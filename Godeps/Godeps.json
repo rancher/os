@@ -1,0 +1,65 @@
+{
+	"ImportPath": "github.com/rancherio/os",
+	"GoVersion": "go1.3",
+	"Deps": [
+		{
+			"ImportPath": "github.com/Sirupsen/logrus",
+			"Comment": "v0.6.4-13-g0b189e0",
+			"Rev": "0b189e019aabcec0af8e433b10b3073ad9382b44"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/archive",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/fileutils",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/ioutils",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/mount",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/pools",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/promise",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/reexec",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/system",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/units",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/vendor/src/code.google.com/p/go/src/pkg/archive/tar",
+			"Comment": "v1.4.1-979-gc28ea14",
+			"Rev": "c28ea14bbb5c16cd69aee384d5261f6a53581741"
+		},
+		{
+			"ImportPath": "github.com/fsouza/go-dockerclient",
+			"Rev": "57da4a6dd45ab6d734c466e28253182d8467e335"
+		}
+	]
+}
