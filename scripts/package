@@ -1,0 +1,42 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+source scripts/build-common
+
+cp bin/rancheros ${BUILD}/initrd/init
+cp scripts/dockerimages/scripts/os-dockerfile ${BUILD}/initrd/Dockerfile
+
+cd ${BUILD}/initrd
+
+find | cpio -H newc -o | lzma -c > ${DIST}/artifacts/initrd
+
+CD=${BUILD}/cd
+
+mkdir -p ${CD}/boot/isolinux
+cp ${DIST}/artifacts/vmlinuz ${CD}/boot
+cp ${DIST}/artifacts/initrd ${CD}/boot
+cp /usr/lib/syslinux/isolinux.bin ${CD}/boot/isolinux
+cp /usr/lib/syslinux/linux.c32 ${CD}/boot/isolinux/ldlinux.c32
+cat > ${CD}/boot/isolinux/isolinux.cfg << EOF
+default rancheros
+label rancheros
+    kernel /boot/vmlinuz
+    initrd /boot/initrd
+    append quiet
+
+prompt 1
+timeout 1
+EOF
+
+# Copied from boot2docker, thanks.
+cd ${CD}
+    xorriso \
+        -publisher "Rancher Labs, Inc." \
+        -as mkisofs \
+        -l -J -R -V "RancherOS" \
+        -no-emul-boot -boot-load-size 4 -boot-info-table \
+        -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
+        -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
+        -o ${DIST}/artifacts/rancheros.iso $(pwd)

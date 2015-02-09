@@ -1,0 +1,3 @@
+FROM base
+COPY scripts/dockerimages/scripts/udev.sh /
+CMD ["/udev.sh"]

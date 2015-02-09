@@ -1,0 +1,3 @@
+FROM scratch
+ADD build/dist/rootfs.tar /
+CMD ["/bin/sh"]

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cd $(dirname $0)/..
+
+source scripts/build-common
+
+download a8e5925eab10a472af4b9326dc3ff1068fd56886 https://github.com/rancherio/os-base/releases/download/v0.0.1/os-base.tar.xz
+download c7d977c2bdc48c022fcf3a51a6e26229247cfb15 https://test.docker.com/builds/Linux/x86_64/docker-1.5.0-rc4

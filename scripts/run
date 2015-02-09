@@ -1,0 +1,45 @@
+#!/bin/bash
+set -e
+set -x
+
+cd $(dirname $0)/..
+
+source scripts/build-common
+
+BASE=$(pwd)
+
+KERNEL=${BASE}/dist/artifacts/vmlinuz
+INITRD=${BASE}/dist/artifacts/initrd
+HD=${BASE}/build/empty-hd.img
+HD_GZ=${ARTIFACTS}/empty-hd.img.gz
+INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
+INITRD_TEST=${BUILD}/initrd.test
+
+if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
+    echo "Failed to find ${KERNEL} or ${INITRD}" 1>&2
+    exit 1
+fi
+
+if [ ! -d ${INITRD_TMP} ]; then
+    mkdir -p ${INITRD_TMP}
+    pushd ${INITRD_TMP}
+    lzma -dc ${INITRD} | sudo cpio -idmv
+    rm -f init
+    popd
+fi
+
+cp bin/rancheros ${INITRD_TMP}/init
+cd ${INITRD_TMP}
+
+if [ "$1" == "--docker" ]; then
+    docker build -t rancheros-run .
+    docker run --privileged -it rancheros-run
+else
+    find | cpio -H newc -o > ${INITRD_TEST}
+
+    if [ ! -e ${HD} ]; then
+        zcat ${HD_GZ} > ${HD}
+    fi
+
+    kvm -m 1024 -kernel ${KERNEL} -initrd ${INITRD_TEST} -append "$1" -hda ${HD} -serial stdio -netdev user,id=hostnet0 -device virtio-net-pci,romfile=,netdev=hostnet0
+fi

@@ -1,0 +1,29 @@
+#!/bin/bash -e
+
+if [[ ! -x "$(which go)" && -x /usr/local/go/bin/go ]]; then
+    PATH=/usr/local/go/bin:${PATH}
+fi
+
+cd $(dirname $0)/..
+
+if [ -f ./build/bootstrap.envs ];then
+    . ./build/bootstrap.envs
+fi
+
+export GOPATH=$(pwd)/Godeps/_workspace:$(pwd)/gopath
+
+PACKAGE=./gopath/src/$(<.package)
+
+if [ -L ${PACKAGE} ]; then
+    rm ${PACKAGE}
+fi
+
+if [ ! -e ${PACKAGE} ]; then
+    mkdir -p $(dirname $PACKAGE)
+    ln -s $(pwd) $PACKAGE
+fi
+
+echo export GOPATH=$GOPATH
+
+mkdir -p bin
+go build -ldflags "-linkmode external -extldflags -static" -o bin/rancheros

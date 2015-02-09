@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+source scripts/build-common
+
+mkdir -p ${BUILD}/initrd ${DIST}/artifacts
+
+echo Extracting ${ARTIFACTS}/os-base.tar.xz
+tar xJf ${ARTIFACTS}/os-base.tar.xz -C ${BUILD}
+
+cp /etc/ssl/certs/ca-certificates.crt ${BUILD}/ca.crt
+
+rm -rf ${BUILD}/initrd/lib
+cp -rf ${BUILD}/dist/kernel/lib ${BUILD}/initrd
+(
+    cd ${BUILD}/initrd/lib/modules
+    # Taken from boot2docker
+    # Remove useless kernel modules, based on unclejack/debian2docker
+    rm -rf ./*/kernel/sound/*
+    rm -rf ./*/kernel/drivers/gpu/*
+    rm -rf ./*/kernel/drivers/infiniband/*
+    rm -rf ./*/kernel/drivers/isdn/*
+    rm -rf ./*/kernel/drivers/media/*
+    rm -rf ./*/kernel/drivers/staging/lustre/*
+    rm -rf ./*/kernel/drivers/staging/comedi/*
+    rm -rf ./*/kernel/fs/ocfs2/*
+    rm -rf ./*/kernel/net/bluetooth/*
+    rm -rf ./*/kernel/net/mac80211/*
+    rm -rf ./*/kernel/net/wireless/*
+)
+cp -f ${ARTIFACTS}/docker* ${BUILD}/initrd/docker
+chmod +x ${BUILD}/initrd/docker
+
+cp ${BUILD}/dist/kernel/bzImage ${DIST}/artifacts/vmlinuz
+
+tar xf ${BUILD}/dist/rootfs-static.tar -C ${BUILD}/initrd --strip-components=2 ./bin/busybox
+
+if ! docker info >/dev/null 2>&1 && [ -x "$(which wrapdocker)" ]; then
+    wrapdocker
+fi
+
+>${BUILD}/tags
+for i in scripts/dockerimages/[0-9]*; do
+    tag=$(echo $i | cut -f2 -d-)
+    echo Building $tag
+    docker build -t $tag -f $i .
+    echo $tag >> ${BUILD}/tags
+done
+
+echo Creating images.tar
+docker save $(<${BUILD}/tags) > ${BUILD}/initrd/images.tar

@@ -1,0 +1,48 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+export DOCKER_IMAGE=${DOCKER_IMAGE:=rancher-os-build}
+export DOCKER_BASE=rancher/docker-dind-base:latest
+
+source scripts/build-common
+
+DOCKER_FILE=$(pwd)/.dockerfile
+
+generate_images()
+{
+    IMAGE_ID=$(docker images --no-trunc -q ${DOCKER_IMAGE})
+
+    if [ -e ${BUILD}/${IMAGE_ID} ]; then
+        DOCKER_BASE=$(<${BUILD}/${IMAGE_ID})
+    else
+        CID=$(docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images)
+        docker logs -f ${CID} &
+        trap "docker rm -f ${CID}" exit
+        docker wait $CID
+        DOCKER_BASE=$(docker commit $CID)
+
+        echo ${DOCKER_BASE} > ${BUILD}/${IMAGE_ID}
+    fi
+}
+
+run ./scripts/bootstrap
+run --assets ./scripts/build-common ./scripts/download
+run --assets ./scripts/dockerimages --assets ./scripts/build-images
+finish
+
+generate_images
+
+reset_docker_build
+ARGS=
+for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|dist|.git|scripts|bin)$'); do
+    if [ -d $i ]; then
+        run --assets $i
+    else
+        ARGS="${ARGS} $i"
+    fi
+done
+run --assets "${ARGS}" ./scripts/build
+run --assets ./scripts/install ./scripts/package
+finish

@@ -1,0 +1,4 @@
+FROM scratch
+COPY init busybox docker images.tar /
+COPY lib /lib
+CMD ["/init"]

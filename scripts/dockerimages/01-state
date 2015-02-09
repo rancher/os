@@ -1,0 +1,5 @@
+FROM base
+VOLUME /home
+VOLUME /var/lib/docker
+VOLUME /var/run
+CMD ["echo"]

@@ -1,0 +1,7 @@
+/bin
+/build
+/dist
+/gopath
+.dockerfile
+*.swp
+Dockerfile

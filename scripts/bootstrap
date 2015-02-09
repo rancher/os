@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+set -x
+
+cd $(dirname $0)/..
+
+apt-get update
+apt-get install -y curl rsync build-essential syslinux xorriso
+
+
+curl -sL https://test.docker.com/builds/Linux/x86_64/docker-1.5.0-rc4 > /usr/bin/docker
+
+chmod +x /usr/bin/docker
+
+curl -sL https://storage.googleapis.com/golang/go1.4.1.linux-amd64.tar.gz | tar xvzf - -C /usr/local

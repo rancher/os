@@ -1,0 +1,125 @@
+#!/bin/bash
+set -e
+
+: ${ARTIFACTS:=$(pwd)/assets}
+: ${BUILD:=$(pwd)/build}
+: ${CONFIG:=$(pwd)/config}
+: ${DIST:=$(pwd)/dist}
+
+BUILDROOT=buildroot-2014.11.tar.bz2
+DOCKER_FILE=${CONFIG}/.dockerfile
+
+mkdir -p ${BUILD} ${DIST}
+
+busybox_install()
+{
+    apt-get update
+    apt-get install -y build-essential wget libncurses5-dev unzip bc
+
+    cd ${BUILD}
+
+    rm -rf ${BUILDROOT/.tar.bz2//}
+    tar xvjf ${ARTIFACTS}/${BUILDROOT}
+    cd ${BUILDROOT/.tar.bz2//}
+
+    cp $1 .config
+    make oldconfig
+    make
+
+    cp output/images/rootfs.tar $2
+}
+
+write_base()
+{
+    if [ "${BASE_WRITTEN}" = "true" ]; then
+        return
+    fi
+
+    mkdir -p $(dirname ${DOCKER_FILE})
+
+    cat > ${DOCKER_FILE} << EOF
+FROM ${DOCKER_BASE:=ubuntu:14.04.1}
+ENV TERM xterm
+WORKDIR /source
+CMD ["/source/scripts/install"]
+EOF
+
+    BASE_WRITTEN=true
+}
+
+run()
+{
+    local content
+
+    while [ $# -gt 1 ]; do
+        case $1 in
+            --assets)
+                shift 1
+                if [ -e "$1" ]; then
+                    content="$content\nCOPY $1 /source/$1"
+                else
+                    content="$content\nCOPY $1 /source/"
+                fi
+                ;;
+        esac
+
+        shift 1
+    done
+
+    write_base
+    if [ -n "$content" ]; then
+        echo -e "$content" >> ${DOCKER_FILE}
+    fi
+    if [ -n "$1" ]; then
+        echo -e "\nCOPY $1 /source/$1" >> ${DOCKER_FILE}
+        echo -e "RUN /source/$1" >> ${DOCKER_FILE}
+    fi
+}
+
+finish()
+{
+    local cmd="docker build -t ${DOCKER_IMAGE} -f ${DOCKER_FILE} ."
+    echo Running $cmd
+    echo Pwd $(pwd)
+
+    cat ${DOCKER_FILE}
+
+    $cmd
+}
+
+reset_docker_build()
+{
+    BASE_WRITTEN=false
+}
+
+check()
+{
+    local hash=$1
+    local file=$2
+
+    if [ ! -e "$file" ]; then
+        return 1
+    fi
+
+    CURRENT=$(sha1sum $file | awk '{print $1}')
+
+    [ "$hash" = "$CURRENT" ]
+}
+
+download()
+{
+    mkdir -p ${ARTIFACTS}
+
+    local url=$2
+    local file=${ARTIFACTS}/$(basename $2)
+    local hash=$1
+
+    if ! check $hash $file; then
+        curl -sL $url > $file
+    fi
+
+    if ! check $hash $file; then
+        echo "ERROR: $file does not match checksum $hash, got $CURRENT" 1>&2
+        return 1
+    fi
+}
