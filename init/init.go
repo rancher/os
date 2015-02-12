@@ -217,13 +217,13 @@ func mountState(cfg *config.Config) error {
 		log.Debugf("State will not be persisted")
 		err = util.Mount("none", STATE, "tmpfs", "")
 	} else {
-		log.Debugf("Mounting state device %s to %s", cfg.StateDev, STATE)
+		log.Debugf("Mounting state device %s", cfg.StateDev)
 		err = util.Mount(cfg.StateDev, STATE, cfg.StateDevFSType, "")
 	}
 
-	//if err != nil {
-	return err
-	//}
+	if err != nil {
+		return err
+	}
 
 	//for _, i := range []string{"docker", "images"} {
 	//	dir := path.Join(STATE, i)

@@ -41,6 +41,7 @@ type Config struct {
 	SystemDockerArgs []string          `json:"systemDockerArgs,omitempty"`
 	UserContainers   []ContainerConfig `json:"userContainser,omitempty"`
 	UserInit         string            `json:"userInit,omitempty"`
+	DockerBin        string            `json:"dockerBin,omitempty"`
 	Modules          []string          `json:"modules,omitempty"`
 	Respawn          []string          `json:"respawn,omitempty"`
 }
@@ -70,16 +71,17 @@ func LoadConfig() (*Config, error) {
 func NewConfig() *Config {
 	return &Config{
 		ConsoleContainer: "console",
+		DockerBin:        "/usr/bin/docker",
 		Debug:            true,
 		DockerEndpoint:   "unix:/var/run/docker.sock",
 		Dns: []string{
 			"8.8.8.8",
 			"8.8.4.4",
 		},
-		ImagesPath:       "/",
-		ImagesPattern:    "images*.tar",
-		StateRequired:    false,
-		StateDev:         "/dev/sda",
+		ImagesPath:    "/",
+		ImagesPattern: "images*.tar",
+		StateRequired: false,
+		StateDev:         "LABEL=RANCHER_STATE",
 		StateDevFSType:   "ext4",
 		SysInit:          "/sbin/init-sys",
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
