@@ -82,7 +82,7 @@ func NewConfig() *Config {
 		ImagesPattern: "images*.tar",
 		StateRequired: false,
 		StateDev:         "LABEL=RANCHER_STATE",
-		StateDevFSType:   "ext4",
+		StateDevFSType:   "auto",
 		SysInit:          "/sbin/init-sys",
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
 		UserInit:         "/sbin/init-user",
