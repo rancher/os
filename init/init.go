@@ -55,6 +55,9 @@ var (
 		"/sbin/modprobe":                     "/busybox",
 		"/var/run":                           "/run",
 		DOCKER:                               "/docker",
+		"/sbin/poweroff":                     "/init",
+		"/sbin/halt":                         "/init",
+		"/sbin/reboot":                       "/init",
 	}
 )
 
@@ -215,10 +218,10 @@ func mountState(cfg *config.Config) error {
 	var err error
 
 	dev := util.ResolveDevice(cfg.StateDev)
-	log.Debugf("Mounting state device %s", dev)	
+	log.Debugf("Mounting state device %s", dev)
 
 	fsType := cfg.StateDevFSType
-	log.Debugf("FsType has been set to %s", fsType)	
+	log.Debugf("FsType has been set to %s", fsType)
 	if fsType == "auto" {
 		actualFsType, fsErr := util.GetFsType(dev)
 		if fsErr != nil {
