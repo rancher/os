@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	STATE  string = "/var/lib/rancher/state"
-	DOCKER string = "/var/lib/docker"
+	STATE string = "/var"
 )
 
 var (
@@ -25,13 +24,14 @@ var (
 		"/bin",
 		"/dev",
 		"/dev/pts",
-		"/etc/ssl/certs/ca-certificates.crt",
+		"/etc/ssl/certs",
 		"/proc",
 		"/sbin",
 		"/sys",
 		"/usr/bin",
-		DOCKER,
-		STATE,
+		"/var/run",
+	}
+	statedirs []string = []string{
 		"/var/run",
 	}
 	mounts [][]string = [][]string{
@@ -278,6 +278,9 @@ func RunInit() error {
 		mountCgroups,
 		loadModules,
 		mountState,
+		func(cfg *config.Config) error {
+			return createDirs(statedirs...)
+		},
 		sysInit,
 	}
 
