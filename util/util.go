@@ -4,11 +4,16 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"math/rand"
 	"os"
 	"path"
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
+)
+
+var (
+	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
 func mountProc() error {
@@ -93,4 +98,59 @@ func ExtractTar(archive string, dest string) error {
 	}
 
 	return nil
+}
+
+func Contains(values []string, value string) bool {
+	if len(value) == 0 {
+		return false
+	}
+
+	for _, value := range values {
+		if value == value {
+			return true
+		}
+	}
+
+	return false
+}
+
+type ReturnsErr func() error
+
+func ShortCircuit(funcs ...ReturnsErr) error {
+	for _, f := range funcs {
+		err := f()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+type ErrWriter struct {
+	w   io.Writer
+	Err error
+}
+
+func NewErrorWriter(w io.Writer) *ErrWriter {
+	return &ErrWriter{
+		w: w,
+	}
+}
+
+func (e *ErrWriter) Write(buf []byte) *ErrWriter {
+	if e.Err != nil {
+		return e
+	}
+
+	_, e.Err = e.w.Write(buf)
+	return e
+}
+
+func RandSeq(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }

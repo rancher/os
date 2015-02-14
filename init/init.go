@@ -187,25 +187,29 @@ func loadModules(cfg *config.Config) error {
 }
 
 func sysInit(cfg *config.Config) error {
-	cmd := exec.Command("openvt", "-s", "/sbin/init-sys")
-	//cmd := exec.Command("/sbin/init-sys")
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
+	args := append([]string{"/sbin/init-sys"}, os.Args[1:]...)
+
+	var cmd *exec.Cmd
+	if util.IsRunningInTty() {
+		cmd = exec.Command(args[0], args[1:]...)
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+	} else {
+		args = append([]string{"openvt", "-s"}, args...)
+		cmd = exec.Command(args[0], args[1:]...)
+	}
+
 	if err := cmd.Start(); err != nil {
 		return err
 	}
 
-	return nil
-
-	//log.Debug("Launching host console")
-	//return exec.Command("openvt", "/bin/sh").Run()
-
-	//log.Debug("Launching console")
-	//return exec.Command("/bin/openvt", "-s", "/bin/console-container.sh").Start()
+	return os.Stdin.Close()
 }
 
 func execDocker(cfg *config.Config) error {
 	log.Info("Launching Docker")
+	os.Stdin.Close()
 	return syscall.Exec(cfg.DockerBin, cfg.SystemDockerArgs, os.Environ())
 }
 
@@ -237,11 +241,11 @@ func mountState(cfg *config.Config) error {
 		}
 	}
 
-	log.Debugf("Bind mounting %s to %s", path.Join(STATE, "docker"), DOCKER)
-	err = util.Mount(path.Join(STATE, "docker"), DOCKER, "", "bind")
-	if err != nil && cfg.StateRequired {
-		return err
-	}
+	//log.Debugf("Bind mounting %s to %s", path.Join(STATE, "docker"), DOCKER)
+	//err = util.Mount(path.Join(STATE, "docker"), DOCKER, "", "bind")
+	//if err != nil && cfg.StateRequired {
+	//	return err
+	//}
 
 	return nil
 }
