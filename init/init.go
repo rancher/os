@@ -267,8 +267,18 @@ func RunInit() error {
 		func(cfg *config.Config) error {
 			newCfg, err := config.LoadConfig()
 			if err == nil {
+				if newCfg.Debug {
+					newCfg, err = config.LoadConfig()
+				}
+			}
+			if err == nil {
 				*cfg = *newCfg
 			}
+
+			if cfg.Debug {
+				log.Debugf("Config: %s", cfg.Dump())
+			}
+
 			return err
 		},
 		createSymlinks,
