@@ -4,13 +4,13 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/fsouza/go-dockerclient"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 	initPkg "github.com/rancherio/os/init"
+	"github.com/rancherio/os/util"
 )
 
 func SysInit() {
@@ -67,7 +67,6 @@ func findImages(cfg *config.Config) ([]string, error) {
 	}
 
 	for _, fileName := range files {
-		log.Debugf("Checking %s", fileName)
 		if ok, _ := path.Match(cfg.ImagesPattern, fileName); ok {
 			log.Debugf("Found %s", fileName)
 			result = append(result, fileName)
@@ -115,33 +114,51 @@ func loadImages(cfg *config.Config) error {
 }
 
 func runContainers(cfg *config.Config) error {
-	containers := cfg.SystemContainers
+	containerConfigs := cfg.SystemContainers
 	if cfg.Rescue {
 		log.Debug("Running rescue container")
-		containers = []config.ContainerConfig{cfg.RescueContainer}
+		containerConfigs = []config.ContainerConfig{cfg.RescueContainer}
 	}
 
-	for _, container := range containers {
-		args := append([]string{"run"}, container.Options...)
-		args = append(args, container.Image)
-		args = append(args, container.Args...)
+	for _, containerConfig := range containerConfigs {
+		if util.Contains(cfg.Disable, containerConfig.Id) {
+			log.Debugf("%s is disabled", containerConfig.Id)
+			continue
+		}
 
-		cmd := exec.Command(cfg.DockerBin, args...)
-		cmd.Stderr = os.Stderr
-		cmd.Stdout = os.Stdout
-		cmd.Stdin = os.Stdin
+		err := docker.StartAndWait(cfg, &containerConfig)
+		log.Debugf("Running %s", containerConfig.Id)
 
-		//log.Infof("Is a tty : %v", term.IsTerminal(0))
-		//log.Infof("Is a tty : %v", term.IsTerminal(1))
-		//log.Infof("Is a tty : %v", term.IsTerminal(2))
-		log.Debugf("Running %s", strings.Join(args, " "))
-		err := cmd.Run()
 		if err != nil {
-			log.Errorf("Failed to run %v: %v", args, err)
+			log.Errorf("Failed to run %v: %v", containerConfig.Id, err)
 		}
 	}
 
 	return nil
+}
+
+func launchConsole(cfg *config.Config) error {
+
+	cmd := exec.Command("docker", "attach", "console")
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	cmd.Start()
+
+	return cmd.Wait()
+	//console := cfg.GetContainerById(cfg.ConsoleContainer)
+	//if console == nil {
+	//	return nil
+	//}
+
+	//c, err := docker.ParseContainer(cfg, console)
+	//if err != nil {
+	//	return err
+	//}
+
+	//return c.Attach()
+
+	//return nil
 }
 
 func sysInit() error {
@@ -153,6 +170,7 @@ func sysInit() error {
 	initFuncs := []config.InitFunc{
 		loadImages,
 		runContainers,
+		//launchConsole,
 	}
 
 	return config.RunInitFuncs(cfg, initFuncs)
