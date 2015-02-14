@@ -194,6 +194,7 @@ type Config struct {
 	Entrypoint      []string            `json:"Entrypoint,omitempty" yaml:"Entrypoint,omitempty"`
 	NetworkDisabled bool                `json:"NetworkDisabled,omitempty" yaml:"NetworkDisabled,omitempty"`
 	SecurityOpts    []string            `json:"SecurityOpts,omitempty" yaml:"SecurityOpts,omitempty"`
+	Labels          map[string]string   `json:"Labels,omitempty" yaml:"Labels,omitempty"`
 }
 
 // Container is the type encompasing everything about a container - its config,
@@ -222,6 +223,20 @@ type Container struct {
 	Volumes    map[string]string `json:"Volumes,omitempty" yaml:"Volumes,omitempty"`
 	VolumesRW  map[string]bool   `json:"VolumesRW,omitempty" yaml:"VolumesRW,omitempty"`
 	HostConfig *HostConfig       `json:"HostConfig,omitempty" yaml:"HostConfig,omitempty"`
+}
+
+// See  for more details.
+func (c *Client) RenameContainer(id string, name string) error {
+	qs := struct {
+		new_name string
+	}{
+		new_name: name,
+	}
+
+	_, _, err := c.do("POST", fmt.Sprintf("/containers/"+id+"/rename?%s",
+		queryString(qs)), nil)
+
+	return err
 }
 
 // InspectContainer returns information about a container by its ID.
@@ -360,6 +375,7 @@ type HostConfig struct {
 	VolumesFrom     []string               `json:"VolumesFrom,omitempty" yaml:"VolumesFrom,omitempty"`
 	NetworkMode     string                 `json:"NetworkMode,omitempty" yaml:"NetworkMode,omitempty"`
 	IpcMode         string                 `json:"IpcMode,omitempty" yaml:"IpcMode,omitempty"`
+	PidMode         string                 `json:"PidMode,omitempty" yaml:"PidMode,omitempty"`
 	RestartPolicy   RestartPolicy          `json:"RestartPolicy,omitempty" yaml:"RestartPolicy,omitempty"`
 }
 
@@ -737,7 +753,7 @@ type NoSuchContainer struct {
 	ID string
 }
 
-func (err *NoSuchContainer) Error() string {
+func (err NoSuchContainer) Error() string {
 	return "No such container: " + err.ID
 }
 
