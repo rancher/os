@@ -8,7 +8,7 @@ apt-get update
 apt-get install -y curl rsync build-essential syslinux xorriso
 
 
-curl -sL https://test.docker.com/builds/Linux/x86_64/docker-1.5.0-rc4 > /usr/bin/docker
+curl -sL https://github.com/ibuildthecloud/docker/releases/download/v1.5.0-rancher-2/docker-1.5.0 > /usr/bin/docker
 
 chmod +x /usr/bin/docker
 

@@ -1,2 +1,3 @@
 FROM base
-CMD ["/bin/sh"]
+COPY scripts/dockerimages/scripts/console.sh /
+CMD ["/console.sh"]

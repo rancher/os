@@ -33,7 +33,7 @@ cd ${INITRD_TMP}
 
 if [ "$1" == "--docker" ]; then
     docker build -t rancheros-run .
-    docker run --privileged -it rancheros-run
+    docker run --rm --privileged -it rancheros-run
 else
     find | cpio -H newc -o > ${INITRD_TEST}
 
@@ -41,5 +41,5 @@ else
         zcat ${HD_GZ} > ${HD}
     fi
 
-    kvm -m 1024 -kernel ${KERNEL} -initrd ${INITRD_TEST} -append "$1" -hda ${HD} -serial stdio -netdev user,id=hostnet0 -device virtio-net-pci,romfile=,netdev=hostnet0
+    kvm -m 1024 -kernel ${KERNEL} -initrd ${INITRD_TEST} -append "$@" -hda ${HD} -serial stdio -netdev user,id=hostnet0 -device virtio-net-pci,romfile=,netdev=hostnet0
 fi

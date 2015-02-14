@@ -10,7 +10,9 @@ if [ -f ./build/bootstrap.envs ];then
     . ./build/bootstrap.envs
 fi
 
-export GOPATH=$(pwd)/Godeps/_workspace:$(pwd)/gopath
+if [ -z "$ROS_CUSTOM_GOPATH" ]; then
+    export GOPATH=$(pwd)/Godeps/_workspace:$(pwd)/gopath
+fi
 
 PACKAGE=./gopath/src/$(<.package)
 

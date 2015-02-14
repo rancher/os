@@ -12,7 +12,7 @@ for i in $CGROUPS; do
 done
 
 if ! lsmod | grep -q br_netfilter; then
-    modprobe br_netfilter
+    modprobe br_netfilter 2>/dev/null || true
 fi
 
 rm -f /var/run/docker.pid
