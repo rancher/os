@@ -13,7 +13,11 @@ const (
 )
 
 func NewClient(cfg *config.Config) (*dockerClient.Client, error) {
-	client, err := dockerClient.NewClient(cfg.DockerEndpoint)
+	endpoint := "unix:///var/run/docker.sock"
+	if cfg != nil {
+		endpoint = cfg.DockerEndpoint
+	}
+	client, err := dockerClient.NewClient(endpoint)
 	if err != nil {
 		return nil, err
 	}
