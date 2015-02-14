@@ -3,42 +3,56 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/rancherio/os/util"
 )
 
 type InitFunc func(*Config) error
 
 type ContainerConfig struct {
-	Options []string `json:"options,omitempty"`
-	Image   string   `json:"image,omitempty"`
-	Args    []string `json:"args,omitempty"`
+	Id  string   `json:"id,omitempty"`
+	Cmd []string `json:"run,omitempty"`
+	//Config     *runconfig.Config     `json:"-"`
+	//HostConfig *runconfig.HostConfig `json:"-"`
 }
 
 type Config struct {
-	BootstrapContainers []ContainerConfig `json:"bootstrapContainers,omitempty"`
-	Debug               bool              `json:"debug,omitempty"`
-	DockerEndpoint      string            `json:"dockerEndpoint,omitempty"`
-	Dns                 []string          `json:"dns,omitempty"`
-	ImagesPath          string            `json:"ImagesPath,omitempty"`
-	ImagesPattern       string            `json:"ImagesPattern,omitempty"`
-	ModulesArchive      string            `json:"modulesArchive,omitempty"`
-	Rescue              bool              `json:"rescue,omitempty"`
-	RescueContainer     ContainerConfig   `json:"rescueContainer,omitempty"`
-	StateDevFSType      string            `json:"stateDeviceFsType,omitempty"`
-	StateDev            string            `json:"stateDevice,omitempty"`
-	StateRequired       bool              `json:"stateRequired,omitempty"`
-	SysInit             string            `json:"sysInit,omitempty"`
-	SystemContainers    []ContainerConfig `json:"systemContainers,omitempty"`
-	SystemDockerArgs    []string          `json:"systemDockerArgs,omitempty"`
-	UserContainers      []ContainerConfig `json:"userContainser,omitempty"`
-	UserInit            string            `json:"userInit,omitempty"`
-	DockerBin           string            `json:"dockerBin,omitempty"`
-	Modules             []string          `json:"modules,omitempty"`
-	Respawn             []string          `json:"respawn,omitempty"`
+	//BootstrapContainers []ContainerConfig `json:"bootstrapContainers,omitempty"`
+	ConsoleContainer string            `json:"consoleContainer,omitempty"`
+	Debug            bool              `json:"debug,omitempty"`
+	Disable          []string          `json:"disable,omitempty"`
+	DockerEndpoint   string            `json:"dockerEndpoint,omitempty"`
+	Dns              []string          `json:"dns,omitempty"`
+	ImagesPath       string            `json:"ImagesPath,omitempty"`
+	ImagesPattern    string            `json:"ImagesPattern,omitempty"`
+	ModulesArchive   string            `json:"modulesArchive,omitempty"`
+	Rescue           bool              `json:"rescue,omitempty"`
+	RescueContainer  ContainerConfig   `json:"rescueContainer,omitempty"`
+	StateDevFSType   string            `json:"stateDeviceFsType,omitempty"`
+	StateDev         string            `json:"stateDevice,omitempty"`
+	StateRequired    bool              `json:"stateRequired,omitempty"`
+	SysInit          string            `json:"sysInit,omitempty"`
+	SystemContainers []ContainerConfig `json:"systemContainers,omitempty"`
+	SystemDockerArgs []string          `json:"systemDockerArgs,omitempty"`
+	UserContainers   []ContainerConfig `json:"userContainser,omitempty"`
+	UserInit         string            `json:"userInit,omitempty"`
+	DockerBin        string            `json:"dockerBin,omitempty"`
+	Modules          []string          `json:"modules,omitempty"`
+	Respawn          []string          `json:"respawn,omitempty"`
+}
+
+func (c *Config) Dump() string {
+	content, err := json.MarshalIndent(c, "", "  ")
+	if err == nil {
+		return string(content)
+	} else {
+		return err.Error()
+	}
 }
 
 func LoadConfig() (*Config, error) {
@@ -56,9 +70,10 @@ func LoadConfig() (*Config, error) {
 
 func NewConfig() *Config {
 	return &Config{
-		DockerBin:      "/usr/bin/docker",
-		Debug:          true,
-		DockerEndpoint: "unix:/var/run/docker.sock",
+		ConsoleContainer: "console",
+		DockerBin:        "/usr/bin/docker",
+		Debug:            true,
+		DockerEndpoint:   "unix:/var/run/docker.sock",
 		Dns: []string{
 			"8.8.8.8",
 			"8.8.4.4",
@@ -75,33 +90,36 @@ func NewConfig() *Config {
 		ModulesArchive:   "/modules.tar",
 		SystemContainers: []ContainerConfig{
 			{
-				Options: []string{
+				Cmd: []string{
 					"--name", "system-state",
 					"--net", "none",
 					"--read-only",
+					"state",
 				},
-				Image: "state",
 			},
 			{
-				Options: []string{
+				Cmd: []string{
+					"--name", "udev",
 					"--net", "none",
 					"--privileged",
 					"--rm",
 					"--volume", "/dev:/host/dev",
 					"--volume", "/lib/modules:/lib/modules:ro",
+					"udev",
 				},
-				Image: "udev",
 			},
 			{
-				Options: []string{
+				Cmd: []string{
+					"--name", "network",
 					"--cap-add", "NET_ADMIN",
 					"--net", "host",
 					"--rm",
+					"network",
 				},
-				Image: "network",
 			},
 			{
-				Options: []string{
+				Cmd: []string{
+					"--name", "userdocker",
 					"-d",
 					"--restart", "always",
 					"--net", "host",
@@ -109,28 +127,32 @@ func NewConfig() *Config {
 					"--volume", "/lib/modules:/lib/modules:ro",
 					"--volume", "/usr/bin/docker:/usr/bin/docker:ro",
 					"--volumes-from", "system-state",
+					"userdocker",
 				},
-				Image: "userdocker",
 			},
 			{
-				Options: []string{
+				Cmd: []string{
+					"--name", "console",
+					"-d",
 					"--rm",
 					"--privileged",
 					"--volume", "/:/host:ro",
 					"--volume", "/lib/modules:/lib/modules:ro",
 					"--volume", "/usr/bin/docker:/usr/bin/docker:ro",
 					"--volume", "/usr/bin/system-docker:/usr/bin/system-docker:ro",
+					"--volume", "/init:/usr/bin/respawn:ro",
 					"--volume", "/var/run/docker.sock:/var/run/system-docker.sock:ro",
 					"--volumes-from", "system-state",
 					"--net", "host",
 					"--pid", "host",
 					"-it",
+					"console",
 				},
-				Image: "console",
 			},
 		},
 		RescueContainer: ContainerConfig{
-			Options: []string{
+			Cmd: []string{
+				"--name", "rescue",
 				"--rm",
 				"--privileged",
 				"--volume", "/:/host",
@@ -140,26 +162,50 @@ func NewConfig() *Config {
 				"--net", "host",
 				"--pid", "host",
 				"-it",
+				"rescue",
 			},
-			Image: "rescue",
 		},
 	}
 }
 
+func (c *Config) readArgs() error {
+	log.Debug("Reading config args")
+	cmdLine := strings.Join(os.Args[1:], " ")
+	if len(cmdLine) == 0 {
+		return nil
+	}
+
+	log.Debugf("Config Args %s", cmdLine)
+
+	cmdLineObj := parseCmdline(strings.TrimSpace(cmdLine))
+
+	return c.merge(cmdLineObj)
+}
+
+func (c *Config) merge(values map[string]interface{}) error {
+	// Lazy way to assign values to *Config
+	override, err := json.Marshal(values)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(override, c)
+}
+
 func (c *Config) readCmdline() error {
+	log.Debug("Reading config cmdline")
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return err
 	}
 
-	cmdLineObj := parseCmdline(strings.TrimSpace(string(cmdLine)))
-
-	// Lazy way to assign values to *Config
-	b, err := json.Marshal(cmdLineObj)
-	if err != nil {
-		return err
+	if len(cmdLine) == 0 {
+		return nil
 	}
-	return json.Unmarshal(b, c)
+
+	log.Debugf("Config cmdline %s", cmdLine)
+
+	cmdLineObj := parseCmdline(strings.TrimSpace(string(cmdLine)))
+	return c.merge(cmdLineObj)
 }
 
 func dummyMarshall(value string) interface{} {
@@ -200,7 +246,11 @@ outer:
 		keys := strings.Split(kv[0], ".")[1:]
 		for i, key := range keys {
 			if i == len(keys)-1 {
-				current[key] = dummyMarshall(value)
+				if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
+					current[key] = strings.Split(value[1:len(value)-1], ",")
+				} else {
+					current[key] = dummyMarshall(value)
+				}
 			} else {
 				if obj, ok := current[key]; ok {
 					if newCurrent, ok := obj.(map[string]interface{}); ok {
@@ -217,11 +267,25 @@ outer:
 		}
 	}
 
+	log.Debugf("Input obj %s", result)
 	return result
 }
 
 func (c *Config) Reload() error {
-	return c.readCmdline()
+	return util.ShortCircuit(
+		c.readCmdline,
+		c.readArgs,
+	)
+}
+
+func (c *Config) GetContainerById(id string) *ContainerConfig {
+	for _, c := range c.SystemContainers {
+		if c.Id == id {
+			return &c
+		}
+	}
+
+	return nil
 }
 
 func RunInitFuncs(cfg *Config, initFuncs []InitFunc) error {
