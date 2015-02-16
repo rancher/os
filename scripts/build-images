@@ -10,7 +10,7 @@ mkdir -p ${BUILD}/initrd ${DIST}/artifacts
 echo Extracting ${ARTIFACTS}/os-base.tar.xz
 tar xJf ${ARTIFACTS}/os-base.tar.xz -C ${BUILD}
 
-cp /etc/ssl/certs/ca-certificates.crt ${BUILD}/ca.crt
+cp /etc/ssl/certs/ca-certificates.crt ${BUILD}/initrd/ca.crt
 
 rm -rf ${BUILD}/initrd/lib
 cp -rf ${BUILD}/dist/kernel/lib ${BUILD}/initrd

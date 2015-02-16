@@ -37,6 +37,7 @@ func execute(line string, wait sync.WaitGroup) {
 		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
 
 		err := cmd.Start()
 		if err != nil {

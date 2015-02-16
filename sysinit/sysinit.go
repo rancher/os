@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/fsouza/go-dockerclient"
@@ -121,16 +122,28 @@ func runContainers(cfg *config.Config) error {
 	}
 
 	for _, containerConfig := range containerConfigs {
+		container := docker.NewContainer(cfg, &containerConfig)
+		container.Parse()
+
 		if util.Contains(cfg.Disable, containerConfig.Id) {
-			log.Debugf("%s is disabled", containerConfig.Id)
+			log.Debugf("%s is disabled : %v", containerConfig.Id, cfg.Disable)
 			continue
 		}
 
-		err := docker.StartAndWait(cfg, &containerConfig)
+		if containerConfig.Id == cfg.ConsoleContainer {
+			if util.IsRunningInTty() {
+				container.Config.Tty = true
+				container.Config.AttachStdin = true
+				container.Config.AttachStdout = true
+				container.Config.AttachStderr = true
+			}
+		}
+
+		container.StartAndWait()
 		log.Debugf("Running %s", containerConfig.Id)
 
-		if err != nil {
-			log.Errorf("Failed to run %v: %v", containerConfig.Id, err)
+		if container.Err != nil {
+			log.Errorf("Failed to run %v: %v", containerConfig.Id, container.Err)
 		}
 	}
 
@@ -138,7 +151,11 @@ func runContainers(cfg *config.Config) error {
 }
 
 func launchConsole(cfg *config.Config) error {
+	if !util.IsRunningInTty() {
+		return nil
+	}
 
+	log.Debugf("Attaching to console")
 	cmd := exec.Command("docker", "attach", "console")
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
@@ -170,6 +187,10 @@ func sysInit() error {
 	initFuncs := []config.InitFunc{
 		loadImages,
 		runContainers,
+		func(cfg *config.Config) error {
+			syscall.Sync()
+			return nil
+		},
 		//launchConsole,
 	}
 

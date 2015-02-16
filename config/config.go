@@ -41,7 +41,6 @@ type Config struct {
 	SystemDockerArgs []string          `json:"systemDockerArgs,omitempty"`
 	UserContainers   []ContainerConfig `json:"userContainser,omitempty"`
 	UserInit         string            `json:"userInit,omitempty"`
-	DockerBin        string            `json:"dockerBin,omitempty"`
 	Modules          []string          `json:"modules,omitempty"`
 	Respawn          []string          `json:"respawn,omitempty"`
 }
@@ -71,17 +70,16 @@ func LoadConfig() (*Config, error) {
 func NewConfig() *Config {
 	return &Config{
 		ConsoleContainer: "console",
-		DockerBin:        "/usr/bin/docker",
 		Debug:            true,
 		DockerEndpoint:   "unix:/var/run/docker.sock",
 		Dns: []string{
 			"8.8.8.8",
 			"8.8.4.4",
 		},
-		ImagesPath:    "/",
-		ImagesPattern: "images*.tar",
-		StateRequired: false,
-		//StateDev:         "/dev/sda",
+		ImagesPath:       "/",
+		ImagesPattern:    "images*.tar",
+		StateRequired:    false,
+		StateDev:         "/dev/sda",
 		StateDevFSType:   "ext4",
 		SysInit:          "/sbin/init-sys",
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
@@ -122,6 +120,7 @@ func NewConfig() *Config {
 					"--name", "userdocker",
 					"-d",
 					"--restart", "always",
+					"--pid", "host",
 					"--net", "host",
 					"--privileged",
 					"--volume", "/lib/modules:/lib/modules:ro",
@@ -136,16 +135,15 @@ func NewConfig() *Config {
 					"-d",
 					"--rm",
 					"--privileged",
-					"--volume", "/:/host:ro",
+					//"--volume", "/:/host:ro",
 					"--volume", "/lib/modules:/lib/modules:ro",
 					"--volume", "/usr/bin/docker:/usr/bin/docker:ro",
-					"--volume", "/usr/bin/system-docker:/usr/bin/system-docker:ro",
+					"--volume", "/init:/usr/bin/system-docker:ro",
 					"--volume", "/init:/usr/bin/respawn:ro",
 					"--volume", "/var/run/docker.sock:/var/run/system-docker.sock:ro",
 					"--volumes-from", "system-state",
 					"--net", "host",
 					"--pid", "host",
-					"-it",
 					"console",
 				},
 			},
@@ -153,15 +151,17 @@ func NewConfig() *Config {
 		RescueContainer: ContainerConfig{
 			Cmd: []string{
 				"--name", "rescue",
+				"-d",
 				"--rm",
 				"--privileged",
-				"--volume", "/:/host",
+				//"--volume", "/:/host",
 				"--volume", "/lib/modules:/lib/modules:ro",
 				"--volume", "/usr/bin/docker:/usr/bin/docker:ro",
-				"--volume", "/var/run/docker.sock:/var/run/docker.sock:ro",
+				"--volume", "/init:/usr/bin/system-docker:ro",
+				"--volume", "/init:/usr/bin/respawn:ro",
+				"--volume", "/var/run/docker.sock:/var/run/system-docker.sock:ro",
 				"--net", "host",
 				"--pid", "host",
-				"-it",
 				"rescue",
 			},
 		},

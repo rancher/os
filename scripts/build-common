@@ -13,6 +13,15 @@ mkdir -p ${BUILD} ${DIST}
 
 busybox_install()
 {
+    local conf=$1
+    local bbconf=$2
+    local target=$3
+
+    if [ "$#" = "2" ]; then
+        target=$2
+        bbconf=
+    fi
+
     apt-get update
     apt-get install -y build-essential wget libncurses5-dev unzip bc
 
@@ -22,11 +31,14 @@ busybox_install()
     tar xvjf ${ARTIFACTS}/${BUILDROOT}
     cd ${BUILDROOT/.tar.bz2//}
 
-    cp $1 .config
+    cp $conf .config
+    if [ -n "$bbconf" ]; then
+        cp $bbconf package/busybox/
+    fi
     make oldconfig
     make
 
-    cp output/images/rootfs.tar $2
+    cp output/images/rootfs.tar $target
 }
 
 write_base()
@@ -73,6 +85,10 @@ run()
     if [ -n "$1" ]; then
         echo -e "\nCOPY $1 /source/$1" >> ${DOCKER_FILE}
         echo -e "RUN /source/$1" >> ${DOCKER_FILE}
+    fi
+
+    if [ "$RUN_EXEC" = "true" ]; then
+        $1
     fi
 }
 

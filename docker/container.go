@@ -142,6 +142,10 @@ func (c *Container) Start() *Container {
 	return c.start(false)
 }
 
+func (c *Container) StartAndWait() *Container {
+	return c.start(true)
+}
+
 func (c *Container) Stage() *Container {
 	c.Parse()
 

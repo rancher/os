@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"syscall"
 	"time"
@@ -16,23 +15,16 @@ import (
 )
 
 const (
-	STATE string = "/var"
+	STATE  string = "/var"
+	DOCKER string = "/usr/bin/docker"
 )
 
 var (
 	dirs []string = []string{
-		"/bin",
-		"/dev",
-		"/dev/pts",
 		"/etc/ssl/certs",
-		"/proc",
 		"/sbin",
-		"/sys",
 		"/usr/bin",
-		"/var/run",
-	}
-	statedirs []string = []string{
-		"/var/run",
+		"/var",
 	}
 	mounts [][]string = [][]string{
 		[]string{"none", "/etc/docker", "tmpfs", ""},
@@ -41,7 +33,7 @@ var (
 		[]string{"none", "/sys", "sysfs", ""},
 		[]string{"none", "/sys/fs/cgroup", "tmpfs", ""},
 		[]string{"none", "/dev/pts", "devpts", ""},
-		[]string{"none", "/var/run", "tmpfs", ""},
+		[]string{"none", "/run", "tmpfs", ""},
 	}
 	cgroups []string = []string{
 		"perf_event",
@@ -58,17 +50,16 @@ var (
 	// so map[y] = x
 	symlinks map[string]string = map[string]string{
 		"/etc/ssl/certs/ca-certificates.crt": "/ca.crt",
-		"/bin/busybox":                       "/busybox",
 		"/sbin/init-sys":                     "/init",
 		"/sbin/init-user":                    "/init",
-		"/sbin/modprobe":                     "/bin/busybox",
-		"/usr/bin/docker":                    "/docker",
-		"/usr/bin/openvt":                    "/busybox",
-		"/usr/bin/system-docker":             "/init",
+		"/sbin/modprobe":                     "/busybox",
+		"/var/run":                           "/run",
+		DOCKER:                               "/docker",
 	}
 )
 
 func createSymlinks(cfg *config.Config) error {
+	log.Debug("Creating symlinking")
 	for dest, src := range symlinks {
 		if _, err := os.Stat(dest); os.IsNotExist(err) {
 			log.Debugf("Symlinking %s => %s", src, dest)
@@ -196,7 +187,6 @@ func sysInit(cfg *config.Config) error {
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdout
 	} else {
-		args = append([]string{"openvt", "-s"}, args...)
 		cmd = exec.Command(args[0], args[1:]...)
 	}
 
@@ -209,8 +199,10 @@ func sysInit(cfg *config.Config) error {
 
 func execDocker(cfg *config.Config) error {
 	log.Info("Launching Docker")
-	os.Stdin.Close()
-	return syscall.Exec(cfg.DockerBin, cfg.SystemDockerArgs, os.Environ())
+	//os.Stdin.Close()
+	//os.Stdout.Close()
+	//os.Stderr.Close()
+	return syscall.Exec(DOCKER, cfg.SystemDockerArgs, os.Environ())
 }
 
 func MainInit() {
@@ -225,21 +217,21 @@ func mountState(cfg *config.Config) error {
 		log.Debugf("State will not be persisted")
 		err = util.Mount("none", STATE, "tmpfs", "")
 	} else {
-		log.Debugf("Mounting state device %s", cfg.StateDev)
+		log.Debugf("Mounting state device %s to %s", cfg.StateDev, STATE)
 		err = util.Mount(cfg.StateDev, STATE, cfg.StateDevFSType, "")
 	}
 
-	if err != nil {
-		return err
-	}
+	//if err != nil {
+	return err
+	//}
 
-	for _, i := range []string{"docker", "images"} {
-		dir := path.Join(STATE, i)
-		err = os.MkdirAll(dir, 0755)
-		if err != nil {
-			return err
-		}
-	}
+	//for _, i := range []string{"docker", "images"} {
+	//	dir := path.Join(STATE, i)
+	//	err = os.MkdirAll(dir, 0755)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
 
 	//log.Debugf("Bind mounting %s to %s", path.Join(STATE, "docker"), DOCKER)
 	//err = util.Mount(path.Join(STATE, "docker"), DOCKER, "", "bind")
@@ -271,9 +263,7 @@ func RunInit() error {
 		func(cfg *config.Config) error {
 			newCfg, err := config.LoadConfig()
 			if err == nil {
-				if newCfg.Debug {
-					newCfg, err = config.LoadConfig()
-				}
+				newCfg, err = config.LoadConfig()
 			}
 			if err == nil {
 				*cfg = *newCfg
@@ -285,16 +275,13 @@ func RunInit() error {
 
 			return err
 		},
-		createSymlinks,
 		setResolvConf,
 		extractModules,
-		remountRo,
 		mountCgroups,
 		loadModules,
 		mountState,
-		func(cfg *config.Config) error {
-			return createDirs(statedirs...)
-		},
+		createSymlinks,
+		remountRo,
 		sysInit,
 	}
 

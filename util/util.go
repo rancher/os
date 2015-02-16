@@ -105,8 +105,8 @@ func Contains(values []string, value string) bool {
 		return false
 	}
 
-	for _, value := range values {
-		if value == value {
+	for _, i := range values {
+		if i == value {
 			return true
 		}
 	}
