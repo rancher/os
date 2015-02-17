@@ -33,8 +33,8 @@ type Config struct {
 	ModulesArchive   string            `json:"modulesArchive,omitempty"`
 	Rescue           bool              `json:"rescue,omitempty"`
 	RescueContainer  ContainerConfig   `json:"rescueContainer,omitempty"`
-	StateDevFSType   string            `json:"stateDeviceFsType,omitempty"`
-	StateDev         string            `json:"stateDevice,omitempty"`
+	StateDevFSType   string            `json:"stateDevFsType,omitempty"`
+	StateDev         string            `json:"stateDev,omitempty"`
 	StateRequired    bool              `json:"stateRequired,omitempty"`
 	SysInit          string            `json:"sysInit,omitempty"`
 	SystemContainers []ContainerConfig `json:"systemContainers,omitempty"`
