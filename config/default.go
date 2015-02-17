@@ -77,6 +77,15 @@ func NewConfig() *Config {
 					"console",
 				},
 			},
+			{
+				Cmd: []string{
+					"--name", "ntp",
+					"-d",
+					"--privileged",
+					"--net", "host",
+					"ntp",
+				},
+			},
 		},
 		RescueContainer: ContainerConfig{
 			Cmd: []string{
