@@ -55,9 +55,6 @@ var (
 		"/sbin/modprobe":                     "/busybox",
 		"/var/run":                           "/run",
 		DOCKER:                               "/docker",
-		"/sbin/poweroff":                     "/init",
-		"/sbin/halt":                         "/init",
-		"/sbin/reboot":                       "/init",
 	}
 )
 

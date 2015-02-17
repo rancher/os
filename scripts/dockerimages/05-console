@@ -1,3 +1,4 @@
 FROM base
+RUN rm /sbin/poweroff /sbin/reboot /sbin/halt
 COPY scripts/dockerimages/scripts/console.sh /
 CMD ["/console.sh"]

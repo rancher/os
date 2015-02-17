@@ -5,15 +5,14 @@ import (
 	"errors"
 	"os"
 	"strconv"
-	"syscall"
 	"strings"
+	"syscall"
 
 	"github.com/fsouza/go-dockerclient"
 )
 
-
 const (
-	dockerPath = "unix:///var/run/system-docker.sock"
+	dockerPath        = "unix:///var/run/system-docker.sock"
 	dockerCGroupsFile = "/proc/self/cgroup"
 )
 
@@ -65,14 +64,14 @@ func shutDownContainers() error {
 		return nil
 	}
 	client, err := docker.NewClient(dockerPath)
-	
+
 	if err != nil {
 		return err
 	}
 
 	opts := docker.ListContainersOptions{All: true, Filters: map[string][]string{"status": []string{"running"}}}
 	var containers []docker.APIContainers
-	
+
 	containers, err = client.ListContainers(opts)
 
 	if err != nil {
@@ -93,7 +92,7 @@ func shutDownContainers() error {
 		}
 		stopErr := client.StopContainer(containers[i].ID, timeout)
 		if stopErr != nil {
-			stopErrorStrings = append(stopErrorStrings, " [" + containers[i].ID  + "] " +stopErr.Error())
+			stopErrorStrings = append(stopErrorStrings, " ["+containers[i].ID+"] "+stopErr.Error())
 		}
 	}
 
@@ -105,17 +104,16 @@ func shutDownContainers() error {
 		}
 		_, waitErr := client.WaitContainer(containers[i].ID)
 		if waitErr != nil {
-			 waitErrorStrings = append(waitErrorStrings, " [" + containers[i].ID  + "] " + waitErr.Error())
+			waitErrorStrings = append(waitErrorStrings, " ["+containers[i].ID+"] "+waitErr.Error())
 		}
 	}
-		
+
 	if len(waitErrorStrings) != 0 || len(stopErrorStrings) != 0 {
 		return errors.New("error while stopping \n1. STOP Errors [" + strings.Join(stopErrorStrings, ",") + "] \n2. WAIT Errors [" + strings.Join(waitErrorStrings, ",") + "]")
 	}
 
 	return nil
 }
-
 
 func getCurrentContainerId() (string, error) {
 	file, err := os.Open(dockerCGroupsFile)
@@ -131,7 +129,7 @@ func getCurrentContainerId() (string, error) {
 	line := fileReader.Text()
 	parts := strings.Split(line, "/")
 
-	while len(parts) != 3 {
+	for len(parts) != 3 {
 		if !fileReader.Scan() {
 			return "", errors.New("Found no docker cgroups")
 		}
@@ -148,4 +146,3 @@ func getCurrentContainerId() (string, error) {
 
 	return parts[len(parts)-1:][0], nil
 }
-

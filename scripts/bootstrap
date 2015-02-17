@@ -5,7 +5,7 @@ set -x
 cd $(dirname $0)/..
 
 apt-get update
-apt-get install -y curl rsync build-essential syslinux xorriso libblkid-dev
+apt-get install -y curl rsync build-essential syslinux xorriso libblkid-dev libmount-dev libselinux1-dev
 
 
 curl -sL https://github.com/ibuildthecloud/docker/releases/download/v1.5.0-rancher-2/docker-1.5.0 > /usr/bin/docker
