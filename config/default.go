@@ -62,6 +62,7 @@ func NewConfig() *Config {
 					"-v=/init:/sbin/poweroff:ro " +
 					"-v=/init:/sbin/reboot:ro " +
 					"-v=/init:/sbin/halt:ro " +
+					"-v=/init:/usr/bin/rancherctl:ro " +
 					"--volumes-from=system-state " +
 					"--net=host " +
 					"--pid=host " +
