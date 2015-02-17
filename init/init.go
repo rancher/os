@@ -55,6 +55,9 @@ var (
 		"/sbin/modprobe":                     "/busybox",
 		"/var/run":                           "/run",
 		DOCKER:                               "/docker",
+		"/sbin/poweroff":                     "/init",
+		"/sbin/halt":                         "/init",
+		"/sbin/reboot":                       "/init",
 	}
 )
 
@@ -213,17 +216,36 @@ func MainInit() {
 
 func mountState(cfg *config.Config) error {
 	var err error
-	if len(cfg.StateDev) == 0 {
-		log.Debugf("State will not be persisted")
-		err = util.Mount("none", STATE, "tmpfs", "")
-	} else {
-		log.Debugf("Mounting state device %s to %s", cfg.StateDev, STATE)
-		err = util.Mount(cfg.StateDev, STATE, cfg.StateDevFSType, "")
+
+	dev := util.ResolveDevice(cfg.StateDev)
+	log.Debugf("Mounting state device %s", dev)
+
+	fsType := cfg.StateDevFSType
+	log.Debugf("FsType has been set to %s", fsType)
+	if fsType == "auto" {
+		actualFsType, fsErr := util.GetFsType(dev)
+		if fsErr != nil {
+			return fsErr
+		}
+		fsType = actualFsType
+	}
+	err = util.Mount(dev, STATE, fsType, "")
+
+	if err != nil {
+		if cfg.StateRequired {
+			return err
+		} else {
+			log.Debugf("State will not be persisted")
+			err = util.Mount("none", STATE, "tmpfs", "")
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	//if err != nil {
-	return err
-	//}
+	if err != nil {
+		return err
+	}
 
 	//for _, i := range []string{"docker", "images"} {
 	//	dir := path.Join(STATE, i)
