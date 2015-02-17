@@ -2,24 +2,18 @@ package config
 
 func NewConfig() *Config {
 	return &Config{
-		ConsoleContainer: "console",
-		DockerBin:        "/usr/bin/docker",
-		Debug:            true,
-		DockerEndpoint:   "unix:/var/run/docker.sock",
+		Debug: DEBUG,
 		Dns: []string{
 			"8.8.8.8",
 			"8.8.4.4",
 		},
-		ImagesPath:       "/",
-		ImagesPattern:    "images*.tar",
-		StateRequired:    false,
-		StateDev:         "LABEL=RANCHER_STATE",
-		StateDevFSType:   "auto",
-		SysInit:          "/sbin/init-sys",
+		State: ConfigState{
+			Required: false,
+			Dev:      "LABEL=RANCHER_STATE",
+			FsType:   "auto",
+		},
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
-		UserInit:         "/sbin/init-user",
 		Modules:          []string{},
-		ModulesArchive:   "/modules.tar",
 		SystemContainers: []ContainerConfig{
 			{
 				Cmd: []string{

@@ -7,7 +7,6 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
-	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/config"
@@ -123,13 +122,13 @@ func mountCgroups(cfg *config.Config) error {
 }
 
 func extractModules(cfg *config.Config) error {
-	if _, err := os.Stat(cfg.ModulesArchive); os.IsNotExist(err) {
+	if _, err := os.Stat(config.MODULES_ARCHIVE); os.IsNotExist(err) {
 		log.Debug("Modules do not exist")
 		return nil
 	}
 
 	log.Debug("Extracting modules")
-	return util.ExtractTar(cfg.ModulesArchive, "/")
+	return util.ExtractTar(config.MODULES_ARCHIVE, "/")
 }
 
 func setResolvConf(cfg *config.Config) error {
@@ -214,62 +213,37 @@ func MainInit() {
 func mountState(cfg *config.Config) error {
 	var err error
 
-	dev := util.ResolveDevice(cfg.StateDev)
-	log.Debugf("Mounting state device %s", dev)
+	if cfg.State.Dev != "" {
+		dev := util.ResolveDevice(cfg.State.Dev)
+		log.Debugf("Mounting state device %s to %s", dev, STATE)
 
-	fsType := cfg.StateDevFSType
-	log.Debugf("FsType has been set to %s", fsType)
-	if fsType == "auto" {
-		actualFsType, fsErr := util.GetFsType(dev)
-		if fsErr != nil {
-			return fsErr
+		fsType := cfg.State.FsType
+		if fsType == "auto" {
+			fsType, err = util.GetFsType(dev)
 		}
-		fsType = actualFsType
-	}
-	err = util.Mount(dev, STATE, fsType, "")
 
-	if err != nil {
-		if cfg.StateRequired {
-			return err
-		} else {
-			log.Debugf("State will not be persisted")
-			err = util.Mount("none", STATE, "tmpfs", "")
-			if err != nil {
-				return err
-			}
+		if err == nil {
+			log.Debugf("FsType has been set to %s", fsType)
+			err = util.Mount(dev, STATE, fsType, "")
 		}
 	}
 
-	if err != nil {
+	if err != nil && cfg.State.Required {
 		return err
 	}
 
-	//for _, i := range []string{"docker", "images"} {
-	//	dir := path.Join(STATE, i)
-	//	err = os.MkdirAll(dir, 0755)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
+	if err != nil || cfg.State.Dev == "" {
+		log.Debugf("State will not be persisted")
+		err = util.Mount("none", STATE, "tmpfs", "")
+	}
 
-	//log.Debugf("Bind mounting %s to %s", path.Join(STATE, "docker"), DOCKER)
-	//err = util.Mount(path.Join(STATE, "docker"), DOCKER, "", "bind")
-	//if err != nil && cfg.StateRequired {
-	//	return err
-	//}
-
-	return nil
-}
-
-func pause(cfg *config.Config) error {
-	time.Sleep(5 + time.Minute)
-	return nil
+	return err
 }
 
 func RunInit() error {
 	var cfg config.Config
 
-	os.Setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin")
+	os.Setenv("PATH", "/sbin:/usr/bin")
 	os.Setenv("DOCKER_RAMDISK", "true")
 
 	initFuncs := []config.InitFunc{

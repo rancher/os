@@ -12,11 +12,15 @@ const (
 	INTERVAL = 100
 )
 
-func NewClient(cfg *config.Config) (*dockerClient.Client, error) {
-	endpoint := "unix:///var/run/docker.sock"
-	if cfg != nil {
-		endpoint = cfg.DockerEndpoint
-	}
+func NewSystemClient() (*dockerClient.Client, error) {
+	return NewClient(config.DOCKER_SYSTEM_HOST)
+}
+
+func NewDefaultClient() (*dockerClient.Client, error) {
+	return NewClient(config.DOCKER_HOST)
+}
+
+func NewClient(endpoint string) (*dockerClient.Client, error) {
 	client, err := dockerClient.NewClient(endpoint)
 	if err != nil {
 		return nil, err

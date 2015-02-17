@@ -131,6 +131,7 @@ download()
     local hash=$1
 
     if ! check $hash $file; then
+        echo Downloading $url to $file
         curl -sL $url > $file
     fi
 

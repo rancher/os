@@ -1,4 +1,6 @@
 FROM base
 RUN rm /sbin/poweroff /sbin/reboot /sbin/halt
+RUN sed -i '/^root/s!/bin/sh!/bin/bash!' /etc/passwd
+RUN echo -e 'RancherOS\n' > /etc/issue
 COPY scripts/dockerimages/scripts/console.sh /
 CMD ["/console.sh"]

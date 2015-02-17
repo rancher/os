@@ -12,6 +12,19 @@ import (
 	"github.com/rancherio/os/util"
 )
 
+const (
+	CONSOLE_CONTAINER  = "console"
+	DOCKER_BIN         = "/usr/bin/docker"
+	DOCKER_SYSTEM_HOST = "unix:///var/run/system-docker.sock"
+	DOCKER_HOST        = "unix:///var/run/docker.sock"
+	IMAGES_PATH        = "/"
+	IMAGES_PATTERN     = "images*.tar"
+	SYS_INIT           = "/sbin/init-sys"
+	USER_INIT          = "/sbin/init-user"
+	MODULES_ARCHIVE    = "/modules.tar"
+	DEBUG              = true
+)
+
 type InitFunc func(*Config) error
 
 type ContainerConfig struct {
@@ -23,27 +36,23 @@ type ContainerConfig struct {
 
 type Config struct {
 	//BootstrapContainers []ContainerConfig `json:"bootstrapContainers,omitempty"`
+	//UserContainers   []ContainerConfig `json:"userContainser,omitempty"`
 	ConsoleContainer string            `json:"consoleContainer,omitempty"`
 	Debug            bool              `json:"debug,omitempty"`
 	Disable          []string          `json:"disable,omitempty"`
-	DockerEndpoint   string            `json:"dockerEndpoint,omitempty"`
 	Dns              []string          `json:"dns,omitempty"`
-	ImagesPath       string            `json:"ImagesPath,omitempty"`
-	ImagesPattern    string            `json:"ImagesPattern,omitempty"`
-	ModulesArchive   string            `json:"modulesArchive,omitempty"`
 	Rescue           bool              `json:"rescue,omitempty"`
 	RescueContainer  ContainerConfig   `json:"rescueContainer,omitempty"`
-	StateDevFSType   string            `json:"stateDevFsType,omitempty"`
-	StateDev         string            `json:"stateDev,omitempty"`
-	StateRequired    bool              `json:"stateRequired,omitempty"`
-	SysInit          string            `json:"sysInit,omitempty"`
+	State            ConfigState       `json:"state,omitempty"`
 	SystemContainers []ContainerConfig `json:"systemContainers,omitempty"`
 	SystemDockerArgs []string          `json:"systemDockerArgs,omitempty"`
-	UserContainers   []ContainerConfig `json:"userContainser,omitempty"`
-	UserInit         string            `json:"userInit,omitempty"`
-	DockerBin        string            `json:"dockerBin,omitempty"`
 	Modules          []string          `json:"modules,omitempty"`
-	Respawn          []string          `json:"respawn,omitempty"`
+}
+
+type ConfigState struct {
+	FsType   string `json:"fsType,omitempty"`
+	Dev      string `json:"dev,omitempty"`
+	Required bool   `json:"required,omitempty"`
 }
 
 func (c *Config) Dump() string {

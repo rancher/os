@@ -41,6 +41,6 @@ else
         zcat ${HD_GZ} > ${HD}
     fi
 
-    qemu-system-x86_64 -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -append "x $@"
+    qemu-system-x86_64 -serial stdio -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -append "console=ttyS0 $@"
 
 fi

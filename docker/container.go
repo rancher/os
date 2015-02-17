@@ -28,7 +28,7 @@ type Container struct {
 	detach       bool
 	Config       *runconfig.Config
 	HostConfig   *runconfig.HostConfig
-	cfg          *config.Config
+	dockerHost   string
 	container    *dockerClient.Container
 	containerCfg *config.ContainerConfig
 }
@@ -47,16 +47,17 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 	return hex.EncodeToString(hash.Sum([]byte{})), nil
 }
 
-func StartAndWait(cfg *config.Config, containerCfg *config.ContainerConfig) error {
-	container := NewContainer(cfg, containerCfg).start(true)
+func StartAndWait(dockerHost string, containerCfg *config.ContainerConfig) error {
+	container := NewContainer(dockerHost, containerCfg).start(true)
 	return container.Err
 }
 
-func NewContainer(cfg *config.Config, containerCfg *config.ContainerConfig) *Container {
-	return &Container{
-		cfg:          cfg,
+func NewContainer(dockerHost string, containerCfg *config.ContainerConfig) *Container {
+	c := &Container{
+		dockerHost:   dockerHost,
 		containerCfg: containerCfg,
 	}
+	return c.Parse()
 }
 
 func (c *Container) returnErr(err error) *Container {
@@ -76,7 +77,7 @@ func (c *Container) Lookup() *Container {
 		return c.returnErr(err)
 	}
 
-	client, err := NewClient(c.cfg)
+	client, err := NewClient(c.dockerHost)
 	if err != nil {
 		return c.returnErr(err)
 	}
@@ -153,7 +154,7 @@ func (c *Container) Stage() *Container {
 		return c
 	}
 
-	client, err := NewClient(c.cfg)
+	client, err := NewClient(c.dockerHost)
 	if err != nil {
 		c.Err = err
 		return c
@@ -185,7 +186,7 @@ func (c *Container) Delete() *Container {
 		return c
 	}
 
-	client, err := NewClient(c.cfg)
+	client, err := NewClient(c.dockerHost)
 	if err != nil {
 		return c.returnErr(err)
 	}
@@ -235,7 +236,7 @@ func (c *Container) start(wait bool) *Container {
 		return c.returnErr(err)
 	}
 
-	client, err := NewClient(c.cfg)
+	client, err := NewClient(c.dockerHost)
 	if err != nil {
 		return c.returnErr(err)
 	}

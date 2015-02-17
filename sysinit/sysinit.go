@@ -47,11 +47,11 @@ func hasImage(name string) bool {
 }
 
 func findImages(cfg *config.Config) ([]string, error) {
-	log.Debugf("Looking for images at %s", cfg.ImagesPath)
+	log.Debugf("Looking for images at %s", config.IMAGES_PATH)
 
 	result := []string{}
 
-	dir, err := os.Open(cfg.ImagesPath)
+	dir, err := os.Open(config.IMAGES_PATH)
 	if os.IsNotExist(err) {
 		log.Debugf("Not loading images, %s does not exist")
 		return result, nil
@@ -68,7 +68,7 @@ func findImages(cfg *config.Config) ([]string, error) {
 	}
 
 	for _, fileName := range files {
-		if ok, _ := path.Match(cfg.ImagesPattern, fileName); ok {
+		if ok, _ := path.Match(config.IMAGES_PATTERN, fileName); ok {
 			log.Debugf("Found %s", fileName)
 			result = append(result, fileName)
 		}
@@ -83,7 +83,7 @@ func loadImages(cfg *config.Config) error {
 		return err
 	}
 
-	client, err := docker.NewClient(cfg)
+	client, err := docker.NewDefaultClient()
 	if err != nil {
 		return err
 	}
@@ -93,7 +93,7 @@ func loadImages(cfg *config.Config) error {
 			continue
 		}
 
-		inputFileName := path.Join(cfg.ImagesPath, image)
+		inputFileName := path.Join(config.IMAGES_PATH, image)
 		input, err := os.Open(inputFileName)
 		if err != nil {
 			return err
@@ -122,7 +122,7 @@ func runContainers(cfg *config.Config) error {
 	}
 
 	for _, containerConfig := range containerConfigs {
-		container := docker.NewContainer(cfg, &containerConfig)
+		container := docker.NewContainer(config.DOCKER_HOST, &containerConfig)
 		container.Parse()
 
 		if util.Contains(cfg.Disable, containerConfig.Id) {
