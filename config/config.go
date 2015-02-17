@@ -41,6 +41,7 @@ type Config struct {
 	SystemDockerArgs []string          `json:"systemDockerArgs,omitempty"`
 	UserContainers   []ContainerConfig `json:"userContainser,omitempty"`
 	UserInit         string            `json:"userInit,omitempty"`
+	DockerBin        string            `json:"dockerBin,omitempty"`
 	Modules          []string          `json:"modules,omitempty"`
 	Respawn          []string          `json:"respawn,omitempty"`
 }
@@ -70,6 +71,7 @@ func LoadConfig() (*Config, error) {
 func NewConfig() *Config {
 	return &Config{
 		ConsoleContainer: "console",
+		DockerBin:        "/usr/bin/docker",
 		Debug:            true,
 		DockerEndpoint:   "unix:/var/run/docker.sock",
 		Dns: []string{
@@ -79,7 +81,7 @@ func NewConfig() *Config {
 		ImagesPath:       "/",
 		ImagesPattern:    "images*.tar",
 		StateRequired:    false,
-		StateDev:         "/dev/vda",
+		StateDev:         "LABEL=RANCHER_STATE",
 		StateDevFSType:   "ext4",
 		SysInit:          "/sbin/init-sys",
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
@@ -141,6 +143,9 @@ func NewConfig() *Config {
 					"--volume", "/init:/usr/bin/system-docker:ro",
 					"--volume", "/init:/usr/bin/respawn:ro",
 					"--volume", "/var/run/docker.sock:/var/run/system-docker.sock:ro",
+					"--volume", "/sbin/poweroff:/sbin/poweroff:ro",
+					"--volume", "/sbin/reboot:/sbin/reboot:ro",
+					"--volume", "/sbin/halt:/sbin/halt:ro",
 					"--volumes-from", "system-state",
 					"--net", "host",
 					"--pid", "host",
