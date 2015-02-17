@@ -1,0 +1,3 @@
+#!/bin/bash
+
+ntpd -d

@@ -1,0 +1,3 @@
+FROM console
+COPY scripts/dockerimages/scripts/ntp.sh /
+CMD ["/ntp.sh"]

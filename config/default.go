@@ -68,6 +68,15 @@ func NewConfig() *Config {
 					"--pid=host " +
 					"console",
 			},
+			{
+				Cmd: []string{
+					"--name", "ntp",
+					"-d",
+					"--privileged",
+					"--net", "host",
+					"ntp",
+				},
+			},
 		},
 		RescueContainer: &ContainerConfig{
 			Cmd: "--name=rescue " +
