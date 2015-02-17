@@ -263,7 +263,10 @@ func RunInit() error {
 			}
 
 			if cfg.Debug {
-				log.Debugf("Config: %s", cfg.Dump())
+				cfgString, _ := cfg.Dump()
+				if cfgString != "" {
+					log.Debugf("Config: %s", cfgString)
+				}
 			}
 
 			return err

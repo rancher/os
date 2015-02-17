@@ -118,7 +118,7 @@ func runContainers(cfg *config.Config) error {
 	containerConfigs := cfg.SystemContainers
 	if cfg.Rescue {
 		log.Debug("Running rescue container")
-		containerConfigs = []config.ContainerConfig{cfg.RescueContainer}
+		containerConfigs = []config.ContainerConfig{*cfg.RescueContainer}
 	}
 
 	for _, containerConfig := range containerConfigs {
@@ -130,7 +130,7 @@ func runContainers(cfg *config.Config) error {
 			continue
 		}
 
-		if containerConfig.Id == cfg.ConsoleContainer {
+		if containerConfig.Id == config.CONSOLE_CONTAINER {
 			if util.IsRunningInTty() {
 				container.Config.Tty = true
 				container.Config.AttachStdin = true

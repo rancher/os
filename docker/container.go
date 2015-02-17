@@ -9,8 +9,10 @@ import (
 	"os"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	flag "github.com/docker/docker/pkg/mflag"
 	"github.com/docker/docker/runconfig"
+	shlex "github.com/flynn/go-shlex"
 	dockerClient "github.com/fsouza/go-dockerclient"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
@@ -38,7 +40,7 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 	w := util.NewErrorWriter(hash)
 
 	w.Write([]byte(containerCfg.Id))
-	w.Write([]byte(strings.Join(containerCfg.Cmd, ":")))
+	w.Write([]byte(containerCfg.Cmd))
 
 	if w.Err != nil {
 		return "", w.Err
@@ -126,13 +128,19 @@ func (c *Container) Parse() *Container {
 	flDetach := flags.Bool([]string{"d", "-detach"}, false, "")
 	flName := flags.String([]string{"#name", "-name"}, "", "")
 
-	c.Config, c.HostConfig, _, c.Err = runconfig.Parse(flags, c.containerCfg.Cmd)
+	args, err := shlex.Split(c.containerCfg.Cmd)
+	if err != nil {
+		return c.returnErr(err)
+	}
+
+	log.Debugf("Parsing [%s]", strings.Join(args, ","))
+	c.Config, c.HostConfig, _, c.Err = runconfig.Parse(flags, args)
 
 	c.Name = *flName
 	c.detach = *flDetach
 	c.remove = *flRemove
 
-	if len(c.containerCfg.Id) == 0 {
+	if c.containerCfg.Id == "" {
 		c.containerCfg.Id = c.Name
 	}
 

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -10,9 +9,11 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/util"
+	"gopkg.in/yaml.v2"
 )
 
 const (
+	VERSION            = "0.0.1"
 	CONSOLE_CONTAINER  = "console"
 	DOCKER_BIN         = "/usr/bin/docker"
 	DOCKER_SYSTEM_HOST = "unix:///var/run/system-docker.sock"
@@ -22,45 +23,49 @@ const (
 	SYS_INIT           = "/sbin/init-sys"
 	USER_INIT          = "/sbin/init-user"
 	MODULES_ARCHIVE    = "/modules.tar"
-	DEBUG              = true
+	DEBUG              = false
 )
 
 type InitFunc func(*Config) error
 
 type ContainerConfig struct {
-	Id  string   `json:"id,omitempty"`
-	Cmd []string `json:"run,omitempty"`
-	//Config     *runconfig.Config     `json:"-"`
-	//HostConfig *runconfig.HostConfig `json:"-"`
+	Id  string `yaml:"id,omitempty"`
+	Cmd string `yaml:"run,omitempty"`
+	//Config     *runconfig.Config     `yaml:"-"`
+	//HostConfig *runconfig.HostConfig `yaml:"-"`
 }
 
 type Config struct {
-	//BootstrapContainers []ContainerConfig `json:"bootstrapContainers,omitempty"`
-	//UserContainers   []ContainerConfig `json:"userContainser,omitempty"`
-	ConsoleContainer string            `json:"consoleContainer,omitempty"`
-	Debug            bool              `json:"debug,omitempty"`
-	Disable          []string          `json:"disable,omitempty"`
-	Dns              []string          `json:"dns,omitempty"`
-	Rescue           bool              `json:"rescue,omitempty"`
-	RescueContainer  ContainerConfig   `json:"rescueContainer,omitempty"`
-	State            ConfigState       `json:"state,omitempty"`
-	SystemContainers []ContainerConfig `json:"systemContainers,omitempty"`
-	SystemDockerArgs []string          `json:"systemDockerArgs,omitempty"`
-	Modules          []string          `json:"modules,omitempty"`
+	//BootstrapContainers []ContainerConfig `yaml:"bootstrapContainers,omitempty"`
+	//UserContainers   []ContainerConfig `yaml:"userContainser,omitempty"`
+	Debug            bool              `yaml:"debug,omitempty"`
+	Disable          []string          `yaml:"disable,omitempty"`
+	Dns              []string          `yaml:"dns,omitempty"`
+	Rescue           bool              `yaml:"rescue,omitempty"`
+	RescueContainer  *ContainerConfig  `yaml:"rescue_container,omitempty"`
+	State            ConfigState       `yaml:"state,omitempty"`
+	SystemContainers []ContainerConfig `yaml:"system_containers,omitempty"`
+	SystemDockerArgs []string          `yaml:"system_docker_args,flow,omitempty"`
+	Modules          []string          `yaml:"modules,omitempty"`
 }
 
 type ConfigState struct {
-	FsType   string `json:"fsType,omitempty"`
-	Dev      string `json:"dev,omitempty"`
-	Required bool   `json:"required,omitempty"`
+	FsType   string `yaml:"fstype"`
+	Dev      string `yaml:"dev"`
+	Required bool   `yaml:"required"`
 }
 
-func (c *Config) Dump() string {
-	content, err := json.MarshalIndent(c, "", "  ")
-	if err == nil {
-		return string(content)
+func (c *Config) ClearReadOnly() {
+	c.SystemContainers = []ContainerConfig{}
+	c.RescueContainer = nil
+}
+
+func (c *Config) Dump() (string, error) {
+	content, err := yaml.Marshal(c)
+	if err != nil {
+		return "", err
 	} else {
-		return err.Error()
+		return string(content), err
 	}
 }
 
@@ -93,11 +98,11 @@ func (c *Config) readArgs() error {
 
 func (c *Config) merge(values map[string]interface{}) error {
 	// Lazy way to assign values to *Config
-	override, err := json.Marshal(values)
+	override, err := yaml.Marshal(values)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(override, c)
+	return yaml.Unmarshal(override, c)
 }
 
 func (c *Config) readCmdline() error {

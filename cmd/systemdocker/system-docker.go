@@ -1,4 +1,4 @@
-package user
+package systemdocker
 
 import (
 	"os"
@@ -6,9 +6,10 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/rancherio/os/config"
 )
 
-func SystemDocker() {
+func Main() {
 	var newEnv []string
 	for _, env := range os.Environ() {
 		if !strings.HasPrefix(env, "DOCKER_HOST=") {
@@ -16,7 +17,7 @@ func SystemDocker() {
 		}
 	}
 
-	newEnv = append(newEnv, "DOCKER_HOST=unix:///var/run/system-docker.sock")
+	newEnv = append(newEnv, "DOCKER_HOST="+config.DOCKER_SYSTEM_HOST)
 
 	os.Args[0] = "/usr/bin/docker"
 	if err := syscall.Exec(os.Args[0], os.Args, newEnv); err != nil {
