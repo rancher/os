@@ -63,23 +63,48 @@ func configGet(c *cli.Context) {
 	}
 
 	parts := strings.Split(arg, ".")
+
+	val := lookupVal(parts, data)
+
+	printYaml := false
+	switch val.(type) {
+	case []interface{}:
+		printYaml = true
+	case map[interface{}]interface{}:
+		printYaml = true
+	}
+
+	if printYaml {
+		bytes, err := yaml.Marshal(val)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(string(bytes))
+	} else {
+		fmt.Println(val)
+	}
+}
+
+func lookupVal(parts []string, data map[interface{}]interface{}) interface{} {
 	for i, part := range parts {
-		if val, ok := data[part]; ok {
-			if i+1 == len(parts) {
-				fmt.Println(val)
-			} else {
-				if newData, ok := val.(map[interface{}]interface{}); ok {
-					data = newData
-				} else {
-					fmt.Println(val)
-					break
-				}
-			}
-		} else {
-			fmt.Println("2")
+		val, ok := data[part]
+		if !ok {
 			break
 		}
+
+		if i+1 == len(parts) {
+			return val
+		}
+
+		newData, ok := val.(map[interface{}]interface{})
+		if !ok {
+			break
+		}
+
+		data = newData
 	}
+
+	return ""
 }
 
 func configSave(c *cli.Context) {
