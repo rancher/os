@@ -12,6 +12,7 @@ import (
 	"github.com/rancherio/os/power"
 	"github.com/rancherio/os/respawn"
 	"github.com/rancherio/os/sysinit"
+	"github.com/rancherio/os/util"
 )
 
 func registerCmd(cmd string, mainFunc func()) {
@@ -41,7 +42,8 @@ func main() {
 	registerCmd("/sbin/halt", power.Halt)
 	registerCmd("/usr/bin/respawn", respawn.Main)
 	registerCmd("/usr/sbin/rancherctl", control.Main)
-
+        registerCmd("/sbin/tlsconf", util.TLSConf)
+	
 	if !reexec.Init() {
 		log.Fatalf("Failed to find an entry point for %s", os.Args[0])
 	}

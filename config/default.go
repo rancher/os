@@ -62,6 +62,7 @@ func NewConfig() *Config {
 					"-v=/init:/sbin/poweroff:ro " +
 					"-v=/init:/sbin/reboot:ro " +
 					"-v=/init:/sbin/halt:ro " +
+					"-v=/init:/sbin/tlsconf:ro " +
 					"-v=/init:/usr/bin/rancherctl:ro " +
 					"--volumes-from=system-state " +
 					"--net=host " +
@@ -69,13 +70,11 @@ func NewConfig() *Config {
 					"console",
 			},
 			{
-				Cmd: []string{
-					"--name", "ntp",
-					"-d",
-					"--privileged",
-					"--net", "host",
+				Cmd: "--name=ntp " +
+					"-d " +
+					"--privileged " +
+					"--net=host " +
 					"ntp",
-				},
 			},
 		},
 		RescueContainer: &ContainerConfig{
