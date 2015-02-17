@@ -41,5 +41,6 @@ else
         zcat ${HD_GZ} > ${HD}
     fi
 
-    kvm -m 1024 -kernel ${KERNEL} -initrd ${INITRD_TEST} -append "$@" -hda ${HD} -serial stdio -netdev user,id=hostnet0 -device virtio-net-pci,romfile=,netdev=hostnet0
+    qemu-system-x86_64 -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -append "x $@"
+
 fi
