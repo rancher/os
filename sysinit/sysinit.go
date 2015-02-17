@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/fsouza/go-dockerclient"
@@ -186,10 +187,11 @@ func sysInit() error {
 	initFuncs := []config.InitFunc{
 		loadImages,
 		runContainers,
-		//func(cfg *config.Config) error {
-		//	syscall.Sync()
-		//	return nil
-		//},
+		func(cfg *config.Config) error {
+			//TODO: not totally sure why we need this.
+			syscall.Sync()
+			return nil
+		},
 		//launchConsole,
 	}
 
