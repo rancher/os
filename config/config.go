@@ -79,7 +79,7 @@ func NewConfig() *Config {
 		ImagesPath:       "/",
 		ImagesPattern:    "images*.tar",
 		StateRequired:    false,
-		StateDev:         "/dev/sda",
+		StateDev:         "/dev/vda",
 		StateDevFSType:   "ext4",
 		SysInit:          "/sbin/init-sys",
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
