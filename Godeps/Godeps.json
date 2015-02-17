@@ -1,11 +1,16 @@
 {
 	"ImportPath": "github.com/rancherio/os",
-	"GoVersion": "go1.3",
+	"GoVersion": "go1.4.1",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
 			"Comment": "v0.6.4-13-g0b189e0",
 			"Rev": "0b189e019aabcec0af8e433b10b3073ad9382b44"
+		},
+		{
+			"ImportPath": "github.com/codegangsta/cli",
+			"Comment": "1.2.0-66-g6086d79",
+			"Rev": "6086d7927ec35315964d9fea46df6c04e6d697c1"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/api",
@@ -122,12 +127,20 @@
 			"Rev": "c54fbb67c1f1e68d7d6f8d2ad7c9360404616a41"
 		},
 		{
+			"ImportPath": "github.com/flynn/go-shlex",
+			"Rev": "70644ac2a65dbf1691ce00c209d185163a14edc6"
+		},
+		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
 			"Rev": "c726ee4dd0cdd42a8dd8397d005698d2e881460d"
 		},
 		{
 			"ImportPath": "github.com/kless/term",
 			"Rev": "d57d9d2d5be197e12d9dee142d855470d83ce62f"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "a1c4bcb6c278a41992e2f4f0f29a44b4146daa5c"
 		}
 	]
 }
