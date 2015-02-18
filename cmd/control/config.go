@@ -21,6 +21,11 @@ func configSubcommands() []cli.Command {
 			Action: configGet,
 		},
 		{
+			Name:   "set",
+			Usage:  "set a value",
+			Action: configSet,
+		},
+		{
 			Name:  "import",
 			Usage: "list values",
 		},
@@ -42,7 +47,7 @@ func configSubcommands() []cli.Command {
 	}
 }
 
-func configGet(c *cli.Context) {
+func getConfigData() (map[interface{}]interface{}, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -54,17 +59,64 @@ func configGet(c *cli.Context) {
 	}
 
 	data := make(map[interface{}]interface{})
-	yaml.Unmarshal([]byte(content), data)
+	err = yaml.Unmarshal([]byte(content), data)
 
-	arg := c.Args().Get(0)
-	if arg == "" {
-		fmt.Println("")
+	return data, err
+}
+
+func configSet(c *cli.Context) {
+	key := c.Args().Get(0)
+	value := c.Args().Get(1)
+	if key == "" {
 		return
 	}
 
-	parts := strings.Split(arg, ".")
+	data, err := getConfigData()
+	getOrSetVal(key, data, value)
 
-	val := lookupVal(parts, data)
+	bytes, err := yaml.Marshal(data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var newConfig config.Config
+	err = yaml.Unmarshal(bytes, &newConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	reboot, err := cfg.Merge(newConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = cfg.Save()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if reboot {
+		fmt.Println("Reboot needed")
+	}
+}
+
+func configGet(c *cli.Context) {
+	arg := c.Args().Get(0)
+	if arg == "" {
+		return
+	}
+
+	data, err := getConfigData()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	val := getOrSetVal(arg, data, nil)
 
 	printYaml := false
 	switch val.(type) {
@@ -85,14 +137,27 @@ func configGet(c *cli.Context) {
 	}
 }
 
-func lookupVal(parts []string, data map[interface{}]interface{}) interface{} {
+func getOrSetVal(args string, data map[interface{}]interface{}, value interface{}) interface{} {
+	parts := strings.Split(args, ".")
+
 	for i, part := range parts {
 		val, ok := data[part]
+		last := i+1 == len(parts)
+
+		if last && value != nil {
+			if s, ok := value.(string); ok {
+				value = config.DummyMarshall(s)
+			}
+
+			data[part] = value
+			return value
+		}
+
 		if !ok {
 			break
 		}
 
-		if i+1 == len(parts) {
+		if last {
 			return val
 		}
 

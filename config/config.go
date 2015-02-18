@@ -26,6 +26,10 @@ const (
 	DEBUG              = false
 )
 
+var (
+	ConfigFile = "/var/lib/rancher/rancher.yml"
+)
+
 type InitFunc func(*Config) error
 
 type ContainerConfig struct {
@@ -40,7 +44,7 @@ type Config struct {
 	//UserContainers   []ContainerConfig `yaml:"userContainser,omitempty"`
 	Debug            bool              `yaml:"debug,omitempty"`
 	Disable          []string          `yaml:"disable,omitempty"`
-	Dns              []string          `yaml:"dns,omitempty"`
+	Dns              []string          `yaml:"dns,flow,omitempty"`
 	Rescue           bool              `yaml:"rescue,omitempty"`
 	RescueContainer  *ContainerConfig  `yaml:"rescue_container,omitempty"`
 	State            ConfigState       `yaml:"state,omitempty"`
@@ -55,6 +59,18 @@ type ConfigState struct {
 	Required bool   `yaml:"required"`
 }
 
+func (c *Config) Merge(newConfig Config) (bool, error) {
+	//Efficient? Nope, but computers are fast
+	newConfig.ClearReadOnly()
+	content, err := newConfig.Dump()
+	if err != nil {
+		return false, err
+	}
+
+	err = yaml.Unmarshal([]byte(content), c)
+	return true, err
+}
+
 func (c *Config) ClearReadOnly() {
 	c.SystemContainers = []ContainerConfig{}
 	c.RescueContainer = nil
@@ -67,6 +83,16 @@ func (c *Config) Dump() (string, error) {
 	} else {
 		return string(content), err
 	}
+}
+
+func (c Config) Save() error {
+	c.ClearReadOnly()
+	content, err := c.Dump()
+	if err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(ConfigFile, []byte(content), 400)
 }
 
 func LoadConfig() (*Config, error) {
@@ -105,6 +131,21 @@ func (c *Config) merge(values map[string]interface{}) error {
 	return yaml.Unmarshal(override, c)
 }
 
+func (c *Config) readFile() error {
+	content, err := ioutil.ReadFile(ConfigFile)
+	if os.IsNotExist(err) {
+		return nil
+	}
+
+	data := make(map[string]interface{})
+	err = yaml.Unmarshal(content, data)
+	if err != nil {
+		return err
+	}
+
+	return c.merge(data)
+}
+
 func (c *Config) readCmdline() error {
 	log.Debug("Reading config cmdline")
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
@@ -122,7 +163,11 @@ func (c *Config) readCmdline() error {
 	return c.merge(cmdLineObj)
 }
 
-func dummyMarshall(value string) interface{} {
+func DummyMarshall(value string) interface{} {
+	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
+		return strings.Split(value[1:len(value)-1], ",")
+	}
+
 	if value == "true" {
 		return true
 	} else if value == "false" {
@@ -160,11 +205,7 @@ outer:
 		keys := strings.Split(kv[0], ".")[1:]
 		for i, key := range keys {
 			if i == len(keys)-1 {
-				if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-					current[key] = strings.Split(value[1:len(value)-1], ",")
-				} else {
-					current[key] = dummyMarshall(value)
-				}
+				current[key] = DummyMarshall(value)
 			} else {
 				if obj, ok := current[key]; ok {
 					if newCurrent, ok := obj.(map[string]interface{}); ok {
@@ -187,6 +228,7 @@ outer:
 
 func (c *Config) Reload() error {
 	return util.ShortCircuit(
+		c.readFile,
 		c.readCmdline,
 		c.readArgs,
 	)
