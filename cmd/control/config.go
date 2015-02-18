@@ -2,7 +2,9 @@ package control
 
 import (
 	"fmt"
+	"io"
 	"io/ioutil"
+	"os"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -26,8 +28,15 @@ func configSubcommands() []cli.Command {
 			Action: configSet,
 		},
 		{
-			Name:  "import",
-			Usage: "list values",
+			Name:   "import",
+			Usage:  "import configuration from standard in or a file",
+			Action: configImport,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input, i",
+					Usage: "File from which to read",
+				},
+			},
 		},
 		{
 			Name:  "export",
@@ -64,6 +73,60 @@ func getConfigData() (map[interface{}]interface{}, error) {
 	return data, err
 }
 
+func configImport(c *cli.Context) {
+	var input io.Reader
+	var err error
+	input = os.Stdin
+
+	inputFile := c.String("input")
+	if inputFile != "" {
+		input, err = os.Open(inputFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	bytes, err := ioutil.ReadAll(input)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = mergeConfig(bytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func mergeConfig(bytes []byte) error {
+	var newConfig config.Config
+
+	err := yaml.Unmarshal(bytes, &newConfig)
+	if err != nil {
+		return err
+	}
+
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+
+	reboot, err := cfg.Merge(newConfig)
+	if err != nil {
+		return err
+	}
+
+	err = cfg.Save()
+	if err != nil {
+		return err
+	}
+
+	if reboot {
+		fmt.Println("Reboot needed")
+	}
+
+	return err
+}
+
 func configSet(c *cli.Context) {
 	key := c.Args().Get(0)
 	value := c.Args().Get(1)
@@ -79,29 +142,9 @@ func configSet(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	var newConfig config.Config
-	err = yaml.Unmarshal(bytes, &newConfig)
+	err = mergeConfig(bytes)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	reboot, err := cfg.Merge(newConfig)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = cfg.Save()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if reboot {
-		fmt.Println("Reboot needed")
 	}
 }
 

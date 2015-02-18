@@ -1,5 +1,6 @@
 FROM base
 VOLUME /home
+VOLUME /opt
 VOLUME /var/lib/docker
 VOLUME /var/run
 CMD ["echo"]

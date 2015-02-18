@@ -19,6 +19,7 @@ func NewConfig() *Config {
 				Cmd: "--name=system-state " +
 					"--net=none " +
 					"--read-only " +
+					"-v=/var/lib/rancher/etc:/var/lib/rancher/etc " +
 					"state",
 			},
 			{
