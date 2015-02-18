@@ -18,7 +18,6 @@ var (
 	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
-
 func TLSConf() {
 	name := "rancher"
 	bits := 2048
@@ -44,7 +43,7 @@ func TLSConf() {
 			fmt.Println("--outdir \t the output directory to save the generate certs or keys")
 			return
 		} else if arg == "--outdir" {
-			if len(vargs) > index + 1 {
+			if len(vargs) > index+1 {
 				outDir = vargs[index+1]
 			} else {
 				fmt.Println("please specify a output directory")
@@ -52,13 +51,13 @@ func TLSConf() {
 		} else if arg == "-g" {
 			generateCaCerts = false
 		} else if arg == "--cakey" {
-			if len(vargs) > index + 1 {
+			if len(vargs) > index+1 {
 				inputCaKey = vargs[index+1]
 			} else {
 				fmt.Println("please specify a input ca-key file path")
 			}
 		} else if arg == "--ca" {
-			if len(vargs) > index + 1 {
+			if len(vargs) > index+1 {
 				inputCaCert = vargs[index+1]
 			} else {
 				fmt.Println("please specify a input ca file path")
@@ -108,7 +107,6 @@ func TLSConf() {
 	}
 
 }
-
 
 func mountProc() error {
 	if _, err := os.Stat("/proc/self/mountinfo"); os.IsNotExist(err) {
