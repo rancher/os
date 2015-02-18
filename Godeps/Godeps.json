@@ -127,6 +127,11 @@
 			"Rev": "c54fbb67c1f1e68d7d6f8d2ad7c9360404616a41"
 		},
 		{
+			"ImportPath": "github.com/docker/machine/utils",
+			"Comment": "v0.1.0-rc3-18-gd674e87",
+			"Rev": "d674e87813ffc10048f55d884396be1af327705e"
+		},
+		{
 			"ImportPath": "github.com/flynn/go-shlex",
 			"Rev": "70644ac2a65dbf1691ce00c209d185163a14edc6"
 		},
