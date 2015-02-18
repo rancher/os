@@ -14,6 +14,9 @@ func NewConfig() *Config {
 		},
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
 		Modules:          []string{},
+		Userdocker: UserDockerInfo{
+				UseTLS: true,
+			},
 		SystemContainers: []ContainerConfig{
 			{
 				Cmd: "--name=system-state " +
@@ -47,6 +50,8 @@ func NewConfig() *Config {
 					"--privileged " +
 					"-v=/lib/modules:/lib/modules:ro " +
 					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
+					"-v=/init:/usr/bin/tlsconf:ro " +
+					"-v=/init:/usr/bin/rancherctl:ro " +
 					"--volumes-from=system-state " +
 					"userdocker",
 			},
