@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package control
+package cloudinit
 
 import (
 	"flag"
@@ -118,7 +118,7 @@ var (
 	}
 )
 
-func CloudInit() {
+func Main() {
 	failure := false
 
 	flag.Parse()
