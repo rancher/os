@@ -86,6 +86,7 @@ func NewConfig() *Config {
 					"--pid=host " +
 					"--net=host " +
 					"--privileged " +
+					"--volumes-from=console-volumes " +
 					"--volumes-from=system-volumes " +
 					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
 					"-v=/init:/usr/bin/tlsconf:ro " +
