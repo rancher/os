@@ -9,10 +9,10 @@ import (
 	"github.com/rancherio/os/cmd/control"
 	"github.com/rancherio/os/cmd/power"
 	"github.com/rancherio/os/cmd/respawn"
+	"github.com/rancherio/os/cmd/sysinit"
 	"github.com/rancherio/os/cmd/systemdocker"
 	"github.com/rancherio/os/cmd/tlsconf"
 	osInit "github.com/rancherio/os/init"
-	"github.com/rancherio/os/sysinit"
 )
 
 func registerCmd(cmd string, mainFunc func()) {
@@ -35,7 +35,7 @@ func registerCmd(cmd string, mainFunc func()) {
 
 func main() {
 	registerCmd("/init", osInit.MainInit)
-	registerCmd(osInit.SYSINIT, sysinit.SysInit)
+	registerCmd(osInit.SYSINIT, sysinit.Main)
 	registerCmd("/usr/bin/system-docker", systemdocker.Main)
 	registerCmd("/sbin/poweroff", power.PowerOff)
 	registerCmd("/sbin/reboot", power.Reboot)

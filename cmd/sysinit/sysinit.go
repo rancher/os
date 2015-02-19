@@ -14,7 +14,7 @@ import (
 	"github.com/rancherio/os/util"
 )
 
-func SysInit() {
+func Main() {
 	if err := sysInit(); err != nil {
 		log.Fatal(err)
 	}
