@@ -27,21 +27,18 @@ const (
 )
 
 var (
-	ConfigFile = "/var/lib/rancher/rancher.yml"
+	ConfigFile = "/var/lib/rancher/conf/rancher.yml"
 )
 
 type InitFunc func(*Config) error
 
 type ContainerConfig struct {
-	Id  string `yaml:"id,omitempty"`
-	Cmd string `yaml:"run,omitempty"`
-	//Config     *runconfig.Config     `yaml:"-"`
-	//HostConfig *runconfig.HostConfig `yaml:"-"`
+	Id             string `yaml:"id,omitempty"`
+	Cmd            string `yaml:"run,omitempty"`
+	MigrateVolumes bool   `yaml:"migrate_volumes,omitempty"`
 }
 
 type Config struct {
-	//BootstrapContainers []ContainerConfig `yaml:"bootstrapContainers,omitempty"`
-	//UserContainers   []ContainerConfig `yaml:"userContainser,omitempty"`
 	Debug            bool              `yaml:"debug,omitempty"`
 	Disable          []string          `yaml:"disable,omitempty"`
 	Dns              []string          `yaml:"dns,flow,omitempty"`

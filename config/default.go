@@ -12,14 +12,14 @@ func NewConfig() *Config {
 			Dev:      "LABEL=RANCHER_STATE",
 			FsType:   "auto",
 		},
-		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none"},
+		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none", "--restart=false"},
 		Modules:          []string{},
 		SystemContainers: []ContainerConfig{
 			{
 				Cmd: "--name=system-state " +
 					"--net=none " +
 					"--read-only " +
-					"-v=/var/lib/rancher/etc:/var/lib/rancher/etc " +
+					"-v=/var/lib/rancher/conf:/var/lib/rancher/conf " +
 					"state",
 			},
 			{
@@ -72,6 +72,7 @@ func NewConfig() *Config {
 			},
 			{
 				Cmd: "--name=ntp " +
+					"--rm " +
 					"-d " +
 					"--privileged " +
 					"--net=host " +
