@@ -26,7 +26,7 @@ func TLSConf() {
 
 	caCertPath := "ca.pem"
 	caKeyPath := "ca-key.pem"
-	outDir := "/var/run/"
+	outDir := "/etc/docker/tls/"
 	generateCaCerts := true
 
 	inputCaKey := ""
