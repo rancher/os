@@ -25,7 +25,7 @@ generate_images()
         CID=$(docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images)
         docker logs -f ${CID} &
         trap "docker rm -f ${CID}" exit
-        docker wait $CID
+        [ "$(docker wait $CID)" == 0 ]
         DOCKER_BASE=$(docker commit $CID)
 
         echo ${DOCKER_BASE} > ${BUILD}/${IMAGE_ID}
