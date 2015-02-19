@@ -17,6 +17,7 @@ func NewConfig() *Config {
 		Userdocker: UserDockerInfo{
 				UseTLS: true,
 			},
+		CloudConfig: []string{},
 		SystemContainers: []ContainerConfig{
 			{
 				Cmd: "--name=system-state " +
@@ -33,6 +34,13 @@ func NewConfig() *Config {
 					"-v=/dev:/host/dev " +
 					"-v=/lib/modules:/lib/modules:ro " +
 					"udev",
+			},
+			{
+				Cmd: "--name=cloudconfig " +
+					"--net=host " +
+					"-v=/init:/usr/bin/rancherctl:ro " +
+					"-v=/init:/usr/bin/cloudinit:ro " +
+					"cloudconfig", 
 			},
 			{
 				Cmd: "--name=network " +
@@ -65,6 +73,7 @@ func NewConfig() *Config {
 					"-v=/init:/usr/bin/system-docker:ro " +
 					"-v=/init:/usr/bin/respawn:ro " +
 					"-v=/var/run/docker.sock:/var/run/system-docker.sock:ro " +
+					"-v=/init:/usr/bin/cloudinit:ro " +
 					"-v=/init:/sbin/poweroff:ro " +
 					"-v=/init:/sbin/reboot:ro " +
 					"-v=/init:/sbin/halt:ro " +

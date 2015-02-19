@@ -43,6 +43,7 @@ func main() {
 	registerCmd("/usr/bin/respawn", respawn.Main)
 	registerCmd("/usr/sbin/rancherctl", control.Main)
 	registerCmd("/usr/bin/tlsconf", util.TLSConf)
+	registerCmd("/usr/bin/cloudinit", control.CloudInit)
 
 	if !reexec.Init() {
 		log.Fatalf("Failed to find an entry point for %s", os.Args[0])
