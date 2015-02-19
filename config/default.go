@@ -15,8 +15,8 @@ func NewConfig() *Config {
 		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none", "--restart=false", "-H", DOCKER_SYSTEM_HOST},
 		Modules:          []string{},
 		Userdocker: UserDockerInfo{
-				UseTLS: true,
-			},
+			UseTLS: true,
+		},
 		CloudConfig: []string{},
 		SystemContainers: []ContainerConfig{
 			{
@@ -32,7 +32,6 @@ func NewConfig() *Config {
 				Cmd: "--name=console-volumes " +
 					"--net=none " +
 					"--read-only " +
-
 					"-v=/init:/sbin/halt:ro " +
 					"-v=/init:/sbin/poweroff:ro " +
 					"-v=/init:/sbin/reboot:ro " +
@@ -61,7 +60,7 @@ func NewConfig() *Config {
 					"--net=host " +
 					"-v=/init:/usr/bin/rancherctl:ro " +
 					"-v=/init:/usr/bin/cloudinit:ro " +
-					"cloudconfig", 
+					"cloudconfig",
 			},
 			{
 				Cmd: "--name=network " +

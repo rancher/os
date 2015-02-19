@@ -67,8 +67,8 @@ var (
 		sshKeyName     string
 		oem            string
 		validate       bool
-		preInit	       bool
-		outDir	       string
+		preInit        bool
+		outDir         string
 	}{}
 )
 
@@ -239,12 +239,12 @@ func CloudInit() {
 		}
 
 		outFile := outDir + "cloud-config"
-		
+
 		if err := ioutil.WriteFile(outFile, fileData, 444); err != nil {
 			fmt.Println("Error while writing file ", err.Error())
 			os.Exit(1)
 		}
-		
+
 		os.Exit(0)
 	}
 
@@ -403,4 +403,3 @@ func runScript(script config.Script, env *initialize.Environment) error {
 	}
 	return err
 }
-

@@ -46,17 +46,17 @@ type Config struct {
 	RescueContainer  *ContainerConfig  `yaml:"rescue_container,omitempty"`
 	State            ConfigState       `yaml:"state,omitempty"`
 	Userdocker       UserDockerInfo    `yaml:"userdocker,omitempty"`
-	CloudConfig	 []string	   `yaml:"cloud_config,omitempty"`
+	CloudConfig      []string          `yaml:"cloud_config,omitempty"`
 	SystemContainers []ContainerConfig `yaml:"system_containers,omitempty"`
 	SystemDockerArgs []string          `yaml:"system_docker_args,flow,omitempty"`
 	Modules          []string          `yaml:"modules,omitempty"`
 }
 
 type UserDockerInfo struct {
-	UseTLS 		bool 	`yaml:"use_tls,omitempty"`
-	TLSServerCert 	string	`yaml:"tls_server_cert"`
-	TLSServerKey 	string	`yaml:"tls_server_key"`
-	TLSCACert 	string	`yaml:"tls_ca_cert"`
+	UseTLS        bool   `yaml:"use_tls,omitempty"`
+	TLSServerCert string `yaml:"tls_server_cert"`
+	TLSServerKey  string `yaml:"tls_server_key"`
+	TLSCACert     string `yaml:"tls_ca_cert"`
 }
 
 type ConfigState struct {
