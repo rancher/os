@@ -1,3 +1,3 @@
 #!/bin/bash
 
-ntpd -d
+exec ntpd -d
