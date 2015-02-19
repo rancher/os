@@ -8,11 +8,11 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancherio/os/cmd/control"
 	"github.com/rancherio/os/cmd/systemdocker"
+	"github.com/rancherio/os/cmd/tlsconf"
 	osInit "github.com/rancherio/os/init"
 	"github.com/rancherio/os/power"
 	"github.com/rancherio/os/respawn"
 	"github.com/rancherio/os/sysinit"
-	"github.com/rancherio/os/util"
 )
 
 func registerCmd(cmd string, mainFunc func()) {
@@ -42,7 +42,7 @@ func main() {
 	registerCmd("/sbin/halt", power.Halt)
 	registerCmd("/usr/bin/respawn", respawn.Main)
 	registerCmd("/usr/sbin/rancherctl", control.Main)
-	registerCmd("/usr/bin/tlsconf", util.TLSConf)
+	registerCmd("/usr/bin/tlsconf", tlsconf.Main)
 	registerCmd("/usr/bin/cloudinit", control.CloudInit)
 
 	if !reexec.Init() {

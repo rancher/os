@@ -89,6 +89,7 @@ func NewConfig() *Config {
 					"--volumes-from=system-volumes " +
 					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
 					"-v=/init:/usr/bin/tlsconf:ro " +
+					"-v=/init:/usr/sbin/rancherctl:ro " +
 					"-v=/var/lib/rancher/state/docker:/var/lib/docker " +
 					"userdocker",
 			},
