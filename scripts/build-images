@@ -13,6 +13,7 @@ echo Extracting ${ARTIFACTS}/os-base.tar.xz
 tar xJf ${ARTIFACTS}/os-base.tar.xz -C ${BUILD}
 
 cp /etc/ssl/certs/ca-certificates.crt ${ARTIFACTS}/ca.crt
+cp /etc/ssl/certs/ca-certificates.crt ${BUILD}/initrd/ca.crt
 cp ${BUILD}/dist/rootfs.tar ${ARTIFACTS}
 
 rm -rf ${BUILD}/initrd/lib
