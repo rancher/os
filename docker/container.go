@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -21,6 +22,7 @@ import (
 const (
 	LABEL = "label"
 	HASH  = "io.rancher.os.hash"
+	ID    = "io.rancher.os.id"
 )
 
 type Container struct {
@@ -31,9 +33,15 @@ type Container struct {
 	Config       *runconfig.Config
 	HostConfig   *runconfig.HostConfig
 	dockerHost   string
-	container    *dockerClient.Container
+	Container    *dockerClient.Container
 	containerCfg *config.ContainerConfig
 }
+
+type ByCreated []dockerClient.APIContainers
+
+func (c ByCreated) Len() int           { return len(c) }
+func (c ByCreated) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
+func (c ByCreated) Less(i, j int) bool { return c[j].Created < c[i].Created }
 
 func getHash(containerCfg *config.ContainerConfig) (string, error) {
 	hash := sha1.New()
@@ -67,10 +75,30 @@ func (c *Container) returnErr(err error) *Container {
 	return c
 }
 
+func getByLabel(client *dockerClient.Client, key, value string) (*dockerClient.APIContainers, error) {
+	containers, err := client.ListContainers(dockerClient.ListContainersOptions{
+		All: true,
+		Filters: map[string][]string{
+			LABEL: []string{fmt.Sprintf("%s=%s", key, value)},
+		},
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(containers) == 0 {
+		return nil, nil
+	}
+
+	sort.Sort(ByCreated(containers))
+	return &containers[0], nil
+}
+
 func (c *Container) Lookup() *Container {
 	c.Parse()
 
-	if c.Err != nil || (c.container != nil && c.container.HostConfig != nil) {
+	if c.Err != nil || (c.Container != nil && c.Container.HostConfig != nil) {
 		return c
 	}
 
@@ -98,20 +126,33 @@ func (c *Container) Lookup() *Container {
 		return c
 	}
 
-	c.container, c.Err = client.InspectContainer(containers[0].ID)
+	c.Container, c.Err = inspect(client, containers[0].ID)
 
 	return c
 }
 
+func inspect(client *dockerClient.Client, id string) (*dockerClient.Container, error) {
+	c, err := client.InspectContainer(id)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.HasPrefix(c.Name, "/") {
+		c.Name = c.Name[1:]
+	}
+
+	return c, err
+}
+
 func (c *Container) Exists() bool {
 	c.Lookup()
-	return c.container != nil
+	return c.Container != nil
 }
 
 func (c *Container) Reset() *Container {
 	c.Config = nil
 	c.HostConfig = nil
-	c.container = nil
+	c.Container = nil
 	c.Err = nil
 
 	return c
@@ -200,7 +241,7 @@ func (c *Container) Delete() *Container {
 	}
 
 	err = client.RemoveContainer(dockerClient.RemoveContainerOptions{
-		ID:    c.container.ID,
+		ID:    c.Container.ID,
 		Force: true,
 	})
 	if err != nil {
@@ -210,25 +251,110 @@ func (c *Container) Delete() *Container {
 	return c
 }
 
-func renameOld(client *dockerClient.Client, opts *dockerClient.CreateContainerOptions) error {
+func (c *Container) renameCurrent(client *dockerClient.Client) error {
+	if c.Name == "" {
+		return nil
+	}
+
+	if c.Name == c.Container.Name {
+		return nil
+	}
+
+	err := client.RenameContainer(c.Container.ID, c.Name)
+	if err != nil {
+		return err
+	}
+
+	c.Container, err = inspect(client, c.Container.ID)
+	return err
+}
+
+func (c *Container) renameOld(client *dockerClient.Client, opts *dockerClient.CreateContainerOptions) error {
 	if len(opts.Name) == 0 {
 		return nil
 	}
 
-	existing, err := client.InspectContainer(opts.Name)
+	existing, err := inspect(client, opts.Name)
 	if _, ok := err.(dockerClient.NoSuchContainer); ok {
 		return nil
 	}
+
 	if err != nil {
 		return nil
 	}
 
+	if c.Container != nil && existing.ID == c.Container.ID {
+		return nil
+	}
+
 	if label, ok := existing.Config.Labels[HASH]; ok {
-		return client.RenameContainer(existing.ID, fmt.Sprintf("%s-%s", existing.Name, label))
+		newName := fmt.Sprintf("%s-%s", existing.Name, label)
+
+		if existing.State.Running {
+			err := client.StopContainer(existing.ID, 2)
+			if err != nil {
+				return err
+			}
+
+			_, err = client.WaitContainer(existing.ID)
+			if err != nil {
+				return err
+			}
+		}
+
+		log.Debugf("Renaming %s to %s", existing.Name, newName)
+		return client.RenameContainer(existing.ID, newName)
 	} else {
 		//TODO: do something with containers with no hash
 		return errors.New("Existing container doesn't have a hash")
 	}
+}
+
+func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.CreateContainerOptions, error) {
+	bytes, err := json.Marshal(c)
+	if err != nil {
+		return nil, err
+	}
+
+	var opts dockerClient.CreateContainerOptions
+
+	err = json.Unmarshal(bytes, &opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if opts.Config.Labels == nil {
+		opts.Config.Labels = make(map[string]string)
+	}
+
+	hash, err := getHash(c.containerCfg)
+	if err != nil {
+		return nil, err
+	}
+
+	opts.Config.Labels[HASH] = hash
+	opts.Config.Labels[ID] = c.containerCfg.Id
+
+	return &opts, nil
+}
+
+func appendVolumesFrom(client *dockerClient.Client, containerCfg *config.ContainerConfig, opts *dockerClient.CreateContainerOptions) error {
+	if !containerCfg.MigrateVolumes {
+		return nil
+	}
+
+	container, err := getByLabel(client, ID, containerCfg.Id)
+	if err != nil || container == nil {
+		return err
+	}
+
+	if opts.HostConfig.VolumesFrom == nil {
+		opts.HostConfig.VolumesFrom = []string{container.ID}
+	} else {
+		opts.HostConfig.VolumesFrom = append(opts.HostConfig.VolumesFrom, container.ID)
+	}
+
+	return nil
 }
 
 func (c *Container) start(wait bool) *Container {
@@ -239,63 +365,74 @@ func (c *Container) start(wait bool) *Container {
 		return c
 	}
 
-	bytes, err := json.Marshal(c)
-	if err != nil {
-		return c.returnErr(err)
-	}
-
 	client, err := NewClient(c.dockerHost)
 	if err != nil {
 		return c.returnErr(err)
 	}
 
-	var opts dockerClient.CreateContainerOptions
-	container := c.container
+	container := c.Container
 	created := false
 
-	if !c.Exists() {
-		c.Err = json.Unmarshal(bytes, &opts)
+	opts, err := c.getCreateOpts(client)
+	if err != nil {
+		return c.returnErr(err)
+	}
+
+	if c.Exists() && c.remove {
+		log.Debugf("Deleting container %s", c.Container.ID)
+		c.Delete().Reset().Lookup()
+
 		if c.Err != nil {
 			return c
 		}
+	}
 
-		if opts.Config.Labels == nil {
-			opts.Config.Labels = make(map[string]string)
-		}
-
-		hash, err := getHash(c.containerCfg)
+	if !c.Exists() {
+		err = c.renameOld(client, opts)
 		if err != nil {
 			return c.returnErr(err)
 		}
 
-		opts.Config.Labels[HASH] = hash
-
-		err = renameOld(client, &opts)
+		err := appendVolumesFrom(client, c.containerCfg, opts)
 		if err != nil {
 			return c.returnErr(err)
 		}
 
-		container, err = client.CreateContainer(opts)
+		container, err = client.CreateContainer(*opts)
 		created = true
 		if err != nil {
 			return c.returnErr(err)
 		}
 	}
 
-	c.container = container
+	c.Container = container
 
-	hostConfig := container.HostConfig
+	hostConfig := c.Container.HostConfig
 	if created {
 		hostConfig = opts.HostConfig
 	}
 
-	err = client.StartContainer(container.ID, hostConfig)
-	if err != nil {
-		return c.returnErr(err)
+	if !c.Container.State.Running {
+		if !created {
+			err = c.renameOld(client, opts)
+			if err != nil {
+				return c.returnErr(err)
+			}
+		}
+
+		err = c.renameCurrent(client)
+		if err != nil {
+			return c.returnErr(err)
+		}
+
+		err = client.StartContainer(c.Container.ID, hostConfig)
+		if err != nil {
+			return c.returnErr(err)
+		}
 	}
 
 	if !c.detach && wait {
-		_, c.Err = client.WaitContainer(container.ID)
+		_, c.Err = client.WaitContainer(c.Container.ID)
 		return c
 	}
 
