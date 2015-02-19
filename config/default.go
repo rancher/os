@@ -105,6 +105,13 @@ func NewConfig() *Config {
 					"--pid=host " +
 					"console",
 			},
+			{
+				Cmd: "--name=syslog " +
+				     	"-d " +
+				     	"--privileged " +
+				    	"--net=host " +
+					"syslog",
+			},
 		},
 		RescueContainer: &ContainerConfig{
 			Cmd: "--name=rescue " +
