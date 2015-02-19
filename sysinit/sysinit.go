@@ -83,7 +83,7 @@ func loadImages(cfg *config.Config) error {
 		return err
 	}
 
-	client, err := docker.NewDefaultClient()
+	client, err := docker.NewSystemClient()
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func runContainers(cfg *config.Config) error {
 	}
 
 	for _, containerConfig := range containerConfigs {
-		container := docker.NewContainer(config.DOCKER_HOST, &containerConfig)
+		container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &containerConfig)
 		container.Parse()
 
 		if util.Contains(cfg.Disable, containerConfig.Id) {

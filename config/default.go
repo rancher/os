@@ -12,14 +12,33 @@ func NewConfig() *Config {
 			Dev:      "LABEL=RANCHER_STATE",
 			FsType:   "auto",
 		},
-		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none", "--restart=false"},
+		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none", "--restart=false", "-H", DOCKER_SYSTEM_HOST},
 		Modules:          []string{},
 		SystemContainers: []ContainerConfig{
 			{
-				Cmd: "--name=system-state " +
+				Cmd: "--name=system-volumes " +
 					"--net=none " +
 					"--read-only " +
 					"-v=/var/lib/rancher/conf:/var/lib/rancher/conf " +
+					"-v=/lib/modules:/lib/modules:ro " +
+					"-v=/var/run:/var/run " +
+					"state",
+			},
+			{
+				Cmd: "--name=console-volumes " +
+					"--net=none " +
+					"--read-only " +
+					"-v=/init:/sbin/halt:ro " +
+					"-v=/init:/sbin/poweroff:ro " +
+					"-v=/init:/sbin/reboot:ro " +
+					"-v=/init:/sbin/tlsconf:ro " +
+					"-v=/init:/usr/bin/rancherctl:ro " +
+					"-v=/init:/usr/bin/respawn:ro " +
+					"-v=/init:/usr/bin/system-docker:ro " +
+					"-v=/lib/modules:/lib/modules:ro " +
+					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
+					"-v=/var/lib/rancher/state/home:/home " +
+					"-v=/var/lib/rancher/state/opt:/opt " +
 					"state",
 			},
 			{
@@ -39,38 +58,6 @@ func NewConfig() *Config {
 					"network",
 			},
 			{
-				Cmd: "--name=userdocker " +
-					"-d " +
-					"--restart=always " +
-					"--pid=host " +
-					"--net=host " +
-					"--privileged " +
-					"-v=/lib/modules:/lib/modules:ro " +
-					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
-					"--volumes-from=system-state " +
-					"userdocker",
-			},
-			{
-				Cmd: "--name=console " +
-					"-d " +
-					"--rm " +
-					"--privileged " +
-					"-v=/lib/modules:/lib/modules:ro " +
-					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
-					"-v=/init:/usr/bin/system-docker:ro " +
-					"-v=/init:/usr/bin/respawn:ro " +
-					"-v=/var/run/docker.sock:/var/run/system-docker.sock:ro " +
-					"-v=/init:/sbin/poweroff:ro " +
-					"-v=/init:/sbin/reboot:ro " +
-					"-v=/init:/sbin/halt:ro " +
-					"-v=/init:/sbin/tlsconf:ro " +
-					"-v=/init:/usr/bin/rancherctl:ro " +
-					"--volumes-from=system-state " +
-					"--net=host " +
-					"--pid=host " +
-					"console",
-			},
-			{
 				Cmd: "--name=ntp " +
 					"--rm " +
 					"-d " +
@@ -78,17 +65,41 @@ func NewConfig() *Config {
 					"--net=host " +
 					"ntp",
 			},
+			{
+				Cmd: "--name=userdocker " +
+					"-d " +
+					"--rm " +
+					"--restart=always " +
+					"--ipc=host " +
+					"--pid=host " +
+					"--net=host " +
+					"--privileged " +
+					"--volumes-from=system-volumes " +
+					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
+					"-v=/var/lib/rancher/state/docker:/var/lib/docker " +
+					"userdocker",
+			},
+			{
+				Cmd: "--name=console " +
+					"-d " +
+					"--rm " +
+					"--privileged " +
+					"--volumes-from=console-volumes " +
+					"--volumes-from=system-volumes " +
+					"--ipc=host " +
+					"--net=host " +
+					"--pid=host " +
+					"console",
+			},
 		},
 		RescueContainer: &ContainerConfig{
 			Cmd: "--name=rescue " +
 				"-d " +
 				"--rm " +
 				"--privileged " +
-				"-v=/lib/modules:/lib/modules:ro " +
-				"-v=/usr/bin/docker:/usr/bin/docker:ro " +
-				"-v=/init:/usr/bin/system-docker:ro " +
-				"-v=/init:/usr/bin/respawn:ro " +
-				"-v=/var/run/docker.sock:/var/run/system-docker.sock:ro " +
+				"--volumes-from=console-volumes " +
+				"--volumes-from=system-volumes " +
+				"--ipc=host " +
 				"--net=host " +
 				"--pid=host " +
 				"rescue",

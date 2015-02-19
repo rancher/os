@@ -14,8 +14,9 @@ import (
 )
 
 const (
-	STATE  string = "/var"
-	DOCKER string = "/usr/bin/docker"
+	STATE   string = "/var"
+	DOCKER  string = "/usr/bin/docker"
+	SYSINIT string = "/sbin/rancher-sysinit"
 )
 
 var (
@@ -23,37 +24,37 @@ var (
 		"/etc/ssl/certs",
 		"/sbin",
 		"/usr/bin",
-		"/var",
 	}
 	mounts [][]string = [][]string{
+		[]string{"devtmpfs", "/dev", "devtmpfs", ""},
+		[]string{"none", "/dev/pts", "devpts", ""},
 		[]string{"none", "/etc/docker", "tmpfs", ""},
 		[]string{"none", "/proc", "proc", ""},
-		[]string{"devtmpfs", "/dev", "devtmpfs", ""},
+		[]string{"none", "/run", "tmpfs", ""},
 		[]string{"none", "/sys", "sysfs", ""},
 		[]string{"none", "/sys/fs/cgroup", "tmpfs", ""},
-		[]string{"none", "/dev/pts", "devpts", ""},
-		[]string{"none", "/run", "tmpfs", ""},
+	}
+	postMounts [][]string = [][]string{
+		[]string{"none", "/var/run", "tmpfs", ""},
 	}
 	cgroups []string = []string{
-		"perf_event",
-		"net_cls",
-		"freezer",
-		"devices",
 		"blkio",
-		"memory",
-		"cpuacct",
 		"cpu",
+		"cpuacct",
 		"cpuset",
+		"devices",
+		"freezer",
+		"memory",
+		"net_cls",
+		"perf_event",
 	}
 	// Notice this map is the reverse order of a "ln -s x y" command
 	// so map[y] = x
 	symlinks map[string]string = map[string]string{
 		"/etc/ssl/certs/ca-certificates.crt": "/ca.crt",
-		"/sbin/init-sys":                     "/init",
-		"/sbin/init-user":                    "/init",
 		"/sbin/modprobe":                     "/busybox",
-		"/var/run":                           "/run",
 		DOCKER:                               "/docker",
+		SYSINIT:                              "/init",
 	}
 )
 
@@ -177,7 +178,7 @@ func loadModules(cfg *config.Config) error {
 }
 
 func sysInit(cfg *config.Config) error {
-	args := append([]string{"/sbin/init-sys"}, os.Args[1:]...)
+	args := append([]string{SYSINIT}, os.Args[1:]...)
 
 	var cmd *exec.Cmd
 	if util.IsRunningInTty() {
@@ -275,6 +276,9 @@ func RunInit() error {
 		extractModules,
 		loadModules,
 		mountState,
+		func(cfg *config.Config) error {
+			return createMounts(postMounts...)
+		},
 		func(cfg *config.Config) error {
 			return cfg.Reload()
 		},

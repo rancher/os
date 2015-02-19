@@ -35,7 +35,7 @@ func registerCmd(cmd string, mainFunc func()) {
 
 func main() {
 	registerCmd("/init", osInit.MainInit)
-	registerCmd("/sbin/init-sys", sysinit.SysInit)
+	registerCmd(osInit.SYSINIT, sysinit.SysInit)
 	registerCmd("/usr/bin/system-docker", systemdocker.Main)
 	registerCmd("/sbin/poweroff", power.PowerOff)
 	registerCmd("/sbin/reboot", power.Reboot)
