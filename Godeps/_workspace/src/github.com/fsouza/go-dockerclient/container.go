@@ -226,15 +226,12 @@ type Container struct {
 }
 
 // See  for more details.
-func (c *Client) RenameContainer(id string, name string) error {
-	qs := struct {
-		new_name string
+func (c *Client) RenameContainer(id string, newName string) error {
+	_, _, err := c.do("POST", fmt.Sprintf("/containers/"+id+"/rename?%s", queryString(struct {
+		Name string `json:"name,omitempty"`
 	}{
-		new_name: name,
-	}
-
-	_, _, err := c.do("POST", fmt.Sprintf("/containers/"+id+"/rename?%s",
-		queryString(qs)), nil)
+		Name: newName,
+	})), nil)
 
 	return err
 }

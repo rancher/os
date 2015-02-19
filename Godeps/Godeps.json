@@ -137,7 +137,7 @@
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "c726ee4dd0cdd42a8dd8397d005698d2e881460d"
+			"Rev": "d7ce918e02502d8f1b539703ef308977364385c6"
 		},
 		{
 			"ImportPath": "github.com/kless/term",
