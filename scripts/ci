@@ -4,7 +4,7 @@ set -e
 cd $(dirname $0)/..
 
 export DOCKER_IMAGE=${DOCKER_IMAGE:=rancher-os-build}
-export DOCKER_BASE=rancher/docker-dind-base:latest
+export DOCKER_BASE=rancher/dind:v0.1.0
 
 source scripts/build-common
 
@@ -12,6 +12,11 @@ DOCKER_FILE=$(pwd)/.dockerfile
 
 generate_images()
 {
+    if [ "$RUN_EXEC" = "true" ]; then
+        ./scripts/build-images
+        return
+    fi
+
     IMAGE_ID=$(docker images --no-trunc -q ${DOCKER_IMAGE})
 
     if [ -e ${BUILD}/${IMAGE_ID} ]; then
@@ -45,5 +50,5 @@ for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|dist|.gi
     fi
 done
 run --assets "${ARGS}" ./scripts/build
-run --assets ./scripts/install ./scripts/package
+run --assets ./scripts/install ./scripts/package "$@"
 finish

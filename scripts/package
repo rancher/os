@@ -10,7 +10,12 @@ cp scripts/dockerimages/scripts/os-dockerfile ${BUILD}/initrd/Dockerfile
 
 cd ${BUILD}/initrd
 
-find | cpio -H newc -o | lzma -c > ${DIST}/artifacts/initrd
+if [ "--dev" = "$1" ]; then
+    find | cpio -H newc -o > ${DIST}/artifacts/initrd
+    cp ${DIST}/artifacts/initrd ${DIST}/artifacts/initrd.none
+else
+    find | cpio -H newc -o | lzma -c > ${DIST}/artifacts/initrd
+fi
 
 CD=${BUILD}/cd
 

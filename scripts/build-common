@@ -73,6 +73,9 @@ run()
                     content="$content\nCOPY $1 /source/"
                 fi
                 ;;
+            *)
+                break
+                ;;
         esac
 
         shift 1
@@ -84,16 +87,20 @@ run()
     fi
     if [ -n "$1" ]; then
         echo -e "\nCOPY $1 /source/$1" >> ${DOCKER_FILE}
-        echo -e "RUN /source/$1" >> ${DOCKER_FILE}
+        echo -e "RUN /source/"$@"" >> ${DOCKER_FILE}
     fi
 
     if [ "$RUN_EXEC" = "true" ]; then
-        $1
+        "$@"
     fi
 }
 
 finish()
 {
+    if [ "$RUN_EXEC" = "true" ]; then
+        return
+    fi
+
     local cmd="docker build -t ${DOCKER_IMAGE} -f ${DOCKER_FILE} ."
     echo Running $cmd
     echo Pwd $(pwd)

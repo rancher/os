@@ -1,3 +1,23 @@
 FROM scratch
-ADD build/dist/rootfs.tar /
+ADD assets/rootfs.tar /
+# Cleanup Buildroot
+RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
+    sed -i '/^root/s!/bin/sh!/bin/bash!' /etc/passwd && \
+    echo -e 'RancherOS\n' > /etc/issue && \
+    rm /run \
+       /linuxrc \
+       /etc/os-release \
+       /var/cache \
+       /var/lock \
+       /var/log \
+       /var/run \
+       /var/spool \
+       /var/lib/misc && \
+    mkdir -p \
+       /run \
+       /var/cache \
+       /var/lock \
+       /var/log \
+       /var/run \
+       /var/spool
 CMD ["/bin/sh"]

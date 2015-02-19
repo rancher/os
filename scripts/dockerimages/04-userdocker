@@ -1,4 +1,4 @@
 FROM base
 COPY scripts/dockerimages/scripts/docker.sh /
-COPY build/initrd/ca.crt /etc/ssl/certs/ca-certificates.crt
+COPY assets/ca.crt /etc/ssl/certs/ca-certificates.crt
 CMD ["/docker.sh"]

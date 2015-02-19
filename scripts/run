@@ -10,6 +10,7 @@ BASE=$(pwd)
 
 KERNEL=${BASE}/dist/artifacts/vmlinuz
 INITRD=${BASE}/dist/artifacts/initrd
+NO_COMPRESS_INITRD=${INITRD}.none
 HD=${BASE}/build/empty-hd.img
 HD_GZ=${ARTIFACTS}/empty-hd.img.gz
 INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
@@ -23,7 +24,11 @@ fi
 if [ ! -d ${INITRD_TMP} ]; then
     mkdir -p ${INITRD_TMP}
     pushd ${INITRD_TMP}
-    lzma -dc ${INITRD} | sudo cpio -idmv
+    if [ -e ${NO_COMPRESS_INITRD} ]; then
+        cat ${NO_COMPRESS_INITRD} | sudo cpio -idmv
+    else
+        xz -dc ${INITRD} | sudo cpio -idmv
+    fi
     rm -f init
     popd
 fi
@@ -41,6 +46,6 @@ else
         zcat ${HD_GZ} > ${HD}
     fi
 
-    qemu-system-x86_64 -serial stdio -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -append "console=ttyS0 $@"
+    qemu-system-x86_64 -serial stdio -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -append "x $@" ${QEMU_ARGS}
 
 fi

@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+VERSION=v0.0.1
+
 cd $(dirname $0)/..
 
 source scripts/build-common
@@ -10,7 +12,8 @@ mkdir -p ${BUILD}/initrd ${DIST}/artifacts
 echo Extracting ${ARTIFACTS}/os-base.tar.xz
 tar xJf ${ARTIFACTS}/os-base.tar.xz -C ${BUILD}
 
-cp /etc/ssl/certs/ca-certificates.crt ${BUILD}/initrd/ca.crt
+cp /etc/ssl/certs/ca-certificates.crt ${ARTIFACTS}/ca.crt
+cp ${BUILD}/dist/rootfs.tar ${ARTIFACTS}
 
 rm -rf ${BUILD}/initrd/lib
 cp -rf ${BUILD}/dist/kernel/lib ${BUILD}/initrd
@@ -46,6 +49,7 @@ for i in scripts/dockerimages/[0-9]*; do
     tag=$(echo $i | cut -f2 -d-)
     echo Building $tag
     docker build -t $tag -f $i .
+    docker build -t ${tag}:${VERSION} -f $i .
     echo $tag >> ${BUILD}/tags
 done
 

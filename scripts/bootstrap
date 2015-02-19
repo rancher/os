@@ -7,9 +7,6 @@ cd $(dirname $0)/..
 apt-get update
 apt-get install -y curl rsync build-essential syslinux xorriso libblkid-dev libmount-dev libselinux1-dev
 
-
-curl -sL https://github.com/ibuildthecloud/docker/releases/download/v1.5.0-rancher-2/docker-1.5.0 > /usr/bin/docker
-
-chmod +x /usr/bin/docker
-
-curl -sL https://storage.googleapis.com/golang/go1.4.1.linux-amd64.tar.gz | tar xvzf - -C /usr/local
+if [ ! -d /usr/local/go ]; then
+    curl -sL https://storage.googleapis.com/golang/go1.4.1.linux-amd64.tar.gz | tar xvzf - -C /usr/local
+fi
