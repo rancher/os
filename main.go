@@ -7,11 +7,11 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancherio/os/cmd/control"
+	"github.com/rancherio/os/cmd/respawn"
 	"github.com/rancherio/os/cmd/systemdocker"
 	"github.com/rancherio/os/cmd/tlsconf"
 	osInit "github.com/rancherio/os/init"
 	"github.com/rancherio/os/power"
-	"github.com/rancherio/os/respawn"
 	"github.com/rancherio/os/sysinit"
 )
 
