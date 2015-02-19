@@ -8,9 +8,51 @@
 			"Rev": "0b189e019aabcec0af8e433b10b3073ad9382b44"
 		},
 		{
+			"ImportPath": "github.com/cloudsigma/cepgo",
+			"Rev": "1bfc4895bf5c4d3b599f3f6ee142299488c8739b"
+		},
+		{
 			"ImportPath": "github.com/codegangsta/cli",
 			"Comment": "1.2.0-66-g6086d79",
 			"Rev": "6086d7927ec35315964d9fea46df6c04e6d697c1"
+		},
+		{
+			"ImportPath": "github.com/coreos/coreos-cloudinit/config",
+			"Comment": "v1.3.2-4-g42c79dc",
+			"Rev": "42c79dcb539868d21ccd93b0aeadd25bbd0e4fdd"
+		},
+		{
+			"ImportPath": "github.com/coreos/coreos-cloudinit/datasource",
+			"Comment": "v1.3.2-4-g42c79dc",
+			"Rev": "42c79dcb539868d21ccd93b0aeadd25bbd0e4fdd"
+		},
+		{
+			"ImportPath": "github.com/coreos/coreos-cloudinit/initialize",
+			"Comment": "v1.3.2-4-g42c79dc",
+			"Rev": "42c79dcb539868d21ccd93b0aeadd25bbd0e4fdd"
+		},
+		{
+			"ImportPath": "github.com/coreos/coreos-cloudinit/network",
+			"Comment": "v1.3.2-4-g42c79dc",
+			"Rev": "42c79dcb539868d21ccd93b0aeadd25bbd0e4fdd"
+		},
+		{
+			"ImportPath": "github.com/coreos/coreos-cloudinit/pkg",
+			"Comment": "v1.3.2-4-g42c79dc",
+			"Rev": "42c79dcb539868d21ccd93b0aeadd25bbd0e4fdd"
+		},
+		{
+			"ImportPath": "github.com/coreos/coreos-cloudinit/system",
+			"Comment": "v1.3.2-4-g42c79dc",
+			"Rev": "42c79dcb539868d21ccd93b0aeadd25bbd0e4fdd"
+		},
+		{
+			"ImportPath": "github.com/coreos/go-systemd/dbus",
+			"Rev": "4fbc5060a317b142e6c7bfbedb65596d5f0ab99b"
+		},
+		{
+			"ImportPath": "github.com/coreos/yaml",
+			"Rev": "6b16a5714269b2f70720a45406b1babd947a17ef"
 		},
 		{
 			"ImportPath": "github.com/docker/docker/api",
@@ -123,6 +165,11 @@
 			"Rev": "833c62efcb5613c935e6ed2703835a338887a7d2"
 		},
 		{
+			"ImportPath": "github.com/docker/libcontainer/netlink",
+			"Comment": "v1.4.0-127-gf4a4391",
+			"Rev": "f4a4391e4ef7e886e56816ae59cbe99d8cff91d9"
+		},
+		{
 			"ImportPath": "github.com/docker/libtrust",
 			"Rev": "c54fbb67c1f1e68d7d6f8d2ad7c9360404616a41"
 		},
@@ -140,8 +187,16 @@
 			"Rev": "d7ce918e02502d8f1b539703ef308977364385c6"
 		},
 		{
+			"ImportPath": "github.com/guelfey/go.dbus",
+			"Rev": "f6a3a2366cc39b8479cadc499d3c735fb10fbdda"
+		},
+		{
 			"ImportPath": "github.com/kless/term",
 			"Rev": "d57d9d2d5be197e12d9dee142d855470d83ce62f"
+		},
+		{
+			"ImportPath": "github.com/tarm/goserial",
+			"Rev": "cdabc8d44e8e84f58f18074ae44337e1f2f375b9"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
