@@ -17,14 +17,17 @@ const (
 )
 
 func PowerOff() {
+	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 }
 
 func Reboot() {
+	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 }
 
 func Halt() {
+	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_HALT)
 }
 
