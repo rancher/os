@@ -4,5 +4,5 @@ cd $(dirname $0)/..
 
 source scripts/build-common
 
-download 7226af54b492483d9e9b4e6a41c99433bcc9be21 http://storage.googleapis.com/darren-dev/os-base.tar.xz
+download 720f68d2137c2aaeba45db529c0bbfb7af0e89bb http://storage.googleapis.com/darren-dev/os-base.tar.xz
 download 1acbe869b32869bca5788373e8624a2957cbb380 https://github.com/ibuildthecloud/docker/releases/download/v1.5.0-rancher-2/docker-1.5.0
