@@ -22,6 +22,7 @@ generate_images()
     if [ -e ${BUILD}/${IMAGE_ID} ]; then
         DOCKER_BASE=$(<${BUILD}/${IMAGE_ID})
     else
+        echo Running: docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images
         CID=$(docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images)
         docker logs -f ${CID} &
         trap "docker rm -f ${CID}" exit

@@ -1,3 +1,7 @@
 FROM base
 COPY scripts/dockerimages/scripts/console.sh /usr/sbin/
+RUN adduser -G sudo -D -h /home/rancher -s /bin/bash rancher && \
+    sed -i 's/rancher.*/rancher:rixbL64o6zGmY:16486:0:99999:7:::/g' /etc/shadow && \
+    mkdir -p /home/rancher && \
+    chmod 2755 /home/rancher
 CMD ["/usr/sbin/console.sh"]

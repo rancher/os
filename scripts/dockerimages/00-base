@@ -19,5 +19,7 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
        /var/lock \
        /var/log \
        /var/run \
-       /var/spool
-CMD ["/bin/sh"]
+       /var/spool && \
+    passwd -l root && \
+    addgroup sudo && \
+    echo '%sudo ALL=(ALL) ALL' > /etc/sudoers.d/sudo-group

@@ -125,6 +125,7 @@ func NewConfig() *Config {
 				"--rm " +
 				"--privileged " +
 				"--volumes-from=console-volumes " +
+				"--volumes-from=user-volumes " +
 				"--volumes-from=system-volumes " +
 				"--ipc=host " +
 				"--net=host " +

@@ -1,9 +1,17 @@
 #!/bin/sh
+# Test
 
 CLOUD_CONFIG_FILE=/var/lib/rancher/cloud-config
 
 if [ -s $CLOUD_CONFIG_FILE ]; then
 	cloud-init --from-file $CLOUD_CONFIG_FILE
+fi
+
+RANCER_HOME=/home/rancher
+if [ ! -d ${RANCER_HOME} ]; then
+    mkdir -p ${RANCER_HOME}
+    chown rancher:rancher ${RANCER_HOME}
+    chmod 2755 ${RANCER_HOME}
 fi
 
 cat > /etc/respawn.conf << EOF

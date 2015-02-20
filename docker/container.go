@@ -380,8 +380,13 @@ func (c *Container) start(wait bool) *Container {
 
 	if c.Exists() && c.remove {
 		log.Debugf("Deleting container %s", c.Container.ID)
-		c.Delete().Reset().Lookup()
+		c.Delete()
 
+		if c.Err != nil {
+			return c
+		}
+
+		c.Reset().Lookup()
 		if c.Err != nil {
 			return c
 		}
