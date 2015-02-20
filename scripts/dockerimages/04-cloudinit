@@ -1,0 +1,3 @@
+FROM base 
+COPY scripts/dockerimages/scripts/cloud-init.sh  /
+CMD ["/cloud-init.sh"]
