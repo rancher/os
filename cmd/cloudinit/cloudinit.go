@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -52,17 +53,19 @@ var (
 	outputFile string
 	save       bool
 	sshKeyName string
+	flags      *flag.FlagSet
 )
 
 func init() {
-	flag.StringVar(&outputDir, "dir", "/var/lib/rancher/conf", "working directory")
-	flag.StringVar(&outputFile, "file", "/var/lib/rancher/conf/cloud-config.yml", "cloud config file name")
-	flag.StringVar(&sshKeyName, "ssh-key-name", "rancheros-cloud-config", "SSH key name")
-	flag.BoolVar(&save, "save", false, "save cloud config and exit")
+	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flags.StringVar(&outputDir, "dir", "/var/lib/rancher/conf", "working directory")
+	flags.StringVar(&outputFile, "file", "cloud-config.yml", "cloud config file name")
+	flags.StringVar(&sshKeyName, "ssh-key-name", "rancheros-cloud-config", "SSH key name")
+	flags.BoolVar(&save, "save", false, "save cloud config and exit")
 }
 
 func Main() {
-	flag.Parse()
+	flags.Parse(os.Args[1:])
 
 	cfg, err := rancherConfig.LoadConfig()
 	if err != nil {
@@ -71,6 +74,7 @@ func Main() {
 
 	dss := getDatasources(cfg)
 	if len(dss) == 0 {
+		log.Infof("No datasources available %v", cfg.CloudInit.Datasources)
 		os.Exit(0)
 	}
 
@@ -80,7 +84,7 @@ func Main() {
 		os.Exit(0)
 	}
 
-	log.Info("Fetching user-data from datasource %s", ds.Type())
+	log.Infof("Fetching user-data from datasource %v", ds.Type())
 	userdataBytes, err := ds.FetchUserdata()
 	if err != nil {
 		log.Fatalf("Failed fetching user-data from datasource: %v", err)
@@ -139,7 +143,8 @@ func Main() {
 			}
 		}
 
-		if err := ioutil.WriteFile(outputFile, fileData, 400); err != nil {
+		output := path.Join(outputDir, outputFile)
+		if err := ioutil.WriteFile(output, fileData, 400); err != nil {
 			log.Fatalf("Error while writing file %v", err)
 		}
 
@@ -184,7 +189,7 @@ func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 
 	for _, ds := range cfg.CloudInit.Datasources {
-		parts := strings.SplitN(ds, ":", 1)
+		parts := strings.SplitN(ds, ":", 2)
 
 		switch parts[0] {
 		case "ec2":
