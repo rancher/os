@@ -21,5 +21,6 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
        /var/run \
        /var/spool && \
     passwd -l root && \
+    addgroup docker && \
     addgroup sudo && \
     echo '%sudo ALL=(ALL) ALL' > /etc/sudoers.d/sudo-group

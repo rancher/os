@@ -21,7 +21,7 @@ if [ ! -d ${RANCER_HOME} ]; then
     chmod 2755 ${RANCER_HOME}
 fi
 
-chown root:rancher /var/run/docker.sock:/var/run/system-docker.sock
+chown root:docker /var/run/docker.sock /var/run/system-docker.sock
 
 cat > /etc/respawn.conf << EOF
 /sbin/getty 115200 tty1
