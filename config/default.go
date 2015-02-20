@@ -17,7 +17,6 @@ func NewConfig() *Config {
 		Userdocker: UserDockerInfo{
 			UseTLS: true,
 		},
-		CloudConfig: []string{},
 		SystemContainers: []ContainerConfig{
 			{
 				Cmd: "--name=system-volumes " +
@@ -29,19 +28,25 @@ func NewConfig() *Config {
 					"state",
 			},
 			{
-				Cmd: "--name=console-volumes " +
+				Cmd: "--name=command-volumes " +
 					"--net=none " +
 					"--read-only " +
 					"-v=/init:/sbin/halt:ro " +
 					"-v=/init:/sbin/poweroff:ro " +
 					"-v=/init:/sbin/reboot:ro " +
-					"-v=/init:/sbin/tlsconf:ro " +
+					"-v=/init:/usr/bin/cloud-init:ro " +
 					"-v=/init:/usr/bin/tlsconf:ro " +
 					"-v=/init:/usr/bin/rancherctl:ro " +
 					"-v=/init:/usr/bin/respawn:ro " +
 					"-v=/init:/usr/bin/system-docker:ro " +
 					"-v=/lib/modules:/lib/modules:ro " +
 					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
+					"state",
+			},
+			{
+				Cmd: "--name=user-volumes " +
+					"--net=none " +
+					"--read-only " +
 					"-v=/var/lib/rancher/state/home:/home " +
 					"-v=/var/lib/rancher/state/opt:/opt " +
 					"state",
@@ -56,11 +61,11 @@ func NewConfig() *Config {
 					"udev",
 			},
 			{
-				Cmd: "--name=cloudconfig " +
+				Cmd: "--name=cloud-init " +
+					"--rm " +
 					"--net=host " +
-					"-v=/init:/usr/bin/rancherctl:ro " +
-					"-v=/init:/usr/bin/cloudinit:ro " +
-					"cloudconfig",
+					"--volumes-from=command-volumes " +
+					"cloudinit",
 			},
 			{
 				Cmd: "--name=network " +
@@ -78,6 +83,14 @@ func NewConfig() *Config {
 					"ntp",
 			},
 			{
+				Cmd: "--name=syslog " +
+					"-d " +
+					"--rm " +
+					"--privileged " +
+					"--net=host " +
+					"syslog",
+			},
+			{
 				Cmd: "--name=userdocker " +
 					"-d " +
 					"--rm " +
@@ -86,11 +99,9 @@ func NewConfig() *Config {
 					"--pid=host " +
 					"--net=host " +
 					"--privileged " +
-					"--volumes-from=console-volumes " +
+					"--volumes-from=command-volumes " +
+					"--volumes-from=user-volumes " +
 					"--volumes-from=system-volumes " +
-					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
-					"-v=/init:/usr/bin/tlsconf:ro " +
-					"-v=/init:/usr/sbin/rancherctl:ro " +
 					"-v=/var/lib/rancher/state/docker:/var/lib/docker " +
 					"userdocker",
 			},
@@ -99,19 +110,13 @@ func NewConfig() *Config {
 					"-d " +
 					"--rm " +
 					"--privileged " +
-					"--volumes-from=console-volumes " +
+					"--volumes-from=command-volumes " +
+					"--volumes-from=user-volumes " +
 					"--volumes-from=system-volumes " +
 					"--ipc=host " +
 					"--net=host " +
 					"--pid=host " +
 					"console",
-			},
-			{
-				Cmd: "--name=syslog " +
-				     	"-d " +
-				     	"--privileged " +
-				    	"--net=host " +
-					"syslog",
 			},
 		},
 		RescueContainer: &ContainerConfig{

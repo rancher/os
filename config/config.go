@@ -46,14 +46,14 @@ type Config struct {
 	RescueContainer  *ContainerConfig  `yaml:"rescue_container,omitempty"`
 	State            ConfigState       `yaml:"state,omitempty"`
 	Userdocker       UserDockerInfo    `yaml:"userdocker,omitempty"`
-	CloudConfig      []string          `yaml:"cloud_config,omitempty"`
 	SystemContainers []ContainerConfig `yaml:"system_containers,omitempty"`
 	SystemDockerArgs []string          `yaml:"system_docker_args,flow,omitempty"`
 	Modules          []string          `yaml:"modules,omitempty"`
+	CloudInit        CloudInit         `yaml:"cloud_init"`
 }
 
 type UserDockerInfo struct {
-	UseTLS        bool   `yaml:"use_tls,omitempty"`
+	UseTLS        bool   `yaml:"use_tls"`
 	TLSServerCert string `yaml:"tls_server_cert"`
 	TLSServerKey  string `yaml:"tls_server_key"`
 	TLSCACert     string `yaml:"tls_ca_cert"`
@@ -65,6 +65,10 @@ type ConfigState struct {
 	Required bool   `yaml:"required"`
 }
 
+type CloudInit struct {
+	Datasources []string `yaml:"datasources"`
+}
+
 func (c *Config) Merge(newConfig Config) (bool, error) {
 	//Efficient? Nope, but computers are fast
 	newConfig.ClearReadOnly()
@@ -72,6 +76,8 @@ func (c *Config) Merge(newConfig Config) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+
+	log.Debugf("Input \n%s", string(content))
 
 	err = yaml.Unmarshal([]byte(content), c)
 	return true, err
@@ -116,7 +122,18 @@ func LoadConfig() (*Config, error) {
 
 func (c *Config) readArgs() error {
 	log.Debug("Reading config args")
-	cmdLine := strings.Join(os.Args[1:], " ")
+	parts := make([]string, len(os.Args))
+
+	for _, arg := range os.Args[1:] {
+		if strings.HasPrefix(arg, "--") {
+			arg = arg[2:]
+		}
+
+		arg = strings.Replace(arg, "-", ".", -1)
+		parts = append(parts, arg)
+	}
+
+	cmdLine := strings.Join(parts, " ")
 	if len(cmdLine) == 0 {
 		return nil
 	}

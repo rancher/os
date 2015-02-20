@@ -163,19 +163,6 @@ func launchConsole(cfg *config.Config) error {
 	cmd.Start()
 
 	return cmd.Wait()
-	//console := cfg.GetContainerById(cfg.ConsoleContainer)
-	//if console == nil {
-	//	return nil
-	//}
-
-	//c, err := docker.ParseContainer(cfg, console)
-	//if err != nil {
-	//	return err
-	//}
-
-	//return c.Attach()
-
-	//return nil
 }
 
 func sysInit() error {
@@ -188,7 +175,6 @@ func sysInit() error {
 		loadImages,
 		runContainers,
 		func(cfg *config.Config) error {
-			//TODO: not totally sure why we need this.
 			syscall.Sync()
 			return nil
 		},

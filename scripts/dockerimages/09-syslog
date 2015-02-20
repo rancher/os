@@ -1,3 +1,3 @@
-FROM console
+FROM base
 COPY scripts/dockerimages/scripts/syslog.sh /
 CMD ["/syslog.sh"] 

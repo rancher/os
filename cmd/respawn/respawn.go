@@ -1,6 +1,7 @@
 package respawn
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -9,10 +10,38 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 )
 
 func Main() {
-	input, err := ioutil.ReadAll(os.Stdin)
+	app := cli.NewApp()
+
+	app.Flags = []cli.Flag{
+		cli.StringFlag{
+			Name:  "file, f",
+			Usage: "Optional config file to load",
+		},
+	}
+	app.Action = run
+
+	app.Run(os.Args)
+
+}
+
+func run(c *cli.Context) {
+	var stream io.Reader = os.Stdin
+	var err error
+
+	inputFileName := c.String("file")
+
+	if inputFileName != "" {
+		stream, err = os.Open(inputFileName)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	input, err := ioutil.ReadAll(stream)
 	if err != nil {
 		panic(err)
 	}
