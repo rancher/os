@@ -110,7 +110,7 @@ func mergeConfig(bytes []byte) error {
 		return err
 	}
 
-	reboot, err := cfg.Merge(newConfig)
+	_, err = cfg.Merge(newConfig)
 	if err != nil {
 		return err
 	}
@@ -118,10 +118,6 @@ func mergeConfig(bytes []byte) error {
 	err = cfg.Save()
 	if err != nil {
 		return err
-	}
-
-	if reboot {
-		fmt.Println("Reboot needed")
 	}
 
 	return err
