@@ -11,7 +11,7 @@ Docker 1.5+ required.
 ## Running
 
 KVM, VirtualBox, and VMware all supported (Clouds and Vagrant coming soon).  Just
-boot from the `rancheros.iso` from the [releases](https://github.com/rancherlabs/os/releases) page.
+boot from the `rancheros.iso` (probably want to run with at least 1G of memory) from the [releases](https://github.com/rancherlabs/os/releases) page.
 
 ## Logging in
 
