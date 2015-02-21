@@ -101,10 +101,11 @@ func loadImages(cfg *config.Config) error {
 
 		defer input.Close()
 
-		log.Debugf("Loading images from %s", inputFileName)
+		log.Infof("Loading images from %s", inputFileName)
 		err = client.LoadImage(dockerClient.LoadImageOptions{
 			InputStream: input,
 		})
+		log.Infof("Done loading images from %s", inputFileName)
 
 		if err != nil {
 			return err
@@ -121,12 +122,11 @@ func runContainers(cfg *config.Config) error {
 		containerConfigs = []config.ContainerConfig{*cfg.RescueContainer}
 	}
 
-	for _, containerConfig := range containerConfigs {
+	for i, containerConfig := range containerConfigs {
 		container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &containerConfig)
-		container.Parse()
 
 		if util.Contains(cfg.Disable, containerConfig.Id) {
-			log.Debugf("%s is disabled : %v", containerConfig.Id, cfg.Disable)
+			log.Infof("%s is disabled : %v", containerConfig.Id, cfg.Disable)
 			continue
 		}
 
@@ -139,8 +139,8 @@ func runContainers(cfg *config.Config) error {
 			}
 		}
 
+		log.Infof("Running [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
 		container.StartAndWait()
-		log.Debugf("Running %s", containerConfig.Id)
 
 		if container.Err != nil {
 			log.Errorf("Failed to run %v: %v", containerConfig.Id, container.Err)

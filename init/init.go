@@ -25,6 +25,9 @@ var (
 		"/sbin",
 		"/usr/bin",
 	}
+	postDirs []string = []string{
+		"/var/log",
+	}
 	mounts [][]string = [][]string{
 		[]string{"devtmpfs", "/dev", "devtmpfs", ""},
 		[]string{"none", "/dev/pts", "devpts", ""},
@@ -99,6 +102,7 @@ func createMounts(mounts ...[]string) error {
 }
 
 func remountRo(cfg *config.Config) error {
+	log.Info("Remouting root read only")
 	return util.Remount("/", "ro")
 }
 
@@ -198,10 +202,18 @@ func sysInit(cfg *config.Config) error {
 }
 
 func execDocker(cfg *config.Config) error {
-	log.Info("Launching Docker")
-	//os.Stdin.Close()
-	//os.Stdout.Close()
-	//os.Stderr.Close()
+	log.Info("Launching System Docker")
+	if !cfg.Debug {
+		output, err := os.Create("/var/log/system-docker.log")
+		if err != nil {
+			return err
+		}
+
+		syscall.Dup2(int(output.Fd()), int(os.Stdout.Fd()))
+		syscall.Dup2(int(output.Fd()), int(os.Stderr.Fd()))
+	}
+
+	os.Stdin.Close()
 	return syscall.Exec(DOCKER, cfg.SystemDockerArgs, os.Environ())
 }
 
@@ -216,7 +228,7 @@ func mountState(cfg *config.Config) error {
 
 	if cfg.State.Dev != "" {
 		dev := util.ResolveDevice(cfg.State.Dev)
-		log.Debugf("Mounting state device %s to %s", dev, STATE)
+		log.Infof("Mounting state device %s to %s", dev, STATE)
 
 		fsType := cfg.State.FsType
 		if fsType == "auto" {
@@ -252,6 +264,7 @@ func RunInit() error {
 			return createDirs(dirs...)
 		},
 		func(cfg *config.Config) error {
+			log.Info("Setting up mounts")
 			return createMounts(mounts...)
 		},
 		func(cfg *config.Config) error {
@@ -276,6 +289,9 @@ func RunInit() error {
 		extractModules,
 		loadModules,
 		mountState,
+		func(cfg *config.Config) error {
+			return createDirs(postDirs...)
+		},
 		func(cfg *config.Config) error {
 			return createMounts(postMounts...)
 		},
