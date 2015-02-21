@@ -45,20 +45,7 @@ func Main() {
 		{
 			Name:  "os",
 			Usage: "operating system upgrade/downgrade",
-			Subcommands: []cli.Command{
-				{
-					Name:  "list",
-					Usage: "list available RancherOS versions and state",
-				},
-				{
-					Name:  "update",
-					Usage: "download the latest new version of RancherOS",
-				},
-				{
-					Name:  "activate",
-					Usage: "switch to a new version of RancherOS and reboot",
-				},
-			},
+			Subcommands: osSubcommands(),
 		},
 	}
 

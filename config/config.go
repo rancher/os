@@ -46,6 +46,7 @@ type Config struct {
 	RescueContainer  *ContainerConfig  `yaml:"rescue_container,omitempty"`
 	State            ConfigState       `yaml:"state,omitempty"`
 	Userdocker       UserDockerInfo    `yaml:"userdocker,omitempty"`
+	OsUpgradeChannel string		   `yaml:"os_upgrade_channel,omitempty"`
 	SystemContainers []ContainerConfig `yaml:"system_containers,omitempty"`
 	SystemDockerArgs []string          `yaml:"system_docker_args,flow,omitempty"`
 	Modules          []string          `yaml:"modules,omitempty"`

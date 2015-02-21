@@ -186,7 +186,7 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 	for i, part := range parts {
 		val, ok := data[part]
 		last := i+1 == len(parts)
-
+	
 		if last && value != nil {
 			if s, ok := value.(string); ok {
 				value = config.DummyMarshall(s)
