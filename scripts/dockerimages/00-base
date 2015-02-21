@@ -23,4 +23,4 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     passwd -l root && \
     addgroup docker && \
     addgroup sudo && \
-    echo '%sudo ALL=(ALL) ALL' > /etc/sudoers.d/sudo-group
+    echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers

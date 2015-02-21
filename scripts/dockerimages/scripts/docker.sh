@@ -42,7 +42,7 @@ if [ "$USE_TLS" == "true" ]; then
     rancherctl config set -- userdocker.tls_server_cert "$TLS_SERVER_CERT"
     rancherctl config set -- userdocker.tls_server_key "$TLS_SERVER_KEY"
 
-    exec docker -d -s overlay --tlsverify --tlscacert=$TLS_PATH/ca.pem --tlscert=$TLS_PATH/server-cert.pem --tlskey=$TLS_PATH/server-key.pem -H=0.0.0.0:2376 -H=unix:///var/run/docker.sock
+    exec docker -d -s overlay --tlsverify --tlscacert=$TLS_PATH/ca.pem --tlscert=$TLS_PATH/server-cert.pem --tlskey=$TLS_PATH/server-key.pem -H=0.0.0.0:2376 -H=unix:///var/run/docker.sock -G docker
 else
-    exec docker -d -s overlay
+    exec docker -d -s overlay -G docker
 fi
