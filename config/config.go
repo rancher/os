@@ -50,6 +50,7 @@ type Config struct {
 	SystemDockerArgs []string          `yaml:"system_docker_args,flow,omitempty"`
 	Modules          []string          `yaml:"modules,omitempty"`
 	CloudInit        CloudInit         `yaml:"cloud_init"`
+	SshInfo          SshInfo           `yaml:"ssh"`
 }
 
 type UserDockerInfo struct {
@@ -57,6 +58,10 @@ type UserDockerInfo struct {
 	TLSServerCert string `yaml:"tls_server_cert"`
 	TLSServerKey  string `yaml:"tls_server_key"`
 	TLSCACert     string `yaml:"tls_ca_cert"`
+}
+
+type SshInfo struct {
+	Keys map[string]string
 }
 
 type ConfigState struct {
@@ -158,6 +163,8 @@ func (c *Config) readFile() error {
 	content, err := ioutil.ReadFile(ConfigFile)
 	if os.IsNotExist(err) {
 		return nil
+	} else if err != nil {
+		return err
 	}
 
 	data := make(map[string]interface{})
