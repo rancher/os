@@ -15,7 +15,7 @@ boot from the `rancheros.iso` from the [releases](https://github.com/rancherlabs
 
 ## Logging in
 
-Log in with rancher/rancher and use `sudo` to get root access.
+Log in with **rancher/rancher** and use `sudo` to get root access.
 
 Once cloud-init integration is finished we will not need to hard code the
 password anymore.
@@ -43,8 +43,8 @@ You can edit the configuration with the `rancherctl config` command.
 
 Everything in RancherOS is a Docker container.  We accomplish this by launching two instances of
 Docker.  One is what we call the system Docker which runs as PID 1.  System Docker then launches
-a container that runs the user Docker.  We created this separation as is really seemed like a
-bad idea that if somebody did `docker rm -f $(docker ps -qa)` they would delete the entire OS.
+a container that runs the user Docker.  The user Docker is then the instance that gets primarilry
+used to create containers.  We created this separation because it seemed logical and also
+it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and deleted the entire OS.
 
-![How it works](https://raw.githubusercontent.com/rancherlabs/os/master/docs/rancheros.png "How it works")
-
+![How it works](docs/rancheros.png "How it works")
