@@ -47,6 +47,11 @@ func Main() {
 			Usage: "operating system upgrade/downgrade",
 			Subcommands: osSubcommands(),
 		},
+		{
+			Name: "tlsconf",
+			Usage: "setup tls configuration",
+			Subcommands: tlsConfCommands(),
+		},
 	}
 
 	app.Run(os.Args)

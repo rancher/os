@@ -32,7 +32,7 @@ if [ "$USE_TLS" == "true" ]; then
 	echo "$TLS_SERVER_CERT" > $TLS_PATH/server-cert.pem
 	echo "$TLS_SERVER_KEY" > $TLS_PATH/server-key.pem
     else
-        tlsconf
+        rancherctl tlsconf create
     	TLS_CA_CERT="$(cat $TLS_PATH/ca.pem)"
     	TLS_SERVER_CERT="$(cat $TLS_PATH/server-cert.pem)"
     	TLS_SERVER_KEY="$(cat $TLS_PATH/server-key.pem)"
