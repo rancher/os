@@ -1,5 +1,6 @@
 FROM base
 COPY scripts/dockerimages/scripts/console.sh /usr/sbin/
+COPY scripts/dockerimages/scripts/update-ssh-keys /usr/bin/
 RUN echo 'set bell-style none' > /etc/inputrc && \
     adduser -g rancher -G sudo -D -h /home/rancher -s /bin/bash rancher && \
     sed -i 's/\(docker.*\)/\1rancher/g' /etc/group && \

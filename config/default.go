@@ -17,6 +17,9 @@ func NewConfig() *Config {
 		Userdocker: UserDockerInfo{
 			UseTLS: true,
 		},
+		CloudInit: CloudInit{ 
+				Datasources: []string{"file:/home/rancher/cloudconfig"},
+		},
 		SystemContainers: []ContainerConfig{
 			{
 				Cmd: "--name=system-volumes " +
