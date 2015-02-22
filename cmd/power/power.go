@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/fsouza/go-dockerclient"
+	log "github.com/Sirupsen/logrus"
 )
 
 const (
@@ -17,16 +18,28 @@ const (
 )
 
 func PowerOff() {
+	if os.Geteuid() != 0 {
+		log.Info("poweroff: Permission Denied")
+		return	
+	}
 	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 }
 
 func Reboot() {
+	if os.Geteuid() != 0 {
+		log.Info("reboot: Permission Denied")
+		return
+	}
 	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 }
 
 func Halt() {
+	if os.Geteuid() != 0 {
+		log.Info("reboot: Permission Denied")
+		return
+	}
 	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_HALT)
 }
@@ -34,11 +47,11 @@ func Halt() {
 func reboot(code int) {
 	err := shutDownContainers()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	err = syscall.Reboot(code)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -59,7 +72,7 @@ func shutDownContainers() error {
 				}
 				timeout = uint(t)
 			} else {
-				panic("please specify a timeout")
+				log.Info("please specify a timeout")
 			}
 		}
 	}
