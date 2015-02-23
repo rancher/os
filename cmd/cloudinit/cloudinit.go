@@ -1,18 +1,3 @@
-// Copyright 2015 CoreOS, Inc.
-// Copyright 2015 Rancher Labs, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package cloudinit
 
 import (
@@ -20,7 +5,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -35,7 +22,6 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/initialize"
-	"github.com/coreos/coreos-cloudinit/network"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
 	rancherConfig "github.com/rancherio/os/config"
@@ -97,6 +83,7 @@ func Main() {
 			fail = true
 		}
 		if fail {
+			fmt.Println("failed validation")
 			os.Exit(1)
 		}
 	} else {
@@ -151,15 +138,41 @@ func Main() {
 		os.Exit(0)
 	}
 
-	if err = initialize.Apply(cc, []network.InterfaceGenerator{}, env); err != nil {
-		log.Fatalf("Failed to apply cloud-config: %v", err)
-	}
-
 	if script != nil {
-		if err = runScript(*script, env); err != nil {
-			log.Fatalf("Failed to run script: %v", err)
+		if ds.Type() != "local-file" {
+			fmt.Println("can only execute local files")
+		}
+		cmdPath := reflect.ValueOf(ds).Elem().Field(0).String()
+		cmd := exec.Command(cmdPath)
+		fmt.Println("running ", cmdPath)
+		if err := cmd.Run(); err != nil {
+			fmt.Printf("Failed to run script: %v\n", err)
+			os.Exit(1)
 		}
 	}
+
+	if &cc == nil {
+		log.Fatal("no config or script found")	
+	}
+
+	for _, user := range cc.Users {
+		if user.Name == "" {
+			continue
+		}
+		if len(user.SSHAuthorizedKeys) > 0 {
+			authorizeSSHKeys(user.Name, user.SSHAuthorizedKeys, env.SSHKeyName())
+		}
+	}
+	
+	for _, file := range cc.WriteFiles {
+		f := system.File{File: file}
+		fullPath, err := system.WriteFile(&f, env.Root())
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+		log.Printf("Wrote file %s to filesystem", fullPath)
+	}
+
 }
 
 // mergeConfigs merges certain options from md (meta-data from the datasource)
@@ -271,18 +284,3 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 	return s
 }
 
-// TODO(jonboulle): this should probably be refactored and moved into a different module
-func runScript(script config.Script, env *initialize.Environment) error {
-	err := initialize.PrepWorkspace(env.Workspace())
-	if err != nil {
-		fmt.Printf("Failed preparing workspace: %v\n", err)
-		return err
-	}
-	path, err := initialize.PersistScriptInWorkspace(script, env.Workspace())
-	if err == nil {
-		var name string
-		name, err = system.ExecuteScript(path)
-		initialize.PersistUnitNameInWorkspace(name, env.Workspace())
-	}
-	return err
-}
