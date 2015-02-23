@@ -57,9 +57,9 @@ func checkEncoding(cfg node, report *Report) {
 			continue
 		}
 
-		c := f.Child("contents")
+		c := f.Child("content")
 		if _, err := config.DecodeContent(c.String(), e.String()); err != nil {
-			report.Error(c.line, fmt.Sprintf("contents cannot be decoded as %q", e.String()))
+			report.Error(c.line, fmt.Sprintf("content cannot be decoded as %q", e.String()))
 		}
 	}
 }

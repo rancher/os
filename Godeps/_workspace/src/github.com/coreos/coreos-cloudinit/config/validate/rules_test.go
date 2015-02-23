@@ -60,27 +60,27 @@ func TestCheckEncoding(t *testing.T) {
 	}{
 		{},
 		{
-			config: "write_files:\n  - encoding: base64\n    contents: aGVsbG8K",
+			config: "write_files:\n  - encoding: base64\n    content: aGVsbG8K",
 		},
 		{
-			config: "write_files:\n  - contents: !!binary aGVsbG8K",
+			config: "write_files:\n  - content: !!binary aGVsbG8K",
 		},
 		{
-			config:  "write_files:\n  - encoding: base64\n    contents: !!binary aGVsbG8K",
-			entries: []Entry{{entryError, `contents cannot be decoded as "base64"`, 3}},
+			config:  "write_files:\n  - encoding: base64\n    content: !!binary aGVsbG8K",
+			entries: []Entry{{entryError, `content cannot be decoded as "base64"`, 3}},
 		},
 		{
-			config: "write_files:\n  - encoding: base64\n    contents: !!binary YUdWc2JHOEsK",
+			config: "write_files:\n  - encoding: base64\n    content: !!binary YUdWc2JHOEsK",
 		},
 		{
-			config: "write_files:\n  - encoding: gzip\n    contents: !!binary H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
+			config: "write_files:\n  - encoding: gzip\n    content: !!binary H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
 		},
 		{
-			config: "write_files:\n  - encoding: gzip+base64\n    contents: H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
+			config: "write_files:\n  - encoding: gzip+base64\n    content: H4sIAOC3tVQAA8tIzcnJ5wIAIDA6NgYAAAA=",
 		},
 		{
-			config:  "write_files:\n  - encoding: custom\n    contents: hello",
-			entries: []Entry{{entryError, `contents cannot be decoded as "custom"`, 3}},
+			config:  "write_files:\n  - encoding: custom\n    content: hello",
+			entries: []Entry{{entryError, `content cannot be decoded as "custom"`, 3}},
 		},
 	}
 
