@@ -2,4 +2,4 @@
 
 set -x -e
 
-exec syslogd -n
+exec rsyslogd -n

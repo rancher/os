@@ -1,9 +1,6 @@
 FROM base
 COPY scripts/dockerimages/scripts/console.sh /usr/sbin/
-RUN echo 'set bell-style none' > /etc/inputrc && \
-    adduser -g rancher -G sudo -D -h /home/rancher -s /bin/bash rancher && \
-    sed -i 's/\(docker.*\)/\1rancher/g' /etc/group && \
-    sed -i 's/rancher.*/rancher:rixbL64o6zGmY:16486:0:99999:7:::/g' /etc/shadow && \
+RUN sed -i 's/rancher.*/rancher:rixbL64o6zGmY:16486:0:99999:7:::/g' /etc/shadow && \
     echo '## allow password less for rancher user' >> /etc/sudoers && \
     echo 'rancher ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 CMD ["/usr/sbin/console.sh"]

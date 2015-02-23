@@ -24,6 +24,8 @@ setup_ssh()
             fi
         fi
     done
+
+    mkdir -p /var/run/sshd
 }
 
 
@@ -48,6 +50,14 @@ if [ ! -d ${RANCHER_HOME} ]; then
     mkdir -p ${RANCHER_HOME}
     chown rancher:rancher ${RANCHER_HOME}
     chmod 2755 ${RANCHER_HOME}
+fi
+
+if ! grep -q "$(hostname)" /etc/hosts; then
+    echo 127.0.1.1 $(hostname) >> /etc/hosts
+fi
+
+if [ -x /opt/rancher/bin/start.sh ]; then
+    /opt/rancher/bin/start.sh
 fi
 
 exec respawn -f /etc/respawn.conf
