@@ -115,12 +115,8 @@ func loadImages(cfg *config.Config) error {
 	return nil
 }
 
-func runContainers(cfg *config.Config) error {
-	containerConfigs := cfg.SystemContainers
-	if cfg.Rescue {
-		log.Debug("Running rescue container")
-		containerConfigs = []config.ContainerConfig{*cfg.RescueContainer}
-	}
+func runContainersFrom(startFrom string, cfg *config.Config, containerConfigs []config.ContainerConfig) error {
+	foundStart := false
 
 	for i, containerConfig := range containerConfigs {
 		container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &containerConfig)
@@ -130,24 +126,48 @@ func runContainers(cfg *config.Config) error {
 			continue
 		}
 
-		if containerConfig.Id == config.CONSOLE_CONTAINER {
-			if util.IsRunningInTty() {
-				container.Config.Tty = true
-				container.Config.AttachStdin = true
-				container.Config.AttachStdout = true
-				container.Config.AttachStderr = true
+		//if containerConfig.Id == config.CONSOLE_CONTAINER {
+		//	if util.IsRunningInTty() {
+		//		container.Config.Tty = true
+		//		container.Config.AttachStdin = true
+		//		container.Config.AttachStdout = true
+		//		container.Config.AttachStderr = true
+		//	}
+		//}
+
+		if foundStart || startFrom == "" {
+			log.Infof("Running [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
+			container.StartAndWait()
+
+			if container.Err != nil {
+				log.Errorf("Failed to run %v: %v", containerConfig.Id, container.Err)
 			}
-		}
 
-		log.Infof("Running [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
-		container.StartAndWait()
+			if containerConfig.ReloadConfig {
+				log.Info("Reloading configuration")
+				err := cfg.Reload()
+				if err != nil {
+					return err
+				}
 
-		if container.Err != nil {
-			log.Errorf("Failed to run %v: %v", containerConfig.Id, container.Err)
+				return runContainersFrom(containerConfig.Id, cfg, cfg.SystemContainers)
+			}
+		} else if startFrom == containerConfig.Id {
+			foundStart = true
 		}
 	}
 
 	return nil
+}
+
+func runContainers(cfg *config.Config) error {
+	containerConfigs := cfg.SystemContainers
+	if cfg.Rescue {
+		log.Debug("Running rescue container")
+		containerConfigs = []config.ContainerConfig{*cfg.RescueContainer}
+	}
+
+	return runContainersFrom("", cfg, containerConfigs)
 }
 
 func launchConsole(cfg *config.Config) error {

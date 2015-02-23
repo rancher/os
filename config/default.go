@@ -19,15 +19,18 @@ func NewConfig() *Config {
 		},
 		SystemContainers: []ContainerConfig{
 			{
+				Id: "system-volumes",
 				Cmd: "--name=system-volumes " +
 					"--net=none " +
 					"--read-only " +
 					"-v=/var/lib/rancher/conf:/var/lib/rancher/conf " +
 					"-v=/lib/modules:/lib/modules:ro " +
 					"-v=/var/run:/var/run " +
+					"-v=/var/log:/var/log " +
 					"state",
 			},
 			{
+				Id: "command-volumes",
 				Cmd: "--name=command-volumes " +
 					"--net=none " +
 					"--read-only " +
@@ -44,6 +47,7 @@ func NewConfig() *Config {
 					"state",
 			},
 			{
+				Id: "user-volumes",
 				Cmd: "--name=user-volumes " +
 					"--net=none " +
 					"--read-only " +
@@ -52,6 +56,7 @@ func NewConfig() *Config {
 					"state",
 			},
 			{
+				Id: "udev",
 				Cmd: "--name=udev " +
 					"--net=none " +
 					"--privileged " +
@@ -61,13 +66,16 @@ func NewConfig() *Config {
 					"udev",
 			},
 			{
+				Id: "cloud-init",
 				Cmd: "--name=cloud-init " +
 					"--rm " +
 					"--net=host " +
 					"--volumes-from=command-volumes " +
 					"cloudinit",
+				ReloadConfig: true,
 			},
 			{
+				Id: "network",
 				Cmd: "--name=network " +
 					"--cap-add=NET_ADMIN " +
 					"--net=host " +
@@ -75,6 +83,7 @@ func NewConfig() *Config {
 					"network",
 			},
 			{
+				Id: "ntp",
 				Cmd: "--name=ntp " +
 					"--rm " +
 					"-d " +
@@ -83,14 +92,19 @@ func NewConfig() *Config {
 					"ntp",
 			},
 			{
+				Id: "syslog",
 				Cmd: "--name=syslog " +
 					"-d " +
 					"--rm " +
 					"--privileged " +
 					"--net=host " +
+					"--ipc=host " +
+					"--pid=host " +
+					"--volumes-from=system-volumes " +
 					"syslog",
 			},
 			{
+				Id: "userdocker",
 				Cmd: "--name=userdocker " +
 					"-d " +
 					"--rm " +
@@ -106,6 +120,7 @@ func NewConfig() *Config {
 					"userdocker",
 			},
 			{
+				Id: "console",
 				Cmd: "--name=console " +
 					"-d " +
 					"--rm " +
@@ -113,13 +128,37 @@ func NewConfig() *Config {
 					"--volumes-from=command-volumes " +
 					"--volumes-from=user-volumes " +
 					"--volumes-from=system-volumes " +
+					"--restart=always " +
 					"--ipc=host " +
 					"--net=host " +
 					"--pid=host " +
 					"console",
 			},
 		},
+		EnabledAddons: []string{},
+		Addons: map[string]Config{
+			"ubuntu-console": {
+				SystemContainers: []ContainerConfig{
+					{
+						Id: "console",
+						Cmd: "--name=ubuntu-console " +
+							"-d " +
+							"--rm " +
+							"--privileged " +
+							"--volumes-from=command-volumes " +
+							"--volumes-from=user-volumes " +
+							"--volumes-from=system-volumes " +
+							"--restart=always " +
+							"--ipc=host " +
+							"--net=host " +
+							"--pid=host " +
+							"rancher/ubuntuconsole",
+					},
+				},
+			},
+		},
 		RescueContainer: &ContainerConfig{
+			Id: "console",
 			Cmd: "--name=rescue " +
 				"-d " +
 				"--rm " +
@@ -127,6 +166,7 @@ func NewConfig() *Config {
 				"--volumes-from=console-volumes " +
 				"--volumes-from=user-volumes " +
 				"--volumes-from=system-volumes " +
+				"--restart=always " +
 				"--ipc=host " +
 				"--net=host " +
 				"--pid=host " +

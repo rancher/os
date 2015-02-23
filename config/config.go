@@ -36,6 +36,7 @@ type ContainerConfig struct {
 	Id             string `yaml:"id,omitempty"`
 	Cmd            string `yaml:"run,omitempty"`
 	MigrateVolumes bool   `yaml:"migrate_volumes,omitempty"`
+	ReloadConfig   bool   `yaml:"reload_config,omitempty"`
 }
 
 type Config struct {
@@ -52,6 +53,8 @@ type Config struct {
 	Modules          []string          `yaml:"modules,omitempty"`
 	CloudInit        CloudInit         `yaml:"cloud_init"`
 	SshInfo          SshInfo           `yaml:"ssh"`
+	EnabledAddons    []string          `yaml:"enabledAddons,omitempty"`
+	Addons           map[string]Config `yaml:"addons,omitempty"`
 }
 
 type UserDockerInfo struct {
@@ -75,6 +78,32 @@ type CloudInit struct {
 	Datasources []string `yaml:"datasources"`
 }
 
+func (c *Config) PrivilegedMerge(newConfig Config) (bool, error) {
+	reboot, err := c.Merge(newConfig)
+	if err != nil {
+		return reboot, err
+	}
+
+	toAppend := make([]ContainerConfig, 0, 5)
+
+	for _, newContainer := range newConfig.SystemContainers {
+		found := false
+		for i, existingContainer := range c.SystemContainers {
+			if existingContainer.Id != "" && newContainer.Id == existingContainer.Id {
+				found = true
+				c.SystemContainers[i] = newContainer
+			}
+		}
+		if !found {
+			toAppend = append(toAppend, newContainer)
+		}
+	}
+
+	c.SystemContainers = append(c.SystemContainers, toAppend...)
+
+	return reboot, nil
+}
+
 func (c *Config) Merge(newConfig Config) (bool, error) {
 	//Efficient? Nope, but computers are fast
 	newConfig.ClearReadOnly()
@@ -92,6 +121,9 @@ func (c *Config) Merge(newConfig Config) (bool, error) {
 func (c *Config) ClearReadOnly() {
 	c.SystemContainers = []ContainerConfig{}
 	c.RescueContainer = nil
+	c.Rescue = false
+	c.Debug = false
+	c.Addons = map[string]Config{}
 }
 
 func (c *Config) Dump() (string, error) {
@@ -157,7 +189,14 @@ func (c *Config) merge(values map[string]interface{}) error {
 	if err != nil {
 		return err
 	}
-	return yaml.Unmarshal(override, c)
+	var newConfig Config
+	err = yaml.Unmarshal(override, &newConfig)
+	if err != nil {
+		return nil
+	}
+
+	_, err = c.Merge(newConfig)
+	return err
 }
 
 func (c *Config) readFile() error {
@@ -262,13 +301,18 @@ func (c *Config) Reload() error {
 		c.readFile,
 		c.readCmdline,
 		c.readArgs,
+		c.mergeAddons,
 	)
 }
 
-func (c *Config) GetContainerById(id string) *ContainerConfig {
-	for _, c := range c.SystemContainers {
-		if c.Id == id {
-			return &c
+func (c *Config) mergeAddons() error {
+	for _, addon := range c.EnabledAddons {
+		if newConfig, ok := c.Addons[addon]; ok {
+			log.Debugf("Enabling addon %s", addon)
+			_, err := c.PrivilegedMerge(newConfig)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

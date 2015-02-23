@@ -34,7 +34,7 @@ type Container struct {
 	HostConfig   *runconfig.HostConfig
 	dockerHost   string
 	Container    *dockerClient.Container
-	containerCfg *config.ContainerConfig
+	ContainerCfg *config.ContainerConfig
 }
 
 type ByCreated []dockerClient.APIContainers
@@ -65,7 +65,7 @@ func StartAndWait(dockerHost string, containerCfg *config.ContainerConfig) error
 func NewContainer(dockerHost string, containerCfg *config.ContainerConfig) *Container {
 	c := &Container{
 		dockerHost:   dockerHost,
-		containerCfg: containerCfg,
+		ContainerCfg: containerCfg,
 	}
 	return c.Parse()
 }
@@ -102,7 +102,7 @@ func (c *Container) Lookup() *Container {
 		return c
 	}
 
-	hash, err := getHash(c.containerCfg)
+	hash, err := getHash(c.ContainerCfg)
 	if err != nil {
 		return c.returnErr(err)
 	}
@@ -169,7 +169,7 @@ func (c *Container) Parse() *Container {
 	flDetach := flags.Bool([]string{"d", "-detach"}, false, "")
 	flName := flags.String([]string{"#name", "-name"}, "", "")
 
-	args, err := shlex.Split(c.containerCfg.Cmd)
+	args, err := shlex.Split(c.ContainerCfg.Cmd)
 	if err != nil {
 		return c.returnErr(err)
 	}
@@ -181,8 +181,8 @@ func (c *Container) Parse() *Container {
 	c.detach = *flDetach
 	c.remove = *flRemove
 
-	if c.containerCfg.Id == "" {
-		c.containerCfg.Id = c.Name
+	if c.ContainerCfg.Id == "" {
+		c.ContainerCfg.Id = c.Name
 	}
 
 	return c
@@ -327,13 +327,13 @@ func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.Cr
 		opts.Config.Labels = make(map[string]string)
 	}
 
-	hash, err := getHash(c.containerCfg)
+	hash, err := getHash(c.ContainerCfg)
 	if err != nil {
 		return nil, err
 	}
 
 	opts.Config.Labels[HASH] = hash
-	opts.Config.Labels[ID] = c.containerCfg.Id
+	opts.Config.Labels[ID] = c.ContainerCfg.Id
 
 	return &opts, nil
 }
@@ -398,7 +398,7 @@ func (c *Container) start(wait bool) *Container {
 			return c.returnErr(err)
 		}
 
-		err := appendVolumesFrom(client, c.containerCfg, opts)
+		err := appendVolumesFrom(client, c.ContainerCfg, opts)
 		if err != nil {
 			return c.returnErr(err)
 		}
