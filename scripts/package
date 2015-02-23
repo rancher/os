@@ -45,3 +45,11 @@ cd ${CD}
         -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
         -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
         -o ${DIST}/artifacts/rancheros.iso $(pwd)
+
+if [ -e ${DIST}/artficats/iso-checksums.txt ]; then
+    rm ${DIST}/artficats/iso-checksums.txt
+fi
+
+for algorithm in 'sha256' 'md5'; do
+    echo "${algorithm}: $(${algorithm}sum ${DIST}/artifacts/rancheros.iso)" >> ${DIST}/artifacts/iso-checksums.txt
+done
