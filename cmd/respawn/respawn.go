@@ -25,7 +25,6 @@ func Main() {
 	app.Action = run
 
 	app.Run(os.Args)
-
 }
 
 func run(c *cli.Context) {
@@ -49,6 +48,9 @@ func run(c *cli.Context) {
 	var wait sync.WaitGroup
 
 	for _, line := range strings.Split(string(input), "\n") {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
 		wait.Add(1)
 		go execute(line, wait)
 	}
@@ -63,7 +65,7 @@ func execute(line string, wait sync.WaitGroup) {
 	for {
 		args := strings.Split(line, " ")
 
-		cmd := exec.Command(args[0], args[1:]...)
+		cmd := exec.Command("setsid", args...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
