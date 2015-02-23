@@ -40,6 +40,7 @@ func main() {
 	registerCmd("/sbin/poweroff", power.PowerOff)
 	registerCmd("/sbin/reboot", power.Reboot)
 	registerCmd("/sbin/halt", power.Halt)
+	registerCmd("/sbin/shutdown", power.Main)
 	registerCmd("/usr/bin/respawn", respawn.Main)
 	registerCmd("/usr/sbin/rancherctl", control.Main)
 	registerCmd("/usr/bin/cloud-init", cloudinit.Main)
