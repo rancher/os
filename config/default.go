@@ -70,6 +70,14 @@ func NewConfig() *Config {
 					"udev",
 			},
 			{
+				Id: "network",
+				Cmd: "--name=network " +
+					"--cap-add=NET_ADMIN " +
+					"--net=host " +
+					"--rm " +
+					"network",
+			},
+			{
 				Id: "cloud-init",
 				Cmd: "--name=cloud-init " +
 					"--rm " +
@@ -79,14 +87,6 @@ func NewConfig() *Config {
 					"--volumes-from=system-volumes " +
 					"cloudinit",
 				ReloadConfig: true,
-			},
-			{
-				Id: "network",
-				Cmd: "--name=network " +
-					"--cap-add=NET_ADMIN " +
-					"--net=host " +
-					"--rm " +
-					"network",
 			},
 			{
 				Id: "ntp",
