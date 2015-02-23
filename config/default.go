@@ -17,8 +17,8 @@ func NewConfig() *Config {
 		Userdocker: UserDockerInfo{
 			UseTLS: true,
 		},
-		CloudInit: CloudInit{ 
-				Datasources: []string{"file:/home/rancher/cloudconfig"},
+		CloudInit: CloudInit{
+			Datasources: []string{"configdrive:/media/config-2"},
 		},
 		SystemContainers: []ContainerConfig{
 			{
@@ -72,8 +72,10 @@ func NewConfig() *Config {
 				Id: "cloud-init",
 				Cmd: "--name=cloud-init " +
 					"--rm " +
+					"--privileged " +
 					"--net=host " +
 					"--volumes-from=command-volumes " +
+					"--volumes-from=system-volumes " +
 					"cloudinit",
 				ReloadConfig: true,
 			},

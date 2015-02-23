@@ -1,8 +1,22 @@
+// Copyright 2015 CoreOS, Inc.
+// Copyright 2015 Rancher Labs, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cloudinit
 
 import (
 	"flag"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -38,6 +52,7 @@ var (
 	outputDir  string
 	outputFile string
 	save       bool
+	execute    bool
 	sshKeyName string
 	flags      *flag.FlagSet
 )
@@ -45,13 +60,14 @@ var (
 func init() {
 	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.StringVar(&outputDir, "dir", "/var/lib/rancher/conf", "working directory")
-	flags.StringVar(&outputFile, "file", "cloud-config.yml", "cloud config file name")
+	flags.StringVar(&outputFile, "file", "cloud-config.yml", "output cloud config file name")
 	flags.StringVar(&sshKeyName, "ssh-key-name", "rancheros-cloud-config", "SSH key name")
 	flags.BoolVar(&save, "save", false, "save cloud config and exit")
+	flags.BoolVar(&execute, "execute", false, "execute saved cloud config")
 }
 
 func Main() {
-	flags.Parse(os.Args[1:])
+	flags.Parse(rancherConfig.FilterGlobalConfig(os.Args[1:]))
 
 	cfg, err := rancherConfig.LoadConfig()
 	if err != nil {
@@ -83,17 +99,17 @@ func Main() {
 			fail = true
 		}
 		if fail {
-			fmt.Println("failed validation")
+			log.Info("failed validation")
 			os.Exit(1)
 		}
 	} else {
 		log.Fatalf("Failed while validating user_data (%v)", err)
 	}
 
-	fmt.Printf("Fetching meta-data from datasource of type %v", ds.Type())
+	log.Infof("Fetching meta-data from datasource of type %v", ds.Type())
 	metadata, err := ds.FetchMetadata()
 	if err != nil {
-		fmt.Printf("Failed fetching meta-data from datasource: %v", err)
+		log.Infof("Failed fetching meta-data from datasource: %v", err)
 		os.Exit(1)
 	}
 
@@ -114,7 +130,7 @@ func Main() {
 		}
 	}
 
-	fmt.Println("Merging cloud-config from meta-data and user-data")
+	log.Info("Merging cloud-config from meta-data and user-data")
 	cc := mergeConfigs(ccu, metadata)
 
 	if save {
@@ -126,11 +142,12 @@ func Main() {
 			if data, err := yaml.Marshal(cc); err != nil {
 				log.Fatalf("Error while marshalling cloud config %v", err)
 			} else {
-				fileData = data
+				fileData = append([]byte("#cloud-config\n"), data...)
 			}
 		}
 
 		output := path.Join(outputDir, outputFile)
+		log.Infof("Writing merged cloud-config to %s", output)
 		if err := ioutil.WriteFile(output, fileData, 400); err != nil {
 			log.Fatalf("Error while writing file %v", err)
 		}
@@ -140,19 +157,29 @@ func Main() {
 
 	if script != nil {
 		if ds.Type() != "local-file" {
-			fmt.Println("can only execute local files")
+			log.Info("can only execute local files")
 		}
 		cmdPath := reflect.ValueOf(ds).Elem().Field(0).String()
+		if err := os.Chmod(cmdPath, 0500); err != nil {
+			log.Fatalf("Failed to set %s to executable : %v", cmdPath, err)
+		}
 		cmd := exec.Command(cmdPath)
-		fmt.Println("running ", cmdPath)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		log.Info("Running ", cmdPath)
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("Failed to run script: %v\n", err)
+			log.Infof("Failed to run script: %v\n", err)
 			os.Exit(1)
 		}
 	}
 
 	if &cc == nil {
-		log.Fatal("no config or script found")	
+		log.Fatal("no config or script found")
+	}
+
+	if len(cc.SSHAuthorizedKeys) > 0 {
+		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, env.SSHKeyName())
 	}
 
 	for _, user := range cc.Users {
@@ -163,7 +190,7 @@ func Main() {
 			authorizeSSHKeys(user.Name, user.SSHAuthorizedKeys, env.SSHKeyName())
 		}
 	}
-	
+
 	for _, file := range cc.WriteFiles {
 		f := system.File{File: file}
 		fullPath, err := system.WriteFile(&f, env.Root())
@@ -185,7 +212,7 @@ func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.Cl
 
 	if md.Hostname != "" {
 		if out.Hostname != "" {
-			fmt.Printf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", out.Hostname, md.Hostname)
+			log.Infof("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", out.Hostname, md.Hostname)
 		} else {
 			out.Hostname = md.Hostname
 		}
@@ -200,6 +227,16 @@ func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.Cl
 // on the different source command-line flags.
 func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
+
+	if execute {
+		cloudConfig := path.Join(outputDir, outputFile)
+		if _, err := os.Stat(cloudConfig); os.IsNotExist(err) {
+			return dss
+		}
+
+		dss = append(dss, file.NewDatasource(cloudConfig))
+		return dss
+	}
 
 	for _, ds := range cfg.CloudInit.Datasources {
 		parts := strings.SplitN(ds, ":", 2)
@@ -250,7 +287,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 
 			duration := datasourceInterval
 			for {
-				fmt.Printf("Checking availability of %q\n", s.Type())
+				log.Infof("Checking availability of %q\n", s.Type())
 				if s.IsAvailable() {
 					ds <- s
 					return
@@ -283,4 +320,3 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 	close(stop)
 	return s
 }
-

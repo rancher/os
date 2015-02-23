@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-CLOUD_CONFIG_FILE=/var/lib/rancher/cloud-config
-
 setup_ssh()
 {
     for i in rsa dsa ecdsa ed25519; do
@@ -28,10 +26,7 @@ setup_ssh()
     mkdir -p /var/run/sshd
 }
 
-
-if [ -s $CLOUD_CONFIG_FILE ]; then
-	cloud-init --from-file $CLOUD_CONFIG_FILE
-fi
+cloud-init -execute
 
 setup_ssh
 

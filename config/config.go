@@ -47,7 +47,7 @@ type Config struct {
 	RescueContainer  *ContainerConfig  `yaml:"rescue_container,omitempty"`
 	State            ConfigState       `yaml:"state,omitempty"`
 	Userdocker       UserDockerInfo    `yaml:"userdocker,omitempty"`
-	OsUpgradeChannel string		   `yaml:"os_upgrade_channel,omitempty"`
+	OsUpgradeChannel string            `yaml:"os_upgrade_channel,omitempty"`
 	SystemContainers []ContainerConfig `yaml:"system_containers,omitempty"`
 	SystemDockerArgs []string          `yaml:"system_docker_args,flow,omitempty"`
 	Modules          []string          `yaml:"modules,omitempty"`
@@ -75,7 +75,7 @@ type ConfigState struct {
 }
 
 type CloudInit struct {
-	Datasources []string `yaml:"datasources"`
+	Datasources []string `yaml:"datasources,omitempty"`
 }
 
 func (c *Config) PrivilegedMerge(newConfig Config) (bool, error) {
@@ -158,6 +158,17 @@ func LoadConfig() (*Config, error) {
 	return cfg, nil
 }
 
+func FilterGlobalConfig(input []string) []string {
+	result := make([]string, 0, len(input))
+	for _, value := range input {
+		if !strings.HasPrefix(value, "--rancher") {
+			result = append(result, value)
+		}
+	}
+
+	return result
+}
+
 func (c *Config) readArgs() error {
 	log.Debug("Reading config args")
 	parts := make([]string, len(os.Args))
@@ -167,8 +178,9 @@ func (c *Config) readArgs() error {
 			arg = arg[2:]
 		}
 
-		arg = strings.Replace(arg, "-", ".", -1)
-		parts = append(parts, arg)
+		kv := strings.SplitN(arg, "=", 2)
+		kv[0] = strings.Replace(kv[0], "-", ".", -1)
+		parts = append(parts, strings.Join(kv, "="))
 	}
 
 	cmdLine := strings.Join(parts, " ")
