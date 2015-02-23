@@ -18,6 +18,12 @@ const (
 )
 
 func PowerOff() {
+	defer func() {
+		if r := recover(); r!= nil {
+			log.Info("Error while shutting down containers, gracefully stopping")
+			os.Exit(0)
+		}
+	}()
 	if os.Geteuid() != 0 {
 		log.Info("poweroff: Permission Denied")
 		return	
@@ -27,6 +33,12 @@ func PowerOff() {
 }
 
 func Reboot() {
+	defer func() {
+		if r := recover(); r!= nil {
+			log.Info("Error while shutting down containers, gracefully stopping")
+			os.Exit(0)
+		}
+	}()
 	if os.Geteuid() != 0 {
 		log.Info("reboot: Permission Denied")
 		return
@@ -36,6 +48,12 @@ func Reboot() {
 }
 
 func Halt() {
+	defer func() {
+		if r := recover(); r!= nil {
+			log.Info("Error while shutting down containers, gracefully stopping")
+			os.Exit(0)
+		}
+	}()
 	if os.Geteuid() != 0 {
 		log.Info("reboot: Permission Denied")
 		return
@@ -58,7 +76,7 @@ func reboot(code int) {
 func shutDownContainers() error {
 	var err error
 	shutDown := true
-	timeout := uint(0)
+	timeout := uint(2)
 	for i := range os.Args {
 		arg := os.Args[i]
 		if arg == "-f" || arg == "--f" || arg == "--force" {
