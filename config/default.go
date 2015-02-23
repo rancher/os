@@ -37,6 +37,7 @@ func NewConfig() *Config {
 					"-v=/init:/sbin/halt:ro " +
 					"-v=/init:/sbin/poweroff:ro " +
 					"-v=/init:/sbin/reboot:ro " +
+					"-v=/init:/sbin/shutdown:ro " +
 					"-v=/init:/usr/bin/cloud-init:ro " +
 					"-v=/init:/usr/bin/tlsconf:ro " +
 					"-v=/init:/usr/bin/rancherctl:ro " +
