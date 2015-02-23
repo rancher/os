@@ -37,13 +37,13 @@ func Main() {
 		//	Action:    reload,
 		//},
 		{
-			Name:  "os",
-			Usage: "operating system upgrade/downgrade",
+			Name:        "os",
+			Usage:       "operating system upgrade/downgrade",
 			Subcommands: osSubcommands(),
 		},
 		{
-			Name: "tlsconf",
-			Usage: "setup tls configuration",
+			Name:        "tlsconf",
+			Usage:       "setup tls configuration",
 			Subcommands: tlsConfCommands(),
 		},
 	}

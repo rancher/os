@@ -30,27 +30,27 @@ func osSubcommands() []cli.Command {
 			Action: osUpgrade,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
-					Name: "stage, s",
+					Name:  "stage, s",
 					Usage: "Only stage the new upgrade, don't apply it",
 				},
 				cli.StringFlag{
-					Name: "image, i",
+					Name:  "image, i",
 					Usage: "upgrade to a certain image",
 				},
 				cli.StringFlag{
-					Name: "channel, c",
+					Name:  "channel, c",
 					Usage: "upgrade to the latest in a specific channel",
 				},
 			},
 		},
 		{
-			Name: "list",
-			Usage: "list the current available versions",
+			Name:   "list",
+			Usage:  "list the current available versions",
 			Action: osMetaDataGet,
 		},
 		{
-			Name: "rollback",
-			Usage: "rollback to the previous version",
+			Name:   "rollback",
+			Usage:  "rollback to the previous version",
 			Action: osRollback,
 		},
 	}
@@ -65,9 +65,9 @@ func osRollback(c *cli.Context) {
 
 	fileReader := bufio.NewScanner(file)
 	line := " "
-	for ; line[len(line)-1:] != "*"; {
+	for line[len(line)-1:] != "*" {
 		if !fileReader.Scan() {
-			log.Error("Current version not indicated in "+ osVersionsFile)
+			log.Error("Current version not indicated in " + osVersionsFile)
 		}
 		line = fileReader.Text()
 	}
@@ -79,9 +79,10 @@ func osRollback(c *cli.Context) {
 
 	startUpgradeContainer(line, false)
 }
-	
+
 func osMetaDataGet(c *cli.Context) {
-	osChannel, ok := getChannelUrl("meta"); if !ok {
+	osChannel, ok := getChannelUrl("meta")
+	if !ok {
 		log.Fatal("unrecognized channel meta")
 	}
 	resp, err := http.Get(osChannel)
@@ -113,7 +114,7 @@ func osUpgrade(c *cli.Context) {
 
 func startUpgradeContainer(image string, stage bool) {
 	container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &config.ContainerConfig{
-		Cmd:  "--name=upgrade " +
+		Cmd: "--name=upgrade " +
 			"--privileged " +
 			"--net=host " +
 			"--ipc=host " +
@@ -140,7 +141,7 @@ func getLatestImage(channel string) (string, error) {
 	data, err := getConfigData()
 
 	if err != nil {
-		return "", err	
+		return "", err
 	}
 
 	var pivot string
@@ -153,15 +154,16 @@ func getLatestImage(channel string) (string, error) {
 		}
 
 		switch currentChannel := val.(type) {
-			case string:
-				pivot = currentChannel
-			default:
-				return "", errors.New("invalid format of rancherctl config get os_upgrade_channel")
+		case string:
+			pivot = currentChannel
+		default:
+			return "", errors.New("invalid format of rancherctl config get os_upgrade_channel")
 		}
 	} else {
 		pivot = channel
 	}
-	osChannel, ok := getChannelUrl(pivot); if !ok {
+	osChannel, ok := getChannelUrl(pivot)
+	if !ok {
 		return "", errors.New("unrecognized channel " + pivot)
 	}
 	resp, err := http.Get(osChannel)
@@ -184,14 +186,13 @@ func parseBody(body []byte, channel string) string {
 
 func getChannelUrl(channel string) (string, bool) {
 	if osChannels == nil {
-		osChannels = map[string]string {
-				"stable" : "",
-				"alpha" : "",
-				"beta" : "",
-				"meta" : "",
+		osChannels = map[string]string{
+			"stable": "",
+			"alpha":  "",
+			"beta":   "",
+			"meta":   "",
 		}
 	}
-	channel, ok := osChannels[channel]; 
+	channel, ok := osChannels[channel]
 	return channel, ok
 }
-

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/fsouza/go-dockerclient"
 	log "github.com/Sirupsen/logrus"
+	"github.com/fsouza/go-dockerclient"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 func PowerOff() {
 	if os.Geteuid() != 0 {
 		log.Info("poweroff: Permission Denied")
-		return	
+		return
 	}
 	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)

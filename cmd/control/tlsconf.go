@@ -1,4 +1,4 @@
-package control 
+package control
 
 import (
 	"fmt"
@@ -10,32 +10,32 @@ import (
 )
 
 func tlsConfCommands() []cli.Command {
-	return []cli.Command {
+	return []cli.Command{
 		{
-			Name: "create",
-			Usage: "use it to create a new set of tls configuration certs and keys or upload existing ones",
+			Name:   "create",
+			Usage:  "use it to create a new set of tls configuration certs and keys or upload existing ones",
 			Action: tlsConfCreate,
-			Flags: []cli.Flag {
-				cli.StringFlag {
-					Name: "cakey",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "cakey",
 					Usage: "path to existing certificate authority key (only use with --generate)",
 				},
-				cli.StringFlag {
-					Name: "ca",
+				cli.StringFlag{
+					Name:  "ca",
 					Usage: "path to existing certificate authority (only use with --genreate)",
 				},
-				cli.BoolFlag {
-					Name: "generate, g",
+				cli.BoolFlag{
+					Name:  "generate, g",
 					Usage: "generate the client key and client cert from existing ca and cakey",
 				},
-				cli.StringFlag {
-					Name: "outDir, o",
+				cli.StringFlag{
+					Name:  "outDir, o",
 					Usage: "the output directory to save the generated certs or keys",
 				},
 			},
 		},
 	}
-} 
+}
 
 func tlsConfCreate(c *cli.Context) {
 	name := "rancher"
@@ -52,18 +52,18 @@ func tlsConfCreate(c *cli.Context) {
 	if val := c.String("outDir"); val != "" {
 		outDir = val
 	}
-	
+
 	if c.Bool("generate") {
 		generateCaCerts = false
 	}
-	
+
 	if val := c.String("cakey"); val != "" {
 		inputCaKey = val
 	}
 
 	if val := c.String("ca"); val != "" {
 		inputCaCert = val
-	}	
+	}
 
 	caCertPath = filepath.Join(outDir, caCertPath)
 	caKeyPath = filepath.Join(outDir, caKeyPath)
@@ -99,7 +99,6 @@ func tlsConfCreate(c *cli.Context) {
 		serverCertPath = "client-cert.pem"
 		serverKeyPath = "client-key.pem"
 	}
-
 
 	serverCertPath = filepath.Join(outDir, serverCertPath)
 	serverKeyPath = filepath.Join(outDir, serverKeyPath)
