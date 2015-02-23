@@ -29,3 +29,4 @@ echo export GOPATH=$GOPATH
 
 mkdir -p bin
 go build -ldflags "-linkmode external -extldflags -static" -o bin/rancheros
+strip --strip-all bin/rancheros
