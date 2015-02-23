@@ -1,0 +1,13 @@
+#!/bin/bash
+
+USERNAME=$1
+HOME_DIR=$(grep ^$USERNAME /etc/passwd | cut -f6 -d:)
+
+if [ ! -d $HOME_DIR/.ssh ]; then
+	mkdir -p $HOME_DIR/.ssh
+fi
+
+
+if [ ! grep -q $HOME_DIR/.ssh/authorized_keys ]; then 
+    echo "$2" >> $HOME_DIR/.ssh/authorized_keys
+fi
