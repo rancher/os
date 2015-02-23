@@ -19,8 +19,7 @@ const (
 
 func PowerOff() {
 	if os.Geteuid() != 0 {
-		log.Info("poweroff: Permission Denied")
-		return
+		log.Fatalf("%s: Permission Denied", os.Args[0])
 	}
 	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
@@ -28,8 +27,7 @@ func PowerOff() {
 
 func Reboot() {
 	if os.Geteuid() != 0 {
-		log.Info("reboot: Permission Denied")
-		return
+		log.Fatalf("%s: Permission Denied", os.Args[0])
 	}
 	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
@@ -37,8 +35,7 @@ func Reboot() {
 
 func Halt() {
 	if os.Geteuid() != 0 {
-		log.Info("reboot: Permission Denied")
-		return
+		log.Fatalf("%s: Permission Denied", os.Args[0])
 	}
 	syscall.Sync()
 	reboot(syscall.LINUX_REBOOT_CMD_HALT)
@@ -47,7 +44,7 @@ func Halt() {
 func reboot(code int) {
 	err := shutDownContainers()
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 	err = syscall.Reboot(code)
 	if err != nil {
@@ -58,7 +55,7 @@ func reboot(code int) {
 func shutDownContainers() error {
 	var err error
 	shutDown := true
-	timeout := uint(0)
+	timeout := uint(2)
 	for i := range os.Args {
 		arg := os.Args[i]
 		if arg == "-f" || arg == "--f" || arg == "--force" {
