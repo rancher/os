@@ -15,6 +15,7 @@ func Main() {
 	app.Version = config.VERSION
 	app.Author = "Rancher Labs, Inc."
 	app.Email = "darren@rancher.com"
+	app.EnableBashCompletion = true
 
 	app.Commands = []cli.Command{
 		{
@@ -24,24 +25,17 @@ func Main() {
 			Subcommands: configSubcommands(),
 		},
 		{
-			Name:      "module",
-			ShortName: "m",
-			Usage:     "module settings",
-			Subcommands: []cli.Command{
-				{
-					Name:  "activate",
-					Usage: "turn on a module and possibly reboot",
-				},
-				{
-					Name:  "deactivate",
-					Usage: "turn off a module and possibly reboot",
-				},
-				{
-					Name:  "list",
-					Usage: "list modules and state",
-				},
-			},
+			Name:        "addon",
+			ShortName:   "a",
+			Usage:       "addon settings",
+			Subcommands: addonSubCommands(),
 		},
+		//{
+		//	Name:      "reload",
+		//	ShortName: "a",
+		//	Usage:     "reload configuration of a service and restart the container",
+		//	Action:    reload,
+		//},
 		{
 			Name:  "os",
 			Usage: "operating system upgrade/downgrade",
