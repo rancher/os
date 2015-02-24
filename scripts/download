@@ -4,6 +4,5 @@ cd $(dirname $0)/..
 
 source scripts/build-common
 
-download 5f4fdc1e17db658a3c3d7476ca19cc35960e0b53 http://storage.googleapis.com/darren-dev/os-base-dev3.tar.xz
-mv ${ARTIFACTS}/os-base{-dev3,}.tar.xz
+download 73a825ad2664e9da99b9a0ca5e794afccc0b058c https://github.com/rancherio/os-base/releases/download/v0.0.4/os-base.tar.xz
 download 1acbe869b32869bca5788373e8624a2957cbb380 https://github.com/ibuildthecloud/docker/releases/download/v1.5.0-rancher-2/docker-1.5.0
