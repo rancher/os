@@ -15,6 +15,7 @@ HD=${BASE}/build/empty-hd.img
 HD_GZ=${ARTIFACTS}/empty-hd.img.gz
 INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
 INITRD_TEST=${BUILD}/initrd.test
+USER_DATA=cloud-init/openstack/latest/user_data
 
 if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
     echo "Failed to find ${KERNEL} or ${INITRD}" 1>&2
@@ -33,6 +34,10 @@ if [ ! -d ${INITRD_TMP} ]; then
     popd
 fi
 
+if [ ! -e bin/rancheros ]; then
+    ./script/build
+fi
+
 cp bin/rancheros ${INITRD_TMP}/init
 cd ${INITRD_TMP}
 
@@ -46,6 +51,16 @@ else
         zcat ${HD_GZ} > ${HD}
     fi
 
-    qemu-system-x86_64 -serial stdio -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -append "x $@" ${QEMU_ARGS}
+    mkdir -p $(dirname $USER_DATA)
+
+    echo "#cloud-config" > ${USER_DATA}
+    echo "ssh_authorized_keys:" >> ${USER_DATA}
+    for i in ${HOME}/.ssh/*.pub; do
+        if [ -e $i ]; then
+            echo "  - $(<$i)" >> ${USER_DATA}
+        fi
+    done
+
+    qemu-system-x86_64 -serial stdio -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 -append "x rancher.password=rancher $@" ${QEMU_ARGS}
 
 fi

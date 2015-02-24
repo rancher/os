@@ -29,10 +29,7 @@ default rancheros
 label rancheros
     kernel /boot/vmlinuz
     initrd /boot/initrd
-    append quiet
-
-prompt 1
-timeout 1
+    append quiet rancher.password=rancher
 EOF
 
 # Copied from boot2docker, thanks.

@@ -26,6 +26,18 @@ setup_ssh()
     mkdir -p /var/run/sshd
 }
 
+for i in $(</proc/cmdline); do
+    case $i in
+        rancher.password=*)
+            PASSWORD=$(echo $i | sed 's/rancher.password=//')
+            ;;
+    esac
+done
+
+if [ -n "$PASSWORD" ]; then
+    echo "rancher:$PASSWORD" | chpasswd
+fi
+
 cloud-init -execute
 
 setup_ssh

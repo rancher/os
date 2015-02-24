@@ -10,7 +10,6 @@ RUN locale-gen en_US.UTF-8
 RUN addgroup --gid 1100 rancher && \
     addgroup --gid 1101 docker && \
     useradd -u 1100 -g rancher -G docker,sudo -m -s /bin/bash rancher && \
-    sed -i 's/rancher.*/rancher:rixbL64o6zGmY:16486:0:99999:7:::/g' /etc/shadow && \
     echo '## allow password less for rancher user' >> /etc/sudoers && \
     echo 'rancher ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 CMD ["/usr/sbin/console.sh"]
