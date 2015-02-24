@@ -15,10 +15,10 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.1.0 - Docker 1.5.0 - Linux 3.18.6**
+**v0.1.1 - Docker 1.5.0 - Linux 3.18.6**
 
 ### ISO
- https://github.com/rancherio/os/releases/download/v0.1.0/rancheros.iso
+ https://github.com/rancherio/os/releases/download/v0.1.1/rancheros.iso
 
 ### Amazon
 
