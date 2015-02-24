@@ -286,6 +286,8 @@ func RunInit() error {
 			return err
 		},
 		mountCgroups,
+		setResolvConf,
+		createSymlinks,
 		extractModules,
 		loadModules,
 		mountState,
@@ -298,8 +300,6 @@ func RunInit() error {
 		func(cfg *config.Config) error {
 			return cfg.Reload()
 		},
-		setResolvConf,
-		createSymlinks,
 		remountRo,
 		sysInit,
 	}

@@ -29,7 +29,7 @@ default rancheros
 label rancheros
     kernel /boot/vmlinuz
     initrd /boot/initrd
-    append quiet rancher.password=rancher
+    append quiet rancher.password=rancher rancher.modules=[mptspi]
 EOF
 
 # Copied from boot2docker, thanks.
