@@ -15,18 +15,18 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.1.0 - Docker 1.5.0 - Linux 3.18.6**
+**v0.1.1 - Docker 1.5.0 - Linux 3.18.6**
 
 ### ISO
- https://github.com/rancherio/os/releases/download/v0.1.0/rancheros.iso
+ https://github.com/rancherio/os/releases/download/v0.1.1/rancheros.iso
 
 ### Amazon
 
 Region | Type | AMI |
 -------|------|------
-us-east-1 | PV | [ami-XXXXX](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchAmi=ami-XXXX)
-us-west-1 | PV | [ami-XXXXX](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchAmi=ami-XXXX)
-us-west-2 | PV | [ami-XXXXX](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-XXXX)
+us-east-1 | PV | [ami-eeaefc86](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchAmi=ami-eeaefc86)
+us-west-1 | PV | [ami-bb04e1ff](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchAmi=ami-bb04e1ff)
+us-west-2 | PV | [ami-5f0c2d6f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-5f0c2d6f)
 
 ## Running
 
