@@ -138,7 +138,7 @@ Since RancherOS is so small the default console is based off of Busybox.  This i
 
  Run the above but with `disable` to turn it off.  Currently you have to reboot the system to enable the new console.  I the future it will be dynamic and just require you to log out and back in.
 
-### Console is ephmereal
+### Console is ephemeral
 
 The console (and all system containers) are ephemeral.  This means on each reboot of the system all changes to the console are lost.  Any changes in `/home` or `/opt` will be persisted though.  Additionally, on startup of the console container, if `/opt/rancher/bin/start.sh` exists, it will be executed.  You can add anything to that script to configure your console the way you want it.
 
