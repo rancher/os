@@ -157,3 +157,19 @@ When the build is done the ISO should be in `dist/artifacts`
 Development is easiest done with KVM on Linux.  If you aren't running Linux natively then we recommend you run VMware Fusion/Workstation and enable VT-x support.  Then KVM will run sufficiently fast inside a Linux VM.
 
 First run `./build.sh` to create the initial bootstrap Docker images.  After that if you make changes to the go code only run `./script/build`.  To launch RancherOS in KVM from your dev version run `./script/run`.  You can SSH into KVM using `ssh -l rancher -p 2222 localhost`.  Your SSH keys should have been populated so you won't need a password.  If you don't have SSH keys then the password is "rancher".
+
+#License
+Copyright (c) 2014-2015 [Rancher Labs, Inc.](http://rancher.com)
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+[http://www.apache.org/licenses/LICENSE-2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
