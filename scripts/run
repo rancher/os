@@ -35,7 +35,7 @@ if [ ! -d ${INITRD_TMP} ]; then
 fi
 
 if [ ! -e bin/rancheros ]; then
-    ./script/build
+    ./scripts/build
 fi
 
 cp bin/rancheros ${INITRD_TMP}/init
