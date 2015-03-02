@@ -1,2 +1,3 @@
 FROM base
-CMD ["udhcpc", "-i", "eth0"]
+COPY scripts/dockerimages/scripts/network.sh /
+CMD ["/network.sh"]
