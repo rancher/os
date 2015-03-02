@@ -40,7 +40,7 @@ Vagrant is the simplest way to try out RancherOS from the desktop.  Refer to the
 
 ### Other
 
-KVM, VirtualBox, and VMware are all supported.  Just
+QEMU, VirtualBox, and VMware are all supported.  Just
 boot from the `rancheros.iso` with at least 1GB of memory.
 
 ## Logging in
@@ -136,7 +136,7 @@ Since RancherOS is so small the default console is based off of Busybox.  This i
 
     sudo rancherctl addon enable ubuntu-console
 
- Run the above but with `disable` to turn it off.  Currently you have to reboot the system to enable the new console.  I the future it will be dynamic and just require you to log out and back in.
+Run the above but with `disable` to turn it off.  Currently you have to reboot the system to enable the new console.  I the future it will be dynamic and just require you to log out and back in.
 
 ### Console is ephemeral
 
@@ -154,9 +154,9 @@ When the build is done the ISO should be in `dist/artifacts`
 
 ## Developing
 
-Development is easiest done with KVM on Linux.  If you aren't running Linux natively then we recommend you run VMware Fusion/Workstation and enable VT-x support.  Then KVM will run sufficiently fast inside a Linux VM.
+Development is easiest done with QEMU on Linux.  If you aren't running Linux natively then we recommend you run VMware Fusion/Workstation and enable VT-x support.  Then, QEMU (with KVM support) will run sufficiently fast inside a Linux VM.
 
-First run `./build.sh` to create the initial bootstrap Docker images.  After that if you make changes to the go code only run `./script/build`.  To launch RancherOS in KVM from your dev version run `./script/run`.  You can SSH into KVM using `ssh -l rancher -p 2222 localhost`.  Your SSH keys should have been populated so you won't need a password.  If you don't have SSH keys then the password is "rancher".
+First run `./build.sh` to create the initial bootstrap Docker images.  After that if you make changes to the go code only run `./scripts/build`.  To launch RancherOS in QEMU from your dev version run `./scripts/run`.  You can SSH in using `ssh -l rancher -p 2222 localhost`.  Your SSH keys should have been populated so you won't need a password.  If you don't have SSH keys then the password is "rancher".
 
 #License
 Copyright (c) 2014-2015 [Rancher Labs, Inc.](http://rancher.com)
