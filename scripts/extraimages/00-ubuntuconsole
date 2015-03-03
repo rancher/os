@@ -1,4 +1,4 @@
-FROM ubuntu:14.04.1
+FROM ubuntu:14.04
 RUN apt-get update && \
     apt-get upgrade --no-install-recommends -y && \
     apt-get install -y --no-install-recommends openssh-server
