@@ -23,7 +23,7 @@ Another way in which RancherOS is designed specifically for running Docker is th
 
 Like other minimalist Linux distributions, RancherOS boots incredibly quickly, generally in 5-10 seconds.  Starting Docker containers is nearly instant, similar to starting any other process. This quickness is ideal for organizations adopting microservices and autoscaling.
 
-Docker is an open-source platform designed for developers, system admins, and DevOps, it used to build, ship, and run containers, using simple yet powerful CLI, you can get started with Docker from [here](https://docs.docker.com/userguide/).
+Docker is an open-source platform designed for developers, system admins, and DevOps, it is used to build, ship, and run containers, using simple yet powerful CLI, you can get started with Docker from [Docker user guide](https://docs.docker.com/userguide/).
 
 ## Installing RancherOS
 ### Using Vagrant
