@@ -1,6 +1,6 @@
 # RancherOS Getting Started Guide
 
-RancherOS is a lightweight Linux distro designed from the ground up to run Docker containers. This guide will provide detailed instructions on how to get started using RancherOS, and will include:
+RancherOS is a lightweight Linux distro designed from the ground up to run Docker containers. This guide provides detailed instructions on how to get started using RancherOS, and including:
   - An overview of the RancherOS architecture.
   - Installation instructions for running RancherOS on Vagrant or AWS. 
   - Overview of how to deploy Docker containers on RancherOS.
@@ -9,9 +9,9 @@ RancherOS is a lightweight Linux distro designed from the ground up to run Docke
 
 ## RancherOS Architecture
 
-RancherOS is a 20MB distro which runs the latest Docker daemon as PID1, the first process on the system.  All other system services, like ntpd, rsyslog, console, etc. are run as Docker containers.
+RancherOS is a 20MB distro which runs the latest Docker daemon as PID1, the first process on the system.  All other system services, like ntpd, rsyslog, and console, are running in Docker containers.
 
-The first process on the system is called **System Docker** and its responsible for managing the system services on RancherOS, this process replaces traditional init systems like systemd, and can be used to launch additional system services, which we will see later in this guide..
+The first process on the system is called **System Docker** and it's responsible for managing the system services on RancherOS. System Docker replaces traditional init systems like systemd, and can be used to launch additional system services, which we will see later in this guide..
 
 System Docker runs a special container called **User Docker** which is another Docker daemon responsible for managing all of the user’s containers. Any containers you launch as a user from the console will run inside this User Docker. This creates isolation from the System Docker containers, and ensures normal user commands don’t impact system services.
 
