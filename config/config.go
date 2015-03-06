@@ -55,6 +55,20 @@ type Config struct {
 	SshInfo          SshInfo           `yaml:"ssh"`
 	EnabledAddons    []string          `yaml:"enabledAddons,omitempty"`
 	Addons           map[string]Config `yaml:"addons,omitempty"`
+	Network    	 NetworkConfig	   `yaml:"network_config,omitempty"`
+}
+
+type NetworkConfig struct {
+	Interfaces	[]InterfaceConfig 	`yaml:"config"`
+	PostRun 	*ContainerConfig	`yaml:"post_run"`
+}
+
+type InterfaceConfig struct {
+	Match	string	`yaml:"match"`
+	DHCP	bool	`yaml:"dhcp"`
+	Address	string	`yaml:"address,omitempty"`
+	Gateway	string	`yaml:"gateway,omitempty"`
+	MTU	int	`yaml:"mtu,omitempty"`
 }
 
 type UserDockerInfo struct {

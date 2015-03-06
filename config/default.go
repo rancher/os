@@ -17,6 +17,14 @@ func NewConfig() *Config {
 		Userdocker: UserDockerInfo{
 			UseTLS: true,
 		},
+		Network: NetworkConfig {
+			Interfaces: []InterfaceConfig {
+				{
+					Match: "*",
+					DHCP: true,
+				},
+			},
+		},
 		CloudInit: CloudInit{
 			Datasources: []string{"configdrive:/media/config-2"},
 		},
@@ -41,8 +49,8 @@ func NewConfig() *Config {
 					"-v=/init:/sbin/poweroff:ro " +
 					"-v=/init:/sbin/reboot:ro " +
 					"-v=/init:/sbin/shutdown:ro " +
+					"-v=/init:/sbin/netconf:ro " +
 					"-v=/init:/usr/bin/cloud-init:ro " +
-					"-v=/init:/usr/bin/tlsconf:ro " +
 					"-v=/init:/usr/bin/rancherctl:ro " +
 					"-v=/init:/usr/bin/respawn:ro " +
 					"-v=/init:/usr/bin/system-docker:ro " +

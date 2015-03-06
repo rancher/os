@@ -12,6 +12,7 @@ import (
 	"github.com/rancherio/os/cmd/respawn"
 	"github.com/rancherio/os/cmd/sysinit"
 	"github.com/rancherio/os/cmd/systemdocker"
+	"github.com/rancherio/os/cmd/network"
 	osInit "github.com/rancherio/os/init"
 )
 
@@ -44,6 +45,7 @@ func main() {
 	registerCmd("/usr/bin/respawn", respawn.Main)
 	registerCmd("/usr/sbin/rancherctl", control.Main)
 	registerCmd("/usr/bin/cloud-init", cloudinit.Main)
+	registerCmd("/usr/sbin/netconf", network.Main)
 
 	if !reexec.Init() {
 		log.Fatalf("Failed to find an entry point for %s", os.Args[0])
