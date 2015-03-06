@@ -41,7 +41,7 @@ func tlsConfCreate(c *cli.Context) {
 	name := "rancher"
 	bits := 2048
 
-	caCertPath := "ca.pem"
+	caCertPath := "ca-cert.pem"
 	caKeyPath := "ca-key.pem"
 	outDir := "/etc/docker/tls/"
 	generateCaCerts := true
@@ -78,12 +78,12 @@ func tlsConfCreate(c *cli.Context) {
 		}
 	} else {
 		if inputCaKey == "" || inputCaCert == "" {
-			fmt.Println("Please specify caKey and CaCert along with -g")
-			return
+			fmt.Println("Path to caKey and caCert not specified with -g, searching in default location")
+			inputCaKey = "/etc/docker/tls/ca-key.pem"
+			inputCaCert = "/etc/docker/tls/ca-cert.pem"
 		}
 
 		if _, err := os.Stat(inputCaKey); err != nil {
-
 			fmt.Printf("ERROR: %s does not exist\n", inputCaKey)
 			return
 		} else {
