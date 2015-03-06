@@ -138,6 +138,28 @@ Since RancherOS is so small the default console is based off of Busybox.  This i
 
 Run the above but with `disable` to turn it off.  Currently you have to reboot the system to enable the new console.  I the future it will be dynamic and just require you to log out and back in.
 
+## Addons: etcd and flannel
+
+[Etcd](https://github.com/coreos/etcd) and [flannel](https://github.com/coreos/flannel) are necessary if you'd like to run cluster management frameworks like [Kubernetes](https://github.com/GoogleCloudPlatform/kubernetes).
+
+Enable `etcd`:
+
+    sudo rancherctl addon enable etcd
+
+Etcd will start after the next reboot.
+When etcd is running, you can store flannel config in it:
+
+    sudo system-docker run --net=host --volumes-from=command-volumes --volumes-from=system-volumes \
+      etcdctl mk /coreos.com/network/config '{"Network":"10.244.0.0/16", "Backend": {"Type": "vxlan"}}'
+
+, where `10.244.0.0/16` is the overlay network flannel will allocate for containers on this RancherOS instance.
+
+Enable `flannel`:
+
+    sudo rancherctl addon enable flannel
+
+Again, currently flannel is going to start after reboot.
+
 ### Console is ephemeral
 
 The console (and all system containers) are ephemeral.  This means on each reboot of the system all changes to the console are lost.  Any changes in `/home` or `/opt` will be persisted though.  Additionally, on startup of the console container, if `/opt/rancher/bin/start.sh` exists, it will be executed.  You can add anything to that script to configure your console the way you want it.

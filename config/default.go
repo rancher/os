@@ -162,6 +162,37 @@ func NewConfig() *Config {
 					},
 				},
 			},
+			"etcd": {
+				SystemContainers: []ContainerConfig{
+					{
+						Id: "etcd",
+						Cmd: "--name=etcd " +
+							"-d " +
+							"--restart=always " +
+							"--net=host " +
+							"quay.io/coreos/etcd:v2.0.4 " +
+							"--listen-client-urls 'http://0.0.0.0:2379,http://0.0.0.0:4001'",
+					},
+				},
+			},
+			"flannel": {
+				SystemContainers: []ContainerConfig{
+					{
+						Id: "flannel",
+						Cmd: "--name=flannel " +
+							"-d " +
+							"--rm " +
+							"--restart=always " +
+							"--ipc=host " +
+							"--pid=host " +
+							"--net=host " +
+							"--privileged " +
+							"--volumes-from=command-volumes " +
+							"--volumes-from=system-volumes " +
+							"flannel",
+					},
+				},
+			},
 		},
 		RescueContainer: &ContainerConfig{
 			Id: "console",

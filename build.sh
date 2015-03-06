@@ -3,6 +3,8 @@ set -e
 
 cd $(dirname $0)
 
+./scripts/addon-deps
+
 export DOCKER_IMAGE=rancher-os-build
 
 ./scripts/ci "$@"
