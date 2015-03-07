@@ -4,7 +4,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -287,27 +286,27 @@ func (c *Container) renameOld(client *dockerClient.Client, opts *dockerClient.Cr
 		return nil
 	}
 
+	var newName string
 	if label, ok := existing.Config.Labels[HASH]; ok {
-		newName := fmt.Sprintf("%s-%s", existing.Name, label)
+		newName = fmt.Sprintf("%s-%s", existing.Name, label)
+	} else {
+		newName = fmt.Sprintf("%s-unknown-%s", existing.Name, util.RandSeq(12))
+	}
 
-		if existing.State.Running {
-			err := client.StopContainer(existing.ID, 2)
-			if err != nil {
-				return err
-			}
-
-			_, err = client.WaitContainer(existing.ID)
-			if err != nil {
-				return err
-			}
+	if existing.State.Running {
+		err := client.StopContainer(existing.ID, 2)
+		if err != nil {
+			return err
 		}
 
-		log.Debugf("Renaming %s to %s", existing.Name, newName)
-		return client.RenameContainer(existing.ID, newName)
-	} else {
-		//TODO: do something with containers with no hash
-		return errors.New("Existing container doesn't have a hash")
+		_, err = client.WaitContainer(existing.ID)
+		if err != nil {
+			return err
+		}
 	}
+
+	log.Debugf("Renaming %s to %s", existing.Name, newName)
+	return client.RenameContainer(existing.ID, newName)
 }
 
 func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.CreateContainerOptions, error) {
