@@ -124,6 +124,10 @@ check()
         return 1
     fi
 
+    if [ "$hash" = dev ]; then
+        return 0
+    fi
+
     CURRENT=$(sha1sum $file | awk '{print $1}')
 
     [ "$hash" = "$CURRENT" ]

@@ -35,7 +35,7 @@ generate_images()
 
 run ./scripts/bootstrap
 run ./scripts/test
-run --assets ./scripts/build-common ./scripts/download
+run --assets ./scripts/build-common --assets ./assets ./scripts/download
 run --assets ./scripts/dockerimages --assets ./scripts/build-images
 finish
 
