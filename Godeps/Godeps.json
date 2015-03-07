@@ -191,6 +191,14 @@
 			"Rev": "d57d9d2d5be197e12d9dee142d855470d83ce62f"
 		},
 		{
+			"ImportPath": "github.com/ryanuber/go-glob",
+			"Rev": "0067a9abd927e50aed5190662702f81231413ae0"
+		},
+		{
+			"ImportPath": "github.com/vishvananda/netlink",
+			"Rev": "ae3e7dba57271b4e976c4f91637861ee477135e2"
+		},
+		{
 			"ImportPath": "gopkg.in/yaml.v2",
 			"Rev": "a1c4bcb6c278a41992e2f4f0f29a44b4146daa5c"
 		}
