@@ -172,7 +172,7 @@ func NewConfig() *Config {
 							"--ipc=host " +
 							"--net=host " +
 							"--pid=host " +
-							"rancher/ubuntuconsole:v0.0.1",
+							"rancher/ubuntuconsole:v0.0.2",
 					},
 				},
 			},
