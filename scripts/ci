@@ -33,6 +33,10 @@ generate_images()
     fi
 }
 
+if [ -x "$(wrapdocker)" ] && ! docker info >/dev/null 2>&1; then
+    wrapdocker
+fi
+
 run ./scripts/bootstrap
 run ./scripts/test
 run --assets ./scripts/build-common --assets ./assets ./scripts/download
