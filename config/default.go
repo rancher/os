@@ -17,11 +17,15 @@ func NewConfig() *Config {
 		Userdocker: UserDockerInfo{
 			UseTLS: true,
 		},
-		Network: NetworkConfig {
-			Interfaces: []InterfaceConfig {
+		Network: NetworkConfig{
+			Interfaces: []InterfaceConfig{
 				{
-					Match: "*",
-					DHCP: true,
+					Match: "eth*",
+					DHCP:  true,
+				},
+				{
+					Match:   "lo",
+					Address: "127.0.0.1/8",
 				},
 			},
 		},
@@ -80,9 +84,11 @@ func NewConfig() *Config {
 			{
 				Id: "network",
 				Cmd: "--name=network " +
+					"--rm " +
 					"--cap-add=NET_ADMIN " +
 					"--net=host " +
-					"--rm " +
+					"--volumes-from=command-volumes " +
+					"--volumes-from=system-volumes " +
 					"network",
 			},
 			{

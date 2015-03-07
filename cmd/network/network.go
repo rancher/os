@@ -29,19 +29,23 @@ func Main() {
 }
 
 func applyNetworkConfigs(cfg *config.Config) error {
-	links, err := netlink.LinkList() 
+	links, err := netlink.LinkList()
 	if err != nil {
 		return err
 	}
-	
+
 	//apply network config
-	for _, netConf := range  cfg.Network.Interfaces {
+	for _, netConf := range cfg.Network.Interfaces {
 		for _, link := range links {
 			err := applyNetConf(link, netConf)
 			if err != nil {
-				log.Fatal(err)
+				log.Errorf("Failed to apply settings to %s : %v", link.Attrs().Name, err)
 			}
 		}
+	}
+
+	if err != nil {
+		return err
 	}
 
 	//post run
@@ -54,7 +58,8 @@ func applyNetworkConfigs(cfg *config.Config) error {
 func applyNetConf(link netlink.Link, netConf config.InterfaceConfig) error {
 	if matches(link.Attrs().Name, netConf.Match) {
 		if netConf.DHCP {
-			cmd := exec.Command("udhcpc", "-i", link.Attrs().Name)
+			log.Infof("Running DHCP on %s", link.Attrs().Name)
+			cmd := exec.Command("udhcpc", "-i", link.Attrs().Name, "-t", "20", "-n")
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			if err := cmd.Run(); err != nil {
@@ -72,23 +77,37 @@ func applyNetConf(link netlink.Link, netConf config.InterfaceConfig) error {
 				log.Error("addr add failed")
 				return err
 			}
+			log.Infof("Set %s on %s", netConf.Address, link.Attrs().Name)
 		}
+
 		if netConf.MTU > 0 {
 			if err := netlink.LinkSetMTU(link, netConf.MTU); err != nil {
 				log.Error("set MTU Failed")
-				return err	
+				return err
 			}
 		}
+
+		if err := netlink.LinkSetUp(link); err != nil {
+			log.Error("failed to setup link")
+			return err
+		}
+
 		if netConf.Gateway != "" {
-			route := netlink.Route{LinkIndex: link.Attrs().Index, Scope: netlink.SCOPE_LINK, Gw: net.ParseIP(netConf.Gateway)}
+			gatewayIp := net.ParseIP(netConf.Gateway)
+			if gatewayIp == nil {
+				return errors.New("Invalid gateway address " + netConf.Gateway)
+			}
+
+			route := netlink.Route{
+				Scope: netlink.SCOPE_UNIVERSE,
+				Gw:    net.ParseIP(netConf.Gateway),
+			}
 			if err := netlink.RouteAdd(&route); err != nil {
 				log.Error("gateway set failed")
 				return err
 			}
-		}
-		if err := netlink.LinkSetUp(link); err != nil {
-			log.Error("failed to setup link")
-			return err	
+
+			log.Infof("Set default gateway %s", netConf.Gateway)
 		}
 	}
 	return nil
@@ -97,4 +116,3 @@ func applyNetConf(link netlink.Link, netConf config.InterfaceConfig) error {
 func matches(link, conf string) bool {
 	return glob.Glob(conf, link)
 }
-

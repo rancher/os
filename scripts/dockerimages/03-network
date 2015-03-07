@@ -1,3 +1,2 @@
 FROM base
-COPY scripts/dockerimages/scripts/network.sh /
-CMD ["/network.sh"]
+CMD ["netconf"]
