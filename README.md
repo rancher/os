@@ -24,9 +24,15 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 Region | Type | AMI |
 -------|------|------
-us-east-1 | PV | [ami-eeaefc86](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchAmi=ami-eeaefc86)
-us-west-1 | PV | [ami-bb04e1ff](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchAmi=ami-bb04e1ff)
-us-west-2 | PV | [ami-5f0c2d6f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-5f0c2d6f)
+ap-northeast-1| PV | [ami-95db3395](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchAmi=ami-95db3395)
+ap-southeast-1| PV | [ami-64073136](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchAmi=ami-64073136)
+ap-southeast-2| PV | [ami-c588f9ff](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchAmi=ami-c588f9ff)
+eu-west-1| PV | [ami-57cd5f20](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchAmi=ami-57cd5f20)
+sa-east-1| PV | [ami-a311a8be](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchAmi=ami-a311a8be)
+us-east-1| PV | [ami-90f6d3f8](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchAmi=ami-90f6d3f8)
+us-west-1| PV | [ami-5992751d](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchAmi=ami-5992751d)
+us-west-2| PV | [ami-2b67451b](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-2b67451b)
+
 
 ## Running
 
