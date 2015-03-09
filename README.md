@@ -33,6 +33,8 @@ us-east-1| PV | [ami-90f6d3f8](https://console.aws.amazon.com/ec2/home?region=us
 us-west-1| PV | [ami-5992751d](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchAmi=ami-5992751d)
 us-west-2| PV | [ami-2b67451b](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-2b67451b)
 
+SSH keys are added to the **`rancher`** user.
+
 
 ## Running
 
