@@ -29,7 +29,7 @@ VBoxManage createhd --format vmdk --filename ./dist/artifacts/$VM.vmdk --size 40
 
 VBoxManage createvm --name $VM --ostype "Linux_64" --register
 
-VBoxManage storagectl $VM --name "SATA" --add sata
+VBoxManage storagectl $VM --name "SATA" --add sata --portcount 2
 VBoxManage storageattach $VM --storagectl "SATA" --port 0 --type hdd --medium ./dist/artifacts/$VM.vmdk
 VBoxManage storageattach $VM --storagectl "SATA" --port 1 --type dvddrive --medium ${RANCHER_ISO}
 
