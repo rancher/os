@@ -1,11 +1,14 @@
 #!/bin/bash
 set -x -e
 
-## DOC: configure VirtualBox vboxnet1 host-only virtual network for use with a RancherOS VM cluster
+vboxnet=vboxnet1
+ip_prefix=172.17.7
 
-## NOTE: host-only NIC `vboxnet1` should already exist!
+## DOC: configure VirtualBox ${vboxnet} host-only virtual network for use with a RancherOS VM cluster
 
-vboxmanage hostonlyif ipconfig vboxnet1 --ip 172.17.7.1
-vboxmanage dhcpserver remove --ifname vboxnet1 && :
-vboxmanage dhcpserver add --ifname vboxnet1 --ip 172.17.7.100 --netmask 255.255.255.0 \
-    --lowerip 172.17.7.101 --upperip 172.17.7.254 --enable
+## NOTE: host-only NIC ${vboxnet} should already exist!
+
+vboxmanage hostonlyif ipconfig ${vboxnet} --ip ${ip_prefix}.1
+vboxmanage dhcpserver remove --ifname ${vboxnet} && :
+vboxmanage dhcpserver add --ifname ${vboxnet} --ip ${ip_prefix}.100 --netmask 255.255.255.0 \
+    --lowerip ${ip_prefix}.101 --upperip ${ip_prefix}.254 --enable
