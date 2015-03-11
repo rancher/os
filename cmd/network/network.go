@@ -18,7 +18,7 @@ import (
 func Main() {
 	args := os.Args
 	if len(args) > 1 {
-		fmt.Println("call " + args[0] + "to load network config from rancher.yml config file")
+		fmt.Println("call " + args[0] + " to load network config from rancher.yml config file")
 		return
 	}
 	cfg, err := config.LoadConfig()
