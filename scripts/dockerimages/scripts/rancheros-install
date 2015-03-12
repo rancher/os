@@ -13,7 +13,7 @@ Options:
   -d device
   -f [ DANGEROUS! Data loss can happen ] partition/format without prompting
   -t install-type:
-        generic:    Creates 1 ext4 partition and installs RancherOS
+        generic:    (Default) Creates 1 ext4 partition and installs RancherOS
         amazon-ebs: Installs RancherOS and sets up PV-GRUB
   -v os-installer version.
   -h print this
@@ -21,9 +21,17 @@ EOF
 }
 
 PARTITION_FLAG="false"
-INSTALLER_VERSION="latest"
-EXTRA_ARGS=
 INSTALL_CONTAINER_IMAGE="rancher/os"
+
+if [ -x /usr/bin/rancherctl ]; then
+    INSTALL_CONTAINER_IMAGE="$(rancherctl config get upgrade.image)"
+fi
+
+if [ -n "$(grep RancherOS /etc/lsb-release)" ]; then
+    INSTALLER_VERSION=$(grep DISTRIB_RELEASE /etc/lsb-release|cut -d'=' -f2)
+fi
+
+EXTRA_ARGS=
 
 while getopts "c:d:ft:v:h" OPTION
 do
@@ -31,7 +39,6 @@ do
         c) CLOUD_CONFIG="$OPTARG" ;;
         d) DEVICE="$OPTARG" ;;
         f) FORCE_INSTALL="true" ;;
-        # p) PARTITION_FLAG="true" ;;
         t) INSTALL_TYPE="${OPTARG}" ;;
         v) INSTALLER_VERSION="$OPTARG" ;;
         h) usage; exit ;;
@@ -45,12 +52,17 @@ if [ "$(whoami)" != "root" ]; then
 fi
 
 if [[ -z "${INSTALL_TYPE}" ]]; then
-    echo "$0: No install type specified, -t required to install" 1>&2
-    exit 1
+    echo "No install type specified...defaulting to generic"
+    INSTALL_TYPE="generic"
 fi
 
 if [ -z "${CLOUD_CONFIG}" ] && [ "${INSTALL_TYPE}" != "amazon-ebs" ]; then
     echo "$0: called without cloud config. Can not proceed without -c" 1>&2
+    exit 1
+fi
+
+if [[ -z "${DEVICE}" ]]; then 
+    echo "$0: No device defined. Can not proceed without -d <dev> specified" 1>&2
     exit 1
 fi
 
