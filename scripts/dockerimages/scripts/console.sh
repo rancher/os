@@ -55,8 +55,11 @@ EOF
 RANCHER_HOME=/home/rancher
 if [ ! -d ${RANCHER_HOME} ]; then
     mkdir -p ${RANCHER_HOME}
-    chown rancher:rancher ${RANCHER_HOME}
     chmod 2755 ${RANCHER_HOME}
+fi
+
+if [ "$(ls -ld ${RANCHER_HOME}|grep rancher|awk -e '{print $3}')" != "rancher" ]; then
+    chown rancher:rancher ${RANCHER_HOME}
 fi
 
 if ! grep -q "$(hostname)" /etc/hosts; then
