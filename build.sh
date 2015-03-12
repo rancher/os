@@ -9,13 +9,25 @@ export DOCKER_IMAGE=rancher-os-build
 mkdir -p dist
 docker run --rm -it -e CHOWN_ID=$(id -u) -v $(pwd)/dist:/source/target $DOCKER_IMAGE
 
-# Stupidest argparse ever
-if echo "$@" | grep -q -- '--images'; then
-    ./scripts/build-extra-images
-    echo 'docker push rancher/ubuntuconsole'
-fi
+ARGS=`getopt -o '' -l images,push -- "$@"`
+eval set -- "${ARGS}"
 
-# And again
-if echo "$@" | grep -q -- '--push'; then
-    docker push rancher/ubuntuconsole
-fi
+while true
+do
+    case "$1" in
+        --images)
+            echo "Build images"
+            ./scripts/build-extra-images
+            shift
+            ;;
+        --push)
+            echo 'docker push rancher/ubuntuconsole'
+            docker push rancher/ubuntuconsole
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
+
