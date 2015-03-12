@@ -1,6 +1,7 @@
 FROM base
 COPY scripts/dockerimages/scripts/console.sh /usr/sbin/
 COPY scripts/dockerimages/scripts/update-ssh-keys /usr/bin/
+COPY scripts/dockerimages/scripts/rancheros-install /usr/sbin/
 RUN sed -i 's/rancher:!/rancher:*/g' /etc/shadow && \
     echo '## allow password less for rancher user' >> /etc/sudoers && \
     echo 'rancher ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
