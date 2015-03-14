@@ -33,7 +33,7 @@ generate_images()
     fi
 }
 
-if [ -x "$(wrapdocker)" ] && ! docker info >/dev/null 2>&1; then
+if [ -x "$(which wrapdocker)" ] && ! docker info >/dev/null 2>&1; then
     wrapdocker
 fi
 
