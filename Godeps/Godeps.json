@@ -180,7 +180,7 @@
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "d7ce918e02502d8f1b539703ef308977364385c6"
+			"Rev": "96713c2fd1829362fa590fec24594e0c115ce64b"
 		},
 		{
 			"ImportPath": "github.com/guelfey/go.dbus",
