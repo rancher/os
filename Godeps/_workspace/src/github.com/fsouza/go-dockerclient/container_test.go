@@ -7,6 +7,7 @@ package docker
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -536,7 +537,7 @@ func TestStartContainerNilHostConfig(t *testing.T) {
 func TestStartContainerNotFound(t *testing.T) {
 	client := newTestClient(&FakeRoundTripper{message: "no such container", status: http.StatusNotFound})
 	err := client.StartContainer("a2344", &HostConfig{})
-	expected := &NoSuchContainer{ID: "a2344"}
+	expected := &NoSuchContainer{ID: "a2344", Err: err.(*NoSuchContainer).Err}
 	if !reflect.DeepEqual(err, expected) {
 		t.Errorf("StartContainer: Wrong error returned. Want %#v. Got %#v.", expected, err)
 	}
@@ -1302,6 +1303,14 @@ func TestLogsNoContainer(t *testing.T) {
 func TestNoSuchContainerError(t *testing.T) {
 	var err = &NoSuchContainer{ID: "i345"}
 	expected := "No such container: i345"
+	if got := err.Error(); got != expected {
+		t.Errorf("NoSuchContainer: wrong message. Want %q. Got %q.", expected, got)
+	}
+}
+
+func TestNoSuchContainerErrorMessage(t *testing.T) {
+	var err = &NoSuchContainer{ID: "i345", Err: errors.New("some advanced error info")}
+	expected := "some advanced error info"
 	if got := err.Error(); got != expected {
 		t.Errorf("NoSuchContainer: wrong message. Want %q. Got %q.", expected, got)
 	}

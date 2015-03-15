@@ -255,6 +255,35 @@ func TestCreateContainerImageNotFound(t *testing.T) {
 	}
 }
 
+func TestRenameContainer(t *testing.T) {
+	server := DockerServer{}
+	addContainers(&server, 2)
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	newName := server.containers[0].Name + "abc"
+	path := fmt.Sprintf("/containers/%s/rename?name=%s", server.containers[0].ID, newName)
+	request, _ := http.NewRequest("POST", path, nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusNoContent {
+		t.Errorf("RenameContainer: wrong status. Want %d. Got %d.", http.StatusNoContent, recorder.Code)
+	}
+	container := server.containers[0]
+	if container.Name != newName {
+		t.Errorf("RenameContainer: did not rename the container. Want %q. Got %q.", newName, container.Name)
+	}
+}
+
+func TestRenameContainerNotFound(t *testing.T) {
+	server := DockerServer{}
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/containers/blabla/rename?name=something", nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusNotFound {
+		t.Errorf("RenameContainer: wrong status. Want %d. Got %d.", http.StatusNotFound, recorder.Code)
+	}
+}
+
 func TestCommitContainer(t *testing.T) {
 	server := DockerServer{}
 	addContainers(&server, 2)

@@ -92,6 +92,7 @@ func (s *DockerServer) buildMuxer() {
 	s.mux.Path("/containers/json").Methods("GET").HandlerFunc(s.handlerWrapper(s.listContainers))
 	s.mux.Path("/containers/create").Methods("POST").HandlerFunc(s.handlerWrapper(s.createContainer))
 	s.mux.Path("/containers/{id:.*}/json").Methods("GET").HandlerFunc(s.handlerWrapper(s.inspectContainer))
+	s.mux.Path("/containers/{id:.*}/rename").Methods("POST").HandlerFunc(s.handlerWrapper(s.renameContainer))
 	s.mux.Path("/containers/{id:.*}/top").Methods("GET").HandlerFunc(s.handlerWrapper(s.topContainer))
 	s.mux.Path("/containers/{id:.*}/start").Methods("POST").HandlerFunc(s.handlerWrapper(s.startContainer))
 	s.mux.Path("/containers/{id:.*}/kill").Methods("POST").HandlerFunc(s.handlerWrapper(s.stopContainer))
@@ -370,6 +371,23 @@ func (s *DockerServer) generateID() string {
 	var buf [16]byte
 	rand.Read(buf[:])
 	return fmt.Sprintf("%x", buf)
+}
+
+func (s *DockerServer) renameContainer(w http.ResponseWriter, r *http.Request) {
+	id := mux.Vars(r)["id"]
+	container, index, err := s.findContainer(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	copy := *container
+	copy.Name = r.URL.Query().Get("name")
+	s.cMut.Lock()
+	defer s.cMut.Unlock()
+	if s.containers[index].ID == copy.ID {
+		s.containers[index] = &copy
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *DockerServer) inspectContainer(w http.ResponseWriter, r *http.Request) {
