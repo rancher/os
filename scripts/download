@@ -4,5 +4,5 @@ cd $(dirname $0)/..
 
 source scripts/build-common
 
-download a7f1be93078d18f6a061896d34c64f12b97c8899 https://github.com/rancherio/os-base/releases/download/v0.0.5/os-base.tar.xz
+download d39f85b5c3ca59be9936627b2c3138bc2868fdfd https://github.com/rancherio/os-base/releases/download/v0.1.0/os-base.tar.xz
 download 1acbe869b32869bca5788373e8624a2957cbb380 https://github.com/ibuildthecloud/docker/releases/download/v1.5.0-rancher-2/docker-1.5.0

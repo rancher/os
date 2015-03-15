@@ -47,7 +47,7 @@ generate_images
 
 reset_docker_build
 ARGS=
-for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|dist|.git|scripts|bin)$'); do
+for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|dist|.git|scripts|bin|state)$'); do
     if [ -d $i ]; then
         run --assets $i
     else

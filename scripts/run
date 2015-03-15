@@ -11,7 +11,7 @@ BASE=$(pwd)
 KERNEL=${BASE}/dist/artifacts/vmlinuz
 INITRD=${BASE}/dist/artifacts/initrd
 NO_COMPRESS_INITRD=${INITRD}.none
-HD=${BASE}/build/empty-hd.img
+HD=${BASE}/state/empty-hd.img
 HD_GZ=${ARTIFACTS}/empty-hd.img.gz
 INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
 INITRD_TEST=${BUILD}/initrd.test
@@ -48,6 +48,7 @@ else
     find | cpio -H newc -o > ${INITRD_TEST}
 
     if [ ! -e ${HD} ]; then
+        mkdir -p $(dirname ${HD})
         zcat ${HD_GZ} > ${HD}
     fi
 
@@ -61,6 +62,18 @@ else
         fi
     done
 
-    qemu-system-x86_64 -serial stdio -kernel ${KERNEL} -initrd ${INITRD_TEST} -m 1024 -net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher -drive if=virtio,file=${HD} -machine accel=kvm -cpu host -smp 4 -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 -append "x rancher.password=rancher $@" ${QEMU_ARGS}
-
+    qemu-system-x86_64 -serial stdio \
+        -kernel ${KERNEL} \
+        -initrd ${INITRD_TEST} \
+        -m 1024 \
+        -net nic,vlan=0,model=virtio \
+        -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher \
+        -drive if=virtio,file=${HD} \
+        -machine accel=kvm \
+        -cpu host \
+        -smp 4 \
+        -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init \
+        -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
+        -append "x rancher.password=rancher $@" \
+        ${QEMU_ARGS}
 fi

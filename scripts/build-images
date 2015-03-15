@@ -12,6 +12,8 @@ mkdir -p ${BUILD}/initrd ${DIST}/artifacts
 echo Extracting ${ARTIFACTS}/os-base.tar.xz
 tar xJf ${ARTIFACTS}/os-base.tar.xz -C ${BUILD}
 
+tar xvf ${BUILD}/dist/kernel/*.tar -C ${BUILD}/dist/kernel
+
 cp /etc/ssl/certs/ca-certificates.crt ${ARTIFACTS}/ca.crt
 cp /etc/ssl/certs/ca-certificates.crt ${BUILD}/initrd/ca.crt
 cp ${BUILD}/dist/rootfs.tar ${ARTIFACTS}
@@ -37,7 +39,7 @@ cp -rf ${BUILD}/dist/kernel/lib ${BUILD}/initrd
 cp -f ${ARTIFACTS}/docker* ${BUILD}/initrd/docker
 chmod +x ${BUILD}/initrd/docker
 
-cp ${BUILD}/dist/kernel/bzImage ${DIST}/artifacts/vmlinuz
+cp ${BUILD}/dist/kernel/boot/vmlinuz* ${DIST}/artifacts/vmlinuz
 
 tar xf ${BUILD}/dist/rootfs-static.tar -C ${BUILD}/initrd --strip-components=2 ./bin/busybox
 
