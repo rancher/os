@@ -51,7 +51,7 @@ func disable(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err = cfg.Set("enabled_addons", cfg.EnabledAddons); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -72,7 +72,7 @@ func enable(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err = cfg.Set("enabled_addons", cfg.EnabledAddons); err != nil {
 			log.Fatal(err)
 		}
 	}

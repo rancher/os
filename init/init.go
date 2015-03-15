@@ -277,7 +277,7 @@ func RunInit() error {
 			}
 
 			if cfg.Debug {
-				cfgString, _ := cfg.Dump()
+				cfgString, _ := config.Dump(false, true)
 				if cfgString != "" {
 					log.Debugf("Config: %s", cfgString)
 				}

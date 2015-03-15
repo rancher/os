@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -153,4 +154,13 @@ func RandSeq(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func Convert(from, to interface{}) error {
+	bytes, err := yaml.Marshal(from)
+	if err != nil {
+		return err
+	}
+
+	return yaml.Unmarshal(bytes, to)
 }
