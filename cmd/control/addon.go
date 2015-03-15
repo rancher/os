@@ -13,17 +13,17 @@ func addonSubCommands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "enable",
-			Usage:  "turn on a module",
+			Usage:  "turn on an addon",
 			Action: enable,
 		},
 		{
 			Name:   "disable",
-			Usage:  "turn off a module",
+			Usage:  "turn off an addon",
 			Action: disable,
 		},
 		{
 			Name:   "list",
-			Usage:  "list modules and state",
+			Usage:  "list addons and state",
 			Action: list,
 		},
 	}
