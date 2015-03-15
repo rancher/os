@@ -259,7 +259,7 @@ func (c *Container) renameCurrent(client *dockerClient.Client) error {
 		return nil
 	}
 
-	err := client.RenameContainer(c.Container.ID, c.Name)
+	err := client.RenameContainer(dockerClient.RenameContainerOptions{ID: c.Container.ID, Name: c.Name})
 	if err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ func (c *Container) renameOld(client *dockerClient.Client, opts *dockerClient.Cr
 	}
 
 	existing, err := inspect(client, opts.Name)
-	if _, ok := err.(dockerClient.NoSuchContainer); ok {
+	if _, ok := err.(*dockerClient.NoSuchContainer); ok {
 		return nil
 	}
 
@@ -306,7 +306,7 @@ func (c *Container) renameOld(client *dockerClient.Client, opts *dockerClient.Cr
 	}
 
 	log.Debugf("Renaming %s to %s", existing.Name, newName)
-	return client.RenameContainer(existing.ID, newName)
+	return client.RenameContainer(dockerClient.RenameContainerOptions{ID: existing.ID, Name: newName})
 }
 
 func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.CreateContainerOptions, error) {
