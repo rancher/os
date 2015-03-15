@@ -170,19 +170,39 @@ func runContainers(cfg *config.Config) error {
 	return runContainersFrom("", cfg, containerConfigs)
 }
 
-func launchConsole(cfg *config.Config) error {
-	if !util.IsRunningInTty() {
+func tailConsole(cfg *config.Config) error {
+	if !cfg.Console.Tail {
 		return nil
 	}
 
-	log.Debugf("Attaching to console")
-	cmd := exec.Command("docker", "attach", "console")
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Start()
+	client, err := docker.NewSystemClient()
+	if err != nil {
+		return err
+	}
 
-	return cmd.Wait()
+	for _, container := range cfg.SystemContainers {
+		if container.Id != config.CONSOLE_CONTAINER {
+			continue
+		}
+
+		c := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &container).Lookup()
+		if c.Err != nil {
+			continue
+		}
+
+		log.Infof("Tailing console : %s", c.Name)
+		return client.Logs(dockerClient.LogsOptions{
+			Container:    c.Name,
+			Stdout:       true,
+			Stderr:       true,
+			Follow:       true,
+			OutputStream: os.Stdout,
+			ErrorStream:  os.Stderr,
+		})
+	}
+
+	log.Error("Console not found")
+	return nil
 }
 
 func sysInit() error {
@@ -198,7 +218,7 @@ func sysInit() error {
 			syscall.Sync()
 			return nil
 		},
-		//launchConsole,
+		tailConsole,
 	}
 
 	return config.RunInitFuncs(cfg, initFuncs)

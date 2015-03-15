@@ -32,19 +32,25 @@ type Config struct {
 	Dns     []string `yaml:"dns,flow,omitempty"`
 	//Rescue              bool              `yaml:"rescue,omitempty"`
 	//RescueContainer     *ContainerConfig  `yaml:"rescue_container,omitempty"`
+	Console             ConsoleConfig     `yaml:"console,omitempty"`
 	State               ConfigState       `yaml:"state,omitempty"`
 	Userdocker          UserDockerConfig  `yaml:"userdocker,omitempty"`
-	UpgradeConfig       UpgradeConfig     `yaml:"upgrade,omitempty"`
+	Upgrade             UpgradeConfig     `yaml:"upgrade,omitempty"`
 	BootstrapContainers []ContainerConfig `yaml:"bootstrap_containers,omitempty"`
 	SystemContainers    []ContainerConfig `yaml:"system_containers,omitempty"`
 	UserContainers      []ContainerConfig `yaml:"user_containers,omitempty"`
 	SystemDockerArgs    []string          `yaml:"system_docker_args,flow,omitempty"`
 	Modules             []string          `yaml:"modules,omitempty"`
 	CloudInit           CloudInit         `yaml:"cloud_init,omitempty"`
-	SshConfig           SshConfig         `yaml:"ssh,omitempty"`
+	Ssh                 SshConfig         `yaml:"ssh,omitempty"`
 	EnabledAddons       []string          `yaml:"enabled_addons,omitempty"`
 	Addons              map[string]Config `yaml:"addons,omitempty"`
 	Network             NetworkConfig     `yaml:"network,omitempty"`
+}
+
+type ConsoleConfig struct {
+	Tail      bool `yaml:"tail,omitempty"`
+	Ephemeral bool `yaml:"ephemeral,omitempty"`
 }
 
 type UpgradeConfig struct {
