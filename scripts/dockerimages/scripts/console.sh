@@ -26,6 +26,13 @@ setup_ssh()
     mkdir -p /var/run/sshd
 }
 
+RANCHER_HOME=/home/rancher
+if [ ! -d ${RANCHER_HOME} ]; then
+    mkdir -p ${RANCHER_HOME}
+    chown rancher:rancher ${RANCHER_HOME}
+    chmod 2755 ${RANCHER_HOME}
+fi
+
 for i in $(</proc/cmdline); do
     case $i in
         rancher.password=*)
@@ -56,13 +63,6 @@ cat > /etc/respawn.conf << EOF
 /sbin/getty 115200 tty6
 /usr/sbin/sshd -D
 EOF
-
-RANCHER_HOME=/home/rancher
-if [ ! -d ${RANCHER_HOME} ]; then
-    mkdir -p ${RANCHER_HOME}
-    chown rancher:rancher ${RANCHER_HOME}
-    chmod 2755 ${RANCHER_HOME}
-fi
 
 if ! grep -q "$(hostname)" /etc/hosts; then
     echo 127.0.1.1 $(hostname) >> /etc/hosts
