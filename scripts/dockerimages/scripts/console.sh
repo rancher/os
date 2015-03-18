@@ -54,6 +54,13 @@ fi
 
 setup_ssh
 
+VERSION="$(rancherctl -v | awk '{print $NF}')"
+cat > /etc/lsb-release << EOF
+DISTRIB_ID=RancherOS
+DISTRIB_RELEASE=${VERSION}
+DISTRIB_DESCRIPTION="RancherOS ${VERSION}"
+EOF
+
 cat > /etc/respawn.conf << EOF
 /sbin/getty 115200 tty1
 /sbin/getty 115200 tty2
