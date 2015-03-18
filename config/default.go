@@ -3,28 +3,50 @@ package config
 func NewConfig() *Config {
 	return &Config{
 		Debug: DEBUG,
-		Dns: []string{
-			"8.8.8.8",
-			"8.8.4.4",
-		},
-		State: ConfigState{
+		State: StateConfig{
 			Required: false,
 			Dev:      "LABEL=RANCHER_STATE",
 			FsType:   "auto",
 		},
-		SystemDockerArgs: []string{"docker", "-d", "-s", "overlay", "-b", "none", "--restart=false", "-H", DOCKER_SYSTEM_HOST},
-		Modules:          []string{},
-		Userdocker: UserDockerInfo{
-			UseTLS: true,
+		SystemDocker: DockerConfig{
+			Args: []string{
+				"docker",
+				"-d",
+				"-s",
+				"overlay",
+				"-b",
+				"none",
+				"--restart=false",
+				"-g", "/var/lib/system-docker",
+				"-H", DOCKER_SYSTEM_HOST,
+			},
+		},
+		Modules: []string{},
+		UserDocker: DockerConfig{
+			TLSArgs: []string{
+				"--tlsverify",
+				"--tlscacert=ca.pem",
+				"--tlscert=server-cert.pem",
+				"--tlskey=server-key.pem",
+				"-H=0.0.0.0:2376",
+			},
+			Args: []string{
+				"docker",
+				"-d",
+				"-s", "overlay",
+				"-G", "docker",
+				"-H", DOCKER_HOST,
+			},
 		},
 		Network: NetworkConfig{
-			Interfaces: []InterfaceConfig{
-				{
-					Match: "eth*",
-					DHCP:  true,
+			Dns: DnsConfig{
+				Nameservers: []string{"8.8.8.8", "8.8.4.4"},
+			},
+			Interfaces: map[string]InterfaceConfig{
+				"eth*": {
+					DHCP: true,
 				},
-				{
-					Match:   "lo",
+				"lo": {
 					Address: "127.0.0.1/8",
 				},
 			},
@@ -32,12 +54,28 @@ func NewConfig() *Config {
 		CloudInit: CloudInit{
 			Datasources: []string{"configdrive:/media/config-2"},
 		},
+		Upgrade: UpgradeConfig{
+			Url: "https://cdn.rancher.io/rancheros/versions.yml",
+		},
+		BootstrapContainers: []ContainerConfig{
+			{
+				Id: "udev",
+				Cmd: "--name=udev " +
+					"--net=none " +
+					"--privileged " +
+					"--rm " +
+					"-v=/dev:/host/dev " +
+					"-v=/lib/modules:/lib/modules:ro " +
+					"udev",
+			},
+		},
 		SystemContainers: []ContainerConfig{
 			{
 				Id: "system-volumes",
 				Cmd: "--name=system-volumes " +
 					"--net=none " +
 					"--read-only " +
+					"-v=/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt " +
 					"-v=/var/lib/rancher/conf:/var/lib/rancher/conf " +
 					"-v=/lib/modules:/lib/modules:ro " +
 					"-v=/var/run:/var/run " +
@@ -67,19 +105,42 @@ func NewConfig() *Config {
 				Cmd: "--name=user-volumes " +
 					"--net=none " +
 					"--read-only " +
-					"-v=/var/lib/rancher/state/home:/home " +
-					"-v=/var/lib/rancher/state/opt:/opt " +
+					"-v=/home:/home " +
+					"-v=/opt:/opt " +
 					"state",
 			},
 			{
-				Id: "udev",
-				Cmd: "--name=udev " +
+				Id: "docker-volumes",
+				Cmd: "--name=docker-volumes " +
 					"--net=none " +
-					"--privileged " +
+					"--read-only " +
+					"-v=/var/lib/docker:/var/lib/docker " +
+					"-v=/var/lib/system-docker:/var/lib/system-docker " +
+					"state",
+			},
+			{
+				Id: "all-volumes",
+				Cmd: "--name=all-volumes " +
 					"--rm " +
-					"-v=/dev:/host/dev " +
-					"-v=/lib/modules:/lib/modules:ro " +
-					"udev",
+					"--net=none " +
+					"--read-only " +
+					"--volumes-from=docker-volumes " +
+					"--volumes-from=command-volumes " +
+					"--volumes-from=user-volumes " +
+					"--volumes-from=system-volumes " +
+					"state",
+			},
+			{
+				Id: "cloud-init-pre",
+				Cmd: "--name=cloud-init-pre " +
+					"--rm " +
+					"--privileged " +
+					"--net=host " +
+					"-e CLOUD_INIT_NETWORK=false " +
+					"--volumes-from=command-volumes " +
+					"--volumes-from=system-volumes " +
+					"cloudinit",
+				ReloadConfig: true,
 			},
 			{
 				Id: "network",
@@ -133,10 +194,7 @@ func NewConfig() *Config {
 					"--pid=host " +
 					"--net=host " +
 					"--privileged " +
-					"--volumes-from=command-volumes " +
-					"--volumes-from=user-volumes " +
-					"--volumes-from=system-volumes " +
-					"-v=/var/lib/rancher/state/docker:/var/lib/docker " +
+					"--volumes-from=all-volumes " +
 					"userdocker",
 			},
 			{
@@ -145,9 +203,7 @@ func NewConfig() *Config {
 					"-d " +
 					"--rm " +
 					"--privileged " +
-					"--volumes-from=command-volumes " +
-					"--volumes-from=user-volumes " +
-					"--volumes-from=system-volumes " +
+					"--volumes-from=all-volumes " +
 					"--restart=always " +
 					"--ipc=host " +
 					"--net=host " +
@@ -165,9 +221,7 @@ func NewConfig() *Config {
 							"-d " +
 							"--rm " +
 							"--privileged " +
-							"--volumes-from=command-volumes " +
-							"--volumes-from=user-volumes " +
-							"--volumes-from=system-volumes " +
+							"--volumes-from=all-volumes " +
 							"--restart=always " +
 							"--ipc=host " +
 							"--net=host " +
@@ -176,21 +230,6 @@ func NewConfig() *Config {
 					},
 				},
 			},
-		},
-		RescueContainer: &ContainerConfig{
-			Id: "console",
-			Cmd: "--name=rescue " +
-				"-d " +
-				"--rm " +
-				"--privileged " +
-				"--volumes-from=console-volumes " +
-				"--volumes-from=user-volumes " +
-				"--volumes-from=system-volumes " +
-				"--restart=always " +
-				"--ipc=host " +
-				"--net=host " +
-				"--pid=host " +
-				"rescue",
 		},
 	}
 }

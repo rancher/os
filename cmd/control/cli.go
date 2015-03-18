@@ -14,7 +14,6 @@ func Main() {
 	app.Usage = "Control and configure RancherOS"
 	app.Version = config.VERSION
 	app.Author = "Rancher Labs, Inc."
-	app.Email = "darren@rancher.com"
 	app.EnableBashCompletion = true
 
 	app.Commands = []cli.Command{
@@ -22,12 +21,14 @@ func Main() {
 			Name:        "config",
 			ShortName:   "c",
 			Usage:       "configure settings",
+			HideHelp:    true,
 			Subcommands: configSubcommands(),
 		},
 		{
 			Name:        "addon",
 			ShortName:   "a",
 			Usage:       "addon settings",
+			HideHelp:    true,
 			Subcommands: addonSubCommands(),
 		},
 		//{
@@ -39,6 +40,7 @@ func Main() {
 		{
 			Name:        "os",
 			Usage:       "operating system upgrade/downgrade",
+			HideHelp:    true,
 			Subcommands: osSubcommands(),
 		},
 		{
