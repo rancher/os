@@ -52,6 +52,7 @@ write_base()
     cat > ${DOCKER_FILE} << EOF
 FROM ${DOCKER_BASE:=ubuntu:14.04.2}
 ENV TERM xterm
+ENV IN_DOCKER true
 WORKDIR /source
 CMD ["/source/scripts/install"]
 EOF
