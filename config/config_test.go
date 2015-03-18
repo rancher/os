@@ -1,6 +1,12 @@
 package config
 
-import "testing"
+import (
+	"fmt"
+	"log"
+	"testing"
+
+	"github.com/rancherio/os/util"
+)
 import "reflect"
 
 func TestParseCmdline(t *testing.T) {
@@ -92,4 +98,93 @@ func TestSet(t *testing.T) {
 	if !reflect.DeepEqual(data, expected) {
 		t.Fatalf("Expected %v, got %v", expected, data)
 	}
+}
+
+type OuterData struct {
+	One Data `"yaml:one"`
+}
+
+type Data struct {
+	Two   bool `"yaml:two"`
+	Three bool `"yaml:three"`
+}
+
+func TestMapMerge(t *testing.T) {
+	one := `
+one:
+  two: true`
+	two := `
+one:
+  three: true`
+
+	data := make(map[string]map[string]bool)
+	yaml.Unmarshal([]byte(one), data)
+	yaml.Unmarshal([]byte(two), data)
+
+	if _, ok := data["one"]; !ok {
+		t.Fatal("one not found")
+	}
+
+	if !data["one"]["three"] {
+		t.Fatal("three not found")
+	}
+
+	if data["one"]["two"] {
+		t.Fatal("two not found")
+	}
+
+	data2 := &OuterData{}
+	yaml.Unmarshal([]byte(one), data2)
+	yaml.Unmarshal([]byte(two), data2)
+
+	if !data2.One.Three {
+		t.Fatal("three not found")
+	}
+
+	if !data2.One.Two {
+		t.Fatal("two not found")
+	}
+
+}
+
+func TestUserDocker(t *testing.T) {
+	config := &Config{
+		UserDocker: DockerConfig{
+			TLS: true,
+		},
+	}
+
+	bytes, err := yaml.Marshal(config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	config = NewConfig()
+	err = yaml.Unmarshal(bytes, config)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	data := make(map[interface{}]interface{})
+	util.Convert(config, data)
+
+	fmt.Println(data)
+
+	val, ok := data["user_docker"]
+	if !ok {
+		t.Fatal("Failed to find user_docker")
+	}
+
+	if m, ok := val.(map[interface{}]interface{}); ok {
+		if v, ok := m["tls"]; ok {
+			if v != true {
+				t.Fatal("user_docker.tls is not true")
+			}
+		} else {
+			t.Fatal("user_docker.tls is not found")
+		}
+	} else {
+		t.Fatal("Bad data")
+	}
+
 }

@@ -62,26 +62,34 @@ func readSavedConfig(bytes []byte) (map[interface{}]interface{}, error) {
 }
 
 func readConfig(bytes []byte, files ...string) (map[interface{}]interface{}, error) {
-	data := make(map[interface{}]interface{})
+	// You can't just overlay yaml bytes on to maps, it won't merge, but instead
+	// just override the keys and not merge the map values.
+	left := make(map[interface{}]interface{})
 	for _, conf := range files {
 		content, err := readConfigFile(conf)
 		if err != nil {
 			return nil, err
 		}
 
-		err = yaml.Unmarshal(content, &data)
+		right := make(map[interface{}]interface{})
+		err = yaml.Unmarshal(content, &right)
 		if err != nil {
 			return nil, err
 		}
+
+		util.MergeMaps(left, right)
 	}
 
 	if bytes != nil && len(bytes) > 0 {
-		if err := yaml.Unmarshal(bytes, &data); err != nil {
+		right := make(map[interface{}]interface{})
+		if err := yaml.Unmarshal(bytes, &right); err != nil {
 			return nil, err
 		}
+
+		util.MergeMaps(left, right)
 	}
 
-	return data, nil
+	return left, nil
 }
 
 func readConfigFile(file string) ([]byte, error) {
