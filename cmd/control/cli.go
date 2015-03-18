@@ -42,8 +42,9 @@ func Main() {
 			Subcommands: osSubcommands(),
 		},
 		{
-			Name:        "tlsconf",
+			Name:        "tls",
 			Usage:       "setup tls configuration",
+			HideHelp:    true,
 			Subcommands: tlsConfCommands(),
 		},
 	}
