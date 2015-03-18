@@ -40,6 +40,11 @@ fi
 
 cloud-init -execute
 
+if [ -x /var/lib/rancher/conf/cloud-config-script ]; then
+    echo "Running /var/lib/rancher/conf/cloud-config-script"
+    /var/lib/rancher/conf/cloud-config-script || true
+fi
+
 setup_ssh
 
 cat > /etc/respawn.conf << EOF
