@@ -5,6 +5,7 @@ cd $(dirname $0)/..
 
 source scripts/build-common
 
+
 cp bin/rancheros ${BUILD}/initrd/init
 cp scripts/dockerimages/scripts/os-dockerfile ${BUILD}/initrd/Dockerfile
 
@@ -24,6 +25,7 @@ cp ${DIST}/artifacts/vmlinuz ${CD}/boot
 cp ${DIST}/artifacts/initrd ${CD}/boot
 cp /usr/lib/syslinux/isolinux.bin ${CD}/boot/isolinux
 cp /usr/lib/syslinux/linux.c32 ${CD}/boot/isolinux/ldlinux.c32
+
 cat > ${CD}/boot/isolinux/isolinux.cfg << EOF
 default rancheros
 label rancheros
@@ -32,21 +34,42 @@ label rancheros
     append quiet rancher.password=rancher
 EOF
 
-# Copied from boot2docker, thanks.
 cd ${CD}
-    xorriso \
-        -publisher "Rancher Labs, Inc." \
-        -as mkisofs \
-        -l -J -R -V "RancherOS" \
-        -no-emul-boot -boot-load-size 4 -boot-info-table \
-        -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
-        -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
-        -o ${DIST}/artifacts/rancheros.iso $(pwd)
+# Copied from boot2docker, thanks.
+xorriso \
+    -publisher "Rancher Labs, Inc." \
+    -as mkisofs \
+    -l -J -R -V "RancherOS" \
+    -no-emul-boot -boot-load-size 4 -boot-info-table \
+    -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
+    -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
+    -o ${DIST}/artifacts/rancheros.iso $(pwd)
+
+cat > ${CD}/boot/isolinux/isolinux.cfg << EOF
+default rancheros
+label rancheros
+    kernel /boot/vmlinuz
+    initrd /boot/initrd
+    append quiet rancher.password=rancher rancher.state.autoformat=[/dev/sda,/dev/vda]
+EOF
+
+cd ${CD}
+xorriso \
+    -publisher "Rancher Labs, Inc." \
+    -as mkisofs \
+    -l -J -R -V "RancherOS" \
+    -no-emul-boot -boot-load-size 4 -boot-info-table \
+    -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
+    -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
+    -o ${DIST}/artifacts/machine-rancheros.iso $(pwd)
+
 
 if [ -e ${DIST}/artficats/iso-checksums.txt ]; then
     rm ${DIST}/artficats/iso-checksums.txt
 fi
 
 for algorithm in 'sha256' 'md5'; do
-    echo "${algorithm}: $(${algorithm}sum ${DIST}/artifacts/rancheros.iso)" >> ${DIST}/artifacts/iso-checksums.txt
+    for i in ${DIST}/artifacts/*iso; do
+        echo "${algorithm}: $(${algorithm}sum ${i})" >> ${DIST}/artifacts/iso-checksums.txt
+    done
 done
