@@ -1,6 +1,7 @@
 #!/bin/bash
 set -x -e
 
+TLS_PATH=/etc/docker/tls
 CGROUPS="perf_event net_cls freezer devices blkio memory cpuacct cpu cpuset"
 
 mkdir -p /sys/fs/cgroup
@@ -17,34 +18,12 @@ fi
 
 rm -f /var/run/docker.pid
 
-USE_TLS=$(rancherctl config get userdocker.use_tls)
+ARGS=$(echo $(rancherctl config get user_docker.args | sed 's/^-//'))
 
-if [ "$USE_TLS" == "true" ]; then
-    TLS_CA_CERT=$(rancherctl config get userdocker.tls_ca_cert)
-    TLS_SERVER_CERT=$(rancherctl config get userdocker.tls_server_cert)
-    TLS_SERVER_KEY=$(rancherctl config get userdocker.tls_server_key)    
-
-    TLS_PATH=/etc/docker/tls
-    mkdir -p $TLS_PATH 
-
-    if [ -n "$TLS_CA_CERT" ] && [ -n "$TLS_SERVER_CERT" ] && [ -n "$TLS_SERVER_KEY" ]; then
-	echo "$TLS_CA_CERT" > $TLS_PATH/ca.pem
-	echo "$TLS_SERVER_CERT" > $TLS_PATH/server-cert.pem
-	echo "$TLS_SERVER_KEY" > $TLS_PATH/server-key.pem
-    else
-        rancherctl tlsconf create
-    	TLS_CA_CERT="$(cat $TLS_PATH/ca.pem)"
-    	TLS_SERVER_CERT="$(cat $TLS_PATH/server-cert.pem)"
-    	TLS_SERVER_KEY="$(cat $TLS_PATH/server-key.pem)"
-    fi 
-    
-    rancherctl config set -- userdocker.tls_ca_cert "$TLS_CA_CERT"
-    rancherctl config set -- userdocker.tls_server_cert "$TLS_SERVER_CERT"
-    rancherctl config set -- userdocker.tls_server_key "$TLS_SERVER_KEY"
-
-    exec >/var/log/userdocker.log 2>&1 
-    exec docker -d -s overlay --tlsverify --tlscacert=$TLS_PATH/ca.pem --tlscert=$TLS_PATH/server-cert.pem --tlskey=$TLS_PATH/server-key.pem -H=0.0.0.0:2376 -H=unix:///var/run/docker.sock -G docker
-else
-    exec >/var/log/userdocker.log 2>&1 
-    exec docker -d -s overlay -G docker
+if [ $(rancherctl config get user_docker.tls) = "true" ]; then
+    ARGS="$ARGS $(echo $(rancherctl config get user_docker.tls_args | sed 's/^-//'))"
+    rancherctl tls generate --server -d $TLS_PATH
+    cd $TLS_PATH
 fi
+
+exec $ARGS >/var/log/docker.log 2>&1
