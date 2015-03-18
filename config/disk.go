@@ -56,7 +56,7 @@ func saveToDisk(data map[interface{}]interface{}) error {
 }
 
 func readSavedConfig(bytes []byte) (map[interface{}]interface{}, error) {
-	return readConfig(bytes, ConfigFile, PrivateConfigFile)
+	return readConfig(bytes, CloudConfigFile, ConfigFile, PrivateConfigFile)
 }
 
 func readConfig(bytes []byte, files ...string) (map[interface{}]interface{}, error) {
