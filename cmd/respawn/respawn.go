@@ -127,7 +127,7 @@ func execute(line string, wg *sync.WaitGroup) {
 		}
 
 		if !running {
-			log.Info("%s : not restarting, exiting", line)
+			log.Infof("%s : not restarting, exiting", line)
 			break
 		}
 
