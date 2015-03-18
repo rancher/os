@@ -24,21 +24,23 @@ func saveToDisk(data map[interface{}]interface{}) error {
 	for k, v := range data {
 		if k == "ssh" {
 			private[k] = v
-		} else if k == "userdocker" {
-			var userDockerConfig UserDockerConfig
-			var userDockerConfigPrivate UserDockerConfig
+		} else if k == "user_docker" {
+			var userDockerConfig DockerConfig
+			var userDockerConfigPrivate DockerConfig
 			err := util.Convert(v, &userDockerConfig)
 			if err != nil {
 				return err
 			}
 
-			userDockerConfigPrivate.TLSCACert = userDockerConfig.TLSCACert
-			userDockerConfigPrivate.TLSServerKey = userDockerConfig.TLSServerKey
-			userDockerConfigPrivate.TLSServerCert = userDockerConfig.TLSServerCert
+			userDockerConfigPrivate.CAKey = userDockerConfig.CAKey
+			userDockerConfigPrivate.CACert = userDockerConfig.CACert
+			userDockerConfigPrivate.ServerKey = userDockerConfig.ServerKey
+			userDockerConfigPrivate.ServerCert = userDockerConfig.ServerCert
 
-			userDockerConfig.TLSCACert = ""
-			userDockerConfig.TLSServerKey = ""
-			userDockerConfig.TLSServerCert = ""
+			userDockerConfig.CAKey = ""
+			userDockerConfig.CACert = ""
+			userDockerConfig.ServerKey = ""
+			userDockerConfig.ServerCert = ""
 
 			config[k] = userDockerConfig
 			private[k] = userDockerConfigPrivate
