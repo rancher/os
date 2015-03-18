@@ -27,6 +27,9 @@ var (
 	}
 	postDirs []string = []string{
 		"/var/log",
+		"/var/lib/rancher/state/docker",
+		"/var/lib/rancher/state/home",
+		"/var/lib/rancher/state/opt",
 	}
 	mounts [][]string = [][]string{
 		[]string{"devtmpfs", "/dev", "devtmpfs", ""},
@@ -58,10 +61,15 @@ var (
 		"/sbin/modprobe":                     "/busybox",
 		DOCKER:                               "/docker",
 		SYSINIT:                              "/init",
+		"/home":                              "/var/lib/rancher/state/home",
+		"/opt":                               "/var/lib/rancher/state/opt",
+	}
+	postSymlinks map[string]string = map[string]string{
+		"/var/lib/docker": "/var/lib/rancher/state/docker",
 	}
 )
 
-func createSymlinks(cfg *config.Config) error {
+func createSymlinks(cfg *config.Config, symlinks map[string]string) error {
 	log.Debug("Creating symlinking")
 	for dest, src := range symlinks {
 		if _, err := os.Stat(dest); os.IsNotExist(err) {
@@ -146,8 +154,23 @@ func setResolvConf(cfg *config.Config) error {
 
 	defer f.Close()
 
-	for _, dns := range cfg.Dns {
+	for _, dns := range cfg.Network.Dns.Nameservers {
 		content := fmt.Sprintf("nameserver %s\n", dns)
+		if _, err = f.Write([]byte(content)); err != nil {
+			return err
+		}
+	}
+
+	search := strings.Join(cfg.Network.Dns.Search, " ")
+	if search != "" {
+		content := fmt.Sprintf("search %s\n", search)
+		if _, err = f.Write([]byte(content)); err != nil {
+			return err
+		}
+	}
+
+	if cfg.Network.Dns.Domain != "" {
+		content := fmt.Sprintf("domain %s\n", cfg.Network.Dns.Domain)
 		if _, err = f.Write([]byte(content)); err != nil {
 			return err
 		}
@@ -214,7 +237,7 @@ func execDocker(cfg *config.Config) error {
 	}
 
 	os.Stdin.Close()
-	return syscall.Exec(DOCKER, cfg.SystemDockerArgs, os.Environ())
+	return syscall.Exec(DOCKER, cfg.SystemDocker.Args, os.Environ())
 }
 
 func MainInit() {
@@ -286,19 +309,26 @@ func RunInit() error {
 			return err
 		},
 		mountCgroups,
-		setResolvConf,
-		createSymlinks,
+		func(cfg *config.Config) error {
+			return createSymlinks(cfg, symlinks)
+		},
 		extractModules,
 		loadModules,
+		setResolvConf,
+		bootstrap,
 		mountState,
+		func(cfg *config.Config) error {
+			return cfg.Reload()
+		},
+		setResolvConf,
 		func(cfg *config.Config) error {
 			return createDirs(postDirs...)
 		},
 		func(cfg *config.Config) error {
-			return createMounts(postMounts...)
+			return createSymlinks(cfg, postSymlinks)
 		},
 		func(cfg *config.Config) error {
-			return cfg.Reload()
+			return createMounts(postMounts...)
 		},
 		remountRo,
 		sysInit,
