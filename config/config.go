@@ -71,6 +71,16 @@ func (c *Config) Import(bytes []byte) error {
 	return c.Reload()
 }
 
+// This function only sets "non-empty" values
+func (c *Config) SetConfig(newConfig *Config) error {
+	bytes, err := yaml.Marshal(newConfig)
+	if err != nil {
+		return err
+	}
+
+	return c.Merge(bytes)
+}
+
 func (c *Config) Merge(bytes []byte) error {
 	data, err := readSavedConfig(bytes)
 	if err != nil {
@@ -156,15 +166,15 @@ func (c *Config) readCmdline() error {
 }
 
 func Dump(private, full bool) (string, error) {
-	files := []string{ConfigFile}
+	files := []string{CloudConfigFile, ConfigFile}
 	if private {
 		files = append(files, PrivateConfigFile)
 	}
 
-	var c Config
+	c := &Config{}
 
 	if full {
-		c = *NewConfig()
+		c = NewConfig()
 	}
 
 	data, err := readConfig(nil, files...)
@@ -186,11 +196,33 @@ func Dump(private, full bool) (string, error) {
 	return string(bytes), err
 }
 
+func (c *Config) configureConsole() error {
+	if !c.Console.Persistent {
+		return nil
+	}
+
+	for i := range c.SystemContainers {
+		// Need to modify original object, not the copy
+		var container *ContainerConfig = &c.SystemContainers[i]
+
+		if container.Id != CONSOLE_CONTAINER {
+			continue
+		}
+
+		if strings.Contains(container.Cmd, "--rm ") {
+			container.Cmd = strings.Replace(container.Cmd, "--rm ", "", 1)
+		}
+	}
+
+	return nil
+}
+
 func (c *Config) readGlobals() error {
 	return util.ShortCircuit(
 		c.readCmdline,
 		c.readArgs,
 		c.mergeAddons,
+		c.configureConsole,
 	)
 }
 
@@ -223,31 +255,6 @@ func (c *Config) Get(key string) (interface{}, error) {
 
 	return getOrSetVal(key, data, nil), nil
 }
-
-//func (c *Config) SetBytes(bytes []byte) error {
-//	content, err := readConfigFile()
-//	if err != nil {
-//		return err
-//	}
-//
-//	data := make(map[interface{}]interface{})
-//	err = yaml.Unmarshal(content, &data)
-//	if err != nil {
-//		return err
-//	}
-//
-//	err = yaml.Unmarshal(bytes, &data)
-//	if err != nil {
-//		return err
-//	}
-//
-//	content, err = yaml.Marshal(data)
-//	if err != nil {
-//		return err
-//	}
-//
-//	return ioutil.WriteFile(ConfigFile, content, 400)
-//}
 
 func (c *Config) Set(key string, value interface{}) error {
 	data, err := readSavedConfig(nil)
