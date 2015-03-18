@@ -76,7 +76,8 @@ if ! grep -q "$(hostname)" /etc/hosts; then
 fi
 
 if [ -x /opt/rancher/bin/start.sh ]; then
-    /opt/rancher/bin/start.sh
+    echo Executing custom script
+    /opt/rancher/bin/start.sh || true
 fi
 
 exec respawn -f /etc/respawn.conf
