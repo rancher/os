@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -37,6 +38,10 @@ func osSubcommands() []cli.Command {
 				cli.StringFlag{
 					Name:  "image, i",
 					Usage: "upgrade to a certain image",
+				},
+				cli.BoolFlag{
+					Name:  "force, f",
+					Usage: "do not prompt for input",
 				},
 			},
 		},
@@ -100,9 +105,9 @@ func osMetaDataGet(c *cli.Context) {
 	for _, image := range images.Available {
 		_, err := client.InspectImage(image)
 		if err == dockerClient.ErrNoSuchImage {
-			fmt.Println(image, " remote")
+			fmt.Println(image, "remote")
 		} else {
-			fmt.Println(image, " local")
+			fmt.Println(image, "local")
 		}
 	}
 }
@@ -129,10 +134,10 @@ func osUpgrade(c *cli.Context) {
 			log.Fatal("Failed to find latest image")
 		}
 	}
-	startUpgradeContainer(image, c.Bool("stage"))
+	startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"))
 }
 
-func startUpgradeContainer(image string, stage bool) {
+func startUpgradeContainer(image string, stage, force bool) {
 	container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &config.ContainerConfig{
 		Cmd: "--name=os-upgrade " +
 			"--rm " +
@@ -148,11 +153,56 @@ func startUpgradeContainer(image string, stage bool) {
 	}
 
 	if !stage {
-		container.StartAndWait()
+		fmt.Printf("Upgrading to %s : %v\n", image, stage)
+		if !force {
+			fmt.Print("Continue [y/N] ")
+			one := make([]byte, 1, 1)
+			_, err := os.Stdin.Read(one)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if string(one) != "Y" && string(one) != "y" {
+				os.Exit(1)
+			}
+		}
+
+		container.Start()
 		if container.Err != nil {
 			log.Fatal(container.Err)
 		}
-		power.Reboot()
+
+		client, err := docker.NewClient(config.DOCKER_SYSTEM_HOST)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		go func() {
+			client.Logs(dockerClient.LogsOptions{
+				Container:    container.Container.ID,
+				OutputStream: os.Stdout,
+				ErrorStream:  os.Stderr,
+				Follow:       true,
+				Stdout:       true,
+				Stderr:       true,
+			})
+		}()
+
+		exit, err := client.WaitContainer(container.Container.ID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if container.Err != nil {
+			log.Fatal(container.Err)
+		}
+
+		if exit == 0 {
+			log.Info("Rebooting")
+			power.Reboot()
+		} else {
+			os.Exit(exit)
+		}
 	}
 }
 
