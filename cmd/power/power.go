@@ -4,40 +4,122 @@ import (
 	"bufio"
 	"errors"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/fsouza/go-dockerclient"
+	dockerClient "github.com/fsouza/go-dockerclient"
+
+	"github.com/rancherio/os/docker"
 )
 
 const (
-	dockerPath        = "unix:///var/run/system-docker.sock"
-	dockerCGroupsFile = "/proc/self/cgroup"
+	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
 )
 
-func PowerOff() {
-	if os.Geteuid() != 0 {
-		log.Fatalf("%s: Permission Denied", os.Args[0])
+func runDocker() error {
+	if os.ExpandEnv("${IN_DOCKER}") == "true" {
+		return nil
 	}
-	syscall.Sync()
+
+	client, err := docker.NewSystemClient()
+	if err != nil {
+		return err
+	}
+
+	name := filepath.Base(os.Args[0])
+	exiting, err := client.InspectContainer(name)
+	if exiting != nil {
+		err := client.RemoveContainer(dockerClient.RemoveContainerOptions{
+			ID:    exiting.ID,
+			Force: true,
+		})
+
+		if err != nil {
+			return err
+		}
+	}
+
+	currentContainerId, err := getCurrentContainerId()
+	if err != nil {
+		return err
+	}
+
+	currentContainer, err := client.InspectContainer(currentContainerId)
+	if err != nil {
+		return err
+	}
+
+	powerContainer, err := client.CreateContainer(dockerClient.CreateContainerOptions{
+		Name: name,
+		Config: &dockerClient.Config{
+			Image: currentContainer.Config.Image,
+			Cmd:   os.Args,
+			Env: []string{
+				"IN_DOCKER=true",
+			},
+		},
+		HostConfig: &dockerClient.HostConfig{
+			PidMode: "host",
+			VolumesFrom: []string{
+				currentContainer.ID,
+			},
+			Privileged: true,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		client.AttachToContainer(dockerClient.AttachToContainerOptions{
+			Container:    powerContainer.ID,
+			OutputStream: os.Stdout,
+			ErrorStream:  os.Stderr,
+			Stderr:       true,
+			Stdout:       true,
+		})
+	}()
+
+	err = client.StartContainer(powerContainer.ID, powerContainer.HostConfig)
+	if err != nil {
+		return err
+	}
+
+	_, err = client.WaitContainer(powerContainer.ID)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	os.Exit(0)
+	return nil
+}
+
+func common() {
+	if os.Geteuid() != 0 {
+		log.Fatalf("%s: Need to be root", os.Args[0])
+	}
+
+	if err := runDocker(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func PowerOff() {
+	common()
 	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 }
 
 func Reboot() {
-	if os.Geteuid() != 0 {
-		log.Fatalf("%s: Permission Denied", os.Args[0])
-	}
-	syscall.Sync()
+	common()
 	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 }
 
 func Halt() {
-	if os.Geteuid() != 0 {
-		log.Fatalf("%s: Permission Denied", os.Args[0])
-	}
-	syscall.Sync()
+	common()
 	reboot(syscall.LINUX_REBOOT_CMD_HALT)
 }
 
@@ -46,6 +128,9 @@ func reboot(code int) {
 	if err != nil {
 		log.Error(err)
 	}
+
+	syscall.Sync()
+
 	err = syscall.Reboot(code)
 	if err != nil {
 		log.Fatal(err)
@@ -55,69 +140,72 @@ func reboot(code int) {
 func shutDownContainers() error {
 	var err error
 	shutDown := true
-	timeout := uint(2)
-	for i := range os.Args {
-		arg := os.Args[i]
+	timeout := 2
+	for i, arg := range os.Args {
 		if arg == "-f" || arg == "--f" || arg == "--force" {
 			shutDown = false
 		}
 		if arg == "-t" || arg == "--t" || arg == "--timeout" {
 			if len(os.Args) > i+1 {
-				t, er := strconv.Atoi(os.Args[i+1])
-				if er != nil {
+				t, err := strconv.Atoi(os.Args[i+1])
+				if err != nil {
 					return err
 				}
-				timeout = uint(t)
+				timeout = t
 			} else {
-				log.Info("please specify a timeout")
+				log.Error("please specify a timeout")
 			}
 		}
 	}
 	if !shutDown {
 		return nil
 	}
-	client, err := docker.NewClient(dockerPath)
+	client, err := docker.NewSystemClient()
 
 	if err != nil {
 		return err
 	}
 
-	opts := docker.ListContainersOptions{All: true, Filters: map[string][]string{"status": []string{"running"}}}
-	var containers []docker.APIContainers
+	opts := dockerClient.ListContainersOptions{
+		All: true,
+		Filters: map[string][]string{
+			"status": []string{"running"},
+		},
+	}
 
-	containers, err = client.ListContainers(opts)
-
+	containers, err := client.ListContainers(opts)
 	if err != nil {
 		return err
 	}
 
 	currentContainerId, err := getCurrentContainerId()
-
 	if err != nil {
 		return err
 	}
 
 	var stopErrorStrings []string
 
-	for i := range containers {
-		if containers[i].ID == currentContainerId {
+	for _, container := range containers {
+		if container.ID == currentContainerId {
 			continue
 		}
-		stopErr := client.StopContainer(containers[i].ID, timeout)
+
+		log.Infof("Stopping %s : %v", container.ID[:12], container.Names)
+		stopErr := client.StopContainer(container.ID, uint(timeout))
 		if stopErr != nil {
-			stopErrorStrings = append(stopErrorStrings, " ["+containers[i].ID+"] "+stopErr.Error())
+			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
 		}
 	}
 
 	var waitErrorStrings []string
 
-	for i := range containers {
-		if containers[i].ID == currentContainerId {
+	for _, container := range containers {
+		if container.ID == currentContainerId {
 			continue
 		}
-		_, waitErr := client.WaitContainer(containers[i].ID)
+		_, waitErr := client.WaitContainer(container.ID)
 		if waitErr != nil {
-			waitErrorStrings = append(waitErrorStrings, " ["+containers[i].ID+"] "+waitErr.Error())
+			waitErrorStrings = append(waitErrorStrings, " ["+container.ID+"] "+waitErr.Error())
 		}
 	}
 
@@ -129,7 +217,7 @@ func shutDownContainers() error {
 }
 
 func getCurrentContainerId() (string, error) {
-	file, err := os.Open(dockerCGroupsFile)
+	file, err := os.Open(DOCKER_CGROUPS_FILE)
 
 	if err != nil {
 		return "", err

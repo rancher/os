@@ -9,8 +9,8 @@
 		},
 		{
 			"ImportPath": "github.com/codegangsta/cli",
-			"Comment": "1.2.0-66-g6086d79",
-			"Rev": "6086d7927ec35315964d9fea46df6c04e6d697c1"
+			"Comment": "1.2.0-87-g8ce64f1",
+			"Rev": "8ce64f19ff08029a69d11b7615c9b591245450ad"
 		},
 		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/config",
@@ -180,7 +180,7 @@
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "d7ce918e02502d8f1b539703ef308977364385c6"
+			"Rev": "73a0e3760037ce30d63015a74af4ffe48329dbf8"
 		},
 		{
 			"ImportPath": "github.com/guelfey/go.dbus",

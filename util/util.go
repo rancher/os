@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -153,4 +154,31 @@ func RandSeq(n int) string {
 		b[i] = letters[rand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+func Convert(from, to interface{}) error {
+	bytes, err := yaml.Marshal(from)
+	if err != nil {
+		return err
+	}
+
+	return yaml.Unmarshal(bytes, to)
+}
+
+func MergeMaps(left, right map[interface{}]interface{}) {
+	for k, v := range right {
+		merged := false
+		if existing, ok := left[k]; ok {
+			if rightMap, ok := v.(map[interface{}]interface{}); ok {
+				if leftMap, ok := existing.(map[interface{}]interface{}); ok {
+					merged = true
+					MergeMaps(leftMap, rightMap)
+				}
+			}
+		}
+
+		if !merged {
+			left[k] = v
+		}
+	}
 }

@@ -13,17 +13,17 @@ func addonSubCommands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "enable",
-			Usage:  "turn on a module",
+			Usage:  "turn on an addon",
 			Action: enable,
 		},
 		{
 			Name:   "disable",
-			Usage:  "turn off a module",
+			Usage:  "turn off an addon",
 			Action: disable,
 		},
 		{
 			Name:   "list",
-			Usage:  "list modules and state",
+			Usage:  "list addons and state",
 			Action: list,
 		},
 	}
@@ -51,7 +51,7 @@ func disable(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err = cfg.Set("enabled_addons", cfg.EnabledAddons); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -72,7 +72,7 @@ func enable(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err = cfg.Set("enabled_addons", cfg.EnabledAddons); err != nil {
 			log.Fatal(err)
 		}
 	}

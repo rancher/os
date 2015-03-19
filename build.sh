@@ -19,3 +19,5 @@ fi
 if echo "$@" | grep -q -- '--push'; then
     docker push rancher/ubuntuconsole
 fi
+
+ls -l dist/artifacts

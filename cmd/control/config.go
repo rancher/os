@@ -12,7 +12,6 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/docker"
 )
 
 func configSubcommands() []cli.Command {
@@ -30,7 +29,7 @@ func configSubcommands() []cli.Command {
 		{
 			Name:   "import",
 			Usage:  "import configuration from standard in or a file",
-			Action: configImport,
+			Action: runImport,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "input, i",
@@ -40,43 +39,40 @@ func configSubcommands() []cli.Command {
 		},
 		{
 			Name:  "export",
-			Usage: "dump full configuration",
+			Usage: "export configuration",
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "output, o",
 					Usage: "File to which to save",
 				},
 				cli.BoolFlag{
-					Name:  "full",
-					Usage: "Include full configuration, not just writable fields",
+					Name:  "private, p",
+					Usage: "Include private information such as keys",
+				},
+				cli.BoolFlag{
+					Name:  "full, f",
+					Usage: "Include full configuration, including internal and default settings",
 				},
 			},
-			Action: configSave,
+			Action: export,
+		},
+		{
+			Name:   "merge",
+			Usage:  "merge configuration from stdin",
+			Action: merge,
 		},
 	}
 }
 
-func getConfigData() (map[interface{}]interface{}, error) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	content, err := cfg.Dump()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	data := make(map[interface{}]interface{})
-	err = yaml.Unmarshal([]byte(content), data)
-
-	return data, err
-}
-
-func configImport(c *cli.Context) {
-	var input io.Reader
+func runImport(c *cli.Context) {
+	var input io.ReadCloser
 	var err error
 	input = os.Stdin
+	cfg, err := config.LoadConfig()
+
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	inputFile := c.String("input")
 	if inputFile != "" {
@@ -84,6 +80,7 @@ func configImport(c *cli.Context) {
 		if err != nil {
 			log.Fatal(err)
 		}
+		defer input.Close()
 	}
 
 	bytes, err := ioutil.ReadAll(input)
@@ -91,36 +88,10 @@ func configImport(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	err = mergeConfig(bytes)
+	err = cfg.Import(bytes)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func mergeConfig(bytes []byte) error {
-	var newConfig config.Config
-
-	err := yaml.Unmarshal(bytes, &newConfig)
-	if err != nil {
-		return err
-	}
-
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
-
-	_, err = cfg.Merge(newConfig)
-	if err != nil {
-		return err
-	}
-
-	err = cfg.Save()
-	if err != nil {
-		return err
-	}
-
-	return err
 }
 
 func configSet(c *cli.Context) {
@@ -130,15 +101,12 @@ func configSet(c *cli.Context) {
 		return
 	}
 
-	data, err := getConfigData()
-	getOrSetVal(key, data, value)
-
-	bytes, err := yaml.Marshal(data)
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = mergeConfig(bytes)
+	err = cfg.Set(key, value)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -150,12 +118,15 @@ func configGet(c *cli.Context) {
 		return
 	}
 
-	data, err := getConfigData()
+	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	val := getOrSetVal(arg, data, nil)
+	val, err := cfg.Get(arg)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	printYaml := false
 	switch val.(type) {
@@ -183,6 +154,7 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 		val, ok := data[part]
 		last := i+1 == len(parts)
 
+		// Reached end, set the value
 		if last && value != nil {
 			if s, ok := value.(string); ok {
 				value = config.DummyMarshall(s)
@@ -190,6 +162,14 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 
 			data[part] = value
 			return value
+		}
+
+		// Missing intermediate key, create key
+		if !last && value != nil && !ok {
+			newData := map[interface{}]interface{}{}
+			data[part] = newData
+			data = newData
+			continue
 		}
 
 		if !ok {
@@ -211,25 +191,28 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 	return ""
 }
 
-func configSave(c *cli.Context) {
+func merge(c *cli.Context) {
+	bytes, err := ioutil.ReadAll(os.Stdin)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//TODO: why doesn't this work
-	for _, c := range cfg.SystemContainers {
-		container := docker.NewContainer("", &c)
-		if container.Err != nil {
-			log.Fatalf("Failed to parse [%s] : %v", c.Cmd, container.Err)
-		}
+	err = cfg.Merge(bytes)
+	if err != nil {
+		log.Fatal(err)
 	}
+}
 
-	if !c.Bool("full") {
-		cfg.ClearReadOnly()
+func export(c *cli.Context) {
+	content, err := config.Dump(c.Bool("private"), c.Bool("full"))
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	content, err := cfg.Dump()
 
 	output := c.String("output")
 	if output == "" {
@@ -240,5 +223,4 @@ func configSave(c *cli.Context) {
 			log.Fatal(err)
 		}
 	}
-
 }

@@ -1,13 +1,24 @@
 #!/bin/bash -e
-
-if [[ ! -x "$(which go)" && -x /usr/local/go/bin/go ]]; then
-    PATH=/usr/local/go/bin:${PATH}
-fi
+set -x
 
 cd $(dirname $0)/..
 
-if [ -f ./build/bootstrap.envs ];then
-    . ./build/bootstrap.envs
+if [ "$IN_DOCKER" != "true" ]; then
+    cat > .dockerfile << "EOF"
+FROM rancher/dind:v0.1.0
+COPY ./scripts/bootstrap /scripts/bootstrap
+RUN /scripts/bootstrap
+WORKDIR /source
+ENV IN_DOCKER true
+EOF
+
+    docker build -t rancher-os-go-build -f .dockerfile .
+    docker run --rm -v $(pwd):/source -it rancher-os-go-build ./scripts/build
+    exit 0
+fi
+
+if [[ ! -x "$(which go)" && -x /usr/local/go/bin/go ]]; then
+    PATH=/usr/local/go/bin:${PATH}
 fi
 
 if [ -z "$ROS_CUSTOM_GOPATH" ]; then
@@ -28,5 +39,5 @@ fi
 echo export GOPATH=$GOPATH
 
 mkdir -p bin
-go build -ldflags "-linkmode external -extldflags -static" -o bin/rancheros
+go build -tags netgo -ldflags "-linkmode external -extldflags -static" -o bin/rancheros
 strip --strip-all bin/rancheros

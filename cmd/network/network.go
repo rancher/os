@@ -35,11 +35,34 @@ func applyNetworkConfigs(cfg *config.Config) error {
 	}
 
 	//apply network config
-	for _, netConf := range cfg.Network.Interfaces {
-		for _, link := range links {
-			err := applyNetConf(link, netConf)
+	for _, link := range links {
+		linkName := link.Attrs().Name
+		var match config.InterfaceConfig
+
+		for key, netConf := range cfg.Network.Interfaces {
+			if netConf.Match == "" {
+				netConf.Match = key
+			}
+
+			if netConf.Match == "" {
+				continue
+			}
+
+			// "" means match has not been found
+			if match.Match == "" && matches(linkName, netConf.Match) {
+				match = netConf
+			}
+
+			if netConf.Match == linkName {
+				// Found exact match, use it over wildcard match
+				match = netConf
+			}
+		}
+
+		if match.Match != "" {
+			err = applyNetConf(link, match)
 			if err != nil {
-				log.Errorf("Failed to apply settings to %s : %v", link.Attrs().Name, err)
+				log.Errorf("Failed to apply settings to %s : %v", linkName, err)
 			}
 		}
 	}
@@ -56,60 +79,58 @@ func applyNetworkConfigs(cfg *config.Config) error {
 }
 
 func applyNetConf(link netlink.Link, netConf config.InterfaceConfig) error {
-	if matches(link.Attrs().Name, netConf.Match) {
-		if netConf.DHCP {
-			log.Infof("Running DHCP on %s", link.Attrs().Name)
-			cmd := exec.Command("udhcpc", "-i", link.Attrs().Name, "-t", "20", "-n")
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-			if err := cmd.Run(); err != nil {
-				log.Error(err)
-			}
-		} else {
-			if netConf.Address == "" {
-				return errors.New("DHCP is false and Address is not set")
-			}
-			addr, err := netlink.ParseAddr(netConf.Address)
-			if err != nil {
-				return err
-			}
-			if err := netlink.AddrAdd(link, addr); err != nil {
-				log.Error("addr add failed")
-				return err
-			}
-			log.Infof("Set %s on %s", netConf.Address, link.Attrs().Name)
+	if netConf.DHCP {
+		log.Infof("Running DHCP on %s", link.Attrs().Name)
+		cmd := exec.Command("udhcpc", "-i", link.Attrs().Name, "-t", "20", "-n")
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
+	} else if netConf.Address == "" {
+		return nil
+	} else {
+		addr, err := netlink.ParseAddr(netConf.Address)
+		if err != nil {
+			return err
+		}
+		if err := netlink.AddrAdd(link, addr); err != nil {
+			log.Error("addr add failed")
+			return err
+		}
+		log.Infof("Set %s on %s", netConf.Address, link.Attrs().Name)
+	}
+
+	if netConf.MTU > 0 {
+		if err := netlink.LinkSetMTU(link, netConf.MTU); err != nil {
+			log.Error("set MTU Failed")
+			return err
+		}
+	}
+
+	if err := netlink.LinkSetUp(link); err != nil {
+		log.Error("failed to setup link")
+		return err
+	}
+
+	if netConf.Gateway != "" {
+		gatewayIp := net.ParseIP(netConf.Gateway)
+		if gatewayIp == nil {
+			return errors.New("Invalid gateway address " + netConf.Gateway)
 		}
 
-		if netConf.MTU > 0 {
-			if err := netlink.LinkSetMTU(link, netConf.MTU); err != nil {
-				log.Error("set MTU Failed")
-				return err
-			}
+		route := netlink.Route{
+			Scope: netlink.SCOPE_UNIVERSE,
+			Gw:    net.ParseIP(netConf.Gateway),
 		}
-
-		if err := netlink.LinkSetUp(link); err != nil {
-			log.Error("failed to setup link")
+		if err := netlink.RouteAdd(&route); err != nil {
+			log.Error("gateway set failed")
 			return err
 		}
 
-		if netConf.Gateway != "" {
-			gatewayIp := net.ParseIP(netConf.Gateway)
-			if gatewayIp == nil {
-				return errors.New("Invalid gateway address " + netConf.Gateway)
-			}
-
-			route := netlink.Route{
-				Scope: netlink.SCOPE_UNIVERSE,
-				Gw:    net.ParseIP(netConf.Gateway),
-			}
-			if err := netlink.RouteAdd(&route); err != nil {
-				log.Error("gateway set failed")
-				return err
-			}
-
-			log.Infof("Set default gateway %s", netConf.Gateway)
-		}
+		log.Infof("Set default gateway %s", netConf.Gateway)
 	}
+
 	return nil
 }
 

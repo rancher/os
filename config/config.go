@@ -3,8 +3,6 @@ package config
 import (
 	"io/ioutil"
 	"os"
-	"regexp"
-	"strconv"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -12,90 +10,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-const (
-	VERSION            = "0.0.1"
-	CONSOLE_CONTAINER  = "console"
-	DOCKER_BIN         = "/usr/bin/docker"
-	DOCKER_SYSTEM_HOST = "unix:///var/run/system-docker.sock"
-	DOCKER_HOST        = "unix:///var/run/docker.sock"
-	IMAGES_PATH        = "/"
-	IMAGES_PATTERN     = "images*.tar"
-	SYS_INIT           = "/sbin/init-sys"
-	USER_INIT          = "/sbin/init-user"
-	MODULES_ARCHIVE    = "/modules.tar"
-	DEBUG              = false
-)
-
-var (
-	ConfigFile = "/var/lib/rancher/conf/rancher.yml"
-)
-
-type InitFunc func(*Config) error
-
-type ContainerConfig struct {
-	Id             string `yaml:"id,omitempty"`
-	Cmd            string `yaml:"run,omitempty"`
-	MigrateVolumes bool   `yaml:"migrate_volumes,omitempty"`
-	ReloadConfig   bool   `yaml:"reload_config,omitempty"`
-}
-
-type Config struct {
-	Debug            bool              `yaml:"debug,omitempty"`
-	Disable          []string          `yaml:"disable,omitempty"`
-	Dns              []string          `yaml:"dns,flow,omitempty"`
-	Rescue           bool              `yaml:"rescue,omitempty"`
-	RescueContainer  *ContainerConfig  `yaml:"rescue_container,omitempty"`
-	State            ConfigState       `yaml:"state,omitempty"`
-	Userdocker       UserDockerInfo    `yaml:"userdocker,omitempty"`
-	OsUpgradeChannel string            `yaml:"os_upgrade_channel,omitempty"`
-	SystemContainers []ContainerConfig `yaml:"system_containers,omitempty"`
-	SystemDockerArgs []string          `yaml:"system_docker_args,flow,omitempty"`
-	Modules          []string          `yaml:"modules,omitempty"`
-	CloudInit        CloudInit         `yaml:"cloud_init"`
-	SshInfo          SshInfo           `yaml:"ssh"`
-	EnabledAddons    []string          `yaml:"enabledAddons,omitempty"`
-	Addons           map[string]Config `yaml:"addons,omitempty"`
-	Network    	 NetworkConfig	   `yaml:"network_config,omitempty"`
-}
-
-type NetworkConfig struct {
-	Interfaces	[]InterfaceConfig 	`yaml:"config"`
-	PostRun 	*ContainerConfig	`yaml:"post_run"`
-}
-
-type InterfaceConfig struct {
-	Match	string	`yaml:"match"`
-	DHCP	bool	`yaml:"dhcp"`
-	Address	string	`yaml:"address,omitempty"`
-	Gateway	string	`yaml:"gateway,omitempty"`
-	MTU	int	`yaml:"mtu,omitempty"`
-}
-
-type UserDockerInfo struct {
-	UseTLS        bool   `yaml:"use_tls"`
-	TLSServerCert string `yaml:"tls_server_cert"`
-	TLSServerKey  string `yaml:"tls_server_key"`
-	TLSCACert     string `yaml:"tls_ca_cert"`
-}
-
-type SshInfo struct {
-	Keys map[string]string
-}
-
-type ConfigState struct {
-	FsType   string `yaml:"fstype"`
-	Dev      string `yaml:"dev"`
-	Required bool   `yaml:"required"`
-}
-
-type CloudInit struct {
-	Datasources []string `yaml:"datasources,omitempty"`
-}
-
-func (c *Config) PrivilegedMerge(newConfig Config) (bool, error) {
-	reboot, err := c.Merge(newConfig)
+func (c *Config) privilegedMerge(newConfig Config) error {
+	err := c.overlay(newConfig)
 	if err != nil {
-		return reboot, err
+		return err
 	}
 
 	toAppend := make([]ContainerConfig, 0, 5)
@@ -115,48 +33,66 @@ func (c *Config) PrivilegedMerge(newConfig Config) (bool, error) {
 
 	c.SystemContainers = append(c.SystemContainers, toAppend...)
 
-	return reboot, nil
+	return nil
 }
 
-func (c *Config) Merge(newConfig Config) (bool, error) {
-	//Efficient? Nope, but computers are fast
-	newConfig.ClearReadOnly()
-	content, err := newConfig.Dump()
-	if err != nil {
-		return false, err
+func (c *Config) overlay(newConfig Config) error {
+	newConfig.clearReadOnly()
+	return util.Convert(&newConfig, c)
+}
+
+func (c *Config) clearReadOnly() {
+	c.BootstrapContainers = make([]ContainerConfig, 0)
+	c.SystemContainers = make([]ContainerConfig, 0)
+}
+
+func clearReadOnly(data map[interface{}]interface{}) map[interface{}]interface{} {
+	newData := make(map[interface{}]interface{})
+	for k, v := range data {
+		newData[k] = v
 	}
 
-	log.Debugf("Input \n%s", string(content))
+	delete(newData, "system_container")
+	delete(newData, "bootstrap_container")
 
-	err = yaml.Unmarshal([]byte(content), c)
-	return true, err
+	return newData
 }
 
-func (c *Config) ClearReadOnly() {
-	c.SystemContainers = []ContainerConfig{}
-	c.RescueContainer = nil
-	c.Rescue = false
-	c.Debug = false
-	c.Addons = map[string]Config{}
-}
-
-func (c *Config) Dump() (string, error) {
-	content, err := yaml.Marshal(c)
-	if err != nil {
-		return "", err
-	} else {
-		return string(content), err
-	}
-}
-
-func (c Config) Save() error {
-	c.ClearReadOnly()
-	content, err := c.Dump()
+func (c *Config) Import(bytes []byte) error {
+	data, err := readConfig(bytes, PrivateConfigFile)
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(ConfigFile, []byte(content), 400)
+	if err = saveToDisk(data); err != nil {
+		return err
+	}
+
+	return c.Reload()
+}
+
+// This function only sets "non-empty" values
+func (c *Config) SetConfig(newConfig *Config) error {
+	bytes, err := yaml.Marshal(newConfig)
+	if err != nil {
+		return err
+	}
+
+	return c.Merge(bytes)
+}
+
+func (c *Config) Merge(bytes []byte) error {
+	data, err := readSavedConfig(bytes)
+	if err != nil {
+		return err
+	}
+
+	err = saveToDisk(data)
+	if err != nil {
+		return err
+	}
+
+	return c.Reload()
 }
 
 func LoadConfig() (*Config, error) {
@@ -170,17 +106,6 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return cfg, nil
-}
-
-func FilterGlobalConfig(input []string) []string {
-	result := make([]string, 0, len(input))
-	for _, value := range input {
-		if !strings.HasPrefix(value, "--rancher") {
-			result = append(result, value)
-		}
-	}
-
-	return result
 }
 
 func (c *Config) readArgs() error {
@@ -209,32 +134,13 @@ func (c *Config) readArgs() error {
 	return c.merge(cmdLineObj)
 }
 
-func (c *Config) merge(values map[string]interface{}) error {
-	// Lazy way to assign values to *Config
-	override, err := yaml.Marshal(values)
-	if err != nil {
-		return err
-	}
-	var newConfig Config
-	err = yaml.Unmarshal(override, &newConfig)
-	if err != nil {
-		return nil
-	}
-
-	_, err = c.Merge(newConfig)
-	return err
+func (c *Config) merge(values map[interface{}]interface{}) error {
+	values = clearReadOnly(values)
+	return util.Convert(values, c)
 }
 
-func (c *Config) readFile() error {
-	content, err := ioutil.ReadFile(ConfigFile)
-	if os.IsNotExist(err) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-
-	data := make(map[string]interface{})
-	err = yaml.Unmarshal(content, data)
+func (c *Config) readFiles() error {
+	data, err := readSavedConfig(nil)
 	if err != nil {
 		return err
 	}
@@ -259,75 +165,71 @@ func (c *Config) readCmdline() error {
 	return c.merge(cmdLineObj)
 }
 
-func DummyMarshall(value string) interface{} {
-	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-		return strings.Split(value[1:len(value)-1], ",")
+func Dump(private, full bool) (string, error) {
+	files := []string{CloudConfigFile, ConfigFile}
+	if private {
+		files = append(files, PrivateConfigFile)
 	}
 
-	if value == "true" {
-		return true
-	} else if value == "false" {
-		return false
-	} else if ok, _ := regexp.MatchString("^[0-9]+$", value); ok {
-		i, err := strconv.Atoi(value)
-		if err != nil {
-			panic(err)
-		}
-		return i
+	c := &Config{}
+
+	if full {
+		c = NewConfig()
 	}
 
-	return value
+	data, err := readConfig(nil, files...)
+	if err != nil {
+		return "", err
+	}
+
+	err = c.merge(data)
+	if err != nil {
+		return "", err
+	}
+
+	err = c.readGlobals()
+	if err != nil {
+		return "", err
+	}
+
+	bytes, err := yaml.Marshal(c)
+	return string(bytes), err
 }
 
-func parseCmdline(cmdLine string) map[string]interface{} {
-	result := make(map[string]interface{})
+func (c *Config) configureConsole() error {
+	if !c.Console.Persistent {
+		return nil
+	}
 
-outer:
-	for _, part := range strings.Split(cmdLine, " ") {
-		if !strings.HasPrefix(part, "rancher.") {
+	for i := range c.SystemContainers {
+		// Need to modify original object, not the copy
+		var container *ContainerConfig = &c.SystemContainers[i]
+
+		if container.Id != CONSOLE_CONTAINER {
 			continue
 		}
 
-		var value string
-		kv := strings.SplitN(part, "=", 2)
-
-		if len(kv) == 1 {
-			value = "true"
-		} else {
-			value = kv[1]
-		}
-
-		current := result
-		keys := strings.Split(kv[0], ".")[1:]
-		for i, key := range keys {
-			if i == len(keys)-1 {
-				current[key] = DummyMarshall(value)
-			} else {
-				if obj, ok := current[key]; ok {
-					if newCurrent, ok := obj.(map[string]interface{}); ok {
-						current = newCurrent
-					} else {
-						continue outer
-					}
-				} else {
-					newCurrent := make(map[string]interface{})
-					current[key] = newCurrent
-					current = newCurrent
-				}
-			}
+		if strings.Contains(container.Cmd, "--rm ") {
+			container.Cmd = strings.Replace(container.Cmd, "--rm ", "", 1)
 		}
 	}
 
-	log.Debugf("Input obj %s", result)
-	return result
+	return nil
+}
+
+func (c *Config) readGlobals() error {
+	return util.ShortCircuit(
+		c.readCmdline,
+		c.readArgs,
+		c.mergeAddons,
+		c.configureConsole,
+	)
 }
 
 func (c *Config) Reload() error {
 	return util.ShortCircuit(
-		c.readFile,
-		c.readCmdline,
-		c.readArgs,
-		c.mergeAddons,
+		c.readFiles,
+		c.readGlobals,
 	)
 }
 
@@ -335,8 +237,7 @@ func (c *Config) mergeAddons() error {
 	for _, addon := range c.EnabledAddons {
 		if newConfig, ok := c.Addons[addon]; ok {
 			log.Debugf("Enabling addon %s", addon)
-			_, err := c.PrivilegedMerge(newConfig)
-			if err != nil {
+			if err := c.privilegedMerge(newConfig); err != nil {
 				return err
 			}
 		}
@@ -345,14 +246,28 @@ func (c *Config) mergeAddons() error {
 	return nil
 }
 
-func RunInitFuncs(cfg *Config, initFuncs []InitFunc) error {
-	for i, initFunc := range initFuncs {
-		log.Debugf("[%d/%d] Starting", i+1, len(initFuncs))
-		if err := initFunc(cfg); err != nil {
-			log.Errorf("Failed [%d/%d] %d%%", i+1, len(initFuncs), ((i + 1) * 100 / len(initFuncs)))
-			return err
-		}
-		log.Debugf("[%d/%d] Done %d%%", i+1, len(initFuncs), ((i + 1) * 100 / len(initFuncs)))
+func (c *Config) Get(key string) (interface{}, error) {
+	data := make(map[interface{}]interface{})
+	err := util.Convert(c, &data)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	return getOrSetVal(key, data, nil), nil
+}
+
+func (c *Config) Set(key string, value interface{}) error {
+	data, err := readSavedConfig(nil)
+	if err != nil {
+		return err
+	}
+
+	getOrSetVal(key, data, value)
+
+	err = saveToDisk(data)
+	if err != nil {
+		return err
+	}
+
+	return c.Reload()
 }

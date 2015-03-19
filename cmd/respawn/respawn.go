@@ -5,12 +5,20 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+)
+
+var (
+	running     bool                = true
+	processes   map[int]*os.Process = map[int]*os.Process{}
+	processLock                     = sync.Mutex{}
 )
 
 func Main() {
@@ -27,7 +35,19 @@ func Main() {
 	app.Run(os.Args)
 }
 
+func setupSigterm() {
+	sigtermChan := make(chan os.Signal)
+	signal.Notify(sigtermChan, syscall.SIGTERM)
+	go func() {
+		for _ = range sigtermChan {
+			termPids()
+		}
+	}()
+}
+
 func run(c *cli.Context) {
+	setupSigterm()
+
 	var stream io.Reader = os.Stdin
 	var err error
 
@@ -45,20 +65,44 @@ func run(c *cli.Context) {
 		panic(err)
 	}
 
-	var wait sync.WaitGroup
+	var wg sync.WaitGroup
 
 	for _, line := range strings.Split(string(input), "\n") {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		wait.Add(1)
-		go execute(line, wait)
+		wg.Add(1)
+		go execute(line, &wg)
 	}
 
-	wait.Wait()
+	wg.Wait()
 }
 
-func execute(line string, wait sync.WaitGroup) {
+func addProcess(process *os.Process) {
+	processLock.Lock()
+	defer processLock.Unlock()
+	processes[process.Pid] = process
+}
+
+func removeProcess(process *os.Process) {
+	processLock.Lock()
+	defer processLock.Unlock()
+	delete(processes, process.Pid)
+}
+
+func termPids() {
+	running = false
+	processLock.Lock()
+	defer processLock.Unlock()
+
+	for _, process := range processes {
+		process.Signal(syscall.SIGTERM)
+	}
+}
+
+func execute(line string, wg *sync.WaitGroup) {
+	defer wg.Done()
+
 	start := time.Now()
 	count := 0
 
@@ -69,12 +113,22 @@ func execute(line string, wait sync.WaitGroup) {
 
 		err := cmd.Start()
 		if err != nil {
-			log.Error("%s : %v", line, err)
+			log.Errorf("%s : %v", line, err)
 		}
 
-		err = cmd.Wait()
+		if err == nil {
+			addProcess(cmd.Process)
+			err = cmd.Wait()
+			removeProcess(cmd.Process)
+		}
+
 		if err != nil {
-			log.Error("%s : %v", line, err)
+			log.Errorf("%s : %v", line, err)
+		}
+
+		if !running {
+			log.Infof("%s : not restarting, exiting", line)
+			break
 		}
 
 		count++
@@ -89,6 +143,4 @@ func execute(line string, wait sync.WaitGroup) {
 			start = time.Now()
 		}
 	}
-
-	wait.Done()
 }

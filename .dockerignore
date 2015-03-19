@@ -1,3 +1,5 @@
 .git
+state
 build
 dist
+Godeps/_workspace/pkg

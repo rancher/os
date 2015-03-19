@@ -26,6 +26,13 @@ setup_ssh()
     mkdir -p /var/run/sshd
 }
 
+RANCHER_HOME=/home/rancher
+if [ ! -d ${RANCHER_HOME} ]; then
+    mkdir -p ${RANCHER_HOME}
+    chown rancher:rancher ${RANCHER_HOME}
+    chmod 2755 ${RANCHER_HOME}
+fi
+
 for i in $(</proc/cmdline); do
     case $i in
         rancher.password=*)
@@ -40,7 +47,19 @@ fi
 
 cloud-init -execute
 
+if [ -x /var/lib/rancher/conf/cloud-config-script ]; then
+    echo "Running /var/lib/rancher/conf/cloud-config-script"
+    /var/lib/rancher/conf/cloud-config-script || true
+fi
+
 setup_ssh
+
+VERSION="$(rancherctl -v | awk '{print $NF}')"
+cat > /etc/lsb-release << EOF
+DISTRIB_ID=RancherOS
+DISTRIB_RELEASE=${VERSION}
+DISTRIB_DESCRIPTION="RancherOS ${VERSION}"
+EOF
 
 cat > /etc/respawn.conf << EOF
 /sbin/getty 115200 tty1
@@ -52,19 +71,13 @@ cat > /etc/respawn.conf << EOF
 /usr/sbin/sshd -D
 EOF
 
-RANCHER_HOME=/home/rancher
-if [ ! -d ${RANCHER_HOME} ]; then
-    mkdir -p ${RANCHER_HOME}
-    chown rancher:rancher ${RANCHER_HOME}
-    chmod 2755 ${RANCHER_HOME}
-fi
-
 if ! grep -q "$(hostname)" /etc/hosts; then
     echo 127.0.1.1 $(hostname) >> /etc/hosts
 fi
 
 if [ -x /opt/rancher/bin/start.sh ]; then
-    /opt/rancher/bin/start.sh
+    echo Executing custom script
+    /opt/rancher/bin/start.sh || true
 fi
 
 exec respawn -f /etc/respawn.conf

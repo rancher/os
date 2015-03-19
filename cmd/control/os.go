@@ -1,14 +1,16 @@
 package control
 
 import (
-	"bufio"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
+	"net/url"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"gopkg.in/yaml.v2"
+
+	dockerClient "github.com/fsouza/go-dockerclient"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancherio/os/cmd/power"
@@ -16,11 +18,10 @@ import (
 	"github.com/rancherio/os/docker"
 )
 
-var osChannels map[string]string
-
-const (
-	osVersionsFile = "/var/lib/rancher/versions"
-)
+type Images struct {
+	Current   string   `yaml:"current,omitempty"`
+	Available []string `yaml:"available,omitempty"`
+}
 
 func osSubcommands() []cli.Command {
 	return []cli.Command{
@@ -37,10 +38,6 @@ func osSubcommands() []cli.Command {
 					Name:  "image, i",
 					Usage: "upgrade to a certain image",
 				},
-				cli.StringFlag{
-					Name:  "channel, c",
-					Usage: "upgrade to the latest in a specific channel",
-				},
 			},
 		},
 		{
@@ -48,65 +45,88 @@ func osSubcommands() []cli.Command {
 			Usage:  "list the current available versions",
 			Action: osMetaDataGet,
 		},
-		{
-			Name:   "rollback",
-			Usage:  "rollback to the previous version",
-			Action: osRollback,
-		},
 	}
 }
 
-func osRollback(c *cli.Context) {
-	file, err := os.Open(osVersionsFile)
-
+func getImages() (*Images, error) {
+	upgradeUrl, err := getUpgradeUrl()
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	fileReader := bufio.NewScanner(file)
-	line := " "
-	for line[len(line)-1:] != "*" {
-		if !fileReader.Scan() {
-			log.Error("Current version not indicated in " + osVersionsFile)
+	var body []byte
+
+	if strings.HasPrefix(upgradeUrl, "/") {
+		body, err = ioutil.ReadFile(upgradeUrl)
+		if err != nil {
+			return nil, err
 		}
-		line = fileReader.Text()
-	}
-	if !fileReader.Scan() {
-		log.Error("already at earliest version, please choose a version specifically using upgrade --image")
-	}
-	line = fileReader.Text()
-	//TODO: process string if required
+	} else {
+		u, err := url.Parse(upgradeUrl)
+		if err != nil {
+			return nil, err
+		}
 
-	startUpgradeContainer(line, false)
+		q := u.Query()
+		q.Set("current", config.VERSION)
+		u.RawQuery = q.Encode()
+		upgradeUrl = u.String()
+
+		resp, err := http.Get(upgradeUrl)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return parseBody(body)
 }
 
 func osMetaDataGet(c *cli.Context) {
-	osChannel, ok := getChannelUrl("meta")
-	if !ok {
-		log.Fatal("unrecognized channel meta")
-	}
-	resp, err := http.Get(osChannel)
+	images, err := getImages()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
+
+	client, err := docker.NewSystemClient()
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Print(parseBody(body, osChannel))
+
+	for _, image := range images.Available {
+		_, err := client.InspectImage(image)
+		if err == dockerClient.ErrNoSuchImage {
+			fmt.Println(image, " remote")
+		} else {
+			fmt.Println(image, " local")
+		}
+	}
+}
+
+func getLatestImage() (string, error) {
+	images, err := getImages()
+	if err != nil {
+		return "", err
+	}
+
+	return images.Current, nil
 }
 
 func osUpgrade(c *cli.Context) {
-	channel := c.String("channel")
-
 	image := c.String("image")
 
 	if image == "" {
 		var err error
-		image, err = getLatestImage(channel)
+		image, err = getLatestImage()
 		if err != nil {
 			log.Fatal(err)
+		}
+		if image == "" {
+			log.Fatal("Failed to find latest image")
 		}
 	}
 	startUpgradeContainer(image, c.Bool("stage"))
@@ -114,14 +134,13 @@ func osUpgrade(c *cli.Context) {
 
 func startUpgradeContainer(image string, stage bool) {
 	container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &config.ContainerConfig{
-		Cmd: "--name=upgrade " +
+		Cmd: "--name=os-upgrade " +
+			"--rm " +
 			"--privileged " +
 			"--net=host " +
-			"--ipc=host " +
-			"--pid=host " +
-			"-v=/var:/var " +
-			"--volumes-from=system-volumes " +
-			image,
+			image + " " +
+			"-t rancher-upgrade " +
+			"-r " + config.VERSION,
 	}).Stage()
 
 	if container.Err != nil {
@@ -137,62 +156,21 @@ func startUpgradeContainer(image string, stage bool) {
 	}
 }
 
-func getLatestImage(channel string) (string, error) {
-	data, err := getConfigData()
-
+func parseBody(body []byte) (*Images, error) {
+	update := &Images{}
+	err := yaml.Unmarshal(body, update)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var pivot string
-
-	if pivot == "" {
-		val := getOrSetVal("os_upgrade_channel", data, nil)
-
-		if val == nil {
-			return "", errors.New("os_upgrade_channel is not set")
-		}
-
-		switch currentChannel := val.(type) {
-		case string:
-			pivot = currentChannel
-		default:
-			return "", errors.New("invalid format of rancherctl config get os_upgrade_channel")
-		}
-	} else {
-		pivot = channel
-	}
-	osChannel, ok := getChannelUrl(pivot)
-	if !ok {
-		return "", errors.New("unrecognized channel " + pivot)
-	}
-	resp, err := http.Get(osChannel)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	return parseBody(body, osChannel), nil
+	return update, nil
 }
 
-func parseBody(body []byte, channel string) string {
-	// just going to assume that the response is the image name
-	// can change it later based on server response design
-	return string(body)
-}
-
-func getChannelUrl(channel string) (string, bool) {
-	if osChannels == nil {
-		osChannels = map[string]string{
-			"stable": "",
-			"alpha":  "",
-			"beta":   "",
-			"meta":   "",
-		}
+func getUpgradeUrl() (string, error) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return "", err
 	}
-	channel, ok := osChannels[channel]
-	return channel, ok
+
+	return cfg.Upgrade.Url, nil
 }

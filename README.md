@@ -103,45 +103,8 @@ Options:
  
 ## Configuring
 
-The entire state of RancherOS is controlled by a single configuration document.
-You can edit the configuration with the `rancherctl config` command.  **Please note the configuration format is very much a work in progress and will most likely change in the early stages of RancherOS**
-
-Sample configuration
-
-```yaml
-dns: [8.8.8.8, 8.8.4.4]
-state:
-  fstype: auto
-  dev: LABEL=RANCHER_STATE
-  required: false
-userdocker:
-  use_tls: true
-  tls_server_cert: |-
-    -----BEGIN CERTIFICATE-----
-    ...
-    -----END CERTIFICATE-----
-  tls_server_key: |-
-    -----BEGIN RSA PRIVATE KEY-----
-    ...
-    -----END RSA PRIVATE KEY-----
-  tls_ca_cert: |-
-    -----BEGIN CERTIFICATE-----
-    ...
-    -----END CERTIFICATE-----
-system_docker_args: [docker, -d, -s, overlay, -b, none, --restart=false, -H, 'unix:///var/run/system-docker.sock']
-cloud_init:
-  datasources:
-  - configdrive:/media/config-2
-ssh:
-  keys:
-    ecdsa: |-
-      -----BEGIN DSA PRIVATE KEY-----
-      ...
-    ecdsa-pub: ssh-dss  AAAAB3NzaC1k.... root@rancher
-enabledAddons:
-- ubuntu-console
-
-```
+The entire state of RancherOS is controlled by a single configuration document.  Please refer
+to the [full documentation](docs/config.md).
 
 ## Cloud Init
 

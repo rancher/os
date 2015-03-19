@@ -4,7 +4,7 @@ ADD assets/rootfs.tar /
 RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     sed -i '/^root/s!/bin/sh!/bin/bash!' /etc/passwd && \
     echo 'RancherOS \n \l' > /etc/issue && \
-    rm /run \
+    rm -rf /run \
        /linuxrc \
        /etc/os-release \
        /var/cache \

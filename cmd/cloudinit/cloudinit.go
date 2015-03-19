@@ -19,16 +19,13 @@ import (
 	"flag"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"path"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/config"
-	"github.com/coreos/coreos-cloudinit/config/validate"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
 	"github.com/coreos/coreos-cloudinit/datasource/file"
@@ -51,8 +48,11 @@ const (
 var (
 	outputDir  string
 	outputFile string
+	scriptFile string
+	rancherYml string
 	save       bool
 	execute    bool
+	network    bool
 	sshKeyName string
 	flags      *flag.FlagSet
 )
@@ -60,10 +60,65 @@ var (
 func init() {
 	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.StringVar(&outputDir, "dir", "/var/lib/rancher/conf", "working directory")
-	flags.StringVar(&outputFile, "file", "cloud-config.yml", "output cloud config file name")
+	flags.StringVar(&outputFile, "file", "cloud-config-processed.yml", "output cloud config file name")
+	flags.StringVar(&scriptFile, "script-file", "cloud-config-script", "output cloud config script file name")
+	flags.StringVar(&rancherYml, "rancher", "cloud-config-rancher.yml", "output cloud config rancher file name")
 	flags.StringVar(&sshKeyName, "ssh-key-name", "rancheros-cloud-config", "SSH key name")
+	flags.BoolVar(&network, "network", true, "use network based datasources")
 	flags.BoolVar(&save, "save", false, "save cloud config and exit")
 	flags.BoolVar(&execute, "execute", false, "execute saved cloud config")
+}
+
+func saveFiles(script *config.Script, userdataBytes []byte, cc *config.CloudConfig) error {
+	var fileData []byte
+
+	os.Remove(path.Join(outputDir, scriptFile))
+	os.Remove(path.Join(outputDir, outputFile))
+	os.Remove(path.Join(outputDir, rancherYml))
+
+	if script != nil {
+		fileData = userdataBytes
+		output := path.Join(outputDir, scriptFile)
+		log.Infof("Writing cloud-config script to %s", output)
+		if err := ioutil.WriteFile(output, fileData, 500); err != nil {
+			log.Errorf("Error while writing file %v", err)
+			return err
+		}
+	}
+
+	if data, err := yaml.Marshal(cc); err != nil {
+		log.Errorf("Error while marshalling cloud config %v", err)
+		return err
+	} else {
+		fileData = append([]byte("#cloud-config\n"), data...)
+	}
+
+	output := path.Join(outputDir, outputFile)
+	log.Infof("Writing merged cloud-config to %s", output)
+	if err := ioutil.WriteFile(output, fileData, 400); err != nil {
+		log.Errorf("Error while writing file %v", err)
+		return err
+	}
+
+	if script == nil {
+		ccData := make(map[string]interface{})
+		if err := yaml.Unmarshal(userdataBytes, ccData); err != nil {
+			return err
+		}
+
+		if rancher, ok := ccData["rancher"]; ok {
+			bytes, err := yaml.Marshal(rancher)
+			if err != nil {
+				return err
+			}
+
+			if err = ioutil.WriteFile(path.Join(outputDir, rancherYml), bytes, 400); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func Main() {
@@ -92,20 +147,6 @@ func Main() {
 		log.Fatalf("Failed fetching user-data from datasource: %v", err)
 	}
 
-	if report, err := validate.Validate(userdataBytes); err == nil {
-		fail := false
-		for _, e := range report.Entries() {
-			log.Error(e)
-			fail = true
-		}
-		if fail {
-			log.Info("failed validation")
-			os.Exit(1)
-		}
-	} else {
-		log.Fatalf("Failed while validating user_data (%v)", err)
-	}
-
 	log.Infof("Fetching meta-data from datasource of type %v", ds.Type())
 	metadata, err := ds.FetchMetadata()
 	if err != nil {
@@ -113,13 +154,9 @@ func Main() {
 		os.Exit(1)
 	}
 
-	// Apply environment to user-data
-	env := initialize.NewEnvironment("/", ds.ConfigRoot(), outputDir, sshKeyName, metadata)
-	userdata := env.Apply(string(userdataBytes))
-
 	var ccu *config.CloudConfig
 	var script *config.Script
-	if ud, err := initialize.ParseUserData(userdata); err != nil {
+	if ud, err := initialize.ParseUserData(string(userdataBytes)); err != nil {
 		log.Fatalf("Failed to parse user-data: %v\n", err)
 	} else {
 		switch t := ud.(type) {
@@ -134,52 +171,15 @@ func Main() {
 	cc := mergeConfigs(ccu, metadata)
 
 	if save {
-		var fileData []byte
-
-		if script != nil {
-			fileData = userdataBytes
-		} else {
-			if data, err := yaml.Marshal(cc); err != nil {
-				log.Fatalf("Error while marshalling cloud config %v", err)
-			} else {
-				fileData = append([]byte("#cloud-config\n"), data...)
-			}
+		err = saveFiles(script, userdataBytes, &cc)
+		if err != nil {
+			log.Fatal(err)
 		}
-
-		output := path.Join(outputDir, outputFile)
-		log.Infof("Writing merged cloud-config to %s", output)
-		if err := ioutil.WriteFile(output, fileData, 400); err != nil {
-			log.Fatalf("Error while writing file %v", err)
-		}
-
 		os.Exit(0)
 	}
 
-	if script != nil {
-		if ds.Type() != "local-file" {
-			log.Info("can only execute local files")
-		}
-		cmdPath := reflect.ValueOf(ds).Elem().Field(0).String()
-		if err := os.Chmod(cmdPath, 0500); err != nil {
-			log.Fatalf("Failed to set %s to executable : %v", cmdPath, err)
-		}
-		cmd := exec.Command(cmdPath)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		log.Info("Running ", cmdPath)
-		if err := cmd.Run(); err != nil {
-			log.Infof("Failed to run script: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-	if &cc == nil {
-		log.Fatal("no config or script found")
-	}
-
 	if len(cc.SSHAuthorizedKeys) > 0 {
-		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, env.SSHKeyName())
+		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)
 	}
 
 	for _, user := range cc.Users {
@@ -187,13 +187,13 @@ func Main() {
 			continue
 		}
 		if len(user.SSHAuthorizedKeys) > 0 {
-			authorizeSSHKeys(user.Name, user.SSHAuthorizedKeys, env.SSHKeyName())
+			authorizeSSHKeys(user.Name, user.SSHAuthorizedKeys, sshKeyName)
 		}
 	}
 
 	for _, file := range cc.WriteFiles {
 		f := system.File{File: file}
-		fullPath, err := system.WriteFile(&f, env.Root())
+		fullPath, err := system.WriteFile(&f, outputDir)
 		if err != nil {
 			log.Fatalf("%v", err)
 		}
@@ -243,10 +243,12 @@ func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 
 		switch parts[0] {
 		case "ec2":
-			if len(parts) == 1 {
-				dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))
-			} else {
-				dss = append(dss, ec2.NewDatasource(parts[1]))
+			if network {
+				if len(parts) == 1 {
+					dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))
+				} else {
+					dss = append(dss, ec2.NewDatasource(parts[1]))
+				}
 			}
 		case "file":
 			if len(parts) == 2 {
