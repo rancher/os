@@ -26,6 +26,7 @@ type ContainerConfig struct {
 	Cmd            string `yaml:"run,omitempty"`
 	MigrateVolumes bool   `yaml:"migrate_volumes,omitempty"`
 	ReloadConfig   bool   `yaml:"reload_config,omitempty"`
+	CreateOnly     bool   `yaml:create_only,omitempty`
 }
 
 type Config struct {
@@ -53,7 +54,9 @@ type ConsoleConfig struct {
 }
 
 type UpgradeConfig struct {
-	Url string `yaml:"url,omitempty"`
+	Url      string `yaml:"url,omitempty"`
+	Image    string `yaml:"image,omitempty"`
+	Rollback string `yaml:"rollback,omitempty"`
 }
 
 type DnsConfig struct {
