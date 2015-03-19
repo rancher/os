@@ -55,7 +55,7 @@ func NewConfig() *Config {
 			Datasources: []string{"configdrive:/media/config-2"},
 		},
 		Upgrade: UpgradeConfig{
-			Url: "https://cdn.rancher.io/rancheros/versions.yml",
+			Url: "http://storage.googleapis.com/releases_rancher_com/rancheros/versions.yml",
 		},
 		BootstrapContainers: []ContainerConfig{
 			{
