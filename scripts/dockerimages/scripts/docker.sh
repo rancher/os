@@ -20,7 +20,7 @@ rm -f /var/run/docker.pid
 
 ARGS=$(echo $(rancherctl config get user_docker.args | sed 's/^-//'))
 
-if [ $(rancherctl config get user_docker.tls) = "true" ]; then
+if [ "$(rancherctl config get user_docker.tls)" = "true" ]; then
     ARGS="$ARGS $(echo $(rancherctl config get user_docker.tls_args | sed 's/^-//'))"
     rancherctl tls generate --server -d $TLS_PATH
     cd $TLS_PATH
