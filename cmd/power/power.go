@@ -19,7 +19,7 @@ const (
 	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
 )
 
-func runDocker() error {
+func runDocker(name string) error {
 	if os.ExpandEnv("${IN_DOCKER}") == "true" {
 		return nil
 	}
@@ -29,7 +29,13 @@ func runDocker() error {
 		return err
 	}
 
-	name := filepath.Base(os.Args[0])
+	cmd := []string{name}
+
+	if name == "" {
+		name = filepath.Base(os.Args[0])
+		cmd = os.Args
+	}
+
 	exiting, err := client.InspectContainer(name)
 	if exiting != nil {
 		err := client.RemoveContainer(dockerClient.RemoveContainerOptions{
@@ -56,7 +62,7 @@ func runDocker() error {
 		Name: name,
 		Config: &dockerClient.Config{
 			Image: currentContainer.Config.Image,
-			Cmd:   os.Args,
+			Cmd:   cmd,
 			Env: []string{
 				"IN_DOCKER=true",
 			},
@@ -98,28 +104,28 @@ func runDocker() error {
 	return nil
 }
 
-func common() {
+func common(name string) {
 	if os.Geteuid() != 0 {
 		log.Fatalf("%s: Need to be root", os.Args[0])
 	}
 
-	if err := runDocker(); err != nil {
+	if err := runDocker(name); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func PowerOff() {
-	common()
+	common("poweroff")
 	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 }
 
 func Reboot() {
-	common()
+	common("reboot")
 	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
 }
 
 func Halt() {
-	common()
+	common("halt")
 	reboot(syscall.LINUX_REBOOT_CMD_HALT)
 }
 

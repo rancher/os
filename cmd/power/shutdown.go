@@ -32,7 +32,7 @@ func Main() {
 }
 
 func shutdown(c *cli.Context) {
-	common()
+	common("")
 	reboot := c.String("r")
 	poweroff := c.String("h")
 
