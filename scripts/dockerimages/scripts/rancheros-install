@@ -23,6 +23,7 @@ EOF
 PARTITION_FLAG="false"
 INSTALLER_VERSION="latest"
 EXTRA_ARGS=
+INSTALL_CONTAINER_IMAGE="rancher/os"
 
 while getopts "c:d:ft:v:h" OPTION
 do
@@ -73,10 +74,10 @@ if [ "${FORCE_INSTALL}" != "true" ] && [ "${INSTALL_TYPE}" != "rancher-upgrade" 
 fi
 
 if [ "$PARTITION_FLAG" == "true" ]; then
-    system-docker run --net=host -it --privileged --entrypoint=/scripts/set-disk-partitions rancher/os-installer:${INSTALLER_VERSION} ${DEVICE}
+    system-docker run --net=host -it --privileged --entrypoint=/scripts/set-disk-partitions ${INSTALL_CONTAINER_IMAGE}:${INSTALLER_VERSION} ${DEVICE}
     system-docker start udev
 fi
 
-system-docker run --volumes-from=user-volumes --net=host -it --privileged rancher/os-installer:${INSTALLER_VERSION} -d ${DEVICE} -t ${INSTALL_TYPE} ${EXTRA_ARGS}
+system-docker run --volumes-from=user-volumes --net=host -it --privileged ${INSTALL_CONTAINER_IMAGE}:${INSTALLER_VERSION} -d ${DEVICE} -t ${INSTALL_TYPE} ${EXTRA_ARGS}
 
 echo "RancherOS has been installed. Please reboot..."
