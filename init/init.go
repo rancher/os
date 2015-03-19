@@ -27,7 +27,6 @@ var (
 	}
 	postDirs []string = []string{
 		"/var/log",
-		"/var/lib/rancher/state/docker",
 		"/var/lib/rancher/state/home",
 		"/var/lib/rancher/state/opt",
 	}
@@ -63,9 +62,6 @@ var (
 		SYSINIT:                              "/init",
 		"/home":                              "/var/lib/rancher/state/home",
 		"/opt":                               "/var/lib/rancher/state/opt",
-	}
-	postSymlinks map[string]string = map[string]string{
-		"/var/lib/docker": "/var/lib/rancher/state/docker",
 	}
 )
 
@@ -323,9 +319,6 @@ func RunInit() error {
 		setResolvConf,
 		func(cfg *config.Config) error {
 			return createDirs(postDirs...)
-		},
-		func(cfg *config.Config) error {
-			return createSymlinks(cfg, postSymlinks)
 		},
 		func(cfg *config.Config) error {
 			return createMounts(postMounts...)
