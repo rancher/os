@@ -1,7 +1,7 @@
 package config
 
 const (
-	VERSION            = "0.2.0-dev"
+	VERSION            = "0.2.0"
 	CONSOLE_CONTAINER  = "console"
 	DOCKER_BIN         = "/usr/bin/docker"
 	DOCKER_SYSTEM_HOME = "/var/lib/system-docker"
