@@ -72,6 +72,17 @@ func NewConfig() *Config {
 		},
 		SystemContainers: []ContainerConfig{
 			{
+				Id: "udev",
+				Cmd: "--name=udev " +
+					"--net=none " +
+					"--privileged " +
+					"--rm " +
+					"-v=/dev:/host/dev " +
+					"-v=/lib/modules:/lib/modules:ro " +
+					"udev",
+				CreateOnly: true,
+			},
+			{
 				Id: "system-volumes",
 				Cmd: "--name=system-volumes " +
 					"--net=none " +
