@@ -119,8 +119,14 @@ func runContainersFrom(startFrom string, cfg *config.Config, containerConfigs []
 		}
 
 		if foundStart || startFrom == "" {
-			log.Infof("Running [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
-			container.StartAndWait()
+
+			if containerConfig.CreateOnly {
+				log.Infof("Creating [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
+				container.Create()
+			} else {
+				log.Infof("Running [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
+				container.StartAndWait()
+			}
 
 			if container.Err != nil {
 				log.Errorf("Failed to run %v: %v", containerConfig.Id, container.Err)

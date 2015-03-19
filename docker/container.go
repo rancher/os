@@ -57,7 +57,7 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 }
 
 func StartAndWait(dockerHost string, containerCfg *config.ContainerConfig) error {
-	container := NewContainer(dockerHost, containerCfg).start(true)
+	container := NewContainer(dockerHost, containerCfg).start(false, true)
 	return container.Err
 }
 
@@ -187,12 +187,16 @@ func (c *Container) Parse() *Container {
 	return c
 }
 
+func (c *Container) Create() *Container {
+	return c.start(true, false)
+}
+
 func (c *Container) Start() *Container {
-	return c.start(false)
+	return c.start(false, false)
 }
 
 func (c *Container) StartAndWait() *Container {
-	return c.start(true)
+	return c.start(false, true)
 }
 
 func (c *Container) Stage() *Container {
@@ -356,7 +360,7 @@ func appendVolumesFrom(client *dockerClient.Client, containerCfg *config.Contain
 	return nil
 }
 
-func (c *Container) start(wait bool) *Container {
+func (c *Container) start(create_only, wait bool) *Container {
 	c.Lookup()
 	c.Stage()
 
@@ -414,6 +418,10 @@ func (c *Container) start(wait bool) *Container {
 	hostConfig := c.Container.HostConfig
 	if created {
 		hostConfig = opts.HostConfig
+	}
+
+	if create_only {
+		return c
 	}
 
 	if !c.Container.State.Running {
