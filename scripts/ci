@@ -54,6 +54,6 @@ for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|dist|.gi
         ARGS="${ARGS} $i"
     fi
 done
-run --assets "${ARGS}" ./scripts/build
+run --assets ./scripts/version --assets "${ARGS}" ./scripts/build
 run --assets ./scripts/install ./scripts/package "$@"
 finish

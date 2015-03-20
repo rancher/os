@@ -3,6 +3,8 @@ set -x
 
 cd $(dirname $0)/..
 
+source scripts/version
+
 if [ "$IN_DOCKER" != "true" ]; then
     cat > .dockerfile << "EOF"
 FROM rancher/dind:v0.1.0
@@ -39,5 +41,5 @@ fi
 echo export GOPATH=$GOPATH
 
 mkdir -p bin
-go build -tags netgo -ldflags "-linkmode external -extldflags -static" -o bin/rancheros
+go build -tags netgo -ldflags "-X github.com/rancherio/os/config.VERSION ${VERSION:-v0.0.0-dev} -linkmode external -extldflags -static" -o bin/rancheros
 strip --strip-all bin/rancheros
