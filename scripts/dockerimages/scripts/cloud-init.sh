@@ -14,4 +14,4 @@ fi
 
 rancherctl config get cloud_init
 
-cloud-init -save -network ${CLOUD_INIT_NETWORK:-true}
+cloud-init -save -network=${CLOUD_INIT_NETWORK:-true}
