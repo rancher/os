@@ -1,6 +1,7 @@
 package control
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -137,7 +138,19 @@ func osUpgrade(c *cli.Context) {
 	startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"))
 }
 
+func yes(in *bufio.Reader, question string) bool {
+	fmt.Printf("%s [y/N]: ", question)
+	line, err := in.ReadString('\n')
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return strings.ToLower(line[0:1]) == "y"
+}
+
 func startUpgradeContainer(image string, stage, force bool) {
+	in := bufio.NewReader(os.Stdin)
+
 	container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &config.ContainerConfig{
 		Cmd: "--name=os-upgrade " +
 			"--rm " +
@@ -152,17 +165,11 @@ func startUpgradeContainer(image string, stage, force bool) {
 		log.Fatal(container.Err)
 	}
 
-	if !stage {
-		fmt.Printf("Upgrading to %s : %v\n", image, stage)
-		if !force {
-			fmt.Print("Continue [y/N] ")
-			one := make([]byte, 1, 1)
-			_, err := os.Stdin.Read(one)
-			if err != nil {
-				log.Fatal(err)
-			}
+	fmt.Printf("Upgrading to %s\n", image)
 
-			if string(one) != "Y" && string(one) != "y" {
+	if !stage {
+		if !force {
+			if !yes(in, "Continue") {
 				os.Exit(1)
 			}
 		}
@@ -198,9 +205,12 @@ func startUpgradeContainer(image string, stage, force bool) {
 		}
 
 		if exit == 0 {
-			log.Info("Rebooting")
-			power.Reboot()
+			if force || yes(in, "Continue with reboot") {
+				log.Info("Rebooting")
+				power.Reboot()
+			}
 		} else {
+			log.Error("Upgrade failed")
 			os.Exit(exit)
 		}
 	}
