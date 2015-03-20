@@ -93,6 +93,7 @@ func NewConfig() *Config {
 					"-v=/var/run:/var/run " +
 					"-v=/var/log:/var/log " +
 					"state",
+				CreateOnly: true,
 			},
 			{
 				Id: "command-volumes",
@@ -111,6 +112,7 @@ func NewConfig() *Config {
 					"-v=/lib/modules:/lib/modules:ro " +
 					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
 					"state",
+				CreateOnly: true,
 			},
 			{
 				Id: "user-volumes",
@@ -120,15 +122,18 @@ func NewConfig() *Config {
 					"-v=/home:/home " +
 					"-v=/opt:/opt " +
 					"state",
+				CreateOnly: true,
 			},
 			{
 				Id: "docker-volumes",
 				Cmd: "--name=docker-volumes " +
 					"--net=none " +
 					"--read-only " +
+					"-v=/var/lib/rancher:/var/lib/rancher " +
 					"-v=/var/lib/docker:/var/lib/docker " +
 					"-v=/var/lib/system-docker:/var/lib/system-docker " +
 					"state",
+				CreateOnly: true,
 			},
 			{
 				Id: "all-volumes",
@@ -141,6 +146,7 @@ func NewConfig() *Config {
 					"--volumes-from=user-volumes " +
 					"--volumes-from=system-volumes " +
 					"state",
+				CreateOnly: true,
 			},
 			{
 				Id: "cloud-init-pre",
