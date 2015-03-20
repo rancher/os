@@ -7,7 +7,7 @@ source scripts/build-common
 
 >${BUILD}/tags
 for i in scripts/extraimages/[0-9]*; do
-    tag=$(echo $i | cut -f2 -d-)
+    tag=$(echo $i | cut -f2 -d-):$(<scripts/version)
     echo Building $tag
     docker build -t rancher/$tag -f $i .
     echo $tag >> ${BUILD}/tags

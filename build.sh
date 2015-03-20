@@ -12,12 +12,11 @@ docker run --rm -it -e CHOWN_ID=$(id -u) -v $(pwd)/dist:/source/target $DOCKER_I
 # Stupidest argparse ever
 if echo "$@" | grep -q -- '--images'; then
     ./scripts/build-extra-images
-    echo 'docker push rancher/ubuntuconsole'
 fi
 
 # And again
 if echo "$@" | grep -q -- '--push'; then
-    docker push rancher/ubuntuconsole
+    docker push rancher/ubuntuconsole:$(<./scripts/version)
 fi
 
 ls -l dist/artifacts
