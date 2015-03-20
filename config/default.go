@@ -244,7 +244,7 @@ func NewConfig() *Config {
 							"--ipc=host " +
 							"--net=host " +
 							"--pid=host " +
-							"rancher/ubuntuconsole:v0.0.2",
+							"rancher/ubuntuconsole:" + VERSION,
 					},
 				},
 			},
