@@ -1,7 +1,6 @@
 package config
 
 const (
-	VERSION            = "0.2.0"
 	CONSOLE_CONTAINER  = "console"
 	DOCKER_BIN         = "/usr/bin/docker"
 	DOCKER_SYSTEM_HOME = "/var/lib/system-docker"
@@ -16,6 +15,7 @@ const (
 )
 
 var (
+	VERSION           string
 	CloudConfigFile   = "/var/lib/rancher/conf/cloud-config-rancher.yml"
 	ConfigFile        = "/var/lib/rancher/conf/rancher.yml"
 	PrivateConfigFile = "/var/lib/rancher/conf/rancher-private.yml"
@@ -102,4 +102,10 @@ type StateConfig struct {
 
 type CloudInit struct {
 	Datasources []string `yaml:"datasources,omitempty"`
+}
+
+func init() {
+	if VERSION == "" {
+		VERSION = "v0.0.0-dev"
+	}
 }
