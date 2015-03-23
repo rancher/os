@@ -18,7 +18,8 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 **v0.2.1 - Docker 1.5.0 - Linux 3.19.2**
 
 ### ISO
- https://github.com/rancherio/os/releases/download/v0.1.2/rancheros.iso
+
+https://github.com/rancherio/os/releases/download/v0.2.1/rancheros.iso
 
 ### Amazon
 
