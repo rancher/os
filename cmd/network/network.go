@@ -87,6 +87,11 @@ func applyNetConf(link netlink.Link, netConf config.InterfaceConfig) error {
 		if err := cmd.Run(); err != nil {
 			log.Error(err)
 		}
+	} else if netConf.IPV4LL {
+		if err := AssignLinkLocalIP(link); err != nil {
+			log.Error("IPV4LL set failed")
+			return err
+		}
 	} else if netConf.Address == "" {
 		return nil
 	} else {

@@ -75,6 +75,7 @@ type InterfaceConfig struct {
 	Match   string `yaml:"match,omitempty"`
 	DHCP    bool   `yaml:"dhcp,omitempty"`
 	Address string `yaml:"address,omitempty"`
+	IPV4LL  bool   `yaml:"ipv4ll,omitempty"`
 	Gateway string `yaml:"gateway,omitempty"`
 	MTU     int    `yaml:"mtu,omitempty"`
 }
