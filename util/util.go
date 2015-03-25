@@ -2,6 +2,7 @@ package util
 
 import (
 	"archive/tar"
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -13,10 +14,11 @@ import (
 	"strings"
 	"syscall"
 
+	"gopkg.in/yaml.v2"
+
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/docker/docker/pkg/mount"
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -24,6 +26,23 @@ var (
 	ErrNoNetwork = errors.New("Networking not available to load resource")
 	ErrNotFound  = errors.New("Failed to find resource")
 )
+
+func GetOSType() string {
+	f, err := os.Open("/etc/os-release")
+	defer f.Close()
+	if err != nil {
+		return "busybox"
+	}
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 8 && line[:8] == "ID_LIKE=" {
+			return line[8:]
+		}
+	}
+	return "busybox"
+
+}
 
 func mountProc() error {
 	if _, err := os.Stat("/proc/self/mountinfo"); os.IsNotExist(err) {

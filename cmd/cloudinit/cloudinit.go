@@ -24,6 +24,8 @@ import (
 	"sync"
 	"time"
 
+	"gopkg.in/yaml.v2"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/datasource"
@@ -35,10 +37,10 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
+	"github.com/rancherio/os/cmd/cloudinit/hostname"
 	rancherNetwork "github.com/rancherio/os/cmd/network"
 	rancherConfig "github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
-	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -298,6 +300,13 @@ func executeCloudConfig() error {
 	log.Info("Merging cloud-config from meta-data and user-data")
 	cc := mergeConfigs(ccu, metadata)
 
+	if cc.Hostname != "" {
+		//set hostname
+		if err := hostname.SetHostname(cc.Hostname); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	if len(cc.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)
 	}
@@ -315,7 +324,7 @@ func executeCloudConfig() error {
 		f := system.File{File: file}
 		fullPath, err := system.WriteFile(&f, "/")
 		if err != nil {
-			log.Fatalf("%v", err)
+			log.Fatal(err)
 		}
 		log.Printf("Wrote file %s to filesystem", fullPath)
 	}
