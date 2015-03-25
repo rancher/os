@@ -95,7 +95,7 @@ Options:
   -h print this
  ```
  
- This command orchestrates installation from the rancher/os-installer container. 
+ This command orchestrates installation from the rancher/os container. 
  
 ####Examples:
  Virtualbox installation:
