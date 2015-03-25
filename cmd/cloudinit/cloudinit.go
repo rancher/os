@@ -35,6 +35,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
+	"github.com/rancherio/os/cmd/cloudinit/hostname"
 	rancherConfig "github.com/rancherio/os/config"
 	"gopkg.in/yaml.v2"
 )
@@ -178,6 +179,13 @@ func Main() {
 		os.Exit(0)
 	}
 
+	if cc.Hostname != "" {
+		//set hostname
+		if err := hostname.SetHostname(cc.Hostname); err != nil {
+			log.Fatal(err)
+		}
+	}
+
 	if len(cc.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)
 	}
@@ -195,7 +203,7 @@ func Main() {
 		f := system.File{File: file}
 		fullPath, err := system.WriteFile(&f, outputDir)
 		if err != nil {
-			log.Fatalf("%v", err)
+			log.Fatal(err)
 		}
 		log.Printf("Wrote file %s to filesystem", fullPath)
 	}

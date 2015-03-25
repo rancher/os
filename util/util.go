@@ -2,6 +2,7 @@ package util
 
 import (
 	"archive/tar"
+	"bufio"
 	"fmt"
 	"io"
 	"math/rand"
@@ -16,6 +17,23 @@ import (
 var (
 	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
+
+func GetOSType() string {
+	f, err := os.Open("/etc/os-release")
+	defer f.Close()
+	if err != nil {
+		return "busybox"
+	}
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if len(line) > 8 && line[:8] == "ID_LIKE=" {
+			return line[8:]
+		}
+	}
+	return "busybox"
+
+}
 
 func mountProc() error {
 	if _, err := os.Stat("/proc/self/mountinfo"); os.IsNotExist(err) {
