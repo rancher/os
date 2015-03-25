@@ -1,11 +1,13 @@
 package network
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/exec"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -46,6 +48,18 @@ func applyNetworkConfigs(cfg *config.Config) error {
 
 			if netConf.Match == "" {
 				continue
+			}
+
+			if len(netConf.Match) > 4 && strings.ToLower(netConf.Match[:3]) == "mac" {
+				haAddr, err := net.ParseMAC(netConf.Match[4:])
+				if err != nil {
+					return err
+				}
+				if bytes.Compare(haAddr, link.Attrs().HardwareAddr) == 0 {
+					// MAC address match is used over all other matches
+					match = netConf
+					break
+				}
 			}
 
 			// "" means match has not been found
