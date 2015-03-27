@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"strings"
@@ -128,6 +129,22 @@ func (c *Container) Lookup() *Container {
 	c.Container, c.Err = inspect(client, containers[0].ID)
 
 	return c
+}
+
+func (c *Container) Log(stdout io.Writer, stderr io.Writer, follow bool) error {
+	client, err := NewClient(c.dockerHost)
+	if err != nil {
+		return err
+	}
+
+	return client.Logs(dockerClient.LogsOptions{
+		Container:    c.Name,
+		Stdout:       true,
+		Stderr:       true,
+		Follow:       follow,
+		OutputStream: stdout,
+		ErrorStream:  stderr,
+	})
 }
 
 func inspect(client *dockerClient.Client, id string) (*dockerClient.Container, error) {
