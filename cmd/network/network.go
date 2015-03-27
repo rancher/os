@@ -73,7 +73,7 @@ func applyNetworkConfigs(cfg *config.Config) error {
 
 	//post run
 	if cfg.Network.PostRun != nil {
-		return docker.StartAndWait(config.DOCKER_HOST, cfg.Network.PostRun)
+		return docker.StartAndWait(config.DOCKER_SYSTEM_HOST, cfg.Network.PostRun)
 	}
 	return nil
 }
