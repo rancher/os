@@ -150,7 +150,7 @@ Since RancherOS is so small the default console is based off of Busybox.  This i
 
     sudo rancherctl addon enable ubuntu-console
 
-Run the above but with `disable` to turn it off.  Currently you have to reboot the system to enable the new console.  I the future it will be dynamic and just require you to log out and back in.
+Run the above but with `disable` to turn it off.  Currently you have to reboot the system to enable the new console.  In the future it will be dynamic and just require you to log out and back in.
 
 ### Console is ephemeral
 
