@@ -29,12 +29,14 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
 	"github.com/coreos/coreos-cloudinit/datasource/file"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
+	rancherNetwork "github.com/rancherio/os/cmd/network"
 	rancherConfig "github.com/rancherio/os/config"
 	"gopkg.in/yaml.v2"
 )
@@ -199,7 +201,6 @@ func Main() {
 		}
 		log.Printf("Wrote file %s to filesystem", fullPath)
 	}
-
 }
 
 // mergeConfigs merges certain options from md (meta-data from the datasource)
@@ -266,10 +267,33 @@ func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 			if len(parts) == 2 {
 				dss = append(dss, configdrive.NewDatasource(parts[1]))
 			}
+		case "digitalocean":
+			if network {
+				if len(parts) == 1 {
+					dss = append(dss, digitalocean.NewDatasource(digitalocean.DefaultAddress))
+				} else {
+					dss = append(dss, digitalocean.NewDatasource(parts[1]))
+				}
+			} else {
+				enableDoLinkLocal()
+			}
 		}
 	}
 
 	return dss
+}
+
+func enableDoLinkLocal() {
+	err := rancherNetwork.ApplyNetworkConfigs(&rancherConfig.NetworkConfig{
+		Interfaces: map[string]rancherConfig.InterfaceConfig{
+			"eth0": {
+				IPV4LL: true,
+			},
+		},
+	})
+	if err != nil {
+		log.Errorf("Failed to apply link local on eth0: %v", err)
+	}
 }
 
 // selectDatasource attempts to choose a valid Datasource to use based on its
