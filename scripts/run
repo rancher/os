@@ -14,6 +14,7 @@ NO_COMPRESS_INITRD=${INITRD}.none
 HD=${BASE}/state/empty-hd.img
 HD_GZ=${ARTIFACTS}/empty-hd.img.gz
 INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
+INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
 USER_DATA=cloud-init/openstack/latest/user_data
 
@@ -33,6 +34,11 @@ if [ ! -d ${INITRD_TMP} ]; then
     rm -f init
     popd
 fi
+
+if [ -e $INITRD_CURRENT ]; then
+    rm -f ${INITRD_CURRENT}
+fi
+ln -s ${INITRD_TMP} ${INITRD_CURRENT}
 
 if [ ! -e bin/rancheros ]; then
     ./scripts/build
