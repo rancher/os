@@ -8,26 +8,26 @@ import (
 	"github.com/rancherio/os/docker"
 )
 
-func parseContainers(cfg *config.Config) map[string]*docker.Container {
-	result := map[string]*docker.Container{}
-
-	for _, containerConfig := range cfg.SystemContainers {
-		container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &containerConfig)
-		if containerConfig.Id != "" {
-			result[containerConfig.Id] = container
-		}
-	}
-
-	return result
-}
+//func parseContainers(cfg *config.Config) map[string]*docker.Container {
+//	result := map[string]*docker.Container{}
+//
+//	for _, containerConfig := range cfg.SystemContainers {
+//		container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &containerConfig)
+//		if containerConfig.Id != "" {
+//			result[containerConfig.Id] = container
+//		}
+//	}
+//
+//	return result
+//}
 
 func reload(c *cli.Context) {
-	cfg, err := config.LoadConfig()
+	_, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	containers := parseContainers(cfg)
+	containers := map[string]*docker.Container{} //parseContainers(cfg)
 	toStart := make([]*docker.Container, 0, len(c.Args()))
 
 	for _, id := range c.Args() {

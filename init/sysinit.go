@@ -10,6 +10,8 @@ import (
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
+
+	"github.com/rancherio/rancher-compose/project"
 )
 
 func importImage(client *dockerClient.Client, name, fileName string) error {
@@ -107,50 +109,63 @@ func loadImages(cfg *config.Config) error {
 	return nil
 }
 
-func runContainersFrom(startFrom string, cfg *config.Config, containerConfigs []config.ContainerConfig) error {
-	foundStart := false
+func runServices(name string, cfg *config.Config, configs map[string]*project.ServiceConfig) error {
+	project := project.NewProject(name, &docker.ContainerFactory{})
+	enabled := make(map[string]bool)
 
-	for i, containerConfig := range containerConfigs {
-		container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &containerConfig)
-
-		if util.Contains(cfg.Disable, containerConfig.Id) {
-			log.Infof("%s is disabled : %v", containerConfig.Id, cfg.Disable)
-			continue
-		}
-
-		if foundStart || startFrom == "" {
-
-			if containerConfig.CreateOnly {
-				log.Infof("Creating [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
-				container.Create()
-			} else {
-				log.Infof("Running [%d/%d] %s", i+1, len(containerConfigs), containerConfig.Id)
-				container.StartAndWait()
-			}
-
-			if container.Err != nil {
-				log.Errorf("Failed to run %v: %v", containerConfig.Id, container.Err)
-			}
-
-			if containerConfig.ReloadConfig {
-				log.Info("Reloading configuration")
-				err := cfg.Reload()
-				if err != nil {
-					return err
-				}
-
-				return runContainersFrom(containerConfig.Id, cfg, cfg.SystemContainers)
-			}
-		} else if startFrom == containerConfig.Id {
-			foundStart = true
+	for name, serviceConfig := range configs {
+		if err := project.AddConfig(name, serviceConfig); err != nil {
+			log.Infof("Failed loading service %s", name)
 		}
 	}
 
-	return nil
+	project.ReloadCallback = func() error {
+		err := cfg.Reload()
+		if err != nil {
+			return err
+		}
+
+		for _, addon := range cfg.EnabledAddons {
+			if _, ok := enabled[addon]; ok {
+				continue
+			}
+
+			if config, ok := cfg.Addons[addon]; ok {
+				for name, s := range config.SystemContainers {
+					if err := project.AddConfig(name, s); err != nil {
+						log.Errorf("Failed to load %s : %v", name, err)
+					}
+				}
+			} else {
+				bytes, err := util.LoadResource(addon)
+				if err != nil {
+					log.Errorf("Failed to load %s : %v", addon, err)
+					continue
+				}
+
+				err = project.Load(bytes)
+				if err != nil {
+					log.Errorf("Failed to load %s : %v", addon, err)
+					continue
+				}
+			}
+
+			enabled[addon] = true
+		}
+
+		return nil
+	}
+
+	err := project.ReloadCallback()
+	if err != nil {
+		log.Errorf("Failed to reload %s : %v", name, err)
+		return err
+	}
+	return project.Up()
 }
 
 func runContainers(cfg *config.Config) error {
-	return runContainersFrom("", cfg, cfg.SystemContainers)
+	return runServices("system-init", cfg, cfg.SystemContainers)
 }
 
 func tailConsole(cfg *config.Config) error {
@@ -163,29 +178,26 @@ func tailConsole(cfg *config.Config) error {
 		return err
 	}
 
-	for _, container := range cfg.SystemContainers {
-		if container.Id != config.CONSOLE_CONTAINER {
-			continue
-		}
-
-		c := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &container).Lookup()
-		if c.Err != nil {
-			continue
-		}
-
-		log.Infof("Tailing console : %s", c.Name)
-		return client.Logs(dockerClient.LogsOptions{
-			Container:    c.Name,
-			Stdout:       true,
-			Stderr:       true,
-			Follow:       true,
-			OutputStream: os.Stdout,
-			ErrorStream:  os.Stderr,
-		})
+	console, ok := cfg.SystemContainers[config.CONSOLE_CONTAINER]
+	if !ok {
+		log.Error("Console not found")
+		return nil
 	}
 
-	log.Error("Console not found")
-	return nil
+	c := docker.NewContainerFromService(config.DOCKER_SYSTEM_HOST, config.CONSOLE_CONTAINER, console)
+	if c.Err != nil {
+		return c.Err
+	}
+
+	log.Infof("Tailing console : %s", c.Name)
+	return client.Logs(dockerClient.LogsOptions{
+		Container:    c.Name,
+		Stdout:       true,
+		Stderr:       true,
+		Follow:       true,
+		OutputStream: os.Stdout,
+		ErrorStream:  os.Stderr,
+	})
 }
 
 func SysInit() error {
@@ -199,6 +211,10 @@ func SysInit() error {
 		runContainers,
 		func(cfg *config.Config) error {
 			syscall.Sync()
+			return nil
+		},
+		func(cfg *config.Config) error {
+			log.Info("RancherOS booted")
 			return nil
 		},
 		tailConsole,

@@ -4,9 +4,12 @@ import (
 	"archive/tar"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"os"
 	"path"
+	"strings"
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
@@ -180,5 +183,18 @@ func MergeMaps(left, right map[interface{}]interface{}) {
 		if !merged {
 			left[k] = v
 		}
+	}
+}
+
+func LoadResource(location string) ([]byte, error) {
+	if strings.HasPrefix(location, "http:/") || strings.HasPrefix(location, "https:/") {
+		resp, err := http.Get(location)
+		if err != nil {
+			return nil, err
+		}
+		defer resp.Body.Close()
+		return ioutil.ReadAll(resp.Body)
+	} else {
+		return ioutil.ReadFile(location)
 	}
 }

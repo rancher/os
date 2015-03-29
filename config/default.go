@@ -1,5 +1,9 @@
 package config
 
+import (
+	"github.com/rancherio/rancher-compose/project"
+)
+
 func NewConfig() *Config {
 	return &Config{
 		Debug: DEBUG,
@@ -43,7 +47,7 @@ func NewConfig() *Config {
 				Nameservers: []string{"8.8.8.8", "8.8.4.4"},
 			},
 			Interfaces: map[string]InterfaceConfig{
-				"eth*": {
+				"eth0": {
 					DHCP: true,
 				},
 				"lo": {
@@ -58,193 +62,238 @@ func NewConfig() *Config {
 			Url:   "https://releases.rancher.com/os/versions.yml",
 			Image: "rancher/os",
 		},
-		BootstrapContainers: []ContainerConfig{
-			{
-				Id: "udev",
-				Cmd: "--name=udev " +
-					"--net=none " +
-					"--privileged " +
-					"--rm " +
-					"-v=/dev:/host/dev " +
-					"-v=/lib/modules:/lib/modules:ro " +
-					"udev",
+		BootstrapContainers: map[string]*project.ServiceConfig{
+			"udev": {
+				Net:        "host",
+				Privileged: true,
+				Labels: []string{
+					DETACH + "=false",
+				},
+				Volumes: []string{
+					"/dev:/host/dev",
+					"/lib/modules:/lib/modules:ro",
+					"/lib/firmware:/lib/firmware:ro",
+				},
+				Image: "udev",
 			},
 		},
-		SystemContainers: []ContainerConfig{
-			{
-				Id: "udev",
-				Cmd: "--name=udev " +
-					"--net=none " +
-					"--privileged " +
-					"--rm " +
-					"-v=/dev:/host/dev " +
-					"-v=/lib/modules:/lib/modules:ro " +
-					"udev",
-				CreateOnly: true,
+		SystemContainers: map[string]*project.ServiceConfig{
+			"udev": {
+				Image:      "udev",
+				Net:        "host",
+				Privileged: true,
+				Labels: []string{
+					DETACH + "=true",
+				},
+				Environment: []string{
+					"DAEMON=true",
+				},
+				Volumes: []string{
+					"/dev:/host/dev",
+					"/lib/modules:/lib/modules:ro",
+					"/lib/firmware:/lib/firmware:ro",
+				},
 			},
-			{
-				Id: "system-volumes",
-				Cmd: "--name=system-volumes " +
-					"--net=none " +
-					"--read-only " +
-					"-v=/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt " +
-					"-v=/var/lib/rancher/conf:/var/lib/rancher/conf " +
-					"-v=/lib/modules:/lib/modules:ro " +
-					"-v=/var/run:/var/run " +
-					"-v=/var/log:/var/log " +
-					"state",
-				CreateOnly: true,
+			"system-volumes": {
+				Image:      "state",
+				Net:        "none",
+				ReadOnly:   true,
+				Privileged: true,
+				Labels: []string{
+					CREATE_ONLY + "=true",
+				},
+				Volumes: []string{
+					"/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
+					"/var/lib/rancher/conf:/var/lib/rancher/conf",
+					"/lib/modules:/lib/modules:ro",
+					"/lib/firmware:/lib/firmware:ro",
+					"/var/run:/var/run",
+					"/var/log:/var/log",
+				},
 			},
-			{
-				Id: "command-volumes",
-				Cmd: "--name=command-volumes " +
-					"--net=none " +
-					"--read-only " +
-					"-v=/init:/sbin/halt:ro " +
-					"-v=/init:/sbin/poweroff:ro " +
-					"-v=/init:/sbin/reboot:ro " +
-					"-v=/init:/sbin/shutdown:ro " +
-					"-v=/init:/sbin/netconf:ro " +
-					"-v=/init:/usr/bin/cloud-init:ro " +
-					"-v=/init:/usr/bin/rancherctl:ro " +
-					"-v=/init:/usr/bin/respawn:ro " +
-					"-v=/init:/usr/bin/system-docker:ro " +
-					"-v=/lib/modules:/lib/modules:ro " +
-					"-v=/usr/bin/docker:/usr/bin/docker:ro " +
-					"state",
-				CreateOnly: true,
+			"command-volumes": {
+				Image:      "state",
+				Net:        "none",
+				ReadOnly:   true,
+				Privileged: true,
+				Labels: []string{
+					CREATE_ONLY + "=true",
+				},
+				Volumes: []string{
+					"/init:/sbin/halt:ro",
+					"/init:/sbin/poweroff:ro",
+					"/init:/sbin/reboot:ro",
+					"/init:/sbin/shutdown:ro",
+					"/init:/sbin/netconf:ro",
+					"/init:/usr/bin/cloud-init:ro",
+					"/init:/usr/bin/rancherctl:ro",
+					"/init:/usr/bin/respawn:ro",
+					"/init:/usr/bin/system-docker:ro",
+					"/lib/modules:/lib/modules:ro",
+					"/usr/bin/docker:/usr/bin/docker:ro",
+				},
 			},
-			{
-				Id: "user-volumes",
-				Cmd: "--name=user-volumes " +
-					"--net=none " +
-					"--read-only " +
-					"-v=/home:/home " +
-					"-v=/opt:/opt " +
-					"state",
-				CreateOnly: true,
+			"user-volumes": {
+				Image:      "state",
+				Net:        "none",
+				ReadOnly:   true,
+				Privileged: true,
+				Labels: []string{
+					CREATE_ONLY + "=true",
+				},
+				Volumes: []string{
+					"/home:/home",
+					"/opt:/opt",
+				},
 			},
-			{
-				Id: "docker-volumes",
-				Cmd: "--name=docker-volumes " +
-					"--net=none " +
-					"--read-only " +
-					"-v=/var/lib/rancher:/var/lib/rancher " +
-					"-v=/var/lib/docker:/var/lib/docker " +
-					"-v=/var/lib/system-docker:/var/lib/system-docker " +
-					"state",
-				CreateOnly: true,
+			"docker-volumes": {
+				Image:      "state",
+				Net:        "none",
+				ReadOnly:   true,
+				Privileged: true,
+				Labels: []string{
+					CREATE_ONLY + "=true",
+				},
+				Volumes: []string{
+					"/var/lib/rancher:/var/lib/rancher",
+					"/var/lib/docker:/var/lib/docker",
+					"/var/lib/system-docker:/var/lib/system-docker",
+				},
 			},
-			{
-				Id: "all-volumes",
-				Cmd: "--name=all-volumes " +
-					"--rm " +
-					"--net=none " +
-					"--read-only " +
-					"--volumes-from=docker-volumes " +
-					"--volumes-from=command-volumes " +
-					"--volumes-from=user-volumes " +
-					"--volumes-from=system-volumes " +
-					"state",
-				CreateOnly: true,
+			"all-volumes": {
+				Image:      "state",
+				Net:        "none",
+				ReadOnly:   true,
+				Privileged: true,
+				Labels: []string{
+					CREATE_ONLY + "=true",
+				},
+				VolumesFrom: []string{
+					"docker-volumes",
+					"command-volumes",
+					"user-volumes",
+					"system-volumes",
+				},
 			},
-			{
-				Id: "cloud-init-pre",
-				Cmd: "--name=cloud-init-pre " +
-					"--rm " +
-					"--privileged " +
-					"--net=host " +
-					"-e CLOUD_INIT_NETWORK=false " +
-					"--volumes-from=command-volumes " +
-					"--volumes-from=system-volumes " +
-					"cloudinit",
-				ReloadConfig: true,
+			"cloud-init-pre": {
+				Image:      "cloudinit",
+				Privileged: true,
+				Net:        "host",
+				Labels: []string{
+					RELOAD_CONFIG + "=true",
+					DETACH + "=false",
+				},
+				Environment: []string{
+					"CLOUD_INIT_NETWORK=false",
+				},
+				VolumesFrom: []string{
+					"command-volumes",
+					"system-volumes",
+				},
 			},
-			{
-				Id: "network",
-				Cmd: "--name=network " +
-					"--rm " +
-					"--cap-add=NET_ADMIN " +
-					"--net=host " +
-					"--volumes-from=command-volumes " +
-					"--volumes-from=system-volumes " +
+			"network": {
+				Image: "network",
+				CapAdd: []string{
+					"NET_ADMIN",
+				},
+				Net: "host",
+				Labels: []string{
+					DETACH + "=false",
+				},
+				Links: []string{
+					"cloud-init-pre",
+				},
+				VolumesFrom: []string{
+					"command-volumes",
+					"system-volumes",
+				},
+			},
+			"cloud-init": {
+				Image:      "cloudinit",
+				Privileged: true,
+				Labels: []string{
+					RELOAD_CONFIG + "=true",
+					DETACH + "=false",
+				},
+				Net: "host",
+				Links: []string{
+					"cloud-init-pre",
 					"network",
+				},
+				VolumesFrom: []string{
+					"command-volumes",
+					"system-volumes",
+				},
 			},
-			{
-				Id: "cloud-init",
-				Cmd: "--name=cloud-init " +
-					"--rm " +
-					"--privileged " +
-					"--net=host " +
-					"--volumes-from=command-volumes " +
-					"--volumes-from=system-volumes " +
-					"cloudinit",
-				ReloadConfig: true,
+			"ntp": {
+				Image:      "ntp",
+				Privileged: true,
+				Net:        "host",
+				Links: []string{
+					"cloud-init",
+					"network",
+				},
 			},
-			{
-				Id: "ntp",
-				Cmd: "--name=ntp " +
-					"--rm " +
-					"-d " +
-					"--privileged " +
-					"--net=host " +
-					"ntp",
+			"syslog": {
+				Image:      "syslog",
+				Privileged: true,
+				Net:        "host",
+				Links: []string{
+					"cloud-init",
+					"network",
+				},
+				VolumesFrom: []string{
+					"system-volumes",
+				},
 			},
-			{
-				Id: "syslog",
-				Cmd: "--name=syslog " +
-					"-d " +
-					"--rm " +
-					"--privileged " +
-					"--net=host " +
-					"--ipc=host " +
-					"--pid=host " +
-					"--volumes-from=system-volumes " +
-					"syslog",
+			"userdocker": {
+				Image:      "userdocker",
+				Privileged: true,
+				Pid:        "host",
+				Ipc:        "host",
+				Net:        "host",
+				Links: []string{
+					"network",
+				},
+				VolumesFrom: []string{
+					"all-volumes",
+				},
 			},
-			{
-				Id: "userdocker",
-				Cmd: "--name=userdocker " +
-					"-d " +
-					"--rm " +
-					"--restart=always " +
-					"--ipc=host " +
-					"--pid=host " +
-					"--net=host " +
-					"--privileged " +
-					"--volumes-from=all-volumes " +
-					"userdocker",
-			},
-			{
-				Id: "console",
-				Cmd: "--name=console " +
-					"-d " +
-					"--rm " +
-					"--privileged " +
-					"--volumes-from=all-volumes " +
-					"--restart=always " +
-					"--ipc=host " +
-					"--net=host " +
-					"--pid=host " +
-					"console",
+			"console": {
+				Image:      "console",
+				Privileged: true,
+				Links: []string{
+					"cloud-init",
+				},
+				VolumesFrom: []string{
+					"all-volumes",
+				},
+				Restart: "always",
+				Pid:     "host",
+				Ipc:     "host",
+				Net:     "host",
 			},
 		},
 		EnabledAddons: []string{},
 		Addons: map[string]Config{
 			"ubuntu-console": {
-				SystemContainers: []ContainerConfig{
-					{
-						Id: "console",
-						Cmd: "--name=ubuntu-console " +
-							"-d " +
-							"--rm " +
-							"--privileged " +
-							"--volumes-from=all-volumes " +
-							"--restart=always " +
-							"--ipc=host " +
-							"--net=host " +
-							"--pid=host " +
-							"rancher/ubuntuconsole:" + VERSION,
+				SystemContainers: map[string]*project.ServiceConfig{
+					"console": {
+						Image:      "rancher/ubuntuconsole:" + VERSION,
+						Privileged: true,
+						Labels: []string{
+							DETACH + "=true",
+						},
+						Links: []string{
+							"cloud-init",
+						},
+						VolumesFrom: []string{
+							"all-volumes",
+						},
+						Restart: "always",
+						Pid:     "host",
+						Ipc:     "host",
+						Net:     "host",
 					},
 				},
 			},
