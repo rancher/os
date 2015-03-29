@@ -1,0 +1,25 @@
+web:
+  image: rancher/server:beta
+  ports:
+    - "8080:8080"
+    - "3306:3306"
+zk:
+  image: ibuildthecloud/zookeeper
+  ports:
+    - "2181:2181"
+  environment:
+    CATTLE: "Prod"
+redis:
+  image: ibuildthecloud/redis
+  expose:
+    - "2176"
+  ports:
+    - "2222"
+app:
+ image: rancher/server:beta
+ubuntu:
+ image: ubuntu:14.04.1
+ command: sleep 60
+master:
+ image: rancher/build-master
+ privileged: true

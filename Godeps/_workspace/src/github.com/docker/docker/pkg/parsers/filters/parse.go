@@ -73,25 +73,28 @@ func (filters Args) MatchKVList(field string, sources map[string]string) bool {
 		return true
 	}
 
-	if sources == nil {
+	if sources == nil || len(sources) == 0 {
 		return false
 	}
 
+outer:
 	for _, name2match := range fieldValues {
 		testKV := strings.SplitN(name2match, "=", 2)
 
 		for k, v := range sources {
 			if len(testKV) == 1 {
 				if k == testKV[0] {
-					return true
+					continue outer
 				}
 			} else if k == testKV[0] && v == testKV[1] {
-				return true
+				continue outer
 			}
 		}
+
+		return false
 	}
 
-	return false
+	return true
 }
 
 func (filters Args) Match(field, source string) bool {

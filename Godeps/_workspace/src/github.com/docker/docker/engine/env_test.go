@@ -3,10 +3,23 @@ package engine
 import (
 	"bytes"
 	"encoding/json"
+	"math/rand"
 	"testing"
-
-	"github.com/docker/docker/pkg/testutils"
+	"time"
 )
+
+const chars = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+	"~!@#$%^&*()-_+={}[]\\|<,>.?/\"';:` "
+
+// RandomString returns random string of specified length
+func RandomString(length int) string {
+	res := make([]byte, length)
+	for i := 0; i < length; i++ {
+		res[i] = chars[rand.Intn(len(chars))]
+	}
+	return string(res)
+}
 
 func TestEnvLenZero(t *testing.T) {
 	env := &Env{}
@@ -94,6 +107,27 @@ func TestSetenvBool(t *testing.T) {
 	}
 }
 
+func TestSetenvTime(t *testing.T) {
+	job := mkJob(t, "dummy")
+
+	now := time.Now()
+	job.SetenvTime("foo", now)
+	if val, err := job.GetenvTime("foo"); err != nil {
+		t.Fatalf("GetenvTime failed to parse: %v", err)
+	} else {
+		nowStr := now.Format(time.RFC3339)
+		valStr := val.Format(time.RFC3339)
+		if nowStr != valStr {
+			t.Fatalf("GetenvTime returns incorrect value: %s, Expected: %s", valStr, nowStr)
+		}
+	}
+
+	job.Setenv("bar", "Obviously I'm not a date")
+	if val, err := job.GetenvTime("bar"); err == nil {
+		t.Fatalf("GetenvTime was supposed to fail, instead returned: %s", val)
+	}
+}
+
 func TestSetenvInt(t *testing.T) {
 	job := mkJob(t, "dummy")
 
@@ -163,7 +197,7 @@ func TestMultiMap(t *testing.T) {
 func testMap(l int) [][2]string {
 	res := make([][2]string, l)
 	for i := 0; i < l; i++ {
-		t := [2]string{testutils.RandomString(5), testutils.RandomString(20)}
+		t := [2]string{RandomString(5), RandomString(20)}
 		res[i] = t
 	}
 	return res
