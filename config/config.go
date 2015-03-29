@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/rancherio/rancher-compose/project"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/util"
 	"gopkg.in/yaml.v2"
@@ -16,22 +18,9 @@ func (c *Config) privilegedMerge(newConfig Config) error {
 		return err
 	}
 
-	toAppend := make([]ContainerConfig, 0, 5)
-
-	for _, newContainer := range newConfig.SystemContainers {
-		found := false
-		for i, existingContainer := range c.SystemContainers {
-			if existingContainer.Id != "" && newContainer.Id == existingContainer.Id {
-				found = true
-				c.SystemContainers[i] = newContainer
-			}
-		}
-		if !found {
-			toAppend = append(toAppend, newContainer)
-		}
+	for k, v := range newConfig.SystemContainers {
+		c.SystemContainers[k] = v
 	}
-
-	c.SystemContainers = append(c.SystemContainers, toAppend...)
 
 	return nil
 }
@@ -42,8 +31,8 @@ func (c *Config) overlay(newConfig Config) error {
 }
 
 func (c *Config) clearReadOnly() {
-	c.BootstrapContainers = make([]ContainerConfig, 0)
-	c.SystemContainers = make([]ContainerConfig, 0)
+	c.BootstrapContainers = make(map[string]*project.ServiceConfig, 0)
+	c.SystemContainers = make(map[string]*project.ServiceConfig, 0)
 }
 
 func clearReadOnly(data map[interface{}]interface{}) map[interface{}]interface{} {
@@ -103,6 +92,12 @@ func LoadConfig() (*Config, error) {
 
 	if cfg.Debug {
 		log.SetLevel(log.DebugLevel)
+		if !util.Contains(cfg.UserDocker.Args, "-D") {
+			cfg.UserDocker.Args = append(cfg.UserDocker.Args, "-D")
+		}
+		if !util.Contains(cfg.SystemDocker.Args, "-D") {
+			cfg.SystemDocker.Args = append(cfg.SystemDocker.Args, "-D")
+		}
 	}
 
 	return cfg, nil
@@ -197,20 +192,11 @@ func Dump(private, full bool) (string, error) {
 }
 
 func (c *Config) configureConsole() error {
-	if !c.Console.Persistent {
-		return nil
-	}
-
-	for i := range c.SystemContainers {
-		// Need to modify original object, not the copy
-		var container *ContainerConfig = &c.SystemContainers[i]
-
-		if container.Id != CONSOLE_CONTAINER {
-			continue
-		}
-
-		if strings.Contains(container.Cmd, "--rm ") {
-			container.Cmd = strings.Replace(container.Cmd, "--rm ", "", 1)
+	if console, ok := c.SystemContainers[CONSOLE_CONTAINER]; ok {
+		if c.Console.Persistent {
+			console.Labels = append(console.Labels, REMOVE+"=false")
+		} else {
+			console.Labels = append(console.Labels, REMOVE+"=true")
 		}
 	}
 
@@ -221,7 +207,6 @@ func (c *Config) readGlobals() error {
 	return util.ShortCircuit(
 		c.readCmdline,
 		c.readArgs,
-		c.mergeAddons,
 		c.configureConsole,
 	)
 }
@@ -231,19 +216,6 @@ func (c *Config) Reload() error {
 		c.readFiles,
 		c.readGlobals,
 	)
-}
-
-func (c *Config) mergeAddons() error {
-	for _, addon := range c.EnabledAddons {
-		if newConfig, ok := c.Addons[addon]; ok {
-			log.Debugf("Enabling addon %s", addon)
-			if err := c.privilegedMerge(newConfig); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 func (c *Config) Get(key string) (interface{}, error) {

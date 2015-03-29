@@ -1,5 +1,7 @@
 package config
 
+import "github.com/rancherio/rancher-compose/project"
+
 const (
 	CONSOLE_CONTAINER  = "console"
 	DOCKER_BIN         = "/usr/bin/docker"
@@ -12,6 +14,14 @@ const (
 	USER_INIT          = "/sbin/init-user"
 	MODULES_ARCHIVE    = "/modules.tar"
 	DEBUG              = false
+
+	LABEL         = "label"
+	HASH          = "io.rancher.os.hash"
+	ID            = "io.rancher.os.id"
+	DETACH        = "io.rancher.os.detach"
+	REMOVE        = "io.rancher.os.remove"
+	CREATE_ONLY   = "io.rancher.os.createonly"
+	RELOAD_CONFIG = "io.rancher.os.reloadconfig"
 )
 
 var (
@@ -22,30 +32,31 @@ var (
 )
 
 type ContainerConfig struct {
-	Id             string `yaml:"id,omitempty"`
-	Cmd            string `yaml:"run,omitempty"`
-	MigrateVolumes bool   `yaml:"migrate_volumes,omitempty"`
-	ReloadConfig   bool   `yaml:"reload_config,omitempty"`
-	CreateOnly     bool   `yaml:create_only,omitempty`
+	Id             string                 `yaml:"id,omitempty"`
+	Cmd            string                 `yaml:"run,omitempty"`
+	MigrateVolumes bool                   `yaml:"migrate_volumes,omitempty"`
+	ReloadConfig   bool                   `yaml:"reload_config,omitempty"`
+	CreateOnly     bool                   `yaml:create_only,omitempty`
+	Service        *project.ServiceConfig `yaml:service,omitempty`
 }
 
 type Config struct {
-	Addons              map[string]Config `yaml:"addons,omitempty"`
-	BootstrapContainers []ContainerConfig `yaml:"bootstrap_containers,omitempty"`
-	CloudInit           CloudInit         `yaml:"cloud_init,omitempty"`
-	Console             ConsoleConfig     `yaml:"console,omitempty"`
-	Debug               bool              `yaml:"debug,omitempty"`
-	Disable             []string          `yaml:"disable,omitempty"`
-	EnabledAddons       []string          `yaml:"enabled_addons,omitempty"`
-	Modules             []string          `yaml:"modules,omitempty"`
-	Network             NetworkConfig     `yaml:"network,omitempty"`
-	Ssh                 SshConfig         `yaml:"ssh,omitempty"`
-	State               StateConfig       `yaml:"state,omitempty"`
-	SystemContainers    []ContainerConfig `yaml:"system_containers,omitempty"`
-	SystemDocker        DockerConfig      `yaml:"system_docker,omitempty"`
-	Upgrade             UpgradeConfig     `yaml:"upgrade,omitempty"`
-	UserContainers      []ContainerConfig `yaml:"user_containers,omitempty"`
-	UserDocker          DockerConfig      `yaml:"user_docker,omitempty"`
+	Addons              map[string]Config                 `yaml:"addons,omitempty"`
+	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap_containers,omitempty"`
+	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
+	Console             ConsoleConfig                     `yaml:"console,omitempty"`
+	Debug               bool                              `yaml:"debug,omitempty"`
+	//Disable             []string                          `yaml:"disable,omitempty"`
+	EnabledAddons    []string                          `yaml:"enabled_addons,omitempty"`
+	Modules          []string                          `yaml:"modules,omitempty"`
+	Network          NetworkConfig                     `yaml:"network,omitempty"`
+	Ssh              SshConfig                         `yaml:"ssh,omitempty"`
+	State            StateConfig                       `yaml:"state,omitempty"`
+	SystemContainers map[string]*project.ServiceConfig `yaml:"system_containers,omitempty"`
+	SystemDocker     DockerConfig                      `yaml:"system_docker,omitempty"`
+	Upgrade          UpgradeConfig                     `yaml:"upgrade,omitempty"`
+	UserContainers   []ContainerConfig                 `yaml:"user_containers,omitempty"`
+	UserDocker       DockerConfig                      `yaml:"user_docker,omitempty"`
 }
 
 type ConsoleConfig struct {

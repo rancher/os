@@ -4,6 +4,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"sort"
@@ -16,12 +17,8 @@ import (
 	dockerClient "github.com/fsouza/go-dockerclient"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
-)
-
-const (
-	LABEL = "label"
-	HASH  = "io.rancher.os.hash"
-	ID    = "io.rancher.os.id"
+	"github.com/rancherio/rancher-compose/docker"
+	"github.com/rancherio/rancher-compose/project"
 )
 
 type Container struct {
@@ -48,6 +45,10 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 
 	w.Write([]byte(containerCfg.Id))
 	w.Write([]byte(containerCfg.Cmd))
+	if containerCfg.Service != nil {
+		//TODO: properly hash
+		w.Write([]byte(fmt.Sprintf("%v", containerCfg.Service)))
+	}
 
 	if w.Err != nil {
 		return "", w.Err
@@ -59,6 +60,18 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 func StartAndWait(dockerHost string, containerCfg *config.ContainerConfig) error {
 	container := NewContainer(dockerHost, containerCfg).start(false, true)
 	return container.Err
+}
+
+func NewContainerFromService(dockerHost string, name string, service *project.ServiceConfig) *Container {
+	c := &Container{
+		Name:       name,
+		dockerHost: dockerHost,
+		ContainerCfg: &config.ContainerConfig{
+			Id:      name,
+			Service: service,
+		},
+	}
+	return c.Parse()
 }
 
 func NewContainer(dockerHost string, containerCfg *config.ContainerConfig) *Container {
@@ -78,7 +91,7 @@ func getByLabel(client *dockerClient.Client, key, value string) (*dockerClient.A
 	containers, err := client.ListContainers(dockerClient.ListContainersOptions{
 		All: true,
 		Filters: map[string][]string{
-			LABEL: []string{fmt.Sprintf("%s=%s", key, value)},
+			config.LABEL: []string{fmt.Sprintf("%s=%s", key, value)},
 		},
 	})
 
@@ -114,7 +127,7 @@ func (c *Container) Lookup() *Container {
 	containers, err := client.ListContainers(dockerClient.ListContainersOptions{
 		All: true,
 		Filters: map[string][]string{
-			LABEL: []string{fmt.Sprintf("%s=%s", HASH, hash)},
+			config.LABEL: []string{fmt.Sprintf("%s=%s", config.HASH, hash)},
 		},
 	})
 	if err != nil {
@@ -157,11 +170,23 @@ func (c *Container) Reset() *Container {
 	return c
 }
 
-func (c *Container) Parse() *Container {
-	if c.Config != nil || c.Err != nil {
-		return c
+func (c *Container) parseService() {
+	cfg, hostConfig, err := docker.Convert(c.ContainerCfg.Service)
+	if err != nil {
+		c.Err = err
+		return
 	}
 
+	c.Config = cfg
+	c.HostConfig = hostConfig
+
+	c.detach = c.Config.Labels[config.DETACH] != "false"
+	c.remove = c.Config.Labels[config.REMOVE] != "false"
+	c.ContainerCfg.CreateOnly = c.Config.Labels[config.CREATE_ONLY] == "true"
+	c.ContainerCfg.ReloadConfig = c.Config.Labels[config.RELOAD_CONFIG] == "true"
+}
+
+func (c *Container) parseCmd() {
 	flags := flag.NewFlagSet("run", flag.ExitOnError)
 
 	flRemove := flags.Bool([]string{"#rm", "-rm"}, false, "")
@@ -170,7 +195,8 @@ func (c *Container) Parse() *Container {
 
 	args, err := shlex.Split(c.ContainerCfg.Cmd)
 	if err != nil {
-		return c.returnErr(err)
+		c.Err = err
+		return
 	}
 
 	log.Debugf("Parsing [%s]", strings.Join(args, ","))
@@ -179,6 +205,21 @@ func (c *Container) Parse() *Container {
 	c.Name = *flName
 	c.detach = *flDetach
 	c.remove = *flRemove
+}
+
+func (c *Container) Parse() *Container {
+	if c.Config != nil || c.Err != nil {
+		return c
+	}
+
+	if len(c.ContainerCfg.Cmd) > 0 {
+		c.parseCmd()
+	} else if c.ContainerCfg.Service != nil {
+		c.parseService()
+	} else {
+		c.Err = errors.New("Cmd or Service must be set")
+		return c
+	}
 
 	if c.ContainerCfg.Id == "" {
 		c.ContainerCfg.Id = c.Name
@@ -219,6 +260,7 @@ func (c *Container) Stage() *Container {
 			OutputStream: os.Stdout,
 		}, dockerClient.AuthConfiguration{})
 	} else if err != nil {
+		log.Errorf("Failed to stage: %s: %v", c.Config.Image, err)
 		c.Err = err
 	}
 
@@ -291,7 +333,7 @@ func (c *Container) renameOld(client *dockerClient.Client, opts *dockerClient.Cr
 	}
 
 	var newName string
-	if label, ok := existing.Config.Labels[HASH]; ok {
+	if label, ok := existing.Config.Labels[config.HASH]; ok {
 		newName = fmt.Sprintf("%s-%s", existing.Name, label)
 	} else {
 		newName = fmt.Sprintf("%s-unknown-%s", existing.Name, util.RandSeq(12))
@@ -316,6 +358,7 @@ func (c *Container) renameOld(client *dockerClient.Client, opts *dockerClient.Cr
 func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.CreateContainerOptions, error) {
 	bytes, err := json.Marshal(c)
 	if err != nil {
+		log.Errorf("Failed to marshall: %v", c)
 		return nil, err
 	}
 
@@ -323,6 +366,7 @@ func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.Cr
 
 	err = json.Unmarshal(bytes, &opts)
 	if err != nil {
+		log.Errorf("Failed to unmarshall: %s", string(bytes))
 		return nil, err
 	}
 
@@ -335,8 +379,8 @@ func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.Cr
 		return nil, err
 	}
 
-	opts.Config.Labels[HASH] = hash
-	opts.Config.Labels[ID] = c.ContainerCfg.Id
+	opts.Config.Labels[config.HASH] = hash
+	opts.Config.Labels[config.ID] = c.ContainerCfg.Id
 
 	return &opts, nil
 }
@@ -346,7 +390,7 @@ func appendVolumesFrom(client *dockerClient.Client, containerCfg *config.Contain
 		return nil
 	}
 
-	container, err := getByLabel(client, ID, containerCfg.Id)
+	container, err := getByLabel(client, config.ID, containerCfg.Id)
 	if err != nil || container == nil {
 		return err
 	}
@@ -360,7 +404,7 @@ func appendVolumesFrom(client *dockerClient.Client, containerCfg *config.Contain
 	return nil
 }
 
-func (c *Container) start(create_only, wait bool) *Container {
+func (c *Container) start(createOnly, wait bool) *Container {
 	c.Lookup()
 	c.Stage()
 
@@ -378,6 +422,7 @@ func (c *Container) start(create_only, wait bool) *Container {
 
 	opts, err := c.getCreateOpts(client)
 	if err != nil {
+		log.Errorf("Failed to create container create options: %v", err)
 		return c.returnErr(err)
 	}
 
@@ -420,7 +465,7 @@ func (c *Container) start(create_only, wait bool) *Container {
 		hostConfig = opts.HostConfig
 	}
 
-	if create_only {
+	if createOnly {
 		return c
 	}
 
@@ -439,12 +484,17 @@ func (c *Container) start(create_only, wait bool) *Container {
 
 		err = client.StartContainer(c.Container.ID, hostConfig)
 		if err != nil {
+			log.Errorf("Error from Docker %s", err)
 			return c.returnErr(err)
 		}
 	}
 
 	if !c.detach && wait {
-		_, c.Err = client.WaitContainer(c.Container.ID)
+		var exitCode int
+		exitCode, c.Err = client.WaitContainer(c.Container.ID)
+		if exitCode != 0 {
+			c.Err = errors.New(fmt.Sprintf("Container %s exited with code %d", c.Name, exitCode))
+		}
 		return c
 	}
 

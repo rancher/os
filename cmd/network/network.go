@@ -25,10 +25,10 @@ func Main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	applyNetworkConfigs(cfg)
+	ApplyNetworkConfigs(&cfg.Network)
 }
 
-func applyNetworkConfigs(cfg *config.Config) error {
+func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
 	links, err := netlink.LinkList()
 	if err != nil {
 		return err
@@ -39,7 +39,7 @@ func applyNetworkConfigs(cfg *config.Config) error {
 		linkName := link.Attrs().Name
 		var match config.InterfaceConfig
 
-		for key, netConf := range cfg.Network.Interfaces {
+		for key, netConf := range netCfg.Interfaces {
 			if netConf.Match == "" {
 				netConf.Match = key
 			}
@@ -72,8 +72,8 @@ func applyNetworkConfigs(cfg *config.Config) error {
 	}
 
 	//post run
-	if cfg.Network.PostRun != nil {
-		return docker.StartAndWait(config.DOCKER_HOST, cfg.Network.PostRun)
+	if netCfg.PostRun != nil {
+		return docker.StartAndWait(config.DOCKER_HOST, netCfg.PostRun)
 	}
 	return nil
 }

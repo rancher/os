@@ -8,9 +8,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
+	"github.com/rancherio/rancher-compose/project"
 )
 
-func runBootstrapContainers(cfg *config.Config) error {
+func autoformat(cfg *config.Config) error {
 	if len(cfg.State.Autoformat) == 0 || util.ResolveDevice(cfg.State.Dev) != "" {
 		return nil
 	}
@@ -54,24 +55,22 @@ outer:
 
 	if format != "" {
 		log.Infof("Auto formatting : %s", format)
-		return runContainersFrom("", cfg, append([]config.ContainerConfig{
-			{
-				Id: "auto-format",
-				Cmd: "--name auto-format " +
-					"--rm " +
-					"--net=none " +
-					"--privileged " +
-					"autoformat " +
-					format,
+		return runServices("autoformat", cfg, map[string]*project.ServiceConfig{
+			"autoformat": {
+				Net:        "none",
+				Privileged: true,
+				Image:      "autoformat",
+				Command:    format,
 			},
-		}, cfg.BootstrapContainers...))
+			"udev": cfg.BootstrapContainers["udev"],
+		})
 	}
 
 	return nil
 }
 
-func autoformat(cfg *config.Config) error {
-	return runContainersFrom("", cfg, cfg.BootstrapContainers)
+func runBootstrapContainers(cfg *config.Config) error {
+	return runServices("bootstrap", cfg, cfg.BootstrapContainers)
 }
 
 func startDocker(cfg *config.Config) (chan interface{}, error) {
