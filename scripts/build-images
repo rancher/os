@@ -20,22 +20,7 @@ cp ${BUILD}/dist/rootfs.tar ${ARTIFACTS}
 
 rm -rf ${BUILD}/initrd/lib
 cp -rf ${BUILD}/dist/kernel/lib ${BUILD}/initrd
-(
-    cd ${BUILD}/initrd/lib/modules
-    # Taken from boot2docker
-    # Remove useless kernel modules, based on unclejack/debian2docker
-    rm -rf ./*/kernel/sound/*
-    rm -rf ./*/kernel/drivers/gpu/*
-    rm -rf ./*/kernel/drivers/infiniband/*
-    rm -rf ./*/kernel/drivers/isdn/*
-    rm -rf ./*/kernel/drivers/media/*
-    rm -rf ./*/kernel/drivers/staging/lustre/*
-    rm -rf ./*/kernel/drivers/staging/comedi/*
-    rm -rf ./*/kernel/fs/ocfs2/*
-    rm -rf ./*/kernel/net/bluetooth/*
-    rm -rf ./*/kernel/net/mac80211/*
-    rm -rf ./*/kernel/net/wireless/*
-)
+cp -rf ${BUILD}/dist/kernel/headers/* ${BUILD}/initrd
 cp -f ${ARTIFACTS}/docker* ${BUILD}/initrd/docker
 chmod +x ${BUILD}/initrd/docker
 
