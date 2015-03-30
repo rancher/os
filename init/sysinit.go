@@ -214,7 +214,7 @@ func SysInit() error {
 			return nil
 		},
 		func(cfg *config.Config) error {
-			log.Info("RancherOS booted")
+			log.Infof("RancherOS %s started", config.VERSION)
 			return nil
 		},
 		tailConsole,
