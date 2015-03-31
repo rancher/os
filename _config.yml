@@ -1,9 +1,7 @@
 name: RancherOS
 description: RancherOS Documentation
 
-url: ”http://deniseschannon.github.io/os”
-
-paginate: 10
+url: ”http://rancherio.github.io/os”
 
 markdown: rdiscount
 permalink: pretty
