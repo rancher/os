@@ -211,10 +211,8 @@ func NewConfig() *Config {
 			},
 			"network": {
 				Image: "network",
-				CapAdd: []string{
-					"NET_ADMIN",
-				},
-				Net: "host",
+				Privileged: true,
+                                Net: "host",
 				Labels: []string{
 					DETACH + "=false",
 				},
