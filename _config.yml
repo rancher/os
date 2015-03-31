@@ -1,7 +1,7 @@
 name: RancherOS
 description: RancherOS Documentation
 
-url: ”http://localhost:4000”
+url: ”http://deniseschannon.github.io/os”
 
 paginate: 10
 
