@@ -1,0 +1,7 @@
+name: RancherOS
+description: RancherOS Documentation
+
+url: ”http://deniseschannon.github.io/os”
+
+markdown: rdiscount
+permalink: pretty
