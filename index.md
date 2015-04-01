@@ -20,5 +20,21 @@ Everything in RancherOS is a Docker container.  We accomplish this by launching 
 
 
 
+## Running RancherOS
+
+To find out more about installing RancherOS, go to our [installation page]({{site.baseurl}}/install/).
+
+### Cloud
+
+Currently we only have RancherOS available in EC2 but more clouds will come based on demand.  Follow the links in the Release section above to deploy using our AMIs. 
+
+### Vagrant
+
+Vagrant is the simplest way to try out RancherOS from the desktop.  Refer to the [RancherOS Vagrant project](https://github.com/rancherio/os-vagrant)
+
+### Other
+
+QEMU, VirtualBox, and VMware are all supported.  Just
+boot from the `rancheros.iso` with at least 1GB of memory.
 
 
