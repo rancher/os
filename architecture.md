@@ -12,7 +12,7 @@ The first process on the system is called **System Docker** and it's responsible
 
 System Docker runs a special container called **User Docker** which is another Docker daemon responsible for managing all of the user’s containers. Any containers you launch as a user from the console will run inside this User Docker. This creates isolation from the System Docker containers, and ensures normal user commands don’t impact system services.
 
-![GitHub Logo]({{site.url}}/img/rancheroshowitworks.png)
+![GitHub Logo]({{site.baseurl}}/img/rancheroshowitworks.png)
 
 RancherOS is dramatically smaller than most traditional operating systems, because it only includes the services necessary to run Docker.  By removing unnecessary libraries and services, requirements for security patches and other maintenance are dramatically reduced.  This is possible because with Docker, users typically package all necessary libraries into their containers.
 
