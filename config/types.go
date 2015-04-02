@@ -35,6 +35,7 @@ type Config struct {
 	CloudInit           CloudInit         `yaml:"cloud_init,omitempty"`
 	Console             ConsoleConfig     `yaml:"console,omitempty"`
 	Debug               bool              `yaml:"debug,omitempty"`
+	Oem                 string            `yaml:"oem,omitempty"`
 	Disable             []string          `yaml:"disable,omitempty"`
 	EnabledAddons       []string          `yaml:"enabled_addons,omitempty"`
 	Modules             []string          `yaml:"modules,omitempty"`

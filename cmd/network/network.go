@@ -74,7 +74,7 @@ func applyNetworkConfigs(cfg *config.Config) error {
 		}
 
 		if match.Match != "" {
-			err = applyNetConf(link, match)
+			err = applyNetConf(link, match, cfg.Oem)
 			if err != nil {
 				log.Errorf("Failed to apply settings to %s : %v", linkName, err)
 			}
@@ -92,10 +92,21 @@ func applyNetworkConfigs(cfg *config.Config) error {
 	return nil
 }
 
-func applyNetConf(link netlink.Link, netConf config.InterfaceConfig) error {
+func applyNetConf(link netlink.Link, netConf config.InterfaceConfig, oem string) error {
 	if netConf.DHCP {
 		log.Infof("Running DHCP on %s", link.Attrs().Name)
-		cmd := exec.Command("udhcpc", "-i", link.Attrs().Name, "-t", "20", "-n")
+
+		//ideally this goes away at some point
+		commandString := []string{"udhcpc", "-i", link.Attrs().Name, "-t", "20", "-n"}
+		if oem != "" {
+			filename := strings.Join([]string{"/scripts/udhcpd-", oem, "-config.sh"}, "")
+			if _, err := os.Stat(filename); err == nil {
+				log.Debugf("Found OEM network script: %s for OEM: %s", filename, oem)
+				commandString = append(commandString, "-s", filename)
+			}
+		}
+		log.Debugf("Executing: %s", commandString)
+		cmd := exec.Command(commandString[0], commandString[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
