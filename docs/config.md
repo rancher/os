@@ -2,6 +2,10 @@
 
 The configuration of RancherOS is on a single configuration file called rancher.yml.  You can either use `rancherctl config` to edit and interact with this file or edit `/var/lib/rancher/conf/rancher.yml` directly.  It is safer to use `rancherctl config`.
 
+## rancherctl
+
+[`rancherctl`](rancherctl.md) is the main command to interact with RancherOS configuration, to the the [full documentation](rancherctl.md).
+
 ## Networking
 
 RancherOS provides very basic support to get networking up.
