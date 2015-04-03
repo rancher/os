@@ -35,6 +35,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
+	userConf "github.com/rancherio/os/cmd/cloudinit/user"
 	rancherConfig "github.com/rancherio/os/config"
 	"gopkg.in/yaml.v2"
 )
@@ -186,6 +187,9 @@ func Main() {
 		if user.Name == "" {
 			continue
 		}
+
+		userConf.AddUser(user.Name, user.GECOS, user.Homedir, user.PasswordHash, user.NoCreateHome, user.System)
+
 		if len(user.SSHAuthorizedKeys) > 0 {
 			authorizeSSHKeys(user.Name, user.SSHAuthorizedKeys, sshKeyName)
 		}
