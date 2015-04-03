@@ -95,7 +95,7 @@ func applyNetworkConfigs(cfg *config.Config) error {
 func applyNetConf(link netlink.Link, netConf config.InterfaceConfig) error {
 	if netConf.DHCP {
 		log.Infof("Running DHCP on %s", link.Attrs().Name)
-		cmd := exec.Command("udhcpc", "-i", link.Attrs().Name, "-t", "20", "-n")
+		cmd := exec.Command("dhcpcd", link.Attrs().Name)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {

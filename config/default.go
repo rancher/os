@@ -164,7 +164,7 @@ func NewConfig() *Config {
 				Id: "network",
 				Cmd: "--name=network " +
 					"--rm " +
-					"--cap-add=NET_ADMIN " +
+					"--privileged " +
 					"--net=host " +
 					"--volumes-from=command-volumes " +
 					"--volumes-from=system-volumes " +
