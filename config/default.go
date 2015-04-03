@@ -12,7 +12,7 @@ func NewConfig() *Config {
 			Dev:      "LABEL=RANCHER_STATE",
 			FsType:   "auto",
 		},
-		SystemDocker: DockerConfig{
+		BootstrapDocker: DockerConfig{
 			Args: []string{
 				"docker",
 				"-d",
@@ -22,6 +22,22 @@ func NewConfig() *Config {
 				"none",
 				"--restart=false",
 				"-g", "/var/lib/system-docker",
+				"-H", DOCKER_SYSTEM_HOST,
+			},
+		},
+		SystemDocker: DockerConfig{
+			Args: []string{
+				"docker",
+				"-d",
+				"-s",
+				"overlay",
+				"-b",
+				"docker-sys",
+				"--fixed-cidr",
+				"172.18.42.1/16",
+				"--restart=false",
+				"-g", "/var/lib/system-docker",
+				"-G", "root",
 				"-H", DOCKER_SYSTEM_HOST,
 			},
 		},

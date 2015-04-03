@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/rancherio/os/cmd/network"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
 )
@@ -24,6 +25,7 @@ var (
 		"/etc/ssl/certs",
 		"/sbin",
 		"/usr/bin",
+		"/usr/sbin",
 	}
 	postDirs []string = []string{
 		"/var/log",
@@ -58,6 +60,7 @@ var (
 	symlinks map[string]string = map[string]string{
 		"/etc/ssl/certs/ca-certificates.crt": "/ca.crt",
 		"/sbin/modprobe":                     "/busybox",
+		"/usr/sbin/iptables":                 "/xtables-multi",
 		DOCKER:                               "/docker",
 		SYSINIT:                              "/init",
 		"/home":                              "/var/lib/rancher/state/home",
@@ -272,10 +275,45 @@ func mountState(cfg *config.Config) error {
 	return err
 }
 
+func createGroups(cfg *config.Config) error {
+	return ioutil.WriteFile("/etc/group", []byte("root:x:0:\n"), 0644)
+}
+
+func touchSocket(cfg *config.Config) error {
+	for _, path := range []string{"/var/run/docker.sock", "/var/run/system-docker.sock"} {
+		if err := syscall.Unlink(path); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		if l, err := net.Listen("unix", path); err != nil {
+			return err
+		} else {
+			l.Close()
+		}
+	}
+
+	return nil
+}
+
+func setupSystemBridge(cfg *config.Config) error {
+	bridge, cidr := cfg.SystemDocker.BridgeConfig()
+	if bridge == "" {
+		return nil
+	}
+
+	return network.ApplyNetworkConfigs(&config.NetworkConfig{
+		Interfaces: map[string]config.InterfaceConfig{
+			bridge: {
+				Bridge:  true,
+				Address: cidr,
+			},
+		},
+	})
+}
+
 func RunInit() error {
 	var cfg config.Config
 
-	os.Setenv("PATH", "/sbin:/usr/bin")
+	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 	os.Setenv("DOCKER_RAMDISK", "true")
 
 	initFuncs := []config.InitFunc{
@@ -311,6 +349,7 @@ func RunInit() error {
 		extractModules,
 		loadModules,
 		setResolvConf,
+		setupSystemBridge,
 		bootstrap,
 		mountState,
 		func(cfg *config.Config) error {

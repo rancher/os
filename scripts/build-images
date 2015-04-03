@@ -27,6 +27,7 @@ chmod +x ${BUILD}/initrd/docker
 cp ${BUILD}/dist/kernel/boot/vmlinuz* ${DIST}/artifacts/vmlinuz
 
 tar xf ${BUILD}/dist/rootfs-static.tar -C ${BUILD}/initrd --strip-components=2 ./bin/busybox
+tar xf ${BUILD}/dist/rootfs-static.tar -C ${BUILD}/initrd --strip-components=3 ./usr/sbin/xtables-multi
 
 if ! docker info >/dev/null 2>&1 && [ -x "$(which wrapdocker)" ]; then
     wrapdocker

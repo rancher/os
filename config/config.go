@@ -243,3 +243,24 @@ func (c *Config) Set(key string, value interface{}) error {
 
 	return c.Reload()
 }
+
+func (d *DockerConfig) BridgeConfig() (string, string) {
+	var name, cidr string
+
+	args := append(d.Args, d.ExtraArgs...)
+	for i, opt := range args {
+		if opt == "-b" && i < len(args)-1 {
+			name = args[i+1]
+		}
+
+		if opt == "--fixed-cidr" && i < len(args)-1 {
+			cidr = args[i+1]
+		}
+	}
+
+	if name == "" || name == "none" {
+		return "", ""
+	} else {
+		return name, cidr
+	}
+}

@@ -44,6 +44,7 @@ type ContainerConfig struct {
 type Config struct {
 	Addons              map[string]Config                 `yaml:"addons,omitempty"`
 	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap_containers,omitempty"`
+	BootstrapDocker     DockerConfig                      `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
 	Console             ConsoleConfig                     `yaml:"console,omitempty"`
 	Debug               bool                              `yaml:"debug,omitempty"`
@@ -90,12 +91,14 @@ type InterfaceConfig struct {
 	IPV4LL  bool   `yaml:"ipv4ll,omitempty"`
 	Gateway string `yaml:"gateway,omitempty"`
 	MTU     int    `yaml:"mtu,omitempty"`
+	Bridge  bool   `yaml:"bridge,omitempty"`
 }
 
 type DockerConfig struct {
 	TLS        bool     `yaml:"tls,omitempty"`
 	TLSArgs    []string `yaml:"tls_args,flow,omitempty"`
 	Args       []string `yaml:"args,flow,omitempty"`
+	ExtraArgs  []string `yaml:"extra_args,flow,omitempty"`
 	ServerCert string   `yaml:"server_cert,omitempty"`
 	ServerKey  string   `yaml:"server_key,omitempty"`
 	CACert     string   `yaml:"ca_cert,omitempty"`

@@ -30,7 +30,28 @@ func Main() {
 	ApplyNetworkConfigs(&cfg.Network)
 }
 
+func createInterfaces(netCfg *config.NetworkConfig) error {
+	for name, iface := range netCfg.Interfaces {
+		if !iface.Bridge {
+			continue
+		}
+
+		bridge := netlink.Bridge{}
+		bridge.LinkAttrs.Name = name
+
+		if err := netlink.LinkAdd(&bridge); err != nil {
+			log.Errorf("Failed to create bridge %s: %v", name, err)
+		}
+	}
+
+	return nil
+}
+
 func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
+	if err := createInterfaces(netCfg); err != nil {
+		return err
+	}
+
 	links, err := netlink.LinkList()
 	if err != nil {
 		return err

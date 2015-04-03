@@ -81,7 +81,7 @@ func startDocker(cfg *config.Config) (chan interface{}, error) {
 		}
 	}
 
-	cmd := exec.Command(cfg.SystemDocker.Args[0], cfg.SystemDocker.Args[1:]...)
+	cmd := exec.Command(cfg.BootstrapDocker.Args[0], cfg.BootstrapDocker.Args[1:]...)
 	if cfg.Debug {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
