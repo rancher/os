@@ -210,9 +210,9 @@ func NewConfig() *Config {
 				},
 			},
 			"network": {
-				Image: "network",
+				Image:      "network",
 				Privileged: true,
-                                Net: "host",
+				Net:        "host",
 				Labels: []string{
 					DETACH + "=false",
 				},
