@@ -277,6 +277,15 @@ func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 			} else {
 				enableDoLinkLocal()
 			}
+		case "gce":
+			if network {
+				gceCloudConfigFile, err := GetAndCreateGceDataSourceFilename()
+				if err != nil {
+					log.Errorf("Could not retrieve GCE CloudConfig %s", err)
+					continue
+				}
+				dss = append(dss, file.NewDatasource(gceCloudConfigFile))
+			}
 		}
 	}
 
