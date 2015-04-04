@@ -71,6 +71,10 @@ cat > /etc/respawn.conf << EOF
 /usr/sbin/sshd -D
 EOF
 
+if ! grep -q '^UseDNS no' /etc/ssh/sshd_config; then
+    echo "UseDNS no" >> /etc/ssh/sshd_config
+fi
+
 if ! grep -q "$(hostname)" /etc/hosts; then
     echo 127.0.1.1 $(hostname) >> /etc/hosts
 fi
