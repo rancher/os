@@ -75,6 +75,24 @@ if ! grep -q '^UseDNS no' /etc/ssh/sshd_config; then
     echo "UseDNS no" >> /etc/ssh/sshd_config
 fi
 
+ID_TYPE="busybox"
+if grep -q 'ID_LIKE=' /etc/os-release; then
+    ID_TYPE=$(grep 'ID_LIKE=' /etc/os-release | cut -d'=' -f2)
+fi
+
+cat > /etc/os-release << EOF
+NAME="RancherOS"
+VERSION=$VERSION
+ID=rancheros
+ID_LIKE=$ID_TYPE
+VERSION_ID=$VERSION
+PRETTY_NAME="RancherOS"
+HOME_URL=
+SUPPORT_URL=
+BUG_REPORT_URL=
+BUILD_ID=
+EOF
+
 if ! grep -q "$(hostname)" /etc/hosts; then
     echo 127.0.1.1 $(hostname) >> /etc/hosts
 fi
