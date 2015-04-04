@@ -47,17 +47,17 @@ type Config struct {
 	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
 	Console             ConsoleConfig                     `yaml:"console,omitempty"`
 	Debug               bool                              `yaml:"debug,omitempty"`
-	//Disable             []string                          `yaml:"disable,omitempty"`
-	EnabledAddons    []string                          `yaml:"enabled_addons,omitempty"`
-	Modules          []string                          `yaml:"modules,omitempty"`
-	Network          NetworkConfig                     `yaml:"network,omitempty"`
-	Ssh              SshConfig                         `yaml:"ssh,omitempty"`
-	State            StateConfig                       `yaml:"state,omitempty"`
-	SystemContainers map[string]*project.ServiceConfig `yaml:"system_containers,omitempty"`
-	SystemDocker     DockerConfig                      `yaml:"system_docker,omitempty"`
-	Upgrade          UpgradeConfig                     `yaml:"upgrade,omitempty"`
-	UserContainers   []ContainerConfig                 `yaml:"user_containers,omitempty"`
-	UserDocker       DockerConfig                      `yaml:"user_docker,omitempty"`
+	Disable             []string                          `yaml:"disable,omitempty"`
+	EnabledAddons       []string                          `yaml:"enabled_addons,omitempty"`
+	Modules             []string                          `yaml:"modules,omitempty"`
+	Network             NetworkConfig                     `yaml:"network,omitempty"`
+	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
+	State               StateConfig                       `yaml:"state,omitempty"`
+	SystemContainers    map[string]*project.ServiceConfig `yaml:"system_containers,omitempty"`
+	SystemDocker        DockerConfig                      `yaml:"system_docker,omitempty"`
+	Upgrade             UpgradeConfig                     `yaml:"upgrade,omitempty"`
+	UserContainers      []ContainerConfig                 `yaml:"user_containers,omitempty"`
+	UserDocker          DockerConfig                      `yaml:"user_docker,omitempty"`
 }
 
 type ConsoleConfig struct {
