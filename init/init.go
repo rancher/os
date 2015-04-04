@@ -3,6 +3,7 @@ package init
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -346,6 +347,7 @@ func RunInit() error {
 		func(cfg *config.Config) error {
 			return createSymlinks(cfg, symlinks)
 		},
+		createGroups,
 		extractModules,
 		loadModules,
 		setResolvConf,
@@ -362,6 +364,7 @@ func RunInit() error {
 		func(cfg *config.Config) error {
 			return createMounts(postMounts...)
 		},
+		touchSocket,
 		remountRo,
 		sysInit,
 	}

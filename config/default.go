@@ -22,6 +22,7 @@ func NewConfig() *Config {
 				"none",
 				"--restart=false",
 				"-g", "/var/lib/system-docker",
+				"-G", "root",
 				"-H", DOCKER_SYSTEM_HOST,
 			},
 		},
