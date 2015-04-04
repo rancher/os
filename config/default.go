@@ -103,7 +103,6 @@ func NewConfig() *Config {
 					CREATE_ONLY + "=true",
 				},
 				Volumes: []string{
-					"/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
 					"/var/lib/rancher/conf:/var/lib/rancher/conf",
 					"/lib/modules:/lib/modules:ro",
 					"/lib/firmware:/lib/firmware:ro",
@@ -256,6 +255,13 @@ func NewConfig() *Config {
 				Links: []string{
 					"network",
 				},
+				Volumes: []string{
+					"/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
+				},
+				VolumesFrom: []string{
+					"all-volumes",
+				},
+			},
 			"userdockerwait": {
 				Image: "userdockerwait",
 				Net:   "host",
