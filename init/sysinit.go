@@ -110,7 +110,7 @@ func loadImages(cfg *config.Config) error {
 }
 
 func runServices(name string, cfg *config.Config, configs map[string]*project.ServiceConfig) error {
-	project := project.NewProject(name, &docker.ContainerFactory{})
+	project := project.NewProject(name, docker.NewContainerFactory(cfg))
 	enabled := make(map[string]bool)
 
 	for name, serviceConfig := range configs {
