@@ -26,6 +26,7 @@ const (
 
 var (
 	VERSION           string
+	IMAGE_VERSION     string
 	CloudConfigFile   = "/var/lib/rancher/conf/cloud-config-rancher.yml"
 	ConfigFile        = "/var/lib/rancher/conf/rancher.yml"
 	PrivateConfigFile = "/var/lib/rancher/conf/rancher-private.yml"
@@ -119,5 +120,8 @@ type CloudInit struct {
 func init() {
 	if VERSION == "" {
 		VERSION = "v0.0.0-dev"
+	}
+	if IMAGE_VERSION == "" {
+		IMAGE_VERSION = "v0.2.1"
 	}
 }

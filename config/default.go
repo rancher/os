@@ -279,7 +279,7 @@ func NewConfig() *Config {
 			"ubuntu-console": {
 				SystemContainers: map[string]*project.ServiceConfig{
 					"console": {
-						Image:      "rancher/ubuntuconsole:" + VERSION,
+						Image:      "rancher/ubuntuconsole:" + IMAGE_VERSION,
 						Privileged: true,
 						Labels: []string{
 							DETACH + "=true",
