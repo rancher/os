@@ -87,8 +87,8 @@ func NewConfig() *Config {
 				},
 				Volumes: []string{
 					"/dev:/host/dev",
-					"/lib/modules:/lib/modules:ro",
-					"/lib/firmware:/lib/firmware:ro",
+					"/lib/modules:/lib/modules",
+					"/lib/firmware:/lib/firmware",
 				},
 				Image: "udev",
 			},
@@ -106,8 +106,8 @@ func NewConfig() *Config {
 				},
 				Volumes: []string{
 					"/dev:/host/dev",
-					"/lib/modules:/lib/modules:ro",
-					"/lib/firmware:/lib/firmware:ro",
+					"/lib/modules:/lib/modules",
+					"/lib/firmware:/lib/firmware",
 				},
 			},
 			"system-volumes": {
@@ -120,8 +120,8 @@ func NewConfig() *Config {
 				},
 				Volumes: []string{
 					"/var/lib/rancher/conf:/var/lib/rancher/conf",
-					"/lib/modules:/lib/modules:ro",
-					"/lib/firmware:/lib/firmware:ro",
+					"/lib/modules:/lib/modules",
+					"/lib/firmware:/lib/firmware",
 					"/var/run:/var/run",
 					"/var/log:/var/log",
 				},
@@ -145,7 +145,7 @@ func NewConfig() *Config {
 					"/init:/usr/bin/respawn:ro",
 					"/init:/usr/bin/system-docker:ro",
 					"/init:/usr/sbin/wait-for-docker:ro",
-					"/lib/modules:/lib/modules:ro",
+					"/lib/modules:/lib/modules",
 					"/usr/bin/docker:/usr/bin/docker:ro",
 				},
 			},
