@@ -226,13 +226,13 @@
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/docker",
-			"Comment": "0.1.0-6-g2c1ca18",
-			"Rev": "2c1ca181af15180721e684d8e605462e1055cf8b"
+			"Comment": "0.1.0-7-g610ec8a",
+			"Rev": "610ec8ab86c2b1a84e474cbf78cc38104ec4e5e4"
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/project",
-			"Comment": "0.1.0-6-g2c1ca18",
-			"Rev": "2c1ca181af15180721e684d8e605462e1055cf8b"
+			"Comment": "0.1.0-7-g610ec8a",
+			"Rev": "610ec8ab86c2b1a84e474cbf78cc38104ec4e5e4"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-glob",

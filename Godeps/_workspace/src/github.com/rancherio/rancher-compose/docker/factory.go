@@ -16,8 +16,10 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 	}
 
 	cmd, _ := shlex.Split(c.Command)
+	entrypoint, _ := shlex.Split(c.Entrypoint)
 
 	return &runconfig.Config{
+			Entrypoint: entrypoint,
 			Hostname:   c.Hostname,
 			Domainname: c.DomainName,
 			User:       c.User,
