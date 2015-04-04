@@ -8,11 +8,12 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancherio/os/cmd/cloudinit"
 	"github.com/rancherio/os/cmd/control"
+	"github.com/rancherio/os/cmd/network"
 	"github.com/rancherio/os/cmd/power"
 	"github.com/rancherio/os/cmd/respawn"
 	"github.com/rancherio/os/cmd/sysinit"
 	"github.com/rancherio/os/cmd/systemdocker"
-	"github.com/rancherio/os/cmd/network"
+	"github.com/rancherio/os/cmd/wait"
 	osInit "github.com/rancherio/os/init"
 )
 
@@ -46,6 +47,7 @@ func main() {
 	registerCmd("/usr/sbin/rancherctl", control.Main)
 	registerCmd("/usr/bin/cloud-init", cloudinit.Main)
 	registerCmd("/usr/sbin/netconf", network.Main)
+	registerCmd("/usr/sbin/wait-for-docker", wait.Main)
 
 	if !reexec.Init() {
 		log.Fatalf("Failed to find an entry point for %s", os.Args[0])

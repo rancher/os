@@ -129,6 +129,7 @@ func NewConfig() *Config {
 					"/init:/usr/bin/rancherctl:ro",
 					"/init:/usr/bin/respawn:ro",
 					"/init:/usr/bin/system-docker:ro",
+					"/init:/usr/sbin/wait-for-docker:ro",
 					"/lib/modules:/lib/modules:ro",
 					"/usr/bin/docker:/usr/bin/docker:ro",
 				},
@@ -254,6 +255,15 @@ func NewConfig() *Config {
 				Net:        "host",
 				Links: []string{
 					"network",
+				},
+			"userdockerwait": {
+				Image: "userdockerwait",
+				Net:   "host",
+				Labels: []string{
+					"io.rancher.os.detach=false",
+				},
+				Links: []string{
+					"userdocker",
 				},
 				VolumesFrom: []string{
 					"all-volumes",

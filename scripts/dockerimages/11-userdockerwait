@@ -1,0 +1,2 @@
+FROM base
+CMD ["/usr/sbin/wait-for-docker"]
