@@ -305,8 +305,8 @@ func NewConfig() *Config {
 				Net:     "host",
 			},
 		},
-		EnabledAddons: []string{},
-		Addons: map[string]Config{
+		EnabledServices: []string{},
+		Services: map[string]Config{
 			"ubuntu-console": {
 				SystemContainers: map[string]*project.ServiceConfig{
 					"console": {

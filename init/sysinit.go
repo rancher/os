@@ -125,32 +125,32 @@ func runServices(name string, cfg *config.Config, configs map[string]*project.Se
 			return err
 		}
 
-		for _, addon := range cfg.EnabledAddons {
-			if _, ok := enabled[addon]; ok {
+		for _, service := range cfg.EnabledServices {
+			if _, ok := enabled[service]; ok {
 				continue
 			}
 
-			if config, ok := cfg.Addons[addon]; ok {
+			if config, ok := cfg.Services[service]; ok {
 				for name, s := range config.SystemContainers {
 					if err := project.AddConfig(name, s); err != nil {
 						log.Errorf("Failed to load %s : %v", name, err)
 					}
 				}
 			} else {
-				bytes, err := util.LoadResource(addon)
+				bytes, err := util.LoadResource(service)
 				if err != nil {
-					log.Errorf("Failed to load %s : %v", addon, err)
+					log.Errorf("Failed to load %s : %v", service, err)
 					continue
 				}
 
 				err = project.Load(bytes)
 				if err != nil {
-					log.Errorf("Failed to load %s : %v", addon, err)
+					log.Errorf("Failed to load %s : %v", service, err)
 					continue
 				}
 			}
 
-			enabled[addon] = true
+			enabled[service] = true
 		}
 
 		return nil

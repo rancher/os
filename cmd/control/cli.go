@@ -25,11 +25,11 @@ func Main() {
 			Subcommands: configSubcommands(),
 		},
 		{
-			Name:        "addon",
-			ShortName:   "a",
-			Usage:       "addon settings",
+			Name:        "service",
+			ShortName:   "s",
+			Usage:       "service settings",
 			HideHelp:    true,
-			Subcommands: addonSubCommands(),
+			Subcommands: serviceSubCommands(),
 		},
 		//{
 		//	Name:      "reload",

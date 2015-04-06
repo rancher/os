@@ -9,21 +9,21 @@ import (
 	"github.com/rancherio/os/util"
 )
 
-func addonSubCommands() []cli.Command {
+func serviceSubCommands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "enable",
-			Usage:  "turn on an addon",
+			Usage:  "turn on an service",
 			Action: enable,
 		},
 		{
 			Name:   "disable",
-			Usage:  "turn off an addon",
+			Usage:  "turn off an service",
 			Action: disable,
 		},
 		{
 			Name:   "list",
-			Usage:  "list addons and state",
+			Usage:  "list services and state",
 			Action: list,
 		},
 	}
@@ -36,22 +36,22 @@ func disable(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	for _, addon := range c.Args() {
+	for _, service := range c.Args() {
 		filtered := make([]string, 0, len(c.Args()))
-		for _, existing := range cfg.EnabledAddons {
-			if existing != addon {
+		for _, existing := range cfg.EnabledServices {
+			if existing != service {
 				filtered = append(filtered, existing)
 			}
 		}
 
 		if len(filtered) != len(c.Args()) {
-			cfg.EnabledAddons = filtered
+			cfg.EnabledServices = filtered
 			changed = true
 		}
 	}
 
 	if changed {
-		if err = cfg.Set("enabled_addons", cfg.EnabledAddons); err != nil {
+		if err = cfg.Set("enabled_services", cfg.EnabledServices); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -64,15 +64,15 @@ func enable(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	for _, addon := range c.Args() {
-		if _, ok := cfg.Addons[addon]; ok && !util.Contains(cfg.EnabledAddons, addon) {
-			cfg.EnabledAddons = append(cfg.EnabledAddons, addon)
+	for _, service := range c.Args() {
+		if _, ok := cfg.Services[service]; ok && !util.Contains(cfg.EnabledServices, service) {
+			cfg.EnabledServices = append(cfg.EnabledServices, service)
 			changed = true
 		}
 	}
 
 	if changed {
-		if err = cfg.Set("enabled_addons", cfg.EnabledAddons); err != nil {
+		if err = cfg.Set("enabled_services", cfg.EnabledServices); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -86,15 +86,15 @@ func list(c *cli.Context) {
 
 	enabled := map[string]bool{}
 
-	for _, addon := range cfg.EnabledAddons {
-		enabled[addon] = true
+	for _, service := range cfg.EnabledServices {
+		enabled[service] = true
 	}
 
-	for addon, _ := range cfg.Addons {
-		if _, ok := enabled[addon]; ok {
-			fmt.Printf("%s enabled\n", addon)
+	for service, _ := range cfg.Services {
+		if _, ok := enabled[service]; ok {
+			fmt.Printf("%s enabled\n", service)
 		} else {
-			fmt.Printf("%s disabled\n", addon)
+			fmt.Printf("%s disabled\n", service)
 		}
 	}
 }
