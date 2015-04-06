@@ -1,0 +1,9 @@
+name: Rancher Labs
+description: Documentation for Rancher Labss
+
+URL: “http://rancherio.github.io/os”
+baseurl: /os
+
+markdown: rdiscount
+permalink: pretty
+
