@@ -132,6 +132,10 @@ func runContainersFrom(startFrom string, cfg *config.Config, containerConfigs []
 				log.Errorf("Failed to run %v: %v", containerConfig.Id, container.Err)
 			}
 
+			if cfg.Debug {
+				container.Log(os.Stdout, os.Stderr, false)
+			}
+
 			if containerConfig.ReloadConfig {
 				log.Info("Reloading configuration")
 				err := cfg.Reload()
@@ -158,11 +162,6 @@ func tailConsole(cfg *config.Config) error {
 		return nil
 	}
 
-	client, err := docker.NewSystemClient()
-	if err != nil {
-		return err
-	}
-
 	for _, container := range cfg.SystemContainers {
 		if container.Id != config.CONSOLE_CONTAINER {
 			continue
@@ -174,14 +173,7 @@ func tailConsole(cfg *config.Config) error {
 		}
 
 		log.Infof("Tailing console : %s", c.Name)
-		return client.Logs(dockerClient.LogsOptions{
-			Container:    c.Name,
-			Stdout:       true,
-			Stderr:       true,
-			Follow:       true,
-			OutputStream: os.Stdout,
-			ErrorStream:  os.Stderr,
-		})
+		return c.Log(os.Stdout, os.Stderr, true)
 	}
 
 	log.Error("Console not found")
