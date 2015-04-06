@@ -87,7 +87,8 @@ func NewConfig() *Config {
 					"/lib/modules:/lib/modules",
 					"/lib/firmware:/lib/firmware",
 				},
-				Image: "udev",
+				Image:     "udev",
+				LogDriver: "json-file",
 			},
 		},
 		SystemContainers: map[string]*project.ServiceConfig{
