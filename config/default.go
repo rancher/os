@@ -145,6 +145,7 @@ func NewConfig() *Config {
 					"/lib/modules:/lib/modules",
 					"/usr/bin/docker:/usr/bin/docker:ro",
 				},
+				LogDriver: "json-file",
 			},
 			"user-volumes": {
 				Image:      "state",
@@ -158,6 +159,7 @@ func NewConfig() *Config {
 					"/home:/home",
 					"/opt:/opt",
 				},
+				LogDriver: "json-file",
 			},
 			"docker-volumes": {
 				Image:      "state",
@@ -172,6 +174,7 @@ func NewConfig() *Config {
 					"/var/lib/docker:/var/lib/docker",
 					"/var/lib/system-docker:/var/lib/system-docker",
 				},
+				LogDriver: "json-file",
 			},
 			"all-volumes": {
 				Image:      "state",
@@ -187,6 +190,7 @@ func NewConfig() *Config {
 					"user-volumes",
 					"system-volumes",
 				},
+				LogDriver: "json-file",
 			},
 			"cloud-init-pre": {
 				Image:      "cloudinit",
