@@ -29,3 +29,6 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     sed -i 's/\(^sudo.*\)/\1rancher/g' /etc/group && \
     echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
 COPY scripts/dockerimages/scripts/inputrc /etc/inputrc
+COPY scripts/dockerimages/scripts/entry.sh /usr/sbin/entry.sh
+
+ENTRYPOINT ["/usr/sbin/entry.sh"]

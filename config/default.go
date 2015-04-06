@@ -28,6 +28,7 @@ func NewConfig() *Config {
 			Args: []string{
 				"docker",
 				"-d",
+				"--log-driver", "syslog",
 				"-s", "overlay",
 				"-b", "docker-sys",
 				"--fixed-cidr", "172.18.42.1/16",
@@ -100,10 +101,8 @@ func NewConfig() *Config {
 				Environment: []string{
 					"DAEMON=true",
 				},
-				Volumes: []string{
-					"/dev:/host/dev",
-					"/lib/modules:/lib/modules",
-					"/lib/firmware:/lib/firmware",
+				VolumesFrom: []string{
+					"system-volumes",
 				},
 			},
 			"system-volumes": {
@@ -115,12 +114,14 @@ func NewConfig() *Config {
 					CREATE_ONLY + "=true",
 				},
 				Volumes: []string{
+					"/dev:/host/dev",
 					"/var/lib/rancher/conf:/var/lib/rancher/conf",
 					"/lib/modules:/lib/modules",
 					"/lib/firmware:/lib/firmware",
 					"/var/run:/var/run",
 					"/var/log:/var/log",
 				},
+				LogDriver: "json-file",
 			},
 			"command-volumes": {
 				Image:      "state",
@@ -250,13 +251,10 @@ func NewConfig() *Config {
 				Image:      "syslog",
 				Privileged: true,
 				Net:        "host",
-				Links: []string{
-					"cloud-init",
-					"network",
-				},
 				VolumesFrom: []string{
 					"system-volumes",
 				},
+				LogDriver: "json-file",
 			},
 			"userdocker": {
 				Image:      "userdocker",

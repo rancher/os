@@ -171,6 +171,12 @@ func (c *Container) Reset() *Container {
 }
 
 func (c *Container) parseService() {
+	if (c.ContainerCfg.Service.LogDriver == "" || c.ContainerCfg.Service.LogDriver == "syslog") &&
+		!util.Contains(c.ContainerCfg.Service.Links, "syslog") {
+		log.Debugf("Adding syslog link to %s\n", c.Name)
+		c.ContainerCfg.Service.Links = append(c.ContainerCfg.Service.Links, "syslog")
+	}
+
 	cfg, hostConfig, err := docker.Convert(c.ContainerCfg.Service)
 	if err != nil {
 		c.Err = err
@@ -184,6 +190,7 @@ func (c *Container) parseService() {
 	c.remove = c.Config.Labels[config.REMOVE] != "false"
 	c.ContainerCfg.CreateOnly = c.Config.Labels[config.CREATE_ONLY] == "true"
 	c.ContainerCfg.ReloadConfig = c.Config.Labels[config.RELOAD_CONFIG] == "true"
+
 }
 
 func (c *Container) parseCmd() {
