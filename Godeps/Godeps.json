@@ -205,7 +205,7 @@
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "f7e250a5d56499f6591bc98fe58b3a6edaf479a8"
+			"Rev": "9d65f5b8a5731a788b8b13634022089a31af45dc"
 		},
 		{
 			"ImportPath": "github.com/guelfey/go.dbus",
@@ -226,13 +226,13 @@
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/docker",
-			"Comment": "0.1.0-7-g610ec8a",
-			"Rev": "610ec8ab86c2b1a84e474cbf78cc38104ec4e5e4"
+			"Comment": "0.1.0-8-g45c7de3",
+			"Rev": "45c7de3d9b5b106475cf1461df7550bdaab0a9aa"
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/project",
-			"Comment": "0.1.0-7-g610ec8a",
-			"Rev": "610ec8ab86c2b1a84e474cbf78cc38104ec4e5e4"
+			"Comment": "0.1.0-8-g45c7de3",
+			"Rev": "45c7de3d9b5b106475cf1461df7550bdaab0a9aa"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-glob",

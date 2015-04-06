@@ -35,6 +35,7 @@ type ServiceConfig struct {
 	Image       string   `yaml:"image,omitempty"`
 	Labels      []string `yaml:"labels,omitempty"`
 	Links       []string `yaml:"links,omitempty"`
+	LogDriver   string   `yaml:"log_driver,omitempty"`
 	MemLimit    int64    `yaml:"mem_limit,omitempty"`
 	Name        string   `yaml:"name,omitempty"`
 	Net         string   `yaml:"net,omitempty"`
