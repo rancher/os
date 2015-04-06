@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -e /host/dev ]; then
-    mount --bind /host/dev /dev
+    mount --rbind /host/dev /dev
 fi
 
 exec "$@"
