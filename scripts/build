@@ -5,6 +5,19 @@ cd $(dirname $0)/..
 
 source scripts/version
 
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --custom)
+            IN_DOCKER=true
+            ROS_CUSTOM_GOPATH=true
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift 1
+done
+
 if [ "$IN_DOCKER" != "true" ]; then
     cat > .dockerfile << "EOF"
 FROM rancher/dind:v0.1.0
