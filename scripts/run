@@ -47,39 +47,48 @@ fi
 cp bin/rancheros ${INITRD_TMP}/init
 cd ${INITRD_TMP}
 
-if [ "$1" == "--docker" ]; then
-    docker build -t rancheros-run .
-    docker run --rm --privileged -it rancheros-run
-else
-    find | cpio -H newc -o > ${INITRD_TEST}
+find | cpio -H newc -o > ${INITRD_TEST}
 
-    if [ ! -e ${HD} ]; then
-        mkdir -p $(dirname ${HD})
-        zcat ${HD_GZ} > ${HD}
-    fi
-
-    mkdir -p $(dirname $USER_DATA)
-
-    echo "#cloud-config" > ${USER_DATA}
-    echo "ssh_authorized_keys:" >> ${USER_DATA}
-    for i in ${HOME}/.ssh/*.pub; do
-        if [ -e $i ]; then
-            echo "  - $(<$i)" >> ${USER_DATA}
-        fi
-    done
-
-    qemu-system-x86_64 -serial stdio \
-        -kernel ${KERNEL} \
-        -initrd ${INITRD_TEST} \
-        -m 1024 \
-        -net nic,vlan=0,model=virtio \
-        -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher \
-        -drive if=virtio,file=${HD} \
-        -machine accel=kvm \
-        -cpu host \
-        -smp 4 \
-        -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init \
-        -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
-        -append "x rancher.password=rancher $@" \
-        ${QEMU_ARGS}
+if [ ! -e ${HD} ]; then
+    mkdir -p $(dirname ${HD})
+    zcat ${HD_GZ} > ${HD}
 fi
+
+mkdir -p $(dirname $USER_DATA)
+
+echo "#cloud-config" > ${USER_DATA}
+echo "ssh_authorized_keys:" >> ${USER_DATA}
+for i in ${HOME}/.ssh/*.pub; do
+    if [ -e $i ]; then
+        echo "  - $(<$i)" >> ${USER_DATA}
+    fi
+done
+
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --append)
+            shift 1
+            QEMU_APPEND="${QEMU_APPEND} $1"
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift 1
+done
+
+qemu-system-x86_64 -serial stdio \
+    -kernel ${KERNEL} \
+    -initrd ${INITRD_TEST} \
+    -m 1024 \
+    -net nic,vlan=0,model=virtio \
+    -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher \
+    -drive if=virtio,file=${HD} \
+    -machine accel=kvm \
+    -cpu host \
+    -smp 4 \
+    -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init \
+    -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
+    -append "rancher.password=rancher console=ttyS0 ${QEMU_APPEND}" \
+    -serial mon:telnet:localhost:4444,server,nowait \
+    ${QEMU_ARGS} "${@}"

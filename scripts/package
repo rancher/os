@@ -7,7 +7,6 @@ source scripts/build-common
 
 
 cp bin/rancheros ${BUILD}/initrd/init
-cp scripts/dockerimages/scripts/os-dockerfile ${BUILD}/initrd/Dockerfile
 
 cd ${BUILD}/initrd
 
