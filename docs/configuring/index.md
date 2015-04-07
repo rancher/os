@@ -8,6 +8,10 @@ layout: default
 
 The configuration of RancherOS is on a single configuration file called rancher.yml.  You can either use `rancherctl config` to edit and interact with this file or edit `/var/lib/rancher/conf/rancher.yml` directly.  It is safer to use `rancherctl config`.
 
+## rancherctl
+
+[`rancherctl`]({{site/baseurl}}/docs/rancherctl/) is the main command to interact with RancherOS configuration, to the the [full documentation]({{site.baseurl}}/docs/rancherctl/config/).
+
 ## Networking
 
 RancherOS provides very basic support to get networking up.
@@ -41,22 +45,6 @@ In the DNS section you can set the `nameserver`, `search`, and `domain` which di
 
 In the `interfaces` section the keys are used to match the desire interface to configure.  Wildcard globbing is supported so `eth*` will match `eth1` and `eth2`.  The available options you can set are `address`, `gateway`, `mtu`, and `dhcp`.
 
-## Cloud Init
-
-```yaml
-cloud_init:
-datasources:
-- configdrive:/media/config-2
-```
-
-In the rancher.yml you can configure which datasources to use for cloud-init.  Multiple datasources can be set but the datasource that is available the fastest will be used.  This value is usually prepopulated with the current setting for your environment.  Valid value are:
-
-1. `configdrive:PATH` - Look for an OpenStack compatible config drive mounted at `PATH`
-1. `file:PATH` - Read the `FILE` as the user data.
-1. `ec2` - Look for EC2 style meta data at 169.254.169.254
-1. `ec2:IP_ADDRESS` - Look for EC2 style meta data at the `IP_ADDRESS`
-1. `url:URL` - Download `URL` and use that as the user data
-1. `cmdline:URL` - Look for `cloud-config-url=URL` in `/proc/cmdline` and download `URL` as user data
 
 ## Persistence
 

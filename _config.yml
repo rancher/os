@@ -1,9 +1,15 @@
 name: Rancher Labs
 description: Documentation for Rancher Labss
 
-URL: “http://rancherio.github.io/os”
+URL: “http://deniseschannon.github.io/os”
 baseurl: /os
 
-markdown: rdiscount
+
+markdown: redcarpet
+redcarpet:
+  extensions: ["smart", "tables", "no_intra_emphasis", "fenced_code_blocks", "autolink", "strikethrough", "superscript", "with_toc_data"]
+highlighter: pygments
+kramdown: 
+   input: GFM
 permalink: pretty
 

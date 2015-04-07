@@ -15,10 +15,11 @@ Docker 1.5+ is required.
 
 Command | Description
 --------|------------
-`docker` | Good old Docker, use that to run stuff.
+`docker`| Good old Docker, use that to run stuff.
 `system-docker` | The docker instance running the system containers.  Must run as root or using `sudo`
 `rancherctl` | Control and configure RancherOS
 
+<br>
 **How can I customize the console?**
 
 Since RancherOS is so small the default console is based off of Busybox.  This it not always the best experience.  The intention with RancherOS is to allow you to swap out different consoles with something like Ubuntu, Fedora, or CentOS.  Currently we have Ubuntu configured but we will add more.  To enable the Ubuntu console do the following.
