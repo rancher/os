@@ -1,10 +1,10 @@
 ---
-title: Architecture
+title: Ranceher OS Architecture
 layout: default
 
 ---
 
-# RancherOS Architecture
+## RancherOS Architecture
 
 RancherOS is a 20MB distro which runs the latest Docker daemon as PID1, the first process on the system.  All other system services, like ntpd, rsyslog, and console, are running in Docker containers.
 

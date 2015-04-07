@@ -968,24 +968,28 @@ address {
   font-style: normal;
   line-height: 20px;
 }
-
 code,
+
 pre {
-  padding: 0 3px 2px;
-  font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
-  font-size: 12px;
-  color: #333333;
-  -webkit-border-radius: 3px;
-     -moz-border-radius: 3px;
-          border-radius: 3px;
+    
+    padding: 0 3px 2px;
+    font-family: Monaco, Menlo, Consolas, "Courier New", monospace;
+    font-size: 12px;
+    color: #333333;
+    -webkit-border-radius: 3px;
+    -moz-border-radius: 3px;
+    border-radius: 3px;
 }
 
+
+
 code {
-  padding: 2px 4px;
-  color: #d14;
-  white-space: nowrap;
-  background-color: #f7f7f9;
-  border: 1px solid #e1e1e8;
+    
+    padding: 2px 4px;
+    color: #333030;
+    white-space: nowrap;
+    background-color: #f7f7f9;
+    border: 1px solid #e1e1e8;
 }
 
 pre {
@@ -1999,22 +2003,33 @@ table {
   background-color: transparent;
   border-collapse: collapse;
   border-spacing: 0;
-}
+  border: 1px solid #000000;
+ }
+
 
 .table {
   width: 100%;
   margin-bottom: 20px;
 }
 
-.table th,
-.table td {
+th, td {
   padding: 8px;
   line-height: 20px;
   text-align: left;
   vertical-align: top;
   border-top: 1px solid #dddddd;
+  border: 1px solid #000000;
+  
 }
-
+.table th,
+.table td {
+    padding: 8px;
+    line-height: 20px;
+    text-align: left;
+    vertical-align: top;
+    border-top: 1px solid #dddddd;
+    
+}
 .table th {
   font-weight: bold;
 }
