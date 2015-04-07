@@ -36,16 +36,14 @@ func (c *containerBasedService) Up() error {
 		create = true
 	}
 
+	var event project.Event
+
 	if create {
 		container.Create()
-		c.project.Notify(project.CONTAINER_CREATED, c, map[string]string{
-			project.CONTAINER_ID: container.Container.ID,
-		})
+		event = project.CONTAINER_CREATED
 	} else {
 		container.StartAndWait()
-		c.project.Notify(project.CONTAINER_STARTED, c, map[string]string{
-			project.CONTAINER_ID: container.Container.ID,
-		})
+		event = project.CONTAINER_STARTED
 	}
 
 	if container.Err != nil {
@@ -54,6 +52,12 @@ func (c *containerBasedService) Up() error {
 
 	if container.Err == nil && containerCfg.ReloadConfig {
 		return project.ErrRestart
+	}
+
+	if container.Container != nil {
+		c.project.Notify(event, c, map[string]string{
+			project.CONTAINER_ID: container.Container.ID,
+		})
 	}
 
 	return container.Err
