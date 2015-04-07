@@ -15,7 +15,7 @@ For TLS to be used with Docker you must first enable TLS, this can be done by do
 
 | Command  | Description                              |
 |----------|------------------------------------------|
-| generate | Generates client and server certificates |
+| `generate` | Generates client and server certificates |
 
 ## End to end example
 
