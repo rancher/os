@@ -31,15 +31,15 @@ RancherOS is available as an Amazon Web Services AMI, and can be easily run on E
 
 
     
-### Launching RancherOS using the AWS CLI
+### Launching RancherOS using the AWS Command Line Interface
 
-If you prefer to use the AWS CLI the command below will launch a new instance using the RancherOS AMI: 
+If you prefer to use the [AWS Command Line Interface](http://aws.amazon.com/cli/), use the following command. You will need to have a key pair established and a security group set up. 
 
 ```sh
-$ aws ec2 run-instances --image-id ami-ID# --count 1 \
---instance-type t1.micro --key-name MyKey --security-groups new-sg
+$ aws ec2 run-instances --image-id ami-ID# --count 1 --instance-type t1.micro --key-name MyKey --security-groups new-sg
 ```
 ami-ID# is the AMI of RancherOS that you want to use. See below to see the latest AMIs.
+
 
 Now you can login to the RancherOS system:
 
