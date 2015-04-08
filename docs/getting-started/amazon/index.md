@@ -3,39 +3,50 @@ title: Getting Started on Amazon
 layout: default
 
 ---
-# Running RancherOS on Amazon Web Services
+## Running RancherOS on Amazon Web Services
+
+### Launching RancherOS using AWS's website
+
 RancherOS is available as an Amazon Web Services AMI, and can be easily run on EC2.  Let’s walk through how to import and create a RancherOS on EC2 machine:
 
-1. First login to your AWS console, and on the EC2 dashboard, click on **“Launch a new instance”**:
+1. First login to your AWS console, and on the EC2 dashboard, click on **Launch Instance**:
 
     ![RancherOS on AWS 1]({{site.baseurl}}/img/Rancher_aws1.png)
 
-2. Choose Community AMIs and search for RancherOS:
+2. Choose Community AMIs and search for RancherOS. Pick the latest version:
 
     ![RancherOS on AWS 2]({{site.baseurl}}/img/Rancher_aws2.png)
 
-3. After configuring the network, size of the instance, and the security groups, review the information of the instance and choose a ssh key pair to be used with the EC2instance:
+3. Go through the steps of creating the instance type. Choose your instance type, configure instance, add storage, tag instance, configure security group, and review. After you click on **Launch**, either create a new ssh key pair or choose an existing key pair to be used with the EC2 instance. If you have created a new key pair, download the key pair. If you have chosen an existing key pair, make sure you have the key pair accessible. Click on **Launch Instances**. 
 
     ![RancherOS on AWS 3]({{site.baseurl}}/img/Rancher_aws3.png)
 
-4. Download your new key pair, and then launch the instance, you should see the instance up and running:
+4. Your instance should be launching and you can click on **View Instances** to see it's status.
 
     ![RancherOS on AWS 4]({{site.baseurl}}/img/Rancher_aws4.png)
+    
+    ![RancherOS on AWS 5]({{site.baseurl}}/img/Rancher_aws5.png)
+
+
+    
+### Launching RancherOS using the AWS CLI
 
 If you prefer to use the AWS CLI the command below will launch a new instance using the RancherOS AMI: 
 
 ```sh
-$ aws ec2 run-instances --image-id ami-eeaefc86 --count 1 \
+$ aws ec2 run-instances --image-id ami-ID# --count 1 \
 --instance-type t1.micro --key-name MyKey --security-groups new-sg
 ```
-where ami-eeaefc86 is the AMI of RancherOS in us-east-1 region. You can find the codes for AMIs in other regions on the RancherOS GitHub site. Now you can login to the RancherOS system:
+ami-ID# is the AMI of RancherOS that you want to use. See below to see the latest AMIs.
+
+Now you can login to the RancherOS system:
 
 ```sh
 $ ssh -i MyKey.pem rancher@<ip-of-ec2-instance>
 [rancher@rancher ~]$
 ```
 
-# Latest Release 
+## Latest Release 
 
 Region | Type | AMI |
 -------|------|------
