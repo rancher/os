@@ -16,7 +16,7 @@ Details on the RancherOS Architecture can be found [here]({{site.baseurl}}/docs/
 There are a couple of options of how to install RancherOS.
 
 * Installing on [Vagrant]({{site.baseurl}}/docs/getting-started/vagrant/).
-* Running on [Amazon]({{site.baseurl}}/docks/getting-started/amazon/).
+* Running on [Amazon]({{site.baseurl}}/docs/getting-started/amazon/).
 * Installing to [Disk]({{site.baseurl}}/docs/getting-started/disk/).
 
 ## A First Look At RancherOS
