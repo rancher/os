@@ -5,7 +5,7 @@ layout: default
 ---
 ## Running RancherOS on Amazon Web Services
 
-### Launching RancherOS using AWS's website
+### Launching RancherOS using Amazon's web interface
 
 RancherOS is available as an Amazon Web Services AMI, and can be easily run on EC2.  Let’s walk through how to import and create a RancherOS on EC2 machine:
 
@@ -24,6 +24,8 @@ RancherOS is available as an Amazon Web Services AMI, and can be easily run on E
 4. Your instance should be launching and you can click on **View Instances** to see it's status.
 
     ![RancherOS on AWS 4]({{site.baseurl}}/img/Rancher_aws4.png)
+    
+    Your instance is running!
     
     ![RancherOS on AWS 5]({{site.baseurl}}/img/Rancher_aws5.png)
 
