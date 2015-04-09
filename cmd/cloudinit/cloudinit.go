@@ -195,7 +195,7 @@ func Main() {
 
 	for _, file := range cc.WriteFiles {
 		f := system.File{File: file}
-		fullPath, err := system.WriteFile(&f, outputDir)
+		fullPath, err := system.WriteFile(&f, "/")
 		if err != nil {
 			log.Fatalf("%v", err)
 		}
