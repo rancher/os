@@ -117,6 +117,7 @@ func NewConfig() *Config {
 				Volumes: []string{
 					"/dev:/host/dev",
 					"/var/lib/rancher/conf:/var/lib/rancher/conf",
+					"/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher",
 					"/lib/modules:/lib/modules",
 					"/lib/firmware:/lib/firmware",
 					"/var/run:/var/run",
@@ -267,9 +268,6 @@ func NewConfig() *Config {
 				Net:        "host",
 				Links: []string{
 					"network",
-				},
-				Volumes: []string{
-					"/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt",
 				},
 				VolumesFrom: []string{
 					"all-volumes",
