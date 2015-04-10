@@ -4,11 +4,11 @@ layout: default
 
 ---
 
-# RancherOS
+## RancherOS
 
 The smallest, easiest way to run Docker in production at scale.  Everything in RancherOS is a container managed by Docker.  This includes system services such as udev and rsyslog.  RancherOS includes only the bare minimum amount of software needed to run Docker.  This keeps the binary download of RancherOS to about 20MB.  Everything else can be pulled in dynamically through Docker.
 
-## How this works
+### How this works
 
 
 
@@ -21,35 +21,28 @@ Everything in RancherOS is a Docker container.  We accomplish this by launching 
 
 
 
-## Running RancherOS
+### Running RancherOS
 
-To find out more about installing RancherOS, go to our [installation page]({{site.baseurl}}/docs/getting-started/).
+To find out more about installing RancherOS, read more about it on our [Getting Started Guide]({{site.baseurl}}/docs/getting-started/).
 
 
-## Latest Release
+### Latest Release
 
-**v0.2.1 - Docker 1.5.0 - Linux 3.19.2**
+v0.2.1 - Docker 1.5.0 - Linux 3.19.2
 
-### ISO
 
-https://github.com/rancherio/os/releases/download/v0.2.1/rancheros.iso
-
-### Amazon
-
-The most recent Amazon AMIs can be found [here]({{site.baseurl}}/docs/getting-started/amazon/).
-
-## Building
+### Building
 
 Docker 1.5+ required.
 
 ./build.sh
 
-When the build is done the ISO should be in `dist/artifacts`
+When the build is done, the ISO should be in `dist/artifacts`.
 
-## Developing
+### Developing
 
 Development is easiest done with QEMU on Linux.  If you aren't running Linux natively then we recommend you run VMware Fusion/Workstation and enable VT-x support.  Then, QEMU (with KVM support) will run sufficiently fast inside a Linux VM.
 
-First run `./build.sh` to create the initial bootstrap Docker images.  After that if you make changes to the go code only run `./scripts/build`.  To launch RancherOS in QEMU from your dev version run `./scripts/run`.  You can SSH in using `ssh -l rancher -p 2222 localhost`.  Your SSH keys should have been populated so you won't need a password.  If you don't have SSH keys then the password is "rancher".
+First run `./build.sh` to create the initial bootstrap Docker images.  After that if you make changes to the go code only run `./scripts/build`.  To launch RancherOS in QEMU from your dev version, run `./scripts/run`.  You can SSH in using `ssh -l rancher -p 2222 localhost`.  Your SSH keys should have been populated so you won't need a password.  If you don't have SSH keys then the password is "rancher".
 
 
