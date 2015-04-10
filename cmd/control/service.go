@@ -65,7 +65,7 @@ func enable(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		if _, ok := cfg.Services[service]; ok && !util.Contains(cfg.EnabledServices, service) {
+		if !util.Contains(cfg.EnabledServices, service) {
 			cfg.EnabledServices = append(cfg.EnabledServices, service)
 			changed = true
 		}
@@ -92,9 +92,14 @@ func list(c *cli.Context) {
 
 	for service, _ := range cfg.Services {
 		if _, ok := enabled[service]; ok {
-			fmt.Printf("%s enabled\n", service)
+			delete(enabled, service)
+			fmt.Printf("enabled  %s\n", service)
 		} else {
-			fmt.Printf("%s disabled\n", service)
+			fmt.Printf("disabled %s\n", service)
 		}
+	}
+
+	for service, _ := range enabled {
+		fmt.Printf("enabled  %s\n", service)
 	}
 }
