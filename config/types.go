@@ -3,17 +3,18 @@ package config
 import "github.com/rancherio/rancher-compose/project"
 
 const (
-	CONSOLE_CONTAINER  = "console"
-	DOCKER_BIN         = "/usr/bin/docker"
-	DOCKER_SYSTEM_HOME = "/var/lib/system-docker"
-	DOCKER_SYSTEM_HOST = "unix:///var/run/system-docker.sock"
-	DOCKER_HOST        = "unix:///var/run/docker.sock"
-	IMAGES_PATH        = "/"
-	IMAGES_PATTERN     = "images*.tar"
-	SYS_INIT           = "/sbin/init-sys"
-	USER_INIT          = "/sbin/init-user"
-	MODULES_ARCHIVE    = "/modules.tar"
-	DEBUG              = false
+	DEFAULT_IMAGE_VERSION = "v0.3.0-rc2"
+	CONSOLE_CONTAINER     = "console"
+	DOCKER_BIN            = "/usr/bin/docker"
+	DOCKER_SYSTEM_HOME    = "/var/lib/system-docker"
+	DOCKER_SYSTEM_HOST    = "unix:///var/run/system-docker.sock"
+	DOCKER_HOST           = "unix:///var/run/docker.sock"
+	IMAGES_PATH           = "/"
+	IMAGES_PATTERN        = "images*.tar"
+	SYS_INIT              = "/sbin/init-sys"
+	USER_INIT             = "/sbin/init-user"
+	MODULES_ARCHIVE       = "/modules.tar"
+	DEBUG                 = false
 
 	LABEL         = "label"
 	HASH          = "io.rancher.os.hash"
@@ -125,6 +126,6 @@ func init() {
 		VERSION = "v0.0.0-dev"
 	}
 	if IMAGE_VERSION == "" {
-		IMAGE_VERSION = "v0.2.1"
+		IMAGE_VERSION = DEFAULT_IMAGE_VERSION
 	}
 }
