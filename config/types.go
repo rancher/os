@@ -125,6 +125,6 @@ func init() {
 		VERSION = "v0.0.0-dev"
 	}
 	if IMAGE_VERSION == "" {
-		IMAGE_VERSION = "v0.2.1"
+		IMAGE_VERSION = "v0.3.0-rc1"
 	}
 }
