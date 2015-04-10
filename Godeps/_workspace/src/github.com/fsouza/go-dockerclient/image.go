@@ -252,7 +252,7 @@ type PullImageOptions struct {
 	RawJSONStream bool      `qs:"-"`
 }
 
-// PullImage pulls an image from a remote registry, logging progress to w.
+// PullImage pulls an image from a remote registry, logging progress to opts.OutputStream.
 //
 // See http://goo.gl/ACyYNS for more details.
 func (c *Client) PullImage(opts PullImageOptions, auth AuthConfiguration) error {

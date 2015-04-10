@@ -205,7 +205,7 @@
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "9d65f5b8a5731a788b8b13634022089a31af45dc"
+			"Rev": "fb0e9fb80f074795d7c11eba700eb33058b14bfb"
 		},
 		{
 			"ImportPath": "github.com/guelfey/go.dbus",
@@ -241,6 +241,18 @@
 		{
 			"ImportPath": "github.com/vishvananda/netlink",
 			"Rev": "ae3e7dba57271b4e976c4f91637861ee477135e2"
+		},
+		{
+			"ImportPath": "golang.org/x/net/context",
+			"Rev": "84ba27dd5b2d8135e9da1395277f2c9333a2ffda"
+		},
+		{
+			"ImportPath": "google.golang.org/cloud/compute/metadata",
+			"Rev": "c97f5f9979a8582f3ab72873a51979619801248b"
+		},
+		{
+			"ImportPath": "google.golang.org/cloud/internal",
+			"Rev": "c97f5f9979a8582f3ab72873a51979619801248b"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

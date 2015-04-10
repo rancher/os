@@ -168,6 +168,11 @@ func (s *DockerServer) ResetFailure(id string) {
 	delete(s.failures, id)
 }
 
+// ResetMultiFailures removes all enqueued failures.
+func (s *DockerServer) ResetMultiFailures() {
+	s.multiFailures = []map[string]string{}
+}
+
 // CustomHandler registers a custom handler for a specific path.
 //
 // For example:

@@ -1165,6 +1165,21 @@ func TestRemoveFailure(t *testing.T) {
 	}
 }
 
+func TestResetMultiFailures(t *testing.T) {
+	server := DockerServer{multiFailures: []map[string]string{}}
+	server.buildMuxer()
+	errorID := "multi error"
+	server.PrepareMultiFailures(errorID, "containers/json")
+	server.PrepareMultiFailures(errorID, "containers/json")
+	if len(server.multiFailures) != 2 {
+		t.Errorf("PrepareMultiFailures: error adding multi failures.")
+	}
+	server.ResetMultiFailures()
+	if len(server.multiFailures) != 0 {
+		t.Errorf("ResetMultiFailures: error reseting multi failures.")
+	}
+}
+
 func TestMutateContainer(t *testing.T) {
 	server := DockerServer{failures: make(map[string]string)}
 	server.buildMuxer()

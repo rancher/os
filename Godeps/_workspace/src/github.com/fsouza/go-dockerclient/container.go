@@ -198,7 +198,7 @@ type Config struct {
 	Labels          map[string]string   `json:"Labels,omitempty" yaml:"Labels,omitempty"`
 }
 
-// LogConfig log driver type and configuration
+// LogConfig defines the log driver type and the configuration for it.
 type LogConfig struct {
 	Type   string            `json:"Type,omitempty" yaml:"Type,omitempty"`
 	Config map[string]string `json:"Config,omitempty" yaml:"Config,omitempty"`
@@ -244,6 +244,8 @@ type Container struct {
 	VolumesRW  map[string]bool   `json:"VolumesRW,omitempty" yaml:"VolumesRW,omitempty"`
 	HostConfig *HostConfig       `json:"HostConfig,omitempty" yaml:"HostConfig,omitempty"`
 	ExecIDs    []string          `json:"ExecIDs,omitempty" yaml:"ExecIDs,omitempty"`
+
+	AppArmorProfile string `json:"AppArmorProfile,omitempty" yaml:"AppArmorProfile,omitempty"`
 }
 
 // RenameContainerOptions specify parameters to the RenameContainer function.
@@ -413,6 +415,8 @@ type HostConfig struct {
 	RestartPolicy   RestartPolicy          `json:"RestartPolicy,omitempty" yaml:"RestartPolicy,omitempty"`
 	Devices         []Device               `json:"Devices,omitempty" yaml:"Devices,omitempty"`
 	LogConfig       LogConfig              `json:"LogConfig,omitempty" yaml:"LogConfig,omitempty"`
+	ReadonlyRootfs  bool                   `json:"ReadonlyRootfs,omitempty" yaml:"ReadonlyRootfs,omitempty"`
+	SecurityOpt     []string               `json:"SecurityOpt,omitempty" yaml:"SecurityOpt,omitempty"`
 }
 
 // StartContainer starts a container, returning an error in case of failure.
