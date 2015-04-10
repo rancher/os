@@ -7,3 +7,6 @@
 .dockerfile
 *.swp
 Dockerfile
+/.idea
+/*.iml
+/scripts/dockerimages/tmp

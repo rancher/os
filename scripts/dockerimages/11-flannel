@@ -1,0 +1,3 @@
+FROM debian:7.8
+COPY scripts/dockerimages/tmp/flannel/flannel scripts/dockerimages/scripts/flannel.sh /
+CMD ["/flannel.sh"]
