@@ -6,7 +6,9 @@ layout: default
 
 # Configuring RancherOS
 
-The configuration of RancherOS is on a single configuration file called rancher.yml.  You can either use `rancherctl config` to edit and interact with this file or edit `/var/lib/rancher/conf/rancher.yml` directly.  It is safer to use `rancherctl config`.
+The configuration of RancherOS is on a single configuration file called rancher.yml.  You can either use [rancherctl config]({{site.baseurl}}/docs/rancherctl/config/) to edit and interact with this file or edit `/var/lib/rancher/conf/rancher.yml` directly.  
+
+Note: We recommend using [rancherctl config]({{site.baseurl}}/docs/rancherctl/config/) as it is safer to use.
 
 ## rancherctl
 
@@ -61,7 +63,7 @@ RancherOS will store its state in a single partition specified by the `dev` fiel
 
 ### Auto formatting
 
-You can specify a list of devices to check to format on boot.  If the state partition is already found RancherOS will not try to auto format a partition.  If the device specified in `autoformat` starts with 1 megabyte of zeros, RancherOS will autoformat the parition to ext4.  Auto-formatting is off by default.
+You can specify a list of devices to check to format on boot.  If the state partition is already found RancherOS will not try to auto format a partition.  If the device specified in `autoformat` starts with 1 megabyte of zeros, RancherOS will autoformat the partition to ext4.  Auto-formatting is off by default.
 
 ## Upgrades
 

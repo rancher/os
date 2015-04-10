@@ -4,58 +4,53 @@ layout: default
 
 ---
 
-# rancherctl tls
+## RancherCTL TLS
 
-`rancherctl tls` is used to generate both the client and server TLS certificates
-for Docker.
+`rancherctl tls` is used to generate both the client and server TLS certificates for Docker. Please refer to the [Configuring TLS page]({{site.baseurl}}/docs/configuring/tls/) for an end to end example.
 
-## Enabling TLS
+Remember, all `rancherctl` commands needs to be used with `sudo`. 
 
-For TLS to be used with Docker you must first enable TLS, this can be done by doing
 
-```bash
-sudo rancherctl config set user_docker.tls true
-sudo system-docker restart userdocker
-```
-
-## Sub commands
+### Sub Commands
 
 | Command  | Description                              |
 |----------|------------------------------------------|
-| `generate` | Generates client and server certificates |
+| `generate` | Generates new client and server certificates |
 
-## End to end example
+### Generate
 
-### Enabled TLS for Docker
+The `generate` command is used to generate new client and server certificates. By default, the command will be creating new client certificates.
+
+#### Generate Options
+
+| Options  | Description                              |
+|----------|------------------------------------------|
+|`--hostname` `[--hostname option --hostname option]`	| The hostname for which you want to generate the certificate|
+|`--server`, `-s`					|	Generate the server keys instead of client keys|
+|`--dir`, `-d` Default Value: "${HOME}/.docker"`	|			The directory to save the certs to|
+
+
+#### Hostname
+
+The `--hostname` option is used to define which hostname(s) you want the server certificate to be generated for. The hostname will be where you access the server. You are able to use this option multiple times in the same command. You can use an IP, "localhost", or "foo.example.com". 
 
 ```bash
-sudo rancherctl config set user_docker.tls true
+$ sudo rancherctl tls generate -s --hostname 172.0.0.1 --hostname localhost --hostname foo.example.com
 ```
 
-### Generate server certificate.
+#### Server
 
-A server certificate must be generated for the hostname under which
-you will access the server.  You can use an IP, "localhost", or "foo.example.com".
+Since the `generate` command is defaulted for creating client certificates, you use the `-s` or `--server` option to indicate that you want to create a server certificate.
+
 
 ```bash
-sudo rancherctl tls generate -s --hostname localhost --hostname something.example.com
-sudo system-docker restart userdocker
+$ sudo rancherctl tls generate -s --hostname localhost
 ```
 
-### Generate client certificate
+#### Directory
 
-One or more client certificates must be generated so that you can access Docker
-
-```bash
-sudo rancherctl tls generate
-sudo chown -R rancher ${HOME}/.docker
-```
-
-The above command will store the generated certificate in `${HOME}/.docker`.
-
-### Test certificates
+The `-d` or `--dir` options allow the user to change where the certificates are saved. The default value is set to **${HOME}/.docker**.
 
 ```bash
-export DOCKER_HOST=tcp://localhost:2376 DOCKER_TLS_VERIFY=1
-docker ps
+$ sudo rancherctl tls generate -d ~/DIR/PATH
 ```

@@ -3,33 +3,57 @@ title: RancherCTL
 layout: default
 ---
 
-### Using RancherCTL
-Another useful command that can be used with RancherOS is rancherctl which can be used to control and configure the system:
+## RancherCTL
+
+A useful command that can be used with RancherOS is `rancherctl` which can be used to control and configure the system. `rancherctl` requires you to be the root user, so with the rancher user, you will need to use `sudo`.
+
+
+### Sub Commands
+| Command  | Description                                     |
+|----------|-------------------------------------------------|
+|`config`, `c`  |	[Configure Settings]({{site.baseurl}}/docs/rancherctl/config/)                       |
+|`service`, `s`   |	[Service Settings]({{site.baseurl}}/docs/rancherctl/services/)                          |
+|`os`           |   [Operating System Upgrade/Downgrade]({{site.baseurl}}/docs/rancherctl/os/)      |
+|`tls`          |	[Setup TLS configuration]({{site.baseurl}}/docs/rancherctl/tls/)                 |
+|`help`, `h`    |	Shows a list of commands or help for one command |
+
+
+### RancherOS Version
+
+If you want to check what version you are on, just use the `-v` option. 
 
 ```sh
-[rancher@rancher ~]$ rancherctl -v
-rancherctl version 0.0.1
+$ sudo rancherctl -v
+rancherctl version v0.2.1
 ```
+### Help
 
-RancherOS state is controlled by simple document, rancherctl is used to edit the configuration of the system, to see for example the dns configuration of the system:
+To list available commands, run any `rancherctl` command with `-h` or `--help`. This would work with any subcommand within `rancherctl`.
 
 ```sh
-[rancher@rancher ~]$ sudo rancherctl config get dns
-- 8.8.8.8
-- 8.8.4.4
+$ sudo rancherctl -h
+NAME:
+rancherctl - Control and configure RancherOS
+
+USAGE:
+rancherctl [global options] command [command options] [arguments...]
+
+VERSION:
+v0.2.1
+
+AUTHOR(S): 
+Rancher Labs, Inc.  
+
+COMMANDS:
+config, c	configure settings
+addon, a	addon settings
+os		operating system upgrade/downgrade
+tls		setup tls configuration
+help, h	Shows a list of commands or help for one command
+
+GLOBAL OPTIONS:
+--help, -h			show help
+--generate-bash-completion	
+--version, -v		print the version
 ```
 
-You can use rancherctl to customize the console and replace the native Busybox console with the consoles from other Linux distributions.  Initially RancherOS only supports the Ubuntu console, but other console support will be coming soon To enable the Ubuntu console use the following command:
-
-```sh
-[rancher@rancher ~]$ sudo rancherctl addon enable ubuntu-console;
-[rancher@rancher ~]$ sudo reboot
-```
-
-After that you will be able to use Ubuntu console, to turn it off use disable instead of enable, and then reboot.
-
-```sh
-rancher@rancher:~$ sudo rancherctl addon disable ubuntu-console;
-```
-
-Note that any changes to the console or the system containers will be lost after reboots, any changes to /home or /opt will be persistent. Theconsole always executes **/opt/rancher/bin/start.sh** at each startup. 
