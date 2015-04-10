@@ -142,6 +142,10 @@ download()
     local file=${ARTIFACTS}/$(basename $2)
     local hash=$1
 
+    if [ "$3" != "" ]; then
+        file=${ARTIFACTS}/$3
+    fi
+
     if ! check $hash $file; then
         echo Downloading $url to $file
         curl -sL $url > $file
