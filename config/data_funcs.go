@@ -54,7 +54,11 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 
 func DummyMarshall(value string) interface{} {
 	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-		return strings.Split(value[1:len(value)-1], ",")
+		result := []string{}
+		for _, i := range strings.Split(value[1:len(value)-1], ",") {
+			result = append(result, strings.TrimSpace(i))
+		}
+		return result
 	}
 
 	if value == "true" {
