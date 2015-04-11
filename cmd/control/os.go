@@ -51,6 +51,11 @@ func osSubcommands() []cli.Command {
 			Usage:  "list the current available versions",
 			Action: osMetaDataGet,
 		},
+		{
+			Name:   "version",
+			Usage:  "show the currently installed version",
+			Action: osVersion,
+		},
 	}
 }
 
@@ -136,6 +141,10 @@ func osUpgrade(c *cli.Context) {
 		}
 	}
 	startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"))
+}
+
+func osVersion(c *cli.Context) {
+	fmt.Println(config.VERSION)
 }
 
 func yes(in *bufio.Reader, question string) bool {
