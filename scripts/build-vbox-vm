@@ -1,14 +1,6 @@
 #!/bin/bash
 set -x -e
 
-vboxnet=vboxnet1
-
-## DOC: create a RancherOS VM for VirtualBox
-## the VM uses 2 network interfaces:  eth0 (NAT) is for Internet access
-##                                    eth1 (host-only) is for internal virtual network
-
-## NOTE: host-only NIC ${vboxnet} should already exist!
-
 cd $(dirname $0)/..
 : RANCHER_ISO=${RANCHER_ISO:="./dist/artifacts/rancheros.iso"}
 
@@ -40,8 +32,5 @@ VBoxManage modifyvm $VM --usb off
 VBoxManage modifyvm $VM --audio none
 VBoxManage modifyvm $VM --nic1 nat
 VBoxManage modifyvm $VM --nictype1 virtio
-VBoxManage modifyvm $VM --nic2 hostonly
-VBoxManage modifyvm $VM --nictype2 virtio
-VBoxManage modifyvm $VM --hostonlyadapter2 ${vboxnet}
 
 #VBoxManage startvm $VM
