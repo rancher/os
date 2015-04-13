@@ -23,11 +23,6 @@
 			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
 		},
 		{
-			"ImportPath": "github.com/coreos/coreos-cloudinit/initialize",
-			"Comment": "v1.3.2-6-g405c260",
-			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
-		},
-		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/network",
 			"Comment": "v1.3.2-6-g405c260",
 			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
@@ -226,13 +221,13 @@
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/docker",
-			"Comment": "0.1.0-8-g45c7de3",
-			"Rev": "45c7de3d9b5b106475cf1461df7550bdaab0a9aa"
+			"Comment": "0.1.0-9-g7343438",
+			"Rev": "734343806223cab5de0532ea7add0beeb2cbea92"
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/project",
-			"Comment": "0.1.0-8-g45c7de3",
-			"Rev": "45c7de3d9b5b106475cf1461df7550bdaab0a9aa"
+			"Comment": "0.1.0-9-g7343438",
+			"Rev": "734343806223cab5de0532ea7add0beeb2cbea92"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-glob",

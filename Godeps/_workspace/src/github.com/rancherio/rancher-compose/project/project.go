@@ -18,6 +18,12 @@ var (
 	ErrRestart error        = errors.New("Restart execution")
 )
 
+type ProjectEvent struct {
+	Event   Event
+	Service Service
+	Data    map[string]string
+}
+
 func NewProject(name string, factory ServiceFactory) *Project {
 	return &Project{
 		Name:     name,
@@ -72,6 +78,12 @@ func (p *Project) Up() error {
 }
 
 func (p *Project) startAll(wrappers map[string]*ServiceWrapper) error {
+	for name, _ := range p.Services {
+		if _, ok := wrappers[name]; !ok {
+			wrappers[name] = NewServiceWrapper(name, p)
+		}
+	}
+
 	restart := false
 
 	for _, wrapper := range wrappers {
@@ -176,6 +188,10 @@ func (s *ServiceWrapper) Wait() error {
 	return s.err
 }
 
+func (p *Project) AddListener(c chan<- ProjectEvent) {
+	p.listeners = append(p.listeners, c)
+}
+
 func (p *Project) Notify(event Event, service Service, data map[string]string) {
 	buffer := bytes.NewBuffer(nil)
 	if data != nil {
@@ -203,5 +219,18 @@ func (p *Project) Notify(event Event, service Service, data map[string]string) {
 		logf("Project [%s]: %s %s", p.Name, event, buffer.Bytes())
 	} else {
 		logf("[%d/%d] [%s]: %s %s", p.upCount, len(p.Services), service.Name(), event, buffer.Bytes())
+	}
+
+	for _, l := range p.listeners {
+		projectEvent := ProjectEvent{
+			Event:   event,
+			Service: service,
+			Data:    data,
+		}
+		// Don't ever block
+		select {
+		case l <- projectEvent:
+		default:
+		}
 	}
 }

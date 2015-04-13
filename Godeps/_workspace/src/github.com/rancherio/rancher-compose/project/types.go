@@ -66,6 +66,7 @@ type Project struct {
 	factory        ServiceFactory
 	ReloadCallback func() error
 	upCount        int
+	listeners      []chan<- ProjectEvent
 }
 
 type Service interface {
