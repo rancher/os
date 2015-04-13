@@ -149,7 +149,7 @@ RancherOS has been installed. Please reboot...
 [rancher@rancher ~]$ sudo reboot
 ```
 
-Login to the VM instance again with the same username and password, which is 'rancher' (all lowercase).
+Login to the VM instance using your SSH keys.
 
 ```bash
 rancher login: rancher
@@ -172,6 +172,8 @@ Password:
 MyFile
 [rancher@rancher ~]$ 
 ```
+
+Note: If you have chosen to use a different version from your iso during the install to disk, make sure you choose to boot off your primary disk instead of the ISO. Otherwise, you will be booted off your ISO version. In our VirtualBox example, that means you'd have to push F12 while booting.
 
 #### Options
 

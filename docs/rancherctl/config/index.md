@@ -77,7 +77,7 @@ $ sudo rancherctl config import -i local-rancher.yml
 
 ### Export
 
-The `export` command allows you to export your existing configuration from rancher.yml. **_By default, these XYZ settings are exclude._**
+The `export` command allows you to export your existing configuration from rancher.yml. By default, only changes from the default values will be exported. 
 
 If you run the command without any options, it will output into the shell what is in the config file.
 
@@ -118,7 +118,7 @@ $ sudo rancherctl config export -o local-rancher.yml
 
 #### Private
 
-Add the `-p` or `--private` option to include the certificates and private keys as part of the export.
+Add the `-p` or `--private` option to include the certificates and private keys as part of the export. These keys are exported in addition to any changes made from the default value. 
 
 ```bash
 $ sudo rancherctl config export --private
