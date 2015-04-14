@@ -86,7 +86,7 @@ if [ "${FORCE_INSTALL}" != "true" ] && [ "${INSTALL_TYPE}" != "rancher-upgrade" 
 fi
 
 if [ "$PARTITION_FLAG" == "true" ]; then
-    system-docker run --net=host -it --privileged --entrypoint=/scripts/set-disk-partitions ${INSTALL_CONTAINER_IMAGE}:${INSTALLER_VERSION} ${DEVICE}
+    system-docker run --net=host -it --privileged --entrypoint=/scripts/set-disk-partitions --volumes-from=all-volumes ${INSTALL_CONTAINER_IMAGE}:${INSTALLER_VERSION} ${DEVICE}
     system-docker start udev
 fi
 
