@@ -30,7 +30,7 @@ default rancheros
 label rancheros
     kernel /boot/vmlinuz
     initrd /boot/initrd
-    append quiet rancher.password=rancher
+    append quiet rancher.password=rancher net.ifnames=0
 EOF
 
 cd ${CD}
@@ -49,7 +49,7 @@ default rancheros
 label rancheros
     kernel /boot/vmlinuz
     initrd /boot/initrd
-    append quiet rancher.password=rancher rancher.state.autoformat=[/dev/sda,/dev/vda]
+    append quiet rancher.password=rancher rancher.state.autoformat=[/dev/sda,/dev/vda] net.ifnames=0
 EOF
 
 cd ${CD}
