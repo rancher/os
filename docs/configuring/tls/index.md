@@ -21,7 +21,7 @@ $ sudo system-docker restart userdocker
 
 ### End to end example
 
-#### Enabled TLS for Docker
+#### Enable TLS for Docker
 
 ```bash
 $ sudo rancherctl config set user_docker.tls true

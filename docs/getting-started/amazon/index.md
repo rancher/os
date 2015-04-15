@@ -83,7 +83,7 @@ If you prefer to use the [AWS Command Line Interface](http://aws.amazon.com/cli/
     $ aws ec2 run-instances --image-id ami-ID# --count 1 --instance-type t1.micro --key-name MySSHKeyName --security-groups sg-name
     ```
 
-4. After the image has been created, you can go to the EC2 dashboard to check that the instance is running. You can either connect into the instance from the AWS console or continue using command lines. 
+4. After the image has been created, you can go to the EC2 dashboard to check that the instance is running. You can either connect into the instance from the AWS console or continue using command lines. If you follow the AWS console command, you must make sure to log in as the rancher user instead of the root user. 
 
 
     ```bash

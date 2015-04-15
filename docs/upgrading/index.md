@@ -66,6 +66,8 @@ $ sudo rancherctl -v
 rancherctl version v0.2.1
 ```
 
+Note: If you are booting from ISO and have not installed to disk, your upgrade will not be saved. You can view our guide to [installing to disk]({{site.baseurl}}/docs/getting-started/disk/). 
+
 #### Upgrading to a Specific Version
 
 If you are a couple of versions behind the current version, use the `-i` option to pick the version that you want to upgrade to. 

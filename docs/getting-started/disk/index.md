@@ -97,33 +97,60 @@ The file is no longer there. If you want this type of change to be saved upon re
 
 To install RancherOS on a new disk, you can use the `rancheros-install` command. By installing to disk, this will allow any changes saved to the console and system containers to be saved whenever a reboot happens.
 
+### Adding Port Forwarding
+
+Currently, RancherOS will dynamically reset the IP every time it reboots, so we will need to add a port forwarding rule so that we can SSH into our VM. Let's continue with our VirtualBox example.
+
+We'll need to power off our VM in order to make our port forwarding rule. Select the VM, click on **Settings** and navigate to the **Network** tab. Expand the **Advanced** section and click on the **Port Forwarding** button.
+
+ ![RancherOS to Disk 1]({{site.baseurl}}/img/Rancher_disk1.png)  
+
+Click on the **+** icon to add a new port forwarding rule. Create the rule with the following parameters:
+
+Name: ssh; Protocol: TCP; Host IP: 127.0.0.1; Host Port: 2223; Guest IP: <blank>; Guest Port: 22
+
+Click on **OK**.
+
+ ![RancherOS to Disk 2]({{site.baseurl}}/img/Rancher_disk2.png)
+
+**Start** the VM and login to the VM. Username and password is 'rancher' (all lowercase).
+
 ### Creating a Cloud Config file
 
-Create a [cloud-init file](https://cloudinit.readthedocs.org/en/latest/index.html). If username and password are enabled, you don't need anything specific in your file. If username and password are not enabled, you should add your SSH public key. Make sure the file has a .yml extension.
+We will need to create a [cloud-init file](https://cloudinit.readthedocs.org/en/latest/index.html) that includes our public SSH keys. If you want more details on what Cloud Init functionality is supported, click [here]({{site.baseurl}}/docs/configuring/cloud-init/).  
 
-Note: If you are trying to install Amazon EC2 to disk to create your own AMI, you will not need to create a cloud-init file.
+Note: If you are trying to install Amazon EC2 to disk to create your own RancherOS AMI, you will not need to create a cloud-init file.
+
+For our VirtualBox example, we'll first copy the public SSH key from our computer to our VM. 
+
+```bash
+[rancher@rancher ~]$ scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
+RSA key fingerprint is X:X:X:X:X.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'computer_ip' (RSA) to the list of known hosts. 
+Password: 
+id_rsa.pub                              100%    422 0.4KB/s    00:00
+[rancher@rancher ~]$ ls
+id_rsa.pub
+[rancher@rancher ~]$ cat id_rsa.pub > cloud_config.yml
+[rancher@rancher ~]$ vi cloud_config.yml
+```
+
+Let's edit the cloud_config.yml so that it matches the syntax of the cloud-init example. 
 
 Cloud-Init File Example:
 
 ```
 #cloud-config
 ssh_authorized_keys:
-- ssh-rsa AAA... user@rancher
+ - ssh-rsa AAA... user@rancher
 ```
 
-If you want more details on what Cloud Init functionality is supported, click [here]({{site.baseurl}}/docs/configuring/cloud-init/).  
-
-For our VirtualBox example, let's create a cloud-init file named cloud_config.yml.
-
-```bash
-[rancher@rancher ~]$ echo '#cloud-config' > cloud_config.yml
-```
+Now that our cloud_config.yml contains our public SSH key, we can move on to installing RancherOS to disk!
 
 ### Using rancheros-install 
 
-The `rancheros-install` command orchestrates installation from the rancher/os container. 
-
-In continuing our VirtualBox installation, let's install RancherOS to disk, create a test file and reboot to see if the file is still there. 
+The `rancheros-install` command orchestrates the installation from the rancher/os container. We will install RancherOS to disk, reboot and then try to save a file. 
 
 ```bash
 [rancher@rancher ~]$ sudo rancheros-install -c cloud_config.yml -d /dev/sda -t generic -v v0.2.1
@@ -132,6 +159,7 @@ Partition: true
 DEVICE: /dev/sda
 Are you sure you want to continue? [yN]
 ```
+
 You will be prompted to see if you want to continue. Type **y**.
 
 ```
@@ -146,14 +174,23 @@ Downloaded newer image for rancher/os:v0.2.1
 ...
 ...
 RancherOS has been installed. Please reboot...
-[rancher@rancher ~]$ sudo reboot
 ```
 
-Login to the VM instance again with the same username and password, which is 'rancher' (all lowercase).
+In our VirtualBox setup, the VM will always boot from ISO, unless you change the boot order or remove the ISO. It's easiest to remove the ISO so that we don't have to worry about boot order every time we reboot.
+
+Let's power off our VM to make the change regarding the ISO. Select the VM and click on **Settings**. Click on the **Storage** tab. Select the **rancheros.iso** file from the storage tree and click on the **delete** icon. 
+
+It will confirm that you want to remove the CD/DVD device. Click on **Remove** and then click **OK**.  Start your VM. Since you have removed the ISO from the VM, it will select the current OS version running on the VM. 
+
+![RancherOS to Disk 3]({{site.baseurl}}/img/Rancher_disk3.png)
+
+
+Even though you will be prompted with the "rancher login" from the VirtualBox screen, you will not be able to use the typical rancher login/password. Instead, you will need to log in to the VM using your SSH keys.
+
+Open up your terminal/command line. After we SSH in, let's create our file and reboot the VM to see if the file has been saved.
 
 ```bash
-rancher login: rancher
-Password:
+$ ssh rancher@127.0.0.1 -p 2223
 [rancher@rancher ~]$ echo 'test' > MyFile
 [rancher@rancher ~]$ ls
 MyFile 
@@ -163,11 +200,10 @@ test
 
 ```
 
-Log back into your RancherOS instance and your test file should still be there!
+Wait a little bit before attempting to SSH back into your RancherOS instance and your test file should still be there!
 
 ```bash
-rancher login: rancher
-Password:
+$ ssh rancher@127.0.0.1 -p 2223
 [rancher@rancher ~]$ ls
 MyFile
 [rancher@rancher ~]$ 
