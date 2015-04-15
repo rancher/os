@@ -174,9 +174,10 @@ func startUpgradeContainer(image string, stage, force bool) {
 		log.Fatal(container.Err)
 	}
 
-	fmt.Printf("Upgrading to %s\n", image)
-
+	
 	if !stage {
+		fmt.Printf("Upgrading to %s\n", image)
+
 		if !force {
 			if !yes(in, "Continue") {
 				os.Exit(1)
