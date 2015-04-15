@@ -17,7 +17,17 @@ Remember all `rancherctl` commands needs to be used with `sudo`.
 |--------|-------------|
 |`upgrade` |	Upgrade to the latest version |
 |`list`	|	List all the current available versions |
+| `version` | Show the currently installed version|
 
+
+### Version (Added as of v0.3.0)
+
+Besides using `rancherctl -v`, you can also find the current version with the `version` command. 
+
+```bash
+$ sudo rancherctl os version
+rancher/os:v0.2.1
+```
 
 ### List
 
