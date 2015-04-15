@@ -3,6 +3,7 @@ package project
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -33,8 +34,30 @@ func NewProject(name string, factory ServiceFactory) *Project {
 	}
 }
 
+func (p *Project) createService(name string, config ServiceConfig) (Service, error) {
+	if p.EnvironmentLookup != nil {
+		parsedEnv := make([]string, 0, len(config.Environment))
+
+		for _, env := range config.Environment {
+			if strings.IndexRune(env, '=') != -1 {
+				parsedEnv = append(parsedEnv, env)
+				continue
+			}
+
+			value := p.EnvironmentLookup.Lookup(env, name, &config)
+			if value != "" {
+				parsedEnv = append(parsedEnv, fmt.Sprintf("%s=%s", env, value))
+			}
+		}
+
+		config.Environment = parsedEnv
+	}
+
+	return p.factory.Create(p, name, &config)
+}
+
 func (p *Project) AddConfig(name string, config *ServiceConfig) error {
-	service, err := p.factory.Create(p, name, config)
+	service, err := p.createService(name, *config)
 	if err != nil {
 		log.Errorf("Failed to create service for %s : %v", name, err)
 		return err

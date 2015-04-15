@@ -7,8 +7,9 @@ type Event string
 const (
 	CONTAINER_ID = "container_id"
 
-	CONTAINER_CREATED = Event("Created container")
-	CONTAINER_STARTED = Event("Started container")
+	CONTAINER_STARTING = Event("Starting container")
+	CONTAINER_CREATED  = Event("Created container")
+	CONTAINER_STARTED  = Event("Started container")
 
 	SERVICE_ADD      = Event("Adding")
 	SERVICE_UP_START = Event("Starting")
@@ -56,17 +57,22 @@ type ServiceConfig struct {
 	ExternalLinks []string `yaml:"external_links,omitempty"`
 }
 
+type EnvironmentLookup interface {
+	Lookup(key, serviceName string, config *ServiceConfig) string
+}
+
 type Project struct {
-	Name           string
-	configs        map[string]*ServiceConfig
-	Services       map[string]Service
-	file           string
-	content        []byte
-	client         *client.RancherClient
-	factory        ServiceFactory
-	ReloadCallback func() error
-	upCount        int
-	listeners      []chan<- ProjectEvent
+	EnvironmentLookup EnvironmentLookup
+	Name              string
+	configs           map[string]*ServiceConfig
+	Services          map[string]Service
+	file              string
+	content           []byte
+	client            *client.RancherClient
+	factory           ServiceFactory
+	ReloadCallback    func() error
+	upCount           int
+	listeners         []chan<- ProjectEvent
 }
 
 type Service interface {
