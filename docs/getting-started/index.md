@@ -180,11 +180,15 @@ Rancher Management platform can be used to Manage Docker containers on RancherOS
 rancher@Rancher-mng:~# docker run -d -p 8080:8080 rancher/server
 ```
 
+You can access the Rancher server by going to the http://SERVER_IP:8080. It might take a couple of minutes before it is available.
+
+Note: If you are trying to use an EC2 instance, you will need to make sure the TCP port 8080 has been enabled in order to view the Rancher server UI. To do this enablement, check the security group of the EC2 instance and update the Inbound tab to add this port 8080.
+
 ![Rancher Platform 1]({{site.baseurl}}/img/Rancher_platform1.png)
 
-You can access the Rancher server by going to the http://SERVER_IP:8080.
+The next step is to register a RancherOS machine with Rancher platform by following the UI in the Rancher server. Select the **Custom** option and get the `docker` command to run in your RancherOS. Typically, we recommend having the Rancher server and hosts be on separate VMs, but in our example, we will use the same RancherOS instance.
 
-The next step is to register your RancherOS machine with Rancher platform by following the UI in the Rancher server. Select the **Custom** option and get the `docker` command to run in your RancherOS.
+Note: If you are trying to use an EC2 instance, you will need to make sure the TCP ports 9345 and 9346 are enabled as well as UDP ports 500 and 4500. To do this enablement, check the security group of the EC2 instance and update the Inbound tab to add these ports.
 
 You should see the RancherOS machine on the management platform:
 
