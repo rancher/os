@@ -81,6 +81,7 @@ func NewConfig() *Config {
 				Privileged: true,
 				Labels: []string{
 					DETACH + "=false",
+					SCOPE + "=" + SYSTEM,
 				},
 				Volumes: []string{
 					"/dev:/host/dev",
@@ -98,6 +99,7 @@ func NewConfig() *Config {
 				Privileged: true,
 				Labels: []string{
 					DETACH + "=true",
+					SCOPE + "=" + SYSTEM,
 				},
 				Environment: []string{
 					"DAEMON=true",
@@ -113,6 +115,7 @@ func NewConfig() *Config {
 				Privileged: true,
 				Labels: []string{
 					CREATE_ONLY + "=true",
+					SCOPE + "=" + SYSTEM,
 				},
 				Volumes: []string{
 					"/dev:/host/dev",
@@ -132,6 +135,7 @@ func NewConfig() *Config {
 				Privileged: true,
 				Labels: []string{
 					CREATE_ONLY + "=true",
+					SCOPE + "=" + SYSTEM,
 				},
 				Volumes: []string{
 					"/init:/sbin/halt:ro",
@@ -156,6 +160,7 @@ func NewConfig() *Config {
 				Privileged: true,
 				Labels: []string{
 					CREATE_ONLY + "=true",
+					SCOPE + "=" + SYSTEM,
 				},
 				Volumes: []string{
 					"/home:/home",
@@ -170,6 +175,7 @@ func NewConfig() *Config {
 				Privileged: true,
 				Labels: []string{
 					CREATE_ONLY + "=true",
+					SCOPE + "=" + SYSTEM,
 				},
 				Volumes: []string{
 					"/var/lib/rancher:/var/lib/rancher",
@@ -185,6 +191,7 @@ func NewConfig() *Config {
 				Privileged: true,
 				Labels: []string{
 					CREATE_ONLY + "=true",
+					SCOPE + "=" + SYSTEM,
 				},
 				VolumesFrom: []string{
 					"docker-volumes",
@@ -201,6 +208,7 @@ func NewConfig() *Config {
 				Labels: []string{
 					RELOAD_CONFIG + "=true",
 					DETACH + "=false",
+					SCOPE + "=" + SYSTEM,
 				},
 				Environment: []string{
 					"CLOUD_INIT_NETWORK=false",
@@ -216,6 +224,7 @@ func NewConfig() *Config {
 				Net:        "host",
 				Labels: []string{
 					DETACH + "=false",
+					SCOPE + "=" + SYSTEM,
 				},
 				Links: []string{
 					"cloud-init-pre",
@@ -231,6 +240,7 @@ func NewConfig() *Config {
 				Labels: []string{
 					RELOAD_CONFIG + "=true",
 					DETACH + "=false",
+					SCOPE + "=" + SYSTEM,
 				},
 				Net: "host",
 				Links: []string{
@@ -246,6 +256,9 @@ func NewConfig() *Config {
 				Image:      "ntp",
 				Privileged: true,
 				Net:        "host",
+				Labels: []string{
+					SCOPE + "=" + SYSTEM,
+				},
 				Links: []string{
 					"cloud-init",
 					"network",
@@ -255,6 +268,9 @@ func NewConfig() *Config {
 				Image:      "syslog",
 				Privileged: true,
 				Net:        "host",
+				Labels: []string{
+					SCOPE + "=" + SYSTEM,
+				},
 				VolumesFrom: []string{
 					"system-volumes",
 				},
@@ -266,6 +282,9 @@ func NewConfig() *Config {
 				Pid:        "host",
 				Ipc:        "host",
 				Net:        "host",
+				Labels: []string{
+					SCOPE + "=" + SYSTEM,
+				},
 				Links: []string{
 					"network",
 				},
@@ -277,7 +296,8 @@ func NewConfig() *Config {
 				Image: "userdockerwait",
 				Net:   "host",
 				Labels: []string{
-					"io.rancher.os.detach=false",
+					DETACH + "=false",
+					SCOPE + "=" + SYSTEM,
 				},
 				Links: []string{
 					"userdocker",
@@ -292,6 +312,9 @@ func NewConfig() *Config {
 				Links: []string{
 					"cloud-init",
 				},
+				Labels: []string{
+					SCOPE + "=" + SYSTEM,
+				},
 				VolumesFrom: []string{
 					"all-volumes",
 				},
@@ -301,31 +324,14 @@ func NewConfig() *Config {
 				Net:     "host",
 			},
 		},
-		Services: map[string]bool{
+		ServicesInclude: map[string]bool{
 			"ubuntu-console": false,
 		},
-		BundledServices: map[string]Config{
-			"ubuntu-console": {
-				SystemContainers: map[string]*project.ServiceConfig{
-					"console": {
-						Image:      "rancher/ubuntuconsole:" + IMAGE_VERSION,
-						Privileged: true,
-						Labels: []string{
-							DETACH + "=true",
-						},
-						Links: []string{
-							"cloud-init",
-						},
-						VolumesFrom: []string{
-							"all-volumes",
-						},
-						Restart: "always",
-						Pid:     "host",
-						Ipc:     "host",
-						Net:     "host",
-					},
-				},
+		Repositories: map[string]Repository{
+			"core": Repository{
+				Url: "https://raw.githubusercontent.com/rancherio/os-services/master/",
 			},
 		},
+		Services: map[string]*project.ServiceConfig{},
 	}
 }

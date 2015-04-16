@@ -476,13 +476,11 @@ func isCompose(content string) bool {
 func toCompose(bytes []byte) ([]byte, error) {
 	result := make(map[interface{}]interface{})
 	compose := make(map[interface{}]interface{})
-	err := yaml.Unmarshal(bytes, &result)
+	err := yaml.Unmarshal(bytes, &compose)
 	if err != nil {
 		return nil, err
 	}
 
-	result["services"] = map[interface{}]interface{}{
-		"cloud-config": compose,
-	}
+	result["services"] = compose
 	return yaml.Marshal(result)
 }

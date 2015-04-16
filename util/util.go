@@ -13,6 +13,8 @@ import (
 	"strings"
 	"syscall"
 
+	log "github.com/Sirupsen/logrus"
+
 	"github.com/docker/docker/pkg/mount"
 	"gopkg.in/yaml.v2"
 )
@@ -20,6 +22,7 @@ import (
 var (
 	letters      = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	ErrNoNetwork = errors.New("Networking not available to load resource")
+	ErrNotFound  = errors.New("Failed to find resource")
 )
 
 func mountProc() error {
@@ -207,7 +210,36 @@ func MergeMaps(left, right map[interface{}]interface{}) {
 	}
 }
 
-func LoadResource(location string, network bool) ([]byte, error) {
+func GetServices(urls []string) ([]string, error) {
+	result := []string{}
+
+	for _, url := range urls {
+		indexUrl := fmt.Sprintf("%s/index.yml", url)
+		content, err := LoadResource(indexUrl, true, []string{})
+		if err != nil {
+			log.Errorf("Failed to load %s: %v", indexUrl, err)
+			continue
+		}
+
+		services := make(map[string][]string)
+		err = yaml.Unmarshal(content, &services)
+		if err != nil {
+			log.Errorf("Failed to unmarshal %s: %v", indexUrl, err)
+			continue
+		}
+
+		if list, ok := services["services"]; ok {
+			result = append(result, list...)
+		}
+	}
+
+	return []string{}, nil
+}
+
+func LoadResource(location string, network bool, urls []string) ([]byte, error) {
+	var bytes []byte
+	err := ErrNotFound
+
 	if strings.HasPrefix(location, "http:/") || strings.HasPrefix(location, "https:/") {
 		if !network {
 			return nil, ErrNoNetwork
@@ -216,9 +248,38 @@ func LoadResource(location string, network bool) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
+		}
 		defer resp.Body.Close()
 		return ioutil.ReadAll(resp.Body)
-	} else {
+	} else if strings.HasPrefix(location, "/") {
 		return ioutil.ReadFile(location)
+	} else if len(location) > 0 {
+		for _, url := range urls {
+			ymlUrl := fmt.Sprintf("%s/%s/%s.yml", url, location[0:1], location)
+			log.Infof("Loading %s from %s", location, ymlUrl)
+			bytes, err = LoadResource(ymlUrl, network, []string{})
+			if err == nil {
+				return bytes, nil
+			}
+		}
 	}
+
+	return nil, err
+}
+
+func GetValue(kvPairs []string, key string) string {
+	if kvPairs == nil {
+		return ""
+	}
+
+	prefix := key + "="
+	for _, i := range kvPairs {
+		if strings.HasPrefix(i, prefix) {
+			return strings.TrimPrefix(i, prefix)
+		}
+	}
+
+	return ""
 }

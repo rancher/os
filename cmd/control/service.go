@@ -6,6 +6,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancherio/os/config"
+	"github.com/rancherio/os/util"
 )
 
 func serviceSubCommands() []cli.Command {
@@ -36,16 +37,16 @@ func disable(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		if _, ok := cfg.Services[service]; !ok {
+		if _, ok := cfg.ServicesInclude[service]; !ok {
 			continue
 		}
 
-		cfg.Services[service] = false
+		cfg.ServicesInclude[service] = false
 		changed = true
 	}
 
 	if changed {
-		if err = cfg.Set("services", cfg.Services); err != nil {
+		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -59,14 +60,14 @@ func enable(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		if val, ok := cfg.Services[service]; !ok || !val {
-			cfg.Services[service] = true
+		if val, ok := cfg.ServicesInclude[service]; !ok || !val {
+			cfg.ServicesInclude[service] = true
 			changed = true
 		}
 	}
 
 	if changed {
-		if err = cfg.Set("services", cfg.Services); err != nil {
+		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -78,7 +79,30 @@ func list(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	for service, enabled := range cfg.Services {
+	clone := make(map[string]bool)
+	for service, enabled := range cfg.ServicesInclude {
+		clone[service] = enabled
+	}
+
+	services, err := util.GetServices(cfg.Repositories.ToArray())
+	if err != nil {
+		log.Fatalf("Failed to get services: %v", err)
+	}
+
+	for _, service := range services {
+		if enabled, ok := clone[service]; ok {
+			delete(clone, service)
+			if enabled {
+				fmt.Printf("enabled  %s\n", service)
+			} else {
+				fmt.Printf("disabled %s\n", service)
+			}
+		} else {
+			fmt.Printf("disabled %s\n", service)
+		}
+	}
+
+	for service, enabled := range clone {
 		if enabled {
 			fmt.Printf("enabled  %s\n", service)
 		} else {

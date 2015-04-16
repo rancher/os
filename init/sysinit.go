@@ -9,9 +9,6 @@ import (
 	dockerClient "github.com/fsouza/go-dockerclient"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
-	"github.com/rancherio/os/util"
-
-	"github.com/rancherio/rancher-compose/project"
 )
 
 func importImage(client *dockerClient.Client, name, fileName string) error {
@@ -109,82 +106,8 @@ func loadImages(cfg *config.Config) error {
 	return nil
 }
 
-func runServices(name string, cfg *config.Config, configs map[string]*project.ServiceConfig) error {
-	network := false
-	projectEvents := make(chan project.ProjectEvent)
-	p := project.NewProject(name, docker.NewContainerFactory(cfg))
-	p.AddListener(projectEvents)
-	enabled := make(map[string]bool)
-
-	for name, serviceConfig := range configs {
-		if err := p.AddConfig(name, serviceConfig); err != nil {
-			log.Infof("Failed loading service %s", name)
-		}
-	}
-
-	p.ReloadCallback = func() error {
-		err := cfg.Reload()
-		if err != nil {
-			return err
-		}
-
-		for service, serviceEnabled := range cfg.Services {
-			if !serviceEnabled {
-				continue
-			}
-
-			if _, ok := enabled[service]; ok {
-				continue
-			}
-
-			if config, ok := cfg.BundledServices[service]; ok {
-				for name, s := range config.SystemContainers {
-					if err := p.AddConfig(name, s); err != nil {
-						log.Errorf("Failed to load %s : %v", name, err)
-					}
-				}
-			} else {
-				bytes, err := util.LoadResource(service, network)
-				if err != nil {
-					if err == util.ErrNoNetwork {
-						log.Debugf("Can not load %s, networking not enabled", service)
-					} else {
-						log.Errorf("Failed to load %s : %v", service, err)
-					}
-					continue
-				}
-
-				err = p.Load(bytes)
-				if err != nil {
-					log.Errorf("Failed to load %s : %v", service, err)
-					continue
-				}
-			}
-
-			enabled[service] = true
-		}
-
-		return nil
-	}
-
-	go func() {
-		for event := range projectEvents {
-			if event.Event == project.CONTAINER_STARTED && event.Service.Name() == "network" {
-				network = true
-			}
-		}
-	}()
-
-	err := p.ReloadCallback()
-	if err != nil {
-		log.Errorf("Failed to reload %s : %v", name, err)
-		return err
-	}
-	return p.Up()
-}
-
 func runContainers(cfg *config.Config) error {
-	return runServices("system-init", cfg, cfg.SystemContainers)
+	return docker.RunServices("system-init", cfg, cfg.SystemContainers)
 }
 
 func tailConsole(cfg *config.Config) error {

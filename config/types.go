@@ -23,6 +23,8 @@ const (
 	REMOVE        = "io.rancher.os.remove"
 	CREATE_ONLY   = "io.rancher.os.createonly"
 	RELOAD_CONFIG = "io.rancher.os.reloadconfig"
+	SCOPE         = "io.rancher.os.scope"
+	SYSTEM        = "system"
 )
 
 var (
@@ -42,18 +44,25 @@ type ContainerConfig struct {
 	Service        *project.ServiceConfig `yaml:service,omitempty`
 }
 
+type Repository struct {
+	Url string `yaml:url,omitempty`
+}
+
+type Repositories map[string]Repository
+
 type Config struct {
 	Environment         map[string]string                 `yaml:"environment,omitempty"`
-	BundledServices     map[string]Config                 `yaml:"bundled_services,omitempty"`
+	Services            map[string]*project.ServiceConfig `yaml:"services,omitempty"`
 	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap_containers,omitempty"`
 	BootstrapDocker     DockerConfig                      `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
 	Console             ConsoleConfig                     `yaml:"console,omitempty"`
 	Debug               bool                              `yaml:"debug,omitempty"`
 	Disable             []string                          `yaml:"disable,omitempty"`
-	Services            map[string]bool                   `yaml:"services,omitempty"`
+	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`
 	Modules             []string                          `yaml:"modules,omitempty"`
 	Network             NetworkConfig                     `yaml:"network,omitempty"`
+	Repositories        Repositories                      `yaml:"repositories,omitempty"`
 	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
 	State               StateConfig                       `yaml:"state,omitempty"`
 	SystemContainers    map[string]*project.ServiceConfig `yaml:"system_containers,omitempty"`
