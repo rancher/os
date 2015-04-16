@@ -82,7 +82,7 @@ qemu-system-x86_64 -serial stdio \
     -initrd ${INITRD_TEST} \
     -m 1024 \
     -net nic,vlan=0,model=virtio \
-    -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher \
+    -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
     -drive if=virtio,file=${HD} \
     -machine accel=kvm \
     -cpu host \
