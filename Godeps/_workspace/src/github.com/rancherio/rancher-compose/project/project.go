@@ -3,7 +3,6 @@ package project
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -44,9 +43,8 @@ func (p *Project) createService(name string, config ServiceConfig) (Service, err
 				continue
 			}
 
-			value := p.EnvironmentLookup.Lookup(env, name, &config)
-			if value != "" {
-				parsedEnv = append(parsedEnv, fmt.Sprintf("%s=%s", env, value))
+			for _, value := range p.EnvironmentLookup.Lookup(env, name, &config) {
+				parsedEnv = append(parsedEnv, value)
 			}
 		}
 
@@ -65,6 +63,7 @@ func (p *Project) AddConfig(name string, config *ServiceConfig) error {
 
 	p.Notify(SERVICE_ADD, service, nil)
 
+	p.reload = append(p.reload, name)
 	p.configs[name] = config
 	p.Services[name] = service
 
@@ -91,21 +90,17 @@ func (p *Project) Load(bytes []byte) error {
 func (p *Project) Up() error {
 	wrappers := make(map[string]*ServiceWrapper)
 
-	for name, _ := range p.Services {
-		wrappers[name] = NewServiceWrapper(name, p)
-	}
-
 	p.Notify(PROJECT_UP_START, nil, nil)
 
 	return p.startAll(wrappers)
 }
 
 func (p *Project) startAll(wrappers map[string]*ServiceWrapper) error {
-	for name, _ := range p.Services {
-		if _, ok := wrappers[name]; !ok {
-			wrappers[name] = NewServiceWrapper(name, p)
-		}
+	for _, name := range p.reload {
+		wrappers[name] = NewServiceWrapper(name, p)
 	}
+
+	p.reload = []string{}
 
 	restart := false
 

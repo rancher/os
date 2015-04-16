@@ -58,13 +58,14 @@ type ServiceConfig struct {
 }
 
 type EnvironmentLookup interface {
-	Lookup(key, serviceName string, config *ServiceConfig) string
+	Lookup(key, serviceName string, config *ServiceConfig) []string
 }
 
 type Project struct {
 	EnvironmentLookup EnvironmentLookup
 	Name              string
 	configs           map[string]*ServiceConfig
+	reload            []string
 	Services          map[string]Service
 	file              string
 	content           []byte
