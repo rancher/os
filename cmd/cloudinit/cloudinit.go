@@ -33,11 +33,11 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
-	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
 	rancherNetwork "github.com/rancherio/os/cmd/network"
 	rancherConfig "github.com/rancherio/os/config"
+	"github.com/rancherio/os/util"
 	"gopkg.in/yaml.v2"
 )
 
@@ -48,21 +48,25 @@ const (
 )
 
 var (
-	outputDir  string
-	outputFile string
-	scriptFile string
-	rancherYml string
-	save       bool
-	execute    bool
-	network    bool
-	sshKeyName string
-	flags      *flag.FlagSet
+	baseConfigDir string
+	outputDir     string
+	outputFile    string
+	metaDataFile  string
+	scriptFile    string
+	rancherYml    string
+	save          bool
+	execute       bool
+	network       bool
+	sshKeyName    string
+	flags         *flag.FlagSet
 )
 
 func init() {
 	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flags.StringVar(&baseConfigDir, "base-config-dir", "/var/lib/rancher/conf/cloud-config.d", "base cloud config")
 	flags.StringVar(&outputDir, "dir", "/var/lib/rancher/conf", "working directory")
 	flags.StringVar(&outputFile, "file", "cloud-config-processed.yml", "output cloud config file name")
+	flags.StringVar(&metaDataFile, "metadata", "metadata", "output metdata file name")
 	flags.StringVar(&scriptFile, "script-file", "cloud-config-script", "output cloud config script file name")
 	flags.StringVar(&rancherYml, "rancher", "cloud-config-rancher.yml", "output cloud config rancher file name")
 	flags.StringVar(&sshKeyName, "ssh-key-name", "rancheros-cloud-config", "SSH key name")
@@ -71,61 +75,61 @@ func init() {
 	flags.BoolVar(&execute, "execute", false, "execute saved cloud config")
 }
 
-func saveFiles(script *config.Script, userdataBytes []byte, cc *config.CloudConfig) error {
-	var fileData []byte
+func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
+	scriptOutput := path.Join(outputDir, scriptFile)
+	cloudConfigOutput := path.Join(outputDir, outputFile)
+	rancherYmlOutput := path.Join(outputDir, rancherYml)
+	metaDataOutput := path.Join(outputDir, metaDataFile)
 
-	os.Remove(path.Join(outputDir, scriptFile))
-	os.Remove(path.Join(outputDir, outputFile))
-	os.Remove(path.Join(outputDir, rancherYml))
+	os.Remove(scriptOutput)
+	os.Remove(cloudConfigOutput)
+	os.Remove(rancherYmlOutput)
+	os.Remove(metaDataOutput)
 
-	if script != nil {
-		fileData = userdataBytes
-		output := path.Join(outputDir, scriptFile)
-		log.Infof("Writing cloud-config script to %s", output)
-		if err := ioutil.WriteFile(output, fileData, 500); err != nil {
-			log.Errorf("Error while writing file %v", err)
+	if len(scriptBytes) > 0 {
+		log.Infof("Writing to %s", scriptOutput)
+		if err := ioutil.WriteFile(scriptOutput, scriptBytes, 500); err != nil {
+			log.Errorf("Error while writing file %s: %v", scriptOutput, err)
 			return err
 		}
 	}
 
-	if data, err := yaml.Marshal(cc); err != nil {
-		log.Errorf("Error while marshalling cloud config %v", err)
-		return err
-	} else {
-		fileData = append([]byte("#cloud-config\n"), data...)
-	}
-
-	output := path.Join(outputDir, outputFile)
-	log.Infof("Writing merged cloud-config to %s", output)
-	if err := ioutil.WriteFile(output, fileData, 400); err != nil {
-		log.Errorf("Error while writing file %v", err)
+	cloudConfigBytes = append([]byte("#cloud-config\n"), cloudConfigBytes...)
+	log.Infof("Writing to %s", cloudConfigOutput)
+	if err := ioutil.WriteFile(cloudConfigOutput, cloudConfigBytes, 500); err != nil {
+		log.Errorf("Error while writing file %s: %v", cloudConfigOutput, err)
 		return err
 	}
 
-	if script == nil {
-		ccData := make(map[string]interface{})
-		if err := yaml.Unmarshal(userdataBytes, ccData); err != nil {
+	ccData := make(map[string]interface{})
+	if err := yaml.Unmarshal(cloudConfigBytes, ccData); err != nil {
+		return err
+	}
+
+	if rancher, ok := ccData["rancher"]; ok {
+		bytes, err := yaml.Marshal(rancher)
+		if err != nil {
 			return err
 		}
 
-		if rancher, ok := ccData["rancher"]; ok {
-			bytes, err := yaml.Marshal(rancher)
-			if err != nil {
-				return err
-			}
-
-			if err = ioutil.WriteFile(path.Join(outputDir, rancherYml), bytes, 400); err != nil {
-				return err
-			}
+		if err = ioutil.WriteFile(rancherYmlOutput, bytes, 400); err != nil {
+			return err
 		}
+	}
+
+	metaDataBytes, err := yaml.Marshal(metadata)
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(metaDataOutput, metaDataBytes, 400); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func Main() {
-	flags.Parse(rancherConfig.FilterGlobalConfig(os.Args[1:]))
-
+func currentDatasource() (datasource.Datasource, error) {
 	cfg, err := rancherConfig.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to read rancher config %v", err)
@@ -133,52 +137,151 @@ func Main() {
 
 	dss := getDatasources(cfg)
 	if len(dss) == 0 {
-		log.Infof("No datasources available %v", cfg.CloudInit.Datasources)
-		os.Exit(0)
+		return nil, nil
 	}
 
 	ds := selectDatasource(dss)
-	if ds == nil {
-		log.Info("No datasources found")
-		os.Exit(0)
-	}
+	return ds, nil
+}
 
-	log.Infof("Fetching user-data from datasource %v", ds.Type())
-	userdataBytes, err := ds.FetchUserdata()
+func mergeBaseConfig(current []byte) ([]byte, error) {
+	files, err := ioutil.ReadDir(baseConfigDir)
 	if err != nil {
-		log.Fatalf("Failed fetching user-data from datasource: %v", err)
-	}
-
-	log.Infof("Fetching meta-data from datasource of type %v", ds.Type())
-	metadata, err := ds.FetchMetadata()
-	if err != nil {
-		log.Infof("Failed fetching meta-data from datasource: %v", err)
-		os.Exit(1)
-	}
-
-	var ccu *config.CloudConfig
-	var script *config.Script
-	if ud, err := initialize.ParseUserData(string(userdataBytes)); err != nil {
-		log.Fatalf("Failed to parse user-data: %v\n", err)
-	} else {
-		switch t := ud.(type) {
-		case *config.CloudConfig:
-			ccu = t
-		case *config.Script:
-			script = t
+		if os.IsNotExist(err) {
+			log.Infof("%s does not exist, not merging", baseConfigDir)
+			return current, nil
 		}
+
+		log.Errorf("Failed to read %s: %v", baseConfigDir, err)
+		return nil, err
+	}
+
+	result := []byte{}
+
+	for _, file := range files {
+		if file.IsDir() || strings.HasPrefix(file.Name(), ".") {
+			continue
+		}
+
+		input := path.Join(baseConfigDir, file.Name())
+		content, err := ioutil.ReadFile(input)
+		if err != nil {
+			log.Errorf("Failed to read %s: %v", input, err)
+			// ignore error
+			continue
+		}
+
+		log.Infof("Merging %s", input)
+		result, err = util.MergeBytes(result, content)
+		if err != nil {
+			log.Errorf("Failed to merge bytes: %v", err)
+			return nil, err
+		}
+	}
+
+	if len(result) == 0 {
+		return current, nil
+	} else {
+		return util.MergeBytes(result, current)
+	}
+}
+
+func saveCloudConfig() error {
+	var userDataBytes []byte
+	var metadata datasource.Metadata
+
+	ds, err := currentDatasource()
+	if err != nil {
+		log.Errorf("Failed to select datasource: %v", err)
+		return err
+	}
+
+	if ds != nil {
+		log.Infof("Fetching user-data from datasource %v", ds.Type())
+		userDataBytes, err = ds.FetchUserdata()
+		if err != nil {
+			log.Errorf("Failed fetching user-data from datasource: %v", err)
+			return err
+		}
+
+		log.Infof("Fetching meta-data from datasource of type %v", ds.Type())
+		metadata, err = ds.FetchMetadata()
+		if err != nil {
+			log.Errorf("Failed fetching meta-data from datasource: %v", err)
+			return err
+		}
+	}
+
+	userData := string(userDataBytes)
+	scriptBytes := []byte{}
+
+	if config.IsScript(userData) {
+		scriptBytes = userDataBytes
+		userDataBytes = []byte{}
+	} else if isCompose(userData) {
+		if userDataBytes, err = toCompose(userDataBytes); err != nil {
+			log.Errorf("Failed to convert to compose syntax: %v", err)
+			return err
+		}
+	} else if config.IsCloudConfig(userData) {
+		// nothing to do
+	} else {
+		log.Errorf("Unrecognized cloud-init\n%s", userData)
+		userDataBytes = []byte{}
+	}
+
+	if userDataBytes, err = mergeBaseConfig(userDataBytes); err != nil {
+		log.Errorf("Failed to merge base config: %v", err)
+		return err
+	}
+
+	return saveFiles(userDataBytes, scriptBytes, metadata)
+}
+
+func getSaveCloudConfig() (*config.CloudConfig, error) {
+	cloudConfig := path.Join(outputDir, outputFile)
+
+	ds := file.NewDatasource(cloudConfig)
+	if !ds.IsAvailable() {
+		log.Infof("%s does not exist", cloudConfig)
+		return nil, nil
+	}
+
+	ccBytes, err := ds.FetchUserdata()
+	if err != nil {
+		log.Errorf("Failed to read user-data from %s: %v", cloudConfig, err)
+		return nil, err
+	}
+
+	var cc config.CloudConfig
+	err = yaml.Unmarshal(ccBytes, &cc)
+	if err != nil {
+		log.Errorf("Failed to unmarshall user-data from %s: %v", cloudConfig, err)
+		return nil, err
+	}
+
+	return &cc, err
+}
+
+func executeCloudConfig() error {
+	ccu, err := getSaveCloudConfig()
+	if err != nil {
+		return err
+	}
+
+	var metadata datasource.Metadata
+
+	metaDataBytes, err := ioutil.ReadFile(path.Join(outputDir, metaDataFile))
+	if err != nil {
+		return err
+	}
+
+	if err = yaml.Unmarshal(metaDataBytes, &metadata); err != nil {
+		return err
 	}
 
 	log.Info("Merging cloud-config from meta-data and user-data")
 	cc := mergeConfigs(ccu, metadata)
-
-	if save {
-		err = saveFiles(script, userdataBytes, &cc)
-		if err != nil {
-			log.Fatal(err)
-		}
-		os.Exit(0)
-	}
 
 	if len(cc.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)
@@ -200,6 +303,26 @@ func Main() {
 			log.Fatalf("%v", err)
 		}
 		log.Printf("Wrote file %s to filesystem", fullPath)
+	}
+
+	return nil
+}
+
+func Main() {
+	flags.Parse(rancherConfig.FilterGlobalConfig(os.Args[1:]))
+
+	if save {
+		err := saveCloudConfig()
+		if err != nil {
+			log.Fatalf("Failed to save cloud config: %v", err)
+		}
+	}
+
+	if execute {
+		err := executeCloudConfig()
+		if err != nil {
+			log.Fatalf("Failed to save cloud config: %v", err)
+		}
 	}
 }
 
@@ -228,16 +351,6 @@ func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.Cl
 // on the different source command-line flags.
 func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
-
-	if execute {
-		cloudConfig := path.Join(outputDir, outputFile)
-		if _, err := os.Stat(cloudConfig); os.IsNotExist(err) {
-			return dss
-		}
-
-		dss = append(dss, file.NewDatasource(cloudConfig))
-		return dss
-	}
 
 	for _, ds := range cfg.CloudInit.Datasources {
 		parts := strings.SplitN(ds, ":", 2)
@@ -354,4 +467,22 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 
 	close(stop)
 	return s
+}
+
+func isCompose(content string) bool {
+	return strings.HasPrefix(content, "#compose\n")
+}
+
+func toCompose(bytes []byte) ([]byte, error) {
+	result := make(map[interface{}]interface{})
+	compose := make(map[interface{}]interface{})
+	err := yaml.Unmarshal(bytes, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	result["services"] = map[interface{}]interface{}{
+		"cloud-config": compose,
+	}
+	return yaml.Marshal(result)
 }
