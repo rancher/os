@@ -76,7 +76,7 @@ if ! grep -q '^UseDNS no' /etc/ssh/sshd_config; then
 fi
 
 ID_TYPE="busybox"
-if grep -q 'ID_LIKE=' /etc/os-release; then
+if [ -e /etc/os-release ] && grep -q 'ID_LIKE=' /etc/os-release; then
     ID_TYPE=$(grep 'ID_LIKE=' /etc/os-release | cut -d'=' -f2)
 fi
 
