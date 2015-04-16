@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/config"
@@ -13,20 +14,40 @@ type configEnvironemnt struct {
 	cfg *config.Config
 }
 
-func (c *configEnvironemnt) Lookup(key, serviceName string, serviceConfig *project.ServiceConfig) []string {
-	result := ""
-	fullKey := fmt.Sprintf("%s/%s", serviceName, key)
-	if value, ok := c.cfg.Environment[fullKey]; ok {
-		result = value
-	} else if value, ok := c.cfg.Environment[key]; ok {
-		result = value
+func appendEnv(array []string, key, value string) []string {
+	parts := strings.SplitN(key, "/", 2)
+	if len(parts) == 2 {
+		key = parts[1]
 	}
 
-	if result == "" {
-		return []string{}
-	} else {
-		return []string{fmt.Sprintf("%s=%s", key, result)}
+	return append(array, fmt.Sprintf("%s=%s", key, value))
+}
+
+func lookupKeys(cfg *config.Config, keys ...string) []string {
+	for _, key := range keys {
+		if strings.HasSuffix(key, "*") {
+			result := []string{}
+			for envKey, envValue := range cfg.Environment {
+				keyPrefix := key[:len(key)-1]
+				if strings.HasPrefix(envKey, keyPrefix) {
+					result = appendEnv(result, envKey, envValue)
+				}
+			}
+
+			if len(result) > 0 {
+				return result
+			}
+		} else if value, ok := cfg.Environment[key]; ok {
+			return appendEnv([]string{}, key, value)
+		}
 	}
+
+	return []string{}
+}
+
+func (c *configEnvironemnt) Lookup(key, serviceName string, serviceConfig *project.ServiceConfig) []string {
+	fullKey := fmt.Sprintf("%s/%s", serviceName, key)
+	return lookupKeys(c.cfg, fullKey, key)
 }
 
 func RunServices(name string, cfg *config.Config, configs map[string]*project.ServiceConfig) error {
