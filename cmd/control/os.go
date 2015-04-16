@@ -162,7 +162,7 @@ func startUpgradeContainer(image string, stage, force bool) {
 
 	container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &config.ContainerConfig{
 		Cmd: "--name=os-upgrade " +
-			"--log-driver=json-file" +
+			"--log-driver=json-file " +
 			"--rm " +
 			"--privileged " +
 			"--net=host " +
@@ -175,7 +175,6 @@ func startUpgradeContainer(image string, stage, force bool) {
 		log.Fatal(container.Err)
 	}
 
-	
 	if !stage {
 		fmt.Printf("Upgrading to %s\n", image)
 
