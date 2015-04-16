@@ -38,6 +38,8 @@ func (c *containerBasedService) Up() error {
 
 	var event project.Event
 
+	c.project.Notify(project.CONTAINER_STARTING, c, map[string]string{})
+
 	if create {
 		container.Create()
 		event = project.CONTAINER_CREATED
@@ -71,8 +73,17 @@ func (c *containerBasedService) Name() string {
 	return c.name
 }
 
+func isSystemService(serviceConfig *project.ServiceConfig) bool {
+	return util.GetValue(serviceConfig.Labels, config.SCOPE) == config.SYSTEM
+}
+
 func (c *ContainerFactory) Create(project *project.Project, name string, serviceConfig *project.ServiceConfig) (project.Service, error) {
-	container := NewContainerFromService(config.DOCKER_SYSTEM_HOST, name, serviceConfig)
+	host := config.DOCKER_HOST
+	if isSystemService(serviceConfig) {
+		host = config.DOCKER_SYSTEM_HOST
+	}
+
+	container := NewContainerFromService(host, name, serviceConfig)
 
 	if container.Err != nil {
 		return nil, container.Err

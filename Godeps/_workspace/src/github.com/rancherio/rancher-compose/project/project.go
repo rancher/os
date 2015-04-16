@@ -18,6 +18,12 @@ var (
 	ErrRestart error        = errors.New("Restart execution")
 )
 
+type ProjectEvent struct {
+	Event   Event
+	Service Service
+	Data    map[string]string
+}
+
 func NewProject(name string, factory ServiceFactory) *Project {
 	return &Project{
 		Name:     name,
@@ -27,8 +33,29 @@ func NewProject(name string, factory ServiceFactory) *Project {
 	}
 }
 
+func (p *Project) createService(name string, config ServiceConfig) (Service, error) {
+	if p.EnvironmentLookup != nil {
+		parsedEnv := make([]string, 0, len(config.Environment))
+
+		for _, env := range config.Environment {
+			if strings.IndexRune(env, '=') != -1 {
+				parsedEnv = append(parsedEnv, env)
+				continue
+			}
+
+			for _, value := range p.EnvironmentLookup.Lookup(env, name, &config) {
+				parsedEnv = append(parsedEnv, value)
+			}
+		}
+
+		config.Environment = parsedEnv
+	}
+
+	return p.factory.Create(p, name, &config)
+}
+
 func (p *Project) AddConfig(name string, config *ServiceConfig) error {
-	service, err := p.factory.Create(p, name, config)
+	service, err := p.createService(name, *config)
 	if err != nil {
 		log.Errorf("Failed to create service for %s : %v", name, err)
 		return err
@@ -36,6 +63,7 @@ func (p *Project) AddConfig(name string, config *ServiceConfig) error {
 
 	p.Notify(SERVICE_ADD, service, nil)
 
+	p.reload = append(p.reload, name)
 	p.configs[name] = config
 	p.Services[name] = service
 
@@ -62,16 +90,18 @@ func (p *Project) Load(bytes []byte) error {
 func (p *Project) Up() error {
 	wrappers := make(map[string]*ServiceWrapper)
 
-	for name, _ := range p.Services {
-		wrappers[name] = NewServiceWrapper(name, p)
-	}
-
 	p.Notify(PROJECT_UP_START, nil, nil)
 
 	return p.startAll(wrappers)
 }
 
 func (p *Project) startAll(wrappers map[string]*ServiceWrapper) error {
+	for _, name := range p.reload {
+		wrappers[name] = NewServiceWrapper(name, p)
+	}
+
+	p.reload = []string{}
+
 	restart := false
 
 	for _, wrapper := range wrappers {
@@ -176,6 +206,10 @@ func (s *ServiceWrapper) Wait() error {
 	return s.err
 }
 
+func (p *Project) AddListener(c chan<- ProjectEvent) {
+	p.listeners = append(p.listeners, c)
+}
+
 func (p *Project) Notify(event Event, service Service, data map[string]string) {
 	buffer := bytes.NewBuffer(nil)
 	if data != nil {
@@ -203,5 +237,18 @@ func (p *Project) Notify(event Event, service Service, data map[string]string) {
 		logf("Project [%s]: %s %s", p.Name, event, buffer.Bytes())
 	} else {
 		logf("[%d/%d] [%s]: %s %s", p.upCount, len(p.Services), service.Name(), event, buffer.Bytes())
+	}
+
+	for _, l := range p.listeners {
+		projectEvent := ProjectEvent{
+			Event:   event,
+			Service: service,
+			Data:    data,
+		}
+		// Don't ever block
+		select {
+		case l <- projectEvent:
+		default:
+		}
 	}
 }

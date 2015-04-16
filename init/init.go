@@ -3,7 +3,6 @@ package init
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -16,9 +15,10 @@ import (
 )
 
 const (
-	STATE   string = "/var"
-	DOCKER  string = "/usr/bin/docker"
-	SYSINIT string = "/sbin/rancher-sysinit"
+	STATE         string = "/var"
+	SYSTEM_DOCKER string = "/usr/bin/system-docker"
+	DOCKER        string = "/usr/bin/docker"
+	SYSINIT       string = "/sbin/rancher-sysinit"
 )
 
 var (
@@ -63,6 +63,7 @@ var (
 		"/sbin/modprobe":                     "/busybox",
 		"/usr/sbin/iptables":                 "/xtables-multi",
 		DOCKER:                               "/docker",
+		SYSTEM_DOCKER:                        "/docker",
 		SYSINIT:                              "/init",
 		"/home":                              "/var/lib/rancher/state/home",
 		"/opt":                               "/var/lib/rancher/state/opt",
@@ -237,7 +238,7 @@ func execDocker(cfg *config.Config) error {
 	}
 
 	os.Stdin.Close()
-	return syscall.Exec(DOCKER, cfg.SystemDocker.Args, os.Environ())
+	return syscall.Exec(SYSTEM_DOCKER, cfg.SystemDocker.Args, os.Environ())
 }
 
 func MainInit() {
@@ -285,10 +286,9 @@ func touchSocket(cfg *config.Config) error {
 		if err := syscall.Unlink(path); err != nil && !os.IsNotExist(err) {
 			return err
 		}
-		if l, err := net.Listen("unix", path); err != nil {
+		err := ioutil.WriteFile(path, []byte{}, 0700)
+		if err != nil {
 			return err
-		} else {
-			l.Close()
 		}
 	}
 
@@ -365,7 +365,8 @@ func RunInit() error {
 			return createMounts(postMounts...)
 		},
 		touchSocket,
-		remountRo,
+		// Disable R/O root write now to support updating modules
+		//remountRo,
 		sysInit,
 	}
 

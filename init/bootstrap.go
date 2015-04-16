@@ -7,6 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/config"
+	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
 	"github.com/rancherio/rancher-compose/project"
 )
@@ -55,7 +56,7 @@ outer:
 
 	if format != "" {
 		log.Infof("Auto formatting : %s", format)
-		return runServices("autoformat", cfg, map[string]*project.ServiceConfig{
+		return docker.RunServices("autoformat", cfg, map[string]*project.ServiceConfig{
 			"autoformat": {
 				Net:        "none",
 				Privileged: true,
@@ -70,7 +71,7 @@ outer:
 }
 
 func runBootstrapContainers(cfg *config.Config) error {
-	return runServices("bootstrap", cfg, cfg.BootstrapContainers)
+	return docker.RunServices("bootstrap", cfg, cfg.BootstrapContainers)
 }
 
 func startDocker(cfg *config.Config) (chan interface{}, error) {

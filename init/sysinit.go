@@ -9,9 +9,6 @@ import (
 	dockerClient "github.com/fsouza/go-dockerclient"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
-	"github.com/rancherio/os/util"
-
-	"github.com/rancherio/rancher-compose/project"
 )
 
 func importImage(client *dockerClient.Client, name, fileName string) error {
@@ -109,63 +106,8 @@ func loadImages(cfg *config.Config) error {
 	return nil
 }
 
-func runServices(name string, cfg *config.Config, configs map[string]*project.ServiceConfig) error {
-	project := project.NewProject(name, docker.NewContainerFactory(cfg))
-	enabled := make(map[string]bool)
-
-	for name, serviceConfig := range configs {
-		if err := project.AddConfig(name, serviceConfig); err != nil {
-			log.Infof("Failed loading service %s", name)
-		}
-	}
-
-	project.ReloadCallback = func() error {
-		err := cfg.Reload()
-		if err != nil {
-			return err
-		}
-
-		for _, service := range cfg.EnabledServices {
-			if _, ok := enabled[service]; ok {
-				continue
-			}
-
-			if config, ok := cfg.Services[service]; ok {
-				for name, s := range config.SystemContainers {
-					if err := project.AddConfig(name, s); err != nil {
-						log.Errorf("Failed to load %s : %v", name, err)
-					}
-				}
-			} else {
-				bytes, err := util.LoadResource(service)
-				if err != nil {
-					log.Errorf("Failed to load %s : %v", service, err)
-					continue
-				}
-
-				err = project.Load(bytes)
-				if err != nil {
-					log.Errorf("Failed to load %s : %v", service, err)
-					continue
-				}
-			}
-
-			enabled[service] = true
-		}
-
-		return nil
-	}
-
-	err := project.ReloadCallback()
-	if err != nil {
-		log.Errorf("Failed to reload %s : %v", name, err)
-		return err
-	}
-	return project.Up()
-}
-
 func runContainers(cfg *config.Config) error {
-	return runServices("system-init", cfg, cfg.SystemContainers)
+	return docker.RunServices("system-init", cfg, cfg.SystemContainers)
 }
 
 func tailConsole(cfg *config.Config) error {

@@ -71,6 +71,7 @@ func NewContainerFromService(dockerHost string, name string, service *project.Se
 			Service: service,
 		},
 	}
+
 	return c.Parse()
 }
 
@@ -170,11 +171,55 @@ func (c *Container) Reset() *Container {
 	return c
 }
 
+func (c *Container) requiresSyslog() bool {
+	return (c.ContainerCfg.Service.LogDriver == "" || c.ContainerCfg.Service.LogDriver == "syslog")
+}
+
+func (c *Container) requiresUserDocker() bool {
+	if c.dockerHost == config.DOCKER_HOST {
+		return true
+	}
+
+	for _, v := range c.ContainerCfg.Service.Volumes {
+		if strings.Index(v, "/var/run/docker.sock") != -1 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Container) hasLink(link string) bool {
+	return util.Contains(c.ContainerCfg.Service.Links, link)
+}
+
+func (c *Container) addLink(link string) {
+	if c.hasLink(link) {
+		return
+	}
+
+	log.Debugf("Adding %s link to %s", link, c.Name)
+	c.ContainerCfg.Service.Links = append(c.ContainerCfg.Service.Links, link)
+}
+
 func (c *Container) parseService() {
-	if (c.ContainerCfg.Service.LogDriver == "" || c.ContainerCfg.Service.LogDriver == "syslog") &&
-		!util.Contains(c.ContainerCfg.Service.Links, "syslog") {
-		log.Debugf("Adding syslog link to %s\n", c.Name)
-		c.ContainerCfg.Service.Links = append(c.ContainerCfg.Service.Links, "syslog")
+	if c.requiresSyslog() {
+		c.addLink("syslog")
+	}
+
+	if c.requiresUserDocker() {
+		c.addLink("userdockerwait")
+	} else if c.ContainerCfg.Service.Image != "" {
+		client, err := NewClient(c.dockerHost)
+		if err != nil {
+			c.Err = err
+			return
+		}
+
+		i, _ := client.InspectImage(c.ContainerCfg.Service.Image)
+		if i == nil {
+			c.addLink("network")
+		}
 	}
 
 	cfg, hostConfig, err := docker.Convert(c.ContainerCfg.Service)
@@ -190,7 +235,6 @@ func (c *Container) parseService() {
 	c.remove = c.Config.Labels[config.REMOVE] != "false"
 	c.ContainerCfg.CreateOnly = c.Config.Labels[config.CREATE_ONLY] == "true"
 	c.ContainerCfg.ReloadConfig = c.Config.Labels[config.RELOAD_CONFIG] == "true"
-
 }
 
 func (c *Container) parseCmd() {

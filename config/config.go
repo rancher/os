@@ -264,3 +264,14 @@ func (d *DockerConfig) BridgeConfig() (string, string) {
 		return name, cidr
 	}
 }
+
+func (r Repositories) ToArray() []string {
+	result := make([]string, 0, len(r))
+	for _, repo := range r {
+		if repo.Url != "" {
+			result = append(result, repo.Url)
+		}
+	}
+
+	return result
+}

@@ -37,21 +37,16 @@ func disable(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		filtered := make([]string, 0, len(c.Args()))
-		for _, existing := range cfg.EnabledServices {
-			if existing != service {
-				filtered = append(filtered, existing)
-			}
+		if _, ok := cfg.ServicesInclude[service]; !ok {
+			continue
 		}
 
-		if len(filtered) != len(c.Args()) {
-			cfg.EnabledServices = filtered
-			changed = true
-		}
+		cfg.ServicesInclude[service] = false
+		changed = true
 	}
 
 	if changed {
-		if err = cfg.Set("enabled_services", cfg.EnabledServices); err != nil {
+		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -65,14 +60,14 @@ func enable(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		if !util.Contains(cfg.EnabledServices, service) {
-			cfg.EnabledServices = append(cfg.EnabledServices, service)
+		if val, ok := cfg.ServicesInclude[service]; !ok || !val {
+			cfg.ServicesInclude[service] = true
 			changed = true
 		}
 	}
 
 	if changed {
-		if err = cfg.Set("enabled_services", cfg.EnabledServices); err != nil {
+		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -84,22 +79,34 @@ func list(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	enabled := map[string]bool{}
-
-	for _, service := range cfg.EnabledServices {
-		enabled[service] = true
+	clone := make(map[string]bool)
+	for service, enabled := range cfg.ServicesInclude {
+		clone[service] = enabled
 	}
 
-	for service, _ := range cfg.Services {
-		if _, ok := enabled[service]; ok {
-			delete(enabled, service)
-			fmt.Printf("enabled  %s\n", service)
+	services, err := util.GetServices(cfg.Repositories.ToArray())
+	if err != nil {
+		log.Fatalf("Failed to get services: %v", err)
+	}
+
+	for _, service := range services {
+		if enabled, ok := clone[service]; ok {
+			delete(clone, service)
+			if enabled {
+				fmt.Printf("enabled  %s\n", service)
+			} else {
+				fmt.Printf("disabled %s\n", service)
+			}
 		} else {
 			fmt.Printf("disabled %s\n", service)
 		}
 	}
 
-	for service, _ := range enabled {
-		fmt.Printf("enabled  %s\n", service)
+	for service, enabled := range clone {
+		if enabled {
+			fmt.Printf("enabled  %s\n", service)
+		} else {
+			fmt.Printf("disabled %s\n", service)
+		}
 	}
 }

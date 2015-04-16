@@ -3,6 +3,7 @@ RUN apt-get update && \
     apt-get upgrade --no-install-recommends -y && \
     apt-get install -y --no-install-recommends openssh-server rsync
 RUN rm -rf /etc/ssh/*key*
+COPY scripts/dockerimages/scripts/entry.sh /usr/sbin/
 COPY scripts/dockerimages/scripts/console.sh /usr/sbin/
 COPY scripts/dockerimages/scripts/update-ssh-keys /usr/bin/
 RUN echo 'RancherOS \\n \l' > /etc/issue
@@ -12,4 +13,5 @@ RUN addgroup --gid 1100 rancher && \
     useradd -u 1100 -g rancher -G docker,sudo -m -s /bin/bash rancher && \
     echo '## allow password less for rancher user' >> /etc/sudoers && \
     echo 'rancher ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+ENTRYPOINT ["/usr/sbin/entry.sh"]
 CMD ["/usr/sbin/console.sh"]
