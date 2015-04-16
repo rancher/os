@@ -301,8 +301,10 @@ func NewConfig() *Config {
 				Net:     "host",
 			},
 		},
-		EnabledServices: []string{},
-		Services: map[string]Config{
+		Services: map[string]bool{
+			"ubuntu-console": false,
+		},
+		BundledServices: map[string]Config{
 			"ubuntu-console": {
 				SystemContainers: map[string]*project.ServiceConfig{
 					"console": {

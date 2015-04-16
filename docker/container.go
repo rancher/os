@@ -170,11 +170,36 @@ func (c *Container) Reset() *Container {
 	return c
 }
 
+func (c *Container) requiresSyslog() bool {
+	return (c.ContainerCfg.Service.LogDriver == "" || c.ContainerCfg.Service.LogDriver == "syslog")
+}
+
+func (c *Container) hasLink(link string) bool {
+	return util.Contains(c.ContainerCfg.Service.Links, link)
+}
+
+func (c *Container) addLink(link string) {
+	c.ContainerCfg.Service.Links = append(c.ContainerCfg.Service.Links, link)
+}
+
 func (c *Container) parseService() {
-	if (c.ContainerCfg.Service.LogDriver == "" || c.ContainerCfg.Service.LogDriver == "syslog") &&
-		!util.Contains(c.ContainerCfg.Service.Links, "syslog") {
+	client, err := NewClient(c.dockerHost)
+	if err != nil {
+		c.Err = err
+		return
+	}
+
+	if c.ContainerCfg.Service.Image != "" {
+		i, _ := client.InspectImage(c.ContainerCfg.Service.Image)
+		if i == nil && !c.hasLink("network") {
+			log.Debugf("Adding network link to %s", c.Name)
+			c.addLink("network")
+		}
+	}
+
+	if c.requiresSyslog() && !c.hasLink("syslog") {
 		log.Debugf("Adding syslog link to %s\n", c.Name)
-		c.ContainerCfg.Service.Links = append(c.ContainerCfg.Service.Links, "syslog")
+		c.addLink("syslog")
 	}
 
 	cfg, hostConfig, err := docker.Convert(c.ContainerCfg.Service)

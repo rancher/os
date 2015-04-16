@@ -2,6 +2,7 @@ package util
 
 import (
 	"archive/tar"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,7 +18,8 @@ import (
 )
 
 var (
-	letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	letters      = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	ErrNoNetwork = errors.New("Networking not available to load resource")
 )
 
 func mountProc() error {
@@ -168,6 +170,25 @@ func Convert(from, to interface{}) error {
 	return yaml.Unmarshal(bytes, to)
 }
 
+func MergeBytes(left, right []byte) ([]byte, error) {
+	leftMap := make(map[interface{}]interface{})
+	rightMap := make(map[interface{}]interface{})
+
+	err := yaml.Unmarshal(left, &leftMap)
+	if err != nil {
+		return nil, err
+	}
+
+	err = yaml.Unmarshal(right, &rightMap)
+	if err != nil {
+		return nil, err
+	}
+
+	MergeMaps(leftMap, rightMap)
+
+	return yaml.Marshal(leftMap)
+}
+
 func MergeMaps(left, right map[interface{}]interface{}) {
 	for k, v := range right {
 		merged := false
@@ -186,8 +207,11 @@ func MergeMaps(left, right map[interface{}]interface{}) {
 	}
 }
 
-func LoadResource(location string) ([]byte, error) {
+func LoadResource(location string, network bool) ([]byte, error) {
 	if strings.HasPrefix(location, "http:/") || strings.HasPrefix(location, "https:/") {
+		if !network {
+			return nil, ErrNoNetwork
+		}
 		resp, err := http.Get(location)
 		if err != nil {
 			return nil, err

@@ -43,14 +43,15 @@ type ContainerConfig struct {
 }
 
 type Config struct {
-	Services            map[string]Config                 `yaml:"services,omitempty"`
+	Environment         map[string]string                 `yaml:"environment,omitempty"`
+	BundledServices     map[string]Config                 `yaml:"bundled_services,omitempty"`
 	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap_containers,omitempty"`
 	BootstrapDocker     DockerConfig                      `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
 	Console             ConsoleConfig                     `yaml:"console,omitempty"`
 	Debug               bool                              `yaml:"debug,omitempty"`
 	Disable             []string                          `yaml:"disable,omitempty"`
-	EnabledServices     []string                          `yaml:"enabled_services,omitempty"`
+	Services            map[string]bool                   `yaml:"services,omitempty"`
 	Modules             []string                          `yaml:"modules,omitempty"`
 	Network             NetworkConfig                     `yaml:"network,omitempty"`
 	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
