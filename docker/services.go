@@ -10,7 +10,7 @@ import (
 	"github.com/rancherio/rancher-compose/project"
 )
 
-type configEnvironemnt struct {
+type configEnvironment struct {
 	cfg *config.Config
 }
 
@@ -45,7 +45,7 @@ func lookupKeys(cfg *config.Config, keys ...string) []string {
 	return []string{}
 }
 
-func (c *configEnvironemnt) Lookup(key, serviceName string, serviceConfig *project.ServiceConfig) []string {
+func (c *configEnvironment) Lookup(key, serviceName string, serviceConfig *project.ServiceConfig) []string {
 	fullKey := fmt.Sprintf("%s/%s", serviceName, key)
 	return lookupKeys(c.cfg, fullKey, key)
 }
@@ -54,7 +54,7 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 	network := false
 	projectEvents := make(chan project.ProjectEvent)
 	p := project.NewProject(name, NewContainerFactory(cfg))
-	p.EnvironmentLookup = &configEnvironemnt{cfg: cfg}
+	p.EnvironmentLookup = &configEnvironment{cfg: cfg}
 	p.AddListener(projectEvents)
 	enabled := make(map[string]bool)
 
