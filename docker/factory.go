@@ -30,17 +30,20 @@ func (c *containerBasedService) Up() error {
 	container := c.container
 	containerCfg := c.container.ContainerCfg
 
+	fakeCreate := false
 	create := containerCfg.CreateOnly
 
 	if util.Contains(c.cfg.Disable, c.name) {
-		create = true
+		fakeCreate = true
 	}
 
 	var event project.Event
 
 	c.project.Notify(project.CONTAINER_STARTING, c, map[string]string{})
 
-	if create {
+	if fakeCreate {
+		event = project.CONTAINER_CREATED
+	} else if create {
 		container.Create()
 		event = project.CONTAINER_CREATED
 	} else {
