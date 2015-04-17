@@ -144,18 +144,19 @@ func currentDatasource() (datasource.Datasource, error) {
 	return ds, nil
 }
 
-func mergeBaseConfig(current []byte) ([]byte, error) {
+func mergeBaseConfig(current, currentScript []byte) ([]byte, []byte, error) {
 	files, err := ioutil.ReadDir(baseConfigDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			log.Infof("%s does not exist, not merging", baseConfigDir)
-			return current, nil
+			return current, currentScript, nil
 		}
 
 		log.Errorf("Failed to read %s: %v", baseConfigDir, err)
-		return nil, err
+		return nil, nil, err
 	}
 
+	scriptResult := currentScript
 	result := []byte{}
 
 	for _, file := range files {
@@ -171,18 +172,32 @@ func mergeBaseConfig(current []byte) ([]byte, error) {
 			continue
 		}
 
+		if config.IsScript(string(content)) {
+			scriptResult = content
+			continue
+		}
+
 		log.Infof("Merging %s", input)
+
+		if isCompose(string(content)) {
+			content, err = toCompose(content)
+			if err != nil {
+				log.Errorf("Failed to convert %s to cloud-config syntax: %v", input, err)
+			}
+		}
+
 		result, err = util.MergeBytes(result, content)
 		if err != nil {
 			log.Errorf("Failed to merge bytes: %v", err)
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
 	if len(result) == 0 {
-		return current, nil
+		return current, scriptResult, nil
 	} else {
-		return util.MergeBytes(result, current)
+		result, err := util.MergeBytes(result, current)
+		return result, scriptResult, err
 	}
 }
 
@@ -230,7 +245,7 @@ func saveCloudConfig() error {
 		userDataBytes = []byte{}
 	}
 
-	if userDataBytes, err = mergeBaseConfig(userDataBytes); err != nil {
+	if userDataBytes, scriptBytes, err = mergeBaseConfig(userDataBytes, scriptBytes); err != nil {
 		log.Errorf("Failed to merge base config: %v", err)
 		return err
 	}
@@ -474,13 +489,15 @@ func isCompose(content string) bool {
 }
 
 func toCompose(bytes []byte) ([]byte, error) {
-	result := make(map[interface{}]interface{})
 	compose := make(map[interface{}]interface{})
 	err := yaml.Unmarshal(bytes, &compose)
 	if err != nil {
 		return nil, err
 	}
 
-	result["services"] = compose
-	return yaml.Marshal(result)
+	return yaml.Marshal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"services": compose,
+		},
+	})
 }
