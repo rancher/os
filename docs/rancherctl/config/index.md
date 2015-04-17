@@ -31,14 +31,9 @@ For all changes to your configuration, you must reboot for them to take effect.
 The `get` command gets a value from the `rancher.yml` file. Let's see how easy it is to get the DNS configuration of the system.
 
 ```sh
-$ sudo rancherctl config get dns
+$ sudo rancherctl config get network.dns.nameservers
 - 8.8.8.8
 - 8.8.4.4
-```
-
-```bash
-$ sudo rancherctl config get user_docker.tls 
-false
 ```
 
 ### Set
