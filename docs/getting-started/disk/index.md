@@ -4,13 +4,13 @@ layout: default
 ---
 
 ## Booting from ISO
-
-The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed as a normal Linux virtual machine.
-
-Download the rancherOS.iso file from our [releases page](https://github.com/rancherio/os/releases/).
+---
+The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed as a normal Linux virtual machine. [Vagrant]({{site.baseurl}}/docs/getting-started/vagrant/) simplest way to try out RancherOS is using our [RancherOS Vagrant project](https://github.com/rancherio/os-vagrant).
 
 
-### Using VirtualBox
+If you've chosen to use a different provisioner, you can download the rancherOS.iso file from our [releases page](https://github.com/rancherio/os/releases/). You must boot with at least **1GB** of memory. If you boot with the ISO, the login is hard coded to **rancher/rancher**. Only the ISO has the password hard coded. If you run from a cloud or install to disk, SSH keys or a password of your choice is expected to be used.
+
+### Example using VirtualBox
 
 
 1. Download the RancherOS ISO.
@@ -92,9 +92,19 @@ When the VM is up and running again, you'll need to login again. Remember that t
 
 The file is no longer there. If you want this type of change to be saved upon rebooting, follow the steps in the next section to install to disk.
 
+## Persisting State
+---
+If you are running from the ISO, RancherOS will be running from memory. In order to persist to disk, you can format a file system with the label `RANCHER_STATE`. 
+
+Example:
+
+```
+docker run --privileged -it debian mkfs.ext4 -L RANCHER_STATE /dev/sda
+```
+
 
 ## Installing to Disk
-
+---
 To install RancherOS on a new disk, you can use the `rancheros-install` command. By installing to disk, this will allow any changes saved to the console and system containers to be saved whenever a reboot happens.
 
 ### Adding Port Forwarding
@@ -142,6 +152,7 @@ Cloud-Init File Example:
 
 ```
 #cloud-config
+
 ssh_authorized_keys:
  - ssh-rsa AAA... user@rancher
 ```

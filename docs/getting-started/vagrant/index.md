@@ -4,12 +4,14 @@ layout: default
 
 ---
 
-## Launching RancherOS on Vagrant
-The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed as a normal Linux virtual machine. We can use Vagrant to build a RancherOS virtual machine on any of these virtualization providers.
+## Running RancherOS on Vagrant
+---
+
+We have created a [RancherOS Vagrant project](https://github.com/rancherio/os-vagrant) that allows you to quickly test out RancherOS.
 
 1. Vagrant can be downloaded and installed from [here](http://www.vagrantup.com/downloads.html).
 
-2. After installing Vagrant, you should clone the RancherOS Vagrant [repository](https://github.com/rancherio/os-vagrant). From the command line, go to the directory that you want to clone the repo into. Clone the repo and go into the newly cloned directory.
+2. After installing Vagrant, you should clone the [RancherOS Vagrant repository](https://github.com/rancherio/os-vagrant). From the command line, go to the directory that you want to clone the repo into. Clone the repo and go into the newly cloned directory.
 
     ```bash
     $ git clone https://github.com/rancherio/os-vagrant.git
@@ -64,7 +66,7 @@ The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed
     end
     ```
 
-3. Run `$ vagrant up`. This will import the vagrant box and create the virtual machine with RancherOS installed. 
+3. Run `vagrant up`. This will import the vagrant box and create the virtual machine with RancherOS installed. 
 
     ```bash
     $ vagrant up
@@ -76,7 +78,10 @@ The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed
     $
     ```
 
-4. Now, let's log in to the system. We use `vagrant ssh` to authenticate with the private Vagrant key and login to the system:
+## Logging into RancherOS
+---
+
+Now, let's log in to the system. We use `vagrant ssh` to authenticate with the private Vagrant key and login to the system:
 
 
     ```bash
@@ -86,8 +91,8 @@ The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed
 
 After you're logged into the system, go back to the [Getting Started Guide]({{site.baseurl}}/docs/getting-started/) to see some examples of what we can do.  
 
-#### Shutting Down the VM
-
+## Shutting Down the VM
+---
 If you are in the RancherOS command line, type `exit`.
 
 ```bash
@@ -97,10 +102,10 @@ Connection to 127.0.0.1 closed.
 $ 
 ```
 
-If you want to shut down your VM, run `vagrant halt` command from the os-vagrant directory. To get the VM back up, run `vagrant up` in the os-vagrant directory. 
+If you want to shut down your VM, run `vagrant halt` command from the os-vagrant directory. Or if you want to destroy the VM, run `vagrant destroy`. 
 
-```bash
-$ vagrant halt
-==> rancher-01: Attempting graceful shutdown of VM...
-$
-```
+To get the VM back up, run `vagrant up` in the os-vagrant directory and just log back in `vagrant ssh`.
+
+
+<br>
+

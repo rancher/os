@@ -5,7 +5,7 @@ layout: default
 ---
 
 ## RancherCTL Config
-
+---
 
 RancherOS state is controlled by simple document. `rancherctl config` is used to manipulate the configuration of RancherOS stored in **/var/lib/rancher/conf/rancher.yml**.  You are free to edit the file directly, but by using `rancherctl config`, it is safer and often more convenient.
 
@@ -15,7 +15,7 @@ Remember, all `rancherctl` commands needs to be used with `sudo`.
 For all changes to your configuration, you must reboot for them to take effect.
 
 ### Sub commands
-
+---
 | Command  | Description                                     |
 |----------|-------------------------------------------------|
 | `get`      | Gets value                                       |
@@ -27,7 +27,7 @@ For all changes to your configuration, you must reboot for them to take effect.
 
 
 ### Get
-
+---
 The `get` command gets a value from the `rancher.yml` file. Let's see how easy it is to get the DNS configuration of the system.
 
 ```sh
@@ -42,7 +42,7 @@ false
 ```
 
 ### Set
-
+---
 The `set` command can set values in the `rancher.yml` file. 
 
 Setting a list in the `rancher.yml`
@@ -58,7 +58,7 @@ $ sudo rancherctl config set user_docker.tls true
 ```
 
 ### Import
-
+---
 The `import` command allows you to import configurations from a standard in or a file. 
 
 #### Import Options
@@ -76,7 +76,7 @@ $ sudo rancherctl config import -i local-rancher.yml
 ```
 
 ### Export
-
+---
 The `export` command allows you to export your existing configuration from rancher.yml. By default, only changes from the default values will be exported. 
 
 If you run the command without any options, it will output into the shell what is in the config file.

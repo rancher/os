@@ -3,7 +3,8 @@ title: Getting Started on Amazon
 layout: default
 
 ---
-## Running RancherOS on Amazon Web Services
+## Running RancherOS on AWS
+----
 
 ### Launching RancherOS through the AWS console
 
@@ -30,28 +31,7 @@ RancherOS is available as an Amazon Web Services AMI, and can be easily run on E
     
     ![RancherOS on AWS 5]({{site.baseurl}}/img/Rancher_aws5.png)
 
-5. After your instance is up and running, let's get into the RancherOS terminal so we can start using it. From your EC2 Dashboard, click on your new instance. Click on **Connect**. 
-
-    ![RancherOS on AWS 6]({{site.baseurl}}/img/Rancher_aws6.png)
-
-6. Select **A Java SSH Client directly from my browser (Java required)**." Fill in the Private key path where the shown key name is saved. Click on **Launch SSH Client**.
-
-    ![RancherOS on AWS 7]({{site.baseurl}}/img/Rancher_aws7.png)
-
-7. For Mac users, the first time launching the SSH client will require you to accept the MindTerm license agreement. This is required by Amazon in order to launch the Java applet. Click **Accept**. 
-
-    ![RancherOS on AWS 8]({{site.baseurl}}/img/Rancher_aws8.png)
-        
-    Click **Yes** to create the MindTerm home directory.
-
-    ![RancherOS on AWS 9]({{site.baseurl}}/img/Rancher_aws9.png)
-
-8. A browser should launch that allows you to access the RancherOS command line.
-    
-After you're logged into the system, go back to the [Getting Started Guide]({{site.baseurl}}/docs/getting-started/) to see some examples of what we can do.
-    
 ### Launching RancherOS through the AWS Command Line Interface
-
 If you prefer to use the [AWS Command Line Interface](http://aws.amazon.com/cli/), let's walk through that process:
 
 1. If you haven't installed the AWS CLI, follow the instructions on the [AWS CLI page](http://aws.amazon.com/cli/) to install. If you've already installed and configured AWS, just skip step 2. 
@@ -83,40 +63,34 @@ If you prefer to use the [AWS Command Line Interface](http://aws.amazon.com/cli/
     $ aws ec2 run-instances --image-id ami-ID# --count 1 --instance-type t1.micro --key-name MySSHKeyName --security-groups sg-name
     ```
 
-4. After the image has been created, you can go to the EC2 dashboard to check that the instance is running. You can either connect into the instance from the AWS console or continue using command lines. If you follow the AWS console command, you must make sure to log in as the rancher user instead of the root user. 
 
+## Logging into RancherOS
+----
 
-    ```bash
-    $ ssh -i /Directory/of/MySSHKeyName.pem rancher@<ip-of-ec2-instance>
-    [rancher@rancher ~]$
-    ```
+From a command line, log into the EC2 Instance.
 
-    If you have issues logging into RancherOS, try using this command to help debug the issue.
+```bash
+$ ssh -i /Directory/of/MySSHKeyName.pem rancher@<ip-of-ec2-instance>
+[rancher@rancher ~]$
+```
 
-    ```bash
-    $ ssh -v -i /Directory/of/MySSHKeyName.pem rancher@<ip-of-ec2-instance>
-    ```
+If you have issues logging into RancherOS, try using this command to help debug the issue.
+
+```bash
+$ ssh -v -i /Directory/of/MySSHKeyName.pem rancher@<ip-of-ec2-instance>
+```
 
 After you're logged into the system, go back to the [Getting Started Guide]({{site.baseurl}}/docs/getting-started/) to see some examples of what we can do.
 
 
 ## Latest AMI Releases 
+----
 
-Region | Type | AMI |
--------|------|------
-ap-northeast-1| PV | [ami-71cb3d71](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchAmi=ami-71cb3d71)
-ap-southeast-1| PV | [ami-4a9eaf18](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchAmi=ami-4a9eaf18)
-ap-southeast-2| PV | [ami-45ef9f7f](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchAmi=ami-45ef9f7f)
-eu-west-1| PV | [ami-fd70ee8a](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchAmi=ami-fd70ee8a)
-sa-east-1| PV | [ami-85f94298](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchAmi=ami-85f94298)
-us-east-1| PV | [ami-5a321d32](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchAmi=ami-5a321d32)
-us-west-1| PV | [ami-bfa849fb](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchAmi=ami-bfa849fb)
-us-west-2| PV | [ami-a9bc9099](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-a9bc9099)
+Please check the [README](https://github.com/rancherio/os/blob/master/README.md) in our RancherOS repository for our latest AMIs.
 
 <br>
-SSH keys are added to the <b>rancher</b> user.
 <br>
-
+<br>
 
 
 

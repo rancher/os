@@ -33,7 +33,9 @@ $ sudo system-docker restart userdocker
 A server certificate must be generated for the hostname under which you will access the server.  You can use an IP, "localhost", or "foo.example.com".
 
 ```bash
-$ sudo rancherctl tls generate -s --hostname localhost --hostname foo.example.com
+$ hostname
+rancher
+$ sudo rancherctl tls generate -s --hostname rancher
 $ sudo system-docker restart userdocker
 ```
 
@@ -42,7 +44,7 @@ $ sudo system-docker restart userdocker
 One or more client certificates must be generated so that you can access Docker. After generating the certificate, you can store the generated certificate in `${HOME}/.docker`.
 
 ```bash
-$ sudo rancherctl tls generate
+$ sudo rancherctl tls generate -d /.docker
 $ sudo chown -R rancher ${HOME}/.docker
 ```
 

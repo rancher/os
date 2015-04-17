@@ -5,7 +5,7 @@ layout: default
 ---
 
 ## Upgrading RancherOS
-
+---
 RancherOS has released a new version and you want to learn how to upgrade your OS. We make it easy using the [RancherCTL OS]({{site.baseurl}}/docs/rancherctl/os) commands.
 
 RancherOS only supports upgrading from the previous version. If you are on version v0.1.2, we recommend upgrading to v0.2.0 before upgrading to v0.2.1. 
