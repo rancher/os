@@ -36,7 +36,7 @@ func NewGceCloudConfig() *GceCloudConfig {
 		log.Errorf("Could not retrieve instance SSH Keys: %s", err)
 	}
 
-	nonUserDataSSHKeysRaw := projectSSHKeys + instanceSSHKeys
+	nonUserDataSSHKeysRaw := projectSSHKeys + "\n" + instanceSSHKeys
 	nonUserDataSSHKeys := gceSshKeyFormatter(nonUserDataSSHKeysRaw)
 
 	gceCC := &GceCloudConfig{
