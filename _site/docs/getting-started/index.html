@@ -1,0 +1,275 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="getting-started-guide">Getting Started Guide</h2>
+
+<hr>
+
+<p>RancherOS is a lightweight Linux distribution designed from the ground up to run Docker containers. This guide provides instructions on how to get started using RancherOS.</p>
+
+<h3 id="architecture">Architecture</h3>
+
+<p>Details on the RancherOS Architecture can be found <a href="/docs/architecture/">here</a>.</p>
+
+<h3 id="installing-rancheros">Installing RancherOS</h3>
+
+<p>There are a couple of options on how to launch RancherOS.</p>
+
+<ul>
+<li>Launching RancherOS on <a href="/docs/getting-started/vagrant/">Vagrant</a>.</li>
+<li>Launching RancherOS and Installing to <a href="/docs/getting-started/disk/">Disk</a>.</li>
+<li>Launching RancherOS on <a href="/docs/getting-started/amazon/">Amazon Web Services</a>.</li>
+</ul>
+
+<h3 id="a-first-look-at-rancheros">A First Look At RancherOS</h3>
+
+<p>Let’s assume that you&rsquo;ve gotten your RancherOS up and are logged in. Let&rsquo;s start checking out what processes are running on the system.</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>ps aux
+PID   USER  COMMAND
+<span class="m">1</span>   root    docker -d -s overlay -b none --restart<span class="o">=</span><span class="nb">false</span> -H unix:///var/run/system-docker.sock
+…..
+<span class="m">308</span>     root    ntpd -d
+<span class="m">314</span>     root    rsyslogd -n
+<span class="m">322</span>     root    docker -d -s overlay --tlsverify --tlscacert<span class="o">=</span>/etc/docker/tls/ca.pem --tlscert<span class="o">=</span>/etc/docker/tls/serve
+…..
+</code></pre></div>
+<p>As you can see, the first process on the system, PID1, is the Docker daemon, called <strong>system-docker</strong>. This is where RancherOS runs system services like ntpd and rsyslogd. You can use the <code>system-docker</code> command to control the <strong>system-docker</strong> daemon. </p>
+
+<p>The other Docker daemon running on the system is <strong>user-docker</strong>, which can be accessed by using the normal <code>docker</code> command.</p>
+
+<p>The <a href="/docs/architecture/">architecture</a> section covers these daemons in more detail.</p>
+
+<p>Use <code>docker images</code> to see the images that the system has:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>docker images
+REPOSITORY   TAG    IMAGE ID    CREATED VIRTUAL SIZE
+</code></pre></div>
+<p>At this point, there are no containers running on the user-docker daemon. However, if you run the same command against the system-docker instance you’ll see a number of system services that are shipped with RancherOS. </p>
+
+<p>Note: system-docker can only be used by root, so it is necessary to use the sudo command whenever you want to interact with system-docker</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">[rancher@rancher ~]$ sudo system-docker images
+REPOSITORY  TAG         IMAGE ID        CREATED         VIRTUAL SIZE
+syslog      latest      92855074bb56    46 hours ago    18.09 MB
+syslog      v0.0.1      92855074bb56    46 hours ago    18.09 MB
+ntp         latest      6560c12b3f56    46 hours ago    18.09 MB
+ntp         v0.0.1      6560c12b3f56    46 hours ago    18.09 MB
+rescue      latest      27c5b8ae9b7c    46 hours ago    18.1 MB
+rescue      v0.0.1      27c5b8ae9b7c    46 hours ago    18.1 MB
+console     latest      ee3a47bd7309    46 hours ago    18.1 MB
+console     v0.0.1      ee3a47bd7309    46 hours ago    18.1 MB
+userdocker  latest      c0196a52a7c4    46 hours ago    18.35 MB
+userdocker  v0.0.1      c0196a52a7c4    46 hours ago    18.35 MB
+cloudinit   latest      7dc2bc8c2ad5    46 hours ago    18.09 MB
+cloudinit   v0.0.1      7dc2bc8c2ad5    46 hours ago    18.09 MB
+…….
+</code></pre></div>
+<p>All of these images are available for use by system-docker daemon, some of them are run at boot time, and others, such as the console, user-docker, rsyslog, and ntp containers are always running.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">[rancher@rancher ~]$ sudo system-docker ps
+CONTAINER ID    IMAGE   COMMAND         CREATED             STATUS         PORTS             NAMES
+5ff08dbb57ce   console:latest   &quot;/usr/sbin/console.s   About an hour ago   Up About an hour console
+56ac381d4acb   userdocker:latest   &quot;/docker.sh&quot; About an hour ago   Up About an hour   userdocker        
+f0dd31b1f7a8   syslog:latest    &quot;/syslog.sh&quot;    About an hour ago   Up About an hour    syslog           
+0c7154630edd   ntp:latest       &quot;/ntp.sh&quot;       About an hour ago   Up About an hour    ntp
+</code></pre></div>
+<h2 id="deploying-a-docker-container">Deploying a Docker Container</h2>
+
+<p>Let&rsquo;s try to deploy a normal Docker container on the user-docker daemon.  The RancherOS user-docker daemon is identical to any other Docker environment, so all normal Docker commands work.</p>
+
+<p>The following is an example of deploying a small nginx container installed on a Busybox Linux. To start a Docker container in the user-docker environment, use the following command:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">rancher@rancher:~<span class="nv">$ </span>docker run -d --name nginx -p 8000:80 husseingalal/nginxbusy
+be2a3c972b75e95cd162e7b4989f66e2b0ed1cb90529c52fd93f6c849b01840f
+</code></pre></div>
+<p>You can see that the nginx container is up and running, using <code>docker ps</code> command:</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh">rancher@rancher:~<span class="nv">$ </span>docker ps
+CONTAINER ID        IMAGE                           COMMAND             CREATED             STATUS              PORTS                  NAMES
+be2a3c972b75        husseingalal/nginxbusy:latest   <span class="s2">&quot;/usr/sbin/nginx&quot;</span>   <span class="m">3</span> seconds ago       Up <span class="m">2</span> seconds        0.0.0.0:8000-&gt;80/tcp   nginx
+</code></pre></div>
+<p>Note: The rancher user belongs to docker group, which is why we&rsquo;re able to use docker without sudo privileges.</p>
+
+<h3 id="deploying-a-system-service-container">Deploying A System Service Container</h3>
+
+<p>The following is a simple Docker container to set up Linux-dash, which is a minimal low-overhead web dashboard for monitoring Linux servers. The Dockerfile will be like this:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">FROM hwestphal/nodebox
+MAINTAINER hussein.galal.ahmed.11@gmail.com
+
+RUN opkg-install unzip
+RUN curl -k -L -o master.zip https://github.com/afaqurk/linux-dash/archive/master.zip
+RUN unzip master.zip
+WORKDIR linux-dash-master
+RUN npm install
+
+ENTRYPOINT [&quot;node&quot;,&quot;server&quot;]
+</code></pre></div>
+<p>I used hwestphal/nodebox image, which uses a busybox image and installs node.js and npm. I downloaded the source code of Linux-dash, and finally I ran the server. This Docker image is only 32MB, and linux-dash will run on port 80 by default.</p>
+
+<p>To run this container with system-docker use the following command:</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>sudo system-docker run -d --net<span class="o">=</span>host --name busydash husseingalal/busydash
+</code></pre></div>
+<p>Note that I used &ndash;net=host to tell system-docker not to containerize the container&rsquo;s networking, and use the host’s networking instead. After running the container, you can see the monitoring server by accessing <a href="http://SERVER_IP">http://SERVER_IP</a>.</p>
+
+<p><img src="/img/Rancher_busydash.png" alt="System Docker Container"></p>
+
+<p>To make the container survive during the reboots, you should create the <code>/opt/rancher/bin/start.sh</code> script, and add the docker start line to launch the docker at each startup:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ sudo mkdir -p /opt/rancher/bin
+$ sudo echo “sudo system-docker start busydash” &gt;&gt; /opt/rancher/bin/start.sh
+$ sudo chmod 755 /opt/rancher/bin/start.sh
+</code></pre></div>
+<h3 id="using-rancherctl">Using <a href="/docs/rancherctl/">RancherCTL</a></h3>
+
+<p>Another useful command that can be used with RancherOS is <code>rancherctl</code> which can be used to control and configure the system. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>rancherctl -v
+rancherctl version 0.0.1
+</code></pre></div>
+<p>RancherOS state is controlled by simple document, which is <strong>/var/lib/rancher/conf/rancher.yml</strong>. <code>rancherctl</code> is used to edit the configuration of the system, to see for example the dns configuration of the system:</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancherctl config get dns
+- 8.8.8.8
+- 8.8.4.4
+</code></pre></div>
+<p>You can use rancherctl to customize the console and replace the native Busybox console with the consoles from other Linux distributions.  Initially, RancherOS only supports the Ubuntu console, but other console support will be coming soon. In order to enable the Ubuntu console use the following command:</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancherctl addon <span class="nb">enable </span>ubuntu-console<span class="p">;</span>
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<p>After that you will be able to use Ubuntu console, to turn it off use disable instead of enable, and then reboot.</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh">rancher@rancher:~<span class="nv">$ </span>sudo rancherctl addon disable ubuntu-console<span class="p">;</span>
+</code></pre></div>
+<p>Note that any changes to the console or the system containers will be lost after reboots, any changes to /home or /opt will be persistent. The console always executes <strong>/opt/rancher/bin/start.sh</strong> at each startup. </p>
+
+<h3 id="using-rancher-management-platform-with-rancheros">Using Rancher Management platform with RancherOS</h3>
+
+<p>Rancher Management platform can be used to Manage Docker containers on RancherOS machines, in the following example I am going to illustrate how to set up Rancher platform and register RancherOS installed on EC2 machine, first you need to run Rancher platform on a machine using the following command:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">rancher@Rancher-mng:~# docker run -d -p 8080:8080 rancher/server
+</code></pre></div>
+<p>You can access the Rancher server by going to the <a href="http://SERVER_IP:8080">http://SERVER_IP:8080</a>. It might take a couple of minutes before it is available.</p>
+
+<p>Note: If you are trying to use an EC2 instance, you will need to make sure the TCP port 8080 has been enabled in order to view the Rancher server UI. To do this enablement, check the security group of the EC2 instance and update the Inbound tab to add this port 8080.</p>
+
+<p><img src="/img/Rancher_platform1.png" alt="Rancher Platform 1"></p>
+
+<p>The next step is to register a RancherOS machine with Rancher platform by following the UI in the Rancher server. Select the <strong>Custom</strong> option and get the <code>docker</code> command to run in your RancherOS. Typically, we recommend having the Rancher server and hosts be on separate VMs, but in our example, we will use the same RancherOS instance.</p>
+
+<p>Note: If you are trying to use an EC2 instance, you will need to make sure the TCP ports 9345 and 9346 are enabled as well as UDP ports 500 and 4500. To do this enablement, check the security group of the EC2 instance and update the Inbound tab to add these ports.</p>
+
+<p>You should see the RancherOS machine on the management platform:</p>
+
+<p><img src="/img/Rancher_platform2.png" alt="Rancher Platform 2"></p>
+
+<p>You can now start to deploy your Docker containers on RancherOS using the Rancher management platform, pretty cool, right?</p>
+
+<h3 id="conclusion">Conclusion</h3>
+
+<p>RancherOS is a simple Linux distribution ideal for running Docker.  It is very new, and evolving quickly. <strong>It is absolutely not a production quality Linux distribution at this point</strong>. However, by embracing containerization of system services and leveraging Docker for management, RancherOS hopes to provide a very reliable, and easy to manage OS for running containers.  To stay up to date, please follow the RancherOS <a href="https://github.com/rancherio/os">GitHub site</a>.  </p>
+
+<p><br></p>
+
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

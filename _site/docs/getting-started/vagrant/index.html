@@ -1,0 +1,210 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="running-rancheros-on-vagrant">Running RancherOS on Vagrant</h2>
+
+<hr>
+
+<p>We have created a <a href="https://github.com/rancherio/os-vagrant">RancherOS Vagrant project</a> that allows you to quickly test out RancherOS.</p>
+
+<ol>
+<li><p>Vagrant can be downloaded and installed from <a href="http://www.vagrantup.com/downloads.html">here</a>.</p></li>
+<li><p>After installing Vagrant, you should clone the <a href="https://github.com/rancherio/os-vagrant">RancherOS Vagrant repository</a>. From the command line, go to the directory that you want to clone the repo into. Clone the repo and go into the newly cloned directory.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>git clone https://github.com/rancherio/os-vagrant.git
+<span class="nv">$ </span><span class="nb">cd </span>os-vagrant
+</code></pre></div>
+<p>Within this directory, the Vagrantfile is the file that will be used to build a virtual machine on top of virtualbox. Vagrantfile will use the second version of the configuration, and it will specify the vagrant box url, and will deploy the ssh keys to rancher user. After that it will specify virtualbox as the provider, note that RancherOS needs at least <strong>1GB</strong> RAM.</p>
+
+<p>This is what the file looks like:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="c"># vi: set ft=ruby :</span>
+
+require_relative <span class="s1">&#39;vagrant_rancheros_guest_plugin.rb&#39;</span>
+
+<span class="c"># To enable rsync folder share change to false</span>
+<span class="nv">$rsync_folder_disabled</span> <span class="o">=</span> <span class="nb">true</span>
+<span class="nv">$number_of_nodes</span> <span class="o">=</span> 1
+<span class="nv">$vm_mem</span> <span class="o">=</span> <span class="s2">&quot;1024&quot;</span>
+<span class="nv">$vb_gui</span> <span class="o">=</span> <span class="nb">false</span>
+
+<span class="c"># All Vagrant configuration is done below. The &quot;2&quot; in Vagrant.configure</span>
+<span class="c"># configures the configuration version (we support older styles for</span>
+<span class="c"># backwards compatibility). Please don&#39;t change it unless you know what</span>
+<span class="c"># you&#39;re doing.</span>
+Vagrant.configure<span class="o">(</span>2<span class="o">)</span> <span class="k">do</span> <span class="p">|</span>config<span class="p">|</span>
+    config.vm.box   <span class="o">=</span> <span class="s2">&quot;rancherio/rancheros&quot;</span>
+    config.vm.box_version <span class="o">=</span> <span class="s2">&quot;&gt;=0.2.0&quot;</span>
+
+    <span class="o">(</span>1..<span class="nv">$number_of_nodes</span><span class="o">)</span>.each <span class="k">do</span> <span class="p">|</span>i<span class="p">|</span>
+        <span class="nv">hostname</span> <span class="o">=</span> <span class="s2">&quot;rancher-%02d&quot;</span> % i
+
+        config.vm.define hostname <span class="k">do</span> <span class="p">|</span>node<span class="p">|</span>
+            node.vm.provider <span class="s2">&quot;virtualbox&quot;</span> <span class="k">do</span> <span class="p">|</span>vb<span class="p">|</span>
+                vb.memory <span class="o">=</span> <span class="nv">$vm_mem</span>
+                vb.gui <span class="o">=</span> <span class="nv">$vb_gui</span>
+            end
+
+        <span class="nv">ip</span> <span class="o">=</span> <span class="s2">&quot;172.19.8.#{i+100}&quot;</span>
+        node.vm.network <span class="s2">&quot;private_network&quot;</span>, ip: ip
+
+        <span class="c"># Disabling compression because OS X has an ancient version of rsync installed.</span>
+        <span class="c"># Add -z or remove rsync__args below if you have a newer version of rsync on your machine.</span>
+        node.vm.synced_folder <span class="s2">&quot;.&quot;</span>, <span class="s2">&quot;/opt/rancher&quot;</span>, <span class="nb">type</span>: <span class="s2">&quot;rsync&quot;</span>,
+            rsync__exclude: <span class="s2">&quot;.git/&quot;</span>, rsync__args: <span class="o">[</span><span class="s2">&quot;--verbose&quot;</span>, <span class="s2">&quot;--archive&quot;</span>, <span class="s2">&quot;--delete&quot;</span>, <span class="s2">&quot;--copy-links&quot;</span><span class="o">]</span>,
+            disabled: <span class="nv">$rsync_folder_disabled</span>
+
+        end
+    end
+end
+</code></pre></div></li>
+<li><p>Run <code>vagrant up</code>. This will import the vagrant box and create the virtual machine with RancherOS installed. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>vagrant up
+Bringing machine <span class="s1">&#39;rancher-01&#39;</span> up with <span class="s1">&#39;virtualbox&#39;</span> provider...
+…
+…
+<span class="o">==</span>&gt; rancher-01: Machine booted and ready!
+<span class="o">==</span>&gt; rancher-01: Configuring and enabling network interfaces...
+<span class="err">$</span>
+</code></pre></div></li>
+</ol>
+
+<h2 id="logging-into-rancheros">Logging into RancherOS</h2>
+
+<hr>
+
+<p>Now, let&rsquo;s log in to the system. We use <code>vagrant ssh</code> to authenticate with the private Vagrant key and login to the system:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">```bash
+$ vagrant ssh
+[rancher@rancher ~]$
+```
+</code></pre></div>
+<p>After you&rsquo;re logged into the system, go back to the <a href="/docs/getting-started/">Getting Started Guide</a> to see some examples of what we can do.  </p>
+
+<h2 id="shutting-down-the-vm">Shutting Down the VM</h2>
+
+<hr>
+
+<p>If you are in the RancherOS command line, type <code>exit</code>.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span><span class="nb">exit </span>
+<span class="nb">logout</span>
+Connection to 127.0.0.1 closed.
+<span class="nv">$ </span>
+</code></pre></div>
+<p>If you want to shut down your VM, run <code>vagrant halt</code> command from the os-vagrant directory. Or if you want to destroy the VM, run <code>vagrant destroy</code>. </p>
+
+<p>To get the VM back up, run <code>vagrant up</code> in the os-vagrant directory and just log back in <code>vagrant ssh</code>.</p>
+
+<p><br></p>
+
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

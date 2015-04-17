@@ -1,0 +1,371 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="booting-from-iso">Booting from ISO</h2>
+
+<hr>
+
+<p>The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed as a normal Linux virtual machine. <a href="/docs/getting-started/vagrant/">Vagrant</a> simplest way to try out RancherOS is using our <a href="https://github.com/rancherio/os-vagrant">RancherOS Vagrant project</a>.</p>
+
+<p>If you&rsquo;ve chosen to use a different provisioner, you can download the rancherOS.iso file from our <a href="https://github.com/rancherio/os/releases/">releases page</a>. You must boot with at least <strong>1GB</strong> of memory. If you boot with the ISO, the login is hard coded to <strong>rancher/rancher</strong>. Only the ISO has the password hard coded. If you run from a cloud or install to disk, SSH keys or a password of your choice is expected to be used.</p>
+
+<h3 id="example-using-virtualbox">Example using VirtualBox</h3>
+
+<ol>
+<li><p>Download the RancherOS ISO.</p></li>
+<li><p>Start up a VM from one of the providers. In our example, we&rsquo;ll use VirtualBox.</p>
+
+<p>a. Open up VirtualBox. If you don&rsquo;t have VirtualBox, download it <a href="https://www.virtualbox.org/wiki/Downloads">here</a>.</p>
+
+<p><img src="/img/Rancher_iso1.png" alt="RancherOS on ISO 1"></p>
+
+<p>b. Provide a <strong>name</strong>, select the <strong>type</strong> to be <em>Linux</em>, and select the <strong>version</strong> to be <em>Other Linux (64-bit)</em>. Click <strong>Continue</strong>.</p>
+
+<p><img src="/img/Rancher_iso2.png" alt="RancherOS on ISO 2"></p>
+
+<p>c. Select at least <strong>1GB</strong> of RAM.</p>
+
+<p><img src="/img/Rancher_iso3.png" alt="RancherOS on ISO 3"></p>
+
+<p>d. Select <strong>Create a virtual hard drive now</strong> and click <strong>Create</strong>.</p>
+
+<p><img src="/img/Rancher_iso4.png" alt="RancherOS on ISO 4"></p>
+
+<p>e. Select the <strong>VDI (VirtualBox Disk Image)</strong> setting and click <strong>Continue</strong>.</p>
+
+<p><img src="/img/Rancher_iso5.png" alt="RancherOS on ISO 5"></p>
+
+<p>f. Select <strong>Dynamically allocated</strong> and click <strong>Continue</strong>.</p>
+
+<p><img src="/img/Rancher_iso6.png" alt="RancherOS on ISO 6">  </p>
+
+<p>g. Click <strong>Create</strong>.</p>
+
+<p><img src="/img/Rancher_iso7.png" alt="RancherOS on ISO 7">  </p>
+
+<p>Your new VM should be created, but in a <em>Powered Off</em> state.</p></li>
+<li><p>Start the VM from VirtualBox by clicking on the VM and clicking <strong>Start</strong> or right-click on the box and select <strong>Start</strong>. You will be immediately prompted to select an ISO. Find the RancherOS ISO that you have downloaded. Click <strong>Start</strong>.</p>
+
+<p><img src="/img/Rancher_iso7.png" alt="RancherOS on ISO 7">  </p></li>
+<li><p>When RancherOS launches, you will be prompted for a rancher login and password. The login and password is &lsquo;rancher&rsquo; (all lowercase).</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash">RancherOS rancher /dev/ttyl
+rancher login: rancher
+Password: 
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="err">$</span>
+</code></pre></div></li>
+<li><p>Once you are logged into RancherOS, you can follow the rest of the <a href="/docs/getting-started/">Getting Started Guide</a> to see what you can do. </p></li>
+</ol>
+
+<h3 id="rebooting-without-installing-to-disk">Rebooting without Installing to Disk</h3>
+
+<p>When RancherOS is booted from an ISO, RancherOS is running from memory. Any changes in the console and containers will be lost upon rebooting.</p>
+
+<p>Example:
+In RancherOS, create a file with the word &ldquo;test&rdquo; in it.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span><span class="nb">echo</span> <span class="s1">&#39;test&#39;</span> &gt; MyFile
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>ls
+MyFile
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>cat MyFile
+<span class="nb">test</span>
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="err">$</span>
+</code></pre></div>
+<p>Reboot the VM.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<p>When the VM is up and running again, you&rsquo;ll need to login again. Remember that the name and password are &lsquo;rancher&rsquo; (all lowercase). Check to see if MyFile is still in the directory. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>ls
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="err">$</span>
+</code></pre></div>
+<p>The file is no longer there. If you want this type of change to be saved upon rebooting, follow the steps in the next section to install to disk.</p>
+
+<h2 id="persisting-state">Persisting State</h2>
+
+<hr>
+
+<p>If you are running from the ISO, RancherOS will be running from memory. In order to persist to disk, you can format a file system with the label <code>RANCHER_STATE</code>. </p>
+
+<p>Example:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">docker run --privileged -it debian mkfs.ext4 -L RANCHER_STATE /dev/sda
+</code></pre></div>
+<h2 id="installing-to-disk">Installing to Disk</h2>
+
+<hr>
+
+<p>To install RancherOS on a new disk, you can use the <code>rancheros-install</code> command. By installing to disk, this will allow any changes saved to the console and system containers to be saved whenever a reboot happens.</p>
+
+<h3 id="adding-port-forwarding">Adding Port Forwarding</h3>
+
+<p>Currently, RancherOS will dynamically reset the IP every time it reboots, so we will need to add a port forwarding rule so that we can SSH into our VM. Let&rsquo;s continue with our VirtualBox example.</p>
+
+<p>We&rsquo;ll need to power off our VM in order to make our port forwarding rule. Select the VM, click on <strong>Settings</strong> and navigate to the <strong>Network</strong> tab. Expand the <strong>Advanced</strong> section and click on the <strong>Port Forwarding</strong> button.</p>
+
+<p><img src="/img/Rancher_disk1.png" alt="RancherOS to Disk 1">  </p>
+
+<p>Click on the <strong>+</strong> icon to add a new port forwarding rule. Create the rule with the following parameters:</p>
+
+<p>Name: ssh; Protocol: TCP; Host IP: 127.0.0.1; Host Port: 2223; Guest IP: <blank>; Guest Port: 22</p>
+
+<p>Click on <strong>OK</strong>.</p>
+
+<p><img src="/img/Rancher_disk2.png" alt="RancherOS to Disk 2"></p>
+
+<p><strong>Start</strong> the VM and login to the VM. Username and password is &lsquo;rancher&rsquo; (all lowercase).</p>
+
+<h3 id="creating-a-cloud-config-file">Creating a Cloud Config file</h3>
+
+<p>We will need to create a <a href="https://cloudinit.readthedocs.org/en/latest/index.html">cloud-init file</a> that includes our public SSH keys. If you want more details on what Cloud Init functionality is supported, click <a href="/docs/configuring/cloud-init/">here</a>.  </p>
+
+<p>Note: If you are trying to install Amazon EC2 to disk to create your own RancherOS AMI, you will not need to create a cloud-init file.</p>
+
+<p>For our VirtualBox example, we&rsquo;ll first copy the public SSH key from our computer to our VM. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
+RSA key fingerprint is X:X:X:X:X.
+Are you sure you want to <span class="k">continue</span> connecting <span class="o">(</span>yes/no<span class="o">)</span>? yes
+Warning: Permanently added <span class="s1">&#39;computer_ip&#39;</span> <span class="o">(</span>RSA<span class="o">)</span> to the list of known hosts. 
+Password: 
+id_rsa.pub                              100%    <span class="m">422</span> 0.4KB/s    00:00
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>ls
+id_rsa.pub
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>cat id_rsa.pub &gt; cloud_config.yml
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>vi cloud_config.yml
+</code></pre></div>
+<p>Let&rsquo;s edit the cloud_config.yml so that it matches the syntax of the cloud-init example. </p>
+
+<p>Cloud-Init File Example:</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">#cloud-config
+
+ssh_authorized_keys:
+ - ssh-rsa AAA... user@rancher
+</code></pre></div>
+<p>Now that our cloud_config.yml contains our public SSH key, we can move on to installing RancherOS to disk!</p>
+
+<h3 id="using-rancheros-install">Using rancheros-install</h3>
+
+<p>The <code>rancheros-install</code> command orchestrates the installation from the rancher/os container. We will install RancherOS to disk, reboot and then try to save a file. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancheros-install -c cloud_config.yml -d /dev/sda -t generic -v v0.2.1
+All data will be wiped from this device
+Partition: <span class="nb">true</span>
+DEVICE: /dev/sda
+Are you sure you want to <span class="k">continue</span>? <span class="o">[</span>yN<span class="o">]</span>
+</code></pre></div>
+<p>You will be prompted to see if you want to continue. Type <strong>y</strong>.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">Are you sure you want to continue? [yN]yUnable to find image &#39;rancher/os:v0.2.1
+Pulling repository rancher/os
+...
+...
+...
+Downloaded newer image for rancher/os:v0.2.1
++ DEVICE=/dev/sda
+...
+...
+...
+RancherOS has been installed. Please reboot...
+</code></pre></div>
+<p>In our VirtualBox setup, the VM will always boot from ISO, unless you change the boot order or remove the ISO. It&rsquo;s easiest to remove the ISO so that we don&rsquo;t have to worry about boot order every time we reboot.</p>
+
+<p>Let&rsquo;s power off our VM to make the change regarding the ISO. Select the VM and click on <strong>Settings</strong>. Click on the <strong>Storage</strong> tab. Select the <strong>rancheros.iso</strong> file from the storage tree and click on the <strong>delete</strong> icon. </p>
+
+<p>It will confirm that you want to remove the CD/DVD device. Click on <strong>Remove</strong> and then click <strong>OK</strong>.  Start your VM. Since you have removed the ISO from the VM, it will select the current OS version running on the VM. </p>
+
+<p><img src="/img/Rancher_disk3.png" alt="RancherOS to Disk 3"></p>
+
+<p>Even though you will be prompted with the &ldquo;rancher login&rdquo; from the VirtualBox screen, you will not be able to use the typical rancher login/password. Instead, you will need to log in to the VM using your SSH keys.</p>
+
+<p>Open up your terminal/command line. After we SSH in, let&rsquo;s create our file and reboot the VM to see if the file has been saved.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>ssh rancher@127.0.0.1 -p 2223
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span><span class="nb">echo</span> <span class="s1">&#39;test&#39;</span> &gt; MyFile
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>ls
+MyFile 
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>cat MyFile
+<span class="nb">test</span>
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<p>Wait a little bit before attempting to SSH back into your RancherOS instance and your test file should still be there!</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>ssh rancher@127.0.0.1 -p 2223
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>ls
+MyFile
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>
+</code></pre></div>
+<h4 id="options">Options</h4>
+
+<table><thead>
+<tr>
+<th>Options</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td>-c</td>
+<td>The Cloud-Config file needed for SSH keys</td>
+</tr>
+<tr>
+<td>-d</td>
+<td>Which Device to Install to</td>
+</tr>
+<tr>
+<td>-f</td>
+<td>[ DANGEROUS! Data loss can happen ] Partition/Format without prompting</td>
+</tr>
+<tr>
+<td>-t</td>
+<td>Decide the install-type: generic:    (Default) Creates 1 ext4 partition and installs RancherOS amazon-ebs: Installs RancherOS and sets up PV-GRUB</td>
+</tr>
+<tr>
+<td>-v</td>
+<td>Provide which os-installer version</td>
+</tr>
+<tr>
+<td>-h</td>
+<td>Prints the help informations</td>
+</tr>
+</tbody></table>
+
+<h5 id="cloud-config">Cloud-Config</h5>
+
+<p>The <code>-c</code> option provides where to get the cloud config file. </p>
+
+<h5 id="device">Device</h5>
+
+<p>The <code>-d</code> option determines where the disk will be installed to. </p>
+
+<p>In our VirtualBox example, you can see the list of disks available to install to. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo fdisk -l
+Disk /dev/sda: <span class="m">8589</span> MB, <span class="m">8589934592</span> bytes
+<span class="m">255</span> heads, <span class="m">63</span> sectors/track, <span class="m">1044</span> cylinders
+<span class="nv">Units</span> <span class="o">=</span> cylinders of <span class="m">16065</span> *512 <span class="o">=</span> <span class="m">8225280</span> bytes
+
+Disk /dev/sda doesn<span class="err">&#39;</span>t contain a valid partition table
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="err">$</span>
+</code></pre></div>
+<h5 id="install-type">Install Type</h5>
+
+<p>The <code>-t</code> option determines what type of installation is used. In most cases, we will be picking the <em>generic</em> install type. The <em>amazon-ebs</em> type is for creating your own AMI images. Since we are creating the <a href="/docs/getting-started/amazon/">RancherOS AMI images</a>, there is no need to create your own. </p>
+
+<h5 id="version">Version</h5>
+
+<p>The <code>-v</code> option will indicate which version of RancherOS to install. To see the most recent versions of RancherOS, please vist the RancherOS GitHub page of <a href="https://github.com/rancherio/os/releases">releases</a>.</p>
+
+<p>Alternatively, you can use the <a href="/docs/rancherctl/os/">rancherctl os</a> commands to find the list of available versions.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancherctl os list
+rancher/os:v0.1.2 remote
+rancher/os:v0.2.0-rc1 remote
+rancher/os:v0.2.0-rc2 remote
+rancher/os:v0.2.0-rc3 remote
+rancher/os:v0.2.0 remote
+rancher/os:v0.2.1 remote
+rancher/os:v0.3.0-rc1 remote
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>
+</code></pre></div>
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

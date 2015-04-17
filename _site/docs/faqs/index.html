@@ -1,0 +1,174 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="frequently-asked-questions">Frequently Asked Questions</h2>
+
+<h3 id="what-is-required?">What is required?</h3>
+
+<p>Docker 1.5+ is required. </p>
+
+<h3 id="what-are-some-commands?">What are some commands?</h3>
+
+<table><thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>docker</code></td>
+<td>Good old Docker, use that to run stuff.</td>
+</tr>
+<tr>
+<td><code>system-docker</code></td>
+<td>The docker instance running the system containers.  Must run as root or using <code>sudo</code></td>
+</tr>
+<tr>
+<td><code>rancherctl</code></td>
+<td>Control and configure RancherOS</td>
+</tr>
+</tbody></table>
+
+<h3 id="how-can-i-customize-the-console?">How can I customize the console?</h3>
+
+<p>Since RancherOS is so small the default console is based off of Busybox.  This it not always the best experience.  The intention with RancherOS is to allow you to swap out different consoles with something like Ubuntu, Fedora, or CentOS.  Currently we have Ubuntu configured but we will add more.  </p>
+
+<p><strong>With v0.3.0+</strong>, we have updated to use the <code>service</code> command within <code>rancherctl</code> and removed <code>addon</code>. </p>
+
+<p>To enable the Ubuntu console do the following.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancherctl service <span class="nb">enable </span>ubuntu-console<span class="p">;</span>
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<p>Run the above but with <code>disable</code> to turn it off.  Currently, you have to reboot the system to enable the new console.  In the future, it will be dynamic and just require you to log out and back in.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancherctl service disable ubuntu-console<span class="p">;</span>
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<p><strong>Versions prior to v0.3.0</strong>, can follow these directions for the <code>addon</code> command.</p>
+
+<p>To enable the Ubuntu console do the following.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancherctl addon <span class="nb">enable </span>ubuntu-console<span class="p">;</span>
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<p>Run the above but with <code>disable</code> to turn it off.  Currently, you have to reboot the system to enable the new console.  In the future, it will be dynamic and just require you to log out and back in.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo rancherctl addon disable ubuntu-console<span class="p">;</span>
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<h3 id="why-are-my-changes-to-the-console-being-lost?">Why are my changes to the console being lost?</h3>
+
+<p>The console and all system containers are ephemeral.  This means on each reboot of the system all changes to the console are lost.  Any changes in <code>/home</code> or <code>/opt</code> will be persisted though.  Additionally, on startup of the console container, if <code>/opt/rancher/bin/start.sh</code> exists, it will be executed.  You can add anything to that script to configure your console the way you want it.</p>
+
+<p>In the future, we will allow one to provide a custom image for the console container, but we just haven&rsquo;t gotten around yet to enabling that.</p>
+
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

@@ -1,0 +1,192 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="running-rancheros-on-aws">Running RancherOS on AWS</h2>
+
+<hr>
+
+<h3 id="launching-rancheros-through-the-aws-console">Launching RancherOS through the AWS console</h3>
+
+<p>RancherOS is available as an Amazon Web Services AMI, and can be easily run on EC2.  Let’s walk through how to import and create a RancherOS on EC2 machine using the AWS console.</p>
+
+<ol>
+<li><p>First login to your AWS console, and go to the EC2 dashboard, click on <strong>Launch Instance</strong>:</p>
+
+<p><img src="/img/Rancher_aws1.png" alt="RancherOS on AWS 1"></p></li>
+<li><p>Select the <strong>Community AMIs</strong> on the sidebar and search for <strong>RancherOS</strong>. Pick the latest version and click <strong>Select</strong>.</p>
+
+<p><img src="/img/Rancher_aws2.png" alt="RancherOS on AWS 2"></p></li>
+<li><p>Go through the steps of creating the instance type through the AWS console. Choose your instance type, configure instance, add storage, tag instance, configure security group, and review. After you click on <strong>Launch</strong>, either create a new key pair or choose an existing key pair to be used with the EC2 instance. If you have created a new key pair, download the key pair. If you have chosen an existing key pair, make sure you have the key pair accessible. Click on <strong>Launch Instances</strong>. </p>
+
+<p><img src="/img/Rancher_aws3.png" alt="RancherOS on AWS 3"></p></li>
+<li><p>Your instance will be launching and you can click on <strong>View Instances</strong> to see it&rsquo;s status.</p>
+
+<p><img src="/img/Rancher_aws4.png" alt="RancherOS on AWS 4"></p>
+
+<p>Your instance is now running!</p>
+
+<p><img src="/img/Rancher_aws5.png" alt="RancherOS on AWS 5"></p></li>
+</ol>
+
+<h3 id="launching-rancheros-through-the-aws-command-line-interface">Launching RancherOS through the AWS Command Line Interface</h3>
+
+<p>If you prefer to use the <a href="http://aws.amazon.com/cli/">AWS Command Line Interface</a>, let&rsquo;s walk through that process:</p>
+
+<ol>
+<li><p>If you haven&rsquo;t installed the AWS CLI, follow the instructions on the <a href="http://aws.amazon.com/cli/">AWS CLI page</a> to install. If you&rsquo;ve already installed and configured AWS, just skip step 2. </p></li>
+<li><p>After you have installed AWS CLI, you&rsquo;ll need to configure your AWS. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>aws configure
+</code></pre></div>
+<p>Input your Access Key ID, Secret Access Key and Region name. You do not need to put in a output format name and can just leave it blank. </p>
+
+<p>Note: Access Key ID and Secret Access Key can be found in the <strong>Security Credentials</strong> section of AWS. If you don&rsquo;t have one, <strong>Create New Access Key</strong>. When created, make sure to save the Secret Access Key. Or you can follow the instructions on AWS on how to create an IAM User account. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>aws configure
+AWS Access Key ID <span class="o">[</span>None<span class="o">]</span>: ABCD 
+AWS Secret Access Key <span class="o">[</span>None<span class="o">]</span>: ABCD 
+Default region name <span class="o">[</span>None<span class="o">]</span>: us-east-1
+Default output format <span class="o">[</span>None<span class="o">]</span>:
+<span class="err">$</span>
+</code></pre></div></li>
+<li><p>Once you&rsquo;ve configured your AWS, use this command to launch an EC2 instance with the RancherOS AMI. You will need to know your SSH key name and security group name for the <em>region</em> that you are configured for. These can be found from the AWS console.</p>
+
+<p>Note: See <strong>Latest AMI Releases</strong> for AMI names. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>aws ec2 run-instances --image-id ami-ID# --count <span class="m">1</span> --instance-type t1.micro --key-name MySSHKeyName --security-groups sg-name
+</code></pre></div></li>
+</ol>
+
+<h2 id="logging-into-rancheros">Logging into RancherOS</h2>
+
+<hr>
+
+<p>From a command line, log into the EC2 Instance.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>ssh -i /Directory/of/MySSHKeyName.pem rancher@&lt;ip-of-ec2-instance&gt;
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="err">$</span>
+</code></pre></div>
+<p>If you have issues logging into RancherOS, try using this command to help debug the issue.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>ssh -v -i /Directory/of/MySSHKeyName.pem rancher@&lt;ip-of-ec2-instance&gt;
+</code></pre></div>
+<p>After you&rsquo;re logged into the system, go back to the <a href="/docs/getting-started/">Getting Started Guide</a> to see some examples of what we can do.</p>
+
+<h2 id="latest-ami-releases">Latest AMI Releases</h2>
+
+<hr>
+
+<p>Please check the <a href="https://github.com/rancherio/os/blob/master/README.md">README</a> in our RancherOS repository for our latest AMIs.</p>
+
+<p><br>
+<br>
+<br></p>
+
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

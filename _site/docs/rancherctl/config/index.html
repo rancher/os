@@ -1,0 +1,276 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="rancherctl-config">RancherCTL Config</h2>
+
+<hr>
+
+<p>RancherOS state is controlled by simple document. <code>rancherctl config</code> is used to manipulate the configuration of RancherOS stored in <strong>/var/lib/rancher/conf/rancher.yml</strong>.  You are free to edit the file directly, but by using <code>rancherctl config</code>, it is safer and often more convenient.</p>
+
+<p>Remember, all <code>rancherctl</code> commands needs to be used with <code>sudo</code>. </p>
+
+<p>For all changes to your configuration, you must reboot for them to take effect.</p>
+
+<h3 id="sub-commands">Sub commands</h3>
+
+<hr>
+
+<table><thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>get</code></td>
+<td>Gets value</td>
+</tr>
+<tr>
+<td><code>set</code></td>
+<td>Sets a value</td>
+</tr>
+<tr>
+<td><code>import</code></td>
+<td>Import configuration from standard in or a file</td>
+</tr>
+<tr>
+<td><code>export</code></td>
+<td>Export configuration</td>
+</tr>
+<tr>
+<td><code>merge</code></td>
+<td>Merge configuration from stdin</td>
+</tr>
+</tbody></table>
+
+<h3 id="get">Get</h3>
+
+<hr>
+
+<p>The <code>get</code> command gets a value from the <code>rancher.yml</code> file. Let&rsquo;s see how easy it is to get the DNS configuration of the system.</p>
+<div class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="nv">$ </span>sudo rancherctl config get network.dns.nameservers
+- 8.8.8.8
+- 8.8.4.4
+</code></pre></div>
+<h3 id="set">Set</h3>
+
+<hr>
+
+<p>The <code>set</code> command can set values in the <code>rancher.yml</code> file. </p>
+
+<p>Setting a list in the <code>rancher.yml</code></p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config <span class="nb">set </span>network.dns.nameservers <span class="s1">&#39;[8.8.8.8,8.8.4.4]&#39;</span>
+</code></pre></div>
+<p>Setting a simple value in the <code>rancher.yml</code></p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config <span class="nb">set </span>user_docker.tls <span class="nb">true</span>
+</code></pre></div>
+<h3 id="import">Import</h3>
+
+<hr>
+
+<p>The <code>import</code> command allows you to import configurations from a standard in or a file. </p>
+
+<h4 id="import-options">Import Options</h4>
+
+<table><thead>
+<tr>
+<th>Options</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>--input</code>, <code>-i</code></td>
+<td>File from which to read</td>
+</tr>
+</tbody></table>
+
+<h4 id="input">Input</h4>
+
+<p>THe <code>-i</code> or <code>--input</code> option must be set in order for the command to work. This option determines where to find the file that you want to import.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config import -i <span class="nb">local</span>-rancher.yml
+</code></pre></div>
+<h3 id="export">Export</h3>
+
+<hr>
+
+<p>The <code>export</code> command allows you to export your existing configuration from rancher.yml. By default, only changes from the default values will be exported. </p>
+
+<p>If you run the command without any options, it will output into the shell what is in the config file.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config <span class="nb">export</span>
+cloud_init:
+    datasources:
+    - file:/var/lib/rancher/conf/user_config.yml
+network:
+    interfaces:
+        eth*: <span class="o">{}</span>
+        eth0:
+            dhcp: <span class="nb">true</span>
+<span class="nb">        </span>eth1:
+            match: eth1
+            address: 172.19.8.101/24
+        lo:
+            address: 127.0.0.1/8
+user_docker:
+    tls: <span class="nb">true</span>
+</code></pre></div>
+<h4 id="export-options">Export Options</h4>
+
+<table><thead>
+<tr>
+<th>Options</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>--output</code>, <code>-o</code></td>
+<td>File to which to save</td>
+</tr>
+<tr>
+<td><code>--private</code>, <code>-p</code></td>
+<td>Include private information such as keys</td>
+</tr>
+<tr>
+<td><code>--full</code>, <code>-f</code></td>
+<td>Include full configuration, including internal and default settings</td>
+</tr>
+</tbody></table>
+
+<h4 id="output">Output</h4>
+
+<p>The <code>-o</code> or <code>--output</code> option will define the name and location of where you want the file to be exported.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config <span class="nb">export</span> -o <span class="nb">local</span>-rancher.yml
+</code></pre></div>
+<h4 id="private">Private</h4>
+
+<p>Add the <code>-p</code> or <code>--private</code> option to include the certificates and private keys as part of the export. These keys are exported in addition to any changes made from the default value. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config <span class="nb">export</span> --private
+</code></pre></div>
+<h4 id="full">Full</h4>
+
+<p>Add the <code>-f</code> or <code>--full</code> option to include the full configuration. This export would include the certificates and private keys as well as the internal and default settings.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config <span class="nb">export</span> --full
+</code></pre></div>
+<h3 id="merge">Merge</h3>
+
+<p>The <code>merge</code> command will merge in parts of a configuration fragment to the existing configuration file.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl config merge &lt;&lt; <span class="s2">&quot;EOF&quot;</span>
+network:
+dns:
+nameservers:
+- 8.8.8.8
+- 8.8.4.4
+EOF
+</code></pre></div>
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

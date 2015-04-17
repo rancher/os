@@ -1,0 +1,152 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="contributing-to-rancheros">Contributing to RancherOS</h2>
+
+<hr>
+
+<h3 id="developing">Developing</h3>
+
+<p>Development is easiest done with QEMU on Linux.  If you aren&rsquo;t running Linux natively then we recommend you run VMware Fusion/Workstation and enable VT-x support.  Then, QEMU (with KVM support) will run sufficiently fast inside a Linux VM.</p>
+
+<p>First run <code>./build.sh</code> to create the initial bootstrap Docker images.  After that if you make changes to the go code only run <code>./scripts/build</code>.  To launch RancherOS in QEMU from your dev version, run <code>./scripts/run</code>.  You can SSH in using <code>ssh -l rancher -p 2222 localhost</code>.  Your SSH keys should have been populated so you won&rsquo;t need a password.  If you don&rsquo;t have SSH keys then the password is &ldquo;rancher&rdquo;.</p>
+
+<h3 id="building">Building</h3>
+
+<p>Docker 1.5+ required.</p>
+<div class="highlight"><pre><code class="language-text" data-lang="text">$ ./build.sh
+</code></pre></div>
+<p>When the build is done, the ISO should be in <code>dist/artifacts</code>.</p>
+
+<h3 id="repositories">Repositories</h3>
+
+<p>All of repositories are located within our main GitHub <a href="https://github.com/rancherio">page</a>. </p>
+
+<p><a href="https://github.com/rancherio/os">RancherOS Repo</a>: This repo contains the bulk of the RancherOS code.</p>
+
+<p><a href="https://github.com/rancherio/os-services">RancherOS Services Repo</a>: This repo is where any <a href="/docs/system-services/">system-services</a> can be contributed.</p>
+
+<p>[RancherOS Vagrant Repo]: We&rsquo;ve created an easy way to spin up RancherOS using <a href="/docs/getting-started/docs">Vagrant</a>. </p>
+
+<p>If you have any updates to our documentation, please fork the <code>gh-pages</code> branch in our main <a href="https://github.com/rancherio/os">RancherOS Repo</a> and contribute to that branch. </p>
+
+<h3 id="bugs">Bugs</h3>
+
+<p>If you find any bugs or are having any trouble, please contact us by filing an <a href="https://github.com/rancherio/os/issues/new">issue</a>. </p>
+
+<p><br>
+<br></p>
+
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

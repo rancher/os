@@ -1,0 +1,204 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="adding-system-services">Adding System Services</h2>
+
+<hr>
+
+<p><em>Available as of v0.3.0.</em></p>
+
+<p>You can design any system services in the <a href="https://docs.docker.com/compose/">docker compose</a> format. The service options that are automatically available are saved in the <a href="https://github.com/rancherio/os-services">os-services repo</a>.</p>
+
+<p>Our first example of a service is the Ubuntu console. Here&rsquo;s the yaml file saved in our repo.</p>
+<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="l-Scalar-Plain">console</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">image</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">rancher/ubuntuconsole:v0.3.0</span>
+  <span class="l-Scalar-Plain">privileged</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">true</span>
+  <span class="l-Scalar-Plain">links</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">cloud-init</span>
+  <span class="l-Scalar-Plain">labels</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">io.rancher.os.scope=system</span>
+  <span class="l-Scalar-Plain">volumes_from</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">all-volumes</span>
+  <span class="l-Scalar-Plain">restart</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">always</span>
+  <span class="l-Scalar-Plain">pid</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">host</span>
+  <span class="l-Scalar-Plain">ipc</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">host</span>
+  <span class="l-Scalar-Plain">net</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">host</span>
+</code></pre></div>
+<h3 id="system-docker-vs.-user-docker">System-Docker vs. User-Docker</h3>
+
+<p>RancherOS uses labels to determine if the container should be deployed in system-docker. By default without the label, the container will be deployed in user-docker.</p>
+<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="l-Scalar-Plain">labels</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">io.rancher.os.scope=system</span>
+</code></pre></div>
+<h3 id="links">Links</h3>
+
+<p>We use <a href="https://docs.docker.com/compose/yml/#links">links</a> to link containers in another service. In our <code>ubuntu-console.yml</code>, we link the container with cloud-init, so that the console is able to use cloud-init.</p>
+<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="l-Scalar-Plain">links</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">cloud-init</span>
+</code></pre></div>
+<p>Other examples of <code>links</code>, which use <code>network</code>, to get access to the networking container.</p>
+<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="l-Scalar-Plain">links</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">network</span>
+</code></pre></div>
+<h3 id="environment">Environment</h3>
+
+<p>With <a href="https://docs.docker.com/compose/yml/#environment">environment</a> in the yaml file, if the environment is not set (i.e. it doesn&rsquo;t have an <code>=</code>), then RancherOS looks up the value in the <code>rancher.yml</code> file. </p>
+
+<p>We support worldwide globbing, so in our example below, the services.yml file will find ETCD_DISCOVERY in the <code>rancher.yml</code> file and set the environment to <code>https://discovery.etcd.io/d1cd18f5ee1c1e2223aed6a1734719f7</code> for the service. </p>
+
+<p><code>services.yml</code> File:</p>
+<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="l-Scalar-Plain">etcd</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">environment</span><span class="p-Indicator">:</span>
+  <span class="p-Indicator">-</span> <span class="l-Scalar-Plain">ETCD_*</span>
+</code></pre></div>
+<p><code>rancher.yml</code> File:</p>
+<div class="highlight"><pre><code class="language-yaml" data-lang="yaml"><span class="l-Scalar-Plain">rancher</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">environment</span><span class="p-Indicator">:</span>
+  <span class="l-Scalar-Plain">ETCD_DISCOVERY</span><span class="p-Indicator">:</span> <span class="l-Scalar-Plain">https://discovery.etcd.io/d1cd18f5ee1c1e2223aed6a1734719f7</span>
+</code></pre></div>
+<h2 id="using-system-services">Using System Services</h2>
+
+<hr>
+
+<p>We control system services using <a href="/docs/rancherctl/service/">rancherctl service</a>.</p>
+
+<p>To use a system service, just run <code>rancherctl service enable &lt;system-service-name&gt;</code> to turn on the service. By using this command, the service will also be added to the <code>rancher.yml</code> file and set to enabled, but a reboot needs to occur in order for it take effect. In the future, the reboot will be dynamic. </p>
+
+<p>The <code>&lt;system-service-name&gt;</code> can either be a http(s) url, location to a yaml file, or  a service that is already in the <a href="https://github.com/rancherio/os-services">os-services repository</a>.</p>
+
+<p>Here&rsquo;s how we enable the ubuntu-console:</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl service list
+disabled ubuntu-console
+<span class="nv">$ </span>sudo rancherctl service <span class="nb">enable </span>ubuntu-console
+<span class="nv">$ </span>sudo rancherctl service list
+enabled ubuntu-console
+<span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<p>After the reboot and logging back in, you should be running the ubuntu console instead of the default busybox console. </p>
+
+<p>To turn off a system service, run <code>rancherctl service disable &lt;system-service-name&gt;</code>. This will only turn off the service in the <code>rancher.yml</code> file, but it will not remove the service from it. Similar to when we enabled the service, we&rsquo;ll need to reboot in order for the disabling to take effect.</p>
+
+<p>Note: Currently, there is no way to remove a service, but it&rsquo;s something that we will be implementing.</p>
+
+<h2 id="contributing-to-os-services">Contributing to OS-Services</h2>
+
+<hr>
+
+<p>If you&rsquo;re interested in adding more services to RancherOS, please contribute to our <a href="https://github.com/rancherio/os-services">repo</a>. </p>
+
+<p><br>
+<br></p>
+
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

@@ -1,0 +1,183 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="rancherctl-service">RancherCTL Service</h2>
+
+<hr>
+
+<p><em>Available as of v0.3.0.</em></p>
+
+<p><code>rancherctl service</code> allows you to enable/disable different system services. Please go to our <a href="/docs/system-services/">Adding System Services page</a> for more details on how to add system services to RancherOS. The <code>rancherctl service</code> command shows you how to turn on and off the services that have been added.</p>
+
+<h3 id="sub-commands">Sub Commands</h3>
+
+<hr>
+
+<table><thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>enable</code></td>
+<td>Turn on an service</td>
+</tr>
+<tr>
+<td><code>disable</code></td>
+<td>Turn off an service</td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>List services and state</td>
+</tr>
+</tbody></table>
+
+<h3 id="list">List</h3>
+
+<hr>
+
+<p>The <code>list</code> command will provide you a list of all services available in the <a href="https://github.com/rancherio/os-services">os-services repository</a> as well as any service that was added by the user to <code>rancher.yml</code>. The command will also show the state that each service is in.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl service list
+disabled ubuntu-console
+</code></pre></div>
+<h3 id="enable">Enable</h3>
+
+<hr>
+
+<p>The <code>enable</code> command turns on a service. This service can either be a http(s) url, location to a yaml file, or  a service that is already in the <a href="https://github.com/rancherio/os-services">os-services repository</a>. For anything outside of the os-services repo, an additional item will be added to the <code>rancher.yml</code> file. In order for the change to take effect, you must reboot. In the future, the reboot will be dynamic.</p>
+
+<p>For our example, we&rsquo;re enabling the ubuntu console. After the reboot, we&rsquo;ll be logged in using the ubuntu-console. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl service list
+disabled ubuntu-console
+<span class="nv">$ </span>sudo rancherctl service <span class="nb">enable </span>ubuntu-console
+<span class="nv">$ </span>sudo rancherctl service list
+enabled ubuntu-console
+<span class="nv">$ </span>sudo reboot
+</code></pre></div>
+<h3 id="disable">Disable</h3>
+
+<hr>
+
+<p>The <code>disable</code> command turns off any service, but the service will <strong>not</strong> be removed. You will need to reboot in order for the change to take effect. In the future, the reboot will be dynamic. </p>
+
+<p>For our example, we&rsquo;re disabling the ubuntu console. After the reboot, we&rsquo;ll be logged in using the busybox console.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl service list
+enabled ubuntu-console
+<span class="nv">$ </span>sudo rancherctl service disable ubuntu-console
+<span class="nv">$ </span>sudo rancherctl service list
+disabled ubuntu-console
+</code></pre></div>
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    

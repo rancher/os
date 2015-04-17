@@ -1,0 +1,233 @@
+
+         <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+            <title>RancherOS Documentation</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <meta name="description" content="Documentation for Rancher Labss">
+                    
+                    <link href="/css/bootstrap.css" rel="stylesheet">
+                        <style>
+                            body {
+                                padding-top: 60px;
+                            }
+                        </style>
+                        <link href="/css/bootstrap-responsive.css" rel="stylesheet">
+                            
+                            <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+                            <!--[if lt IE 9]>
+                             <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+                             <![endif]-->
+                            </head>
+    
+    <body>
+        
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <!--<a class="btn btn-navbar" data-toggle="collapse" data-target=".na\
+                        v-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </a>-->
+                    <a class="brand" href="http://rancher.com/">
+                        <img src="/img/rancher-logo-nopadding.png">
+                    </a>
+                    <!--<div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="/">What is RancherOS?</a></li>
+                            <li class="active"><a href="/install/">Installation</a></li>
+                            <li class="active"><a href="/upgrade/">Upgrading</a></li>
+                            <li class="active"><a href="/configure/">Configuring</a></li>
+                            <li class="active"><a href="/addservices/">Adding System Services</a></li>
+                            <li class="active"><a href="/architecture/">Architecture</a></li>
+                            <li class="active"><a href="/FAQs/">FAQs</a></li>
+                            
+                            
+                        </ul>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+        
+        <div class="container">
+
+<div class="row-fluid">
+    <div class="span8">
+        <h2 id="rancherctl-os">RancherCTL OS</h2>
+
+<hr>
+
+<p><code>rancherctl os</code> gives more information on the OS versions available for RancherOS. </p>
+
+<p>Remember all <code>rancherctl</code> commands needs to be used with <code>sudo</code>. </p>
+
+<h3 id="sub-commands">Sub Commands</h3>
+
+<hr>
+
+<table><thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>upgrade</code></td>
+<td>Upgrade to the latest version</td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td>List all the current available versions</td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>Show the currently installed version</td>
+</tr>
+</tbody></table>
+
+<h3 id="version-(added-as-of-v0.3.0)">Version (Added as of v0.3.0)</h3>
+
+<hr>
+
+<p>Besides using <code>rancherctl -v</code>, you can also find the current version with the <code>version</code> command. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl os version
+v0.2.1
+</code></pre></div>
+<h3 id="list">List</h3>
+
+<hr>
+
+<p>It&rsquo;s easy to see all the current available versions using the <code>list</code> command. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl os list
+rancher/os:v0.1.2 remote
+rancher/os:v0.2.0-rc1 remote
+rancher/os:v0.2.0-rc2 remote
+rancher/os:v0.2.0-rc3 remote
+rancher/os:v0.2.0 <span class="nb">local</span>
+rancher/os:v0.2.1 remote
+rancher/os:v0.3.0-rc1 remote
+</code></pre></div>
+<h3 id="upgrade">Upgrade</h3>
+
+<hr>
+
+<p>Our <a href="/docs/upgrading/">upgrading</a> page provides more details on steps for upgrading.</p>
+
+<h4 id="upgrade-options">Upgrade Options</h4>
+
+<table><thead>
+<tr>
+<th>Options</th>
+<th>Description</th>
+</tr>
+</thead><tbody>
+<tr>
+<td><code>--stage</code>, <code>-s</code></td>
+<td>Only stage the new upgrade, don&rsquo;t apply it</td>
+</tr>
+<tr>
+<td><code>--image</code>, <code>-i</code></td>
+<td>Upgrade to a certain image</td>
+</tr>
+<tr>
+<td><code>--force</code>, <code>-f</code></td>
+<td>do not prompt for input</td>
+</tr>
+</tbody></table>
+
+<h4 id="image">Image</h4>
+
+<p>The <code>-i</code> or <code>--image</code> option uses an image name to upgrade to the specific version. If no image is specified, the command will automatically use the current version.</p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl os upgrade -i rancher/os:v0.2.0    
+Pulling repository rancher/os
+Pulling image <span class="o">(</span>v0.2.0<span class="o">)</span> from rancher/os
+Pulling image <span class="o">(</span>v0.2.0<span class="o">)</span> from rancher/os, endpoint: https://registry-1.docker.io/v1/
+...
+...
+...
+Download <span class="nb">complete</span>
+Status: Downloaded newer image <span class="k">for</span> rancher/os:v0.2.0
+Upgrading to rancher/os:v0.2.0
+Continue <span class="o">[</span>y/N<span class="o">]</span>: y
+Continue with reboot <span class="o">[</span>y/N<span class="o">]</span> y
+INFO<span class="o">[</span>0004<span class="o">]</span> Rebooting 
+</code></pre></div>
+<h4 id="stage">Stage</h4>
+
+<p>The <code>-s</code> or <code>--stage</code> option is used to stage the specific template instead of immediately installing it. </p>
+<div class="highlight"><pre><code class="language-bash" data-lang="bash"><span class="nv">$ </span>sudo rancherctl os upgrade -s -i rancher/os:v0.2.1
+Pulling image <span class="o">(</span>v0.2.1<span class="o">)</span> from rancher/os
+Pulling image <span class="o">(</span>v0.2.1<span class="o">)</span> from rancher/os, endpoint: https://registry-1.docker.io/v1/
+...
+...
+...
+Status: Downloaded newer image <span class="k">for</span> rancher/os:v0.2.1
+<span class="o">[</span>rancher@rancher ~<span class="o">]</span><span class="err">$</span>
+</code></pre></div>
+<h4 id="force-(available-in-version-v0.3.0+)">Force (available in version v0.3.0+)</h4>
+
+<p>The <code>-f</code> or <code>--force</code> option allows the user to bypass the prompts for continuing with the upgrade and rebooting. It will automatically do the upgrade and reboot.</p>
+
+<p><br></p>
+
+    </div>
+    <div class="span3">
+        <div class="row-fluid">
+ 
+ 
+ <h3>Documentation</h3>
+ <div id="navcontainer">
+     <ul>
+         <li><a href="/">What is RancherOS?</a>
+         <li><a href="/docs/architecture/">Architecture</a></li>
+         <li><a href="/docs/getting-started/">Getting Started</a>
+             <ul>
+                 <li><a href="/docs/getting-started/disk/">Installing to Disk</a></li>
+                 <li><a href="/docs/getting-started/vagrant/">Vagrant</a></li>
+                 <li><a href="/docs/getting-started/amazon/">Amazon</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/configuring/">Configuring</a>
+             <ul>
+                 <li><a href="/docs/configuring/tls/">TLS</a></li>
+                 <li><a href="/docs/configuring/cloud-init/">Cloud Init</a></li>
+             </ul>
+         </li>
+         <li><a href="/docs/system-services/">Adding System Services</a></li>
+         <li><a href="/docs/upgrading/">Upgrading</a></li>
+         <li><a href="/docs/rancherctl/">RancherCTL</a>
+             <ul>
+                 <li><a href="/docs/rancherctl/config/">Config</a></li>
+                 <li><a href="/docs/rancherctl/tls/">TLS</a></li>
+                 <li><a href="/docs/rancherctl/os/">OS</a></li>
+                 <li><a href="/docs/rancherctl/service/">Service</a></li>
+            </ul>
+         </li>
+         <li><a href="/docs/contributing/">Contributing</a></li>
+         <li><a href="/docs/faqs/">FAQs</a></li>
+     </ul>
+ </div>
+</div>
+    </div>
+    
+    
+</div>
+            
+             </div>
+</body>
+<footer id="footer" role="contentinfo">
+    <div id="footer-content" class="container">
+        <div class="row">
+            <div class="copyright col-lg-12">
+                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                
+            </div><!-- .col-lg-12 -->
+        </div><!-- .row -->
+    </div><!-- #footer-content.container -->
+</footer><!-- #footer -->
+
+</html>
+    
