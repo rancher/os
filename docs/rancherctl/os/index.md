@@ -5,14 +5,14 @@ layout: default
 ---
 
 ## RancherCTL OS
-
+---
 `rancherctl os` gives more information on the OS versions available for RancherOS. 
 
 Remember all `rancherctl` commands needs to be used with `sudo`. 
 
 
 ### Sub Commands
-
+---
 |Command | Description |
 |--------|-------------|
 |`upgrade` |	Upgrade to the latest version |
@@ -21,16 +21,16 @@ Remember all `rancherctl` commands needs to be used with `sudo`.
 
 
 ### Version (Added as of v0.3.0)
-
+---
 Besides using `rancherctl -v`, you can also find the current version with the `version` command. 
 
 ```bash
 $ sudo rancherctl os version
-rancher/os:v0.2.1
+v0.2.1
 ```
 
 ### List
-
+---
 It's easy to see all the current available versions using the `list` command. 
 
 ```bash
@@ -45,7 +45,7 @@ rancher/os:v0.3.0-rc1 remote
 ```
 
 ### Upgrade
-
+---
 Our [upgrading]({{site.baseurl}}/docs/upgrading/) page provides more details on steps for upgrading.
 
 #### Upgrade Options

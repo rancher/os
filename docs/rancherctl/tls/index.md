@@ -5,20 +5,20 @@ layout: default
 ---
 
 ## RancherCTL TLS
-
+---
 `rancherctl tls` is used to generate both the client and server TLS certificates for Docker. Please refer to the [Configuring TLS page]({{site.baseurl}}/docs/configuring/tls/) for an end to end example.
 
 Remember, all `rancherctl` commands needs to be used with `sudo`. 
 
 
 ### Sub Commands
-
+---
 | Command  | Description                              |
 |----------|------------------------------------------|
 | `generate` | Generates new client and server certificates |
 
 ### Generate
-
+---
 The `generate` command is used to generate new client and server certificates. By default, the command will be creating new client certificates.
 
 #### Generate Options

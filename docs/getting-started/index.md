@@ -5,7 +5,7 @@ layout: default
 ---
 
 ## Getting Started Guide
-
+---
 RancherOS is a lightweight Linux distribution designed from the ground up to run Docker containers. This guide provides instructions on how to get started using RancherOS.
 
 ### Architecture
@@ -17,7 +17,7 @@ There are a couple of options on how to launch RancherOS.
 
 * Launching RancherOS on [Vagrant]({{site.baseurl}}/docs/getting-started/vagrant/).
 * Launching RancherOS and Installing to [Disk]({{site.baseurl}}/docs/getting-started/disk/).
-* Launching RancherOS on [Amazon]({{site.baseurl}}/docs/getting-started/amazon/).
+* Launching RancherOS on [Amazon Web Services]({{site.baseurl}}/docs/getting-started/amazon/).
 
 
 ### A First Look At RancherOS
@@ -128,11 +128,11 @@ To run this container with system-docker use the following command:
 $ sudo system-docker run -d --net=host --name busydash husseingalal/busydash
 ```
 
-Note that I used --net=host to tell system-docker not to containerize the container's networking, and use the host’s networking instead. After running the container, you can see the monitoring server by accessing http://ip-of-the-server
+Note that I used --net=host to tell system-docker not to containerize the container's networking, and use the host’s networking instead. After running the container, you can see the monitoring server by accessing http://SERVER_IP.
 
 ![System Docker Container]({{site.baseurl}}/img/Rancher_busydash.png)
 
-To make the container survive during the reboots, you should create the /opt/rancher/bin/start.sh script, and add the docker start line to launch the docker at each startup:
+To make the container survive during the reboots, you should create the `/opt/rancher/bin/start.sh` script, and add the docker start line to launch the docker at each startup:
 
 ```
 $ sudo mkdir -p /opt/rancher/bin
