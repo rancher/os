@@ -148,7 +148,7 @@ Command | Description
 
 Since RancherOS is so small the default console is based off of Busybox.  This it not always the best experience.  The intention with RancherOS is to allow you to swap out different consoles with something like Ubuntu, Fedora, or CentOS.  Currently we have Ubuntu configured but we will add more.  To enable the Ubuntu console do the following.
 
-    sudo rancherctl addon enable ubuntu-console
+    sudo rancherctl service enable ubuntu-console
 
 Run the above but with `disable` to turn it off.  Currently you have to reboot the system to enable the new console.  In the future it will be dynamic and just require you to log out and back in.
 
