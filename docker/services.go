@@ -79,13 +79,6 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 				continue
 			}
 
-			//if config, ok := cfg.BundledServices[service]; ok {
-			//	for name, s := range config.SystemContainers {
-			//		if err := p.AddConfig(name, s); err != nil {
-			//			log.Errorf("Failed to load %s : %v", name, err)
-			//		}
-			//	}
-			//} else {
 			bytes, err := LoadServiceResource(service, network, cfg)
 			if err != nil {
 				if err == util.ErrNoNetwork {
@@ -101,7 +94,6 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 				log.Errorf("Failed to load %s : %v", service, err)
 				continue
 			}
-			//}
 
 			enabled[service] = true
 		}
