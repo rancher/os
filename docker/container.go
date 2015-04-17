@@ -12,6 +12,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	flag "github.com/docker/docker/pkg/mflag"
+	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/runconfig"
 	shlex "github.com/flynn/go-shlex"
 	dockerClient "github.com/fsouza/go-dockerclient"
@@ -306,8 +307,13 @@ func (c *Container) Stage() *Container {
 
 	_, err = client.InspectImage(c.Config.Image)
 	if err == dockerClient.ErrNoSuchImage {
+		toPull := c.Config.Image
+		_, tag := parsers.ParseRepositoryTag(toPull)
+		if tag == "" {
+			toPull += ":latest"
+		}
 		c.Err = client.PullImage(dockerClient.PullImageOptions{
-			Repository:   c.Config.Image,
+			Repository:   toPull,
 			OutputStream: os.Stdout,
 		}, dockerClient.AuthConfiguration{})
 	} else if err != nil {
