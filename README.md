@@ -15,27 +15,42 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.2.1 - Docker 1.5.0 - Linux 3.19.2**
+**v0.3.0 - Docker 1.6.0 - Linux 3.19.2**
 
 ### ISO
 
-https://github.com/rancherio/os/releases/download/v0.2.1/rancheros.iso
+https://github.com/rancherio/os/releases/download/v0.3.0/rancheros.iso
 
 ### Amazon
 
+We have 2 different [virtualization types of AMIs](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html). SSH keys are added to the **`rancher`** user, so you must log in using the **rancher** user.
+
+**Paravirtual**
+
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1| PV | [ami-71cb3d71](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchAmi=ami-71cb3d71)
-ap-southeast-1| PV | [ami-4a9eaf18](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchAmi=ami-4a9eaf18)
-ap-southeast-2| PV | [ami-45ef9f7f](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchAmi=ami-45ef9f7f)
-eu-west-1| PV | [ami-fd70ee8a](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchAmi=ami-fd70ee8a)
-sa-east-1| PV | [ami-85f94298](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchAmi=ami-85f94298)
-us-east-1| PV | [ami-5a321d32](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchAmi=ami-5a321d32)
-us-west-1| PV | [ami-bfa849fb](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchAmi=ami-bfa849fb)
-us-west-2| PV | [ami-a9bc9099](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchAmi=ami-a9bc9099)
+ap-northeast-1 | PV |  [ami-506da950](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-506da950)
+ap-southeast-1 | PV |  [ami-14043946](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-14043946)
+ap-southeast-2 | PV |  [ami-37acd10d](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-37acd10d)
+eu-west-1 | PV |  [ami-2d8fec5a](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-2d8fec5a)
+sa-east-1 | PV |  [ami-fd7ffae0](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-fd7ffae0)
+us-east-1 | PV |  [ami-ca3e39a2](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-ca3e39a2)
+us-west-1 | PV |  [ami-55816c11](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-55816c11)
+us-west-2 | PV |  [ami-29c1f419](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-29c1f419)
 
-SSH keys are added to the **`rancher`** user, so you must log in using the **rancher** user.
 
+**HVM**
+
+Region | Type | AMI |
+-------|------|------
+ap-northeast-1 | PV |  [ami-be6da9be](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-be6da9be)
+ap-southeast-1 | PV |  [ami-06043954](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-06043954)
+ap-southeast-2 | PV |  [ami-23acd119](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-23acd119)
+eu-west-1 | PV |  [ami-018fec76](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-018fec76)
+sa-east-1 | PV |  [ami-f17ffaec](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-f17ffaec)
+us-east-1 | PV |  [ami-b03e39d8](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-b03e39d8)
+us-west-1 | PV |  [ami-6d816c29](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-6d816c29)
+us-west-2 | PV |  [ami-1fc1f42f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-1fc1f42f)
 
 ## Documentation for Rancher Labs
 
