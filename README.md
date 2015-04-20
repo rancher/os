@@ -54,6 +54,28 @@ us-east-1 | HVM |  [ami-b03e39d8](https://console.aws.amazon.com/ec2/home?region
 us-west-1 | HVM |  [ami-6d816c29](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-6d816c29)
 us-west-2 | HVM |  [ami-1fc1f42f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-1fc1f42f)
 
+
+### Google Compute Engine (Experimental)
+
+We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS v0.3.0.
+
+[Download Image](https://github.com/rancherio/os/releases/download/v0.3.0/rancheros-030-gce-1.tar.gz)
+
+#### Import
+To import the image into your project follow the instructions below:
+
+* [Upload an image into Compute Engine](https://cloud.google.com/compute/docs/tutorials/building-images#publishingimage)
+* [Import RAW image](https://cloud.google.com/compute/docs/images#use_saved_image)
+
+
+#### Usage
+The image supports RancherOS cloud config functionality. Additionally, it merges the SSH keys from the project, instance and cloud-config and adds them to the **rancher** user.
+
+
+#### Known issues/ToDos
+ * Add GCE daemon support. (Manages users)
+
+
 ## Documentation for Rancher Labs
 
 Please refer to our [website](http://rancherio.github.io/os/) to read all about RancherOS. It has detailed information on how it works, getting-started and other details.
