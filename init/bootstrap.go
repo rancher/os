@@ -56,15 +56,28 @@ outer:
 
 	if format != "" {
 		log.Infof("Auto formatting : %s", format)
-		return docker.RunServices("autoformat", cfg, map[string]*project.ServiceConfig{
+
+		// copy
+		udev := *cfg.BootstrapContainers["udev"]
+		udev.Links = append(udev.Links, "autoformat")
+		udev.LogDriver = "json-file"
+
+		err := docker.RunServices("autoformat", cfg, map[string]*project.ServiceConfig{
 			"autoformat": {
 				Net:        "none",
 				Privileged: true,
 				Image:      "autoformat",
 				Command:    format,
+				Labels: []string{
+					config.DETACH + "=false",
+					config.SCOPE + "=" + config.SYSTEM,
+				},
+				LogDriver: "json-file",
 			},
-			"udev": cfg.BootstrapContainers["udev"],
+			"udev": &udev,
 		})
+
+		return err
 	}
 
 	return nil
