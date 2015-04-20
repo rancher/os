@@ -41,16 +41,18 @@ us-west-2 | PV |  [ami-29c1f419](https://console.aws.amazon.com/ec2/home?region=
 
 **HVM**
 
+HVM was introduced in v0.3.0 and only supports v0.3.0+.
+
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | PV |  [ami-be6da9be](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-be6da9be)
-ap-southeast-1 | PV |  [ami-06043954](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-06043954)
-ap-southeast-2 | PV |  [ami-23acd119](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-23acd119)
-eu-west-1 | PV |  [ami-018fec76](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-018fec76)
-sa-east-1 | PV |  [ami-f17ffaec](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-f17ffaec)
-us-east-1 | PV |  [ami-b03e39d8](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-b03e39d8)
-us-west-1 | PV |  [ami-6d816c29](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-6d816c29)
-us-west-2 | PV |  [ami-1fc1f42f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-1fc1f42f)
+ap-northeast-1 | HVM |  [ami-be6da9be](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-be6da9be)
+ap-southeast-1 | HVM |  [ami-06043954](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-06043954)
+ap-southeast-2 | HVM |  [ami-23acd119](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-23acd119)
+eu-west-1 | HVM |  [ami-018fec76](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-018fec76)
+sa-east-1 | HVM |  [ami-f17ffaec](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-f17ffaec)
+us-east-1 | HVM |  [ami-b03e39d8](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-b03e39d8)
+us-west-1 | HVM |  [ami-6d816c29](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-6d816c29)
+us-west-2 | HVM |  [ami-1fc1f42f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-1fc1f42f)
 
 ## Documentation for Rancher Labs
 
