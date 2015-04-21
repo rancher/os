@@ -37,6 +37,9 @@ RancherOS uses labels to determine if the container should be deployed in system
 labels:
   - io.rancher.os.scope=system
 ```
+### Build
+
+RancherOS does not support the `build` command as we are not attempting to build or rebuild services.
 
 ### Links
 

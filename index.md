@@ -33,6 +33,6 @@ Please check our repository for the latest release in our [README](https://githu
 
 ## Cloud
 ---
-Currently we only have RancherOS available in EC2 but more clouds will come based on demand. Follow the steps in our [Amazon]({{site.baseurl}}/docs/getting-started/amazon/) guide to get started.
+Currently we only have RancherOS available in EC2 and GCE (experimental) but more clouds will come based on demand. Follow the steps in our [Amazon]({{site.baseurl}}/docs/getting-started/amazon/) or [GCE]({{site.baseurl}}/docs/getting-started/gce/) guide to get started.
 <br>
 <br>
