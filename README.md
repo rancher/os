@@ -80,6 +80,12 @@ The image supports RancherOS cloud config functionality. Additionally, it merges
 
 Please refer to our [website](http://rancherio.github.io/os/) to read all about RancherOS. It has detailed information on how it works, getting-started and other details.
 
+## Support, Discussion, and Community
+If you need any help with RancherOS or Rancher, please join us at either our [rancherio Google Groups](https://groups.google.com/forum/#!forum/rancherio) or [#rancher IRC channel](http://webchat.freenode.net/?channels=rancher) where most of our team hangs out at.
+
+Please submit any **RancherOS** bugs, issues, and feature requests to [rancherio/os](//github.com/rancherio/os/issues).
+
+Please submit any **Rancher** bugs, issues, and feature requests to [rancherio/rancher](//github.com/rancherio/rancher/issues).
 
 #License
 Copyright (c) 2014-2015 [Rancher Labs, Inc.](http://rancher.com)
