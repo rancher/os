@@ -1,6 +1,5 @@
 #!/bin/bash
-
-set -e
+set -x -e
 
 cd $(dirname $0)/..
 : RANCHER_ISO=${RANCHER_ISO:="./dist/artifacts/rancheros.iso"}
@@ -19,17 +18,21 @@ fi
 GITSHA=$(git rev-parse --short HEAD)
 VM="RancherOS-${GITSHA}"
 
-VBoxManage createhd --format vhd --filename ./dist/artifacts/$VM.vhd --size 8000
+sudo chown -R `whoami`:`whoami` ./dist
+
+VBoxManage createhd --format vmdk --filename ./dist/artifacts/$VM.vmdk --size 40000
 
 VBoxManage createvm --name $VM --ostype "Linux_64" --register
 
-VBoxManage storagectl $VM --name "IDE Controller" --add ide
-VBoxManage storageattach $VM --storagectl "IDE Controller" --port 0 --device 0 \
-    --type hdd --medium ./dist/artifacts/$VM.vhd
-VBoxManage storageattach $VM --storagectl "IDE Controller" --port 1 \
-    --device 0 --type dvddrive --medium ${RANCHER_ISO}
+VBoxManage storagectl $VM --name "SATA" --add sata --portcount 2
+VBoxManage storageattach $VM --storagectl "SATA" --port 0 --type hdd --medium ./dist/artifacts/$VM.vmdk
+VBoxManage storageattach $VM --storagectl "SATA" --port 1 --type dvddrive --medium ${RANCHER_ISO}
 
-VBoxManage modifyvm $VM --memory 1024 --acpi on --boot1 dvd --boot2 disk
+VBoxManage modifyvm $VM --memory 1024 --acpi on --boot1 disk --boot2 dvd
+VBoxManage modifyvm $VM --rtcuseutc on
 VBoxManage modifyvm $VM --usb off
 VBoxManage modifyvm $VM --audio none
-VBoxManage startvm $VM
+VBoxManage modifyvm $VM --nic1 nat
+VBoxManage modifyvm $VM --nictype1 virtio
+
+#VBoxManage startvm $VM
