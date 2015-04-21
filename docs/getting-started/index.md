@@ -18,7 +18,7 @@ There are a couple of options on how to launch RancherOS.
 * Launching RancherOS on [Vagrant]({{site.baseurl}}/docs/getting-started/vagrant/).
 * Launching RancherOS and Installing to [Disk]({{site.baseurl}}/docs/getting-started/disk/).
 * Launching RancherOS on [Amazon Web Services]({{site.baseurl}}/docs/getting-started/amazon/).
-
+* Launching RancherOS on [Google Cloud Engine]({{site.baseurl}}/docs/getting-started/gce/).
 
 ### A First Look At RancherOS
 

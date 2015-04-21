@@ -150,11 +150,11 @@ Let's edit the cloud_config.yml so that it matches the syntax of the cloud-init 
 
 Cloud-Init File Example:
 
-```
+```yaml
 #cloud-config
 
 ssh_authorized_keys:
- - ssh-rsa AAA... user@rancher
+ - ssh-rsa AAA... user@host
 ```
 
 Now that our cloud_config.yml contains our public SSH key, we can move on to installing RancherOS to disk!
@@ -164,7 +164,7 @@ Now that our cloud_config.yml contains our public SSH key, we can move on to ins
 The `rancheros-install` command orchestrates the installation from the rancher/os container. We will install RancherOS to disk, reboot and then try to save a file. 
 
 ```bash
-[rancher@rancher ~]$ sudo rancheros-install -c cloud_config.yml -d /dev/sda -t generic -v v0.2.1
+[rancher@rancher ~]$ sudo rancheros-install -c cloud_config.yml -d /dev/sda -v v0.2.1
 All data will be wiped from this device
 Partition: true
 DEVICE: /dev/sda
@@ -254,9 +254,13 @@ Disk /dev/sda doesn't contain a valid partition table
 ##### Install Type
 The `-t` option determines what type of installation is used. In most cases, we will be picking the _generic_ install type. The _amazon-ebs_ type is for creating your own AMI images. Since we are creating the [RancherOS AMI images]({{site.baseurl}}/docs/getting-started/amazon/), there is no need to create your own. 
 
+By default, the install type will be generic.
+
 ##### Version
 
 The `-v` option will indicate which version of RancherOS to install. To see the most recent versions of RancherOS, please vist the RancherOS GitHub page of [releases](https://github.com/rancherio/os/releases).
+
+By default, the version installed will be version that RancherOS is currently running.
 
 Alternatively, you can use the [rancherctl os]({{site.baseurl}}/docs/rancherctl/os/) commands to find the list of available versions.
 
