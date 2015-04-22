@@ -3,6 +3,7 @@ package docker
 import (
 	"strings"
 
+	"github.com/docker/docker/nat"
 	"github.com/docker/docker/runconfig"
 	"github.com/rancherio/rancher-compose/project"
 
@@ -17,35 +18,43 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 
 	cmd, _ := shlex.Split(c.Command)
 	entrypoint, _ := shlex.Split(c.Entrypoint)
+	ports, binding, err := nat.ParsePortSpecs(c.Ports)
 
-	return &runconfig.Config{
-			Entrypoint: entrypoint,
-			Hostname:   c.Hostname,
-			Domainname: c.DomainName,
-			User:       c.User,
-			Memory:     c.MemLimit,
-			CpuShares:  c.CpuShares,
-			Env:        c.Environment,
-			Cmd:        cmd,
-			Image:      c.Image,
-			Labels:     kvListToMap(c.Labels),
+	if err != nil {
+		return nil, nil, err
+	}
+
+	config := &runconfig.Config{
+		Entrypoint:   entrypoint,
+		Hostname:     c.Hostname,
+		Domainname:   c.DomainName,
+		User:         c.User,
+		Memory:       c.MemLimit,
+		CpuShares:    c.CpuShares,
+		Env:          c.Environment,
+		Cmd:          cmd,
+		Image:        c.Image,
+		Labels:       kvListToMap(c.Labels),
+		ExposedPorts: ports,
+	}
+	host_config := &runconfig.HostConfig{
+		VolumesFrom: c.VolumesFrom,
+		CapAdd:      c.CapAdd,
+		CapDrop:     c.CapDrop,
+		Privileged:  c.Privileged,
+		Binds:       c.Volumes,
+		Dns:         c.Dns,
+		LogConfig: runconfig.LogConfig{
+			Type: c.LogDriver,
 		},
-		&runconfig.HostConfig{
-			VolumesFrom: c.VolumesFrom,
-			CapAdd:      c.CapAdd,
-			CapDrop:     c.CapDrop,
-			Privileged:  c.Privileged,
-			Binds:       c.Volumes,
-			Dns:         c.Dns,
-			LogConfig: runconfig.LogConfig{
-				Type: c.LogDriver,
-			},
-			NetworkMode:    runconfig.NetworkMode(c.Net),
-			ReadonlyRootfs: c.ReadOnly,
-			PidMode:        runconfig.PidMode(c.Pid),
-			IpcMode:        runconfig.IpcMode(c.Ipc),
-		},
-		nil
+		NetworkMode:    runconfig.NetworkMode(c.Net),
+		ReadonlyRootfs: c.ReadOnly,
+		PidMode:        runconfig.PidMode(c.Pid),
+		IpcMode:        runconfig.IpcMode(c.Ipc),
+		PortBindings:   binding,
+	}
+
+	return config, host_config, nil
 }
 
 func kvListToMap(list []string) map[string]string {
