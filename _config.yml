@@ -1,5 +1,5 @@
 name: RancherOS Documentation
-description: Documentation for Rancher Labss
+description: Documentation for RancherOS
 
 URL: “http://rancherio.github.io/os”
 baseurl: /os
