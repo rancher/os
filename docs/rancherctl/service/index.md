@@ -30,9 +30,11 @@ disabled ubuntu-console
 
 ### Enable
 ---
-The `enable` command turns on a service. This service can either be a http(s) url, location to a yaml file, or  a service that is already in the [os-services repository](https://github.com/rancherio/os-services). For anything outside of the os-services repo, an additional item will be added to the `rancher.yml` file. In order for the change to take effect, you must reboot. In the future, the reboot will be dynamic.
+The `enable` command turns on a service. This service can either be a http(s) url, location to a yaml file (file must be located in `/var/lib/rancher/conf/`), or  a service that is already in the [os-services repository](https://github.com/rancherio/os-services). For anything outside of the os-services repo, an additional item will be added to the `rancher.yml` file. In order for the change to take effect, you must reboot. In the future, the reboot will be dynamic.
 
-For our example, we're enabling the ubuntu console. After the reboot, we'll be logged in using the ubuntu-console. 
+Note: If you are using the location of a yaml file to enable, the system-service-name should be the entire location of the file. Therefore, if you were enabling an `example.yml` file, you will be enabling `/var/lib/rancher/conf/example.yml`.
+
+For our example, we're enabling the ubuntu console, which is in the os-services repository. After the reboot, we'll be logged in using the ubuntu-console. 
 
 ```bash
 $ sudo rancherctl service list

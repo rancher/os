@@ -80,13 +80,13 @@ rancher:
 ```
 ## Using System Services
 ---
-We control system services using [rancherctl service]({{site.baseurl}}/docs/rancherctl/service/).
+We control system services using [rancherctl service]({{site.baseurl}}/docs/rancherctl/service/). 
 
 To use a system service, just run `rancherctl service enable <system-service-name>` to turn on the service. By using this command, the service will also be added to the `rancher.yml` file and set to enabled, but a reboot needs to occur in order for it take effect. In the future, the reboot will be dynamic. 
 
 The `<system-service-name>` can either be a http(s) url, location to a yaml file, or  a service that is already in the [os-services repository](https://github.com/rancherio/os-services).
 
-Here's how we enable the ubuntu-console:
+Here's how we enable the ubuntu-console, which is in the os-services directory:
 
 ```bash
 $ sudo rancherctl service list
@@ -98,6 +98,19 @@ $ sudo reboot
 ```
 
 After the reboot and logging back in, you should be running the ubuntu console instead of the default busybox console. 
+
+If you are using the location to a yaml file, the file must be located in `/var/lib/rancher/conf/` and the `<system-service-name>` must be `/var/lib/rancher/conf/example.yml`
+
+Here's how we enable a service file called `example.yml`. The service file must be saved in `/var/lib/rancher/conf/`.
+
+
+```bash
+$ sudo rancherctl service enable /var/lib/rancher/conf/example.yml
+$ sudo rancherctl service list
+enabled ubuntu-console
+enabled /var/lib/rancher/conf/example.yml
+$ sudo reboot
+```
 
 To turn off a system service, run `rancherctl service disable <system-service-name>`. This will only turn off the service in the `rancher.yml` file, but it will not remove the service from it. Similar to when we enabled the service, we'll need to reboot in order for the disabling to take effect.
 
