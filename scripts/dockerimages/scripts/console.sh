@@ -93,6 +93,9 @@ BUG_REPORT_URL=
 BUILD_ID=
 EOF
 
+# start acpi daemon
+/usr/sbin/acpid 
+
 if ! grep -q "$(hostname)" /etc/hosts; then
     echo 127.0.1.1 $(hostname) >> /etc/hosts
 fi
