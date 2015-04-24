@@ -36,6 +36,9 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		Image:        c.Image,
 		Labels:       kvListToMap(c.Labels),
 		ExposedPorts: ports,
+                Tty:          c.Tty,
+                OpenStdin:    c.StdinOpen,
+                WorkingDir:   c.WorkingDir,
 	}
 	host_config := &runconfig.HostConfig{
 		VolumesFrom: c.VolumesFrom,
