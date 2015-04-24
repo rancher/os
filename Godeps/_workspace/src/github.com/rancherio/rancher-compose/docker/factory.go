@@ -19,6 +19,7 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 	cmd, _ := shlex.Split(c.Command)
 	entrypoint, _ := shlex.Split(c.Entrypoint)
 	ports, binding, err := nat.ParsePortSpecs(c.Ports)
+    dns, _ := shlex.Split(c.Dns)
 
 	if err != nil {
 		return nil, nil, err
@@ -43,7 +44,7 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		CapDrop:     c.CapDrop,
 		Privileged:  c.Privileged,
 		Binds:       c.Volumes,
-		Dns:         c.Dns,
+		Dns:         dns,
 		LogConfig: runconfig.LogConfig{
 			Type: c.LogDriver,
 		},
