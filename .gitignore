@@ -7,3 +7,4 @@
 .dockerfile
 *.swp
 Dockerfile
+.DS_Store
