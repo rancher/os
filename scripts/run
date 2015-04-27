@@ -56,13 +56,17 @@ fi
 
 mkdir -p $(dirname $USER_DATA)
 
-echo "#cloud-config" > ${USER_DATA}
-echo "ssh_authorized_keys:" >> ${USER_DATA}
-for i in ${HOME}/.ssh/*.pub; do
-    if [ -e $i ]; then
-        echo "  - $(<$i)" >> ${USER_DATA}
-    fi
-done
+if [ -e ../../tmp/cloud-config.yml ]; then
+    cat ../../tmp/cloud-config.yml > ${USER_DATA}
+else
+    echo "#cloud-config" > ${USER_DATA}
+    echo "ssh_authorized_keys:" >> ${USER_DATA}
+    for i in ${HOME}/.ssh/*.pub; do
+        if [ -e $i ]; then
+            echo "  - $(<$i)" >> ${USER_DATA}
+        fi
+    done
+fi
 
 while [ "$#" -gt 0 ]; do
     case $1 in
