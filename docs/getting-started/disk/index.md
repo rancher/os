@@ -127,35 +127,50 @@ Click on **OK**.
 
 ### Creating a Cloud Config file
 
-We will need to create a [cloud-init file](https://cloudinit.readthedocs.org/en/latest/index.html) that includes our public SSH keys. If you want more details on what Cloud Init functionality is supported, click [here]({{site.baseurl}}/docs/configuring/cloud-init/).  
+We will need to create a [cloud-init file](https://cloudinit.readthedocs.org/en/latest/index.html) that includes the public SSH key from your local computer. If you want more details on what Cloud Init functionality is supported, click [here]({{site.baseurl}}/docs/configuring/cloud-init/).  
 
 Note: If you are trying to install Amazon EC2 to disk to create your own RancherOS AMI, you will not need to create a cloud-init file.
 
-For our VirtualBox example, we'll first copy the public SSH key from our computer to our VM. 
+1. Check to see if you have SSH keys on your local computer. If not, generate a new one by following this [article](https://help.github.com/articles/generating-ssh-keys/). 
 
-```bash
-[rancher@rancher ~]$ scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
-RSA key fingerprint is X:X:X:X:X.
-Are you sure you want to continue connecting (yes/no)? yes
-Warning: Permanently added 'computer_ip' (RSA) to the list of known hosts. 
-Password: 
-id_rsa.pub                              100%    422 0.4KB/s    00:00
-[rancher@rancher ~]$ ls
-id_rsa.pub
-[rancher@rancher ~]$ cat id_rsa.pub > cloud_config.yml
-[rancher@rancher ~]$ vi cloud_config.yml
-```
+    ```bash
+    $ ls -al ~/.ssh
+    # Lists all the files in your .ssh directory, if they exist
+    ```
+    You are looking to see if you have one of the following:
 
-Let's edit the cloud_config.yml so that it matches the syntax of the cloud-init example. 
+    ```bash
+    id_dsa.pub
+    id_ecdsa.pub
+    id_ed25519.pub
+    id_rsa.pub
+    ```
 
-Cloud-Init File Example:
+2. After you've ensured that you have a public SSH key, we'll proceed with copyubg the public SSH key from our computer to our VM. In our example, the public key that we're using is `id_rsa.pub`.
 
-```yaml
-#cloud-config
+    ```bash
+    [rancher@rancher ~]$ scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
+    RSA key fingerprint is X:X:X:X:X.
+    Are you sure you want to continue connecting (yes/no)? yes
+    Warning: Permanently added 'computer_ip' (RSA) to the list of known hosts. 
+    Password: 
+    id_rsa.pub                              100%    422 0.4KB/s    00:00
+    [rancher@rancher ~]$ ls
+    id_rsa.pub
+    [rancher@rancher ~]$ cat id_rsa.pub > cloud_config.yml
+    [rancher@rancher ~]$ vi cloud_config.yml
+    ```
 
-ssh_authorized_keys:
- - ssh-rsa AAA... user@host
-```
+3. Let's edit the cloud_config.yml so that it matches the syntax of the cloud-init example. Yaml files are very particular about their white spacing, so please note the spaces in our file!
+
+    Cloud-Init File Example:
+
+    ```yaml
+    #cloud-config
+    
+    ssh_authorized_keys:
+    - ssh-rsa AAA... user@host
+    ```
 
 Now that our cloud_config.yml contains our public SSH key, we can move on to installing RancherOS to disk!
 
@@ -196,7 +211,9 @@ It will confirm that you want to remove the CD/DVD device. Click on **Remove** a
 ![RancherOS to Disk 3]({{site.baseurl}}/img/Rancher_disk3.png)
 
 
-Even though you will be prompted with the "rancher login" from the VirtualBox screen, you will not be able to use the typical rancher login/password. Instead, you will need to log in to the VM using your SSH keys.
+Even though you will be prompted with the "rancher login" from the VirtualBox screen, you will not be able to use the previous rancher login/password. Instead, you will need to log in to the VM using your SSH keys.
+
+Note: Once you've installed to disk, you will always need to log in as the **rancher** user. All SSH keys are passed to this user, so please make sure to ssh as the **rancher** user. 
 
 Open up your terminal/command line. After we SSH in, let's create our file and reboot the VM to see if the file has been saved.
 
@@ -211,7 +228,7 @@ test
 
 ```
 
-Wait a little bit before attempting to SSH back into your RancherOS instance and your test file should still be there!
+Wait a little bit before attempting to SSH back into your RancherOS instance and your test file should still be there. 
 
 ```bash
 $ ssh rancher@127.0.0.1 -p 2223
