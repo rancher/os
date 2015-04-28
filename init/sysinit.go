@@ -1,6 +1,7 @@
 package init
 
 import (
+	"net"
 	"os"
 	"path"
 	"syscall"
@@ -157,6 +158,15 @@ func SysInit() error {
 		},
 		func(cfg *config.Config) error {
 			log.Infof("RancherOS %s started", config.VERSION)
+			iface, err := net.InterfaceByName("eth0")
+			if err != nil {
+				return nil
+			}
+			ifaceAddrs, err := iface.Addrs()
+			if err != nil {
+				return nil
+			}
+			log.Infof("First Ip address on eth0 is %s", ifaceAddrs[0].String())
 			return nil
 		},
 		tailConsole,
