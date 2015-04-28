@@ -95,6 +95,7 @@ func NewConfig() *Config {
 		SystemContainers: map[string]*project.ServiceConfig{
 			"udev": {
 				Image:      "udev",
+				Restart:    "always",
 				Net:        "host",
 				Privileged: true,
 				Labels: []string{
@@ -254,6 +255,7 @@ func NewConfig() *Config {
 			},
 			"ntp": {
 				Image:      "ntp",
+				Restart:    "always",
 				Privileged: true,
 				Net:        "host",
 				Labels: []string{
@@ -266,6 +268,7 @@ func NewConfig() *Config {
 			},
 			"syslog": {
 				Image:      "syslog",
+				Restart:    "always",
 				Privileged: true,
 				Net:        "host",
 				Labels: []string{
@@ -278,6 +281,7 @@ func NewConfig() *Config {
 			},
 			"userdocker": {
 				Image:      "userdocker",
+				Restart:    "always",
 				Privileged: true,
 				Pid:        "host",
 				Ipc:        "host",
