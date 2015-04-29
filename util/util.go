@@ -302,3 +302,21 @@ func GetValue(kvPairs []string, key string) string {
 
 	return ""
 }
+
+func Map2KVPairs(m map[string]string) []string {
+	r := make([]string, 0, len(m))
+	for k, v := range m {
+		r = append(r, k + "=" + v)
+	}
+	return r
+}
+
+func KVPairs2Map(kvs []string) map[string]string {
+	r := make(map[string]string, len(kvs))
+	for _, kv := range kvs {
+		sepIdx := strings.Index(kv, "=")
+		k, v := kv[:sepIdx], kv[(sepIdx + 1):]
+		r[k] = v
+	}
+	return r
+}
