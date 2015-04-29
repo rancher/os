@@ -83,7 +83,6 @@ $ ssh -v -i /Directory/of/MySSHKeyName.pem rancher@<ip-of-ec2-instance>
 
 After you're logged into the system, go back to the [Getting Started Guide]({{site.baseurl}}/docs/getting-started/) to see some examples of what we can do.
 
-
 ## Latest AMI Releases 
 ----
 
