@@ -1,2 +1,2 @@
 FROM base
-ENTRYPOINT ["/usr/sbin/acpid", "-d"]
+CMD ["/usr/sbin/acpid", "-f"]
