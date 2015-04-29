@@ -17,7 +17,27 @@ INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
 INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
 USER_DATA=cloud-init/openstack/latest/user_data
-CLOUD_CONFIG=$(readlink -f "$1") || :
+
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --append)
+            shift 1
+            QEMU_APPEND="${QEMU_APPEND} $1"
+            ;;
+        --cloud-config)
+            shift 1
+            CLOUD_CONFIG=$(readlink -f "$1") || :
+            if [ ! -f ${CLOUD_CONFIG} ]; then
+                echo No such file: "'"${CLOUD_CONFIG}"'" 1>&2
+                exit 1
+            fi
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift 1
+done
 
 if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
     echo "Failed to find ${KERNEL} or ${INITRD}" 1>&2
@@ -68,19 +88,6 @@ else
         fi
     done
 fi
-
-while [ "$#" -gt 0 ]; do
-    case $1 in
-        --append)
-            shift 1
-            QEMU_APPEND="${QEMU_APPEND} $1"
-            ;;
-        *)
-            break
-            ;;
-    esac
-    shift 1
-done
 
 qemu-system-x86_64 -serial stdio \
     -kernel ${KERNEL} \
