@@ -23,6 +23,11 @@ EOF
 PARTITION_FLAG="false"
 INSTALL_CONTAINER_IMAGE="rancher/os"
 
+if [ "$(whoami)" != "root" ]; then
+    echo "Please run as root." 1>&2
+    exit 1
+fi
+
 if [ -x /usr/bin/rancherctl ]; then
     INSTALL_CONTAINER_IMAGE="$(rancherctl config get upgrade.image)"
 fi
@@ -45,11 +50,6 @@ do
         *) exit 1 ;;
     esac
 done
-
-if [ "$(whoami)" != "root" ]; then
-    echo "Please run as root." 1>&2
-    exit 1
-fi
 
 if [[ -z "${INSTALL_TYPE}" ]]; then
     echo "No install type specified...defaulting to generic"
