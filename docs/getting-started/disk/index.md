@@ -293,6 +293,13 @@ rancher/os:v0.3.0-rc1 remote
 [rancher@rancher ~]$ 
 ```
 
+## Setting up a State Partition
 
+Another way to save the state of Rancher OS is to create a state partition labeled as `RANCHER_STATE`. We package mkfs.ext4 in the console. 
 
+```bash
+$ sudo mkfs.ext4 -L RANCHER_STATE /dev/xvda
+```
+
+`/dev/xvda` will be the disk that will hold the state.
 
