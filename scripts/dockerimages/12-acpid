@@ -1,0 +1,2 @@
+FROM base
+ENTRYPOINT ["/usr/sbin/acpid", "-d"]

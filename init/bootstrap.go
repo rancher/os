@@ -3,6 +3,7 @@ package init
 import (
 	"os"
 	"os/exec"
+	"strings"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -11,6 +12,8 @@ import (
 	"github.com/rancherio/os/util"
 	"github.com/rancherio/rancher-compose/project"
 )
+
+const boot2dockerMagic = "boot2docker, please format-me"
 
 func autoformat(cfg *config.Config) error {
 	if len(cfg.State.Autoformat) == 0 || util.ResolveDevice(cfg.State.Dev) != "" {
@@ -43,10 +46,18 @@ outer:
 			continue
 		}
 
-		for _, b := range buffer {
-			if b != 0 {
-				log.Infof("%s not empty", dev)
-				continue outer
+		boot2docker := false
+
+		if strings.HasPrefix(string(buffer[:len(boot2dockerMagic)]), boot2dockerMagic) {
+			boot2docker = true
+		}
+
+		if boot2docker == false {
+			for _, b := range buffer {
+				if b != 0 {
+					log.Infof("%s not empty", dev)
+					continue outer
+				}
 			}
 		}
 
@@ -73,6 +84,9 @@ outer:
 					config.SCOPE + "=" + config.SYSTEM,
 				},
 				LogDriver: "json-file",
+				Environment: []string{
+					"MAGIC=" + boot2dockerMagic,
+				},
 			},
 			"udev": &udev,
 		})

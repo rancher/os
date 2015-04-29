@@ -323,6 +323,21 @@ func NewConfig() *Config {
 				Ipc:     "host",
 				Net:     "host",
 			},
+			"acpid": {
+				Image:      "acpid",
+				Privileged: true,
+				Links: []string{
+					"console",
+				},
+				Labels: []string{
+					SCOPE + "=" + SYSTEM,
+				},
+				VolumesFrom: []string{
+					"command-volumes",
+					"system-volumes",
+				},
+				Net: "host",
+			},
 		},
 		ServicesInclude: map[string]bool{
 			"ubuntu-console": false,

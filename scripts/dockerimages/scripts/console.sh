@@ -33,6 +33,13 @@ if [ ! -d ${RANCHER_HOME} ]; then
     chmod 2755 ${RANCHER_HOME}
 fi
 
+DOCKER_HOME=/home/docker
+if [ ! -d ${DOCKER_HOME} ]; then
+    mkdir -p ${DOCKER_HOME}
+    chown docker:docker ${DOCKER_HOME}
+    chmod 2755 ${DOCKER_HOME}
+fi
+
 for i in $(</proc/cmdline); do
     case $i in
         rancher.password=*)
