@@ -76,7 +76,7 @@ The image supports RancherOS cloud config functionality. Additionally, it merges
  * Add GCE daemon support. (Manages users)
 
 
-## Documentation for Rancher Labs
+## Documentation for RancherOS
 
 Please refer to our [website](http://rancherio.github.io/os/) to read all about RancherOS. It has detailed information on how it works, getting-started and other details.
 
