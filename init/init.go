@@ -198,7 +198,7 @@ func loadModules(cfg *config.Config) error {
 		log.Debugf("Loading module %s", module)
 		err = exec.Command("/sbin/modprobe", module).Run()
 		if err != nil {
-			return err
+			log.Errorf("Could not load module %s, err %v", module, err)
 		}
 	}
 
