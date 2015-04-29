@@ -18,6 +18,27 @@ INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
 USER_DATA=cloud-init/openstack/latest/user_data
 
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --append)
+            shift 1
+            QEMU_APPEND="${QEMU_APPEND} $1"
+            ;;
+        --cloud-config)
+            shift 1
+            CLOUD_CONFIG=$(readlink -f "$1") || :
+            if [ ! -f ${CLOUD_CONFIG} ]; then
+                echo No such file: "'"${CLOUD_CONFIG}"'" 1>&2
+                exit 1
+            fi
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift 1
+done
+
 if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
     echo "Failed to find ${KERNEL} or ${INITRD}" 1>&2
     exit 1
@@ -56,26 +77,17 @@ fi
 
 mkdir -p $(dirname $USER_DATA)
 
-echo "#cloud-config" > ${USER_DATA}
-echo "ssh_authorized_keys:" >> ${USER_DATA}
-for i in ${HOME}/.ssh/*.pub; do
-    if [ -e $i ]; then
-        echo "  - $(<$i)" >> ${USER_DATA}
-    fi
-done
-
-while [ "$#" -gt 0 ]; do
-    case $1 in
-        --append)
-            shift 1
-            QEMU_APPEND="${QEMU_APPEND} $1"
-            ;;
-        *)
-            break
-            ;;
-    esac
-    shift 1
-done
+if [ -n "$CLOUD_CONFIG" ]; then
+    cat ${CLOUD_CONFIG} > ${USER_DATA}
+else
+    echo "#cloud-config" > ${USER_DATA}
+    echo "ssh_authorized_keys:" >> ${USER_DATA}
+    for i in ${HOME}/.ssh/*.pub; do
+        if [ -e $i ]; then
+            echo "  - $(<$i)" >> ${USER_DATA}
+        fi
+    done
+fi
 
 qemu-system-x86_64 -serial stdio \
     -kernel ${KERNEL} \
