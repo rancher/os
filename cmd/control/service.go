@@ -26,6 +26,11 @@ func serviceSubCommands() []cli.Command {
 			Usage:  "list services and state",
 			Action: list,
 		},
+		{
+			Name:   "delete",
+			Usage:  "delete a service",
+			Action: del,
+		},
 	}
 }
 
@@ -42,6 +47,28 @@ func disable(c *cli.Context) {
 		}
 
 		cfg.ServicesInclude[service] = false
+		changed = true
+	}
+
+	if changed {
+		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
+func del(c *cli.Context) {
+	changed := false
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, service := range c.Args() {
+		if _, ok := cfg.ServicesInclude[service]; !ok {
+			continue
+		}
+		delete(cfg.ServicesInclude, service)
 		changed = true
 	}
 
