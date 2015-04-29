@@ -17,6 +17,7 @@ INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
 INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
 USER_DATA=cloud-init/openstack/latest/user_data
+CLOUD_CONFIG=$(readlink -f "$1") || :
 
 if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
     echo "Failed to find ${KERNEL} or ${INITRD}" 1>&2
@@ -56,8 +57,8 @@ fi
 
 mkdir -p $(dirname $USER_DATA)
 
-if [ -e ../../tmp/cloud-config.yml ]; then
-    cat ../../tmp/cloud-config.yml > ${USER_DATA}
+if [ -n "$CLOUD_CONFIG" ]; then
+    cat ${CLOUD_CONFIG} > ${USER_DATA}
 else
     echo "#cloud-config" > ${USER_DATA}
     echo "ssh_authorized_keys:" >> ${USER_DATA}
