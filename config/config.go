@@ -194,9 +194,9 @@ func Dump(private, full bool) (string, error) {
 func (c *Config) configureConsole() error {
 	if console, ok := c.SystemContainers[CONSOLE_CONTAINER]; ok {
 		if c.Console.Persistent {
-			console.Labels = append(console.Labels, REMOVE+"=false")
+			console.Labels.MapParts()[REMOVE] = "false"
 		} else {
-			console.Labels = append(console.Labels, REMOVE+"=true")
+			console.Labels.MapParts()[REMOVE] = "true"
 		}
 	}
 
