@@ -357,6 +357,7 @@ func RunInit() error {
 		func(cfg *config.Config) error {
 			return cfg.Reload()
 		},
+		loadModules,
 		setResolvConf,
 		func(cfg *config.Config) error {
 			return createDirs(postDirs...)
