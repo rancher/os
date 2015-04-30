@@ -314,9 +314,8 @@ func Map2KVPairs(m map[string]string) []string {
 func KVPairs2Map(kvs []string) map[string]string {
 	r := make(map[string]string, len(kvs))
 	for _, kv := range kvs {
-		sepIdx := strings.Index(kv, "=")
-		k, v := kv[:sepIdx], kv[(sepIdx + 1):]
-		r[k] = v
+		s := strings.SplitN(kv, "=", 2)
+		r[s[0]] = s[1]
 	}
 	return r
 }
