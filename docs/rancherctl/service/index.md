@@ -18,6 +18,7 @@ _Available as of v0.3.0._
 |`enable`	| Turn on an service|
 |`disable`	|Turn off an service|
 |`list`	|	List services and state|
+|`delete`| Delete services|
 
 ### List
 ---
@@ -59,3 +60,17 @@ $ sudo rancherctl service list
 disabled ubuntu-console
 ```
 
+### Delete
+---
+The `delete` command can be used to delete services that were added dynamically. i.e. All the services that were not compiled in can be deleted. 
+
+```
+$ sudo rancherctl service add etcd.yml
+$ sudo rancherctl service list
+enabled  etcd.yml
+disabled ubuntu-console
+$ sudo rancherctl delete etcd.yml
+$ sudo rancherctl service list
+disabled ubuntu-console
+```
+Note that you **cannot** delete the ubuntu-console , because that was compiled into RancherOS
