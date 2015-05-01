@@ -1,6 +1,10 @@
 package project
 
-import "github.com/rancherio/go-rancher/client"
+import (
+	"github.com/rancherio/go-rancher/client"
+	"gopkg.in/yaml.v2"
+	"strings"
+)
 
 type Event string
 
@@ -20,13 +24,110 @@ const (
 	PROJECT_RELOAD_TRIGGER = Event("Triggering project reload")
 )
 
+type Stringorslice struct {
+	parts []string
+}
+
+func (s *Stringorslice) MarshalYAML() (interface{}, error) {
+	if s == nil {
+		return nil, nil
+	}
+	return yaml.Marshal(s.Slice())
+}
+
+func (s *Stringorslice) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var sliceType []string
+	err := unmarshal(&sliceType)
+	if err == nil {
+		s.parts = sliceType
+		return nil
+	}
+
+	var stringType string
+	err = unmarshal(&stringType)
+	if err == nil {
+		sliceType = make([]string, 0, 1)
+		s.parts = append(sliceType, string(stringType))
+		return nil
+	}
+	return err
+}
+
+func (s *Stringorslice) Len() int {
+	if s == nil {
+		return 0
+	}
+	return len(s.parts)
+}
+
+func (s *Stringorslice) Slice() []string {
+	if s == nil {
+		return nil
+	}
+	return s.parts
+}
+
+func NewStringorslice(parts ...string) *Stringorslice {
+	return &Stringorslice{parts}
+}
+
+type SliceorMap struct {
+	parts map[string]string
+}
+
+func (s *SliceorMap) MarshalYAML() (interface{}, error) {
+	if s == nil {
+		return nil, nil
+	}
+	return yaml.Marshal(s.MapParts())
+}
+
+func (s *SliceorMap) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	mapType := make(map[string]string)
+	err := unmarshal(&mapType)
+	if err == nil {
+		s.parts = mapType
+		return nil
+	}
+
+	var sliceType []string
+	var keyValueSlice []string
+	var key string
+	var value string
+
+	err = unmarshal(&sliceType)
+	if err == nil {
+		mapType = make(map[string]string)
+		for _, slice := range sliceType {
+			keyValueSlice = strings.Split(slice, "=") //split up key and value into []string
+			key = keyValueSlice[0]
+			value = keyValueSlice[1]
+			mapType[key] = value
+		}
+		s.parts = mapType
+		return nil
+	}
+	return err
+}
+
+func (s *SliceorMap) MapParts() map[string]string {
+	if s == nil {
+		return nil
+	}
+	return s.parts
+}
+
+func NewSliceorMap(parts map[string]string) *SliceorMap {
+	return &SliceorMap{parts}
+}
+
 type ServiceConfig struct {
 	CapAdd      []string `yaml:"cap_add,omitempty"`
 	CapDrop     []string `yaml:"cap_drop,omitempty"`
 	CpuShares   int64    `yaml:"cpu_shares,omitempty"`
 	Command     string   `yaml:"command,omitempty"`
 	Detach      string   `yaml:"detach,omitempty"`
-	Dns         []string `yaml:"dns,omitempty"`
+	Dns         *Stringorslice
 	DnsSearch   string   `yaml:"dns_search,omitempty"`
 	DomainName  string   `yaml:"domainname,omitempty"`
 	Entrypoint  string   `yaml:"entrypoint,omitempty"`
@@ -34,7 +135,8 @@ type ServiceConfig struct {
 	Environment []string `yaml:"environment,omitempty"`
 	Hostname    string   `yaml:"hostname,omitempty"`
 	Image       string   `yaml:"image,omitempty"`
-	Labels      []string `yaml:"labels,omitempty"`
+	//Labels      map[string]string `yaml:"labels,omitempty"`
+	Labels      *SliceorMap
 	Links       []string `yaml:"links,omitempty"`
 	LogDriver   string   `yaml:"log_driver,omitempty"`
 	MemLimit    int64    `yaml:"mem_limit,omitempty"`
