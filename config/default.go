@@ -330,12 +330,9 @@ func NewConfig() *Config {
 			"acpid": {
 				Image:      "acpid",
 				Privileged: true,
-				Links: []string{
-					"console",
-				},
-				Labels: []string{
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					SCOPE: SYSTEM,
+				}),
 				VolumesFrom: []string{
 					"command-volumes",
 					"system-volumes",
