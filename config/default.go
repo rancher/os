@@ -79,10 +79,10 @@ func NewConfig() *Config {
 			"udev": {
 				Net:        "host",
 				Privileged: true,
-				Labels: []string{
-					DETACH + "=false",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					DETACH: "false",
+					SCOPE:  SYSTEM,
+				}),
 				Volumes: []string{
 					"/dev:/host/dev",
 					"/lib/modules:/lib/modules",
@@ -98,10 +98,10 @@ func NewConfig() *Config {
 				Restart:    "always",
 				Net:        "host",
 				Privileged: true,
-				Labels: []string{
-					DETACH + "=true",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					DETACH: "true",
+					SCOPE:  SYSTEM,
+				}),
 				Environment: []string{
 					"DAEMON=true",
 				},
@@ -114,10 +114,10 @@ func NewConfig() *Config {
 				Net:        "none",
 				ReadOnly:   true,
 				Privileged: true,
-				Labels: []string{
-					CREATE_ONLY + "=true",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					CREATE_ONLY: "true",
+					SCOPE:       SYSTEM,
+				}),
 				Volumes: []string{
 					"/dev:/host/dev",
 					"/var/lib/rancher/conf:/var/lib/rancher/conf",
@@ -134,10 +134,10 @@ func NewConfig() *Config {
 				Net:        "none",
 				ReadOnly:   true,
 				Privileged: true,
-				Labels: []string{
-					CREATE_ONLY + "=true",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					CREATE_ONLY: "true",
+					SCOPE:       SYSTEM,
+				}),
 				Volumes: []string{
 					"/init:/sbin/halt:ro",
 					"/init:/sbin/poweroff:ro",
@@ -159,10 +159,10 @@ func NewConfig() *Config {
 				Net:        "none",
 				ReadOnly:   true,
 				Privileged: true,
-				Labels: []string{
-					CREATE_ONLY + "=true",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					CREATE_ONLY: "true",
+					SCOPE:       SYSTEM,
+				}),
 				Volumes: []string{
 					"/home:/home",
 					"/opt:/opt",
@@ -174,10 +174,10 @@ func NewConfig() *Config {
 				Net:        "none",
 				ReadOnly:   true,
 				Privileged: true,
-				Labels: []string{
-					CREATE_ONLY + "=true",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					CREATE_ONLY: "true",
+					SCOPE:       SYSTEM,
+				}),
 				Volumes: []string{
 					"/var/lib/rancher:/var/lib/rancher",
 					"/var/lib/docker:/var/lib/docker",
@@ -190,10 +190,10 @@ func NewConfig() *Config {
 				Net:        "none",
 				ReadOnly:   true,
 				Privileged: true,
-				Labels: []string{
-					CREATE_ONLY + "=true",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					CREATE_ONLY: "true",
+					SCOPE:       SYSTEM,
+				}),
 				VolumesFrom: []string{
 					"docker-volumes",
 					"command-volumes",
@@ -206,11 +206,11 @@ func NewConfig() *Config {
 				Image:      "cloudinit",
 				Privileged: true,
 				Net:        "host",
-				Labels: []string{
-					RELOAD_CONFIG + "=true",
-					DETACH + "=false",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					RELOAD_CONFIG: "true",
+					DETACH:        "false",
+					SCOPE:         SYSTEM,
+				}),
 				Environment: []string{
 					"CLOUD_INIT_NETWORK=false",
 				},
@@ -223,10 +223,10 @@ func NewConfig() *Config {
 				Image:      "network",
 				Privileged: true,
 				Net:        "host",
-				Labels: []string{
-					DETACH + "=false",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					DETACH: "false",
+					SCOPE:  SYSTEM,
+				}),
 				Links: []string{
 					"cloud-init-pre",
 				},
@@ -238,11 +238,11 @@ func NewConfig() *Config {
 			"cloud-init": {
 				Image:      "cloudinit",
 				Privileged: true,
-				Labels: []string{
-					RELOAD_CONFIG + "=true",
-					DETACH + "=false",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					RELOAD_CONFIG: "true",
+					DETACH:        "false",
+					SCOPE:         SYSTEM,
+				}),
 				Net: "host",
 				Links: []string{
 					"cloud-init-pre",
@@ -258,9 +258,9 @@ func NewConfig() *Config {
 				Restart:    "always",
 				Privileged: true,
 				Net:        "host",
-				Labels: []string{
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					SCOPE: SYSTEM,
+				}),
 				Links: []string{
 					"cloud-init",
 					"network",
@@ -271,9 +271,9 @@ func NewConfig() *Config {
 				Restart:    "always",
 				Privileged: true,
 				Net:        "host",
-				Labels: []string{
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					SCOPE: SYSTEM,
+				}),
 				VolumesFrom: []string{
 					"system-volumes",
 				},
@@ -286,9 +286,9 @@ func NewConfig() *Config {
 				Pid:        "host",
 				Ipc:        "host",
 				Net:        "host",
-				Labels: []string{
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					SCOPE: SYSTEM,
+				}),
 				Links: []string{
 					"network",
 				},
@@ -299,10 +299,10 @@ func NewConfig() *Config {
 			"userdockerwait": {
 				Image: "userdockerwait",
 				Net:   "host",
-				Labels: []string{
-					DETACH + "=false",
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					DETACH: "false",
+					SCOPE:  SYSTEM,
+				}),
 				Links: []string{
 					"userdocker",
 				},
@@ -316,9 +316,9 @@ func NewConfig() *Config {
 				Links: []string{
 					"cloud-init",
 				},
-				Labels: []string{
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					SCOPE: SYSTEM,
+				}),
 				VolumesFrom: []string{
 					"all-volumes",
 				},
@@ -330,12 +330,9 @@ func NewConfig() *Config {
 			"acpid": {
 				Image:      "acpid",
 				Privileged: true,
-				Links: []string{
-					"console",
-				},
-				Labels: []string{
-					SCOPE + "=" + SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					SCOPE: SYSTEM,
+				}),
 				VolumesFrom: []string{
 					"command-volumes",
 					"system-volumes",

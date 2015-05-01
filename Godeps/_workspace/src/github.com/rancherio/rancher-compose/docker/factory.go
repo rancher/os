@@ -19,31 +19,37 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 	cmd, _ := shlex.Split(c.Command)
 	entrypoint, _ := shlex.Split(c.Entrypoint)
 	ports, binding, err := nat.ParsePortSpecs(c.Ports)
+	restart, err := runconfig.ParseRestartPolicy(c.Restart)
+	dns := c.Dns.Slice()
+	labels := c.Labels.MapParts()
 
 	if err != nil {
 		return nil, nil, err
 	}
 
 	config := &runconfig.Config{
-		Entrypoint:   entrypoint,
+		Entrypoint:   runconfig.NewEntrypoint(entrypoint...),
 		Hostname:     c.Hostname,
 		Domainname:   c.DomainName,
 		User:         c.User,
-		Memory:       c.MemLimit,
-		CpuShares:    c.CpuShares,
 		Env:          c.Environment,
-		Cmd:          cmd,
+		Cmd:          runconfig.NewCommand(cmd...),
 		Image:        c.Image,
-		Labels:       kvListToMap(c.Labels),
+		Labels:       labels,
 		ExposedPorts: ports,
+		Tty:          c.Tty,
+		OpenStdin:    c.StdinOpen,
+		WorkingDir:   c.WorkingDir,
 	}
 	host_config := &runconfig.HostConfig{
+		Memory:      c.MemLimit,
+		CpuShares:   c.CpuShares,
 		VolumesFrom: c.VolumesFrom,
 		CapAdd:      c.CapAdd,
 		CapDrop:     c.CapDrop,
 		Privileged:  c.Privileged,
 		Binds:       c.Volumes,
-		Dns:         c.Dns,
+		Dns:         dns,
 		LogConfig: runconfig.LogConfig{
 			Type: c.LogDriver,
 		},
@@ -52,6 +58,7 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		PidMode:        runconfig.PidMode(c.Pid),
 		IpcMode:        runconfig.IpcMode(c.Ipc),
 		PortBindings:   binding,
+		RestartPolicy:  restart,
 	}
 
 	return config, host_config, nil

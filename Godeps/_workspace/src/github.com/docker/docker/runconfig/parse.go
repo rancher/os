@@ -2,7 +2,6 @@ package runconfig
 
 import (
 	"fmt"
-	"path"
 	"strconv"
 	"strings"
 
@@ -12,11 +11,9 @@ import (
 	"github.com/docker/docker/pkg/parsers"
 	"github.com/docker/docker/pkg/ulimit"
 	"github.com/docker/docker/pkg/units"
-	"github.com/docker/docker/utils"
 )
 
 var (
-	ErrInvalidWorkingDirectory          = fmt.Errorf("The working directory is invalid. It needs to be an absolute path.")
 	ErrConflictContainerNetworkAndLinks = fmt.Errorf("Conflicting options: --net=container can't be used with links. This would result in undefined behavior.")
 	ErrConflictContainerNetworkAndDns   = fmt.Errorf("Conflicting options: --net=container can't be used with --dns. This configuration is invalid.")
 	ErrConflictNetworkHostname          = fmt.Errorf("Conflicting options: -h and the network mode (--net)")
@@ -65,6 +62,8 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 		flWorkingDir      = cmd.String([]string{"w", "-workdir"}, "", "Working directory inside the container")
 		flCpuShares       = cmd.Int64([]string{"c", "-cpu-shares"}, 0, "CPU shares (relative weight)")
 		flCpusetCpus      = cmd.String([]string{"#-cpuset", "-cpuset-cpus"}, "", "CPUs in which to allow execution (0-3, 0,1)")
+		flCpusetMems      = cmd.String([]string{"-cpuset-mems"}, "", "MEMs in which to allow execution (0-3, 0,1)")
+		flCpuQuota        = cmd.Int64([]string{"-cpu-quota"}, 0, "Limit the CPU CFS (Completely Fair Scheduler) quota")
 		flNetMode         = cmd.String([]string{"-net"}, "bridge", "Set the Network mode for the container")
 		flMacAddress      = cmd.String([]string{"-mac-address"}, "", "Container MAC address (e.g. 92:d0:c6:0a:29:33)")
 		flIpcMode         = cmd.String([]string{"-ipc"}, "", "IPC namespace to use")
@@ -96,16 +95,11 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 
 	cmd.Require(flag.Min, 1)
 
-	if err := utils.ParseFlags(cmd, args, true); err != nil {
+	if err := cmd.ParseFlags(args, true); err != nil {
 		return nil, nil, cmd, err
 	}
 
-	// Validate input params
-	if *flWorkingDir != "" && !path.IsAbs(*flWorkingDir) {
-		return nil, nil, cmd, ErrInvalidWorkingDirectory
-	}
-
-	// Validate the input mac address
+	// Validate input params starting with the input mac address
 	if *flMacAddress != "" {
 		if _, err := opts.ValidateMACAddress(*flMacAddress); err != nil {
 			return nil, nil, cmd, fmt.Errorf("%s is not a valid mac address", *flMacAddress)
@@ -125,7 +119,7 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 		return nil, nil, cmd, ErrConflictHostNetworkAndLinks
 	}
 
-	if *flNetMode == "container" && flLinks.Len() > 0 {
+	if strings.HasPrefix(*flNetMode, "container") && flLinks.Len() > 0 {
 		return nil, nil, cmd, ErrConflictContainerNetworkAndLinks
 	}
 
@@ -133,7 +127,7 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 		return nil, nil, cmd, ErrConflictHostNetworkAndDns
 	}
 
-	if *flNetMode == "container" && flDns.Len() > 0 {
+	if strings.HasPrefix(*flNetMode, "container") && flDns.Len() > 0 {
 		return nil, nil, cmd, ErrConflictContainerNetworkAndDns
 	}
 
@@ -186,21 +180,22 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 
 	var (
 		parsedArgs = cmd.Args()
-		runCmd     []string
-		entrypoint []string
+		runCmd     *Command
+		entrypoint *Entrypoint
 		image      = cmd.Arg(0)
 	)
 	if len(parsedArgs) > 1 {
-		runCmd = parsedArgs[1:]
+		runCmd = NewCommand(parsedArgs[1:]...)
 	}
 	if *flEntrypoint != "" {
-		entrypoint = []string{*flEntrypoint}
+		entrypoint = NewEntrypoint(*flEntrypoint)
 	}
 
-	lxcConf, err := parseKeyValueOpts(flLxcOpts)
+	lc, err := parseKeyValueOpts(flLxcOpts)
 	if err != nil {
 		return nil, nil, cmd, err
 	}
+	lxcConf := NewLxcConfig(lc)
 
 	var (
 		domainname string
@@ -275,7 +270,7 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 		return nil, nil, cmd, fmt.Errorf("--net: invalid net mode: %v", err)
 	}
 
-	restartPolicy, err := parseRestartPolicy(*flRestartPolicy)
+	restartPolicy, err := ParseRestartPolicy(*flRestartPolicy)
 	if err != nil {
 		return nil, nil, cmd, err
 	}
@@ -289,10 +284,6 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 		Tty:             *flTty,
 		NetworkDisabled: !*flNetwork,
 		OpenStdin:       *flStdin,
-		Memory:          flMemory,      // FIXME: for backward compatibility
-		MemorySwap:      MemorySwap,    // FIXME: for backward compatibility
-		CpuShares:       *flCpuShares,  // FIXME: for backward compatibility
-		Cpuset:          *flCpusetCpus, // FIXME: for backward compatibility
 		AttachStdin:     attachStdin,
 		AttachStdout:    attachStdout,
 		AttachStderr:    attachStderr,
@@ -314,6 +305,8 @@ func Parse(cmd *flag.FlagSet, args []string) (*Config, *HostConfig, *flag.FlagSe
 		MemorySwap:      MemorySwap,
 		CpuShares:       *flCpuShares,
 		CpusetCpus:      *flCpusetCpus,
+		CpusetMems:      *flCpusetMems,
+		CpuQuota:        *flCpuQuota,
 		Privileged:      *flPrivileged,
 		PortBindings:    portBindings,
 		Links:           flLinks.GetAll(),
@@ -374,8 +367,8 @@ func convertKVStringsToMap(values []string) map[string]string {
 	return result
 }
 
-// parseRestartPolicy returns the parsed policy or an error indicating what is incorrect
-func parseRestartPolicy(policy string) (RestartPolicy, error) {
+// ParseRestartPolicy returns the parsed policy or an error indicating what is incorrect
+func ParseRestartPolicy(policy string) (RestartPolicy, error) {
 	p := RestartPolicy{}
 
 	if policy == "" {
@@ -430,14 +423,14 @@ func parseDriverOpts(opts opts.ListOpts) (map[string][]string, error) {
 	return out, nil
 }
 
-func parseKeyValueOpts(opts opts.ListOpts) ([]utils.KeyValuePair, error) {
-	out := make([]utils.KeyValuePair, opts.Len())
+func parseKeyValueOpts(opts opts.ListOpts) ([]KeyValuePair, error) {
+	out := make([]KeyValuePair, opts.Len())
 	for i, o := range opts.GetAll() {
 		k, v, err := parsers.ParseKeyValueOpt(o)
 		if err != nil {
 			return nil, err
 		}
-		out[i] = utils.KeyValuePair{Key: k, Value: v}
+		out[i] = KeyValuePair{Key: k, Value: v}
 	}
 	return out, nil
 }

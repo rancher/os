@@ -77,7 +77,7 @@ func (c *containerBasedService) Name() string {
 }
 
 func isSystemService(serviceConfig *project.ServiceConfig) bool {
-	return util.GetValue(serviceConfig.Labels, config.SCOPE) == config.SYSTEM
+	return serviceConfig.Labels.MapParts()[config.SCOPE] == config.SYSTEM
 }
 
 func (c *ContainerFactory) Create(project *project.Project, name string, serviceConfig *project.ServiceConfig) (project.Service, error) {

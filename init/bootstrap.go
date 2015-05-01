@@ -79,10 +79,10 @@ outer:
 				Privileged: true,
 				Image:      "autoformat",
 				Command:    format,
-				Labels: []string{
-					config.DETACH + "=false",
-					config.SCOPE + "=" + config.SYSTEM,
-				},
+				Labels: project.NewSliceorMap(map[string]string{
+					config.DETACH: "false",
+					config.SCOPE:  config.SYSTEM,
+				}),
 				LogDriver: "json-file",
 				Environment: []string{
 					"MAGIC=" + boot2dockerMagic,
