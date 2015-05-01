@@ -104,6 +104,8 @@ if ! grep -q "$(hostname)" /etc/hosts; then
     echo 127.0.1.1 $(hostname) >> /etc/hosts
 fi
 
+echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue
+
 if [ -x /opt/rancher/bin/start.sh ]; then
     echo Executing custom script
     /opt/rancher/bin/start.sh || true
