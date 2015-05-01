@@ -1,6 +1,7 @@
 package control
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -36,7 +37,7 @@ func tlsConfCommands() []cli.Command {
 				cli.StringFlag{
 					Name:  "dir, d",
 					Usage: "the directory to save/read the certs to/from",
-					Value: "${HOME}/.docker",
+					Value: "",
 				},
 			},
 		},
@@ -132,7 +133,10 @@ func generate(c *cli.Context) error {
 	}
 
 	generateServer := c.Bool("server")
-	outDir := os.ExpandEnv(c.String("dir"))
+	outDir := c.String("dir")
+	if outDir == "" {
+		return fmt.Errorf("out directory (-d, --dir) not specified")
+	}
 	caCertPath := filepath.Join(outDir, "ca.pem")
 	caKeyPath := filepath.Join(outDir, "ca-key.pem")
 	certPath := filepath.Join(outDir, "cert.pem")
