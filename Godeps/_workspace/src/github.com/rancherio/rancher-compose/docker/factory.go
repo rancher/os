@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/docker/docker/nat"
@@ -9,6 +10,20 @@ import (
 
 	shlex "github.com/flynn/go-shlex"
 )
+
+func restartPolicy(restart string) runconfig.RestartPolicy {
+	rs := strings.Split(restart, ":")
+	result := runconfig.RestartPolicy{
+		Name:               rs[0],
+		MaximumRetryCount:  0,
+	}
+	if len(rs) == 2 {
+		if i, err := strconv.Atoi(rs[1]); err == nil {
+			result.MaximumRetryCount = i
+		}
+	}
+	return result
+}
 
 func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig, error) {
 
@@ -48,6 +63,7 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		PidMode:        runconfig.PidMode(c.Pid),
 		IpcMode:        runconfig.IpcMode(c.Ipc),
 		PortBindings:   binding,
+		RestartPolicy:  restartPolicy(c.Restart),
 	}
 
 	return config, host_config, nil
