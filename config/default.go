@@ -279,8 +279,8 @@ func NewConfig() *Config {
 				},
 				LogDriver: "json-file",
 			},
-			"userdocker": {
-				Image:      "userdocker",
+			"docker": {
+				Image:      "docker",
 				Restart:    "always",
 				Privileged: true,
 				Pid:        "host",
@@ -296,15 +296,15 @@ func NewConfig() *Config {
 					"all-volumes",
 				},
 			},
-			"userdockerwait": {
-				Image: "userdockerwait",
+			"dockerwait": {
+				Image: "dockerwait",
 				Net:   "host",
 				Labels: project.NewSliceorMap(map[string]string{
 					DETACH: "false",
 					SCOPE:  SYSTEM,
 				}),
 				Links: []string{
-					"userdocker",
+					"docker",
 				},
 				VolumesFrom: []string{
 					"all-volumes",
