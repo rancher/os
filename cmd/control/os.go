@@ -44,6 +44,10 @@ func osSubcommands() []cli.Command {
 					Name:  "force, f",
 					Usage: "do not prompt for input",
 				},
+				cli.BoolFlag{
+					Name:  "no-reboot",
+					Usage: "do not reboot after upgrade",
+				},
 			},
 		},
 		{
@@ -140,7 +144,7 @@ func osUpgrade(c *cli.Context) {
 			log.Fatal("Failed to find latest image")
 		}
 	}
-	startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"))
+	startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"))
 }
 
 func osVersion(c *cli.Context) {
@@ -157,7 +161,7 @@ func yes(in *bufio.Reader, question string) bool {
 	return strings.ToLower(line[0:1]) == "y"
 }
 
-func startUpgradeContainer(image string, stage, force bool) {
+func startUpgradeContainer(image string, stage, force, reboot bool) {
 	in := bufio.NewReader(os.Stdin)
 
 	container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &config.ContainerConfig{
@@ -215,7 +219,7 @@ func startUpgradeContainer(image string, stage, force bool) {
 		}
 
 		if exit == 0 {
-			if force || yes(in, "Continue with reboot") {
+			if reboot && (force || yes(in, "Continue with reboot")) {
 				log.Info("Rebooting")
 				power.Reboot()
 			}
