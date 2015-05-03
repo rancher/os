@@ -11,10 +11,6 @@ import (
 )
 
 func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig, error) {
-	volumes := map[string]struct{}{}
-	for _, v := range c.Volumes {
-		volumes[strings.Split(v, ":")[0]] = struct{}{}
-	}
 
 	cmd, _ := shlex.Split(c.Command)
 	entrypoint, _ := shlex.Split(c.Entrypoint)
