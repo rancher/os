@@ -27,4 +27,8 @@ if [ "$(rancherctl config get user_docker.tls)" = "true" ]; then
     cd $TLS_PATH
 fi
 
-exec $ARGS >/var/log/docker.log 2>&1
+if [ -e /var/lib/rancher/conf/docker ]; then
+    source /var/lib/rancher/conf/docker
+fi
+
+exec $ARGS $DOCKER_OPTS >/var/log/docker.log 2>&1
