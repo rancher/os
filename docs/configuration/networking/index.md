@@ -48,3 +48,17 @@ In the DNS section, you can set the `nameserver`, `search`, and `domain`, which 
 
 In the `interfaces` section, the keys are used to match the desired interface to configure.  Wildcard globbing is supported so `eth*` will match `eth1` and `eth2`.  The available options you can set are `address`, `gateway`, `mtu`, and `dhcp`.
 
+
+If you have multiple NICs on your server and you want to select a sepecific NIC for RancherOS, you will need to update the `interfaces` key. You can change this key in the [cloud config]({{site.baseurl}}/docs/cloud-config) so that it will select the NIC selection upon the first install.
+
+```yaml
+#cloud-config
+
+#Remember, any changes for rancher will be within the rancher key
+rancher:
+  network:
+    interfaces:
+      "mac=00:00:00:00:00:00":
+         dhcp: true
+```
+
