@@ -3,9 +3,11 @@ package control
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancherio/os/config"
+	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
 )
 
@@ -61,6 +63,14 @@ func enable(c *cli.Context) {
 
 	for _, service := range c.Args() {
 		if val, ok := cfg.ServicesInclude[service]; !ok || !val {
+			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
+				log.Printf("ERROR: Service should be in path /var/lib/rancher/conf")
+				continue
+			}
+			if err := docker.StageService(service, cfg); err != nil {
+				log.Printf("Could not stage service %s", service)
+				continue
+			}
 			cfg.ServicesInclude[service] = true
 			changed = true
 		}

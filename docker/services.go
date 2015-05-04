@@ -50,6 +50,27 @@ func (c *configEnvironment) Lookup(key, serviceName string, serviceConfig *proje
 	return lookupKeys(c.cfg, fullKey, key)
 }
 
+func StageService(name string, cfg *config.Config) error {
+	p := project.NewProject(name, NewContainerFactory(cfg))
+	bytes, err := LoadServiceResource(name, true, cfg)
+	if err != nil {
+		if err == util.ErrNoNetwork {
+			log.Debugf("Can not stage %s, networking not enabled", name)
+			return err
+		} else {
+			log.Errorf("Failed to stage %s : %v", name, err)
+			return err
+		}
+	}
+
+	err = p.Load(bytes)
+	if err != nil {
+		log.Errorf("Failed to load %s : %v", name, err)
+		return err
+	}
+	return p.Pull()
+}
+
 func RunServices(name string, cfg *config.Config, configs map[string]*project.ServiceConfig) error {
 	network := false
 	projectEvents := make(chan project.ProjectEvent)
