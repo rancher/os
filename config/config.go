@@ -236,6 +236,12 @@ func (c *Config) Set(key string, value interface{}) error {
 
 	getOrSetVal(key, data, value)
 
+	cfg := NewConfig()
+
+	if err := util.Convert(data, cfg); err != nil {
+		return err
+	}
+
 	err = saveToDisk(data)
 	if err != nil {
 		return err
