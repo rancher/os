@@ -60,7 +60,7 @@ func NewConfig() *Config {
 				Nameservers: []string{"8.8.8.8", "8.8.4.4"},
 			},
 			Interfaces: map[string]InterfaceConfig{
-				"eth0": {
+				"eth*": {
 					DHCP: true,
 				},
 				"lo": {
