@@ -22,12 +22,13 @@ A useful command that can be used with RancherOS is `rancherctl` which can be us
 
 ### RancherOS Version
 ---
-If you want to check what version you are on, just use the `-v` option. 
+If you want to check what version you are on, just use the `-v` option.
 
 ```sh
 $ sudo rancherctl -v
 rancherctl version v0.2.1
 ```
+
 ### Help
 ---
 To list available commands, run any `rancherctl` command with `-h` or `--help`. This would work with any subcommand within `rancherctl`.
@@ -58,6 +59,4 @@ GLOBAL OPTIONS:
     --help, -h                  show help
     --generate-bash-completion	
     --version, -v               print the version
-
 ```
-
