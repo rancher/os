@@ -6,9 +6,7 @@ layout: default
 
 ## Upgrading RancherOS
 ---
-RancherOS has released a new version and you want to learn how to upgrade your OS. We make it easy using the [RancherCTL OS]({{site.baseurl}}/docs/rancherctl/os) commands.
-
-RancherOS only supports upgrading from the previous version. If you are on version v0.1.2, we recommend upgrading to v0.2.0 before upgrading to v0.2.1. 
+RancherOS has released a new version and you want to learn how to upgrade your OS. We make it easy using the [RancherCTL OS]({{site.baseurl}}/docs/rancheros-tools/rancherctl/os) commands.
 
 To see all of our releases, please visit our [release page](https://github.com/rancherio/os/releases) in GitHub.
 
@@ -21,7 +19,7 @@ $ sudo rancherctl -v
 rancherctl version v0.2.0
 ```
 
-If you just want to find out the available releases from the command line, it's a simple [RancherCTL]({{site.baseurl}}/docs/rancherctl/) command.
+If you just want to find out the available releases from the command line, it's a simple [RancherCTL]({{site.baseurl}}/docs/rancheros-tools/rancherctl/) command.
 
 ```bash
 $ sudo rancherctl os list
@@ -38,7 +36,7 @@ The local/remote shows which images are already in the system-docker containers 
 
 ### Upgrading 
 
-Let's walk through upgrading! The `rancherctl os upgrade` command will automatically upgrade to the current release of RancherOS. The current release is designated as the most recent release of RancherOS. If you are a couple of versions behind, it's recommended to upgrade to each subsequent versions as RancherOS doesn't support going from v0.1.2 to v0.2.1 (skipping v0.2.0). 
+Let's walk through upgrading! The `rancherctl os upgrade` command will automatically upgrade to the current release of RancherOS. The current release is designated as the most recent release of RancherOS. 
 
 ```bash
 $ sudo rancherctl os upgrade
@@ -66,7 +64,7 @@ $ sudo rancherctl -v
 rancherctl version v0.2.1
 ```
 
-Note: If you are booting from ISO and have not installed to disk, your upgrade will not be saved. You can view our guide to [installing to disk]({{site.baseurl}}/docs/getting-started/disk/). 
+Note: If you are booting from ISO and have not installed to disk, your upgrade will not be saved. You can view our guide to [installing to disk]({{site.baseurl}}/docs/running-rancheros/server/install-to-disk/). 
 
 #### Upgrading to a Specific Version
 
