@@ -8,7 +8,7 @@ layout: default
 ---
 RancherOS is a 20MB distribution, which runs the latest Docker daemon as PID1, the first process on the system.  All other system services, like ntpd, rsyslog, and console, are running in Docker containers.
 
-The first process on the system is called **System Docker** and it's responsible for managing the system services on RancherOS. System Docker replaces traditional init systems like systemd, and can be used to launch [additional system services]({{site.baseurl}}/docs/system-services/).
+The first process on the system is called **System Docker** and it's responsible for managing the system services on RancherOS. System Docker replaces traditional init systems like systemd, and can be used to launch [additional system services]({{site.baseurl}}/docs/configuration/system-services/).
 
 System Docker runs a special container called **User Docker**, which is another Docker daemon responsible for managing all of the user’s containers. Any containers that you launch as a user from the console will run inside this User Docker. This creates isolation from the System Docker containers, and ensures normal user commands don’t impact system services.
 

@@ -1,5 +1,5 @@
 ---
-title: Overview of RancherOS
+title: What is RancherOS? 
 layout: default
 
 ---
@@ -9,8 +9,6 @@ layout: default
 The smallest, easiest way to run Docker in production at scale.  Everything in RancherOS is a container managed by Docker.  This includes system services such as udev and rsyslog.  RancherOS includes only the bare minimum amount of software needed to run Docker.  This keeps the binary download of RancherOS to about 20MB.  Everything else can be pulled in dynamically through Docker.
 
 ### How this works
-
-
 
 Everything in RancherOS is a Docker container.  We accomplish this by launching two instances of Docker.  One is what we call the system Docker which runs as PID 1.  System Docker then launches a container that runs the user Docker.  The user Docker is then the instance that gets primarily used to create containers.  We created this separation because it seemed logical and also it would really be bad if somebody did 
 `docker rm -f $(docker ps -qa)` and deleted the entire OS.
@@ -23,12 +21,5 @@ Everything in RancherOS is a Docker container.  We accomplish this by launching 
 
 ## Running RancherOS
 ---
-To find out more about installing RancherOS, read more about it on our [Quick Start Guide]({{site.baseurl}}/docs/quick-start-guide/).
+To find out more about running RancherOS, read more about it on our [Quick Start Guide]({{site.baseurl}}/docs/quick-start-guide/).
 
-
-## Latest Release
----
-Please check our repository for the latest release in our [README](https://github.com/rancherio/os/blob/master/README.md). 
-
-<br>
-<br>
