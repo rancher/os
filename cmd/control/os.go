@@ -144,6 +144,9 @@ func osUpgrade(c *cli.Context) {
 			log.Fatal("Failed to find latest image")
 		}
 	}
+	if c.Args().Present() {
+		log.Fatalf("invalid arguments %v", c.Args())
+	}
 	startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"))
 }
 
