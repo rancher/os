@@ -7,7 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 type configEnvironment struct {
@@ -117,7 +117,7 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 
 	go func() {
 		for event := range projectEvents {
-			if event.Event == project.CONTAINER_STARTED && event.Service.Name() == "network" {
+			if event.Event == project.CONTAINER_STARTED && event.ServiceName == "network" {
 				network = true
 			}
 		}

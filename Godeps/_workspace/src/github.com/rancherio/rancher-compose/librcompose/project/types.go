@@ -1,9 +1,10 @@
 package project
 
 import (
+	"strings"
+
 	"github.com/rancherio/go-rancher/client"
 	"gopkg.in/yaml.v2"
-	"strings"
 )
 
 type Event string
@@ -20,6 +21,7 @@ const (
 	SERVICE_UP       = Event("Started")
 
 	PROJECT_UP_START       = Event("Starting project")
+	PROJECT_UP_DONE        = Event("Project started")
 	PROJECT_RELOAD         = Event("Reloading project")
 	PROJECT_RELOAD_TRIGGER = Event("Triggering project reload")
 )
@@ -168,7 +170,6 @@ type Project struct {
 	Name              string
 	configs           map[string]*ServiceConfig
 	reload            []string
-	Services          map[string]Service
 	file              string
 	content           []byte
 	client            *client.RancherClient

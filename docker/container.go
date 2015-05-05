@@ -18,8 +18,8 @@ import (
 	dockerClient "github.com/fsouza/go-dockerclient"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
-	"github.com/rancherio/rancher-compose/docker"
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/docker"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 type Container struct {
@@ -209,7 +209,7 @@ func (c *Container) parseService() {
 	}
 
 	if c.requiresUserDocker() {
-		c.addLink("userdockerwait")
+		c.addLink("dockerwait")
 	} else if c.ContainerCfg.Service.Image != "" {
 		client, err := NewClient(c.dockerHost)
 		if err != nil {

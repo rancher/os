@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 func NewConfig() *Config {
@@ -179,7 +179,7 @@ func NewConfig() *Config {
 					SCOPE:       SYSTEM,
 				}),
 				Volumes: []string{
-					"/var/lib/rancher:/var/lib/rancher",
+					"/var/lib/rancher/conf:/var/lib/rancher/conf",
 					"/var/lib/docker:/var/lib/docker",
 					"/var/lib/system-docker:/var/lib/system-docker",
 				},
