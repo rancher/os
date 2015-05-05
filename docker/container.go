@@ -209,7 +209,7 @@ func (c *Container) parseService() {
 	}
 
 	if c.requiresUserDocker() {
-		c.addLink("userdockerwait")
+		c.addLink("dockerwait")
 	} else if c.ContainerCfg.Service.Image != "" {
 		client, err := NewClient(c.dockerHost)
 		if err != nil {
