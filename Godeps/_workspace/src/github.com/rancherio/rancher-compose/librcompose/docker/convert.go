@@ -5,7 +5,7 @@ import (
 
 	"github.com/docker/docker/nat"
 	"github.com/docker/docker/runconfig"
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 
 	shlex "github.com/flynn/go-shlex"
 )
@@ -42,17 +42,17 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		WorkingDir:   c.WorkingDir,
 	}
 	host_config := &runconfig.HostConfig{
-		Memory:      c.MemLimit,
-		CpuShares:   c.CpuShares,
 		VolumesFrom: c.VolumesFrom,
 		CapAdd:      c.CapAdd,
 		CapDrop:     c.CapDrop,
+		CpuShares:   c.CpuShares,
 		Privileged:  c.Privileged,
 		Binds:       c.Volumes,
 		Dns:         dns,
 		LogConfig: runconfig.LogConfig{
 			Type: c.LogDriver,
 		},
+		Memory:         c.MemLimit,
 		NetworkMode:    runconfig.NetworkMode(c.Net),
 		ReadonlyRootfs: c.ReadOnly,
 		PidMode:        runconfig.PidMode(c.Pid),
