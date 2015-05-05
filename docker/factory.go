@@ -5,7 +5,7 @@ import (
 
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 type ContainerFactory struct {
@@ -39,7 +39,7 @@ func (c *containerBasedService) Up() error {
 
 	var event project.Event
 
-	c.project.Notify(project.CONTAINER_STARTING, c, map[string]string{})
+	c.project.Notify(project.CONTAINER_STARTING, c.name, map[string]string{})
 
 	if fakeCreate {
 		event = project.CONTAINER_CREATED
@@ -60,7 +60,7 @@ func (c *containerBasedService) Up() error {
 	}
 
 	if container.Container != nil {
-		c.project.Notify(event, c, map[string]string{
+		c.project.Notify(event, c.name, map[string]string{
 			project.CONTAINER_ID: container.Container.ID,
 		})
 	}

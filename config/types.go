@@ -1,6 +1,6 @@
 package config
 
-import "github.com/rancherio/rancher-compose/project"
+import "github.com/rancherio/rancher-compose/librcompose/project"
 
 const (
 	DEFAULT_IMAGE_VERSION = "v0.3.0-rc2"

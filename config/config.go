@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/util"

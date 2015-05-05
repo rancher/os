@@ -10,7 +10,7 @@ import (
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 const boot2dockerMagic = "boot2docker, please format-me"

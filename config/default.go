@@ -1,7 +1,7 @@
 package config
 
 import (
-	"github.com/rancherio/rancher-compose/project"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 func NewConfig() *Config {
