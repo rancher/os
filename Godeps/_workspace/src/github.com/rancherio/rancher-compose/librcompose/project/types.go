@@ -34,7 +34,8 @@ func (s *Stringorslice) MarshalYAML() (interface{}, error) {
 	if s == nil {
 		return nil, nil
 	}
-	return yaml.Marshal(s.Slice())
+	bytes, err := yaml.Marshal(s.Slice())
+	return string(bytes), err
 }
 
 func (s *Stringorslice) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -81,7 +82,8 @@ func (s *SliceorMap) MarshalYAML() (interface{}, error) {
 	if s == nil {
 		return nil, nil
 	}
-	return yaml.Marshal(s.MapParts())
+	bytes, err := yaml.Marshal(s.MapParts())
+	return string(bytes), err
 }
 
 func (s *SliceorMap) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -124,38 +126,37 @@ func NewSliceorMap(parts map[string]string) *SliceorMap {
 }
 
 type ServiceConfig struct {
-	CapAdd      []string `yaml:"cap_add,omitempty"`
-	CapDrop     []string `yaml:"cap_drop,omitempty"`
-	CpuShares   int64    `yaml:"cpu_shares,omitempty"`
-	Command     string   `yaml:"command,omitempty"`
-	Detach      string   `yaml:"detach,omitempty"`
-	Dns         *Stringorslice
-	DnsSearch   string   `yaml:"dns_search,omitempty"`
-	DomainName  string   `yaml:"domainname,omitempty"`
-	Entrypoint  string   `yaml:"entrypoint,omitempty"`
-	EnvFile     string   `yaml:"env_file,omitempty"`
-	Environment []string `yaml:"environment,omitempty"`
-	Hostname    string   `yaml:"hostname,omitempty"`
-	Image       string   `yaml:"image,omitempty"`
-	//Labels      map[string]string `yaml:"labels,omitempty"`
-	Labels      *SliceorMap
-	Links       []string `yaml:"links,omitempty"`
-	LogDriver   string   `yaml:"log_driver,omitempty"`
-	MemLimit    int64    `yaml:"mem_limit,omitempty"`
-	Name        string   `yaml:"name,omitempty"`
-	Net         string   `yaml:"net,omitempty"`
-	Pid         string   `yaml:"pid,omitempty"`
-	Ipc         string   `yaml:"ipc,omitempty"`
-	Ports       []string `yaml:"ports,omitempty"`
-	Privileged  bool     `yaml:"privileged,omitempty"`
-	Restart     string   `yaml:"restart,omitempty"`
-	ReadOnly    bool     `yaml:"read_only,omitempty"`
-	StdinOpen   bool     `yaml:"stdin_open,omitempty"`
-	Tty         bool     `yaml:"tty,omitempty"`
-	User        string   `yaml:"user,omitempty"`
-	Volumes     []string `yaml:"volumes,omitempty"`
-	VolumesFrom []string `yaml:"volumes_from,omitempty"`
-	WorkingDir  string   `yaml:"working_dir,omitempty"`
+	CapAdd      []string       `yaml:"cap_add,omitempty"`
+	CapDrop     []string       `yaml:"cap_drop,omitempty"`
+	CpuShares   int64          `yaml:"cpu_shares,omitempty"`
+	Command     string         `yaml:"command,omitempty"`
+	Detach      string         `yaml:"detach,omitempty"`
+	Dns         *Stringorslice `yaml:"dns,omitempty"`
+	DnsSearch   *Stringorslice `yaml:"dns_search,omitempty"`
+	DomainName  string         `yaml:"domainname,omitempty"`
+	Entrypoint  string         `yaml:"entrypoint,omitempty"`
+	EnvFile     string         `yaml:"env_file,omitempty"`
+	Environment []string       `yaml:"environment,omitempty"`
+	Hostname    string         `yaml:"hostname,omitempty"`
+	Image       string         `yaml:"image,omitempty"`
+	Labels      *SliceorMap    `yaml:"labels,omitempty"`
+	Links       []string       `yaml:"links,omitempty"`
+	LogDriver   string         `yaml:"log_driver,omitempty"`
+	MemLimit    int64          `yaml:"mem_limit,omitempty"`
+	Name        string         `yaml:"name,omitempty"`
+	Net         string         `yaml:"net,omitempty"`
+	Pid         string         `yaml:"pid,omitempty"`
+	Ipc         string         `yaml:"ipc,omitempty"`
+	Ports       []string       `yaml:"ports,omitempty"`
+	Privileged  bool           `yaml:"privileged,omitempty"`
+	Restart     string         `yaml:"restart,omitempty"`
+	ReadOnly    bool           `yaml:"read_only,omitempty"`
+	StdinOpen   bool           `yaml:"stdin_open,omitempty"`
+	Tty         bool           `yaml:"tty,omitempty"`
+	User        string         `yaml:"user,omitempty"`
+	Volumes     []string       `yaml:"volumes,omitempty"`
+	VolumesFrom []string       `yaml:"volumes_from,omitempty"`
+	WorkingDir  string         `yaml:"working_dir,omitempty"`
 	//`yaml:"build,omitempty"`
 	Expose        []string `yaml:"expose,omitempty"`
 	ExternalLinks []string `yaml:"external_links,omitempty"`
