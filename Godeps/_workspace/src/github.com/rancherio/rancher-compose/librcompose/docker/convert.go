@@ -19,12 +19,23 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 	cmd, _ := shlex.Split(c.Command)
 	entrypoint, _ := shlex.Split(c.Entrypoint)
 	ports, binding, err := nat.ParsePortSpecs(c.Ports)
-	restart, err := runconfig.ParseRestartPolicy(c.Restart)
-	dns := c.Dns.Slice()
-	labels := c.Labels.MapParts()
-
 	if err != nil {
 		return nil, nil, err
+	}
+	restart, err := runconfig.ParseRestartPolicy(c.Restart)
+	if err != nil {
+		return nil, nil, err
+	}
+	dns := c.Dns.Slice()
+	dnssearch := c.DnsSearch.Slice()
+	labels := c.Labels.MapParts()
+
+	if len(c.Expose) > 0 {
+		exposedPorts, _, err := nat.ParsePortSpecs(c.Expose)
+		ports = exposedPorts
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
 	config := &runconfig.Config{
@@ -49,6 +60,7 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		Privileged:  c.Privileged,
 		Binds:       c.Volumes,
 		Dns:         dns,
+		DnsSearch:   dnssearch,
 		LogConfig: runconfig.LogConfig{
 			Type: c.LogDriver,
 		},
