@@ -1,0 +1,4 @@
+flake8==2.4.0
+pytest==2.7.0
+tox==1.9.2
+virtualenv==12.1.1
