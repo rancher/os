@@ -184,6 +184,7 @@ type Service interface {
 	Name() string
 	Up() error
 	Config() *ServiceConfig
+	Pull() error
 }
 
 type ServiceFactory interface {

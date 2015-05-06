@@ -99,6 +99,29 @@ func (p *Project) Up() error {
 	return err
 }
 
+func (p *Project) Pull() error {
+	wrappers := make(map[string]*serviceWrapper)
+	for name, _ := range p.configs {
+		w, err := newServiceWrapper(name, p)
+		if err != nil {
+			log.Errorf("could not create service wrapper for service %s: %v", name, err)
+			return err
+		}
+		wrappers[name] = w
+	}
+	for _, wrapper := range wrappers {
+		wrapper.Reset()
+	}
+
+	for _, wrapper := range wrappers {
+		if err := wrapper.Pull(); err != nil {
+			log.Errorf("Failed to stage %s : %v", wrapper.name, err)
+			return err
+		}
+	}
+	return nil
+}
+
 func (p *Project) startAll(wrappers map[string]*serviceWrapper, level int) error {
 	restart := false
 

@@ -45,6 +45,14 @@ func (s *serviceWrapper) Reset() error {
 	return nil
 }
 
+func (s *serviceWrapper) Pull() error {
+	s.err = s.service.Pull()
+	if s.err != nil {
+		log.Errorf("Failed to pull %s: %v", s.name, s.err)
+	}
+	return s.err
+}
+
 func (s *serviceWrapper) Start(wrappers map[string]*serviceWrapper) {
 	defer s.done.Done()
 

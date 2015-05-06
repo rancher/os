@@ -68,6 +68,11 @@ func (c *containerBasedService) Up() error {
 	return container.Err
 }
 
+func (c *containerBasedService) Pull() error {
+	c.container.Stage()
+	return c.container.Err
+}
+
 func (c *containerBasedService) Config() *project.ServiceConfig {
 	return c.serviceConfig
 }
