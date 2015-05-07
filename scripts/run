@@ -82,6 +82,7 @@ if [ -n "$CLOUD_CONFIG" ]; then
 else
     echo "#cloud-config" > ${USER_DATA}
     echo "ssh_authorized_keys:" >> ${USER_DATA}
+    echo "  - $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
     for i in ${HOME}/.ssh/*.pub; do
         if [ -e $i ]; then
             echo "  - $(<$i)" >> ${USER_DATA}
