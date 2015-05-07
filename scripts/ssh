@@ -3,4 +3,4 @@ set -e
 
 cd $(dirname $0)/..
 
-exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@localhost
+exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@localhost "$@"
