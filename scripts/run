@@ -90,7 +90,7 @@ else
     done
 fi
 
-qemu-system-x86_64 -serial stdio \
+exec qemu-system-x86_64 -serial stdio \
     -kernel ${KERNEL} \
     -initrd ${INITRD_TEST} \
     -m 1024 \
