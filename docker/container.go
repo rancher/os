@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -47,8 +48,54 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 	w.Write([]byte(containerCfg.Id))
 	w.Write([]byte(containerCfg.Cmd))
 	if containerCfg.Service != nil {
-		//TODO: properly hash
-		w.Write([]byte(fmt.Sprintf("%v", containerCfg.Service)))
+		//Get values of Service through reflection
+		val := reflect.ValueOf(containerCfg.Service).Elem()
+
+		//Create slice to sort the keys in Service Config, which allow constant hash ordering
+		var serviceKeys []string
+
+		//Create a data structure of map of values keyed by a string
+		unsortedKeyValue := make(map[string]interface{})
+
+		//Create a data structure of map of type keyed by a string
+		unsortedKeyType := make(map[string]reflect.Type)
+
+		//Get all keys and values in Service Configuration
+		for i := 0; i < val.NumField(); i++ {
+			valueField := val.Field(i)
+			keyField := val.Type().Field(i)
+
+			serviceKeys = append(serviceKeys, keyField.Name)
+			unsortedKeyValue[keyField.Name] = valueField.Interface()
+			unsortedKeyType[keyField.Name] = valueField.Type()
+		}
+
+		//Sort serviceKeys alphabetically
+		sort.Strings(serviceKeys)
+
+		//New slice to sort through Labels Map
+		var labelKeys []string
+
+		//Go through keys and write hash
+		for i := 0; i < len(serviceKeys); i++ {
+			serviceValue := unsortedKeyValue[serviceKeys[i]]
+			serviceType := unsortedKeyType[serviceKeys[i]]
+
+			//Only need to check for Labels key as it's a Map and write hash after sorting the label names
+			if serviceType == reflect.TypeOf(project.NewSliceorMap(make(map[string]string))) {
+				for lkey := range serviceValue.(*project.SliceorMap).MapParts() {
+					labelKeys = append(labelKeys, lkey)
+				}
+				sort.Strings(labelKeys)
+
+				for j := 0; j < len(labelKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s%v", labelKeys[j], serviceValue.(*project.SliceorMap).MapParts()[labelKeys[j]])))
+				}
+			} else {
+				w.Write([]byte(fmt.Sprintf("%v", serviceValue)))
+			}
+
+		}
 	}
 
 	if w.Err != nil {
