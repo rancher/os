@@ -1,4 +1,8 @@
 flake8==2.4.0
+mccabe==0.3
+pep8==1.6.2
+py==1.4.27
+pyflakes==0.8.1
 pytest==2.7.0
 pytest-timeout==0.4
 tox==1.9.2
