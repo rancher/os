@@ -36,3 +36,15 @@ def test_rancher_environment(qemu, cloud_config_01):
         stderr=subprocess.STDOUT, universal_newlines=True)
 
     assert v.strip() == cloud_config_01['rancher']['environment']['FLANNEL_NETWORK']
+
+
+@pytest.mark.timeout(40)
+def test_rancher_network(qemu, cloud_config_01):
+    assert qemu is not None
+    u.wait_for_ssh(ssh_command)
+
+    v = subprocess.check_output(
+        ssh_command + ['ip', 'route', 'get', 'to', '10.10.10.10'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    assert v.split(' ')[2] == cloud_config_01['rancher']['network']['interfaces']['eth0']['gateway']
