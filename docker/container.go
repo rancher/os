@@ -73,28 +73,42 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 		//Sort serviceKeys alphabetically
 		sort.Strings(serviceKeys)
 
-		//New slice to sort through Labels Map
-		var labelKeys []string
+		//New slice to sort through Keys
+		//var sliceKeys []string
 
 		//Go through keys and write hash
 		for i := 0; i < len(serviceKeys); i++ {
 			serviceValue := unsortedKeyValue[serviceKeys[i]]
 			serviceType := unsortedKeyType[serviceKeys[i]]
+			sliceKeys := []string{}
 
 			//Only need to check for Labels key as it's a Map and write hash after sorting the label names
 			if serviceType == reflect.TypeOf(project.NewSliceorMap(make(map[string]string))) {
 				for lkey := range serviceValue.(*project.SliceorMap).MapParts() {
-					labelKeys = append(labelKeys, lkey)
+					sliceKeys = append(sliceKeys, lkey)
 				}
-				sort.Strings(labelKeys)
+				sort.Strings(sliceKeys)
 
-				for j := 0; j < len(labelKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s%v", labelKeys[j], serviceValue.(*project.SliceorMap).MapParts()[labelKeys[j]])))
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s%v", sliceKeys[j], serviceValue.(*project.SliceorMap).MapParts()[sliceKeys[j]])))
+				}
+			} else if serviceType == reflect.TypeOf(project.NewStringorslice("TestString")) {
+				sliceKeys = serviceValue.(*project.Stringorslice).Slice()
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+				}
+			} else if v, ok := serviceValue.([]string); ok {
+				sliceKeys = v
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
 				}
 			} else {
 				w.Write([]byte(fmt.Sprintf("%v", serviceValue)))
 			}
-
 		}
 	}
 
