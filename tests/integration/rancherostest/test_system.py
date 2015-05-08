@@ -32,17 +32,14 @@ def test_system_boot(qemu):
 @pytest.mark.timeout(40)
 def test_run_system_container(qemu):
     assert qemu.returncode is None
+
     u.wait_for_ssh()
     ssh = subprocess.Popen(
         './scripts/ssh sudo system-docker run --rm busybox /bin/true', shell=True,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
-    try:
-        with ssh.stdout as f:
-            for ln in iter(f.readline, ''):
-                print(str.strip(ln))
-        ssh.wait()
-        assert ssh.returncode == 0
-    finally:
-        if ssh.returncode is None:
-            ssh.terminate()
+    with ssh, ssh.stdout as f:
+        for ln in iter(f.readline, ''):
+            print(str.strip(ln))
+
+    assert ssh.returncode == 0
