@@ -19,10 +19,19 @@ def qemu(request):
     return p
 
 
+def rancheros_version():
+    with open('./scripts/version') as f:
+        for ln in iter(f.readline, ''):
+            (k, _, v) = ln.partition('=')
+            if k == 'VERSION' and v.strip() != '':
+                return v.strip()
+    raise RuntimeError("Could not parse RancherOS version")
+
+
 @pytest.mark.timeout(30)
 def test_system_boot(qemu):
     for ln in iter(qemu.stdout.readline, ''):
-        ros_booted_substr = str.find(ln, 'RancherOS v0.3.1-rc2 started')  # TODO use ./scripts/version
+        ros_booted_substr = str.find(ln, 'RancherOS {v} started'.format(v=rancheros_version()))
         print(str.strip(ln))
         if ros_booted_substr > -1:
             assert True
