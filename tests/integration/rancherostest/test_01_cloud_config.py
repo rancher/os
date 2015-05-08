@@ -11,7 +11,8 @@ cloud_config_path = './tests/integration/assets/cloud-config-01.yml'
 
 @pytest.fixture(scope="module")
 def qemu(request):
-    return u.run_qemu(request, ['--cloud-config', cloud_config_path])
+    return u.run_qemu(request, ['--cloud-config', cloud_config_path,
+                                '-net', 'nic,vlan=1,model=virtio', '-net', 'user,vlan=1,net=10.10.2.0/24'])
 
 
 @pytest.fixture(scope="module")
@@ -44,7 +45,8 @@ def test_rancher_network(qemu, cloud_config_01):
     u.wait_for_ssh(ssh_command)
 
     v = subprocess.check_output(
-        ssh_command + ['ip', 'route', 'get', 'to', '10.10.10.10'],
+        ssh_command + ['ip', 'route', 'get', 'to', '10.10.2.120'],
         stderr=subprocess.STDOUT, universal_newlines=True)
 
-    assert v.split(' ')[2] == cloud_config_01['rancher']['network']['interfaces']['eth0']['gateway']
+    assert v.split(' ')[2] == 'eth1'
+    assert v.split(' ')[5] + '/24' == cloud_config_01['rancher']['network']['interfaces']['eth1']['address']
