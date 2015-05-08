@@ -19,6 +19,6 @@ def run_qemu(request, run_args=[]):
 
 
 @pytest.mark.timeout(10)
-def wait_for_ssh():
-    while subprocess.call(['./scripts/ssh', '/bin/true']) != 0:
+def wait_for_ssh(ssh_command=['./scripts/ssh']):
+    while subprocess.call(ssh_command + ['/bin/true']) != 0:
         time.sleep(1)

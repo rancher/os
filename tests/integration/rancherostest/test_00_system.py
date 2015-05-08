@@ -29,7 +29,7 @@ def test_system_boot(qemu):
     assert False
 
 
-@pytest.mark.timeout(40)
+@pytest.mark.timeout(60)
 def test_run_system_container(qemu):
     assert qemu.returncode is None
 
