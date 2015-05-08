@@ -13,8 +13,15 @@ def qemu(request):
 
 
 @pytest.mark.timeout(40)
-def test_check_whats_going_on(qemu):
-    assert qemu.returncode is None
+def test_ssh_authorized_keys(qemu):
+    assert qemu is not None
+    u.wait_for_ssh(ssh_command)
+    assert True
+
+
+@pytest.mark.timeout(40)
+def test_rancher_environment(qemu):
+    assert qemu is not None
     u.wait_for_ssh(ssh_command)
 
     ssh = subprocess.Popen(
