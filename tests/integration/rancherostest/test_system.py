@@ -5,6 +5,9 @@ import time
 
 @pytest.fixture(scope="module")
 def qemu(request):
+    subprocess.check_call('rm ./state/*', shell=True)
+    print('\nrm ./state/*')
+    print('\nStarting QEMU')
     p = subprocess.Popen('./scripts/run', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
     def fin():
@@ -16,7 +19,7 @@ def qemu(request):
     return p
 
 
-@pytest.mark.timeout(20)
+@pytest.mark.timeout(30)
 def test_system_boot(qemu):
     for ln in iter(qemu.stdout.readline, ''):
         ros_booted_substr = str.find(ln, 'RancherOS v0.3.1-rc2 started')  # TODO use ./scripts/version
@@ -27,10 +30,16 @@ def test_system_boot(qemu):
     assert False
 
 
+@pytest.mark.timeout(10)
+def wait_for_ssh():
+    while subprocess.call(['./scripts/ssh', '/bin/true']) != 0:
+        time.sleep(1)
+
+
 @pytest.mark.timeout(40)
 def test_run_system_container(qemu):
     assert qemu.returncode is None
-    time.sleep(2)  # or else ssh will fail (WTF?!)
+    wait_for_ssh()
     ssh = subprocess.Popen(
         './scripts/ssh sudo system-docker run --rm busybox /bin/true', shell=True,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
