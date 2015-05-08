@@ -12,7 +12,6 @@ def qemu(request):
 
     def fin():
         print('\nTerminating QEMU')
-        p.stdout.close()
         p.terminate()
 
     request.addfinalizer(fin)
@@ -30,12 +29,13 @@ def rancheros_version():
 
 @pytest.mark.timeout(30)
 def test_system_boot(qemu):
-    for ln in iter(qemu.stdout.readline, ''):
-        ros_booted_substr = str.find(ln, 'RancherOS {v} started'.format(v=rancheros_version()))
-        print(str.strip(ln))
-        if ros_booted_substr > -1:
-            assert True
-            return
+    with qemu.stdout as f:
+        for ln in iter(f.readline, ''):
+            ros_booted_substr = str.find(ln, 'RancherOS {v} started'.format(v=rancheros_version()))
+            print(str.strip(ln))
+            if ros_booted_substr > -1:
+                assert True
+                return
     assert False
 
 
@@ -54,12 +54,11 @@ def test_run_system_container(qemu):
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
     try:
-        for ln in iter(ssh.stdout.readline, ''):
-            print(str.strip(ln))
-            pass
+        with ssh.stdout as f:
+            for ln in iter(f.readline, ''):
+                print(str.strip(ln))
         ssh.wait()
         assert ssh.returncode == 0
     finally:
-        ssh.stdout.close()
         if ssh.returncode is None:
             ssh.terminate()
