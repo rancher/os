@@ -16,7 +16,7 @@ def qemu(request):
 
 
 @pytest.fixture(scope="module")
-def cloud_config_01():
+def cloud_config():
     return yaml.load(open(cloud_config_path))
 
 
@@ -28,7 +28,7 @@ def test_ssh_authorized_keys(qemu):
 
 
 @pytest.mark.timeout(40)
-def test_rancher_environment(qemu, cloud_config_01):
+def test_rancher_environment(qemu, cloud_config):
     assert qemu is not None
     u.wait_for_ssh(ssh_command)
 
@@ -36,11 +36,11 @@ def test_rancher_environment(qemu, cloud_config_01):
         ssh_command + ['sudo', 'rancherctl', 'env', 'printenv', 'FLANNEL_NETWORK'],
         stderr=subprocess.STDOUT, universal_newlines=True)
 
-    assert v.strip() == cloud_config_01['rancher']['environment']['FLANNEL_NETWORK']
+    assert v.strip() == cloud_config['rancher']['environment']['FLANNEL_NETWORK']
 
 
 @pytest.mark.timeout(40)
-def test_rancher_network(qemu, cloud_config_01):
+def test_rancher_network(qemu, cloud_config):
     assert qemu is not None
     u.wait_for_ssh(ssh_command)
 
@@ -49,4 +49,4 @@ def test_rancher_network(qemu, cloud_config_01):
         stderr=subprocess.STDOUT, universal_newlines=True)
 
     assert v.split(' ')[2] == 'eth1'
-    assert v.split(' ')[5] + '/24' == cloud_config_01['rancher']['network']['interfaces']['eth1']['address']
+    assert v.split(' ')[5] + '/24' == cloud_config['rancher']['network']['interfaces']['eth1']['address']
