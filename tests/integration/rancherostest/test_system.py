@@ -1,21 +1,11 @@
 import pytest
 import subprocess
-import time
+import rancherostest.util as u
 
 
 @pytest.fixture(scope="module")
 def qemu(request):
-    subprocess.check_call('rm ./state/*', shell=True)
-    print('\nrm ./state/*')
-    print('\nStarting QEMU')
-    p = subprocess.Popen('./scripts/run', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-
-    def fin():
-        print('\nTerminating QEMU')
-        p.terminate()
-
-    request.addfinalizer(fin)
-    return p
+    return u.run_qemu(request)
 
 
 def rancheros_version():
@@ -39,16 +29,10 @@ def test_system_boot(qemu):
     assert False
 
 
-@pytest.mark.timeout(10)
-def wait_for_ssh():
-    while subprocess.call(['./scripts/ssh', '/bin/true']) != 0:
-        time.sleep(1)
-
-
 @pytest.mark.timeout(40)
 def test_run_system_container(qemu):
     assert qemu.returncode is None
-    wait_for_ssh()
+    u.wait_for_ssh()
     ssh = subprocess.Popen(
         './scripts/ssh sudo system-docker run --rm busybox /bin/true', shell=True,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
