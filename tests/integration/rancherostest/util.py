@@ -4,7 +4,7 @@ import time
 
 
 def run_qemu(request, run_args=[]):
-    subprocess.check_call('rm ./state/*', shell=True)
+    subprocess.check_call('rm -f ./state/empty-hd.img', shell=True)
     print('\nrm ./state/*')
     print('\nStarting QEMU')
     p = subprocess.Popen(['./scripts/run'] + run_args,
