@@ -44,7 +44,8 @@ func main() {
 	registerCmd("/sbin/halt", power.Halt)
 	registerCmd("/sbin/shutdown", power.Main)
 	registerCmd("/usr/bin/respawn", respawn.Main)
-	registerCmd("/usr/sbin/rancherctl", control.Main)
+	registerCmd("/usr/sbin/rancherctl", control.Main) // deprecated, use `ros` instead
+	registerCmd("/usr/sbin/ros", control.Main)
 	registerCmd("/usr/bin/cloud-init", cloudinit.Main)
 	registerCmd("/usr/sbin/netconf", network.Main)
 	registerCmd("/usr/sbin/wait-for-docker", wait.Main)

@@ -145,7 +145,8 @@ func NewConfig() *Config {
 					"/init:/sbin/shutdown:ro",
 					"/init:/sbin/netconf:ro",
 					"/init:/usr/bin/cloud-init:ro",
-					"/init:/usr/bin/rancherctl:ro",
+					"/init:/usr/bin/rancherctl:ro", // deprecated, use `ros` instead
+					"/init:/usr/bin/ros:ro",
 					"/init:/usr/bin/respawn:ro",
 					"/init:/usr/bin/system-docker:ro",
 					"/init:/usr/sbin/wait-for-docker:ro",
