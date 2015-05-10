@@ -3,4 +3,6 @@ set -e
 
 cd $(dirname $0)/..
 
+chmod 0600 ./assets/rancher.key
+
 exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@localhost "$@"
