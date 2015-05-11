@@ -9,11 +9,12 @@ layout: default
 
 Within RancherOS, there are various areas within the system that you might want to configure. Below, we'll outline the different keys that can be saved in the `rancher.yml` file. If you choose to change these settings in the cloud config with the cloud-init process, they must be within the `rancher` key.## Configuring RancherOS
 
-### rancherctl
+### ros
 ---
 
-`rancherctl` is the main command to interact with RancherOS configuration, here's the link to the [full rancherctl config command docs]({{site.baseurl}}/docs/rancheros-tools/rancherctl/config/). With these commands, you can get and set values in the `rancher.yml` file as well as import/export configurations.
+`ros` is the main command to interact with RancherOS configuration, here's the link to the [full ros config command docs]({{site.baseurl}}/docs/rancheros-tools/ros/config/). With these commands, you can get and set values in the `rancher.yml` file as well as import/export configurations.
 
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
 ### Networking
 ---
@@ -132,7 +133,7 @@ system_docker:
 ## Full Example of Default Configuration
 ---
 
-The full configurartion, including the built in default values in RancherOS can be viewed by running `rancherctl config export --full`.  Below is the output of the full yaml file.
+The full configurartion, including the built in default values in RancherOS can be viewed by running `ros config export --full`.  Below is the output of the full yaml file.
 
 
 ```yaml
@@ -233,7 +234,7 @@ system_containers:
       - /init:/sbin/shutdown:ro
       - /init:/sbin/netconf:ro
       - /init:/usr/bin/cloud-init:ro
-      - /init:/usr/bin/rancherctl:ro
+      - /init:/usr/bin/ros:ro
       - /init:/usr/bin/respawn:ro
       - /init:/usr/bin/system-docker:ro
       - /init:/usr/sbin/wait-for-docker:ro

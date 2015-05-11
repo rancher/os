@@ -1,14 +1,17 @@
 ---
-title: RancherCTL TLS
+title: ROS TLS
 layout: default
 
 ---
 
-## RancherCTL TLS
+## ROS TLS
 ---
-`rancherctl tls` is used to generate both the client and server TLS certificates for Docker. Please refer to the [Setting up Docker TLS]({{site.baseurl}}/docs/configuration/setting-up-docker-tls/) for an end to end example.
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
-Remember, all `rancherctl` commands needs to be used with `sudo`. 
+
+`ros tls` is used to generate both the client and server TLS certificates for Docker. Please refer to the [Setting up Docker TLS]({{site.baseurl}}/docs/configuration/setting-up-docker-tls/) for an end to end example.
+
+Remember, all `ros` commands needs to be used with `sudo`. 
 
 
 ### Sub Commands
@@ -35,7 +38,7 @@ The `generate` command is used to generate new client and server certificates. B
 The `--hostname` option is used to define which hostname(s) you want the server certificate to be generated for. The hostname will be where you access the server. You are able to use this option multiple times in the same command. You can use an IP, "localhost", or "foo.example.com". 
 
 ```bash
-$ sudo rancherctl tls generate -s --hostname 172.0.0.1 --hostname localhost --hostname foo.example.com
+$ sudo ros tls generate -s --hostname 172.0.0.1 --hostname localhost --hostname foo.example.com
 ```
 
 #### Server
@@ -44,7 +47,7 @@ Since the `generate` command is defaulted for creating client certificates, you 
 
 
 ```bash
-$ sudo rancherctl tls generate -s --hostname localhost
+$ sudo ros tls generate -s --hostname localhost
 ```
 
 #### Directory
@@ -52,5 +55,5 @@ $ sudo rancherctl tls generate -s --hostname localhost
 The `-d` or `--dir` options allow the user to change where the certificates are saved. 
 
 ```bash
-$ sudo rancherctl tls generate -d ~/DIR/PATH
+$ sudo ros tls generate -d ~/DIR/PATH
 ```

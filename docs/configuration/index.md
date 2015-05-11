@@ -6,7 +6,7 @@ layout: default
 
 ## Configuring RancherOS
 ---
-The configuration of RancherOS is the compilation of different sources. It starts with a default configuration that is shipped with RancherOS, adds in anything found through cloud init process and finally includes any changes that have been made by the user. The cloud-init process can be found in more detail [here]({{site.baseurl}}/docs/cloud-config). Any changes made to RancherOS are made by interacting with the `rancher.yml` file. If any values are changed from the default configuration, the new value is added to the `rancher.yml` file. You can use `rancherctl config` to edit and interact with the configuration. 
+The configuration of RancherOS is the compilation of different sources. It starts with a default configuration that is shipped with RancherOS, adds in anything found through cloud init process and finally includes any changes that have been made by the user. The cloud-init process can be found in more detail [here]({{site.baseurl}}/docs/cloud-config). Any changes made to RancherOS are made by interacting with the `rancher.yml` file. If any values are changed from the default configuration, the new value is added to the `rancher.yml` file. You can use `ros config` to edit and interact with the configuration. 
 
 Here's a diagram of how the configuration of RancherOS is compiled.
 
@@ -27,10 +27,12 @@ We have various topics that cover how to configure specific areas of RancherOS.
 [Building custom RancherOS ISO]({{site.baseurl}}/configuration/custom-rancheros-iso/)<br>
 [Pre-packing Docker Images]({{site.baseurl}}/configuration/prepacking-docker-images/)<br>
 
-### rancherctl
+### ros
 ---
 
-`rancherctl` is the main command to interact with RancherOS configuration, here's the link to the [full rancherctl config command docs]({{site.baseurl}}/docs/rancheros-tools/rancherctl/config/). With these commands, you can get and set values in the configuration as well as import/export configurations.
+`ros` is the main command to interact with RancherOS configuration, here's the link to the [full ros config command docs]({{site.baseurl}}/docs/rancheros-tools/ros/config/). With these commands, you can get and set values in the configuration as well as import/export configurations.
+
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
 ## Cloud Config through Cloud-Init 
 

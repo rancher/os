@@ -6,7 +6,9 @@ layout: default
 
 ## Upgrading RancherOS
 ---
-RancherOS has released a new version and you want to learn how to upgrade your OS. We make it easy using the [RancherCTL OS]({{site.baseurl}}/docs/rancheros-tools/rancherctl/os) commands.
+RancherOS has released a new version and you want to learn how to upgrade your OS. We make it easy using the [ROS OS]({{site.baseurl}}/docs/rancheros-tools/ros/os) commands.
+
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
 To see all of our releases, please visit our [release page](https://github.com/rancherio/os/releases) in GitHub.
 
@@ -15,14 +17,14 @@ To see all of our releases, please visit our [release page](https://github.com/r
 First, let's check what version you have running on your system.
 
 ```bash
-$ sudo rancherctl -v
-rancherctl version v0.2.0
+$ sudo ros -v
+ros version v0.2.0
 ```
 
-If you just want to find out the available releases from the command line, it's a simple [RancherCTL]({{site.baseurl}}/docs/rancheros-tools/rancherctl/) command.
+If you just want to find out the available releases from the command line, it's a simple [ros]({{site.baseurl}}/docs/rancheros-tools/ros/) command.
 
 ```bash
-$ sudo rancherctl os list
+$ sudo ros os list
 rancher/os:v0.1.2 remote
 rancher/os:v0.2.0-rc1 remote
 rancher/os:v0.2.0-rc2 remote
@@ -36,10 +38,10 @@ The local/remote shows which images are already in the system-docker containers 
 
 ### Upgrading 
 
-Let's walk through upgrading! The `rancherctl os upgrade` command will automatically upgrade to the current release of RancherOS. The current release is designated as the most recent release of RancherOS. 
+Let's walk through upgrading! The `ros os upgrade` command will automatically upgrade to the current release of RancherOS. The current release is designated as the most recent release of RancherOS. 
 
 ```bash
-$ sudo rancherctl os upgrade
+$ sudo ros os upgrade
 Upgrading to rancher/os:v0.2.1
 Continue [y/N]: 
 ```
@@ -60,8 +62,8 @@ INFO[0005] Rebooting
 Confirm the reboot and your system will be rebooted. You will need to log back into your VM. After logging back in, you can check that your version has been updated.
 
 ```bash
-$ sudo rancherctl -v
-rancherctl version v0.2.1
+$ sudo ros -v
+ros version v0.2.1
 ```
 
 Note: If you are booting from ISO and have not installed to disk, your upgrade will not be saved. You can view our guide to [installing to disk]({{site.baseurl}}/docs/running-rancheros/server/install-to-disk/). 
@@ -71,7 +73,7 @@ Note: If you are booting from ISO and have not installed to disk, your upgrade w
 If you are a couple of versions behind the current version, use the `-i` option to pick the version that you want to upgrade to. 
 
 ```bash
-$ sudo rancherctl os upgrade -i rancher/os:v0.2.0
+$ sudo ros os upgrade -i rancher/os:v0.2.0
 Upgrading to rancher/os:v0.2.0
 Continue [y/N]: y
 ...
@@ -90,12 +92,12 @@ With v0.3.0+, we have added the ability to bypass the prompts. Use the `-f` or `
 
 If you've upgraded your RancherOS and something's not working anymore, you can easily rollback your upgrade.
 
-The `rancherctl os upgrade` command works for rolling back. We'll use the `-i` option to "upgrade" to a specific version. All you need to do is pick the previous version! Same as before, you will be prompted to confirm your upgrade version as well as confirm your reboot. 
+The `ros os upgrade` command works for rolling back. We'll use the `-i` option to "upgrade" to a specific version. All you need to do is pick the previous version! Same as before, you will be prompted to confirm your upgrade version as well as confirm your reboot. 
 
 ```bash
-$ sudo rancherctl -v
-rancherctl version v0.2.1
-$ sudo rancherctl os upgrade -i rancher/os:v0.2.0
+$ sudo ros -v
+ros version v0.2.1
+$ sudo ros os upgrade -i rancher/os:v0.2.0
 Upgrading to rancher/os:v0.2.0
 Continue [y/N]: y
 ...
@@ -107,8 +109,8 @@ INFO[0005] Rebooting
 The rollback is complete and we just need to log back into our VM to confirm our rollback.
 
 ```bash
-$ sudo rancherctl -v
-rancherctl version 0.2.0
+$ sudo ros -v
+ros version 0.2.0
 ```
 
 ### Staging an Upgrade
@@ -116,7 +118,7 @@ rancherctl version 0.2.0
 During an upgrade, the template of the upgrade is downloaded from the rancher/os repository. You can download this template ahead of time so that it's saved locally. This will decrease the time it takes to upgrade. We'll use the `-s` option to stage the specific template. You will need to specify the image name with the `-i` option, otherwise it will automatically stage the current version. 
 
 ```bash
-$ sudo rancherctl os upgrade -s -i rancher/os:v0.2.1
+$ sudo ros os upgrade -s -i rancher/os:v0.2.1
 Pulling image (v0.2.1) from rancher/os
 Pulling image (v0.2.1) from rancher/os, endpoint: https://registry-1.docker.io/v1/
 ...

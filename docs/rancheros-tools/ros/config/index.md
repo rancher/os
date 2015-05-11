@@ -1,16 +1,16 @@
 ---
-title: RancherCTL Config
+title: ROS Config
 layout: default
 
 ---
 
-## RancherCTL Config
+## ROS Config
 ---
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
-RancherOS state is controlled by simple document. `rancherctl config` is used to manipulate the configuration of RancherOS stored in **/var/lib/rancher/conf/rancher.yml**.  You are free to edit the file directly, but by using `rancherctl config`, it is safer and often more convenient.
+RancherOS state is controlled by simple document. `ros config` is used to manipulate the configuration of RancherOS stored in **/var/lib/rancher/conf/rancher.yml**.  You are free to edit the file directly, but by using `ros config`, it is safer and often more convenient.
 
-Remember, all `rancherctl` commands needs to be used with `sudo`. 
-
+Remember, all `ros` commands needs to be used with `sudo`. 
 
 For all changes to your configuration, you must reboot for them to take effect.
 
@@ -31,7 +31,7 @@ For all changes to your configuration, you must reboot for them to take effect.
 The `get` command gets a value from the `rancher.yml` file. Let's see how easy it is to get the DNS configuration of the system.
 
 ```sh
-$ sudo rancherctl config get network.dns.nameservers
+$ sudo ros config get network.dns.nameservers
 - 8.8.8.8
 - 8.8.4.4
 ```
@@ -43,13 +43,13 @@ The `set` command can set values in the `rancher.yml` file.
 Setting a list in the `rancher.yml`
 
 ```bash
-$ sudo rancherctl config set network.dns.nameservers '[8.8.8.8,8.8.4.4]'
+$ sudo ros config set network.dns.nameservers '[8.8.8.8,8.8.4.4]'
 ```
 
 Setting a simple value in the `rancher.yml`
 
 ```bash
-$ sudo rancherctl config set user_docker.tls true
+$ sudo ros config set user_docker.tls true
 ```
 
 ### Import
@@ -67,7 +67,7 @@ The `import` command allows you to import configurations from a standard in or a
 THe `-i` or `--input` option must be set in order for the command to work. This option determines where to find the file that you want to import.
 
 ```bash
-$ sudo rancherctl config import -i local-rancher.yml
+$ sudo ros config import -i local-rancher.yml
 ```
 
 ### Export
@@ -77,7 +77,7 @@ The `export` command allows you to export your existing configuration from ranch
 If you run the command without any options, it will output into the shell what is in the config file.
 
 ```bash
-$ sudo rancherctl config export
+$ sudo ros config export
 cloud_init:
     datasources:
     - file:/var/lib/rancher/conf/user_config.yml
@@ -108,7 +108,7 @@ user_docker:
 The `-o` or `--output` option will define the name and location of where you want the file to be exported.
 
 ```bash
-$ sudo rancherctl config export -o local-rancher.yml
+$ sudo ros config export -o local-rancher.yml
 ```
 
 #### Private
@@ -116,7 +116,7 @@ $ sudo rancherctl config export -o local-rancher.yml
 Add the `-p` or `--private` option to include the certificates and private keys as part of the export. These keys are exported in addition to any changes made from the default value. 
 
 ```bash
-$ sudo rancherctl config export --private
+$ sudo ros config export --private
 ```
 
 #### Full
@@ -124,7 +124,7 @@ $ sudo rancherctl config export --private
 Add the `-f` or `--full` option to include the full configuration. This export would include the certificates and private keys as well as the internal and default settings.
 
 ```bash
-$ sudo rancherctl config export --full
+$ sudo ros config export --full
 ```
 
 ### Merge
@@ -132,7 +132,7 @@ $ sudo rancherctl config export --full
 The `merge` command will merge in parts of a configuration fragment to the existing configuration file.
 
 ```bash
-$ sudo rancherctl config merge << "EOF"
+$ sudo ros config merge << "EOF"
 network:
 dns:
 nameservers:
