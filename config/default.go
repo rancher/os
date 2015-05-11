@@ -102,9 +102,9 @@ func NewConfig() *Config {
 					DETACH: "true",
 					SCOPE:  SYSTEM,
 				}),
-				Environment: []string{
+				Environment: project.NewMaporslice([]string{
 					"DAEMON=true",
-				},
+				}),
 				VolumesFrom: []string{
 					"system-volumes",
 				},
@@ -211,9 +211,9 @@ func NewConfig() *Config {
 					DETACH:        "false",
 					SCOPE:         SYSTEM,
 				}),
-				Environment: []string{
+				Environment: project.NewMaporslice([]string{
 					"CLOUD_INIT_NETWORK=false",
-				},
+				}),
 				VolumesFrom: []string{
 					"command-volumes",
 					"system-volumes",
