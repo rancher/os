@@ -57,9 +57,6 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 		//Create a data structure of map of values keyed by a string
 		unsortedKeyValue := make(map[string]interface{})
 
-		//Create a data structure of map of type keyed by a string
-		unsortedKeyType := make(map[string]reflect.Type)
-
 		//Get all keys and values in Service Configuration
 		for i := 0; i < val.NumField(); i++ {
 			valueField := val.Field(i)
@@ -67,47 +64,44 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 
 			serviceKeys = append(serviceKeys, keyField.Name)
 			unsortedKeyValue[keyField.Name] = valueField.Interface()
-			unsortedKeyType[keyField.Name] = valueField.Type()
 		}
 
 		//Sort serviceKeys alphabetically
 		sort.Strings(serviceKeys)
 
-		//New slice to sort through Keys
-		//var sliceKeys []string
-
 		//Go through keys and write hash
 		for i := 0; i < len(serviceKeys); i++ {
 			serviceValue := unsortedKeyValue[serviceKeys[i]]
-			serviceType := unsortedKeyType[serviceKeys[i]]
 			sliceKeys := []string{}
 
-			//Only need to check for Labels key as it's a Map and write hash after sorting the label names
-			if serviceType == reflect.TypeOf(project.NewSliceorMap(make(map[string]string))) {
-				for lkey := range serviceValue.(*project.SliceorMap).MapParts() {
-					sliceKeys = append(sliceKeys, lkey)
-				}
-				sort.Strings(sliceKeys)
-
-				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s%v", sliceKeys[j], serviceValue.(*project.SliceorMap).MapParts()[sliceKeys[j]])))
-				}
-			} else if serviceType == reflect.TypeOf(project.NewStringorslice("TestString")) {
-				sliceKeys = serviceValue.(*project.Stringorslice).Slice()
-				sort.Strings(sliceKeys)
-
-				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
-				}
-			} else if v, ok := serviceValue.([]string); ok {
-				sliceKeys = v
-				sort.Strings(sliceKeys)
-
-				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
-				}
-			} else {
+			switch s := serviceValue.(type) {
+			default:
 				w.Write([]byte(fmt.Sprintf("%v", serviceValue)))
+			case *project.SliceorMap:
+				for lkey := range s.MapParts() {
+					if lkey != "io.rancher.os.hash" {
+						sliceKeys = append(sliceKeys, lkey)
+					}
+				}
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s=%v", sliceKeys[j], s.MapParts()[sliceKeys[j]])))
+				}
+			case *project.Stringorslice:
+				sliceKeys = s.Slice()
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+				}
+			case []string:
+				sliceKeys = s
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+				}
 			}
 		}
 	}
