@@ -1,15 +1,16 @@
 ---
-title: RancherCTL Service
+title: ROS Service
 layout: default
 
 ---
 
-## RancherCTL Service
+## ROS Service
 ---
 _Available as of v0.3.0._
 
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
-`rancherctl service` allows you to enable/disable different system services. Please go to our [Adding System Services page]({{site.baseurl}}/docs/system-services/) for more details on how to add system services to RancherOS. The `rancherctl service` command shows you how to turn on and off the services that have been added.
+`ros service` allows you to enable/disable different system services. Please go to our [Adding System Services page]({{site.baseurl}}/docs/system-services/) for more details on how to add system services to RancherOS. The `ros service` command shows you how to turn on and off the services that have been added.
 
 ### Sub Commands
 ---
@@ -25,7 +26,7 @@ _Available as of v0.3.0._
 The `list` command will provide you a list of all services available in the [os-services repository](https://github.com/rancherio/os-services) as well as any service that was added by the user to `rancher.yml`. The command will also show the state that each service is in.
 
 ```bash
-$ sudo rancherctl service list
+$ sudo ros service list
 disabled ubuntu-console
 ```
 
@@ -38,10 +39,10 @@ Note: If you are using the location of a yaml file to enable, the system-service
 For our example, we're enabling the ubuntu console, which is in the os-services repository. After the reboot, we'll be logged in using the ubuntu-console. 
 
 ```bash
-$ sudo rancherctl service list
+$ sudo ros service list
 disabled ubuntu-console
-$ sudo rancherctl service enable ubuntu-console
-$ sudo rancherctl service list
+$ sudo ros service enable ubuntu-console
+$ sudo ros service list
 enabled ubuntu-console
 $ sudo reboot
 ```
@@ -53,10 +54,10 @@ The `disable` command turns off any service, but the service will **not** be rem
 For our example, we're disabling the ubuntu console. After the reboot, we'll be logged in using the busybox console.
 
 ```bash
-$ sudo rancherctl service list
+$ sudo ros service list
 enabled ubuntu-console
-$ sudo rancherctl service disable ubuntu-console
-$ sudo rancherctl service list
+$ sudo ros service disable ubuntu-console
+$ sudo ros service list
 disabled ubuntu-console
 ```
 
@@ -65,12 +66,12 @@ disabled ubuntu-console
 The `delete` command can be used to delete services that were added dynamically. i.e. All the services that were not compiled in can be deleted. 
 
 ```bash
-$ sudo rancherctl service enable /var/lib/rancher/conf/etcd.yml
-$ sudo rancherctl service list
+$ sudo ros service enable /var/lib/rancher/conf/etcd.yml
+$ sudo ros service list
 disabled ubuntu-console
 enabled /var/lib/rancher/conf/etcd.yml
-$ sudo rancherctl delete /var/lib/rancher/conf/etcd.yml
-$ sudo rancherctl service list
+$ sudo ros delete /var/lib/rancher/conf/etcd.yml
+$ sudo ros service list
 disabled ubuntu-console
 ```
 

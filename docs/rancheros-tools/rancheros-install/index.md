@@ -50,10 +50,10 @@ The `-v` option will indicate which version of RancherOS to install. To see the 
 
 By default, the version installed will be version that RancherOS is currently running.
 
-You can use the [rancherctl os]({{site.baseurl}}/docs/rancheros-tools/rancherctl/os/) commands to find the list of available versions.
+You can use the [ros os]({{site.baseurl}}/docs/rancheros-tools/ros/os/) commands to find the list of available versions.
 
 ```bash
-[rancher@rancher ~]$ sudo rancherctl os list
+[rancher@rancher ~]$ sudo ros os list
 rancher/os:v0.1.2 remote
 rancher/os:v0.2.0-rc1 remote
 rancher/os:v0.2.0-rc2 remote

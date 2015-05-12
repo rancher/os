@@ -4,30 +4,32 @@ layout: default
 
 ---
 
-## RancherCTL TLS
+## Configuring TLS
 
-`rancherctl tls` is used to generate both the client and server TLS certificates for Docker.
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
-Remember, all `rancherctl` commands needs to be used with `sudo` or as a `root` user.
+`ros tls` is used to generate both the client and server TLS certificates for Docker.
+
+Remember, all `ros` commands needs to be used with `sudo` or as a `root` user.
 
 ### End to end example
 
 #### Enable TLS for Docker
 
 ```bash
-$ sudo rancherctl config set user_docker.tls true
+$ sudo ros config set user_docker.tls true
 $ sudo system-docker restart userdocker
 userdocker
 ```
 
 #### Generate Server Certificate
 
-A server certificate must be generated for the hostname under which you will access the server.  You can use an IP, "localhost", or "foo.example.com". If you want to see the certificate, use `rancherctl export config -p` to see all certificates.
+A server certificate must be generated for the hostname under which you will access the server.  You can use an IP, "localhost", or "foo.example.com". If you want to see the certificate, use `ros export config -p` to see all certificates.
 
 ```bash
 $ hostname
 rancher
-$ sudo rancherctl tls generate -s --hostname rancher --hostname <IP_OF_SERVER>
+$ sudo ros tls generate -s --hostname rancher --hostname <IP_OF_SERVER>
 $ sudo system-docker restart userdocker
 userdocker
 ```
@@ -37,7 +39,7 @@ userdocker
 One or more client certificates must be generated so that you can access Docker. Let's store them in `/.docker` by using the `-d` option.
 
 ```bash
-$ sudo rancherctl tls generate -d ~/.docker
+$ sudo ros tls generate -d ~/.docker
 # Change ownership to rancher user
 $ sudo chown -R rancher .docker
 ```

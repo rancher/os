@@ -30,7 +30,7 @@ Please see this diagram how the configuration of RancherOS is compiled.
 
 ![Cloud Config]({{site.baseurl}}/img/cloud-config.png "RancherOS Configuration")
 
-Typically, when you first boot the server, you'd pass in the cloud config file to configure the initialization of the server. After the first boot, if you have any changes for the configuration, it's recommended that you use `rancherctl config` commands to set the `rancher` key in the configuration. Any changes will be saved in the `rancher.yml` file.
+Typically, when you first boot the server, you'd pass in the cloud config file to configure the initialization of the server. After the first boot, if you have any changes for the configuration, it's recommended that you use `ros config` commands to set the `rancher` key in the configuration. Any changes will be saved in the `rancher.yml` file.
 
 ### Supported Cloud Init Directives
 

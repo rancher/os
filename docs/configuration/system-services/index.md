@@ -35,19 +35,21 @@ Any services in the repo are automatically available when listing out the availa
 
 ## Configuring System Services
 ---
-We control system services using [rancherctl service]({{site.baseurl}}/docs/rancherctl/service/). 
+We control system services using [ros service]({{site.baseurl}}/docs/ros/service/). 
 
-To use a system service, just run `rancherctl service enable <system-service-name>` to turn on the service. By using this command, the service will also be added to the `rancher.yml` file and set to enabled, but a reboot needs to occur in order for it take effect. In the future, the reboot will be dynamic. 
+_In v0.3.1+, we changed the command from `rancherctl` to `ros`._
+
+To use a system service, just run `ros service enable <system-service-name>` to turn on the service. By using this command, the service will also be added to the `rancher.yml` file and set to enabled, but a reboot needs to occur in order for it take effect. In the future, the reboot will be dynamic. 
 
 The `<system-service-name>` can either be a http(s) url, location to a yaml file, or a service that is already in the [os-services repository](https://github.com/rancherio/os-services).
 
 Here's how we enable the ubuntu-console, which is in the os-services directory:
 
 ```bash
-$ sudo rancherctl service list
+$ sudo ros service list
 disabled ubuntu-console
-$ sudo rancherctl service enable ubuntu-console
-$ sudo rancherctl service list
+$ sudo ros service enable ubuntu-console
+$ sudo ros service list
 enabled ubuntu-console
 $ sudo reboot
 ```
@@ -60,16 +62,16 @@ Here's how we enable a service file called `example.yml`. The service file must 
 
 
 ```bash
-$ sudo rancherctl service enable /var/lib/rancher/conf/example.yml
-$ sudo rancherctl service list
+$ sudo ros service enable /var/lib/rancher/conf/example.yml
+$ sudo ros service list
 enabled ubuntu-console
 enabled /var/lib/rancher/conf/example.yml
 $ sudo reboot
 ```
 
-To turn off a system service, run `rancherctl service disable <system-service-name>`. This will only turn off the service in the `rancher.yml` file, but it will not remove the service from it. Similar to when we enabled the service, we'll need to reboot in order for the disabling to take effect.
+To turn off a system service, run `ros service disable <system-service-name>`. This will only turn off the service in the `rancher.yml` file, but it will not remove the service from it. Similar to when we enabled the service, we'll need to reboot in order for the disabling to take effect.
 
-To delete a service that you added, run `rancherctl service delete <system-service-name>`. This will remove the service from the `rancher.yml` file. If you remove a service that is in the os-services repo, you just need to re-enable the system-service-name that is in the os-services repo.
+To delete a service that you added, run `ros service delete <system-service-name>`. This will remove the service from the `rancher.yml` file. If you remove a service that is in the os-services repo, you just need to re-enable the system-service-name that is in the os-services repo.
 
 ## Rancher-Compose 
 ---

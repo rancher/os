@@ -9,7 +9,7 @@ layout: default
 
 RancherOS networking can be configured if a couple of ways.
 
-To learn more information about configuring the networking settings by using `rancherctl config`, please refer to our [cloud config]({{site.baseurl}}/docs/cloud-config) docs. 
+To learn more information about configuring the networking settings by using `ros config`, please refer to our [cloud config]({{site.baseurl}}/docs/cloud-config) docs. 
 
 ### Networking
 ---
