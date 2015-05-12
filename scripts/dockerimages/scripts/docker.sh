@@ -18,12 +18,12 @@ fi
 
 rm -f /var/run/docker.pid
 
-ARGS=$(echo $(rancherctl config get user_docker.args | sed 's/^-//'))
-ARGS="$ARGS $(echo $(rancherctl config get user_docker.extra_args | sed 's/^-//'))"
+ARGS=$(echo $(ros config get user_docker.args | sed 's/^-//'))
+ARGS="$ARGS $(echo $(ros config get user_docker.extra_args | sed 's/^-//'))"
 
-if [ "$(rancherctl config get user_docker.tls)" = "true" ]; then
-    ARGS="$ARGS $(echo $(rancherctl config get user_docker.tls_args | sed 's/^-//'))"
-    rancherctl tls generate --server -d $TLS_PATH
+if [ "$(ros config get user_docker.tls)" = "true" ]; then
+    ARGS="$ARGS $(echo $(ros config get user_docker.tls_args | sed 's/^-//'))"
+    ros tls generate --server -d $TLS_PATH
     cd $TLS_PATH
 fi
 
