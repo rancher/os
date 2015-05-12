@@ -5,8 +5,9 @@ import (
 	"errors"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"gopkg.in/yaml.v2"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type ServiceState string
@@ -33,9 +34,9 @@ func NewProject(name string, factory ServiceFactory) *Project {
 
 func (p *Project) CreateService(name string, config ServiceConfig) (Service, error) {
 	if p.EnvironmentLookup != nil {
-		parsedEnv := make([]string, 0, len(config.Environment))
+		parsedEnv := make([]string, 0, len(config.Environment.Slice()))
 
-		for _, env := range config.Environment {
+		for _, env := range config.Environment.Slice() {
 			if strings.IndexRune(env, '=') != -1 {
 				parsedEnv = append(parsedEnv, env)
 				continue
@@ -46,7 +47,7 @@ func (p *Project) CreateService(name string, config ServiceConfig) (Service, err
 			}
 		}
 
-		config.Environment = parsedEnv
+		config.Environment = NewMaporslice(parsedEnv)
 	}
 
 	return p.factory.Create(p, name, &config)
@@ -56,6 +57,7 @@ func (p *Project) AddConfig(name string, config *ServiceConfig) error {
 	p.Notify(SERVICE_ADD, name, nil)
 
 	p.configs[name] = config
+	p.reload = append(p.reload, name)
 
 	return nil
 }
@@ -77,10 +79,8 @@ func (p *Project) Load(bytes []byte) error {
 	return nil
 }
 
-func (p *Project) Up() error {
-	wrappers := make(map[string]*serviceWrapper)
-
-	for name, _ := range p.configs {
+func (p *Project) loadWrappers(wrappers map[string]*serviceWrapper) error {
+	for _, name := range p.reload {
 		wrapper, err := newServiceWrapper(name, p)
 		if err != nil {
 			return err
@@ -88,9 +88,17 @@ func (p *Project) Up() error {
 		wrappers[name] = wrapper
 	}
 
+	p.reload = []string{}
+
+	return nil
+}
+
+func (p *Project) Up() error {
+	wrappers := make(map[string]*serviceWrapper)
+
 	p.Notify(PROJECT_UP_START, "", nil)
 
-	err := p.startAll(wrappers, 0)
+	err := p.startAll(wrappers)
 
 	if err == nil {
 		p.Notify(PROJECT_UP_DONE, "", nil)
@@ -99,16 +107,16 @@ func (p *Project) Up() error {
 	return err
 }
 
-func (p *Project) startAll(wrappers map[string]*serviceWrapper, level int) error {
+func (p *Project) startAll(wrappers map[string]*serviceWrapper) error {
 	restart := false
 
-	if level > 0 {
-		for _, wrapper := range wrappers {
-			if err := wrapper.Reset(); err != nil {
-				return err
-			}
+	for _, wrapper := range wrappers {
+		if err := wrapper.Reset(); err != nil {
+			return err
 		}
 	}
+
+	p.loadWrappers(wrappers)
 
 	for _, wrapper := range wrappers {
 		go wrapper.Start(wrappers)
@@ -134,7 +142,7 @@ func (p *Project) startAll(wrappers map[string]*serviceWrapper, level int) error
 				log.Errorf("Failed calling callback: %v", err)
 			}
 		}
-		return p.startAll(wrappers, level+1)
+		return p.startAll(wrappers)
 	} else {
 		return firstError
 	}

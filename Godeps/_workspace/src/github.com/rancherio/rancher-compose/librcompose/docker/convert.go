@@ -43,7 +43,7 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		Hostname:     c.Hostname,
 		Domainname:   c.DomainName,
 		User:         c.User,
-		Env:          c.Environment,
+		Env:          c.Environment.Slice(),
 		Cmd:          runconfig.NewCommand(cmd...),
 		Image:        c.Image,
 		Labels:       labels,

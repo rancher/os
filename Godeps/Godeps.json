@@ -172,13 +172,13 @@
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/librcompose/docker",
-			"Comment": "0.1.0-22-gb05516d",
-			"Rev": "b05516d2ddc60579cf34ff89d4214bf3e6421e45"
+			"Comment": "0.1.0-25-g22c2b87",
+			"Rev": "22c2b870151ab3fa7f3727cfc4504e326ea512e1"
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/librcompose/project",
-			"Comment": "0.1.0-22-gb05516d",
-			"Rev": "b05516d2ddc60579cf34ff89d4214bf3e6421e45"
+			"Comment": "0.1.0-25-g22c2b87",
+			"Rev": "22c2b870151ab3fa7f3727cfc4504e326ea512e1"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-glob",

@@ -84,9 +84,9 @@ outer:
 					config.SCOPE:  config.SYSTEM,
 				}),
 				LogDriver: "json-file",
-				Environment: []string{
+				Environment: project.NewMaporslice([]string{
 					"MAGIC=" + boot2dockerMagic,
-				},
+				}),
 			},
 			"udev": &udev,
 		})
