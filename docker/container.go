@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -47,8 +48,62 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 	w.Write([]byte(containerCfg.Id))
 	w.Write([]byte(containerCfg.Cmd))
 	if containerCfg.Service != nil {
-		//TODO: properly hash
-		w.Write([]byte(fmt.Sprintf("%v", containerCfg.Service)))
+		//Get values of Service through reflection
+		val := reflect.ValueOf(containerCfg.Service).Elem()
+
+		//Create slice to sort the keys in Service Config, which allow constant hash ordering
+		var serviceKeys []string
+
+		//Create a data structure of map of values keyed by a string
+		unsortedKeyValue := make(map[string]interface{})
+
+		//Get all keys and values in Service Configuration
+		for i := 0; i < val.NumField(); i++ {
+			valueField := val.Field(i)
+			keyField := val.Type().Field(i)
+
+			serviceKeys = append(serviceKeys, keyField.Name)
+			unsortedKeyValue[keyField.Name] = valueField.Interface()
+		}
+
+		//Sort serviceKeys alphabetically
+		sort.Strings(serviceKeys)
+
+		//Go through keys and write hash
+		for i := 0; i < len(serviceKeys); i++ {
+			serviceValue := unsortedKeyValue[serviceKeys[i]]
+			sliceKeys := []string{}
+
+			switch s := serviceValue.(type) {
+			default:
+				w.Write([]byte(fmt.Sprintf("%v", serviceValue)))
+			case *project.SliceorMap:
+				for lkey := range s.MapParts() {
+					if lkey != "io.rancher.os.hash" {
+						sliceKeys = append(sliceKeys, lkey)
+					}
+				}
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s=%v", sliceKeys[j], s.MapParts()[sliceKeys[j]])))
+				}
+			case *project.Stringorslice:
+				sliceKeys = s.Slice()
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+				}
+			case []string:
+				sliceKeys = s
+				sort.Strings(sliceKeys)
+
+				for j := 0; j < len(sliceKeys); j++ {
+					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+				}
+			}
+		}
 	}
 
 	if w.Err != nil {
