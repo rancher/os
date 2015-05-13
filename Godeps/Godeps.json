@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/rancherio/os",
-	"GoVersion": "go1.4.1",
+	"GoVersion": "go1.4.2",
 	"Deps": [
 		{
 			"ImportPath": "github.com/Sirupsen/logrus",
@@ -142,7 +142,7 @@
 		},
 		{
 			"ImportPath": "github.com/docker/machine/utils",
-			"Comment": "v0.1.0-rc3-18-gd674e87",
+			"Comment": "v0.1.0-rc4",
 			"Rev": "d674e87813ffc10048f55d884396be1af327705e"
 		},
 		{
@@ -172,13 +172,13 @@
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/librcompose/docker",
-			"Comment": "0.1.0-25-g22c2b87",
-			"Rev": "22c2b870151ab3fa7f3727cfc4504e326ea512e1"
+			"Comment": "0.1.0-27-g1be3efa",
+			"Rev": "1be3efa22d0bbae71d1aed14fcdb870dd0706f1c"
 		},
 		{
 			"ImportPath": "github.com/rancherio/rancher-compose/librcompose/project",
-			"Comment": "0.1.0-25-g22c2b87",
-			"Rev": "22c2b870151ab3fa7f3727cfc4504e326ea512e1"
+			"Comment": "0.1.0-27-g1be3efa",
+			"Rev": "1be3efa22d0bbae71d1aed14fcdb870dd0706f1c"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-glob",

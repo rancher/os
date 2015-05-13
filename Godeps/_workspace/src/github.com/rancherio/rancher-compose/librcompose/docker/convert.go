@@ -10,10 +10,30 @@ import (
 	shlex "github.com/flynn/go-shlex"
 )
 
+func Filter(vs []string, f func(string) bool) []string {
+	r := make([]string, 0, len(vs))
+	for _, v := range vs {
+		if f(v) {
+			r = append(r, v)
+		}
+	}
+	return r
+}
+
+func isBind(s string) bool {
+	return strings.ContainsRune(s, ':')
+}
+
+func isVolume(s string) bool {
+	return !isBind(s)
+}
+
 func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig, error) {
-	volumes := map[string]struct{}{}
-	for _, v := range c.Volumes {
-		volumes[strings.Split(v, ":")[0]] = struct{}{}
+	vs := Filter(c.Volumes, isVolume)
+
+	volumes := make(map[string]struct {}, len(vs))
+	for _, v := range vs {
+		volumes[v] = struct {}{}
 	}
 
 	cmd, _ := shlex.Split(c.Command)
@@ -51,6 +71,7 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		Tty:          c.Tty,
 		OpenStdin:    c.StdinOpen,
 		WorkingDir:   c.WorkingDir,
+		Volumes:      volumes,
 	}
 	host_config := &runconfig.HostConfig{
 		VolumesFrom: c.VolumesFrom,
@@ -58,10 +79,10 @@ func Convert(c *project.ServiceConfig) (*runconfig.Config, *runconfig.HostConfig
 		CapDrop:     c.CapDrop,
 		CpuShares:   c.CpuShares,
 		Privileged:  c.Privileged,
-		Binds:       c.Volumes,
+		Binds:       Filter(c.Volumes, isBind),
 		Dns:         dns,
 		DnsSearch:   dnssearch,
-		LogConfig: runconfig.LogConfig{
+		LogConfig:   runconfig.LogConfig{
 			Type: c.LogDriver,
 		},
 		Memory:         c.MemLimit,
