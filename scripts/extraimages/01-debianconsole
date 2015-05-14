@@ -1,7 +1,7 @@
 FROM debian:jessie
 RUN apt-get update && \
     apt-get upgrade --no-install-recommends -y && \
-    apt-get install -y --no-install-recommends openssh-server rsync locales vim
+    apt-get install -y --no-install-recommends openssh-server rsync locales sudo vim
 RUN rm -rf /etc/ssh/*key*
 COPY scripts/dockerimages/scripts/entry.sh /usr/sbin/
 COPY scripts/dockerimages/scripts/console.sh /usr/sbin/
