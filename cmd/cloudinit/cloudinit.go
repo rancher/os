@@ -393,12 +393,16 @@ func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 				dss = append(dss, file.NewDatasource(parts[1]))
 			}
 		case "url":
-			if len(parts) == 2 {
-				dss = append(dss, url.NewDatasource(parts[1]))
+			if network {
+				if len(parts) == 2 {
+					dss = append(dss, url.NewDatasource(parts[1]))
+				}
 			}
 		case "cmdline":
-			if len(parts) == 1 {
-				dss = append(dss, proc_cmdline.NewDatasource())
+			if network {
+				if len(parts) == 1 {
+					dss = append(dss, proc_cmdline.NewDatasource())
+				}
 			}
 		case "configdrive":
 			if len(parts) == 2 {
