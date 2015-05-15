@@ -57,9 +57,9 @@ func TestParse(t *testing.T) {
 	assert.Equal(c.Name, "c1", "Name doesn't match")
 	assert.True(c.remove, "Remove doesn't match")
 	assert.True(c.detach, "Detach doesn't match")
-	assert.Equal(len(c.Config.Cmd), 2, "Args doesn't match")
-	assert.Equal(c.Config.Cmd[0], "arg1", "Arg1 doesn't match")
-	assert.Equal(c.Config.Cmd[1], "arg2", "Arg2 doesn't match")
+	assert.Equal(c.Config.Cmd.Len(), 2, "Args doesn't match")
+	assert.Equal(c.Config.Cmd.Slice()[0], "arg1", "Arg1 doesn't match")
+	assert.Equal(c.Config.Cmd.Slice()[1], "arg2", "Arg2 doesn't match")
 	assert.True(c.HostConfig.Privileged, "Privileged doesn't match")
 }
 
