@@ -147,7 +147,7 @@
 		},
 		{
 			"ImportPath": "github.com/flynn/go-shlex",
-			"Rev": "70644ac2a65dbf1691ce00c209d185163a14edc6"
+			"Rev": "3f9db97f856818214da2e1057f8ad84803971cff"
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
