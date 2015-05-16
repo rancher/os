@@ -7,7 +7,9 @@ layout: default
 ## RancherOS Detailed Configuration 
 ---
 
-Within RancherOS, there are various areas within the system that you might want to configure. Below, we'll outline the different keys that can be saved in the `rancher.yml` file. If you choose to change these settings in the cloud config with the cloud-init process, they must be within the `rancher` key.## Configuring RancherOS
+Within RancherOS, there are various areas within the system that you might want to configure. Below, we'll outline the different keys that can be saved in the `rancher.yml` file. If you choose to change these settings in the cloud config with the cloud-init process, they must be within the `rancher` key.
+
+## Configuring RancherOS
 
 ### ros
 ---
