@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	dockerClient "github.com/fsouza/go-dockerclient"
-	"github.com/Sirupsen/logrus"
 )
 
 func TestHash(t *testing.T) {
@@ -30,7 +30,7 @@ func TestHash(t *testing.T) {
 		Cmd: "1 2 3 4",
 	})
 
-	assert.Equal("510b68938cba936876588b0143093a5850d4a142", hash, "")
+	assert.Equal("d601444333c7fb4cb955bcca36c5ed59b6fa8c3f", hash, "")
 	assert.NotEqual(hash, hash2, "")
 	assert.NotEqual(hash2, hash3, "")
 	assert.NotEqual(hash, hash3, "")
@@ -45,13 +45,17 @@ func TestHash2(t *testing.T) {
 		MigrateVolumes: false,
 		ReloadConfig:   false,
 		CreateOnly:     true,
-		Service:        &project.ServiceConfig{CapAdd:[]string(nil), CapDrop:[]string(nil), CpuShares:0, Command:"", Detach:"", Dns:project.NewStringorslice(), DnsSearch:project.NewStringorslice(), DomainName:"", Entrypoint:"", EnvFile:"", Environment:project.NewMaporslice([]string{}), Hostname:"", Image:"state", Labels:project.NewSliceorMap(map[string]string{"io.rancher.os.createonly":"true", "io.rancher.os.scope":"system"}), Links:[]string(nil), LogDriver:"json-file", MemLimit:0, Name:"", Net:"none", Pid:"", Ipc:"", Ports:[]string(nil), Privileged:true, Restart:"", ReadOnly:true, StdinOpen:false, Tty:false, User:"", Volumes:[]string{"/var/lib/docker:/var/lib/docker", "/var/lib/rancher/conf:/var/lib/rancher/conf", "/var/lib/system-docker:/var/lib/system-docker"}, VolumesFrom:[]string(nil), WorkingDir:"", Expose:[]string(nil), ExternalLinks:[]string(nil)},
+		Service:        &project.ServiceConfig{CapAdd:nil, CapDrop:nil, CpuShares:0, Command:"", Detach:"", Dns:project.NewStringorslice(), DnsSearch:project.NewStringorslice(), DomainName:"", Entrypoint:"", EnvFile:"", Environment:project.NewMaporslice([]string{}), Hostname:"", Image:"state", Labels:project.NewSliceorMap(map[string]string{"io.rancher.os.createonly":"true", "io.rancher.os.scope":"system"}), Links:nil, LogDriver:"json-file", MemLimit:0, Name:"", Net:"none", Pid:"", Ipc:"", Ports:nil, Privileged:true, Restart:"", ReadOnly:true, StdinOpen:false, Tty:false, User:"", Volumes:[]string{"/var/lib/docker:/var/lib/docker", "/var/lib/rancher/conf:/var/lib/rancher/conf", "/var/lib/system-docker:/var/lib/system-docker"}, VolumesFrom:nil, WorkingDir:"", Expose:nil, ExternalLinks:nil},
 	}
 
-	for i := 0; i < 10000; i++ {
-		logrus.Infoln(i)
-		assert.Equal(getHash(cfg), getHash(cfg), "")
+	for i := 0; i < 1000; i++ {
+		assert.Equal(getHash(cfg), getHash(cfg), fmt.Sprintf("Failed at iteration: %v", i))
 	}
+}
+
+func TestBool2String(t *testing.T) {
+	assert := require.New(t)
+	assert.Equal("true", fmt.Sprint(true), "")
 }
 
 
