@@ -5,37 +5,55 @@ import (
 	"testing"
 
 	"github.com/rancherio/os/config"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 	"github.com/stretchr/testify/require"
 
 	dockerClient "github.com/fsouza/go-dockerclient"
+	"github.com/Sirupsen/logrus"
 )
 
 func TestHash(t *testing.T) {
 	assert := require.New(t)
 
-	hash, err := getHash(&config.ContainerConfig{
+	hash := getHash(&config.ContainerConfig{
 		Id:  "id",
 		Cmd: "1 2 3",
 	})
-	assert.NoError(err, "")
 
-	hash2, err := getHash(&config.ContainerConfig{
+	hash2 := getHash(&config.ContainerConfig{
 		Id:  "id2",
 		Cmd: "1 2 3",
 	})
-	assert.NoError(err, "")
 
-	hash3, err := getHash(&config.ContainerConfig{
+	hash3 := getHash(&config.ContainerConfig{
 		Id:  "id3",
 		Cmd: "1 2 3 4",
 	})
-	assert.NoError(err, "")
 
 	assert.Equal("510b68938cba936876588b0143093a5850d4a142", hash, "")
 	assert.NotEqual(hash, hash2, "")
 	assert.NotEqual(hash2, hash3, "")
 	assert.NotEqual(hash, hash3, "")
 }
+
+func TestHash2(t *testing.T) {
+	assert := require.New(t)
+
+	cfg := &config.ContainerConfig{
+		Id:             "docker-volumes",
+		Cmd:            "",
+		MigrateVolumes: false,
+		ReloadConfig:   false,
+		CreateOnly:     true,
+		Service:        &project.ServiceConfig{CapAdd:[]string(nil), CapDrop:[]string(nil), CpuShares:0, Command:"", Detach:"", Dns:project.NewStringorslice(), DnsSearch:project.NewStringorslice(), DomainName:"", Entrypoint:"", EnvFile:"", Environment:project.NewMaporslice([]string{}), Hostname:"", Image:"state", Labels:project.NewSliceorMap(map[string]string{"io.rancher.os.createonly":"true", "io.rancher.os.scope":"system"}), Links:[]string(nil), LogDriver:"json-file", MemLimit:0, Name:"", Net:"none", Pid:"", Ipc:"", Ports:[]string(nil), Privileged:true, Restart:"", ReadOnly:true, StdinOpen:false, Tty:false, User:"", Volumes:[]string{"/var/lib/docker:/var/lib/docker", "/var/lib/rancher/conf:/var/lib/rancher/conf", "/var/lib/system-docker:/var/lib/system-docker"}, VolumesFrom:[]string(nil), WorkingDir:"", Expose:[]string(nil), ExternalLinks:[]string(nil)},
+	}
+
+	for i := 0; i < 10000; i++ {
+		logrus.Infoln(i)
+		assert.Equal(getHash(cfg), getHash(cfg), "")
+	}
+}
+
 
 func TestParse(t *testing.T) {
 	assert := require.New(t)

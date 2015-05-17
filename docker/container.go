@@ -41,12 +41,11 @@ func (c ByCreated) Len() int           { return len(c) }
 func (c ByCreated) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c ByCreated) Less(i, j int) bool { return c[j].Created < c[i].Created }
 
-func getHash(containerCfg *config.ContainerConfig) (string, error) {
+func getHash(containerCfg *config.ContainerConfig) string {
 	hash := sha1.New()
-	w := util.NewErrorWriter(hash)
 
-	w.Write([]byte(containerCfg.Id))
-	w.Write([]byte(containerCfg.Cmd))
+	hash.Write([]byte(containerCfg.Id))
+	hash.Write([]byte(containerCfg.Cmd))
 	if containerCfg.Service != nil {
 		//Get values of Service through reflection
 		val := reflect.ValueOf(containerCfg.Service).Elem()
@@ -76,7 +75,7 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 
 			switch s := serviceValue.(type) {
 			default:
-				w.Write([]byte(fmt.Sprintf("%v", serviceValue)))
+				hash.Write([]byte(fmt.Sprintf("%v", serviceValue)))
 			case *project.SliceorMap:
 				for lkey := range s.MapParts() {
 					if lkey != "io.rancher.os.hash" {
@@ -86,31 +85,27 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 				sort.Strings(sliceKeys)
 
 				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s=%v", sliceKeys[j], s.MapParts()[sliceKeys[j]])))
+					hash.Write([]byte(fmt.Sprintf("%s=%v", sliceKeys[j], s.MapParts()[sliceKeys[j]])))
 				}
 			case *project.Stringorslice:
 				sliceKeys = s.Slice()
 				sort.Strings(sliceKeys)
 
 				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+					hash.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
 				}
 			case []string:
 				sliceKeys = s
 				sort.Strings(sliceKeys)
 
 				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+					hash.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
 				}
 			}
 		}
 	}
 
-	if w.Err != nil {
-		return "", w.Err
-	}
-
-	return hex.EncodeToString(hash.Sum([]byte{})), nil
+	return hex.EncodeToString(hash.Sum([]byte{}))
 }
 
 func StartAndWait(dockerHost string, containerCfg *config.ContainerConfig) error {
@@ -171,10 +166,7 @@ func (c *Container) Lookup() *Container {
 		return c
 	}
 
-	hash, err := getHash(c.ContainerCfg)
-	if err != nil {
-		return c.returnErr(err)
-	}
+	hash := getHash(c.ContainerCfg)
 
 	client, err := NewClient(c.dockerHost)
 	if err != nil {
@@ -486,10 +478,7 @@ func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.Cr
 		opts.Config.Labels = make(map[string]string)
 	}
 
-	hash, err := getHash(c.ContainerCfg)
-	if err != nil {
-		return nil, err
-	}
+	hash := getHash(c.ContainerCfg)
 
 	opts.Config.Labels[config.HASH] = hash
 	opts.Config.Labels[config.ID] = c.ContainerCfg.Id
