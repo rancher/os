@@ -94,7 +94,7 @@ func getHash(containerCfg *config.ContainerConfig) string {
 				}
 			case project.Maporslice:
 				sliceKeys := s.Slice()
-				sort.Strings(sliceKeys)
+				// do not sort environment keys as the order matters
 
 				for _, sliceKey := range sliceKeys {
 					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
