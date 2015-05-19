@@ -110,8 +110,8 @@ func TestSplitSimple(t *testing.T) {
 }
 
 func TestSplitEscapingQuotes(t *testing.T) {
-	testInput := "one \"two three\" four"
-	expectedOutput := []string{"one", "two three", "four"}
+	testInput := "one \"два ${three}\" four"
+	expectedOutput := []string{"one", "два ${three}", "four"}
 	foundOutput, err := Split(testInput)
 	if err != nil {
 		t.Error("Split returned error:", err)
@@ -145,8 +145,8 @@ func TestGlobbingExpressions(t *testing.T) {
 }
 
 func TestSplitNonEscapingQuotes(t *testing.T) {
-	testInput := "one 'two three' four"
-	expectedOutput := []string{"one", "two three", "four"}
+	testInput := "one 'два ${three}' four"
+	expectedOutput := []string{"one", "два ${three}", "four"}
 	foundOutput, err := Split(testInput)
 	if err != nil {
 		t.Error("Split returned error:", err)
