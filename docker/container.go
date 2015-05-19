@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"reflect"
 	"sort"
@@ -41,18 +42,21 @@ func (c ByCreated) Len() int           { return len(c) }
 func (c ByCreated) Swap(i, j int)      { c[i], c[j] = c[j], c[i] }
 func (c ByCreated) Less(i, j int) bool { return c[j].Created < c[i].Created }
 
-func getHash(containerCfg *config.ContainerConfig) (string, error) {
+func getHash(containerCfg *config.ContainerConfig) string {
 	hash := sha1.New()
-	w := util.NewErrorWriter(hash)
 
-	w.Write([]byte(containerCfg.Id))
-	w.Write([]byte(containerCfg.Cmd))
+	io.WriteString(hash, fmt.Sprintln(containerCfg.Id))
+	io.WriteString(hash, fmt.Sprintln(containerCfg.Cmd))
+	io.WriteString(hash, fmt.Sprintln(containerCfg.MigrateVolumes))
+	io.WriteString(hash, fmt.Sprintln(containerCfg.ReloadConfig))
+	io.WriteString(hash, fmt.Sprintln(containerCfg.CreateOnly))
+
 	if containerCfg.Service != nil {
 		//Get values of Service through reflection
 		val := reflect.ValueOf(containerCfg.Service).Elem()
 
 		//Create slice to sort the keys in Service Config, which allow constant hash ordering
-		var serviceKeys []string
+		serviceKeys := []string{}
 
 		//Create a data structure of map of values keyed by a string
 		unsortedKeyValue := make(map[string]interface{})
@@ -70,14 +74,14 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 		sort.Strings(serviceKeys)
 
 		//Go through keys and write hash
-		for i := 0; i < len(serviceKeys); i++ {
-			serviceValue := unsortedKeyValue[serviceKeys[i]]
-			sliceKeys := []string{}
+		for _, serviceKey := range serviceKeys {
+			serviceValue := unsortedKeyValue[serviceKey]
+
+			io.WriteString(hash, fmt.Sprintf("\n  %v: ", serviceKey))
 
 			switch s := serviceValue.(type) {
-			default:
-				w.Write([]byte(fmt.Sprintf("%v", serviceValue)))
-			case *project.SliceorMap:
+			case project.SliceorMap:
+				sliceKeys := []string{}
 				for lkey := range s.MapParts() {
 					if lkey != "io.rancher.os.hash" {
 						sliceKeys = append(sliceKeys, lkey)
@@ -85,32 +89,37 @@ func getHash(containerCfg *config.ContainerConfig) (string, error) {
 				}
 				sort.Strings(sliceKeys)
 
-				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s=%v", sliceKeys[j], s.MapParts()[sliceKeys[j]])))
+				for _, sliceKey := range sliceKeys {
+					io.WriteString(hash, fmt.Sprintf("%s=%v, ", sliceKey, s.MapParts()[sliceKey]))
 				}
-			case *project.Stringorslice:
-				sliceKeys = s.Slice()
+			case project.Maporslice:
+				sliceKeys := s.Slice()
+				// do not sort environment keys as the order matters
+
+				for _, sliceKey := range sliceKeys {
+					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
+				}
+			case project.Stringorslice:
+				sliceKeys := s.Slice()
 				sort.Strings(sliceKeys)
 
-				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+				for _, sliceKey := range sliceKeys {
+					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
 				}
 			case []string:
-				sliceKeys = s
+				sliceKeys := s
 				sort.Strings(sliceKeys)
 
-				for j := 0; j < len(sliceKeys); j++ {
-					w.Write([]byte(fmt.Sprintf("%s", sliceKeys[j])))
+				for _, sliceKey := range sliceKeys {
+					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
 				}
+			default:
+				io.WriteString(hash, fmt.Sprintf("%v", serviceValue))
 			}
 		}
 	}
 
-	if w.Err != nil {
-		return "", w.Err
-	}
-
-	return hex.EncodeToString(hash.Sum([]byte{})), nil
+	return hex.EncodeToString(hash.Sum(nil))
 }
 
 func StartAndWait(dockerHost string, containerCfg *config.ContainerConfig) error {
@@ -171,10 +180,7 @@ func (c *Container) Lookup() *Container {
 		return c
 	}
 
-	hash, err := getHash(c.ContainerCfg)
-	if err != nil {
-		return c.returnErr(err)
-	}
+	hash := getHash(c.ContainerCfg)
 
 	client, err := NewClient(c.dockerHost)
 	if err != nil {
@@ -486,10 +492,7 @@ func (c *Container) getCreateOpts(client *dockerClient.Client) (*dockerClient.Cr
 		opts.Config.Labels = make(map[string]string)
 	}
 
-	hash, err := getHash(c.ContainerCfg)
-	if err != nil {
-		return nil, err
-	}
+	hash := getHash(c.ContainerCfg)
 
 	opts.Config.Labels[config.HASH] = hash
 	opts.Config.Labels[config.ID] = c.ContainerCfg.Id

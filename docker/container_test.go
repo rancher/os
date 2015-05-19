@@ -1,10 +1,12 @@
 package docker
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
 	"github.com/rancherio/os/config"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 	"github.com/stretchr/testify/require"
 
 	dockerClient "github.com/fsouza/go-dockerclient"
@@ -13,29 +15,49 @@ import (
 func TestHash(t *testing.T) {
 	assert := require.New(t)
 
-	hash, err := getHash(&config.ContainerConfig{
+	hash := getHash(&config.ContainerConfig{
 		Id:  "id",
 		Cmd: "1 2 3",
 	})
-	assert.NoError(err, "")
 
-	hash2, err := getHash(&config.ContainerConfig{
+	hash2 := getHash(&config.ContainerConfig{
 		Id:  "id2",
 		Cmd: "1 2 3",
 	})
-	assert.NoError(err, "")
 
-	hash3, err := getHash(&config.ContainerConfig{
+	hash3 := getHash(&config.ContainerConfig{
 		Id:  "id3",
 		Cmd: "1 2 3 4",
 	})
-	assert.NoError(err, "")
 
-	assert.Equal("510b68938cba936876588b0143093a5850d4a142", hash, "")
+	assert.Equal("d601444333c7fb4cb955bcca36c5ed59b6fa8c3f", hash, "")
 	assert.NotEqual(hash, hash2, "")
 	assert.NotEqual(hash2, hash3, "")
 	assert.NotEqual(hash, hash3, "")
 }
+
+func TestHash2(t *testing.T) {
+	assert := require.New(t)
+
+	cfg := &config.ContainerConfig{
+		Id:             "docker-volumes",
+		Cmd:            "",
+		MigrateVolumes: false,
+		ReloadConfig:   false,
+		CreateOnly:     true,
+		Service:        &project.ServiceConfig{CapAdd:nil, CapDrop:nil, CpuShares:0, Command:"", Detach:"", Dns:project.NewStringorslice(), DnsSearch:project.NewStringorslice(), DomainName:"", Entrypoint:"", EnvFile:"", Environment:project.NewMaporslice([]string{}), Hostname:"", Image:"state", Labels:project.NewSliceorMap(map[string]string{"io.rancher.os.createonly":"true", "io.rancher.os.scope":"system"}), Links:nil, LogDriver:"json-file", MemLimit:0, Name:"", Net:"none", Pid:"", Ipc:"", Ports:nil, Privileged:true, Restart:"", ReadOnly:true, StdinOpen:false, Tty:false, User:"", Volumes:[]string{"/var/lib/docker:/var/lib/docker", "/var/lib/rancher/conf:/var/lib/rancher/conf", "/var/lib/system-docker:/var/lib/system-docker"}, VolumesFrom:nil, WorkingDir:"", Expose:nil, ExternalLinks:nil},
+	}
+
+	for i := 0; i < 1000; i++ {
+		assert.Equal(getHash(cfg), getHash(cfg), fmt.Sprintf("Failed at iteration: %v", i))
+	}
+}
+
+func TestBool2String(t *testing.T) {
+	assert := require.New(t)
+	assert.Equal("true", fmt.Sprint(true), "")
+}
+
 
 func TestParse(t *testing.T) {
 	assert := require.New(t)
@@ -57,9 +79,9 @@ func TestParse(t *testing.T) {
 	assert.Equal(c.Name, "c1", "Name doesn't match")
 	assert.True(c.remove, "Remove doesn't match")
 	assert.True(c.detach, "Detach doesn't match")
-	assert.Equal(len(c.Config.Cmd), 2, "Args doesn't match")
-	assert.Equal(c.Config.Cmd[0], "arg1", "Arg1 doesn't match")
-	assert.Equal(c.Config.Cmd[1], "arg2", "Arg2 doesn't match")
+	assert.Equal(c.Config.Cmd.Len(), 2, "Args doesn't match")
+	assert.Equal(c.Config.Cmd.Slice()[0], "arg1", "Arg1 doesn't match")
+	assert.Equal(c.Config.Cmd.Slice()[1], "arg2", "Arg2 doesn't match")
 	assert.True(c.HostConfig.Privileged, "Privileged doesn't match")
 }
 
