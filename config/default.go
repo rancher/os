@@ -203,6 +203,22 @@ func NewConfig() *Config {
 				},
 				LogDriver: "json-file",
 			},
+			"preload-system-images": {
+				Image:      "preload",
+				Privileged: true,
+				Labels: project.NewSliceorMap(map[string]string{
+					DETACH:        "false",
+					SCOPE:         SYSTEM,
+				}),
+				VolumesFrom: []string{
+					"command-volumes",
+					"system-volumes",
+				},
+				Volumes:     []string{
+					"/var/run/system-docker.sock:/var/run/docker.sock",
+					"/var/lib/system-docker/preload:/mnt/preload",
+				},
+			},
 			"cloud-init-pre": {
 				Image:      "cloudinit",
 				Privileged: true,
@@ -309,6 +325,25 @@ func NewConfig() *Config {
 				},
 				VolumesFrom: []string{
 					"all-volumes",
+				},
+			},
+			"preload-user-images": {
+				Image:      "preload",
+				Privileged: true,
+				Labels: project.NewSliceorMap(map[string]string{
+					DETACH:        "false",
+					SCOPE:         SYSTEM,
+				}),
+				Links: []string{
+					"dockerwait",
+				},
+				VolumesFrom: []string{
+					"command-volumes",
+					"system-volumes",
+				},
+				Volumes:     []string{
+					"/var/run/docker.sock:/var/run/docker.sock",
+					"/var/lib/docker/preload:/mnt/preload",
 				},
 			},
 			"console": {
