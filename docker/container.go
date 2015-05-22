@@ -529,7 +529,6 @@ func (c *Container) start(createOnly, wait bool) *Container {
 		return c.returnErr(err)
 	}
 
-	container := c.Container
 	created := false
 
 	opts, err := c.getCreateOpts(client)
@@ -563,14 +562,12 @@ func (c *Container) start(createOnly, wait bool) *Container {
 			return c.returnErr(err)
 		}
 
-		container, err = client.CreateContainer(*opts)
+		c.Container, err = client.CreateContainer(*opts)
 		created = true
 		if err != nil {
 			return c.returnErr(err)
 		}
 	}
-
-	c.Container = container
 
 	hostConfig := c.Container.HostConfig
 	if created {
