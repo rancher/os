@@ -231,6 +231,9 @@ func NewConfig() *Config {
 				Environment: project.NewMaporslice([]string{
 					"CLOUD_INIT_NETWORK=false",
 				}),
+				Links: []string{
+					"preload-system-images",
+				},
 				VolumesFrom: []string{
 					"command-volumes",
 					"system-volumes",
@@ -262,6 +265,7 @@ func NewConfig() *Config {
 				}),
 				Net: "host",
 				Links: []string{
+					"preload-user-images",
 					"cloud-init-pre",
 					"network",
 				},

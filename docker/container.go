@@ -242,12 +242,6 @@ func (c *Container) requiresUserDocker() bool {
 		return true
 	}
 
-	for _, v := range c.ContainerCfg.Service.Volumes {
-		if strings.Index(v, "/var/run/docker.sock") != -1 {
-			return true
-		}
-	}
-
 	return false
 }
 
@@ -267,10 +261,12 @@ func (c *Container) addLink(link string) {
 func (c *Container) parseService() {
 	if c.requiresSyslog() {
 		c.addLink("syslog")
+		log.Infof("[%v]: Implicitly linked to 'syslog'", c.Name)
 	}
 
 	if c.requiresUserDocker() {
 		c.addLink("dockerwait")
+		log.Infof("[%v]: Implicitly linked to 'dockerwait'", c.Name)
 	} else if c.ContainerCfg.Service.Image != "" {
 		client, err := NewClient(c.dockerHost)
 		if err != nil {
@@ -281,6 +277,7 @@ func (c *Container) parseService() {
 		i, _ := client.InspectImage(c.ContainerCfg.Service.Image)
 		if i == nil {
 			c.addLink("network")
+			log.Infof("[%v]: Implicitly linked to 'network'", c.Name)
 		}
 	}
 
