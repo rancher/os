@@ -385,7 +385,7 @@ func NewConfig() *Config {
 		},
 		Repositories: map[string]Repository{
 			"core": Repository{
-				Url: "https://raw.githubusercontent.com/rancherio/os-services/master",
+				Url: "https://raw.githubusercontent.com/rancherio/os-services/" + DEFAULT_IMAGE_VERSION,
 			},
 		},
 		Services: map[string]*project.ServiceConfig{},
