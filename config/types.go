@@ -3,7 +3,7 @@ package config
 import "github.com/rancherio/rancher-compose/librcompose/project"
 
 const (
-	DEFAULT_IMAGE_VERSION = "v0.3.0-rc2"
+	DEFAULT_IMAGE_VERSION = "v0.3.1"
 	CONSOLE_CONTAINER     = "console"
 	DOCKER_BIN            = "/usr/bin/docker"
 	DOCKER_SYSTEM_HOME    = "/var/lib/system-docker"
