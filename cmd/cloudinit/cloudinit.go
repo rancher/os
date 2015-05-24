@@ -35,6 +35,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
+	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/rancherio/os/cmd/cloudinit/hostname"
@@ -229,6 +230,7 @@ func saveCloudConfig() error {
 		}
 	}
 
+	userDataBytes = substituteUserDataVars(userDataBytes, metadata)
 	userData := string(userDataBytes)
 	scriptBytes := []byte{}
 
@@ -513,4 +515,11 @@ func toCompose(bytes []byte) ([]byte, error) {
 			"services": compose,
 		},
 	})
+}
+
+func substituteUserDataVars(userDataBytes []byte, metadata datasource.Metadata) []byte {
+	env := initialize.NewEnvironment("", "", "", "", metadata)
+	userData := env.Apply(string(userDataBytes))
+
+	return []byte(userData)
 }
