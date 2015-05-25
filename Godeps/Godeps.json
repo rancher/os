@@ -23,6 +23,11 @@
 			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
 		},
 		{
+			"ImportPath": "github.com/coreos/coreos-cloudinit/initialize",
+			"Comment": "v1.3.2-6-g405c260",
+			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
+		},
+		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/network",
 			"Comment": "v1.3.2-6-g405c260",
 			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
