@@ -79,7 +79,8 @@ cat > /etc/respawn.conf << EOF
 EOF
 
 if ! grep -q '^UseDNS no' /etc/ssh/sshd_config; then
-    echo "UseDNS no" >> /etc/ssh/sshd_config
+    echo "UseDNS no
+PermitRootLogin no" >> /etc/ssh/sshd_config
 fi
 
 ID_TYPE="busybox"
