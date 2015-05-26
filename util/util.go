@@ -252,7 +252,7 @@ func GetServices(urls []string) ([]string, error) {
 		}
 	}
 
-	return []string{}, nil
+	return result, nil
 }
 
 func LoadResource(location string, network bool, urls []string) ([]byte, error) {
