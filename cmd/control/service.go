@@ -90,7 +90,7 @@ func enable(c *cli.Context) {
 
 	for _, service := range c.Args() {
 		if val, ok := cfg.ServicesInclude[service]; !ok || !val {
-			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
+			if !strings.HasPrefix(service, "http") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
 				log.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
 			if _, err := docker.LoadServiceResource(service, true, cfg); err != nil {
