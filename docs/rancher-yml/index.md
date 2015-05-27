@@ -1,22 +1,21 @@
 ---
-title: Detailed RancherOS Configuration
+title: Rancher.yml
 layout: default
 
 ---
 
-## RancherOS Detailed Configuration 
+## Rancher.yml
 ---
 
-Within RancherOS, there are various areas within the system that you might want to configure. Below, we'll outline the different keys that can be saved in the `rancher.yml` file. If you choose to change these settings in the cloud config with the cloud-init process, they must be within the `rancher` key.
-
-## Configuring RancherOS
-
-### ros
----
+Within RancherOS, there are various areas within the system that you might want to configure. By making changes using the `ros config` commands, you'll editing the `rancher.yml` file. Below, we'll outline the different keys that can be changed. 
 
 `ros` is the main command to interact with RancherOS configuration, here's the link to the [full ros config command docs]({{site.baseurl}}/docs/rancheros-tools/ros/config/). With these commands, you can get and set values in the `rancher.yml` file as well as import/export configurations.
 
 _In v0.3.1+, we changed the command from `rancherctl` to `ros`._
+
+## Keys in RancherOS
+---
+
 
 ### Networking
 ---
@@ -132,11 +131,12 @@ system_docker:
     172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root, -H, 'unix:///var/run/system-docker.sock']
 ```
 
-## Full Example of Default Configuration
+## Full Export of Configuration
 ---
 
 The full configurartion, including the built in default values in RancherOS can be viewed by running `ros config export --full`.  Below is the output of the full yaml file.
 
+Any keys in the default configuration can be changed using the `ros config` command. All changes will be saved in the `rancher.yml` file.
 
 ```yaml
 bootstrap_containers:

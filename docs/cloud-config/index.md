@@ -24,17 +24,13 @@ In our example above, we have our `#cloud-config` line to indicate it's a cloud 
 
 ### How does Cloud Config work in RancherOS
 
-In RancherOS, we start with a default configuration. The cloud config file processed by cloud-init will extend and overwrite the default config. Finally, there is a `rancher.yml` file that will extend and overwrite the configuration. 
-
-Please see this diagram how the configuration of RancherOS is compiled.
-
-![Cloud Config]({{site.baseurl}}/img/cloud-config.png "RancherOS Configuration")
+In RancherOS, we start with a default configuration. The cloud config file processed by cloud-init will extend and overwrite the default config. Finally, there is a `rancher.yml` file that will extend and overwrite the configuration. If you want to edit the `rancher.yml` file, please go [here]({{site.baseurl}}/docs/rancher-yml).
 
 Typically, when you first boot the server, you'd pass in the cloud config file to configure the initialization of the server. After the first boot, if you have any changes for the configuration, it's recommended that you use `ros config` commands to set the `rancher` key in the configuration. Any changes will be saved in the `rancher.yml` file.
 
 ### Supported Cloud Init Directives
 
-Please review the directives that we currently support.
+Please review the directives that we currently support in RancherOS.
 
 ```yaml
 #cloud-config
@@ -61,7 +57,3 @@ rancher:
     - 8.8.4.4
 
 ```
-
-### RancherOS Configuration
-
-To read more about the details of the configuration, please read the detailed [configuration section]({{site.baseurl}}/docs/configuration/).

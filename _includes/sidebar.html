@@ -15,17 +15,11 @@
         <!-- Collect the nav links, forms, and other content for toggling -->
         <div class="navbar-collapse">
             <ul class="nav navbar-nav">
-                <li>
-                    <a>Overview</a>
-                    <ul class="list-group-submenu" id="overview">
-                        <li><a href="{{site.baseurl}}/docs/what-is-rancheros/">What is RancherOS?</a></li>
-                        <li><a href="{{site.baseurl}}/docs/why-rancheros/">Why RancherOS?</a></li>
-                        <li><a href="{{site.baseurl}}/docs/architecture/">Architecture</a></li>
-                    </ul>
-                </li>
+                <li><a href="{{site.baseurl}}/">Overview</a></li>
                 <li><a href="{{site.baseurl}}/docs/quick-start-guide/">Quick Start Guide</a></li>
                 <li>
-                    <a>Running RancherOS</a>
+                    <a href="{{site.baseurl}}/docs/running-rancheros/">
+                        Running RancherOS</a>
                     <ul class="list-group-submenu" id="running-rancheros">
                         <li>Workstation</li>
                             <ul>
@@ -49,10 +43,8 @@
                     </ul>
                 </li>
                 <li>
-                    <a>Configuration</a>
+                    <a href="{{site.baseurl}}/docs/configuration/">Configuration</a>
                     <ul class="list-group-submenu" id="configuration">
-                        <li><a href="{{site.baseurl}}/docs/configuration/">How is Rancher Configured?</a></li>
-                        <li><a href="{{site.baseurl}}/docs/configuration/detailed-configuration/">Detailed Configuration</a></li>
                         <li><a href="{{site.baseurl}}/docs/configuration/networking/">Networking</a></li>
                         <li><a href="{{site.baseurl}}/docs/configuration/users/">Users</a></li>
                         <li><a href="{{site.baseurl}}/docs/configuration/ssh-keys/">SSH Keys</a></li>
@@ -68,8 +60,8 @@
                 </li>
                 <li><a href="{{site.baseurl}}/docs/upgrading/">Upgrading</a></li>
                 <li><a href="{{site.baseurl}}/docs/cloud-config/">Cloud Config</a></li>
-                <li>
-                    <a>RancherOS Tools</a>
+                <li><a href="{{site.baseurl}}/docs/rancher-yml/">Rancher.yml</a></li>
+                <li>     <a class="no-list-group">      RancherOS Tools</a>
                      <ul class="list-group-submenu" id="tools">
                          <li><a href="{{site.baseurl}}/docs/rancheros-tools/rancheros-install/">rancheros-install</a>
                         <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/">ros</a></li>
@@ -83,7 +75,7 @@
                     </ul>
                 </li>
                 <li>
-                   <a>Under the Hood</a>
+                   <a class="no-list-group">Under the Hood</a>
                    <ul class="list-group-submenu" id="under-hood">
                         <li><a href="{{site.baseurl}}/docs/under-the-hood/directories/">How directories are mounted, Ram disk, etc.</a></li>
                         <li><a href="{{site.baseurl}}/docs/under-the-hood/startup-sequence/">RancherOS Startup Sequence</a></li>
