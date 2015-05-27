@@ -47,16 +47,16 @@ id_rsa.pub
 After you've ensured that you have a public SSH key, we'll proceed with copyubg the public SSH key from our computer to our VM. In our example, the public key that we're using is `id_rsa.pub`.
 
 ```bash
-[rancher@rancher ~]$ scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
+$ scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
 RSA key fingerprint is X:X:X:X:X.
 Are you sure you want to continue connecting (yes/no)? yes
 Warning: Permanently added 'computer_ip' (RSA) to the list of known hosts. 
 Password: 
 id_rsa.pub                              100%    422 0.4KB/s    00:00
-[rancher@rancher ~]$ ls
+$ ls
 id_rsa.pub
-[rancher@rancher ~]$ cat id_rsa.pub > cloud_config.yml
-[rancher@rancher ~]$ vi cloud_config.yml
+$ cat id_rsa.pub > cloud_config.yml
+$ vi cloud_config.yml
 ```
 
 You'll need to edit the cloud_config.yml so that it matches the syntax of a cloud config file. Yaml files are very particular about their white spacing, so please note the spaces in our file!
@@ -78,7 +78,7 @@ Are you sure you want to continue? [yN]
 
 You will be prompted to see if you want to continue. Type **y**.
 
-```
+```bash
 Are you sure you want to continue? [yN]yUnable to find image 'rancher/os:v0.2.1
 Pulling repository rancher/os
 ...

@@ -1,77 +1,101 @@
-<div class="row-fluid">
- 
- 
- <h3>Documentation</h3>
- <div id="navcontainer">
-     <ul>
-         <li><a href="{{site.baseurl}}/">Overview</a></li>
-            <ul>
-                <li><a href="{{site.baseurl}}/docs/what-is-rancheros/">What is RancherOS?</a></li>
-                <li><a href="{{site.baseurl}}/docs/why-rancheros/">Why RancherOS?</a></li>
-                <li><a href="{{site.baseurl}}/docs/architecture/">Architecture</a></li>
-            </ul>
-         <li><a href="{{site.baseurl}}/docs/quick-start-guide/">Quick Start Guide</a></li>
-         <li><a href="{{site.baseurl}}/docs/running-rancheros/">Running RancherOS</a></li>
-             <ul>
-                 <li>Workstation</li>
-                    <ul>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/workstation/docker-machine/">Docker Machine</a></li>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/workstation/vagrant/">Vagrant</a></li>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/workstation/boot-from-iso/">Boot from ISO</a></li>
+<div class="sidebar-nav">
+    <div class="navbar navbar-inverse" role="navigation">
+       
+       <!-- Brand and Toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://rancher.com/"><img src="{{site.baseurl}}/img/rancher-logo-nopadding.png"></a>
+        </div>
+        <div class="clearfix"></div>
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="navbar-collapse">
+            <ul class="nav navbar-nav">
+                <li>
+                    <a class="list-group-item" data-toggle="collapse" data-target="#overview">Overview<b class="caret"></b></a>
+                    <ul class="collapse list-group-submenu" id="overview">
+                        <li><a href="{{site.baseurl}}/docs/what-is-rancheros/">What is RancherOS?</a></li>
+                        <li><a href="{{site.baseurl}}/docs/why-rancheros/">Why RancherOS?</a></li>
+                        <li><a href="{{site.baseurl}}/docs/architecture/">Architecture</a></li>
                     </ul>
-                 <li>Cloud</li>
-                    <ul>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/aws/">AWS</a></li>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/gce/">GCE</a></li>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/do/">DigitalOcean</a></li>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/azure/">Azure</a></li>
+                </li>
+                <li><a href="{{site.baseurl}}/docs/quick-start-guide/">Quick Start Guide</a></li>
+                <li>
+                    <a class="list-group-item" data-toggle="collapse" data-target="#running-rancheros">Running RancherOS<b class="caret"></b></a>
+                    <ul class="collapse list-group-submenu" id="running-rancheros">
+                        <li>Workstation</li>
+                            <ul>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/workstation/docker-machine/">Docker Machine</a></li>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/workstation/vagrant/">Vagrant</a></li>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/workstation/boot-from-iso/">Boot from ISO</a></li>
+                            </ul>
+                        <li>Cloud</li>
+                            <ul>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/aws/">AWS</a></li>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/gce/">GCE</a></li>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/do/">DigitalOcean</a></li>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/cloud/azure/">Azure</a></li>
+                            </ul>
+                        <li>Bare metal and Virtual Server</li>
+                            <ul>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/server/ipxe/">iPXE</a></li>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/server/pxe/">PXE</a></li>
+                                <li><a href="{{site.baseurl}}/docs/running-rancheros/server/install-to-disk/">Install to Hard Disk</a></li>
+                            </ul>
                     </ul>
-                 <li>Bare metal and Virtual Server</li>
-                    <ul>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/server/ipxe/">iPXE</a></li>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/server/pxe/">PXE</a></li>
-                        <li><a href="{{site.baseurl}}/docs/running-rancheros/server/install-to-disk/">Install to Hard Disk</a></li>
+                </li>
+                <li>
+                    <a class="list-group-item" data-toggle="collapse" data-target="#configuration">Configuration<b class="caret"></b></a>
+                    <ul class="collapse list-group-submenu" id="configuration">
+                        <li><a href="{{site.baseurl}}/docs/configuration/">How is Rancher Configured?</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/detailed-configuration/">Detailed Configuration</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/networking/">Networking</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/users/">Users</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/ssh-keys/">SSH Keys</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/custom-console/">Custom Console OS</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/system-services/">System Services</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/setting-up-docker-tls/">Setting up Docker TLS</a></li><li><a href="{{site.baseurl}}/docs/configuration/loading-kernel-modules/">Load kernel modules</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/kernel-modules-kernel-headers/">Install kernel modules that require kernel headers</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/dkms/">DKMS</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/custom-kernels/">Custom Kernels</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/custom-rancheros-iso/">Building custom RancherOS ISO</a></li>
+                        <li><a href="{{site.baseurl}}/docs/configuration/prepacking-docker-images/">Pre-packing Docker Images</a></li>
                     </ul>
-             </ul>
-         <li><a href="{{site.baseurl}}/docs/configuration/">Configuration</a></li>
-             <ul>
-                 <li><a href="{{site.baseurl}}/docs/configuration/detailed-configuration/">Detailed Configuration</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/networking/">Networking</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/users/">Users</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/ssh-keys/">SSH Keys</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/custom-console/">Custom Console OS</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/system-services/">System Services</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/setting-up-docker-tls/">Setting up Docker TLS</a></li><li><a href="{{site.baseurl}}/docs/configuration/loading-kernel-modules/">Load kernel modules</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/kernel-modules-kernel-headers/">Install kernel modules that require kernel headers</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/dkms/">DKMS</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/custom-kernels/">Custom Kernels</a></li>
-                 
-                 <li><a href="{{site.baseurl}}/docs/configuration/custom-rancheros-iso/">Building custom RancherOS ISO</a></li>
-                 <li><a href="{{site.baseurl}}/docs/configuration/prepacking-docker-images/">Pre-packing Docker Images</a></li>
-             </ul>
-         <li><a href="{{site.baseurl}}/docs/upgrading/">Upgrading</a></li>
-         <li><a href="{{site.baseurl}}/docs/cloud-config/">Cloud Config</a></li>
-         <li>RancherOS Tools</li>
-            <ul>
-                <li><a href="{{site.baseurl}}/docs/rancheros-tools/rancheros-install/">rancheros-install</a>
-                    <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/">ros</a></li>
-                    <ul>
-                        <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/config/">Config</a></li>
-                        <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/tls/">TLS</a></li>
-                        <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/os/">OS</a></li>
-                        <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/service/">Service</a></li>
-                        <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/env/">ENV</a></li>
+                </li>
+                <li><a href="{{site.baseurl}}/docs/upgrading/">Upgrading</a></li>
+                <li><a href="{{site.baseurl}}/docs/cloud-config/">Cloud Config</a></li>
+                <li>
+                    <a class="list-group-item" data-toggle="collapse"  data-target="#tools">RancherOS Tools<b class="caret"></b></a>
+                     <ul class="collapse list-group-submenu" id="tools">
+                         <li><a href="{{site.baseurl}}/docs/rancheros-tools/rancheros-install/">rancheros-install</a>
+                        <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/">ros</a></li>
+                        <ul>
+                            <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/config/">Config</a></li>
+                            <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/tls/">TLS</a></li>
+                            <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/os/">OS</a></li>
+                            <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/service/">Service</a></li>
+                            <li><a href="{{site.baseurl}}/docs/rancheros-tools/ros/env/">ENV</a></li>
+                        </ul>
                     </ul>
-            </ul>
-        <li><a href="{{site.baseurl}}/docs/under-the-hood/">Under the Hood</a></li>
-            <ul>
-                <li><a href="{{site.baseurl}}/docs/under-the-hood/directories/">How directories are mounted, Ram disk, etc.</a></li>
-                <li><a href="{{site.baseurl}}/docs/under-the-hood/startup-sequence/">RancherOS Startup Sequence</a></li>
-                <li><a href="{{site.baseurl}}/docs/under-the-hood/device-plug-and-unplug/">Device Plug and Unplug</a></li>
-                <li><a href="{{site.baseurl}}/docs/under-the-hood/zombie-process-management/">Zombie process management (Our Hack on Docker Daemon)</a></li>
-            </ul>
-         <li><a href="{{site.baseurl}}/docs/contributing/">Contributing to RancherOS</a></li>
-         <li><a href="{{site.baseurl}}/docs/faqs/">FAQs</a></li>
-     </ul>
- </div>
-</div>
+                </li>
+                <li>
+                   <a class="list-group-item" data-toggle="collapse" data-target="#under-hood">Under the Hood<b class="caret"></b></a>
+                   <ul class="collapse list-group-submenu" id="under-hood">
+                        <li><a href="{{site.baseurl}}/docs/under-the-hood/directories/">How directories are mounted, Ram disk, etc.</a></li>
+                        <li><a href="{{site.baseurl}}/docs/under-the-hood/startup-sequence/">RancherOS Startup Sequence</a></li>
+                        <li><a href="{{site.baseurl}}/docs/under-the-hood/device-plug-and-unplug/">Device Plug and Unplug</a></li>
+                        <li><a href="{{site.baseurl}}/docs/under-the-hood/zombie-process-management/">Zombie process management (Our Hack on Docker Daemon)</a></li>
+                    </ul>
+                </li>
+                <li><a href="{{site.baseurl}}/docs/contributing/">Contributing to RancherOS</a></li>
+                <li><a href="{{site.baseurl}}/docs/faqs/">FAQs</a></li>
+            </ul><!-- /.navbar-nav -->
+        </div><!-- /.navbar-collapse -->
+       
+
+    </div> <!-- /.navbar-inverse -->
+</div> <!-- /.sidebar-nav -->

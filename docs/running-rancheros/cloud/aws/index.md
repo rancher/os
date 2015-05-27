@@ -27,7 +27,6 @@ AWS Access Key ID [None]: ABCD
 AWS Secret Access Key [None]: ABCD 
 Default region name [None]: us-east-1
 Default output format [None]:
-$
 ```
 
 3. Once you've configured your AWS, use this command to launch an EC2 instance with the RancherOS AMI. You will need to know your SSH key name and security group name for the _region_ that you are configured for. These can be found from the AWS console.
@@ -72,7 +71,6 @@ From a command line, log into the EC2 Instance.
 
 ```bash
 $ ssh -i /Directory/of/MySSHKeyName.pem rancher@<ip-of-ec2-instance>
-[rancher@rancher ~]$
 ```
 
 If you have issues logging into RancherOS, try using this command to help debug the issue.

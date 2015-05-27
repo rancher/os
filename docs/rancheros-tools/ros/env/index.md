@@ -35,15 +35,16 @@ Normally, running `sh -c 'echo $ETCD_DISCOVERY'` wouldn't print anything
 
 Let's try something else:
 
-```
-# ros config set environment.ETCD_NAME RancherOS_etcd_node
-# ros env sh -c 'echo $ETCD_NAME'
+```sh
+$ ros config set environment.ETCD_NAME RancherOS_etcd_node
+$ ros env sh -c 'echo $ETCD_NAME'
 RancherOS_etcd_node
 ```
 
 Let's run _etcd_ with a modified environment:
-```
-# ros env system-docker run --rm -e ETCD_NAME quay.io/coreos/etcd:v2.0.10
+
+```sh
+$ ros env system-docker run --rm -e ETCD_NAME quay.io/coreos/etcd:v2.0.10
 2015/04/30 12:03:01 etcd: no data-dir provided, using default data-dir ./RancherOS_etcd_node.etcd
 <skip>
 2015/04/30 12:03:01 etcdserver: datadir is valid for the 2.0.1 format

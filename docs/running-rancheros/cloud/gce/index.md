@@ -67,7 +67,7 @@ $ gcloud compute instances describe <INSTANCE_NAME> --project <PROJECT_ID> --zon
 
 If you want to remove your cloud config file, use the following command to remove the metadata.
 
-```
+```bash
 $ gcloud compute instances remove-metadata <INSTANCE_NAME> --project <PROJECT_ID> --zone <ZONE_OF_INSTANCE> --keys user-data
 Updated [https://www.googleapis.com/compute/v1/projects/PROJECT_ID/zones/ZONE_OF_INSTANCE/instances/INSTANCE_NAME].
 ```
