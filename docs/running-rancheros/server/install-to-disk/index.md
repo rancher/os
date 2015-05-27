@@ -92,6 +92,14 @@ Downloaded newer image for rancher/os:v0.2.1
 RancherOS has been installed. Please reboot...
 ```
 
+### SSH into RancherOS
+
+After installing RancherOS, you can ssh into RancherOS using your private key and the **rancher** user.
+
+```bash
+$ ssh -i /path/to/private/key rancher@<ip-address>
+```
+
 ### VirtualBox Eample Continued
 
 #### Changing the Boot Order
