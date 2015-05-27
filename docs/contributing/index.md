@@ -17,7 +17,7 @@ First run `./build.sh` to create the initial bootstrap Docker images.  After tha
 
 Docker 1.5+ required.
 
-```
+```bash
 $ ./build.sh
 ```
 

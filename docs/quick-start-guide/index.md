@@ -17,10 +17,12 @@ We have created a [RancherOS Vagrant project](https://github.com/rancherio/os-va
 
 2. Clone the [RancherOS Vagrant repository](https://github.com/rancherio/os-vagrant). Clone the repo and go into the newly cloned directory.
 
+
 ```bash
 $ git clone https://github.com/rancherio/os-vagrant.git
 $ cd os-vagrant
 ```
+
 3. Startup your VM with `vagrant up`.  
 
 ```bash
@@ -30,14 +32,12 @@ Bringing machine 'rancher-01' up with 'virtualbox' provider...
 …
 ==> rancher-01: Machine booted and ready!
 ==> rancher-01: Configuring and enabling network interfaces...
-$
 ```
 
 4. Log into your VM with `vagrant ssh`. 
 
 ```bash
 $ vagrant ssh
-[rancher@rancher ~]$
 ```
 
 With those simple commands, you're up and running a RancherOS instance.
@@ -47,7 +47,7 @@ With those simple commands, you're up and running a RancherOS instance.
 Let's start checking out what processes are running on the system.
 
 ```sh
-[rancher@rancher ~]$ ps aux
+$ ps aux
 PID   USER 	COMMAND
 1 	root 	docker -d -s overlay -b none --restart=false -H unix:///var/run/system-docker.sock
 …..
@@ -67,7 +67,7 @@ The [architecture]({{site.baseurl}}/docs/architecture/) section covers these dae
 Use `docker images` to see the images that the system has:
 
 ```bash
-[rancher@rancher ~]$ docker images
+$ docker images
 REPOSITORY   TAG	IMAGE ID	CREATED	VIRTUAL SIZE
 ```
 
@@ -75,8 +75,8 @@ At this point, there are no containers running on the user-docker daemon. Howeve
 
 Note: system-docker can only be used by root, so it is necessary to use the sudo command whenever you want to interact with system-docker
 
-```
-[rancher@rancher ~]$ sudo system-docker images
+```bash
+$ sudo system-docker images
 REPOSITORY  TAG         IMAGE ID        CREATED     	VIRTUAL SIZE
 syslog  	latest  	92855074bb56    46 hours ago    18.09 MB
 syslog      v0.0.1      92855074bb56    46 hours ago    18.09 MB
@@ -95,8 +95,8 @@ cloudinit   v0.0.1      7dc2bc8c2ad5    46 hours ago	18.09 MB
 
 All of these images are available for use by system-docker daemon, some of them are run at boot time, and others, such as the console, user-docker, rsyslog, and ntp containers are always running.
 
-```
-[rancher@rancher ~]$ sudo system-docker ps
+```bash
+$ sudo system-docker ps
 CONTAINER ID    IMAGE   COMMAND      	CREATED         	STATUS         PORTS             NAMES
 5ff08dbb57ce   console:latest 	"/usr/sbin/console.s   About an hour ago   Up About an hour console
 56ac381d4acb   userdocker:latest   "/docker.sh"	About an hour ago   Up About an hour   userdocker    	 
@@ -111,14 +111,14 @@ Let's try to deploy a normal Docker container on the user-docker daemon.  The Ra
 The following is an example of deploying a small nginx container installed on a Busybox Linux. To start a Docker container in the user-docker environment, use the following command:
 
 ```bash
-rancher@rancher:~$ docker run -d --name nginx -p 8000:80 husseingalal/nginxbusy
+$ docker run -d --name nginx -p 8000:80 husseingalal/nginxbusy
 be2a3c972b75e95cd162e7b4989f66e2b0ed1cb90529c52fd93f6c849b01840f
 ```
 
 You can see that the nginx container is up and running, using `docker ps` command:
 
 ```sh
-rancher@rancher:~$ docker ps
+$ docker ps
 CONTAINER ID        IMAGE                           COMMAND             CREATED             STATUS              PORTS                  NAMES
 be2a3c972b75        husseingalal/nginxbusy:latest   "/usr/sbin/nginx"   3 seconds ago       Up 2 seconds        0.0.0.0:8000->80/tcp   nginx
 ```
@@ -156,7 +156,7 @@ Note that I used --net=host to tell system-docker not to containerize the contai
 
 To make the container survive during the reboots, you should create the `/opt/rancher/bin/start.sh` script, and add the docker start line to launch the docker at each startup:
 
-```
+```bash
 $ sudo mkdir -p /opt/rancher/bin
 $ sudo echo “sudo system-docker start busydash” >> /opt/rancher/bin/start.sh
 $ sudo chmod 755 /opt/rancher/bin/start.sh
@@ -168,14 +168,14 @@ Another useful command that can be used with RancherOS is `ros` which can be use
 _In v0.3.1+, we changed the command from `rancherctl` to `ros`._
 
 ```bash
-[rancher@rancher ~]$ ros -v
+$ ros -v
 ros version 0.0.1
 ```
 
 RancherOS state is controlled by simple document, which is **/var/lib/rancher/conf/rancher.yml**. `ros` is used to edit the configuration of the system, to see for example the dns configuration of the system:
 
 ```sh
-[rancher@rancher ~]$ sudo ros config get dns
+$ sudo ros config get dns
 - 8.8.8.8
 - 8.8.4.4
 ```
@@ -183,14 +183,14 @@ RancherOS state is controlled by simple document, which is **/var/lib/rancher/co
 You can use ros to customize the console and replace the native Busybox console with the consoles from other Linux distributions.  Initially, RancherOS only supports the Ubuntu console, but other console support will be coming soon. In order to enable the Ubuntu console use the following command:
 
 ```sh
-[rancher@rancher ~]$ sudo ros addon enable ubuntu-console;
-[rancher@rancher ~]$ sudo reboot
+$ sudo ros addon enable ubuntu-console;
+$ sudo reboot
 ```
 
 After that you will be able to use Ubuntu console, to turn it off use disable instead of enable, and then reboot.
 
 ```sh
-rancher@rancher:~$ sudo ros addon disable ubuntu-console;
+$ sudo ros addon disable ubuntu-console;
 ```
 
 Note that any changes to the console or the system containers will be lost after reboots, any changes to /home or /opt will be persistent. The console always executes **/opt/rancher/bin/start.sh** at each startup. 
@@ -200,8 +200,8 @@ Note that any changes to the console or the system containers will be lost after
 
 Rancher Management platform can be used to Manage Docker containers on RancherOS machines, in the following example I am going to illustrate how to set up Rancher platform and register RancherOS installed on EC2 machine, first you need to run Rancher platform on a machine using the following command:
 
-```
-rancher@Rancher-mng:~# docker run -d -p 8080:8080 rancher/server
+```bash
+$ sudo docker run -d --restart=always -p 8080:8080 rancher/server
 ```
 
 You can access the Rancher server by going to the http://SERVER_IP:8080. It might take a couple of minutes before it is available.

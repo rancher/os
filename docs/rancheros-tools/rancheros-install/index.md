@@ -30,13 +30,12 @@ The `-d` option provide the target disk location.
 You can see the list of disks available to install to by running `sudo fdisk -l`
 
 ```bash
-[rancher@rancher ~]$ sudo fdisk -l
+$ sudo fdisk -l
 Disk /dev/sda: 8589 MB, 8589934592 bytes
 255 heads, 63 sectors/track, 1044 cylinders
 Units = cylinders of 16065 *512 = 8225280 bytes
 
 Disk /dev/sda doesn't contain a valid partition table
-[rancher@rancher ~]$
 ```
 
 #### Install Type
@@ -53,7 +52,7 @@ By default, the version installed will be version that RancherOS is currently ru
 You can use the [ros os]({{site.baseurl}}/docs/rancheros-tools/ros/os/) commands to find the list of available versions.
 
 ```bash
-[rancher@rancher ~]$ sudo ros os list
+$ sudo ros os list
 rancher/os:v0.1.2 remote
 rancher/os:v0.2.0-rc1 remote
 rancher/os:v0.2.0-rc2 remote
@@ -61,6 +60,5 @@ rancher/os:v0.2.0-rc3 remote
 rancher/os:v0.2.0 remote
 rancher/os:v0.2.1 remote
 rancher/os:v0.3.0-rc1 remote
-[rancher@rancher ~]$ 
 ```
 

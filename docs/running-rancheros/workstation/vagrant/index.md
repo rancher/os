@@ -75,7 +75,6 @@ We have created a [RancherOS Vagrant project](https://github.com/rancherio/os-va
     …
     ==> rancher-01: Machine booted and ready!
     ==> rancher-01: Configuring and enabling network interfaces...
-    $
     ```
 
 ## Logging into RancherOS
@@ -86,7 +85,6 @@ Now, let's log in to the system. We use `vagrant ssh` to authenticate with the p
 
     ```bash
     $ vagrant ssh
-    [rancher@rancher ~]$
     ```
 
 After you're logged into the system, go back to the [Quick Start Guide]({{site.baseurl}}/docs/quick-start-guide/) to see some examples of what we can do.  
@@ -96,10 +94,9 @@ After you're logged into the system, go back to the [Quick Start Guide]({{site.b
 If you are in the RancherOS command line, type `exit`.
 
 ```bash
-[rancher@rancher ~]$ exit 
+$ exit 
 logout
-Connection to 127.0.0.1 closed.
-$ 
+Connection to 127.0.0.1 closed. 
 ```
 
 If you want to shut down your VM, run `vagrant halt` command from the os-vagrant directory. Or if you want to destroy the VM, run `vagrant destroy`. 

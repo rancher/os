@@ -90,7 +90,6 @@ Pulling image (v0.2.1) from rancher/os, endpoint: https://registry-1.docker.io/v
 ...
 ...
 Status: Downloaded newer image for rancher/os:v0.2.1
-[rancher@rancher ~]$
 ```
 
 

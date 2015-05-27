@@ -11,7 +11,7 @@ layout: default
 
 Assuming your EC2 instance with RancherOS with more disk space than what's being read, run the following command to extend the disk size. This allows RancherOS to see the disk size.
 
-```
+```bash
 $ docker run --privileged --rm --it debian:jessie resize2fs /dev/xvda1
 ```
 

@@ -67,7 +67,6 @@ $ sudo mkfs.ext4 -L RANCHER_STATE /dev/xvda
     RancherOS rancher /dev/ttyl
     rancher login: rancher
     Password: 
-    [rancher@rancher ~]$
     ```
 
 Next, read about how to [install to disk]({{site.baseurl}}/docs/running-rancheros/server/install-to-disk/) in order to have any changes to RancherOS to be saved.
