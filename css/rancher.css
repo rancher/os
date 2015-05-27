@@ -150,7 +150,9 @@ hr {
 .navbar-inverse {
     background:#2f333c;
     border: none;
+    color: #FFF;
 }
+
 
 .navbar-inverse .navbar-nav > li > a {
     color: #FFF;
@@ -159,6 +161,17 @@ hr {
 .navbar-inverse .navbar-nav > li > a:focus {
     color: #fff;
     background-color: transparent;
+    text-decoration: underline;
+}
+
+.navbar-inverse .navbar-nav > li > .no-list-group {
+    color: #788188;
+}
+.navbar-inverse .navbar-nav > li > .no-list-group:hover,
+.navbar-inverse .navbar-nav > li > .no-list-group:focus {
+    color: #788188;
+    background-color: transparent;
+    text-decoration: none;
 }
 
 .list-group-item {
