@@ -6,8 +6,8 @@ setup_ssh()
     for i in rsa dsa ecdsa ed25519; do
         local output=/etc/ssh/ssh_host_${i}_key
         if [ ! -e $output ]; then
-            local saved="$(ros config get ssh.keys.${i})"
-            local pub="$(ros config get ssh.keys.${i}-pub)"
+            local saved="$(rancherctl config get ssh.keys.${i})"
+            local pub="$(rancherctl config get ssh.keys.${i}-pub)"
 
             if [[ -n "$saved" && -n "$pub" ]]; then
                 (
@@ -17,8 +17,8 @@ setup_ssh()
                 )
             else
                 ssh-keygen -f $output -N '' -t $i
-                ros config set -- ssh.keys.${i} "$(<${output})"
-                ros config set -- ssh.keys.${i}-pub "$(<${output}.pub)"
+                rancherctl config set -- ssh.keys.${i} "$(<${output})"
+                rancherctl config set -- ssh.keys.${i}-pub "$(<${output}.pub)"
             fi
         fi
     done
@@ -61,7 +61,7 @@ fi
 
 setup_ssh
 
-VERSION="$(ros -v | awk '{print $NF}')"
+VERSION="$(rancherctl -v | awk '{print $NF}')"
 cat > /etc/lsb-release << EOF
 DISTRIB_ID=RancherOS
 DISTRIB_RELEASE=${VERSION}
