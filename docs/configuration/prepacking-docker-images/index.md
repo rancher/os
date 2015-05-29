@@ -11,7 +11,7 @@ On boot RancherOS scans `/var/lib/docker/preload` and `/var/lib/system-docker/pr
 
 The archives are `.tar` files, optionally compressed with `xz` or `gzip`. These can be produced by `docker save` command, e.g.:
 
-```
+```bash
 docker save my-image1 my-image2 some-other/image3 | xz > my-images.tar.xz
 ```
 
