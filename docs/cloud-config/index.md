@@ -37,23 +37,22 @@ Please review the directives that we currently support in RancherOS.
 
 # Adds SSH keys to the rancher user
 ssh_authorized_keys:
- - ssh-rsa AAA... darren@rancher
+  - ssh-rsa AAA... darren@rancher
 
 write_files:
- write_files:
   - path: /opt/rancher/bin/start.sh
     permissions: 0755
     owner: root
     content: |
-     #!/bin/bash
-     echo "I'm doing things on start"
+      #!/bin/bash
+      echo "I'm doing things on start"
 
 # Anything you want to add to the rancher.yml must start with the rancher key
 rancher:
- network:
-  dns:
-   nameservers
-    - 8.8.8.8
-    - 8.8.4.4
+  network:
+    dns:
+      nameservers
+        - 8.8.8.8
+        - 8.8.4.4
 
 ```
