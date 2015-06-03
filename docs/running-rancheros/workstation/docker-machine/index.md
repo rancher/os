@@ -39,7 +39,7 @@ $ VBoxManage list runningvms | grep <MACHINE-NAME>
 
 This command will print out the newly created machine. If not, something went wrong with the provisioning step.
 
-Currently, you can view the list of cloud providers that we have tested using `docker-machine`.
+Currently, you can view the list of cloud providers that we support:
 
 [Amazon EC2]({{site.baseurl}}/docs/running-rancheros/workstation/docker-machine/#amazonec2)
 
