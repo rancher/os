@@ -15,11 +15,11 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.3.0 - Docker 1.6.0 - Linux 3.19.2**
+**v0.3.1 - Docker 1.6.2 - Linux 3.19.2**
 
 ### ISO
 
-https://github.com/rancherio/os/releases/download/v0.3.0/rancheros.iso
+https://github.com/rancherio/os/releases/download/v0.3.1/rancheros.iso
 
 ### Amazon
 
@@ -29,15 +29,14 @@ We have 2 different [virtualization types of AMIs](http://docs.aws.amazon.com/AW
 
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | PV |  [ami-506da950](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-506da950)
-ap-southeast-1 | PV |  [ami-14043946](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-14043946)
-ap-southeast-2 | PV |  [ami-37acd10d](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-37acd10d)
-eu-west-1 | PV |  [ami-2d8fec5a](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-2d8fec5a)
-sa-east-1 | PV |  [ami-fd7ffae0](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-fd7ffae0)
-us-east-1 | PV |  [ami-ca3e39a2](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-ca3e39a2)
-us-west-1 | PV |  [ami-55816c11](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-55816c11)
-us-west-2 | PV |  [ami-29c1f419](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-29c1f419)
-
+ap-northeast-1 | PV |  [ami-72fe2272](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-72fe2272)
+ap-southeast-1 | PV |  [ami-e088b3b2](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-e088b3b2)
+ap-southeast-2 | PV |  [ami-b989f183](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-b989f183)
+eu-west-1 | PV |  [ami-993549ee](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-993549ee)
+sa-east-1 | PV |  [ami-4fa02052](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-4fa02052)
+us-east-1 | PV |  [ami-c78668ac](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-c78668ac)
+us-west-1 | PV |  [ami-79a9433d](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-79a9433d)
+us-west-2 | PV |  [ami-354c7505](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-354c7505)
 
 **HVM**
 
@@ -45,21 +44,21 @@ HVM was introduced in v0.3.0 and only supports v0.3.0+.
 
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | HVM |  [ami-be6da9be](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-be6da9be)
-ap-southeast-1 | HVM |  [ami-06043954](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-06043954)
-ap-southeast-2 | HVM |  [ami-23acd119](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-23acd119)
-eu-west-1 | HVM |  [ami-018fec76](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-018fec76)
-sa-east-1 | HVM |  [ami-f17ffaec](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-f17ffaec)
-us-east-1 | HVM |  [ami-b03e39d8](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-b03e39d8)
-us-west-1 | HVM |  [ami-6d816c29](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-6d816c29)
-us-west-2 | HVM |  [ami-1fc1f42f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-1fc1f42f)
+ap-northeast-1 | HVM |  [ami-94fe2294](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-94fe2294)
+ap-southeast-1 | HVM |  [ami-e888b3ba](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-e888b3ba)
+ap-southeast-2 | HVM |  [ami-bf89f185](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-bf89f185)
+eu-west-1 | HVM |  [ami-8b3549fc](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-8b3549fc)
+sa-east-1 | HVM |  [ami-47a0205a](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-47a0205a)
+us-east-1 | HVM |  [ami-818668ea](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-818668ea)
+us-west-1 | HVM |  [ami-15a94351](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-15a94351)
+us-west-2 | HVM |  [ami-114c7521](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-114c7521)
 
 
 ### Google Compute Engine (Experimental)
 
-We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS v0.3.0.
+We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS v0.3.0 or later.
 
-[Download Image](https://github.com/rancherio/os/releases/download/v0.3.0/rancheros-030-gce-1.tar.gz)
+[Download Image](https://github.com/rancherio/os/releases/download/v0.3.1/rancheros-031-gce-01.tar.gz)
 
 #### Import
 To import the image into your project follow the instructions below:
