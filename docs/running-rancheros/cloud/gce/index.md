@@ -18,11 +18,7 @@ RancherOS is available as an image in GCE, and can be easily run in Google Compu
 
 2. Follow Google's instructions on how to [upload the image](https://cloud.google.com/compute/docs/tutorials/building-images#publishingimage). The image must be uploaded into a Google Cloud Storage bucket before it can be added to a project. 
 
-    ![RancherOS on GCE 2]({{site.baseurl}}/img/Rancher_gce2.png)
-
 3. Follow Google's instructions on how to [import a RAW image](https://cloud.google.com/compute/docs/images#use_saved_image). 
-
-    ![RancherOS on GCE 3]({{site.baseurl}}/img/Rancher_gce3.png)
 
 4. Once the image is added to Compute Engine, we can start creating new instances!
 
