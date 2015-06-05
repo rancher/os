@@ -300,7 +300,21 @@ func NewConfig() *Config {
 				},
 				LogDriver: "json-file",
 			},
-			"docker": {
+      "logrotate": {
+        Image:      "logrotate",
+        Restart:    "always",
+        Privileged: true,
+        Net:        "none",
+        Labels: project.NewSliceorMap(map[string]string{
+          SCOPE: SYSTEM,
+        }),
+        Volumes: []string{
+          "/var/log:/var/log",
+          "/etc/logrotate.d:/etc/logrotate.d",
+        },
+        LogDriver: "json-file",
+      },
+      "docker": {
 				Image:      "docker",
 				Restart:    "always",
 				Privileged: true,
