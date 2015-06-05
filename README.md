@@ -19,7 +19,24 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ### ISO
 
-https://github.com/rancherio/os/releases/download/v0.3.1/rancheros.iso
+https://releases.rancher.com/os/latest/rancheros.iso  
+https://releases.rancher.com/os/v0.3.1/rancheros.iso  
+
+### Additional Downloads
+
+https://releases.rancher.com/os/latest/machine-rancheros.iso  
+https://releases.rancher.com/os/latest/iso-checksums.txt  
+https://releases.rancher.com/os/latest/rancheros-031-gce-01.tar.gz  
+https://releases.rancher.com/os/latest/vmlinuz  
+https://releases.rancher.com/os/latest/initrd  
+
+https://releases.rancher.com/os/v0.3.1/machine-rancheros.iso  
+https://releases.rancher.com/os/v0.3.1/iso-checksums.txt  
+https://releases.rancher.com/os/v0.3.1/rancheros-031-gce-01.tar.gz  
+https://releases.rancher.com/os/v0.3.1/vmlinuz  
+https://releases.rancher.com/os/v0.3.1/initrd  
+
+**Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
 ### Amazon
 
