@@ -86,8 +86,8 @@ if ! grep -q '^PermitRootLogin no' /etc/ssh/sshd_config; then
     echo "PermitRootLogin no" >> /etc/ssh/sshd_config
 fi
 
-if ! grep -q '^AllowUsers rancher' /etc/ssh/sshd_config; then
-    echo "AllowUsers rancher" >> /etc/ssh/sshd_config
+if ! grep -q '^AllowGroups docker' /etc/ssh/sshd_config; then
+    echo "AllowGroups docker" >> /etc/ssh/sshd_config
 fi
 
 ID_TYPE="busybox"
