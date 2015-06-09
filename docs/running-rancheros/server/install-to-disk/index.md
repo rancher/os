@@ -33,33 +33,33 @@ Alternatively, if you have access to your local machine, you can copy your exist
 
 1. Check to see if you have SSH keys on your local computer. 
 
-```bash
-$ ls -al ~/.ssh
-# Lists all the files in your .ssh directory, if they exist
-```
+    ```bash
+    $ ls -al ~/.ssh
+    # Lists all the files in your .ssh directory, if they exist
+    ```
 2. You are looking to see if you have one of the following:
 
-```bash
-id_dsa.pub
-id_ecdsa.pub
-id_ed25519.pub
-id_rsa.pub
-```
+    ```bash
+    id_dsa.pub
+    id_ecdsa.pub
+    id_ed25519.pub
+    id_rsa.pub
+    ```
 
 3. After you've ensured that you have a public SSH key, we'll proceed with copyubg the public SSH key from our computer to our VM. In our example, the public key that we're using is `id_rsa.pub`.
 
-```bash
-$ scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
-RSA key fingerprint is X:X:X:X:X.
-Are you sure you want to continue connecting (yes/no)? yes
-Warning: Permanently added 'computer_ip' (RSA) to the list of known hosts. 
-Password: 
-id_rsa.pub                              100%    422 0.4KB/s    00:00
-$ ls
-id_rsa.pub
-$ cat id_rsa.pub > cloud_config.yml
-$ vi cloud_config.yml
-```
+    ```bash
+    $ scp -r computer_username@computer_ip:~/.ssh/id_rsa.pub ./
+    RSA key fingerprint is X:X:X:X:X.
+    Are you sure you want to continue connecting (yes/no)? yes
+    Warning: Permanently added 'computer_ip' (RSA) to the list of known hosts. 
+    Password: 
+    id_rsa.pub                              100%    422 0.4KB/s    00:00
+    $ ls
+    id_rsa.pub
+    $ cat id_rsa.pub > cloud_config.yml
+    $ vi cloud_config.yml
+    ```
 
 4. You'll need to edit the `cloud_config.yml` so that it matches the syntax of a cloud config file. Yaml files are very particular about their white spacing, so please note the spaces in our file!
 
