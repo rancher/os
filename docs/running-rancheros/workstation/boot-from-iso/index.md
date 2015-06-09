@@ -5,21 +5,28 @@ layout: default
 
 ## Booting from ISO
 ---
-The RancherOS ISO file can be loaded to KVM, Vmware, or VirtualBox and installed as a normal Linux virtual machine. 
+The RancherOS ISO file can be used to create a fresh RancherOS install on KVM, VMware, VirtualBox, or bare metal servers. You can download the rancheros.iso file from our [releases page](https://github.com/rancherio/os/releases/).
 
-If you've chosen to use a different provisioner, you can download the rancheros.iso file from our [releases page](https://github.com/rancherio/os/releases/). You must boot with at least **1GB** of memory. If you boot with the ISO, the login is hard coded to **rancher/rancher**. Only the ISO has the password hard coded. If you run from a cloud or install to disk, SSH keys or a password of your choice is expected to be used.
+You must boot with at least **1GB** of memory. If you boot with the ISO, the login is hard coded to **rancher/rancher**. Only the ISO has the password hard coded. If you run from a cloud or install to disk, SSH keys or a password of your choice is expected to be used.
 
-## Persisting State
+### Install to Disk
+
+After you boot RancherOS from ISO, you can follow the instructions [here]({{site.baseurl}}/docs/running-rancheros/server/install-to-disk/) to install RancherOS to a hard disk.
+
+### Persisting State
 ---
-If you are running from the ISO, RancherOS will be running from memory. In order to persist to disk, you can format a file system with the label `RANCHER_STATE`. 
+If you are running from the ISO, RancherOS will be running from memory. All downloaded Docker images, for example, will be stored in a ramdisk and will be lost after the server is rebooted. You can 
+create a file system with the label `RANCHER_STATE` to instruct RancherOS to use that partition to store state. Suppose you have a disk partition on the server called /dev/sda, the following command formats that partition and labels it `RANCHER_STATE`
 
 ```bash
-$ sudo mkfs.ext4 -L RANCHER_STATE /dev/xvda
+$ sudo mkfs.ext4 -L RANCHER_STATE /dev/sda
 ```
 
-`/dev/xvda` will be the disk that will hold the state.
+After you reboot the server RancherOS will use /dev/sda as the state partition.
 
 
+
+<!----
 ### Example using VirtualBox
 
 
@@ -71,4 +78,4 @@ $ sudo mkfs.ext4 -L RANCHER_STATE /dev/xvda
 
 Next, read about how to [install to disk]({{site.baseurl}}/docs/running-rancheros/server/install-to-disk/) in order to have any changes to RancherOS to be saved.
 
-<br>
+---->
