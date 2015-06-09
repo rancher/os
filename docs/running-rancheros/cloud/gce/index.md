@@ -8,7 +8,7 @@ layout: default
 
 Note: The Google Compute Engine image was introduced in v0.3.0, but is still experimental. There are known issues with the image, so please do not use it in production!
 
-### Adding the RancherOS image into GCE
+### Adding the RancherOS Image into GCE
 
 RancherOS is available as an image in GCE, and can be easily run in Google Compute Engine (GCE).  Let’s walk through how to upload GCE image. 
 
@@ -22,7 +22,7 @@ RancherOS is available as an image in GCE, and can be easily run in Google Compu
 
 4. Once the image is added to Compute Engine, we can start creating new instances!
 
-### Launching RancherOS using gcloud compute
+### Launching RancherOS using `gcloud compute`
 
 After the image is uploaded, we can use the `gcloud compute` [command-line tool](https://cloud.google.com/compute/docs/gcloud-compute/) to start a new instance. It automatically merges the SSH keys from the project and adds the keys to the **rancher** user. If you don't have any project level SSH keys, go to the _Adding SSH Keys_ section to learn more about adding SSH keys. 
 
@@ -32,7 +32,7 @@ Since the image is private, we need to follow Google's [instructions](https://cl
 $ gcloud compute instances create --project <PROJECT_ID> --zone <ZONE_TO_CREATE_INSTANCE> <INSTANCE_NAME> --image <PRIVATE_IMAGE_NAME>
 ```
 
-### Using a Cloud Config file with GCE
+### Using a Cloud Config File with GCE
 
 If you want to pass in your own cloud config file that will be processed by [cloud init]({{site.baseurl}}/docs/cloud-init), you can pass it as metadata upon creation of the instance during the `gcloud compute` command. The file will need to be stored locally before running the command. The key of the metadata will be `user-data` and the value is the location of the file. If any SSH keys are added in the cloud config file, it will also be added to the **rancher** user.
 
@@ -77,7 +77,7 @@ $ gcloud compute instances reset <INSTANCE_NAME> --project <PROJECT_ID> --zone <
 Updated [https://www.googleapis.com/compute/v1/projects/PROJECT_ID/zones/ZONE_OF_INSTANCE/instances/INSTANCE_NAME].
 ```
 
-### Launching RancherOS using the Google console
+### Launching RancherOS using the Google Console
 
 After the image is uploaded, it's easy to use the console to create new instances. You will **not** be able to upload your own cloud config file when creating instances through the console. You can add it after the instance is created using `gcloud compute` commands and resetting the instance. 
 
@@ -150,9 +150,5 @@ $ gcloud compute instances get-serial-port-output <INSTANCE_NAME> --zone <ZONE_O
 ```
 
 
-
-<br>
-<br>
-<br>
 
 
