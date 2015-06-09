@@ -6,3 +6,5 @@ layout: default
 
 ## Running RancherOS on DigitalOcean
 ---
+
+Running RancherOS on DigitalOcean is not yet supported.
