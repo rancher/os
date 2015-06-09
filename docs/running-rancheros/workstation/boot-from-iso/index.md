@@ -10,7 +10,7 @@ The RancherOS ISO file can be used to create a fresh RancherOS install on KVM, V
 You must boot with at least **1GB** of memory. If you boot with the ISO, the login is hard coded to **rancher/rancher**. Only the ISO has the password hard coded. If you run from a cloud or install to disk, SSH keys or a password of your choice is expected to be used.
 
 ### Install to Disk
-
+---
 After you boot RancherOS from ISO, you can follow the instructions [here]({{site.baseurl}}/docs/running-rancheros/server/install-to-disk/) to install RancherOS to a hard disk.
 
 ### Persisting State
