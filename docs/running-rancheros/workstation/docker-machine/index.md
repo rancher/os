@@ -1,4 +1,4 @@
-v---
+---
 title: Running RancherOS on VirtualBox using docker machine
 layout: default
 
