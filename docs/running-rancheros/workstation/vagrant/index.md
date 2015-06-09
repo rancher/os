@@ -9,9 +9,9 @@ layout: default
 
 We have created a [RancherOS Vagrant project](https://github.com/rancherio/os-vagrant) that allows you to quickly test out RancherOS.
 
-1. Vagrant can be downloaded and installed from [here](http://www.vagrantup.com/downloads.html).
+Vagrant can be downloaded and installed from [here](http://www.vagrantup.com/downloads.html).
 
-2. After installing Vagrant, you should clone the [RancherOS Vagrant repository](https://github.com/rancherio/os-vagrant). From the command line, go to the directory that you want to clone the repo into. Clone the repo and go into the newly cloned directory.
+After installing Vagrant, you should clone the [RancherOS Vagrant repository](https://github.com/rancherio/os-vagrant). From the command line, go to the directory that you want to clone the repo into. Clone the repo and go into the newly cloned directory.
 
     ```bash
     $ git clone https://github.com/rancherio/os-vagrant.git
@@ -66,7 +66,7 @@ We have created a [RancherOS Vagrant project](https://github.com/rancherio/os-va
     end
     ```
 
-3. Run `vagrant up`. This will import the vagrant box and create the virtual machine with RancherOS installed. 
+Run `vagrant up`. This will import the vagrant box and create the virtual machine with RancherOS installed. 
 
     ```bash
     $ vagrant up
@@ -102,7 +102,4 @@ Connection to 127.0.0.1 closed.
 If you want to shut down your VM, run `vagrant halt` command from the os-vagrant directory. Or if you want to destroy the VM, run `vagrant destroy`. 
 
 To get the VM back up, run `vagrant up` in the os-vagrant directory and just log back in `vagrant ssh`.
-
-
-<br>
 
