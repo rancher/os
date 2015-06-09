@@ -64,7 +64,13 @@ rancher:
 
 If you want to configure one of multiple network interfaces, you can specify the MAC address of the interface you want to configure.
 
-You can place the MAC address selection in your cloud config file as follows:
+Using `ros config`, you can specify the MAC address of the NIC you want to configure as follows:
+
+```bash
+$ sudo ros config set network.interfaces.”mac=ea:34:71:66:90:12:01”.dhcp true
+```
+
+Alternatively, you can place the MAC address selection in your cloud config file as follows:
 
 ```yaml
 #cloud-config
@@ -73,7 +79,7 @@ You can place the MAC address selection in your cloud config file as follows:
 rancher:
   network:
     interfaces:
-      "mac=ea:34:71:66:90:12":
+      "mac=ea:34:71:66:90:12:01":
          dhcp: true
 ```
 
