@@ -42,9 +42,10 @@ rancher:
 Using `ros config`, you can configure specific interfaces. Wildcard globbing is supported so `eth*` will match `eth1` and `eth2`.  The available options you can configure are `address`, `gateway`, `mtu`, and `dhcp`.
 
 ```bash
-$ sudo ros config set network.interfaces.eth1.address 172.68.1.0/100
-$ sudo ros config get network.interfaces.eth1.address
-172.68.1.0/100
+$ sudo ros config set network.interfaces.eth1.address 172.68.1.100/24
+$ sudo ros config set network.interfaces.eth1.gateway 172.68.1.1
+$ sudo ros config set network.interfaces.eth1.mtu 1500
+$ sudo ros config set network.interfaces.eth1.dhcp false
 ```
 
 If you wanted to configure the interfaces through the cloud config file, you'll need to place interface configurations within the `rancher` key.
@@ -57,7 +58,10 @@ rancher:
   network:
     interfaces:
       eth1:
-        address: 172.68.1.0/100
+        address: 172.68.1.100/24
+        gateway: 172.68.1.1
+        mtu: 1500
+        dhcp: false
 ```
 
 ### Multiple NICs
