@@ -6,25 +6,31 @@ layout: default
 
 ## Configuring RancherOS
 ---
-The configuration of RancherOS is the compilation of different sources. It starts with a default configuration that is shipped with RancherOS, adds in anything found through cloud init process and finally includes any changes that have been made by the user. The cloud-init process can be found in more detail [here]({{site.baseurl}}/docs/cloud-config). 
+The configuration of RancherOS is derived from three sources.
 
-Any user changes made to RancherOS are made by interacting with the `rancher.yml` file. If any values are changed from the default configuration, the new value is added to the `rancher.yml` file. More details on how to interact with the file can be found [here]({{site.baseurl}}/docs/rancher-yml).
+1. RancherOS ships with a default configuration. Default configuration is hard coded into RancherOS binary. The default configuration cannot be changed, but it can be extended or overwritten by cloud-config and `rancher.yml`.
 
-Here's a diagram of how the configuration of RancherOS is compiled.
+2. Cloud config extends and overwrites RancherOS default config. Cloud config itself is derived from several sources by the `cloud-init` program running as a system container inside RancherOS. The details of cloud config can be found in more detail [here]({{site.baseurl}}/docs/cloud-config). 
+
+3. Finally, `rancher.yml` file extends and overwrites the result of cloud config. More details of the `rancher.yml` file can be found [here]({{site.baseurl}}/docs/rancher-yml).
+
+The following diagram illustrates how RancherOS is configured from three sources: the default configuration, cloud config, and `rancher.yml` file.
 
 ![Configuration of RancherOS]({{site.baseurl}}/img/cloud-config.png)
 
-We have various topics that cover how to configure specific areas of RancherOS.
+You can see the RancherOs configuration in its entirety by typing `sudo ros config export --full`.
 
-[Networking]({{site.baseurl}}/configuration/networking/)<br>
-[Users]({{site.baseurl}}/configuration/users/)<br>
-[SSH Keys]({{site.baseurl}}/configuration/ssh-keys/)<br>
-[Custom Console OS]({{site.baseurl}}/configuration/custom-console/)<br>
-[Adding System Services]({{site.baseurl}}/configuration/system-services/)<br>
-[Setting up Docker TLS]({{site.baseurl}}/configuration/setting-up-docker-tls/)<br>
-[Loading Kernel Modules]({{site.baseurl}}/configuration/loading-kernel-modules/)<br>
-[Installing Kernel Modules that require Kernel Headers]({{site.baseurl}}/configuration/kernel-modules-kernel-headers/)<br>
-[DKMS]({{site.baseurl}}/configuration/dkms/)<br>
-[Custom Kernels]({{site.baseurl}}/configuration/custom-kernels/)<br>
-[Building custom RancherOS ISO]({{site.baseurl}}/configuration/custom-rancheros-iso/)<br>
-[Pre-packing Docker Images]({{site.baseurl}}/configuration/prepacking-docker-images/)<br>
+The following is a list of topics on RancherOS configuration:
+
+[Networking]({{site.baseurl}}/docs/configuration/networking/)<br>
+[Users]({{site.baseurl}}/docs/configuration/users/)<br>
+[SSH Keys]({{site.baseurl}}/docs/configuration/ssh-keys/)<br>
+[Custom Console OS]({{site.baseurl}}/docs/configuration/custom-console/)<br>
+[Adding System Services]({{site.baseurl}}/docs/configuration/system-services/)<br>
+[Setting up Docker TLS]({{site.baseurl}}/docs/configuration/setting-up-docker-tls/)<br>
+[Loading Kernel Modules]({{site.baseurl}}/docs/configuration/loading-kernel-modules/)<br>
+[Installing Kernel Modules that require Kernel Headers]({{site.baseurl}}/docs/configuration/kernel-modules-kernel-headers/)<br>
+[DKMS]({{site.baseurl}}/docs/configuration/dkms/)<br>
+[Custom Kernels]({{site.baseurl}}/docs/configuration/custom-kernels/)<br>
+[Building custom RancherOS ISO]({{site.baseurl}}/docs/configuration/custom-rancheros-iso/)<br>
+[Pre-packing Docker Images]({{site.baseurl}}/docs/configuration/prepacking-docker-images/)<br>
