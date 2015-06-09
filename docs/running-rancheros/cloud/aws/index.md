@@ -7,31 +7,13 @@ layout: default
 ----
 RancherOS is available as an Amazon Web Services AMI, and can be easily run on EC2. You can launch RancherOS either using the AWS Command Line Interface (CLI) or using the AWS console. 
 
-### Launching RancherOS through the AWS Command Line Interface
+### Launching RancherOS through the AWS CLI
 
-1. If you haven't installed the AWS CLI, follow the instructions on the [AWS CLI page](http://aws.amazon.com/cli/) to install. If you've already installed and configured AWS, just skip step 2. 
+If you haven't installed the AWS CLI, follow the instructions on the [AWS CLI page](http://aws.amazon.com/cli/) to install the CLI and configure access key and secret keys.
 
-2. After you have installed AWS CLI, you'll need to configure your AWS. 
+Once you've installed your AWS CLI, use this command to launch an EC2 instance with the RancherOS AMI. You will need to know your SSH key name and security group name for the _region_ that you are configured for. These can be found from the AWS console.
 
-```bash
-$ aws configure
-```
-
-Input your Access Key ID, Secret Access Key and Region name. You do not need to put in a output format name and can just leave it blank. 
-
-Note: Access Key ID and Secret Access Key can be found in the **Security Credentials** section of AWS. If you don't have one, **Create New Access Key**. When created, make sure to save the Secret Access Key. Or you can follow the instructions on AWS on how to create an IAM User account. 
-
-```bash
-$ aws configure
-AWS Access Key ID [None]: ABCD 
-AWS Secret Access Key [None]: ABCD 
-Default region name [None]: us-east-1
-Default output format [None]:
-```
-
-3. Once you've configured your AWS, use this command to launch an EC2 instance with the RancherOS AMI. You will need to know your SSH key name and security group name for the _region_ that you are configured for. These can be found from the AWS console.
-
-Note: See **Latest AMI Releases** for AMI names for each region. We support PV and HVM types of AMIs. 
+Note: Check the RancherOS [README](https://github.com/rancherio/os/blob/master/README.md) for AMI names for each region. We support PV and HVM types of AMIs. 
 
 ```bash
 $ aws ec2 run-instances --image-id ami-ID# --count 1 --instance-type t1.micro --key-name MySSHKeyName --security-groups sg-name
@@ -84,9 +66,6 @@ $ ssh -v -i /Directory/of/MySSHKeyName.pem rancher@<ip-of-ec2-instance>
 
 Please check the [README](https://github.com/rancherio/os/blob/master/README.md) in our RancherOS repository for our latest AMIs.
 
-<br>
-<br>
-<br>
 
 
 
