@@ -21,7 +21,7 @@ $ aws ec2 run-instances --image-id ami-ID# --count 1 --instance-type t1.micro --
 
 Your instance is now running!
 
-### Launching RancherOS through the AWS console
+### Launching RancherOS through the AWS Console
 
 Let’s walk through how to import and create a RancherOS on EC2 machine using the AWS console.
 
