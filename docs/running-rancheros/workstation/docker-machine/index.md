@@ -1,4 +1,4 @@
----
+v---
 title: Running RancherOS on VirtualBox using docker machine
 layout: default
 
@@ -15,11 +15,9 @@ Get the latest `machine-rancheros.iso` artifact from the RancherOS [releases](ht
 
 ### Using Docker Machine  
 
-You can use `docker-machine` to launch VMs for various providers. Currently only Virtual Box and AWS are supported
+You can use `docker-machine` to launch VMs for various providers. Currently only VirtualBox and AWS are supported.
 
-#### Using Docker Machine with Virtual Box
-
-We'll show you how simple it is to use with Virtual Box. 
+#### Using Docker Machine with VirtualBox
 
 Before moving forward, you'll need to have VirtualBox installed. Download it directly from [VirtualBox](https://www.virtualbox.org/wiki/Downloads). Once you have VirtualBox and Docker Machine installed, it's just one command to get RancherOS running. 
 
