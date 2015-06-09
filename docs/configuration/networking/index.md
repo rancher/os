@@ -7,13 +7,11 @@ layout: default
 ## Configuring RancherOS Networking
 ---
 
-RancherOS provides very basic support to get networking up. Changes to the networking is quite simple. 
+There are two ways to configure networking on RancherOS.
 
-You can change the networking settings by using `ros config` to set different keys within the network key. Anything set using this command will have its change saved in the `rancher.yml` file. Changes will only take affect after you reboot.
+You can change the networking settings by using `ros config` to set different keys within the network key. Anything set using this command will have its change saved in the `rancher.yml` file. Changes will only take affect after you reboot. To learn more information about configuring the networking settings by using `ros config`, please refer to our [`ros config`]({{site.baseurl}}/docs/rancheros-tools/ros/config) docs. 
 
-Alternatively, you can use a [cloud config]({{site.baseurl}}/docs/cloud-config) file to set up how the network is configured. 
-
-To learn more information about configuring the networking settings by using `ros config`, please refer to our [ros config]({{site.baseurl}}/docs/rancheros-tools/ros/config) docs. 
+Alternatively, you can use a [cloud config]({{site.baseurl}}/docs/cloud-config) file to set up how the network is configured. Cloud config is applied to the RancherOS instance when RancherOS starts.
 
 We'll provide some examples using both the `ros config` or setting it through the cloud config file.
 
@@ -27,7 +25,7 @@ $ sudo ros config get network.dns.domain
 myexampledomain.com
 ```
 
-If you wanted to edit the DNS through the cloud config file, you'll need to have any changes within the `rancher` key in order to change the DNS.
+If you wanted to configure the DNS through the cloud config file, you'll need to place DNS configurations within the `rancher` key.
 
 ```yaml
 #cloud-config
@@ -41,7 +39,7 @@ rancher:
 
 ### Interfaces
 
-Using `ros config`, you can set specific interfaces. Wildcard globbing is supported so `eth*` will match `eth1` and `eth2`.  The available options you can set are `address`, `gateway`, `mtu`, and `dhcp`.
+Using `ros config`, you can configure specific interfaces. Wildcard globbing is supported so `eth*` will match `eth1` and `eth2`.  The available options you can configure are `address`, `gateway`, `mtu`, and `dhcp`.
 
 ```bash
 $ sudo ros config set network.interfaces.eth1.address 172.68.1.0/100
@@ -49,7 +47,7 @@ $ sudo ros config get network.interfaces.eth1.address
 172.68.1.0/100
 ```
 
-If you wanted to edit the DNS through the cloud config file, you'll need to have any changes within the `rancher` key in order to change the interface.
+If you wanted to configure the interfaces through the cloud config file, you'll need to place interface configurations within the `rancher` key.
 
 ```yaml
 #cloud-config
@@ -64,7 +62,15 @@ rancher:
 
 ### Multiple NICs
 
-If you have multiple NICs on your server and you want to select a sepecific NIC for RancherOS, you will need to update your `interfaces`. You can change this key in the cloud config so that it will select the NIC selection upon the first install. 
+If you want to configure one of multiple network interfaces, you can specify the MAC address of the interface you want to configure.
+
+Using `ros config`, you can specify the MAC address of the NIC you want to configure as follows:
+
+```bash
+$ sudo ros config set network.interfaces.”mac=ea:34:71:66:90:12:01”.dhcp true
+```
+
+Alternatively, you can place the MAC address selection in your cloud config file as follows:
 
 ```yaml
 #cloud-config
@@ -73,7 +79,7 @@ If you have multiple NICs on your server and you want to select a sepecific NIC 
 rancher:
   network:
     interfaces:
-      "mac=00:00:00:00:00:00":
+      "mac=ea:34:71:66:90:12:01":
          dhcp: true
 ```
 
