@@ -15,7 +15,11 @@ Get the latest `machine-rancheros.iso` artifact from the RancherOS [releases](ht
 
 ### Using Docker Machine  
 
-You can use `docker-machine` to launch VMs for various providers. We'll show you how simple it is to use with Virtual Box. 
+You can use `docker-machine` to launch VMs for various providers. Currently only Virtual Box and AWS are supported
+
+#### Using Docker Machine with Virtual Box
+
+We'll show you how simple it is to use with Virtual Box. 
 
 Before moving forward, you'll need to have VirtualBox installed. Download it directly from [VirtualBox](https://www.virtualbox.org/wiki/Downloads). Once you have VirtualBox and Docker Machine installed, it's just one command to get RancherOS running. 
 
@@ -39,9 +43,9 @@ $ VBoxManage list runningvms | grep <MACHINE-NAME>
 
 This command will print out the newly created machine. If not, something went wrong with the provisioning step.
 
-Currently, you can view the list of cloud providers that we support:
+#### Using Docker Machine on AWS
 
-[Amazon EC2]({{site.baseurl}}/docs/running-rancheros/workstation/docker-machine/#amazonec2)
+TODO
 
 ### Logging into RancherOS
 
@@ -78,8 +82,3 @@ $ docker-machine ip <MACHINE-NAME>
 ```
 
 Once you obtain the IP address, paste it in a browser and a _Welcome Page_ for nginx will be displayed.
-
-## Docker Machine on Cloud Providers
-
-<span id="amazonec2"></span>
-### Amazon EC2
