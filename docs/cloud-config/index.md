@@ -78,8 +78,8 @@ rancher:
         address: 192.168.100.100/24
         gateway: 192.168.100.1
         mtu: 1500
-        # If this MAC address happens to match eth0, eth0 will be programmed to use DHCP.
-        "mac=ea:34:71:66:90:12:01":
+      # If this MAC address happens to match eth0, eth0 will be programmed to use DHCP.
+      "mac=ea:34:71:66:90:12:01":
         dhcp: true
     dns:
       nameservers:
