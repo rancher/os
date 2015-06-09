@@ -73,6 +73,7 @@ rancher:
         address: 192.168.100.100/24
         gateway: 192.168.100.1
         mtu: 1500
+        bridge: false
       eth1:
         dhcp: true
     dns:
