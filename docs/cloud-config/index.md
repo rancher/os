@@ -62,19 +62,24 @@ write_files:
 
 #### Network Configuration
 
-Network configuration section must start with the `rancher` key.
+Network configuration section must start with the `rancher` key. The example below shows network interface and DNS configuration. For each interface, you can configure DHCP, IP Address, Gateway, and MTU. There are three ways to specify network interfaces:
+
+1. Wild card (e.g., `eth*`). This is the least specific and the lowest priority. An `eth1` specification will take precedence over `eth*` specification.
+2. Exact interface name (e.g., `eth0`). Exact interface names take precedence over wild card specifications.
+3. MAC address (e.g., `"mac=ea:34:71:66:90:12:01"`). Mac addresses take precedence over exact interface names.
 
 ```yaml
 rancher:
   network:
     interfaces:
-      eth0:
+      eth*:
         dhcp: false
+      eth0:
         address: 192.168.100.100/24
         gateway: 192.168.100.1
         mtu: 1500
-        bridge: false
-      eth1:
+        # If this MAC address happens to match eth0, eth0 will be programmed to use DHCP.
+        "mac=ea:34:71:66:90:12:01":
         dhcp: true
     dns:
       nameservers:
