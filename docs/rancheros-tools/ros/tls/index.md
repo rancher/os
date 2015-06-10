@@ -38,7 +38,7 @@ The `generate` command is used to generate new client and server certificates. B
 The `--hostname` option is used to define which hostname(s) you want the server certificate to be generated for. The hostname will be where you access the server. You are able to use this option multiple times in the same command. You can use an IP, "localhost", or "foo.example.com". 
 
 ```bash
-$ sudo ros tls generate -s --hostname 172.0.0.1 --hostname localhost --hostname foo.example.com
+$ sudo ros tls generate -s --hostname 172.0.0.1 --hostname localhost --hostname foo.example.com -d ~/DIR/PATH
 ```
 
 #### Server
@@ -47,7 +47,7 @@ Since the `generate` command is defaulted for creating client certificates, you 
 
 
 ```bash
-$ sudo ros tls generate -s --hostname localhost
+$ sudo ros tls generate -s --hostname localhost -d ~/DIR/PATH
 ```
 
 #### Directory

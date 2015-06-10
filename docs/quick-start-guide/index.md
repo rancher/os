@@ -60,7 +60,7 @@ PID   USER 	COMMAND
 
 As you can see, the first process on the system, PID 1, is the Docker daemon, called **system-docker**. This is where RancherOS runs system services like ntpd and rsyslogd. You can use the `system-docker` command to control the **system-docker** daemon. 
 
-The other Docker daemon running on the system is **user-docker**, which can be accessed by using the normal `docker` command.
+The other Docker daemon running on the system is **docker**, which can be accessed by using the normal `docker` command.
 
 Use `docker images` to see the images that the system has:
 
@@ -69,7 +69,7 @@ $ docker images
 REPOSITORY   TAG	IMAGE ID	CREATED	VIRTUAL SIZE
 ```
 
-At this point, there are no containers running on the `user-docker` daemon. However, if you run the same command against the `system-docker` instance you’ll see a number of system services that are shipped with RancherOS. 
+At this point, there are no containers running on the `docker` daemon. However, if you run the same command against the `system-docker` instance you’ll see a number of system services that are shipped with RancherOS. 
 
 Note: `system-docker` can only be used by root, so it is necessary to use the `sudo` command whenever you want to interact with `system-docker`
 
@@ -91,7 +91,7 @@ cloudinit   v0.0.1      7dc2bc8c2ad5    46 hours ago	18.09 MB
 …….
 ```
 
-All of these images are available for use by `system-docker` daemon, some of them are run at boot time, and others, such as the `console`, `user-docker`, `rsyslog`, and `ntp` containers are always running.
+All of these images are available for use by `system-docker` daemon, some of them are run at boot time, and others, such as the `console`, `docker`, `rsyslog`, and `ntp` containers are always running.
 
 ```bash
 $ sudo system-docker ps
@@ -104,9 +104,9 @@ f0dd31b1f7a8   syslog:latest   	"/syslog.sh"   	About an hour ago   Up About an 
 
 ## Deploying a Docker Container
 
-Let's try to deploy a normal Docker container on the `user-docker` daemon.  The RancherOS `user-docker` daemon is identical to any other Docker environment, so all normal Docker commands work.
+Let's try to deploy a normal Docker container on the `docker` daemon.  The RancherOS `docker` daemon is identical to any other Docker environment, so all normal Docker commands work.
 
-The following is an example of deploying a small nginx container installed on a Busybox Linux. To start a Docker container in the `user-docker` environment, use the following command:
+The following is an example of deploying a small nginx container installed on a Busybox Linux. To start a Docker container in the `docker` environment, use the following command:
 
 ```bash
 $ docker run -d --name nginx -p 8000:80 husseingalal/nginxbusy
