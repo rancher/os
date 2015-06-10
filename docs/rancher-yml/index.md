@@ -109,7 +109,7 @@ upgrade:
 ### User Docker Configuration
 ---
 
-The `user_docker` key configures the user-docker arguments and TLS settings.
+The `user_docker` key configures the docker arguments and TLS settings.
 
 ```yaml
 user_docker:
