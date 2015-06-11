@@ -31,7 +31,7 @@ To delete a service that you added, run `ros service delete <system-service-name
 
 ### Adding Custom System Services
 
-After creating your own custom service, you can save the file in a http(s) url location or within RancherOS. If you choose to save it in RancherOS, the file must be saved in `/var/lib/rancher/conf/` in order for it to be enabled. 
+After creating your own custom service, you can save the rancher-compose file in a http(s) url location or within RancherOS. If you choose to save it in RancherOS, the file must be saved in `/var/lib/rancher/conf/` in order for it to be enabled. 
 
 For enabling custom system-services, the command must indicate the file location if saved in RancherOS.
 
@@ -51,7 +51,7 @@ RancherOS uses [rancher-compose](https://github.com/rancherio/rancher-compose) t
 
 **System-Docker vs. User Docker**
 
-RancherOS uses labels to determine if the container should be deployed in system-docker. By default without the label, the container will be deployed in docker.
+RancherOS uses labels to determine if the container should be deployed in system-docker. By default without the label, the container will be deployed in user docker.
 
 ```yaml
 labels:
@@ -60,7 +60,7 @@ labels:
 
 **Links**
 
-We use [links](https://docs.docker.com/compose/yml/#links) to link containers in another service. In our `ubuntu-console.yml`, we link the container with cloud-init, so that the console is able to use cloud-init.
+We use [links](https://docs.docker.com/compose/yml/#links) to link containers in another service. In our `ubuntu-console.yml`, we link the container with `cloud-init`, so that the console is able to use `cloud-init`.
 
 ```yaml
 links:
