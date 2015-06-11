@@ -238,7 +238,7 @@ ul.nav.navbar-nav li a, ul.nav.navbar-nav li a:focus{
 	font-family:'Open Sans', sans-serif;
 }
 
-ul.nav.navbar-nav li a:hover, ul.nav.navbar-nav li a[aria-expanded=true]{
+ul.nav.navbar-nav li a:hover, ul.nav.navbar-nav li a[aria-expanded=true], ul.nav.navbar-nav li a.active{
 	color:#fff;
 	text-decoration:none;
 	background-color:#43b6e4;
@@ -277,7 +277,7 @@ ul.nav.navbar-nav li ul.list-group-submenu ul{
 	padding:0;
 }
 
-ul.nav.navbar-nav li ul.list-group-submenu li ul li a{
+ul.nav.navbar-nav li ul.list-group-submenu li a{
 	padding-left:30px;
 }
 
@@ -287,11 +287,16 @@ ul.nav.navbar-nav li ul.list-group-submenu li a:hover, ul.nav.navbar-nav li  ul.
 	background:none;
 }
 
-ul.nav.navbar-nav li ul.list-group-submenu li ul li a:hover, ul.nav.navbar-nav li ul.list-group-submenu li ul li a.active{
+ul.nav.navbar-nav li ul.list-group-submenu li ul li a:hover{
 	background-color:#494e5a!important;
 	color:#fff;
 	text-decoration:none;
 	border-bottom:0;
+}
+
+ul.nav.navbar-nav li ul.list-group-submenu li ul li a.active{
+	color:#fff;
+	background-color:#393d47!important
 }
 
 ul.nav.navbar-nav li ul.list-group-submenu li ul li{
@@ -307,7 +312,7 @@ ul.nav.navbar-nav li ul.list-group-submenu li ul li a{
 	background-color:#393d47!important;
 	color:#8c92a1;
 	padding:12px 15px;
-	padding-left:30px;
+	padding-left:45px;
 	display:block;
 	width:100%;
 	font-size:13px;
@@ -375,6 +380,7 @@ code{
 a i {
 	 font-size: 16px;
 	margin-top: 3px;
+	padding-right:10px;
 }
 
 a.collapsed i.fa-angle-down, a i.fa-angle-up{

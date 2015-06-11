@@ -38,10 +38,13 @@
 		$("ul").find("a[href='" + url + "']").parent().parent().parent().find('a.collapsed').attr('aria-expanded', 'true');
 		} else if(parents===3){
 		$("ul").find("a[href='" + url + "']").parent().parent().addClass('in');
+		var select = $("ul").find("a[href='" + url + "']").parent().parent().attr('id');
 		$("ul").find("a[href='" + url + "']").parent().parent().parent().parent().addClass('in');
-		$("ul").find("a[href='" + url + "']").parent().parent().parent().parent().parent().find('a.collapsed').attr('aria-expanded', 'true');
+		$("ul").find("a[href='" + url + "']").parent().parent().parent().parent().parent().find('a[href=#'+select+']').addClass('active');
+		var select = $("ul").find("a[href='" + url + "']").parent().parent().parent().parent().attr('id');
+		console.log(select);
+		$("ul").find("a[href='" + url + "']").parent().parent().parent().parent().parent().parent().find('a[href=#'+select+']').addClass('active');
 		}
-		console.log(url);
 	});
 	</script>
 </html>
