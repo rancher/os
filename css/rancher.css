@@ -364,7 +364,7 @@ code{
 
 .row{
 	width:100%;
-	min-height:100%;
+	min-height:1100px;
 	position:relative;
 	display:inline-block;
 }
@@ -374,6 +374,7 @@ code{
      left:0px;
      bottom:0px;
      position:absolute;
+	 min-height:1100px;
 	 background-color:#f2efef;
 }
 
