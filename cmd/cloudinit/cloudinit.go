@@ -311,6 +311,7 @@ func executeCloudConfig() error {
 
 	if len(cc.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)
+		authorizeSSHKeys("docker", cc.SSHAuthorizedKeys, sshKeyName)
 	}
 
 	for _, user := range cc.Users {
