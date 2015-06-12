@@ -9,7 +9,7 @@
             <link href="{{site.baseurl}}/css/bootstrap.css" rel="stylesheet">
             <link href="{{site.baseurl}}/css/syntax.css" rel="stylesheet">
             <link href="{{site.baseurl}}/css/rancher.css" rel="stylesheet">
-
+			<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     </head>
     <body>
         <div class="container-fluid">
@@ -20,18 +20,38 @@
                 <div class="col-sm-9">
                     <div class="content-container">
                         {{ content }}
+						
                     </div>
                 </div>
             </div>
         </div>
     </body>
-    <footer>
-        <div class="container-fluid">
-            <div class="row">
-                <span class="pull-left">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
-            </div><!-- .row -->
-        </div><!-- #footer-content.container -->
-    </footer><!-- #footer -->
+	<footer>
+		<div class="container-fluid">
+			<div class="row">
+			 <span class="pull-left" style="padding-left:15px;">Copyright &copy; 2015  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+			</div>
+		</div>
+	</footer>
     <script src="http://code.jquery.com/jquery.js"></script>
     <script src="{{site.baseurl}}/js/bootstrap.js"></script>
+	<script>
+	jQuery(document).ready(function(){
+		var url = window.location.pathname;
+		$("ul").find("a[href='" + url + "']").addClass('active');
+		var parents = $("ul").find("a[href='" + url + "']").parents('ul').length;
+		if(parents===2){
+		$("ul").find("a[href='" + url + "']").parent().parent().addClass('in');
+		$("ul").find("a[href='" + url + "']").parent().parent().parent().find('a.collapsed').attr('aria-expanded', 'true');
+		} else if(parents===3){
+		$("ul").find("a[href='" + url + "']").parent().parent().addClass('in');
+		var select = $("ul").find("a[href='" + url + "']").parent().parent().attr('id');
+		$("ul").find("a[href='" + url + "']").parent().parent().parent().parent().addClass('in');
+		$("ul").find("a[href='" + url + "']").parent().parent().parent().parent().parent().find('a[href=#'+select+']').addClass('active');
+		var select = $("ul").find("a[href='" + url + "']").parent().parent().parent().parent().attr('id');
+		console.log(select);
+		$("ul").find("a[href='" + url + "']").parent().parent().parent().parent().parent().parent().find('a[href=#'+select+']').addClass('active');
+		}
+	});
+	</script>
 </html>
