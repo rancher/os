@@ -87,3 +87,12 @@ rancher:
         - 8.8.4.4
 
 ```
+
+#### Set Hostname
+
+You can set the hostname of the host using cloud-config. The example below shows how to configure it.
+
+```yaml
+hostname: myhost
+```
+
