@@ -6,5 +6,5 @@ layout: default
 
 ## Custom Kernels
 
-
+More information coming soon!
 

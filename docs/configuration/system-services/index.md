@@ -31,11 +31,7 @@ To delete a service that you added, run `ros service delete <system-service-name
 
 ### Adding Custom System Services
 
-<<<<<<< HEAD
-After creating your own custom service, you can save the rancher-compose file in a http(s) url location or within RancherOS. If you choose to save it in RancherOS, the file must be saved in `/var/lib/rancher/conf/` in order for it to be enabled. 
-=======
 After creating your own custom service, you can save the rancher compose file in a http(s) url location or within RancherOS. If you choose to save it in RancherOS, the file must be saved in `/var/lib/rancher/conf/` in order for it to be enabled. 
->>>>>>> 693a0a4ccf23a71de203695cf87e949bef0d51fa
 
 For enabling custom system-services, the command must indicate the file location if saved in RancherOS.
 
@@ -59,23 +55,23 @@ RancherOS uses labels to determine if the container should be deployed in system
 
 ```yaml
 labels:
-- io.rancher.os.scope=system
+  - io.rancher.os.scope=system
 ```
 
 **Links**
 
-We use [links](https://docs.docker.com/compose/yml/#links) to link containers in another service. In our `ubuntu-console.yml`, we link the container with `cloud-init`, so that the console is able to use `cloud-init`.
+We use [links](https://docs.docker.com/compose/yml/#links) to create dependency between containers. In our `ubuntu-console.yml`, we link the container with `cloud-init`, so that the console is able to use `cloud-init`. This also means that the `ubuntu-console` container would start after the `cloud-init` container was started.
 
 ```yaml
 links:
-- cloud-init
+  - cloud-init
 ```
 
 Other examples of `links`, which use `network`, to get access to the networking container.
 
 ```yaml
 links:
-- network
+  - network
 ```
 
 **Environment**
@@ -88,16 +84,16 @@ We support worldwide globbing, so in our example below, the services.yml file wi
 
 ```yaml
 etcd:
-environment:
-- ETCD_*
+  environment:
+    - ETCD_*
 ```
 
 `rancher.yml` File:
 
 ```yaml
 rancher:
-environment:
-ETCD_DISCOVERY: https://discovery.etcd.io/d1cd18f5ee1c1e2223aed6a1734719f7
+  environment:
+    ETCD_DISCOVERY: https://discovery.etcd.io/d1cd18f5ee1c1e2223aed6a1734719f7
 ```
 
 **Unsupported Keys in RancherOS**
