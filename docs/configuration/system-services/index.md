@@ -31,7 +31,11 @@ To delete a service that you added, run `ros service delete <system-service-name
 
 ### Adding Custom System Services
 
+<<<<<<< HEAD
 After creating your own custom service, you can save the rancher-compose file in a http(s) url location or within RancherOS. If you choose to save it in RancherOS, the file must be saved in `/var/lib/rancher/conf/` in order for it to be enabled. 
+=======
+After creating your own custom service, you can save the rancher compose file in a http(s) url location or within RancherOS. If you choose to save it in RancherOS, the file must be saved in `/var/lib/rancher/conf/` in order for it to be enabled. 
+>>>>>>> 693a0a4ccf23a71de203695cf87e949bef0d51fa
 
 For enabling custom system-services, the command must indicate the file location if saved in RancherOS.
 
