@@ -369,7 +369,7 @@ code{
 }
 
 .row .col-sm-3{
-    height: 100vh;
+    height: 100vh; 
     min-height: 100vh;
     background-color:#f2efef;
 }
@@ -411,7 +411,6 @@ ul li a[aria-expanded=true]{
 }
 
 @media (max-width:768px){
-    
     .col-sm-9 .content-container{
         padding-left: 15px;
     }
@@ -422,13 +421,13 @@ ul li a[aria-expanded=true]{
     .container-fluid{
         padding:0;
     }
-    
+
     .row{
         width:100%;
         padding:0;
         margin:0;
     }
-    
+
     .row .col-sm-3{
         width:100%;
         top:auto;
@@ -437,7 +436,7 @@ ul li a[aria-expanded=true]{
         position:relative;
         background-color:#f2efef;
     }
-    
+
     .row .col-sm-9{
         position:relative;
         width:100%;
