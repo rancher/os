@@ -22,8 +22,11 @@ import (
 	"time"
 
 	"github.com/fsouza/go-dockerclient"
-	"github.com/gorilla/mux"
+	"github.com/fsouza/go-dockerclient/vendor/github.com/docker/docker/pkg/stdcopy"
+	"github.com/fsouza/go-dockerclient/vendor/github.com/gorilla/mux"
 )
+
+var nameRegexp = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]+$`)
 
 // DockerServer represents a programmable, concurrent (not much), HTTP server
 // implementing a fake version of the Docker remote API.
@@ -332,18 +335,25 @@ func (s *DockerServer) findImageByID(id string) (string, int, error) {
 }
 
 func (s *DockerServer) createContainer(w http.ResponseWriter, r *http.Request) {
-	var config docker.Config
+	var config struct {
+		*docker.Config
+		HostConfig *docker.HostConfig
+	}
 	defer r.Body.Close()
 	err := json.NewDecoder(r.Body).Decode(&config)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	name := r.URL.Query().Get("name")
+	if name != "" && !nameRegexp.MatchString(name) {
+		http.Error(w, "Invalid container name", http.StatusInternalServerError)
+		return
+	}
 	if _, err := s.findImage(config.Image); err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	w.WriteHeader(http.StatusCreated)
 	ports := map[docker.Port][]docker.PortBinding{}
 	for port := range config.ExposedPorts {
 		ports[port] = []docker.PortBinding{{
@@ -363,12 +373,13 @@ func (s *DockerServer) createContainer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	container := docker.Container{
-		Name:    r.URL.Query().Get("name"),
-		ID:      s.generateID(),
-		Created: time.Now(),
-		Path:    path,
-		Args:    args,
-		Config:  &config,
+		Name:       name,
+		ID:         s.generateID(),
+		Created:    time.Now(),
+		Path:       path,
+		Args:       args,
+		Config:     config.Config,
+		HostConfig: config.HostConfig,
 		State: docker.State{
 			Running:   false,
 			Pid:       mathrand.Int() % 50000,
@@ -385,8 +396,18 @@ func (s *DockerServer) createContainer(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 	s.cMut.Lock()
+	if container.Name != "" {
+		for _, c := range s.containers {
+			if c.Name == container.Name {
+				defer s.cMut.Unlock()
+				http.Error(w, "there's already a container with this name", http.StatusConflict)
+				return
+			}
+		}
+	}
 	s.containers = append(s.containers, &container)
 	s.cMut.Unlock()
+	w.WriteHeader(http.StatusCreated)
 	s.notify(&container)
 	var c = struct{ ID string }{ID: container.ID}
 	json.NewEncoder(w).Encode(c)
@@ -459,6 +480,14 @@ func (s *DockerServer) startContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	s.cMut.Lock()
 	defer s.cMut.Unlock()
+	defer r.Body.Close()
+	var hostConfig docker.HostConfig
+	err = json.NewDecoder(r.Body).Decode(&hostConfig)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	container.HostConfig = &hostConfig
 	if container.State.Running {
 		http.Error(w, "Container already running", http.StatusBadRequest)
 		return
@@ -526,8 +555,19 @@ func (s *DockerServer) attachContainer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	outStream := newStdWriter(w, stdout)
-	fmt.Fprintf(outStream, "HTTP/1.1 200 OK\r\nContent-Type: application/vnd.docker.raw-stream\r\n\r\n")
+	hijacker, ok := w.(http.Hijacker)
+	if !ok {
+		http.Error(w, "cannot hijack connection", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/vnd.docker.raw-stream")
+	w.WriteHeader(http.StatusOK)
+	conn, _, err := hijacker.Hijack()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	outStream := stdcopy.NewStdWriter(conn, stdcopy.Stdout)
 	if container.State.Running {
 		fmt.Fprintf(outStream, "Container %q is running\n", container.ID)
 	} else {
@@ -535,6 +575,7 @@ func (s *DockerServer) attachContainer(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintln(outStream, "What happened?")
 	fmt.Fprintln(outStream, "Something happened")
+	conn.Close()
 }
 
 func (s *DockerServer) waitContainer(w http.ResponseWriter, r *http.Request) {
@@ -559,12 +600,13 @@ func (s *DockerServer) waitContainer(w http.ResponseWriter, r *http.Request) {
 
 func (s *DockerServer) removeContainer(w http.ResponseWriter, r *http.Request) {
 	id := mux.Vars(r)["id"]
+	force := r.URL.Query().Get("force")
 	_, index, err := s.findContainer(id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	if s.containers[index].State.Running {
+	if s.containers[index].State.Running && force != "1" {
 		msg := "Error: API error (406): Impossible to remove a running container, please stop it first"
 		http.Error(w, msg, http.StatusInternalServerError)
 		return
@@ -616,11 +658,11 @@ func (s *DockerServer) commitContainer(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `{"ID":%q}`, image.ID)
 }
 
-func (s *DockerServer) findContainer(id string) (*docker.Container, int, error) {
+func (s *DockerServer) findContainer(idOrName string) (*docker.Container, int, error) {
 	s.cMut.RLock()
 	defer s.cMut.RUnlock()
 	for i, container := range s.containers {
-		if container.ID == id {
+		if container.ID == idOrName || container.Name == idOrName {
 			return container, i, nil
 		}
 	}
@@ -751,10 +793,9 @@ func (s *DockerServer) removeImage(w http.ResponseWriter, r *http.Request) {
 
 func (s *DockerServer) inspectImage(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
+	s.iMut.RLock()
+	defer s.iMut.RUnlock()
 	if id, ok := s.imgIDs[name]; ok {
-		s.iMut.Lock()
-		defer s.iMut.Unlock()
-
 		for _, img := range s.images {
 			if img.ID == id {
 				w.Header().Set("Content-Type", "application/json")

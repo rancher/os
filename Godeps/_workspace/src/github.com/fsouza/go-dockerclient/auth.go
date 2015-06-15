@@ -7,6 +7,7 @@ package docker
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -80,4 +81,21 @@ func authConfigs(confs map[string]dockerConfig) (*AuthConfigurations, error) {
 		}
 	}
 	return c, nil
+}
+
+// AuthCheck validates the given credentials. It returns nil if successful.
+//
+// See https://goo.gl/vPoEfJ for more details.
+func (c *Client) AuthCheck(conf *AuthConfiguration) error {
+	if conf == nil {
+		return fmt.Errorf("conf is nil")
+	}
+	body, statusCode, err := c.do("POST", "/auth", doOptions{data: conf})
+	if err != nil {
+		return err
+	}
+	if statusCode > 400 {
+		return fmt.Errorf("auth error (%d): %s", statusCode, body)
+	}
+	return nil
 }
