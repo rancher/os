@@ -6,5 +6,4 @@ layout: default
 
 ## Custom RancherOS ISO
 
-
-
+More information coming soon!
