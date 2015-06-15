@@ -39,7 +39,7 @@ func setupSigterm() {
 	sigtermChan := make(chan os.Signal)
 	signal.Notify(sigtermChan, syscall.SIGTERM)
 	go func() {
-		for _ = range sigtermChan {
+		for range sigtermChan {
 			termPids()
 		}
 	}()
