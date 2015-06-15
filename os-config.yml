@@ -12,6 +12,7 @@ bootstrap_containers:
     links: []
     log_driver: json-file
     net: host
+    uts: host
     privileged: true
     volumes:
     - /dev:/host/dev
@@ -51,6 +52,7 @@ system_containers:
       io.rancher.os.scope: system
     links: []
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
@@ -91,6 +93,7 @@ system_containers:
     - cloud-init-pre
     - network
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
@@ -110,6 +113,7 @@ system_containers:
     links:
     - preload-system-images
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
@@ -156,6 +160,7 @@ system_containers:
     links:
     - cloud-init
     net: host
+    uts: host
     pid: host
     ipc: host
     privileged: true
@@ -174,6 +179,7 @@ system_containers:
     links:
     - network
     net: host
+    uts: host
     pid: host
     ipc: host
     privileged: true
@@ -212,6 +218,7 @@ system_containers:
     links:
     - docker
     net: host
+    uts: host
     volumes_from:
     - all-volumes
   network:
@@ -227,6 +234,7 @@ system_containers:
     links:
     - cloud-init-pre
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
@@ -244,6 +252,7 @@ system_containers:
     - cloud-init
     - network
     net: host
+    uts: host
     privileged: true
     restart: always
   preload-system-images:
@@ -295,6 +304,7 @@ system_containers:
     links: []
     log_driver: json-file
     net: host
+    uts: host
     privileged: true
     restart: always
     volumes_from:
@@ -336,6 +346,7 @@ system_containers:
       io.rancher.os.scope: system
     links: []
     net: host
+    uts: host
     privileged: true
     restart: always
     volumes_from:
