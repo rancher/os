@@ -1,6 +1,6 @@
 bootstrap_containers:
   udev:
-    image: udev
+    image: rancher/os-udev
     command: []
     dns: []
     dns_search: []
@@ -12,6 +12,7 @@ bootstrap_containers:
     links: []
     log_driver: json-file
     net: host
+    uts: host
     privileged: true
     volumes:
     - /dev:/host/dev
@@ -41,7 +42,7 @@ state:
   dev: LABEL=RANCHER_STATE
 system_containers:
   acpid:
-    image: acpid
+    image: rancher/os-acpid
     command: []
     dns: []
     dns_search: []
@@ -51,12 +52,13 @@ system_containers:
       io.rancher.os.scope: system
     links: []
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
     - system-volumes
   all-volumes:
-    image: state
+    image: rancher/os-state
     command: []
     dns: []
     dns_search: []
@@ -76,7 +78,7 @@ system_containers:
     - user-volumes
     - system-volumes
   cloud-init:
-    image: cloudinit
+    image: rancher/os-cloudinit
     command: []
     dns: []
     dns_search: []
@@ -91,12 +93,13 @@ system_containers:
     - cloud-init-pre
     - network
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
     - system-volumes
   cloud-init-pre:
-    image: cloudinit
+    image: rancher/os-cloudinit
     command: []
     dns: []
     dns_search: []
@@ -110,12 +113,13 @@ system_containers:
     links:
     - preload-system-images
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
     - system-volumes
   command-volumes:
-    image: state
+    image: rancher/os-state
     command: []
     dns: []
     dns_search: []
@@ -144,7 +148,7 @@ system_containers:
     - /lib/modules:/lib/modules
     - /usr/bin/docker:/usr/bin/docker:ro
   console:
-    image: console
+    image: rancher/os-console
     command: []
     dns: []
     dns_search: []
@@ -156,6 +160,7 @@ system_containers:
     links:
     - cloud-init
     net: host
+    uts: host
     pid: host
     ipc: host
     privileged: true
@@ -163,7 +168,7 @@ system_containers:
     volumes_from:
     - all-volumes
   docker:
-    image: docker
+    image: rancher/os-docker
     command: []
     dns: []
     dns_search: []
@@ -174,6 +179,7 @@ system_containers:
     links:
     - network
     net: host
+    uts: host
     pid: host
     ipc: host
     privileged: true
@@ -181,7 +187,7 @@ system_containers:
     volumes_from:
     - all-volumes
   docker-volumes:
-    image: state
+    image: rancher/os-state
     command: []
     dns: []
     dns_search: []
@@ -200,7 +206,7 @@ system_containers:
     - /var/lib/docker:/var/lib/docker
     - /var/lib/system-docker:/var/lib/system-docker
   dockerwait:
-    image: dockerwait
+    image: rancher/os-dockerwait
     command: []
     dns: []
     dns_search: []
@@ -212,10 +218,11 @@ system_containers:
     links:
     - docker
     net: host
+    uts: host
     volumes_from:
     - all-volumes
   network:
-    image: network
+    image: rancher/os-network
     command: []
     dns: []
     dns_search: []
@@ -227,12 +234,13 @@ system_containers:
     links:
     - cloud-init-pre
     net: host
+    uts: host
     privileged: true
     volumes_from:
     - command-volumes
     - system-volumes
   ntp:
-    image: ntp
+    image: rancher/os-ntp
     command: []
     dns: []
     dns_search: []
@@ -244,10 +252,11 @@ system_containers:
     - cloud-init
     - network
     net: host
+    uts: host
     privileged: true
     restart: always
   preload-system-images:
-    image: preload
+    image: rancher/os-preload
     command: []
     dns: []
     dns_search: []
@@ -265,7 +274,7 @@ system_containers:
     - command-volumes
     - system-volumes
   preload-user-images:
-    image: preload
+    image: rancher/os-preload
     command: []
     dns: []
     dns_search: []
@@ -284,7 +293,7 @@ system_containers:
     - command-volumes
     - system-volumes
   syslog:
-    image: syslog
+    image: rancher/os-syslog
     command: []
     dns: []
     dns_search: []
@@ -295,12 +304,13 @@ system_containers:
     links: []
     log_driver: json-file
     net: host
+    uts: host
     privileged: true
     restart: always
     volumes_from:
     - system-volumes
   system-volumes:
-    image: state
+    image: rancher/os-state
     command: []
     dns: []
     dns_search: []
@@ -324,7 +334,7 @@ system_containers:
     - /var/run:/var/run
     - /var/log:/var/log
   udev:
-    image: udev
+    image: rancher/os-udev
     command: []
     dns: []
     dns_search: []
@@ -336,12 +346,13 @@ system_containers:
       io.rancher.os.scope: system
     links: []
     net: host
+    uts: host
     privileged: true
     restart: always
     volumes_from:
     - system-volumes
   user-volumes:
-    image: state
+    image: rancher/os-state
     command: []
     dns: []
     dns_search: []

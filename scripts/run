@@ -48,24 +48,17 @@ if [ ! -d ${INITRD_TMP} ]; then
     mkdir -p ${INITRD_TMP}
     pushd ${INITRD_TMP}
     if [ -e ${NO_COMPRESS_INITRD} ]; then
-        cat ${NO_COMPRESS_INITRD} | sudo cpio -idmv
+        cat ${NO_COMPRESS_INITRD} | cpio -idmv
     else
-        xz -dc ${INITRD} | sudo cpio -idmv
+        xz -dc ${INITRD} | cpio -idmv
     fi
     rm -f init
     popd
 fi
 
-if [ -e $INITRD_CURRENT ]; then
-    rm -f ${INITRD_CURRENT}
-fi
-ln -s ${INITRD_TMP} ${INITRD_CURRENT}
+ln -sf ${INITRD_TMP} ${INITRD_CURRENT}
 
-if [ ! -e bin/rancheros ]; then
-    ./scripts/build
-fi
-
-cp bin/rancheros ${INITRD_TMP}/init
+cp dist/artifacts/rancheros ${INITRD_TMP}/init
 cp -f os-config.yml ${INITRD_TMP}/
 cd ${INITRD_TMP}
 
@@ -73,7 +66,7 @@ find | cpio -H newc -o > ${INITRD_TEST}
 
 if [ ! -e ${HD} ]; then
     mkdir -p $(dirname ${HD})
-    zcat ${HD_GZ} > ${HD}
+    gzcat ${HD_GZ} > ${HD}
 fi
 
 mkdir -p $(dirname $USER_DATA)

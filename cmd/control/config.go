@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"sort"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -38,6 +39,17 @@ func configSubcommands() []cli.Command {
 			},
 		},
 		{
+			Name:   "images",
+			Usage:  "List Docker images for a configuration from a file",
+			Action: runImages,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input, i",
+					Usage: "File from which to read config",
+				},
+			},
+		},
+		{
 			Name:  "export",
 			Usage: "export configuration",
 			Flags: []cli.Flag{
@@ -62,6 +74,36 @@ func configSubcommands() []cli.Command {
 			Action: merge,
 		},
 	}
+}
+
+func imagesFromConfig(cfg *config.Config) []string {
+	imagesMap := map[string]int{}
+
+	for _, service := range cfg.BootstrapContainers {
+		imagesMap[service.Image] = 1
+	}
+	for _, service := range cfg.SystemContainers {
+		imagesMap[service.Image] = 1
+	}
+
+	images := make([]string, len(imagesMap))
+	i := 0
+	for image := range imagesMap {
+		images[i] = image
+		i += 1
+	}
+	sort.Strings(images)
+	return images
+}
+
+func runImages(c *cli.Context) {
+	configFile := c.String("input")
+	cfg := config.ReadConfig(configFile)
+	if cfg == nil {
+		log.Fatalf("Could not read config from file %v", configFile)
+	}
+	images := imagesFromConfig(cfg)
+	fmt.Println(strings.Join(images, " "))
 }
 
 func runImport(c *cli.Context) {

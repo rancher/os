@@ -1,10 +1,11 @@
 #!/bin/bash
-set -e
+set -ex
 
 cd $(dirname $0)/..
 
 source scripts/build-common
 
+cp bin/rancheros ${DIST}/artifacts/
 
 cp bin/rancheros ${BUILD}/initrd/init
 cp ./os-config.yml ${BUILD}/initrd/

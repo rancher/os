@@ -1,46 +1,47 @@
 #!/bin/bash
-set -e
-
-VERSION=v0.0.1
+set -ex
 
 cd $(dirname $0)/..
 
 source scripts/build-common
+source scripts/version
+ARTIFACTS=${ARTIFACTS:?"ARTIFACTS not set"}
+VERSION=${VERSION:?"VERSION not set"}
+BUILD=${BUILD:?"BUILD not set"}
+DIST=${DIST:?"DIST not set"}
 
-mkdir -p ${BUILD}/initrd ${DIST}/artifacts
-
-echo Extracting ${ARTIFACTS}/os-base.tar.xz
-tar xJf ${ARTIFACTS}/os-base.tar.xz -C ${BUILD}
-
-tar xvf ${BUILD}/dist/kernel/*.tar -C ${BUILD}/dist/kernel
-
-cp /etc/ssl/certs/ca-certificates.crt ${ARTIFACTS}/ca.crt
-cp /etc/ssl/certs/ca-certificates.crt ${BUILD}/initrd/ca.crt
-cp ${BUILD}/dist/rootfs.tar ${ARTIFACTS}
-
-rm -rf ${BUILD}/initrd/lib
-cp -rf ${BUILD}/dist/kernel/lib ${BUILD}/initrd
-cp -rf ${BUILD}/dist/kernel/headers/* ${BUILD}/initrd
-cp -f ${ARTIFACTS}/docker* ${BUILD}/initrd/docker
-chmod +x ${BUILD}/initrd/docker
-
-cp ${BUILD}/dist/kernel/boot/vmlinuz* ${DIST}/artifacts/vmlinuz
-
-tar xf ${BUILD}/dist/rootfs-static.tar -C ${BUILD}/initrd --strip-components=2 ./bin/busybox
-tar xf ${BUILD}/dist/rootfs-static.tar -C ${BUILD}/initrd --strip-components=3 ./usr/sbin/xtables-multi
-
-if ! docker info >/dev/null 2>&1 && [ -x "$(which wrapdocker)" ]; then
+if [ -x "$(which wrapdocker)" ] && ! docker info >/dev/null 2>&1; then
     wrapdocker
 fi
 
->${BUILD}/tags
-for i in scripts/dockerimages/[0-9]*; do
-    tag=$(echo $i | cut -f2 -d-)
-    echo Building $tag
-    docker build -t $tag -f $i .
-    docker build -t ${tag}:${VERSION} -f $i .
-    echo $tag >> ${BUILD}/tags
-done
+CONTAINER_INITRDBASE=$(docker create rancher/os-initrdbase:${VERSION})
+cleanup_initrdbase() {
+    docker rm -v ${CONTAINER_INITRDBASE}
+}
+trap cleanup_initrdbase EXIT
+docker cp ${CONTAINER_INITRDBASE}:/initrd ${BUILD} # copies files to ${BUILD}/initrd
 
-echo Creating images.tar
-docker save $(<${BUILD}/tags) > ${BUILD}/initrd/images.tar
+INITRD_DIR=${BUILD}/initrd
+
+
+mkdir -p ${DIST}/artifacts
+
+CONTAINER_KERNEL=$(docker create rancher/os-kernel:${VERSION})
+cleanup_kernel() {
+    docker rm -v ${CONTAINER_KERNEL}
+}
+trap cleanup_kernel EXIT
+docker cp ${CONTAINER_KERNEL}:/kernel ${BUILD} # copies files to ${BUILD}/kernel
+mv ${BUILD}/kernel/vmlinuz ${DIST}/artifacts/                               #kernel
+
+
+cp -f ${ARTIFACTS}/docker* ${INITRD_DIR}/docker                             #initrd2-docker: /docker
+chmod +x ${INITRD_DIR}/docker                                               #initrd2-docker: /docker
+
+ln -sf bin/rancheros ./ros
+
+for i in $(./ros c images -i os-config.yml); do
+    docker pull ${i}:${VERSION}
+    docker tag -f ${i}:${VERSION} ${i}
+done
+docker save $(./ros c images -i os-config.yml) > ${INITRD_DIR}/images.tar   #initrd2-images: /images.tar

@@ -1,4 +1,6 @@
 .git
+.idea
+tmp
 state
 build
 dist
