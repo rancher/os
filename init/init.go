@@ -34,16 +34,16 @@ var (
 		"/var/lib/rancher/state/opt",
 	}
 	mounts [][]string = [][]string{
-		[]string{"devtmpfs", "/dev", "devtmpfs", ""},
-		[]string{"none", "/dev/pts", "devpts", ""},
-		[]string{"none", "/etc/docker", "tmpfs", ""},
-		[]string{"none", "/proc", "proc", ""},
-		[]string{"none", "/run", "tmpfs", ""},
-		[]string{"none", "/sys", "sysfs", ""},
-		[]string{"none", "/sys/fs/cgroup", "tmpfs", ""},
+		{"devtmpfs", "/dev", "devtmpfs", ""},
+		{"none", "/dev/pts", "devpts", ""},
+		{"none", "/etc/docker", "tmpfs", ""},
+		{"none", "/proc", "proc", ""},
+		{"none", "/run", "tmpfs", ""},
+		{"none", "/sys", "sysfs", ""},
+		{"none", "/sys/fs/cgroup", "tmpfs", ""},
 	}
 	postMounts [][]string = [][]string{
-		[]string{"none", "/var/run", "tmpfs", ""},
+		{"none", "/var/run", "tmpfs", ""},
 	}
 	cgroups []string = []string{
 		"blkio",
@@ -123,7 +123,7 @@ func mountCgroups(cfg *config.Config) error {
 		}
 
 		err = createMounts([][]string{
-			[]string{"none", "sys/fs/cgroup/" + cgroup, "cgroup", cgroup},
+			{"none", "sys/fs/cgroup/" + cgroup, "cgroup", cgroup},
 		}...)
 		if err != nil {
 			return err

@@ -66,6 +66,7 @@ if [ ! -e bin/rancheros ]; then
 fi
 
 cp bin/rancheros ${INITRD_TMP}/init
+cp -f os-config.yml ${INITRD_TMP}/
 cd ${INITRD_TMP}
 
 find | cpio -H newc -o > ${INITRD_TEST}
