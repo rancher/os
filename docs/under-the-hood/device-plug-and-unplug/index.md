@@ -6,3 +6,5 @@ layout: default
 
 ## Device Plug and Unplug
 ---
+
+More information coming soon!

@@ -321,6 +321,19 @@ ul.nav.navbar-nav li ul.list-group-submenu li ul li a{
     font-family:'Open Sans', sans-serif;
 }
 
+ul.nav.navbar-nav li ul.list-group-submenu-submenu li ul li a{
+    background-color:#393d47!important;
+    color:#8c92a1;
+    padding:12px 15px;
+    padding-left:55px;
+    display:block;
+    width:100%;
+    font-size:13px;
+    font-weight:400;
+    text-decoration:none;
+    font-family:'Open Sans', sans-serif;
+}
+
 
 h2{
     font-size:35px;
@@ -347,6 +360,15 @@ h4{
 }
 
 p{
+    font-size:16px;
+    line-height:24px;
+    font-weight:400;
+    color :#343434;
+    font-family:'Open Sans', sans-serif;
+    margin-bottom:20px;
+}
+
+body {
     font-size:16px;
     line-height:24px;
     font-weight:400;
