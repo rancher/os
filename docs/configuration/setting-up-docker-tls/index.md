@@ -28,7 +28,7 @@ docker
 
 A server certificate must be generated for the hostname under which you will access the server.  You can use an IP, "localhost", or "foo.example.com". You will need to set the directory of the certificates. Place them in `/home/rancher/.docker` using the `-d` option.
 
-If you want to see the certificate, use `ros export config -p` to see all certificates.
+If you want to see the certificate, use `ros config export -p` to see all certificates.
 
 ```bash
 $ hostname
