@@ -389,8 +389,6 @@ code{
 }
 
 .row .col-sm-3{
-    height: 100vh;
-    min-height: 100vh;
     background-color:#f2efef;
 }
 .copyright {

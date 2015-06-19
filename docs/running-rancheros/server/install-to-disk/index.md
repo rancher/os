@@ -23,7 +23,7 @@ Create a cloud config file with a SSH key, this allows you to SSH into the box a
 #cloud-config
 
 ssh_authorized_keys:
-- ssh-rsa AAA... user@host
+  - ssh-rsa AAA... user@host
 ```
 
 You can generate a new SSH key for `cloud-config.yml` file by following this [article](https://help.github.com/articles/generating-ssh-keys/). 
