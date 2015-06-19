@@ -62,7 +62,7 @@ cp bin/rancheros ${INITRD_TMP}/init
 cp -f os-config.yml ${INITRD_TMP}/
 cd ${INITRD_TMP}
 
-find | cpio -H newc -o > ${INITRD_TEST}
+find . | cpio -H newc -o > ${INITRD_TEST}
 
 if [ ! -e ${HD} ]; then
     mkdir -p $(dirname ${HD})
@@ -84,18 +84,37 @@ else
     done
 fi
 
-exec qemu-system-x86_64 -serial stdio \
-    -kernel ${KERNEL} \
-    -initrd ${INITRD_TEST} \
-    -m 1024 \
-    -net nic,vlan=0,model=virtio \
-    -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
-    -drive if=virtio,file=${HD} \
-    -machine accel=kvm \
-    -cpu host \
-    -smp 4 \
-    -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init \
-    -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
-    -append "rancher.password=rancher console=ttyS0 ${QEMU_APPEND}" \
-    -serial mon:telnet:localhost:4444,server,nowait \
-    ${QEMU_ARGS} "${@}"
+UNAME=$(uname)
+
+KERNEL_ARGS="rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
+
+if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
+
+    echo PWD=`pwd`
+    exec sudo xhyve -H -P \
+        -m 2G \
+        -s 0:0,hostbridge -s 31,lpc \
+        -l com1,stdio \
+        -s 2:0,virtio-net \
+        -U a01fb25c-3a19-4759-a47a-2e353e51807d \
+        -f kexec,${KERNEL},${INITRD_TEST},"earlyprintk=serial acpi=off elevator=noop ${KERNEL_ARGS}"
+
+elif ["$UNAME" == "Linux"] && [ -x $(which qemu-system-x86_64) ]; then
+    exec qemu-system-x86_64 -serial stdio \
+        -kernel ${KERNEL} \
+        -initrd ${INITRD_TEST} \
+        -m 1024 \
+        -net nic,vlan=0,model=virtio \
+        -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
+        -drive if=virtio,file=${HD} \
+        -machine accel=kvm \
+        -cpu host \
+        -smp 4 \
+        -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init \
+        -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
+        -append "${KERNEL_ARGS}" \
+        -serial mon:telnet:localhost:4444,server,nowait \
+        ${QEMU_ARGS} "${@}"
+else
+    exit 42
+fi
