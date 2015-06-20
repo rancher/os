@@ -7,10 +7,9 @@ layout: default
 ## Frequently Asked Questions
 ---
 
-###What is required?
+###What is required to run RancherOS?
 
-Docker 1.5+ is required. 
-
+RancherOS runs on any laptop, physical, or virtual servers.
 
 ###What are some commands?
 
