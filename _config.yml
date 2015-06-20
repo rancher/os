@@ -1,8 +1,8 @@
 name: RancherOS Documentation
 description: Documentation for RancherOS
 
-URL: “http://rancherio.github.io/os”
-baseurl: 
+URL: "http://rancherio.github.io/os"
+baseurl: ""
 
 markdown: redcarpet
 
