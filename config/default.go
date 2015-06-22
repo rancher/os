@@ -207,14 +207,14 @@ func NewConfig() *Config {
 				Image:      "preload",
 				Privileged: true,
 				Labels: project.NewSliceorMap(map[string]string{
-					DETACH:        "false",
-					SCOPE:         SYSTEM,
+					DETACH: "false",
+					SCOPE:  SYSTEM,
 				}),
 				VolumesFrom: []string{
 					"command-volumes",
 					"system-volumes",
 				},
-				Volumes:     []string{
+				Volumes: []string{
 					"/var/run/system-docker.sock:/var/run/docker.sock",
 					"/var/lib/system-docker/preload:/mnt/preload",
 				},
@@ -300,6 +300,20 @@ func NewConfig() *Config {
 				},
 				LogDriver: "json-file",
 			},
+			"logrotate": {
+				Image:      "logrotate",
+				Restart:    "always",
+				Privileged: true,
+				Net:        "none",
+				Labels: project.NewSliceorMap(map[string]string{
+					SCOPE: SYSTEM,
+				}),
+				Volumes: []string{
+					"/var/log:/var/log",
+					"/etc/logrotate.d:/etc/logrotate.d",
+				},
+				LogDriver: "json-file",
+			},
 			"docker": {
 				Image:      "docker",
 				Restart:    "always",
@@ -335,8 +349,8 @@ func NewConfig() *Config {
 				Image:      "preload",
 				Privileged: true,
 				Labels: project.NewSliceorMap(map[string]string{
-					DETACH:        "false",
-					SCOPE:         SYSTEM,
+					DETACH: "false",
+					SCOPE:  SYSTEM,
 				}),
 				Links: []string{
 					"dockerwait",
@@ -345,7 +359,7 @@ func NewConfig() *Config {
 					"command-volumes",
 					"system-volumes",
 				},
-				Volumes:     []string{
+				Volumes: []string{
 					"/var/run/docker.sock:/var/run/docker.sock",
 					"/var/lib/docker/preload:/mnt/preload",
 				},
