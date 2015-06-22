@@ -30,7 +30,7 @@ $ docker-machine create -d virtualbox --virtualbox-boot2docker-url <LOCATION-OF-
 Example with RancherOS v0.3.1:
 
 ```bash
-$ docker-machine create -d virtualbox --virtualbox-boot2docker-url https://github.com/rancherio/os/releases/tag/v0.3.1 MyRancherOSMachine
+$ docker-machine create -d virtualbox --virtualbox-boot2docker-url https://github.com/rancherio/os/releases/tag/v0.3.1/machine-rancheros.iso MyRancherOSMachine
 ```
 
 That's it! You should now have a RancherOS host running on VirtualBox. You can verify that you have a VirtualBox VM running on your host.
