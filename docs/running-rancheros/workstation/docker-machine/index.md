@@ -9,6 +9,8 @@ layout: default
 
 Before we get started, you'll need to make sure that you have docker machine installed. Download it directly from the docker machine [releases](https://github.com/docker/machine/releases). The version must be at least [v0.3.0-rc1](https://github.com/docker/machine/releases/tag/v0.3.0-rc1) or greater. 
 
+Note: If you create a RancherOS instance using `docker-machine`, you will not be able to upgrade your version of RancherOS.
+
 ### Downloading RancherOS
 
 Get the latest `machine-rancheros.iso` artifact from the RancherOS [releases](https://github.com/rancherio/os/releases). There are two ISO files in our releases. Please make sure you choose the `machine-rancheros.iso`. This ISO has been built with a special configuration for `docker-machine`.
@@ -30,7 +32,7 @@ $ docker-machine create -d virtualbox --virtualbox-boot2docker-url <LOCATION-OF-
 Example with RancherOS v0.3.1:
 
 ```bash
-$ docker-machine create -d virtualbox --virtualbox-boot2docker-url https://github.com/rancherio/os/releases/tag/v0.3.1/machine-rancheros.iso MyRancherOSMachine
+$ docker-machine create -d virtualbox --virtualbox-boot2docker-url https://github.com/rancherio/os/releases/download/v0.3.1/machine-rancheros.iso MyRancherOSMachine
 ```
 
 That's it! You should now have a RancherOS host running on VirtualBox. You can verify that you have a VirtualBox VM running on your host.
@@ -43,7 +45,7 @@ This command will print out the newly created machine. If not, something went wr
 
 #### Using Docker Machine on AWS
 
-TODO
+More information coming soon!
 
 ### Logging into RancherOS
 
