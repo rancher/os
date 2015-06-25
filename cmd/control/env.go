@@ -20,7 +20,7 @@ func envAction(c *cli.Context) {
 	args := c.Args()
 	osEnv := os.Environ()
 
-	envMap := make(map[string]string, len(cfg.Environment) + len(osEnv))
+	envMap := make(map[string]string, len(cfg.Environment)+len(osEnv))
 	for k, v := range cfg.Environment {
 		envMap[k] = v
 	}

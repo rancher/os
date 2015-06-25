@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
 	"log"
 	"testing"
 
@@ -9,7 +10,7 @@ import (
 )
 import "reflect"
 
-func TestParseCmdline(t *testing.T) {
+func testParseCmdline(t *testing.T) {
 	expected := map[string]interface{}{
 		"rescue":   true,
 		"key1":     "value1",
