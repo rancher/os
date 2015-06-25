@@ -13,6 +13,7 @@ type ContainerFactory struct {
 }
 
 type containerBasedService struct {
+	project.EmptyService
 	name          string
 	project       *project.Project
 	container     *Container

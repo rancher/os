@@ -28,6 +28,14 @@ func ListVar(values *[]string, names []string, usage string) {
 	flag.Var(newListOptsRef(values, nil), names, usage)
 }
 
+func MapVar(values map[string]string, names []string, usage string) {
+	flag.Var(newMapOpt(values, nil), names, usage)
+}
+
+func LogOptsVar(values map[string]string, names []string, usage string) {
+	flag.Var(newMapOpt(values, nil), names, usage)
+}
+
 func HostListVar(values *[]string, names []string, usage string) {
 	flag.Var(newListOptsRef(values, ValidateHost), names, usage)
 }
@@ -130,6 +138,40 @@ func (opts *ListOpts) Len() int {
 	return len((*opts.values))
 }
 
+//MapOpts type
+type MapOpts struct {
+	values    map[string]string
+	validator ValidatorFctType
+}
+
+func (opts *MapOpts) Set(value string) error {
+	if opts.validator != nil {
+		v, err := opts.validator(value)
+		if err != nil {
+			return err
+		}
+		value = v
+	}
+	vals := strings.SplitN(value, "=", 2)
+	if len(vals) == 1 {
+		(opts.values)[vals[0]] = ""
+	} else {
+		(opts.values)[vals[0]] = vals[1]
+	}
+	return nil
+}
+
+func (opts *MapOpts) String() string {
+	return fmt.Sprintf("%v", map[string]string((opts.values)))
+}
+
+func newMapOpt(values map[string]string, validator ValidatorFctType) *MapOpts {
+	return &MapOpts{
+		values:    values,
+		validator: validator,
+	}
+}
+
 // Validators
 type ValidatorFctType func(val string) (string, error)
 type ValidatorFctListType func(val string) ([]string, error)
@@ -145,12 +187,14 @@ func ValidateAttach(val string) (string, error) {
 }
 
 func ValidateLink(val string) (string, error) {
-	if _, err := parsers.PartParser("name:alias", val); err != nil {
+	if _, _, err := parsers.ParseLink(val); err != nil {
 		return val, err
 	}
 	return val, nil
 }
 
+// ValidatePath will make sure 'val' is in the form:
+//    [host-dir:]container-path[:rw|ro]  - but doesn't validate the mode part
 func ValidatePath(val string) (string, error) {
 	var containerPath string
 

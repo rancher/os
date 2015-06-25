@@ -175,7 +175,7 @@ func shutDownContainers() error {
 	opts := dockerClient.ListContainersOptions{
 		All: true,
 		Filters: map[string][]string{
-			"status": []string{"running"},
+			"status": {"running"},
 		},
 	}
 
