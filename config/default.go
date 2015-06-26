@@ -120,6 +120,7 @@ func NewConfig() *Config {
 				}),
 				Volumes: []string{
 					"/dev:/host/dev",
+					"/var/lib/rancher:/var/lib/rancher",
 					"/var/lib/rancher/conf:/var/lib/rancher/conf",
 					"/etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher",
 					"/lib/modules:/lib/modules",
