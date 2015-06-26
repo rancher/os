@@ -82,6 +82,14 @@ if ! grep -q '^UseDNS no' /etc/ssh/sshd_config; then
     echo "UseDNS no" >> /etc/ssh/sshd_config
 fi
 
+if ! grep -q '^PermitRootLogin no' /etc/ssh/sshd_config; then
+    echo "PermitRootLogin no" >> /etc/ssh/sshd_config
+fi
+
+if ! grep -q '^AllowGroups docker' /etc/ssh/sshd_config; then
+    echo "AllowGroups docker" >> /etc/ssh/sshd_config
+fi
+
 ID_TYPE="busybox"
 if [ -e /etc/os-release ] && grep -q 'ID_LIKE=' /etc/os-release; then
     ID_TYPE=$(grep 'ID_LIKE=' /etc/os-release | cut -d'=' -f2)
