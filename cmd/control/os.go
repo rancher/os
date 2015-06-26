@@ -112,14 +112,16 @@ func osMetaDataGet(c *cli.Context) {
 		log.Fatal(err)
 	}
 
+	fmt.Println("---\navailable:")
 	for _, image := range images.Available {
 		_, err := client.InspectImage(image)
 		if err == dockerClient.ErrNoSuchImage {
-			fmt.Println(image, "remote")
+			fmt.Println("-", image+"\tremote")
 		} else {
-			fmt.Println(image, "local")
+			fmt.Println("-", image+"\tlocal")
 		}
 	}
+	fmt.Println("\ncurrent:"+images.Current, "\n---")
 }
 
 func getLatestImage() (string, error) {
