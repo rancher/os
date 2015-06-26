@@ -224,7 +224,7 @@ func startUpgradeContainer(image string, stage, force, reboot bool) {
 		if exit == 0 {
 			if reboot && (force || yes(in, "Continue with reboot")) {
 				log.Info("Rebooting")
-				power.Reboot()
+				power.Reboot(true, true)
 			}
 		} else {
 			log.Error("Upgrade failed")

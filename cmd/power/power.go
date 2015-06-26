@@ -5,19 +5,67 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/fsouza/go-dockerclient"
 
+	"github.com/codegangsta/cli"
+	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 )
 
 const (
 	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
 )
+
+func PowerMain() {
+	app := cli.NewApp()
+
+	app.Name = os.Args[0]
+	app.Version = config.VERSION
+	app.Author = "Rancher Labs, Inc."
+	app.EnableBashCompletion = true
+	app.Action = power
+	app.HideHelp = true
+	app.Flags = []cli.Flag{
+		cli.BoolFlag{
+			Name:  "f",
+			Usage: "Does not invoke shutdown, and instead performs the actual action",
+		},
+		cli.BoolFlag{
+			Name:  "n",
+			Usage: "Does not call sync before bringing down system",
+		},
+		cli.BoolFlag{
+			Name:  "P",
+			Usage: "Halt behaves like poweroff",
+		},
+		cli.BoolFlag{
+			Name:  "i",
+			Usage: "Brings down configured network devices before shutdown",
+		},
+		cli.BoolFlag{
+			Name:  "H",
+			Usage: "Brings down IDE drives before shutdown",
+		},
+	}
+	app.Run(os.Args)
+}
+
+func power(c *cli.Context) {
+	force := c.Bool("f")
+	sync := c.Bool("n")
+	switch filepath.Base(os.Args[0]) {
+	case "poweroff":
+		PowerOff(!force, !sync)
+	case "reboot":
+		Reboot(!force, !sync)
+	case "halt":
+		Halt(!force, !sync)
+	}
+}
 
 func runDocker(name string) error {
 	if os.ExpandEnv("${IN_DOCKER}") == "true" {
@@ -114,28 +162,30 @@ func common(name string) {
 	}
 }
 
-func PowerOff() {
+func PowerOff(shutdown, sync bool) {
 	common("poweroff")
-	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
+	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF, shutdown, sync)
 }
 
-func Reboot() {
+func Reboot(shutdown, sync bool) {
 	common("reboot")
-	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
+	reboot(syscall.LINUX_REBOOT_CMD_RESTART, shutdown, sync)
 }
 
-func Halt() {
+func Halt(shutdown, sync bool) {
 	common("halt")
-	reboot(syscall.LINUX_REBOOT_CMD_HALT)
+	reboot(syscall.LINUX_REBOOT_CMD_HALT, shutdown, sync)
 }
 
-func reboot(code int) {
-	err := shutDownContainers()
+func reboot(code int, shutdown, sync bool) {
+	err := shutDownContainers(shutdown)
 	if err != nil {
 		log.Error(err)
 	}
 
-	syscall.Sync()
+	if sync {
+		syscall.Sync()
+	}
 
 	err = syscall.Reboot(code)
 	if err != nil {
@@ -143,29 +193,12 @@ func reboot(code int) {
 	}
 }
 
-func shutDownContainers() error {
-	var err error
-	shutDown := true
-	timeout := 2
-	for i, arg := range os.Args {
-		if arg == "-f" || arg == "--f" || arg == "--force" {
-			shutDown = false
-		}
-		if arg == "-t" || arg == "--t" || arg == "--timeout" {
-			if len(os.Args) > i+1 {
-				t, err := strconv.Atoi(os.Args[i+1])
-				if err != nil {
-					return err
-				}
-				timeout = t
-			} else {
-				log.Error("please specify a timeout")
-			}
-		}
-	}
-	if !shutDown {
+func shutDownContainers(shutdown bool) error {
+	if !shutdown {
 		return nil
 	}
+
+	var err error
 	client, err := docker.NewSystemClient()
 
 	if err != nil {
@@ -197,7 +230,7 @@ func shutDownContainers() error {
 		}
 
 		log.Infof("Stopping %s : %v", container.ID[:12], container.Names)
-		stopErr := client.StopContainer(container.ID, uint(timeout))
+		stopErr := client.StopContainer(container.ID, 2)
 		if stopErr != nil {
 			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
 		}
