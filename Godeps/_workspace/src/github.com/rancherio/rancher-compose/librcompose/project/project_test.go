@@ -1,21 +1,27 @@
 package project
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 type testFactory struct {
 }
 
-func (t *testFactory) Create(project *Project, name string, config *ServiceConfig) (Service, error) {
-	return struct{}{}, nil
+func (*testFactory) Create(project *Project, name string, serviceConfig *ServiceConfig) (Service, error) {
+	return &testService{}, nil
 }
 
-func TestNewProject(t *testing.T) {
-	p, err := NewProject("foo", "test_files/docker-compose.yml", &testFactory{})
-	if err != nil {
-		t.Fatal(err)
-	}
+type testService struct {
+	EmptyService
+}
 
-	if p.Name != "foo" {
-		t.Fatal("Wrong name expected foo, got", p.Name)
-	}
+func (*testService) Name() string           { return "" }
+func (*testService) Up() error              { return nil }
+func (*testService) Config() *ServiceConfig { return &ServiceConfig{} }
+
+func TestNewProject(t *testing.T) {
+	p := NewProject("foo", &testFactory{})
+	assert.Equal(t, "foo", p.Name)
 }

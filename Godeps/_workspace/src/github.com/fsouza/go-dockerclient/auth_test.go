@@ -7,6 +7,7 @@ package docker
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 )
@@ -33,5 +34,21 @@ func TestAuthConfig(t *testing.T) {
 	}
 	if got, want := c.ServerAddress, "docker.io"; got != want {
 		t.Errorf(`AuthConfigurations.Configs["docker.io"].ServerAddress: wrong result. Want %q. Got %q`, want, got)
+	}
+}
+
+func TestAuthCheck(t *testing.T) {
+	fakeRT := &FakeRoundTripper{status: http.StatusOK}
+	client := newTestClient(fakeRT)
+	if err := client.AuthCheck(nil); err == nil {
+		t.Fatalf("expected error on nil auth config")
+	}
+	// test good auth
+	if err := client.AuthCheck(&AuthConfiguration{}); err != nil {
+		t.Fatal(err)
+	}
+	*fakeRT = FakeRoundTripper{status: http.StatusUnauthorized}
+	if err := client.AuthCheck(&AuthConfiguration{}); err == nil {
+		t.Fatal("expected failure from unauthorized auth")
 	}
 }

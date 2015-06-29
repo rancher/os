@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 cd $(dirname $0)/..
 
@@ -7,6 +7,7 @@ export DOCKER_IMAGE=${DOCKER_IMAGE:=rancher-os-build}
 export DOCKER_BASE=rancher/dind:v0.1.0
 
 source scripts/build-common
+mkdir -p ${BUILD}
 
 DOCKER_FILE=$(pwd)/.dockerfile
 
@@ -25,7 +26,7 @@ generate_images()
         echo Running: docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images
         CID=$(docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images)
         docker logs -f ${CID} &
-        trap "docker rm -f ${CID}" exit
+        trap "docker rm -fv ${CID}" exit
         [ "$(docker wait $CID)" == 0 ]
         DOCKER_BASE=$(docker commit $CID)
 
@@ -38,16 +39,8 @@ if [ -x "$(which wrapdocker)" ] && ! docker info >/dev/null 2>&1; then
 fi
 
 run ./scripts/bootstrap
-run ./scripts/test
-run --assets ./scripts/build-common --assets ./assets ./scripts/download
-run --assets ./scripts/dockerimages --assets ./scripts/build-images
-finish
-
-generate_images
-
-reset_docker_build
 ARGS=
-for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|dist|.git|scripts|bin|state)$'); do
+for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|tmp|dist|.git|.idea|.vagrant|scripts|bin|state)$'); do
     if [ -d $i ]; then
         run --assets $i
     else
@@ -55,5 +48,12 @@ for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|dist|.gi
     fi
 done
 run --assets ./scripts/version --assets "${ARGS}" ./scripts/build
-run --assets ./scripts/install ./scripts/package "$@"
+run --assets ./scripts/build-common --assets ./assets ./scripts/download
+run --assets ./scripts/build-images
+finish
+
+generate_images
+
+reset_docker_build
+run ./scripts/package "$@"
 finish

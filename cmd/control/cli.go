@@ -25,12 +25,12 @@ func Main() {
 			Subcommands: configSubcommands(),
 		},
 		{
-			Name:               "env",
-			ShortName:          "e",
-			Usage:              "env command",
-			HideHelp:           true,
-			SkipFlagParsing:    true,
-			Action:             envAction,
+			Name:            "env",
+			ShortName:       "e",
+			Usage:           "env command",
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          envAction,
 		},
 		{
 			Name:        "service",

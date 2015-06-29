@@ -70,7 +70,7 @@ outer:
 
 		// copy
 		udev := *cfg.BootstrapContainers["udev"]
-		udev.Links = append(udev.Links, "autoformat")
+		udev.Links = project.NewMaporColonSlice(append(udev.Links.Slice(), "autoformat"))
 		udev.LogDriver = "json-file"
 
 		err := docker.RunServices("autoformat", cfg, map[string]*project.ServiceConfig{
@@ -78,13 +78,13 @@ outer:
 				Net:        "none",
 				Privileged: true,
 				Image:      "autoformat",
-				Command:    format,
+				Command:    project.NewCommand(format),
 				Labels: project.NewSliceorMap(map[string]string{
 					config.DETACH: "false",
 					config.SCOPE:  config.SYSTEM,
 				}),
 				LogDriver: "json-file",
-				Environment: project.NewMaporslice([]string{
+				Environment: project.NewMaporEqualSlice([]string{
 					"MAGIC=" + boot2dockerMagic,
 				}),
 			},

@@ -1,0 +1,24 @@
+"1_3_386":
+  build:
+    image: fsouza/godockerclient:1.3
+    dockerfile: Dockerfile.1_3
+  environment:
+    - GOARCH=386
+"1_3_amd64":
+  build:
+    image: fsouza/godockerclient:1.3
+    dockerfile: Dockerfile.1_3
+  environment:
+    - GOARCH=amd64
+"1_4_386":
+  build:
+    image: fsouza/godockerclient:1.4
+    dockerfile: Dockerfile.1_4
+  environment:
+    - GOARCH=386
+"1_4_amd64":
+  build:
+    image: fsouza/godockerclient:1.4
+    dockerfile: Dockerfile.1_4
+  environment:
+    - GOARCH=amd64

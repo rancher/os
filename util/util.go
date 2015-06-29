@@ -306,7 +306,7 @@ func GetValue(kvPairs []string, key string) string {
 func Map2KVPairs(m map[string]string) []string {
 	r := make([]string, 0, len(m))
 	for k, v := range m {
-		r = append(r, k + "=" + v)
+		r = append(r, k+"="+v)
 	}
 	return r
 }

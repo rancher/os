@@ -92,9 +92,30 @@ func getHash(containerCfg *config.ContainerConfig) string {
 				for _, sliceKey := range sliceKeys {
 					io.WriteString(hash, fmt.Sprintf("%s=%v, ", sliceKey, s.MapParts()[sliceKey]))
 				}
-			case project.Maporslice:
+			case project.MaporEqualSlice:
 				sliceKeys := s.Slice()
-				// do not sort environment keys as the order matters
+				// do not sort keys as the order matters
+
+				for _, sliceKey := range sliceKeys {
+					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
+				}
+			case project.MaporColonSlice:
+				sliceKeys := s.Slice()
+				// do not sort keys as the order matters
+
+				for _, sliceKey := range sliceKeys {
+					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
+				}
+			case project.MaporSpaceSlice:
+				sliceKeys := s.Slice()
+				// do not sort keys as the order matters
+
+				for _, sliceKey := range sliceKeys {
+					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
+				}
+			case project.Command:
+				sliceKeys := s.Slice()
+				// do not sort keys as the order matters
 
 				for _, sliceKey := range sliceKeys {
 					io.WriteString(hash, fmt.Sprintf("%s, ", sliceKey))
@@ -157,7 +178,7 @@ func getByLabel(client *dockerClient.Client, key, value string) (*dockerClient.A
 	containers, err := client.ListContainers(dockerClient.ListContainersOptions{
 		All: true,
 		Filters: map[string][]string{
-			config.LABEL: []string{fmt.Sprintf("%s=%s", key, value)},
+			config.LABEL: {fmt.Sprintf("%s=%s", key, value)},
 		},
 	})
 
@@ -190,7 +211,7 @@ func (c *Container) Lookup() *Container {
 	containers, err := client.ListContainers(dockerClient.ListContainersOptions{
 		All: true,
 		Filters: map[string][]string{
-			config.LABEL: []string{fmt.Sprintf("%s=%s", config.HASH, hash)},
+			config.LABEL: {fmt.Sprintf("%s=%s", config.HASH, hash)},
 		},
 	})
 	if err != nil {
@@ -246,7 +267,7 @@ func (c *Container) requiresUserDocker() bool {
 }
 
 func (c *Container) hasLink(link string) bool {
-	return util.Contains(c.ContainerCfg.Service.Links, link)
+	return util.Contains(c.ContainerCfg.Service.Links.Slice(), link)
 }
 
 func (c *Container) addLink(link string) {
@@ -255,7 +276,7 @@ func (c *Container) addLink(link string) {
 	}
 
 	log.Debugf("Adding %s link to %s", link, c.Name)
-	c.ContainerCfg.Service.Links = append(c.ContainerCfg.Service.Links, link)
+	c.ContainerCfg.Service.Links = project.NewMaporColonSlice(append(c.ContainerCfg.Service.Links.Slice(), link))
 }
 
 func (c *Container) parseService() {

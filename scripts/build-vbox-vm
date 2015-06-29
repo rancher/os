@@ -18,7 +18,7 @@ fi
 GITSHA=$(git rev-parse --short HEAD)
 VM="RancherOS-${GITSHA}"
 
-sudo chown -R `whoami`:`whoami` ./dist
+sudo chown -R `whoami` ./dist
 
 VBoxManage createhd --format vmdk --filename ./dist/artifacts/$VM.vmdk --size 40000
 

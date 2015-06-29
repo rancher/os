@@ -45,7 +45,45 @@ func TestHash2(t *testing.T) {
 		MigrateVolumes: false,
 		ReloadConfig:   false,
 		CreateOnly:     true,
-		Service:        &project.ServiceConfig{CapAdd:nil, CapDrop:nil, CpuShares:0, Command:"", Detach:"", Dns:project.NewStringorslice(), DnsSearch:project.NewStringorslice(), DomainName:"", Entrypoint:"", EnvFile:"", Environment:project.NewMaporslice([]string{}), Hostname:"", Image:"state", Labels:project.NewSliceorMap(map[string]string{"io.rancher.os.createonly":"true", "io.rancher.os.scope":"system"}), Links:nil, LogDriver:"json-file", MemLimit:0, Name:"", Net:"none", Pid:"", Ipc:"", Ports:nil, Privileged:true, Restart:"", ReadOnly:true, StdinOpen:false, Tty:false, User:"", Volumes:[]string{"/var/lib/docker:/var/lib/docker", "/var/lib/rancher/conf:/var/lib/rancher/conf", "/var/lib/system-docker:/var/lib/system-docker"}, VolumesFrom:nil, WorkingDir:"", Expose:nil, ExternalLinks:nil},
+		Service: &project.ServiceConfig{
+			CapAdd:      nil,
+			CapDrop:     nil,
+			CpuShares:   0,
+			Command:     project.NewCommand(),
+			Detach:      "",
+			Dns:         project.NewStringorslice(),
+			DnsSearch:   project.NewStringorslice(),
+			DomainName:  "",
+			Entrypoint:  project.NewCommand(),
+			EnvFile:     project.NewStringorslice(),
+			Environment: project.NewMaporEqualSlice([]string{}),
+			Hostname:    "",
+			Image:       "state",
+			Labels: project.NewSliceorMap(map[string]string{
+				"io.rancher.os.createonly": "true",
+				"io.rancher.os.scope":      "system"}),
+			Links:      project.NewMaporColonSlice(nil),
+			LogDriver:  "json-file",
+			MemLimit:   0,
+			Name:       "",
+			Net:        "none",
+			Pid:        "",
+			Ipc:        "",
+			Ports:      nil,
+			Privileged: true,
+			Restart:    "",
+			ReadOnly:   true,
+			StdinOpen:  false,
+			Tty:        false,
+			User:       "",
+			Volumes: []string{
+				"/var/lib/docker:/var/lib/docker",
+				"/var/lib/rancher/conf:/var/lib/rancher/conf",
+				"/var/lib/system-docker:/var/lib/system-docker"},
+			VolumesFrom:   nil,
+			WorkingDir:    "",
+			Expose:        nil,
+			ExternalLinks: nil},
 	}
 
 	for i := 0; i < 1000; i++ {
@@ -57,7 +95,6 @@ func TestBool2String(t *testing.T) {
 	assert := require.New(t)
 	assert.Equal("true", fmt.Sprint(true), "")
 }
-
 
 func TestParse(t *testing.T) {
 	assert := require.New(t)

@@ -1,0 +1,381 @@
+bootstrap_containers:
+  udev:
+    image: rancher/os-udev:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: host
+    uts: host
+    privileged: true
+    volumes:
+    - /dev:/host/dev
+    - /lib/modules:/lib/modules
+    - /lib/firmware:/lib/firmware
+bootstrap_docker:
+  args: [docker, -d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
+    -G, root, -H, 'unix:///var/run/system-docker.sock']
+cloud_init:
+  datasources:
+  - configdrive:/media/config-2
+services_include:
+  ubuntu-console: false
+network:
+  dns:
+    nameservers: [8.8.8.8, 8.8.4.4]
+  interfaces:
+    eth*:
+      dhcp: true
+    lo:
+      address: 127.0.0.1/8
+repositories:
+  core:
+    url: https://raw.githubusercontent.com/rancherio/os-services/v0.3.1
+state:
+  fstype: auto
+  dev: LABEL=RANCHER_STATE
+system_containers:
+  acpid:
+    image: rancher/os-acpid:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.scope: system
+    links: []
+    net: host
+    uts: host
+    privileged: true
+    volumes_from:
+    - command-volumes
+    - system-volumes
+  all-volumes:
+    image: rancher/os-state:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.createonly: true
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: none
+    privileged: true
+    read_only: true
+    volumes_from:
+    - docker-volumes
+    - command-volumes
+    - user-volumes
+    - system-volumes
+  cloud-init:
+    image: rancher/os-cloudinit:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.reloadconfig: true
+      io.rancher.os.scope: system
+    links:
+    - preload-user-images
+    - cloud-init-pre
+    - network
+    net: host
+    uts: host
+    privileged: true
+    volumes_from:
+    - command-volumes
+    - system-volumes
+  cloud-init-pre:
+    image: rancher/os-cloudinit:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment:
+    - CLOUD_INIT_NETWORK=false
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.reloadconfig: true
+      io.rancher.os.scope: system
+    links:
+    - preload-system-images
+    net: host
+    uts: host
+    privileged: true
+    volumes_from:
+    - command-volumes
+    - system-volumes
+  command-volumes:
+    image: rancher/os-state:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.createonly: true
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: none
+    privileged: true
+    read_only: true
+    volumes:
+    - /init:/sbin/halt:ro
+    - /init:/sbin/poweroff:ro
+    - /init:/sbin/reboot:ro
+    - /init:/sbin/shutdown:ro
+    - /init:/sbin/netconf:ro
+    - /init:/usr/bin/cloud-init:ro
+    - /init:/usr/bin/rancherctl:ro
+    - /init:/usr/bin/ros:ro
+    - /init:/usr/bin/respawn:ro
+    - /init:/usr/bin/system-docker:ro
+    - /init:/usr/sbin/wait-for-docker:ro
+    - /lib/modules:/lib/modules
+    - /usr/bin/docker:/usr/bin/docker:ro
+  console:
+    image: rancher/os-console:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.remove: true
+      io.rancher.os.scope: system
+    links:
+    - cloud-init
+    net: host
+    uts: host
+    pid: host
+    ipc: host
+    privileged: true
+    restart: always
+    volumes_from:
+    - all-volumes
+  docker:
+    image: rancher/os-docker:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.scope: system
+    links:
+    - network
+    net: host
+    uts: host
+    pid: host
+    ipc: host
+    privileged: true
+    restart: always
+    volumes_from:
+    - all-volumes
+  docker-volumes:
+    image: rancher/os-state:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.createonly: true
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: none
+    privileged: true
+    read_only: true
+    volumes:
+    - /var/lib/rancher/conf:/var/lib/rancher/conf
+    - /var/lib/docker:/var/lib/docker
+    - /var/lib/system-docker:/var/lib/system-docker
+  dockerwait:
+    image: rancher/os-dockerwait:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.scope: system
+    links:
+    - docker
+    net: host
+    uts: host
+    volumes_from:
+    - all-volumes
+  network:
+    image: rancher/os-network:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.scope: system
+    links:
+    - cloud-init-pre
+    net: host
+    uts: host
+    privileged: true
+    volumes_from:
+    - command-volumes
+    - system-volumes
+  ntp:
+    image: rancher/os-ntp:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.scope: system
+    links:
+    - cloud-init
+    - network
+    net: host
+    uts: host
+    privileged: true
+    restart: always
+  preload-system-images:
+    image: rancher/os-preload:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.scope: system
+    links: []
+    privileged: true
+    volumes:
+    - /var/run/system-docker.sock:/var/run/docker.sock
+    - /var/lib/system-docker/preload:/mnt/preload
+    volumes_from:
+    - command-volumes
+    - system-volumes
+  preload-user-images:
+    image: rancher/os-preload:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.scope: system
+    links:
+    - dockerwait
+    privileged: true
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    - /var/lib/docker/preload:/mnt/preload
+    volumes_from:
+    - command-volumes
+    - system-volumes
+  syslog:
+    image: rancher/os-syslog:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: host
+    uts: host
+    privileged: true
+    restart: always
+    volumes_from:
+    - system-volumes
+  system-volumes:
+    image: rancher/os-state:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.createonly: true
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: none
+    privileged: true
+    read_only: true
+    volumes:
+    - /dev:/host/dev
+    - /os-config.yml:/os-config.yml
+    - /var/lib/rancher/conf:/var/lib/rancher/conf
+    - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
+    - /lib/modules:/lib/modules
+    - /lib/firmware:/lib/firmware
+    - /var/run:/var/run
+    - /var/log:/var/log
+  udev:
+    image: rancher/os-udev:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment:
+    - DAEMON=true
+    labels:
+      io.rancher.os.detach: true
+      io.rancher.os.scope: system
+    links: []
+    net: host
+    uts: host
+    privileged: true
+    restart: always
+    volumes_from:
+    - system-volumes
+  user-volumes:
+    image: rancher/os-state:v0.3.2
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.createonly: true
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: none
+    privileged: true
+    read_only: true
+    volumes:
+    - /home:/home
+    - /opt:/opt
+system_docker:
+  args: [docker, -d, --log-driver, syslog, -s, overlay, -b, docker-sys, --fixed-cidr,
+    172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root, -H, 'unix:///var/run/system-docker.sock']
+upgrade:
+  url: https://releases.rancher.com/os/versions.yml
+  image: rancher/os
+user_docker:
+  tls_args: [--tlsverify, --tlscacert=ca.pem, --tlscert=server-cert.pem, --tlskey=server-key.pem,
+    '-H=0.0.0.0:2376']
+  args: [docker, -d, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock']
