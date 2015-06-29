@@ -58,7 +58,7 @@ fi
 
 ln -sf ${INITRD_TMP} ${INITRD_CURRENT}
 
-cp dist/artifacts/rancheros ${INITRD_TMP}/init
+cp bin/rancheros ${INITRD_TMP}/init
 cp -f os-config.yml ${INITRD_TMP}/
 cd ${INITRD_TMP}
 

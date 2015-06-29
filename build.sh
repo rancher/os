@@ -18,5 +18,6 @@ cleanup() {
 }
 trap cleanup EXIT
 docker cp ${DIST_CONTAINER}:/source/dist/artifacts dist
+docker cp ${DIST_CONTAINER}:/source/bin ./
 
 ls -l dist/artifacts
