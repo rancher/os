@@ -3,7 +3,6 @@ package config
 import "github.com/rancherio/rancher-compose/librcompose/project"
 
 const (
-	DEFAULT_IMAGE_VERSION = "v0.3.1"
 	CONSOLE_CONTAINER     = "console"
 	DOCKER_BIN            = "/usr/bin/docker"
 	DOCKER_SYSTEM_HOME    = "/var/lib/system-docker"
@@ -29,7 +28,6 @@ const (
 
 var (
 	VERSION           string
-	IMAGE_VERSION     string
 	OsConfigFile      = "/os-config.yml"
 	CloudConfigFile   = "/var/lib/rancher/conf/cloud-config-rancher.yml"
 	ConfigFile        = "/var/lib/rancher/conf/rancher.yml"
@@ -135,8 +133,5 @@ type CloudInit struct {
 func init() {
 	if VERSION == "" {
 		VERSION = "v0.0.0-dev"
-	}
-	if IMAGE_VERSION == "" {
-		IMAGE_VERSION = DEFAULT_IMAGE_VERSION
 	}
 }
