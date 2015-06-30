@@ -36,7 +36,7 @@ network:
       address: 127.0.0.1/8
 repositories:
   core:
-    url: https://raw.githubusercontent.com/rancherio/os-services/v0.3.1
+    url: https://raw.githubusercontent.com/rancherio/os-services/v0.3.2
 state:
   fstype: auto
   dev: LABEL=RANCHER_STATE
