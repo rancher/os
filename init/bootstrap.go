@@ -77,7 +77,7 @@ outer:
 			"autoformat": {
 				Net:        "none",
 				Privileged: true,
-				Image:      "autoformat",
+				Image:      "rancher/os-autoformat:"+config.VERSION,
 				Command:    project.NewCommand(format),
 				Labels: project.NewSliceorMap(map[string]string{
 					config.DETACH: "false",
