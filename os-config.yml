@@ -1,6 +1,6 @@
 bootstrap_containers:
   udev:
-    image: rancher/os-udev:v0.3.2
+    image: rancher/os-udev:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -36,13 +36,13 @@ network:
       address: 127.0.0.1/8
 repositories:
   core:
-    url: https://raw.githubusercontent.com/rancherio/os-services/v0.3.2
+    url: https://raw.githubusercontent.com/rancherio/os-services/v0.3.3
 state:
   fstype: auto
   dev: LABEL=RANCHER_STATE
 system_containers:
   acpid:
-    image: rancher/os-acpid:v0.3.2
+    image: rancher/os-acpid:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -58,7 +58,7 @@ system_containers:
     - command-volumes
     - system-volumes
   all-volumes:
-    image: rancher/os-state:v0.3.2
+    image: rancher/os-state:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -78,7 +78,7 @@ system_containers:
     - user-volumes
     - system-volumes
   cloud-init:
-    image: rancher/os-cloudinit:v0.3.2
+    image: rancher/os-cloudinit:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -99,7 +99,7 @@ system_containers:
     - command-volumes
     - system-volumes
   cloud-init-pre:
-    image: rancher/os-cloudinit:v0.3.2
+    image: rancher/os-cloudinit:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -119,7 +119,7 @@ system_containers:
     - command-volumes
     - system-volumes
   command-volumes:
-    image: rancher/os-state:v0.3.2
+    image: rancher/os-state:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -148,7 +148,7 @@ system_containers:
     - /lib/modules:/lib/modules
     - /usr/bin/docker:/usr/bin/docker:ro
   console:
-    image: rancher/os-console:v0.3.2
+    image: rancher/os-console:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -168,7 +168,7 @@ system_containers:
     volumes_from:
     - all-volumes
   docker:
-    image: rancher/os-docker:v0.3.2
+    image: rancher/os-docker:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -187,7 +187,7 @@ system_containers:
     volumes_from:
     - all-volumes
   docker-volumes:
-    image: rancher/os-state:v0.3.2
+    image: rancher/os-state:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -206,7 +206,7 @@ system_containers:
     - /var/lib/docker:/var/lib/docker
     - /var/lib/system-docker:/var/lib/system-docker
   dockerwait:
-    image: rancher/os-dockerwait:v0.3.2
+    image: rancher/os-dockerwait:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -222,7 +222,7 @@ system_containers:
     volumes_from:
     - all-volumes
   network:
-    image: rancher/os-network:v0.3.2
+    image: rancher/os-network:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -240,7 +240,7 @@ system_containers:
     - command-volumes
     - system-volumes
   ntp:
-    image: rancher/os-ntp:v0.3.2
+    image: rancher/os-ntp:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -256,7 +256,7 @@ system_containers:
     privileged: true
     restart: always
   preload-system-images:
-    image: rancher/os-preload:v0.3.2
+    image: rancher/os-preload:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -274,7 +274,7 @@ system_containers:
     - command-volumes
     - system-volumes
   preload-user-images:
-    image: rancher/os-preload:v0.3.2
+    image: rancher/os-preload:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -293,7 +293,7 @@ system_containers:
     - command-volumes
     - system-volumes
   syslog:
-    image: rancher/os-syslog:v0.3.2
+    image: rancher/os-syslog:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -310,7 +310,7 @@ system_containers:
     volumes_from:
     - system-volumes
   system-volumes:
-    image: rancher/os-state:v0.3.2
+    image: rancher/os-state:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -335,7 +335,7 @@ system_containers:
     - /var/run:/var/run
     - /var/log:/var/log
   udev:
-    image: rancher/os-udev:v0.3.2
+    image: rancher/os-udev:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
@@ -353,7 +353,7 @@ system_containers:
     volumes_from:
     - system-volumes
   user-volumes:
-    image: rancher/os-state:v0.3.2
+    image: rancher/os-state:v0.3.3-rc1
     command: []
     dns: []
     dns_search: []
