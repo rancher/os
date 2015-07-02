@@ -8,7 +8,7 @@ layout: default
 
 ```
 #!ipxe
-# Boot a persistent RangerOS to RAM
+# Boot a persistent RancherOS to RAM
 
 # Location of Kernel/Initrd images
 set base-url http://releases.rancher.com/os/latest
