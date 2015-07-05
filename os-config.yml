@@ -372,11 +372,12 @@ system_containers:
     - /opt:/opt
 system_docker:
   args: [docker, -d, --log-driver, syslog, -s, overlay, -b, docker-sys, --fixed-cidr,
-    172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root, -H, 'unix:///var/run/system-docker.sock']
+    172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
+    -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
 upgrade:
   url: https://releases.rancher.com/os/versions.yml
   image: rancher/os
 user_docker:
   tls_args: [--tlsverify, --tlscacert=ca.pem, --tlscert=server-cert.pem, --tlskey=server-key.pem,
     '-H=0.0.0.0:2376']
-  args: [docker, -d, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock']
+  args: [docker, -d, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock', --userland-proxy=false]
