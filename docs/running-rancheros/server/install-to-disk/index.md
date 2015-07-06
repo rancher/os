@@ -5,7 +5,7 @@ layout: default
 
 ## Installing RancherOS to Disk
 ---
-RancherOS comes with a simple installer that will install RancherOS on a given target disk. To install RancherOS on a new disk, you can use the `rancheros-install` [command]({{site.baseurl}}/docs/rancheros-tools/rancheros-install). 
+RancherOS comes with a simple installer that will install RancherOS on a given target disk. To install RancherOS on a new disk, you can use the `rancheros-install` [command]({{site.baseurl}}/docs/rancheros-tools/rancheros-install). Before installing, you'll need to have already [booted RancherOS from iso]({{site.baseurl}}/docs/running-rancheros/workstation/boot-from-iso). Please be sure to pick the `rancheros.iso` from our release [page](https://github.com/rancherio/os/releases).
 
 ### Using `rancheros-install` to Install RancherOS 
 

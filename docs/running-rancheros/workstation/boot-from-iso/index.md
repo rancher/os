@@ -5,7 +5,7 @@ layout: default
 
 ## Booting from ISO
 ---
-The RancherOS ISO file can be used to create a fresh RancherOS install on KVM, VMware, VirtualBox, or bare metal servers. You can download the rancheros.iso file from our [releases page](https://github.com/rancherio/os/releases/).
+The RancherOS ISO file can be used to create a fresh RancherOS install on KVM, VMware, VirtualBox, or bare metal servers. You can download the `rancheros.iso` file from our [releases page](https://github.com/rancherio/os/releases/).
 
 You must boot with at least **1GB** of memory. If you boot with the ISO, the login is hard coded to **rancher/rancher**. Only the ISO has the password hard coded. If you run from a cloud or install to disk, SSH keys or a password of your choice is expected to be used.
 
