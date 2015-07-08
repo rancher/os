@@ -5,8 +5,6 @@ cd $(dirname $0)
 
 export DOCKER_IMAGE=rancher-os-build
 
-source ./scripts/version
-
 ./scripts/ci
 
 rm -rf dist
