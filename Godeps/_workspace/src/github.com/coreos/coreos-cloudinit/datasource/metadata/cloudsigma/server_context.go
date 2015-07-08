@@ -108,7 +108,9 @@ func (scs *serverContextService) FetchMetadata() (metadata datasource.Metadata, 
 	}
 
 	metadata.SSHPublicKeys = map[string]string{}
-	if key, ok := inputMetadata.Meta["ssh_public_key"]; ok {
+	// CloudSigma uses an empty string, rather than no string,
+	// to represent the lack of a SSH key
+	if key, _ := inputMetadata.Meta["ssh_public_key"]; len(key) > 0 {
 		splitted := strings.Split(key, " ")
 		metadata.SSHPublicKeys[splitted[len(splitted)-1]] = key
 	}

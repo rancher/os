@@ -119,6 +119,15 @@ func TestCheckStructure(t *testing.T) {
 			config: "coreos:\n  etcd:\n    discovery: good",
 		},
 
+		// Test for deprecated keys
+		{
+			config: "coreos:\n  etcd:\n    addr: hi",
+		},
+		{
+			config:  "coreos:\n  etcd:\n    proxy: hi",
+			entries: []Entry{{entryWarning, "deprecated key \"proxy\" (etcd2 options no longer work for etcd)", 3}},
+		},
+
 		// Test for error on list of nodes
 		{
 			config: "coreos:\n  units:\n    - hello\n    - goodbye",

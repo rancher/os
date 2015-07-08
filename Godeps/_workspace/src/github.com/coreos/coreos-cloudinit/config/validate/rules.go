@@ -82,6 +82,9 @@ func checkNodeStructure(n, g node, r *Report) {
 	case reflect.Struct:
 		for _, cn := range n.children {
 			if cg := g.Child(cn.name); cg.IsValid() {
+				if msg := cg.field.Tag.Get("deprecated"); msg != "" {
+					r.Warning(cn.line, fmt.Sprintf("deprecated key %q (%s)", cn.name, msg))
+				}
 				checkNodeStructure(cn, cg, r)
 			} else {
 				r.Warning(cn.line, fmt.Sprintf("unrecognized key %q", cn.name))
