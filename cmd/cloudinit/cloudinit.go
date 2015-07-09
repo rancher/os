@@ -35,6 +35,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
+	"github.com/coreos/coreos-cloudinit/datasource/waagent"
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
@@ -389,6 +390,12 @@ func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
 					dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))
 				} else {
 					dss = append(dss, ec2.NewDatasource(parts[1]))
+				}
+			}
+		case "waagent":
+			if network {
+				if len(parts) == 1 {
+					dss = append(dss, waagent.NewDatasource("/var/lib/waagent"))
 				}
 			}
 		case "file":
