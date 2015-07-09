@@ -9,6 +9,8 @@ DOCKER_FILE=${CONFIG}/.dockerfile
 
 write_base()
 {
+    DOCKER_BASE=${DOCKER_BASE:?"DOCKER_BASE not defined"}
+
     if [ "${BASE_WRITTEN}" = "true" ]; then
         return
     fi
@@ -16,7 +18,7 @@ write_base()
     mkdir -p $(dirname ${DOCKER_FILE})
 
     cat > ${DOCKER_FILE} << EOF
-FROM ${DOCKER_BASE:=ubuntu:14.04.2}
+FROM ${DOCKER_BASE}
 ENV TERM xterm
 ENV IN_DOCKER true
 WORKDIR /source
