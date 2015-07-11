@@ -76,7 +76,7 @@ us-west-2 | HVM |  [ami-c5bfb9f5](https://console.aws.amazon.com/ec2/home?region
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS v0.3.0 or later.
 
-[Download Image](https://github.com/rancherio/os/releases/download/v0.3.3/rancheros-033-gce-01.tar.gz)
+[Download Image](https://github.com/rancher/os/releases/download/v0.3.3/rancheros-033-gce-01.tar.gz)
 
 Please follow the directions at our [docs to launch in GCE](http://os.docs.rancher.com/docs/running-rancheros/cloud/gce/). 
 
@@ -88,11 +88,11 @@ Please follow the directions at our [docs to launch in GCE](http://os.docs.ranch
 Please refer to our [RancherOS Documentation](http://os.docs.rancher.com/) website to read all about RancherOS. It has detailed information on how RancherOS works, getting-started and other details.
 
 ## Support, Discussion, and Community
-If you need any help with RancherOS or Rancher, please join us at either our [rancherio Google Groups](https://groups.google.com/forum/#!forum/rancherio) or [#rancher IRC channel](http://webchat.freenode.net/?channels=rancher) where most of our team hangs out at.
+If you need any help with RancherOS or Rancher, please join us at either our [Rancher forums](http://forums.rancher.com) or [#rancher IRC channel](http://webchat.freenode.net/?channels=rancher) where most of our team hangs out at.
 
-Please submit any **RancherOS** bugs, issues, and feature requests to [rancherio/os](//github.com/rancherio/os/issues).
+Please submit any **RancherOS** bugs, issues, and feature requests to [rancher/os](//github.com/rancher/os/issues).
 
-Please submit any **Rancher** bugs, issues, and feature requests to [rancherio/rancher](//github.com/rancherio/rancher/issues).
+Please submit any **Rancher** bugs, issues, and feature requests to [rancher/rancher](//github.com/rancher/rancher/issues).
 
 #License
 Copyright (c) 2014-2015 [Rancher Labs, Inc.](http://rancher.com)
