@@ -1,3 +1,5 @@
+// +build linux
+
 package init
 
 import (
@@ -77,7 +79,7 @@ outer:
 			"autoformat": {
 				Net:        "none",
 				Privileged: true,
-				Image:      "rancher/os-autoformat:"+config.VERSION,
+				Image:      "rancher/os-autoformat:" + config.VERSION,
 				Command:    project.NewCommand(format),
 				Labels: project.NewSliceorMap(map[string]string{
 					config.DETACH: "false",
