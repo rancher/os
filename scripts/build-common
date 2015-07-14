@@ -2,10 +2,7 @@
 
 : ${ARTIFACTS:=$(pwd)/assets}
 : ${BUILD:=$(pwd)/build}
-: ${CONFIG:=$(pwd)/config}
 : ${DIST:=$(pwd)/dist}
-
-DOCKER_FILE=${CONFIG}/.dockerfile
 
 write_base()
 {
