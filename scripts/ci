@@ -40,7 +40,7 @@ fi
 
 run ./scripts/bootstrap
 ARGS=
-for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|tmp|dist|.git|.idea|.vagrant|scripts|bin|state)$'); do
+for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|tmp|dist|.DS_Store|.git|.idea|.vagrant|scripts|bin|state)$'); do
     if [ -d $i ]; then
         run --assets $i
     else
