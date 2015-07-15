@@ -7,11 +7,5 @@ cd $(dirname $0)/..
 apt-get update
 apt-get install -y curl rsync build-essential syslinux xorriso libblkid-dev libmount-dev libselinux1-dev
 
-if [ ! -d /usr/local/go ]; then
-    GO_VERSION=1.4.2
-    curl -sSL https://golang.org/dl/go${GO_VERSION}.src.tar.gz | tar -v -C /usr/local -xz
-    cd /usr/local/go/src && ./make.bash --no-clean 2>&1
-    PATH=/usr/local/go/bin:${PATH}
-    go clean -i net
-    go install -tags netgo std
-fi
+go clean -i net
+go install -tags netgo std
