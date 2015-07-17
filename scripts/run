@@ -92,7 +92,7 @@ if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
 
     echo PWD=`pwd`
     exec sudo xhyve -H -P \
-        -m 2G \
+        -m 4G \
         -s 0:0,hostbridge -s 31,lpc \
         -l com1,stdio \
         -s 2:0,virtio-net \
