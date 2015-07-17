@@ -3,17 +3,17 @@ package config
 import "github.com/rancherio/rancher-compose/librcompose/project"
 
 const (
-	CONSOLE_CONTAINER     = "console"
-	DOCKER_BIN            = "/usr/bin/docker"
-	DOCKER_SYSTEM_HOME    = "/var/lib/system-docker"
-	DOCKER_SYSTEM_HOST    = "unix:///var/run/system-docker.sock"
-	DOCKER_HOST           = "unix:///var/run/docker.sock"
-	IMAGES_PATH           = "/"
-	IMAGES_PATTERN        = "images*.tar"
-	SYS_INIT              = "/sbin/init-sys"
-	USER_INIT             = "/sbin/init-user"
-	MODULES_ARCHIVE       = "/modules.tar"
-	DEBUG                 = false
+	CONSOLE_CONTAINER  = "console"
+	DOCKER_BIN         = "/usr/bin/docker"
+	DOCKER_SYSTEM_HOME = "/var/lib/system-docker"
+	DOCKER_SYSTEM_HOST = "unix:///var/run/system-docker.sock"
+	DOCKER_HOST        = "unix:///var/run/docker.sock"
+	IMAGES_PATH        = "/"
+	IMAGES_PATTERN     = "images*.tar"
+	SYS_INIT           = "/sbin/init-sys"
+	USER_INIT          = "/sbin/init-user"
+	MODULES_ARCHIVE    = "/modules.tar"
+	DEBUG              = false
 
 	LABEL         = "label"
 	HASH          = "io.rancher.os.hash"

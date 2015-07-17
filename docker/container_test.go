@@ -10,7 +10,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	dockerClient "github.com/fsouza/go-dockerclient"
+	"os"
 )
+
+func testDockerHost(t *testing.T) {
+	assert := require.New(t)
+	assert.Equal(os.Getenv("DOCKER_HOST"), config.DOCKER_HOST)
+}
 
 func TestHash(t *testing.T) {
 	assert := require.New(t)
@@ -134,7 +140,7 @@ func TestIdFromName(t *testing.T) {
 	assert.Equal("foo", cfg.Id)
 }
 
-func TestMigrateVolumes(t *testing.T) {
+func testMigrateVolumes(t *testing.T) {
 	assert := require.New(t)
 
 	c := NewContainer(config.DOCKER_HOST, &config.ContainerConfig{
@@ -163,7 +169,7 @@ func TestMigrateVolumes(t *testing.T) {
 	c2.Delete()
 }
 
-func TestRollback(t *testing.T) {
+func testRollback(t *testing.T) {
 	assert := require.New(t)
 
 	c := NewContainer(config.DOCKER_HOST, &config.ContainerConfig{
@@ -197,7 +203,7 @@ func TestRollback(t *testing.T) {
 	c2.Delete()
 }
 
-func TestStart(t *testing.T) {
+func testStart(t *testing.T) {
 	assert := require.New(t)
 
 	c := NewContainer(config.DOCKER_HOST, &config.ContainerConfig{
@@ -213,7 +219,7 @@ func TestStart(t *testing.T) {
 	c.Delete()
 }
 
-func TestLookup(t *testing.T) {
+func testLookup(t *testing.T) {
 	assert := require.New(t)
 
 	cfg := &config.ContainerConfig{
@@ -242,7 +248,7 @@ func TestLookup(t *testing.T) {
 	c2.Delete()
 }
 
-func TestDelete(t *testing.T) {
+func testDelete(t *testing.T) {
 	assert := require.New(t)
 
 	c := NewContainer(config.DOCKER_HOST, &config.ContainerConfig{
@@ -268,7 +274,7 @@ func TestDelete(t *testing.T) {
 	assert.NoError(c.Err, "")
 }
 
-func TestDockerClientNames(t *testing.T) {
+func testDockerClientNames(t *testing.T) {
 	assert := require.New(t)
 	client, err := dockerClient.NewClient(config.DOCKER_HOST)
 
