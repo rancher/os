@@ -26,7 +26,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         --cloud-config)
             shift 1
-            CLOUD_CONFIG=$(readlink -f "$1") || :
+            CLOUD_CONFIG=$(path "$1") || :
             if [ ! -f ${CLOUD_CONFIG} ]; then
                 echo No such file: "'"${CLOUD_CONFIG}"'" 1>&2
                 exit 1
