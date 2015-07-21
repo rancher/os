@@ -25,6 +25,14 @@ func Main() {
 			Subcommands: configSubcommands(),
 		},
 		{
+			Name:            "dev",
+			ShortName:       "d",
+			Usage:           "dev spec",
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          devAction,
+		},
+		{
 			Name:            "env",
 			ShortName:       "e",
 			Usage:           "env command",
