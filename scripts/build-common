@@ -4,6 +4,15 @@
 : ${BUILD:=$(pwd)/build}
 : ${DIST:=$(pwd)/dist}
 
+# PREREQ: brew install coreutils
+path()
+{
+    local UNAME=$(uname)
+    if [ "$UNAME" == "Darwin" ]; then greadlink -f "$1"
+    elif [ "$UNAME" == "Linux" ]; then readlink -f "$1";
+    fi
+}
+
 write_base()
 {
     DOCKER_BASE=${DOCKER_BASE:?"DOCKER_BASE not defined"}
