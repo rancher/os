@@ -5,4 +5,12 @@ cd $(dirname $0)/..
 
 chmod 0600 ./assets/rancher.key
 
-exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@localhost "$@"
+UNAME=$(uname)
+
+if [ "$UNAME" == "Darwin" ]; then
+    HOST=192.168.64.2  #  consult `/var/db/dhcpd_leases` or delete it
+    exec ssh -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@${HOST} "$@"
+elif [ "$UNAME" == "Linux" ]; then
+    exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@localhost "$@"
+fi
+
