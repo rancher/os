@@ -1,4 +1,4 @@
-bootstrap_containers:
+bootstrap:
   udev:
     image: rancher/os-udev:v0.4.0-dev
     command: []
@@ -10,6 +10,42 @@ bootstrap_containers:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
     links: []
+    log_driver: json-file
+    net: host
+    uts: host
+    privileged: true
+    volumes:
+    - /dev:/host/dev
+    - /lib/modules:/lib/modules
+    - /lib/firmware:/lib/firmware
+autoformat:
+  autoformat:
+    image: rancher/os-autoformat:v0.4.0-dev
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.scope: system
+    links: []
+    log_driver: json-file
+    net: none
+    privileged: true
+    volumes: []
+  udev:
+    image: rancher/os-udev:v0.4.0-dev
+    command: []
+    dns: []
+    dns_search: []
+    env_file: []
+    environment: []
+    labels:
+      io.rancher.os.detach: false
+      io.rancher.os.scope: system
+    links:
+    - autoformat
     log_driver: json-file
     net: host
     uts: host
