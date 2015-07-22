@@ -66,6 +66,10 @@ func stopDocker(c chan interface{}) error {
 }
 
 func bootstrap(cfg *config.Config) error {
+	if util.ResolveDevice(cfg.State.Dev) != "" {
+		return nil
+	}
+
 	log.Info("Starting bootstrap")
 	c, err := startDocker(cfg)
 	if err != nil {
