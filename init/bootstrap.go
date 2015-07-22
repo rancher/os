@@ -21,11 +21,13 @@ func autoformat(cfg *config.Config) error {
 	AUTOFORMAT := "AUTOFORMAT=" + strings.Join(cfg.State.Autoformat, " ")
 	FORMATZERO := "FORMATZERO=" + fmt.Sprint(cfg.State.FormatZero)
 	cfg.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
+	log.Info("Running Autoformat services")
 	err := docker.RunServices("autoformat", cfg, cfg.Autoformat)
 	return err
 }
 
 func runBootstrapContainers(cfg *config.Config) error {
+	log.Info("Running Bootstrap services")
 	return docker.RunServices("bootstrap", cfg, cfg.BootstrapContainers)
 }
 
@@ -70,7 +72,7 @@ func bootstrap(cfg *config.Config) error {
 		return nil
 	}
 
-	log.Info("Starting bootstrap")
+	log.Info("Launching Bootstrap Docker")
 	c, err := startDocker(cfg)
 	if err != nil {
 		return err
