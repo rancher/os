@@ -249,11 +249,21 @@ func MainInit() {
 	}
 }
 
+func mountStateTmpfs(cfg *config.Config) error {
+	log.Debugf("State will not be persisted")
+	return util.Mount("none", STATE, "tmpfs", "")
+}
+
 func mountState(cfg *config.Config) error {
 	var err error
 
 	if cfg.State.Dev != "" {
 		dev := util.ResolveDevice(cfg.State.Dev)
+		if dev == "" {
+			msg := fmt.Sprintf("Could not resolve device %q", cfg.State.Dev)
+			log.Infof(msg)
+			return fmt.Errorf(msg)
+		}
 		log.Infof("Mounting state device %s to %s", dev, STATE)
 
 		fsType := cfg.State.FsType
@@ -265,18 +275,29 @@ func mountState(cfg *config.Config) error {
 			log.Debugf("FsType has been set to %s", fsType)
 			err = util.Mount(dev, STATE, fsType, "")
 		}
-	}
-
-	if err != nil && cfg.State.Required {
-		return err
-	}
-
-	if err != nil || cfg.State.Dev == "" {
-		log.Debugf("State will not be persisted")
-		err = util.Mount("none", STATE, "tmpfs", "")
+	} else {
+		return mountStateTmpfs(cfg)
 	}
 
 	return err
+}
+
+func tryMountAndBootstrap(cfg *config.Config) error {
+	if err := mountState(cfg); err != nil {
+		if err := bootstrap(cfg); err != nil {
+			if cfg.State.Required {
+				return err
+			}
+			return mountStateTmpfs(cfg)
+		}
+		if err := mountState(cfg); err != nil {
+			if cfg.State.Required {
+				return err
+			}
+			return mountStateTmpfs(cfg)
+		}
+	}
+	return nil
 }
 
 func createGroups(cfg *config.Config) error {
@@ -354,8 +375,7 @@ func RunInit() error {
 		loadModules,
 		setResolvConf,
 		setupSystemBridge,
-		bootstrap,
-		mountState,
+		tryMountAndBootstrap,
 		func(cfg *config.Config) error {
 			return cfg.Reload()
 		},
