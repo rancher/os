@@ -1,7 +1,0 @@
-#!/bin/bash
-
-cd $(dirname $0)/..
-
-source scripts/build-common
-
-download 99652ec62c682041b67aa917d9b040d5541b4e78 https://github.com/rancher/docker/releases/download/v1.7.1-ros-1/docker-1.7.1

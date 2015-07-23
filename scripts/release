@@ -1,7 +1,0 @@
-#!/bin/bash
-
-if ! docker info >/dev/null 2>&1 && [ -x "$(which wrapdocker)" ]; then
-    wrapdocker
-fi
-
-exec $(dirname $0)/../build.sh
