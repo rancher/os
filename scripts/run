@@ -86,7 +86,7 @@ fi
 
 UNAME=$(uname)
 
-KERNEL_ARGS="rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
+KERNEL_ARGS="quiet rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
 
 if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
 

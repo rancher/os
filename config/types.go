@@ -52,7 +52,8 @@ type Repositories map[string]Repository
 type Config struct {
 	Environment         map[string]string                 `yaml:"environment,omitempty"`
 	Services            map[string]*project.ServiceConfig `yaml:"services,omitempty"`
-	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap_containers,omitempty"`
+	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap,omitempty"`
+	Autoformat          map[string]*project.ServiceConfig `yaml:"autoformat,omitempty"`
 	BootstrapDocker     DockerConfig                      `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
 	Console             ConsoleConfig                     `yaml:"console,omitempty"`
@@ -124,6 +125,7 @@ type StateConfig struct {
 	Dev        string   `yaml:"dev,omitempty"`
 	Required   bool     `yaml:"required,omitempty"`
 	Autoformat []string `yaml:"autoformat,omitempty"`
+	FormatZero bool     `yaml:"formatzero,omitempty"`
 }
 
 type CloudInit struct {

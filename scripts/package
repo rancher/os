@@ -30,7 +30,7 @@ default rancheros
 label rancheros
     kernel /boot/vmlinuz
     initrd /boot/initrd
-    append quiet rancher.password=rancher
+    append quiet rancher.password=rancher rancher.state.autoformat=[/dev/sda,/dev/vda]
 EOF
 
 cd ${CD}
@@ -43,24 +43,6 @@ xorriso \
     -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
     -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
     -o ${DIST}/artifacts/rancheros.iso $(pwd)
-
-cat > ${CD}/boot/isolinux/isolinux.cfg << EOF
-default rancheros
-label rancheros
-    kernel /boot/vmlinuz
-    initrd /boot/initrd
-    append quiet rancher.password=rancher rancher.state.autoformat=[/dev/sda,/dev/vda]
-EOF
-
-cd ${CD}
-xorriso \
-    -publisher "Rancher Labs, Inc." \
-    -as mkisofs \
-    -l -J -R -V "RancherOS" \
-    -no-emul-boot -boot-load-size 4 -boot-info-table \
-    -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
-    -isohybrid-mbr /usr/lib/syslinux/isohdpfx.bin \
-    -o ${DIST}/artifacts/machine-rancheros.iso $(pwd)
 
 
 if [ -e ${DIST}/artficats/iso-checksums.txt ]; then

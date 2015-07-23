@@ -82,6 +82,9 @@ func imagesFromConfig(cfg *config.Config) []string {
 	for _, service := range cfg.BootstrapContainers {
 		imagesMap[service.Image] = 1
 	}
+	for _, service := range cfg.Autoformat {
+		imagesMap[service.Image] = 1
+	}
 	for _, service := range cfg.SystemContainers {
 		imagesMap[service.Image] = 1
 	}

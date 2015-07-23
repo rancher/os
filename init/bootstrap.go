@@ -1,105 +1,33 @@
-// +build linux
-
 package init
 
 import (
 	"os"
 	"os/exec"
-	"strings"
 	"syscall"
 
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
 	"github.com/rancherio/rancher-compose/librcompose/project"
+	"strings"
 )
-
-const boot2dockerMagic = "boot2docker, please format-me"
 
 func autoformat(cfg *config.Config) error {
 	if len(cfg.State.Autoformat) == 0 || util.ResolveDevice(cfg.State.Dev) != "" {
 		return nil
 	}
-
-	var format string
-
-outer:
-	for _, dev := range cfg.State.Autoformat {
-		log.Infof("Checking %s to auto-format", dev)
-		if _, err := os.Stat(dev); os.IsNotExist(err) {
-			continue
-		}
-
-		f, err := os.Open(dev)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-
-		buffer := make([]byte, 1048576, 1048576)
-		c, err := f.Read(buffer)
-		if err != nil {
-			return err
-		}
-
-		if c != 1048576 {
-			log.Infof("%s not right size", dev)
-			continue
-		}
-
-		boot2docker := false
-
-		if strings.HasPrefix(string(buffer[:len(boot2dockerMagic)]), boot2dockerMagic) {
-			boot2docker = true
-		}
-
-		if boot2docker == false {
-			for _, b := range buffer {
-				if b != 0 {
-					log.Infof("%s not empty", dev)
-					continue outer
-				}
-			}
-		}
-
-		format = dev
-		break
-	}
-
-	if format != "" {
-		log.Infof("Auto formatting : %s", format)
-
-		// copy
-		udev := *cfg.BootstrapContainers["udev"]
-		udev.Links = project.NewMaporColonSlice(append(udev.Links.Slice(), "autoformat"))
-		udev.LogDriver = "json-file"
-
-		err := docker.RunServices("autoformat", cfg, map[string]*project.ServiceConfig{
-			"autoformat": {
-				Net:        "none",
-				Privileged: true,
-				Image:      "rancher/os-autoformat:" + config.VERSION,
-				Command:    project.NewCommand(format),
-				Labels: project.NewSliceorMap(map[string]string{
-					config.DETACH: "false",
-					config.SCOPE:  config.SYSTEM,
-				}),
-				LogDriver: "json-file",
-				Environment: project.NewMaporEqualSlice([]string{
-					"MAGIC=" + boot2dockerMagic,
-				}),
-			},
-			"udev": &udev,
-		})
-
-		return err
-	}
-
-	return nil
+	AUTOFORMAT := "AUTOFORMAT=" + strings.Join(cfg.State.Autoformat, " ")
+	FORMATZERO := "FORMATZERO=" + fmt.Sprint(cfg.State.FormatZero)
+	cfg.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
+	log.Info("Running Autoformat services")
+	err := docker.RunServices("autoformat", cfg, cfg.Autoformat)
+	return err
 }
 
 func runBootstrapContainers(cfg *config.Config) error {
+	log.Info("Running Bootstrap services")
 	return docker.RunServices("bootstrap", cfg, cfg.BootstrapContainers)
 }
 
@@ -140,7 +68,7 @@ func stopDocker(c chan interface{}) error {
 }
 
 func bootstrap(cfg *config.Config) error {
-	log.Info("Starting bootstrap")
+	log.Info("Launching Bootstrap Docker")
 	c, err := startDocker(cfg)
 	if err != nil {
 		return err

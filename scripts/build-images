@@ -40,7 +40,7 @@ chmod +x ${INITRD_DIR}/docker                                               #ini
 
 ln -sf bin/rancheros ./ros
 
-for i in $(./ros c images -i os-config.yml) rancher/os-autoformat:${VERSION}; do
+for i in $(./ros c images -i os-config.yml); do
     docker pull ${i}
 done
-docker save $(./ros c images -i os-config.yml) rancher/os-autoformat:${VERSION} > ${INITRD_DIR}/images.tar   #initrd2-images: /images.tar
+docker save $(./ros c images -i os-config.yml) > ${INITRD_DIR}/images.tar   #initrd2-images: /images.tar
