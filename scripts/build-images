@@ -35,6 +35,8 @@ docker cp ${CONTAINER_KERNEL}:/kernel ${BUILD} # copies files to ${BUILD}/kernel
 mv ${BUILD}/kernel/vmlinuz ${DIST}/artifacts/                               #kernel
 
 
+mv ${BUILD}/kernel/lib ${INITRD_DIR}                                        #initrd2-kernel: /lib
+
 cp -f ${ARTIFACTS}/docker* ${INITRD_DIR}/docker                             #initrd2-docker: /docker
 chmod +x ${INITRD_DIR}/docker                                               #initrd2-docker: /docker
 
