@@ -3,57 +3,10 @@ set -ex
 
 cd $(dirname $0)/..
 
-export DOCKER_IMAGE=${DOCKER_IMAGE:=rancher-os-build}
-export DOCKER_BASE=rancher/dind:v0.5.0
-
-source scripts/build-common
-mkdir -p ${BUILD}
-
-DOCKER_FILE=$(pwd)/.dockerfile
-
-generate_images()
-{
-    if [ "$RUN_EXEC" = "true" ]; then
-        ./scripts/build-images
-        return
-    fi
-
-    IMAGE_ID=$(docker images --no-trunc -q ${DOCKER_IMAGE})
-
-    if [ -e ${BUILD}/${IMAGE_ID} ]; then
-        DOCKER_BASE=$(<${BUILD}/${IMAGE_ID})
-    else
-        echo Running: docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images
-        CID=$(docker run -d --privileged ${DOCKER_IMAGE} /source/scripts/build-images)
-        docker logs -f ${CID} &
-        trap "docker rm -fv ${CID}" exit
-        [ "$(docker wait $CID)" == 0 ]
-        DOCKER_BASE=$(docker commit $CID)
-
-        echo ${DOCKER_BASE} > ${BUILD}/${IMAGE_ID}
-    fi
-}
-
 if [ -x "$(which wrapdocker)" ] && ! docker info >/dev/null 2>&1; then
     wrapdocker
 fi
 
-run ./scripts/bootstrap
-ARGS=
-for i in $(ls -d * .* | sort -u | grep -Ev '(\.|\.\.|\.dockerfile|build|tmp|dist|.DS_Store|.git|.idea|.vagrant|scripts|bin|state)$'); do
-    if [ -d $i ]; then
-        run --assets $i
-    else
-        ARGS="${ARGS} $i"
-    fi
-done
-run --assets ./scripts/version --assets "${ARGS}" ./scripts/build
-run --assets ./scripts/build-common --assets ./assets ./scripts/download
-run --assets ./scripts/build-images
-finish
-
-generate_images
-
-reset_docker_build
-run ./scripts/package "$@"
-finish
+docker build -t ros-build-base -f Dockerfile.base .
+docker build -t ros-build .
+echo make package | docker run -v /var/run/docker.sock:/var/run/docker.sock --name=ros-build -i ros-build

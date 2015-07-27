@@ -18,6 +18,14 @@ INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
 USER_DATA=cloud-init/openstack/latest/user_data
 
+# PREREQ: brew install coreutils
+path() {
+    local UNAME=$(uname)
+    if [ "$UNAME" == "Darwin" ]; then greadlink -f "$1"
+    elif [ "$UNAME" == "Linux" ]; then readlink -f "$1";
+    fi
+}
+
 while [ "$#" -gt 0 ]; do
     case $1 in
         --append)

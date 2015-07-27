@@ -1,0 +1,30 @@
+FROM debian:jessie
+RUN apt-get update && \
+    apt-get -y dist-upgrade && \
+    apt-get -y install locales sudo vim less curl wget git rsync build-essential syslinux isolinux xorriso \
+        libblkid-dev libmount-dev libselinux1-dev
+RUN locale-gen en_US.UTF-8
+RUN curl -sSL https://get.docker.com/ | sh
+
+#ENV LANG en_US.UTF-8
+#ENV LANGUAGE en_US:en
+#ENV LC_ALL en_US.UTF-8
+#ENV TERM linux
+
+ENV GOLANG_VERSION 1.4.2
+RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz | tar -v -C /usr/src -xz
+RUN cd /usr/src/go/src && ./make.bash --no-clean 2>&1
+
+ENV GOROOT /usr/src/go
+ENV PATH $GOROOT/bin:$PATH
+
+RUN go clean -i net
+RUN go install -tags netgo std
+
+RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
+ENV GOPATH /go
+ENV PATH /go/bin:$PATH
+
+RUN go get github.com/tools/godep
+
+WORKDIR /go/src/github.com/rancherio/os

@@ -7,7 +7,6 @@
 /gopath
 .dockerfile
 *.swp
-Dockerfile
 /tests/integration/MANIFEST
 /tests/integration/.venv*
 /tests/integration/.tox
