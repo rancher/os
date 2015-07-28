@@ -114,7 +114,7 @@ if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
         -U a01fb25c-3a19-4759-a47a-2e353e51807d \
         -f kexec,${KERNEL},${INITRD_TEST},"earlyprintk=serial acpi=off elevator=noop ${KERNEL_ARGS}"
 
-elif ["$UNAME" == "Linux"] && [ -x $(which qemu-system-x86_64) ]; then
+elif [ "$UNAME" == "Linux" ] && [ -x $(which qemu-system-x86_64) ]; then
     exec qemu-system-x86_64 -serial stdio \
         -kernel ${KERNEL} \
         -initrd ${INITRD_TEST} \
@@ -129,6 +129,7 @@ elif ["$UNAME" == "Linux"] && [ -x $(which qemu-system-x86_64) ]; then
         -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
         -append "${KERNEL_ARGS}" \
         -serial mon:telnet:localhost:4444,server,nowait \
+        -nographic \
         ${QEMU_ARGS} "${@}"
 else
     exit 42
