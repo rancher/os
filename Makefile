@@ -2,6 +2,7 @@
 DOCKER_BINARY_URL := https://github.com/rancher/docker/releases/download/v1.7.1-ros-1/docker-1.7.1
 
 
+FORCE_PULL   := 0
 DOCKER_BINARY := $(shell basename $(DOCKER_BINARY_URL))
 pwd := $(shell pwd)
 include scripts/build-common
@@ -56,7 +57,7 @@ INITRD_DIR := $(BUILD)/initrd
 
 $(INITRD_DIR)/images.tar: bin/rancheros
 	ln -sf bin/rancheros ./ros
-	for i in `./ros c images -i os-config.yml`; do docker pull $$i; done
+	for i in `./ros c images -i os-config.yml`; do [ "$(FORCE_PULL)" != "1" ] && docker inspect $$i >/dev/null 2>&1 || docker pull $$i; done
 	docker save `./ros c images -i os-config.yml` > $@
 
 
@@ -100,7 +101,7 @@ bin/rancheros:
 .PHONY: bin/rancheros
 
 package:
-	@echo make $@ | make docker-run
+	@echo make FORCE_PULL=$(FORCE_PULL) $@ | make docker-run
 	docker cp ros-build:/go/src/github.com/rancherio/os/bin/rancheros bin
 	docker cp ros-build:/go/src/github.com/rancherio/os/dist/artifacts dist
 

@@ -20,6 +20,7 @@ docker cp ${CONTAINER_INITRDBASE}:/initrd ${BUILD} # copies files to ${BUILD}/in
 
 CONTAINER_KERNEL=$(docker create rancher/os-kernel:${VERSION})
 cleanup_kernel() {
+    cleanup_initrdbase
     docker rm -v ${CONTAINER_KERNEL}
 }
 trap cleanup_kernel EXIT
