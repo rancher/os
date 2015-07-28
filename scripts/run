@@ -16,11 +16,11 @@ HD_GZ=${ARTIFACTS}/empty-hd.img.gz
 INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
 INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
+UNAME=$(uname)
 USER_DATA=cloud-init/openstack/latest/user_data
 
 # PREREQ: brew install coreutils
 path() {
-    local UNAME=$(uname)
     if [ "$UNAME" == "Darwin" ]; then greadlink -f "$1"
     elif [ "$UNAME" == "Linux" ]; then readlink -f "$1";
     fi
@@ -91,8 +91,6 @@ else
         fi
     done
 fi
-
-UNAME=$(uname)
 
 KERNEL_ARGS="quiet rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
 
