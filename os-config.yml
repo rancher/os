@@ -38,8 +38,8 @@ rancher:
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
   bootstrap_docker:
-    args: [docker, -d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
-      -G, root, -H, 'unix:///var/run/system-docker.sock']
+    args: [-d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
+        -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   cloud_init:
     datasources:
     - configdrive:/media/config-2
@@ -90,6 +90,7 @@ rancher:
         io.rancher.os.reloadconfig: true
         io.rancher.os.scope: system
       links:
+      - preload-user-images
       - cloud-init-pre
       - network
       net: host
@@ -124,17 +125,17 @@ rancher:
       privileged: true
       read_only: true
       volumes:
-      - /init:/sbin/halt:ro
-      - /init:/sbin/poweroff:ro
-      - /init:/sbin/reboot:ro
-      - /init:/sbin/shutdown:ro
-      - /init:/sbin/netconf:ro
-      - /init:/usr/bin/cloud-init:ro
-      - /init:/usr/bin/rancherctl:ro
-      - /init:/usr/bin/ros:ro
-      - /init:/usr/bin/respawn:ro
-      - /init:/usr/bin/system-docker:ro
-      - /init:/usr/sbin/wait-for-docker:ro
+      - /usr/bin/ros:/sbin/halt:ro
+      - /usr/bin/ros:/sbin/poweroff:ro
+      - /usr/bin/ros:/sbin/reboot:ro
+      - /usr/bin/ros:/sbin/shutdown:ro
+      - /usr/bin/ros:/sbin/netconf:ro
+      - /usr/bin/ros:/usr/bin/cloud-init:ro
+      - /usr/bin/ros:/usr/bin/rancherctl:ro
+      - /usr/bin/ros:/usr/bin/ros:ro
+      - /usr/bin/ros:/usr/bin/respawn:ro
+      - /usr/bin/ros:/usr/bin/system-docker:ro
+      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       - /lib/modules:/lib/modules
       - /usr/bin/docker:/usr/bin/docker:ro
     console:
@@ -144,7 +145,6 @@ rancher:
         io.rancher.os.scope: system
       links:
       - cloud-init
-      - dockerwait  # because console runs `loud-init -execute`, which may need docker
       net: host
       uts: host
       pid: host
@@ -158,7 +158,6 @@ rancher:
       labels:
         io.rancher.os.scope: system
       links:
-      - cloud-init
       - network
       net: host
       uts: host
@@ -298,7 +297,7 @@ rancher:
       - /home:/home
       - /opt:/opt
   system_docker:
-    args: [docker, -d, --log-driver, syslog, -s, overlay, -b, docker-sys, --fixed-cidr,
+    args: [docker, -d, -s, overlay, -b, docker-sys, --fixed-cidr,
       172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:

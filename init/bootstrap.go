@@ -2,16 +2,17 @@ package init
 
 import (
 	"os"
-	"os/exec"
 	"syscall"
 
 	"fmt"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/docker-from-scratch"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
 	"github.com/rancherio/rancher-compose/librcompose/project"
-	"strings"
 )
 
 func autoformat(cfg *config.CloudConfig) error {
@@ -31,20 +32,14 @@ func runBootstrapContainers(cfg *config.CloudConfig) error {
 	return docker.RunServices("bootstrap", cfg, cfg.Rancher.BootstrapContainers)
 }
 
-func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
-	for _, d := range []string{config.DOCKER_SYSTEM_HOST, "/var/run"} {
-		err := os.MkdirAll(d, 0700)
-		if err != nil {
-			return nil, err
-		}
-	}
+func startDocker(cfg *config.Config) (chan interface{}, error) {
 
-	cmd := exec.Command(cfg.Rancher.BootstrapDocker.Args[0], cfg.Rancher.BootstrapDocker.Args[1:]...)
-	if cfg.Rancher.Debug {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
-	err := cmd.Start()
+	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.BootstrapDocker)
+	launchConfig.Fork = true
+	launchConfig.LogFile = ""
+	launchConfig.NoLog = true
+
+	cmd, err := dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
 	if err != nil {
 		return nil, err
 	}
