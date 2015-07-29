@@ -2,16 +2,17 @@ package init
 
 import (
 	"os"
-	"os/exec"
 	"syscall"
 
 	"fmt"
+	"strings"
+
 	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/docker-from-scratch"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
 	"github.com/rancherio/rancher-compose/librcompose/project"
-	"strings"
 )
 
 func autoformat(cfg *config.Config) error {
@@ -32,19 +33,13 @@ func runBootstrapContainers(cfg *config.Config) error {
 }
 
 func startDocker(cfg *config.Config) (chan interface{}, error) {
-	for _, d := range []string{config.DOCKER_SYSTEM_HOST, "/var/run"} {
-		err := os.MkdirAll(d, 0700)
-		if err != nil {
-			return nil, err
-		}
-	}
 
-	cmd := exec.Command(cfg.BootstrapDocker.Args[0], cfg.BootstrapDocker.Args[1:]...)
-	if cfg.Debug {
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-	}
-	err := cmd.Start()
+	launchConfig, args := getLaunchConfig(cfg, &cfg.BootstrapDocker)
+	launchConfig.Fork = true
+	launchConfig.LogFile = ""
+	launchConfig.NoLog = true
+
+	cmd, err := dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
 	if err != nil {
 		return nil, err
 	}

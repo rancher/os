@@ -8,15 +8,16 @@ import (
 const (
 	CONSOLE_CONTAINER  = "console"
 	DOCKER_BIN         = "/usr/bin/docker"
+	ROS_BIN            = "/usr/bin/ros"
+	SYSINIT_BIN        = "/usr/bin/ros-sysinit"
 	DOCKER_SYSTEM_HOME = "/var/lib/system-docker"
 	DOCKER_SYSTEM_HOST = "unix:///var/run/system-docker.sock"
 	DOCKER_HOST        = "unix:///var/run/docker.sock"
-	IMAGES_PATH        = "/"
+	IMAGES_PATH        = "/usr/share/ros"
 	IMAGES_PATTERN     = "images*.tar"
-	SYS_INIT           = "/sbin/init-sys"
-	USER_INIT          = "/sbin/init-user"
 	MODULES_ARCHIVE    = "/modules.tar"
 	DEBUG              = false
+	SYSTEM_DOCKER_LOG  = "/var/log/system-docker.log"
 
 	LABEL         = "label"
 	HASH          = "io.rancher.os.hash"
@@ -31,7 +32,7 @@ const (
 
 var (
 	VERSION           string
-	OsConfigFile      = "/os-config.yml"
+	OsConfigFile      = "/usr/share/ros/os-config.yml"
 	CloudConfigFile   = "/var/lib/rancher/conf/cloud-config-rancher.yml"
 	ConfigFile        = "/var/lib/rancher/conf/rancher.yml"
 	PrivateConfigFile = "/var/lib/rancher/conf/rancher-private.yml"
