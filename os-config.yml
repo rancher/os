@@ -1,15 +1,9 @@
 bootstrap:
   udev:
     image: rancher/os-udev:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: host
     uts: host
@@ -21,26 +15,14 @@ bootstrap:
 autoformat:
   autoformat:
     image: rancher/os-autoformat:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: none
     privileged: true
-    volumes: []
   udev:
     image: rancher/os-udev:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
@@ -55,8 +37,8 @@ autoformat:
     - /lib/modules:/lib/modules
     - /lib/firmware:/lib/firmware
 bootstrap_docker:
-  args: [docker, -d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
-    -G, root, -H, 'unix:///var/run/system-docker.sock']
+  args: [-d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
+      -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
 cloud_init:
   datasources:
   - configdrive:/media/config-2
@@ -79,14 +61,8 @@ state:
 system_containers:
   acpid:
     image: rancher/os-acpid:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.scope: system
-    links: []
     net: host
     uts: host
     privileged: true
@@ -95,15 +71,9 @@ system_containers:
     - system-volumes
   all-volumes:
     image: rancher/os-state:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.createonly: true
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: none
     privileged: true
@@ -115,11 +85,6 @@ system_containers:
     - system-volumes
   cloud-init:
     image: rancher/os-cloudinit:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.reloadconfig: true
@@ -136,10 +101,6 @@ system_containers:
     - system-volumes
   cloud-init-pre:
     image: rancher/os-cloudinit:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
     environment:
     - CLOUD_INIT_NETWORK=false
     labels:
@@ -156,40 +117,29 @@ system_containers:
     - system-volumes
   command-volumes:
     image: rancher/os-state:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.createonly: true
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: none
     privileged: true
     read_only: true
     volumes:
-    - /init:/sbin/halt:ro
-    - /init:/sbin/poweroff:ro
-    - /init:/sbin/reboot:ro
-    - /init:/sbin/shutdown:ro
-    - /init:/sbin/netconf:ro
-    - /init:/usr/bin/cloud-init:ro
-    - /init:/usr/bin/rancherctl:ro
-    - /init:/usr/bin/ros:ro
-    - /init:/usr/bin/respawn:ro
-    - /init:/usr/bin/system-docker:ro
-    - /init:/usr/sbin/wait-for-docker:ro
+    - /usr/bin/ros:/sbin/halt:ro
+    - /usr/bin/ros:/sbin/poweroff:ro
+    - /usr/bin/ros:/sbin/reboot:ro
+    - /usr/bin/ros:/sbin/shutdown:ro
+    - /usr/bin/ros:/sbin/netconf:ro
+    - /usr/bin/ros:/usr/bin/cloud-init:ro
+    - /usr/bin/ros:/usr/bin/rancherctl:ro
+    - /usr/bin/ros:/usr/bin/ros:ro
+    - /usr/bin/ros:/usr/bin/respawn:ro
+    - /usr/bin/ros:/usr/bin/system-docker:ro
+    - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
     - /lib/modules:/lib/modules
     - /usr/bin/docker:/usr/bin/docker:ro
   console:
     image: rancher/os-console:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.remove: true
       io.rancher.os.scope: system
@@ -205,11 +155,6 @@ system_containers:
     - all-volumes
   docker:
     image: rancher/os-docker:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.scope: system
     links:
@@ -224,15 +169,9 @@ system_containers:
     - all-volumes
   docker-volumes:
     image: rancher/os-state:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.createonly: true
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: none
     privileged: true
@@ -243,11 +182,6 @@ system_containers:
     - /var/lib/system-docker:/var/lib/system-docker
   dockerwait:
     image: rancher/os-dockerwait:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
@@ -259,11 +193,6 @@ system_containers:
     - all-volumes
   network:
     image: rancher/os-network:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
@@ -277,11 +206,6 @@ system_containers:
     - system-volumes
   ntp:
     image: rancher/os-ntp:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.scope: system
     links:
@@ -293,15 +217,9 @@ system_containers:
     restart: always
   preload-system-images:
     image: rancher/os-preload:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
-    links: []
     privileged: true
     volumes:
     - /var/run/system-docker.sock:/var/run/docker.sock
@@ -311,11 +229,6 @@ system_containers:
     - system-volumes
   preload-user-images:
     image: rancher/os-preload:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.detach: false
       io.rancher.os.scope: system
@@ -330,14 +243,8 @@ system_containers:
     - system-volumes
   syslog:
     image: rancher/os-syslog:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: host
     uts: host
@@ -347,15 +254,9 @@ system_containers:
     - system-volumes
   system-volumes:
     image: rancher/os-state:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.createonly: true
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: none
     privileged: true
@@ -372,16 +273,11 @@ system_containers:
     - /var/log:/var/log
   udev:
     image: rancher/os-udev:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
     environment:
     - DAEMON=true
     labels:
       io.rancher.os.detach: true
       io.rancher.os.scope: system
-    links: []
     net: host
     uts: host
     privileged: true
@@ -390,15 +286,9 @@ system_containers:
     - system-volumes
   user-volumes:
     image: rancher/os-state:v0.4.0-dev
-    command: []
-    dns: []
-    dns_search: []
-    env_file: []
-    environment: []
     labels:
       io.rancher.os.createonly: true
       io.rancher.os.scope: system
-    links: []
     log_driver: json-file
     net: none
     privileged: true
@@ -407,7 +297,7 @@ system_containers:
     - /home:/home
     - /opt:/opt
 system_docker:
-  args: [docker, -d, --log-driver, syslog, -s, overlay, -b, docker-sys, --fixed-cidr,
+  args: [docker, -d, -s, overlay, -b, docker-sys, --fixed-cidr,
     172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
     -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
 upgrade:

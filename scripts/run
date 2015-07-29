@@ -64,10 +64,15 @@ if [ ! -d ${INITRD_TMP} ]; then
     popd
 fi
 
+if [ -e ${INITRD_CURRENT} ]; then
+    rm -f ${INITRD_CURRENT}
+fi
+
 ln -sf ${INITRD_TMP} ${INITRD_CURRENT}
 
-cp bin/rancheros ${INITRD_TMP}/init
-cp -f os-config.yml ${INITRD_TMP}/
+mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
+cp bin/rancheros ${INITRD_TMP}/usr/bin/ros
+cp -f os-config.yml ${INITRD_TMP}/usr/share/ros
 cd ${INITRD_TMP}
 
 find . | cpio -H newc -o > ${INITRD_TEST}

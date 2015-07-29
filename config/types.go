@@ -1,19 +1,23 @@
 package config
 
-import "github.com/rancherio/rancher-compose/librcompose/project"
+import (
+	"github.com/rancher/netconf"
+	"github.com/rancherio/rancher-compose/librcompose/project"
+)
 
 const (
 	CONSOLE_CONTAINER  = "console"
 	DOCKER_BIN         = "/usr/bin/docker"
+	ROS_BIN            = "/usr/bin/ros"
+	SYSINIT_BIN        = "/usr/bin/ros-sysinit"
 	DOCKER_SYSTEM_HOME = "/var/lib/system-docker"
 	DOCKER_SYSTEM_HOST = "unix:///var/run/system-docker.sock"
 	DOCKER_HOST        = "unix:///var/run/docker.sock"
-	IMAGES_PATH        = "/"
+	IMAGES_PATH        = "/usr/share/ros"
 	IMAGES_PATTERN     = "images*.tar"
-	SYS_INIT           = "/sbin/init-sys"
-	USER_INIT          = "/sbin/init-user"
 	MODULES_ARCHIVE    = "/modules.tar"
 	DEBUG              = false
+	SYSTEM_DOCKER_LOG  = "/var/log/system-docker.log"
 
 	LABEL         = "label"
 	HASH          = "io.rancher.os.hash"
@@ -28,7 +32,7 @@ const (
 
 var (
 	VERSION           string
-	OsConfigFile      = "/os-config.yml"
+	OsConfigFile      = "/usr/share/ros/os-config.yml"
 	CloudConfigFile   = "/var/lib/rancher/conf/cloud-config-rancher.yml"
 	ConfigFile        = "/var/lib/rancher/conf/rancher.yml"
 	PrivateConfigFile = "/var/lib/rancher/conf/rancher-private.yml"
@@ -61,7 +65,7 @@ type Config struct {
 	Disable             []string                          `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`
 	Modules             []string                          `yaml:"modules,omitempty"`
-	Network             NetworkConfig                     `yaml:"network,omitempty"`
+	Network             netconf.NetworkConfig             `yaml:"network,omitempty"`
 	Repositories        Repositories                      `yaml:"repositories,omitempty"`
 	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
 	State               StateConfig                       `yaml:"state,omitempty"`
@@ -81,28 +85,6 @@ type UpgradeConfig struct {
 	Url      string `yaml:"url,omitempty"`
 	Image    string `yaml:"image,omitempty"`
 	Rollback string `yaml:"rollback,omitempty"`
-}
-
-type DnsConfig struct {
-	Nameservers []string `yaml:"nameservers,flow,omitempty"`
-	Search      []string `yaml:"search,flow,omitempty"`
-	Domain      string   `yaml:"domain,omitempty"`
-}
-
-type NetworkConfig struct {
-	Dns        DnsConfig                  `yaml:"dns,omitempty"`
-	Interfaces map[string]InterfaceConfig `yaml:"interfaces,omitempty"`
-	PostRun    *ContainerConfig           `yaml:"post_run,omitempty"`
-}
-
-type InterfaceConfig struct {
-	Match   string `yaml:"match,omitempty"`
-	DHCP    bool   `yaml:"dhcp,omitempty"`
-	Address string `yaml:"address,omitempty"`
-	IPV4LL  bool   `yaml:"ipv4ll,omitempty"`
-	Gateway string `yaml:"gateway,omitempty"`
-	MTU     int    `yaml:"mtu,omitempty"`
-	Bridge  bool   `yaml:"bridge,omitempty"`
 }
 
 type DockerConfig struct {
