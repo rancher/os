@@ -18,47 +18,20 @@ func writeToFile(data interface{}, filename string) error {
 }
 
 func saveToDisk(data map[interface{}]interface{}) error {
-	config := make(map[interface{}]interface{})
-	private := make(map[interface{}]interface{})
+	private, config := filterDottedKeys(data, []string{
+		"rancher.ssh",
+		"rancher.user_docker.ca_key",
+		"rancher.user_docker.ca_cert",
+		"rancher.user_docker.server_key",
+		"rancher.user_docker.server_cert",
+	})
 
-	for k, v := range data {
-		if k == "ssh" {
-			private[k] = v
-		} else if k == "user_docker" {
-			var userDockerConfig DockerConfig
-			var userDockerConfigPrivate DockerConfig
-			err := util.Convert(v, &userDockerConfig)
-			if err != nil {
-				return err
-			}
-
-			userDockerConfigPrivate.CAKey = userDockerConfig.CAKey
-			userDockerConfigPrivate.CACert = userDockerConfig.CACert
-			userDockerConfigPrivate.ServerKey = userDockerConfig.ServerKey
-			userDockerConfigPrivate.ServerCert = userDockerConfig.ServerCert
-
-			userDockerConfig.CAKey = ""
-			userDockerConfig.CACert = ""
-			userDockerConfig.ServerKey = ""
-			userDockerConfig.ServerCert = ""
-
-			config[k] = userDockerConfig
-			private[k] = userDockerConfigPrivate
-		} else {
-			config[k] = v
-		}
-	}
-
-	err := writeToFile(config, ConfigFile)
+	err := writeToFile(config, LocalConfigFile)
 	if err != nil {
 		return err
 	}
 
 	return writeToFile(private, PrivateConfigFile)
-}
-
-func readSavedConfig(bytes []byte) (map[interface{}]interface{}, error) {
-	return readConfig(bytes, CloudConfigFile, ConfigFile, PrivateConfigFile)
 }
 
 func readConfig(bytes []byte, files ...string) (map[interface{}]interface{}, error) {
@@ -77,7 +50,7 @@ func readConfig(bytes []byte, files ...string) (map[interface{}]interface{}, err
 			return nil, err
 		}
 
-		util.MergeMaps(left, right)
+		left = util.MapsUnion(left, right, util.Replace)
 	}
 
 	if bytes != nil && len(bytes) > 0 {
@@ -86,7 +59,7 @@ func readConfig(bytes []byte, files ...string) (map[interface{}]interface{}, err
 			return nil, err
 		}
 
-		util.MergeMaps(left, right)
+		left = util.MapsUnion(left, right, util.Replace)
 	}
 
 	return left, nil

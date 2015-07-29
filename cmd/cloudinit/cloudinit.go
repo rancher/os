@@ -48,86 +48,51 @@ const (
 	datasourceInterval    = 100 * time.Millisecond
 	datasourceMaxInterval = 30 * time.Second
 	datasourceTimeout     = 5 * time.Minute
+	sshKeyName            = "rancheros-cloud-config"
+	baseConfigDir         = "/var/lib/rancher/conf/cloud-config.d"
 )
 
 var (
-	baseConfigDir string
-	outputDir     string
-	outputFile    string
-	metaDataFile  string
-	scriptFile    string
-	rancherYml    string
-	save          bool
-	execute       bool
-	network       bool
-	sshKeyName    string
-	flags         *flag.FlagSet
+	save    bool
+	execute bool
+	network bool
+	flags   *flag.FlagSet
 )
 
 func init() {
 	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	flags.StringVar(&baseConfigDir, "base-config-dir", "/var/lib/rancher/conf/cloud-config.d", "base cloud config")
-	flags.StringVar(&outputDir, "dir", "/var/lib/rancher/conf", "working directory")
-	flags.StringVar(&outputFile, "file", "cloud-config-processed.yml", "output cloud config file name")
-	flags.StringVar(&metaDataFile, "metadata", "metadata", "output metdata file name")
-	flags.StringVar(&scriptFile, "script-file", "cloud-config-script", "output cloud config script file name")
-	flags.StringVar(&rancherYml, "rancher", "cloud-config-rancher.yml", "output cloud config rancher file name")
-	flags.StringVar(&sshKeyName, "ssh-key-name", "rancheros-cloud-config", "SSH key name")
 	flags.BoolVar(&network, "network", true, "use network based datasources")
 	flags.BoolVar(&save, "save", false, "save cloud config and exit")
 	flags.BoolVar(&execute, "execute", false, "execute saved cloud config")
 }
 
 func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
-	scriptOutput := path.Join(outputDir, scriptFile)
-	cloudConfigOutput := path.Join(outputDir, outputFile)
-	rancherYmlOutput := path.Join(outputDir, rancherYml)
-	metaDataOutput := path.Join(outputDir, metaDataFile)
-
-	os.Remove(scriptOutput)
-	os.Remove(cloudConfigOutput)
-	os.Remove(rancherYmlOutput)
-	os.Remove(metaDataOutput)
+	os.Remove(rancherConfig.CloudConfigScriptFile)
+	os.Remove(rancherConfig.CloudConfigFile)
+	os.Remove(rancherConfig.MetaDataFile)
 
 	if len(scriptBytes) > 0 {
-		log.Infof("Writing to %s", scriptOutput)
-		if err := ioutil.WriteFile(scriptOutput, scriptBytes, 500); err != nil {
-			log.Errorf("Error while writing file %s: %v", scriptOutput, err)
+		log.Infof("Writing to %s", rancherConfig.CloudConfigScriptFile)
+		if err := ioutil.WriteFile(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
+			log.Errorf("Error while writing file %s: %v", rancherConfig.CloudConfigScriptFile, err)
 			return err
 		}
 	}
 
-	cloudConfigBytes = append([]byte("#cloud-config\n"), cloudConfigBytes...)
-	log.Infof("Writing to %s", cloudConfigOutput)
-	if err := ioutil.WriteFile(cloudConfigOutput, cloudConfigBytes, 500); err != nil {
-		log.Errorf("Error while writing file %s: %v", cloudConfigOutput, err)
+	if err := ioutil.WriteFile(rancherConfig.CloudConfigFile, cloudConfigBytes, 400); err != nil {
 		return err
 	}
-
-	ccData := make(map[string]interface{})
-	if err := yaml.Unmarshal(cloudConfigBytes, ccData); err != nil {
-		return err
-	}
-
-	if rancher, ok := ccData["rancher"]; ok {
-		bytes, err := yaml.Marshal(rancher)
-		if err != nil {
-			return err
-		}
-
-		if err = ioutil.WriteFile(rancherYmlOutput, bytes, 400); err != nil {
-			return err
-		}
-	}
+	log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigFile, string(cloudConfigBytes))
 
 	metaDataBytes, err := yaml.Marshal(metadata)
 	if err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(metaDataOutput, metaDataBytes, 400); err != nil {
+	if err = ioutil.WriteFile(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
 		return err
 	}
+	log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
 
 	return nil
 }
@@ -258,24 +223,22 @@ func saveCloudConfig() error {
 }
 
 func getSaveCloudConfig() (*config.CloudConfig, error) {
-	cloudConfig := path.Join(outputDir, outputFile)
-
-	ds := file.NewDatasource(cloudConfig)
+	ds := file.NewDatasource(rancherConfig.CloudConfigFile)
 	if !ds.IsAvailable() {
-		log.Infof("%s does not exist", cloudConfig)
+		log.Infof("%s does not exist", rancherConfig.CloudConfigFile)
 		return nil, nil
 	}
 
 	ccBytes, err := ds.FetchUserdata()
 	if err != nil {
-		log.Errorf("Failed to read user-data from %s: %v", cloudConfig, err)
+		log.Errorf("Failed to read user-data from %s: %v", rancherConfig.CloudConfigFile, err)
 		return nil, err
 	}
 
 	var cc config.CloudConfig
 	err = yaml.Unmarshal(ccBytes, &cc)
 	if err != nil {
-		log.Errorf("Failed to unmarshall user-data from %s: %v", cloudConfig, err)
+		log.Errorf("Failed to unmarshall user-data from %s: %v", rancherConfig.CloudConfigFile, err)
 		return nil, err
 	}
 
@@ -290,7 +253,7 @@ func executeCloudConfig() error {
 
 	var metadata datasource.Metadata
 
-	metaDataBytes, err := ioutil.ReadFile(path.Join(outputDir, metaDataFile))
+	metaDataBytes, err := ioutil.ReadFile(rancherConfig.MetaDataFile)
 	if err != nil {
 		return err
 	}
@@ -338,6 +301,8 @@ func executeCloudConfig() error {
 func Main() {
 	flags.Parse(rancherConfig.FilterGlobalConfig(os.Args[1:]))
 
+	log.Infof("Running cloud-init: save=%v, execute=%v", save, execute)
+
 	if save {
 		err := saveCloudConfig()
 		if err != nil {
@@ -376,10 +341,10 @@ func mergeConfigs(cc *config.CloudConfig, md datasource.Metadata) (out config.Cl
 
 // getDatasources creates a slice of possible Datasources for cloudinit based
 // on the different source command-line flags.
-func getDatasources(cfg *rancherConfig.Config) []datasource.Datasource {
+func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 
-	for _, ds := range cfg.CloudInit.Datasources {
+	for _, ds := range cfg.Rancher.CloudInit.Datasources {
 		parts := strings.SplitN(ds, ":", 2)
 
 		switch parts[0] {

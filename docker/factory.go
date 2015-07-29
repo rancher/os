@@ -9,7 +9,7 @@ import (
 )
 
 type ContainerFactory struct {
-	cfg *config.Config
+	cfg *config.CloudConfig
 }
 
 type containerBasedService struct {
@@ -18,10 +18,10 @@ type containerBasedService struct {
 	project       *project.Project
 	container     *Container
 	serviceConfig *project.ServiceConfig
-	cfg           *config.Config
+	cfg           *config.CloudConfig
 }
 
-func NewContainerFactory(cfg *config.Config) *ContainerFactory {
+func NewContainerFactory(cfg *config.CloudConfig) *ContainerFactory {
 	return &ContainerFactory{
 		cfg: cfg,
 	}
@@ -34,7 +34,7 @@ func (c *containerBasedService) Up() error {
 	fakeCreate := false
 	create := containerCfg.CreateOnly
 
-	if util.Contains(c.cfg.Disable, c.name) {
+	if util.Contains(c.cfg.Rancher.Disable, c.name) {
 		fakeCreate = true
 	}
 

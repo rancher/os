@@ -6,9 +6,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 )
 
-type InitFunc func(*Config) error
+type InitFunc func(*CloudConfig) error
 
-func RunInitFuncs(cfg *Config, initFuncs []InitFunc) error {
+func RunInitFuncs(cfg *CloudConfig, initFuncs []InitFunc) error {
 	for i, initFunc := range initFuncs {
 		log.Debugf("[%d/%d] Starting", i+1, len(initFuncs))
 		if err := initFunc(cfg); err != nil {

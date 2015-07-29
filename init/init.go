@@ -72,7 +72,7 @@ var (
 	}
 )
 
-func createSymlinks(cfg *config.Config, symlinks map[string]string) error {
+func createSymlinks(cfg *config.CloudConfig, symlinks map[string]string) error {
 	log.Debug("Creating symlinking")
 	for dest, src := range symlinks {
 		if _, err := os.Stat(dest); os.IsNotExist(err) {
@@ -112,12 +112,12 @@ func createMounts(mounts ...[]string) error {
 	return nil
 }
 
-func remountRo(cfg *config.Config) error {
+func remountRo(cfg *config.CloudConfig) error {
 	log.Info("Remouting root read only")
 	return util.Remount("/", "ro")
 }
 
-func mountCgroups(cfg *config.Config) error {
+func mountCgroups(cfg *config.CloudConfig) error {
 	for _, cgroup := range cgroups {
 		err := createDirs("/sys/fs/cgroup/" + cgroup)
 		if err != nil {
@@ -137,7 +137,7 @@ func mountCgroups(cfg *config.Config) error {
 	return nil
 }
 
-func extractModules(cfg *config.Config) error {
+func extractModules(cfg *config.CloudConfig) error {
 	if _, err := os.Stat(config.MODULES_ARCHIVE); os.IsNotExist(err) {
 		log.Debug("Modules do not exist")
 		return nil
@@ -147,7 +147,7 @@ func extractModules(cfg *config.Config) error {
 	return util.ExtractTar(config.MODULES_ARCHIVE, "/")
 }
 
-func setResolvConf(cfg *config.Config) error {
+func setResolvConf(cfg *config.CloudConfig) error {
 	log.Debug("Creating /etc/resolv.conf")
 	//f, err := os.OpenFile("/etc/resolv.conf", os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0644)
 	f, err := os.Create("/etc/resolv.conf")
@@ -157,14 +157,14 @@ func setResolvConf(cfg *config.Config) error {
 
 	defer f.Close()
 
-	for _, dns := range cfg.Network.Dns.Nameservers {
+	for _, dns := range cfg.Rancher.Network.Dns.Nameservers {
 		content := fmt.Sprintf("nameserver %s\n", dns)
 		if _, err = f.Write([]byte(content)); err != nil {
 			return err
 		}
 	}
 
-	search := strings.Join(cfg.Network.Dns.Search, " ")
+	search := strings.Join(cfg.Rancher.Network.Dns.Search, " ")
 	if search != "" {
 		content := fmt.Sprintf("search %s\n", search)
 		if _, err = f.Write([]byte(content)); err != nil {
@@ -172,8 +172,8 @@ func setResolvConf(cfg *config.Config) error {
 		}
 	}
 
-	if cfg.Network.Dns.Domain != "" {
-		content := fmt.Sprintf("domain %s\n", cfg.Network.Dns.Domain)
+	if cfg.Rancher.Network.Dns.Domain != "" {
+		content := fmt.Sprintf("domain %s\n", cfg.Rancher.Network.Dns.Domain)
 		if _, err = f.Write([]byte(content)); err != nil {
 			return err
 		}
@@ -182,7 +182,7 @@ func setResolvConf(cfg *config.Config) error {
 	return nil
 }
 
-func loadModules(cfg *config.Config) error {
+func loadModules(cfg *config.CloudConfig) error {
 	filesystems, err := ioutil.ReadFile("/proc/filesystems")
 	if err != nil {
 		return err
@@ -196,7 +196,7 @@ func loadModules(cfg *config.Config) error {
 		}
 	}
 
-	for _, module := range cfg.Modules {
+	for _, module := range cfg.Rancher.Modules {
 		log.Debugf("Loading module %s", module)
 		err = exec.Command("/sbin/modprobe", module).Run()
 		if err != nil {
@@ -207,7 +207,7 @@ func loadModules(cfg *config.Config) error {
 	return nil
 }
 
-func sysInit(cfg *config.Config) error {
+func sysInit(cfg *config.CloudConfig) error {
 	args := append([]string{SYSINIT}, os.Args[1:]...)
 
 	var cmd *exec.Cmd
@@ -227,9 +227,9 @@ func sysInit(cfg *config.Config) error {
 	return os.Stdin.Close()
 }
 
-func execDocker(cfg *config.Config) error {
+func execDocker(cfg *config.CloudConfig) error {
 	log.Info("Launching System Docker")
-	if !cfg.Debug {
+	if !cfg.Rancher.Debug {
 		output, err := os.Create("/var/log/system-docker.log")
 		if err != nil {
 			return err
@@ -240,7 +240,7 @@ func execDocker(cfg *config.Config) error {
 	}
 
 	os.Stdin.Close()
-	return syscall.Exec(SYSTEM_DOCKER, cfg.SystemDocker.Args, os.Environ())
+	return syscall.Exec(SYSTEM_DOCKER, cfg.Rancher.SystemDocker.Args, os.Environ())
 }
 
 func MainInit() {
@@ -249,24 +249,24 @@ func MainInit() {
 	}
 }
 
-func mountStateTmpfs(cfg *config.Config) error {
+func mountStateTmpfs(cfg *config.CloudConfig) error {
 	log.Debugf("State will not be persisted")
 	return util.Mount("none", STATE, "tmpfs", "")
 }
 
-func mountState(cfg *config.Config) error {
+func mountState(cfg *config.CloudConfig) error {
 	var err error
 
-	if cfg.State.Dev != "" {
-		dev := util.ResolveDevice(cfg.State.Dev)
+	if cfg.Rancher.State.Dev != "" {
+		dev := util.ResolveDevice(cfg.Rancher.State.Dev)
 		if dev == "" {
-			msg := fmt.Sprintf("Could not resolve device %q", cfg.State.Dev)
+			msg := fmt.Sprintf("Could not resolve device %q", cfg.Rancher.State.Dev)
 			log.Infof(msg)
 			return fmt.Errorf(msg)
 		}
 		log.Infof("Mounting state device %s to %s", dev, STATE)
 
-		fsType := cfg.State.FsType
+		fsType := cfg.Rancher.State.FsType
 		if fsType == "auto" {
 			fsType, err = util.GetFsType(dev)
 		}
@@ -282,16 +282,16 @@ func mountState(cfg *config.Config) error {
 	return err
 }
 
-func tryMountAndBootstrap(cfg *config.Config) error {
+func tryMountAndBootstrap(cfg *config.CloudConfig) error {
 	if err := mountState(cfg); err != nil {
 		if err := bootstrap(cfg); err != nil {
-			if cfg.State.Required {
+			if cfg.Rancher.State.Required {
 				return err
 			}
 			return mountStateTmpfs(cfg)
 		}
 		if err := mountState(cfg); err != nil {
-			if cfg.State.Required {
+			if cfg.Rancher.State.Required {
 				return err
 			}
 			return mountStateTmpfs(cfg)
@@ -300,11 +300,11 @@ func tryMountAndBootstrap(cfg *config.Config) error {
 	return nil
 }
 
-func createGroups(cfg *config.Config) error {
+func createGroups(cfg *config.CloudConfig) error {
 	return ioutil.WriteFile("/etc/group", []byte("root:x:0:\n"), 0644)
 }
 
-func touchSocket(cfg *config.Config) error {
+func touchSocket(cfg *config.CloudConfig) error {
 	for _, path := range []string{"/var/run/docker.sock", "/var/run/system-docker.sock"} {
 		if err := syscall.Unlink(path); err != nil && !os.IsNotExist(err) {
 			return err
@@ -318,8 +318,8 @@ func touchSocket(cfg *config.Config) error {
 	return nil
 }
 
-func setupSystemBridge(cfg *config.Config) error {
-	bridge, cidr := cfg.SystemDocker.BridgeConfig()
+func setupSystemBridge(cfg *config.CloudConfig) error {
+	bridge, cidr := cfg.Rancher.SystemDocker.BridgeConfig()
 	if bridge == "" {
 		return nil
 	}
@@ -335,20 +335,20 @@ func setupSystemBridge(cfg *config.Config) error {
 }
 
 func RunInit() error {
-	var cfg config.Config
+	var cfg config.CloudConfig
 
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 	os.Setenv("DOCKER_RAMDISK", "true")
 
 	initFuncs := []config.InitFunc{
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			return createDirs(dirs...)
 		},
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			log.Info("Setting up mounts")
 			return createMounts(mounts...)
 		},
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			newCfg, err := config.LoadConfig()
 			if err == nil {
 				newCfg, err = config.LoadConfig()
@@ -357,17 +357,15 @@ func RunInit() error {
 				*cfg = *newCfg
 			}
 
-			if cfg.Debug {
+			if cfg.Rancher.Debug {
 				cfgString, _ := config.Dump(false, true)
-				if cfgString != "" {
-					log.Debugf("Config: %s", cfgString)
-				}
+				log.Debugf("os-config dump: \n%s", cfgString)
 			}
 
 			return err
 		},
 		mountCgroups,
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			return createSymlinks(cfg, symlinks)
 		},
 		createGroups,
@@ -376,15 +374,15 @@ func RunInit() error {
 		setResolvConf,
 		setupSystemBridge,
 		tryMountAndBootstrap,
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			return cfg.Reload()
 		},
 		loadModules,
 		setResolvConf,
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			return createDirs(postDirs...)
 		},
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			return createMounts(postMounts...)
 		},
 		touchSocket,

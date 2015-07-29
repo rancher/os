@@ -11,7 +11,7 @@ import (
 )
 
 type configEnvironment struct {
-	cfg *config.Config
+	cfg *config.CloudConfig
 }
 
 func appendEnv(array []string, key, value string) []string {
@@ -23,11 +23,11 @@ func appendEnv(array []string, key, value string) []string {
 	return append(array, fmt.Sprintf("%s=%s", key, value))
 }
 
-func lookupKeys(cfg *config.Config, keys ...string) []string {
+func lookupKeys(cfg *config.CloudConfig, keys ...string) []string {
 	for _, key := range keys {
 		if strings.HasSuffix(key, "*") {
 			result := []string{}
-			for envKey, envValue := range cfg.Environment {
+			for envKey, envValue := range cfg.Rancher.Environment {
 				keyPrefix := key[:len(key)-1]
 				if strings.HasPrefix(envKey, keyPrefix) {
 					result = appendEnv(result, envKey, envValue)
@@ -37,7 +37,7 @@ func lookupKeys(cfg *config.Config, keys ...string) []string {
 			if len(result) > 0 {
 				return result
 			}
-		} else if value, ok := cfg.Environment[key]; ok {
+		} else if value, ok := cfg.Rancher.Environment[key]; ok {
 			return appendEnv([]string{}, key, value)
 		}
 	}
@@ -50,7 +50,7 @@ func (c *configEnvironment) Lookup(key, serviceName string, serviceConfig *proje
 	return lookupKeys(c.cfg, fullKey, key)
 }
 
-func RunServices(name string, cfg *config.Config, configs map[string]*project.ServiceConfig) error {
+func RunServices(name string, cfg *config.CloudConfig, configs map[string]*project.ServiceConfig) error {
 	network := false
 	projectEvents := make(chan project.ProjectEvent)
 	p := project.NewProject(name, NewContainerFactory(cfg))
@@ -61,21 +61,26 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 	for name, serviceConfig := range configs {
 		if err := p.AddConfig(name, serviceConfig); err != nil {
 			log.Infof("Failed loading service %s", name)
+			continue
 		}
+		enabled[name] = true
 	}
 
 	p.ReloadCallback = func() error {
-		err := cfg.Reload()
-		if err != nil {
+		if p.Name != "system-init" {
+			return nil
+		}
+
+		if err := cfg.Reload(); err != nil {
 			return err
 		}
 
-		for service, serviceEnabled := range cfg.ServicesInclude {
+		for service, serviceEnabled := range cfg.Rancher.ServicesInclude {
 			if !serviceEnabled {
 				continue
 			}
 
-			if _, ok := enabled[service]; ok {
+			if en, ok := enabled[service]; ok && en {
 				continue
 			}
 
@@ -89,8 +94,7 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 				continue
 			}
 
-			err = p.Load(bytes)
-			if err != nil {
+			if err := p.Load(bytes); err != nil {
 				log.Errorf("Failed to load %s : %v", service, err)
 				continue
 			}
@@ -98,17 +102,15 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 			enabled[service] = true
 		}
 
-		for service, config := range cfg.Services {
-			if _, ok := enabled[service]; ok {
+		for service, config := range cfg.Rancher.Services {
+			if en, ok := enabled[service]; ok && en {
 				continue
 			}
 
-			err = p.AddConfig(service, config)
-			if err != nil {
+			if err := p.AddConfig(service, config); err != nil {
 				log.Errorf("Failed to load %s : %v", service, err)
 				continue
 			}
-
 			enabled[service] = true
 		}
 
@@ -123,14 +125,13 @@ func RunServices(name string, cfg *config.Config, configs map[string]*project.Se
 		}
 	}()
 
-	err := p.ReloadCallback()
-	if err != nil {
+	if err := p.ReloadCallback(); err != nil {
 		log.Errorf("Failed to reload %s : %v", name, err)
 		return err
 	}
 	return p.Up()
 }
 
-func LoadServiceResource(name string, network bool, cfg *config.Config) ([]byte, error) {
-	return util.LoadResource(name, network, cfg.Repositories.ToArray())
+func LoadServiceResource(name string, network bool, cfg *config.CloudConfig) ([]byte, error) {
+	return util.LoadResource(name, network, cfg.Rancher.Repositories.ToArray())
 }

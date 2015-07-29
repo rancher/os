@@ -1,13 +1,14 @@
 package config
 
-func NewConfig() *Config {
+func NewConfig() *CloudConfig {
 	return ReadConfig(OsConfigFile)
 }
 
-func ReadConfig(file string) *Config {
+func ReadConfig(file string) *CloudConfig {
 	if data, err := readConfig(nil, file); err == nil {
-		c := &Config{}
+		c := &CloudConfig{}
 		c.merge(data)
+		c.amendNils()
 		return c
 	} else {
 		return nil

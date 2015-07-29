@@ -76,16 +76,16 @@ func configSubcommands() []cli.Command {
 	}
 }
 
-func imagesFromConfig(cfg *config.Config) []string {
+func imagesFromConfig(cfg *config.CloudConfig) []string {
 	imagesMap := map[string]int{}
 
-	for _, service := range cfg.BootstrapContainers {
+	for _, service := range cfg.Rancher.BootstrapContainers {
 		imagesMap[service.Image] = 1
 	}
-	for _, service := range cfg.Autoformat {
+	for _, service := range cfg.Rancher.Autoformat {
 		imagesMap[service.Image] = 1
 	}
-	for _, service := range cfg.SystemContainers {
+	for _, service := range cfg.Rancher.Services {
 		imagesMap[service.Image] = 1
 	}
 
@@ -165,12 +165,12 @@ func configGet(c *cli.Context) {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 
 	val, err := cfg.Get(arg)
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{"cfg": cfg, "arg": arg, "val": val}).Panicln(err)
 	}
 
 	printYaml := false
@@ -190,50 +190,6 @@ func configGet(c *cli.Context) {
 	} else {
 		fmt.Println(val)
 	}
-}
-
-func getOrSetVal(args string, data map[interface{}]interface{}, value interface{}) interface{} {
-	parts := strings.Split(args, ".")
-
-	for i, part := range parts {
-		val, ok := data[part]
-		last := i+1 == len(parts)
-
-		// Reached end, set the value
-		if last && value != nil {
-			if s, ok := value.(string); ok {
-				value = config.DummyMarshall(s)
-			}
-
-			data[part] = value
-			return value
-		}
-
-		// Missing intermediate key, create key
-		if !last && value != nil && !ok {
-			newData := map[interface{}]interface{}{}
-			data[part] = newData
-			data = newData
-			continue
-		}
-
-		if !ok {
-			break
-		}
-
-		if last {
-			return val
-		}
-
-		newData, ok := val.(map[interface{}]interface{})
-		if !ok {
-			break
-		}
-
-		data = newData
-	}
-
-	return ""
 }
 
 func merge(c *cli.Context) {
