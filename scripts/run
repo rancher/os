@@ -103,14 +103,14 @@ if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
     mkisofs -R -V config-2 -o "${CLOUD_CONFIG_ISO}" "$(pwd)/cloud-init"
 
     echo PWD=`pwd`
-    exec sudo xhyve -H -P \
+    exec sudo xhyve -A -H -P -u \
         -m 4G \
         -s 0:0,hostbridge -s 31,lpc \
         -l com1,stdio \
         -s 2:0,virtio-net \
         -s 3,ahci-cd,${CLOUD_CONFIG_ISO} \
         -U a01fb25c-3a19-4759-a47a-2e353e51807d \
-        -f kexec,${KERNEL},${INITRD_TEST},"earlyprintk=serial acpi=off elevator=noop ${KERNEL_ARGS}"
+        -f kexec,${KERNEL},${INITRD_TEST},"earlyprintk=serial elevator=noop ${KERNEL_ARGS}"
 
 elif [ "$UNAME" == "Linux" ] && [ -x $(which qemu-system-x86_64) ]; then
     exec qemu-system-x86_64 -serial stdio \
