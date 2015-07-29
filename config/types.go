@@ -1,6 +1,9 @@
 package config
 
-import "github.com/rancherio/rancher-compose/librcompose/project"
+import (
+	"github.com/rancher/netconf"
+	"github.com/rancherio/rancher-compose/librcompose/project"
+)
 
 const (
 	CONSOLE_CONTAINER  = "console"
@@ -61,7 +64,7 @@ type Config struct {
 	Disable             []string                          `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`
 	Modules             []string                          `yaml:"modules,omitempty"`
-	Network             NetworkConfig                     `yaml:"network,omitempty"`
+	Network             netconf.NetworkConfig             `yaml:"network,omitempty"`
 	Repositories        Repositories                      `yaml:"repositories,omitempty"`
 	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
 	State               StateConfig                       `yaml:"state,omitempty"`
@@ -81,28 +84,6 @@ type UpgradeConfig struct {
 	Url      string `yaml:"url,omitempty"`
 	Image    string `yaml:"image,omitempty"`
 	Rollback string `yaml:"rollback,omitempty"`
-}
-
-type DnsConfig struct {
-	Nameservers []string `yaml:"nameservers,flow,omitempty"`
-	Search      []string `yaml:"search,flow,omitempty"`
-	Domain      string   `yaml:"domain,omitempty"`
-}
-
-type NetworkConfig struct {
-	Dns        DnsConfig                  `yaml:"dns,omitempty"`
-	Interfaces map[string]InterfaceConfig `yaml:"interfaces,omitempty"`
-	PostRun    *ContainerConfig           `yaml:"post_run,omitempty"`
-}
-
-type InterfaceConfig struct {
-	Match   string `yaml:"match,omitempty"`
-	DHCP    bool   `yaml:"dhcp,omitempty"`
-	Address string `yaml:"address,omitempty"`
-	IPV4LL  bool   `yaml:"ipv4ll,omitempty"`
-	Gateway string `yaml:"gateway,omitempty"`
-	MTU     int    `yaml:"mtu,omitempty"`
-	Bridge  bool   `yaml:"bridge,omitempty"`
 }
 
 type DockerConfig struct {
