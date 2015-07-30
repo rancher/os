@@ -374,6 +374,7 @@ users:
     no_user_group: true
     system: y
     no_log_init: True
+    shell: /bin/sh
 `
 	cfg, err := NewCloudConfig(contents)
 	if err != nil {
@@ -440,6 +441,10 @@ users:
 
 	if !user.NoLogInit {
 		t.Errorf("Failed to parse no_log_init field")
+	}
+
+	if user.Shell != "/bin/sh" {
+		t.Errorf("Failed to parse shell field, got %q", user.Shell)
 	}
 }
 

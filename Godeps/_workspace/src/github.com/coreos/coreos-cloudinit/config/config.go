@@ -37,6 +37,7 @@ type CloudConfig struct {
 
 type CoreOS struct {
 	Etcd      Etcd      `yaml:"etcd"`
+	Etcd2     Etcd2     `yaml:"etcd2"`
 	Flannel   Flannel   `yaml:"flannel"`
 	Fleet     Fleet     `yaml:"fleet"`
 	Locksmith Locksmith `yaml:"locksmith"`

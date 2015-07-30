@@ -72,6 +72,10 @@ func CreateUser(u *config.User) error {
 		args = append(args, "--no-log-init")
 	}
 
+	if u.Shell != "" {
+		args = append(args, "--shell", u.Shell)
+	}
+
 	args = append(args, u.Name)
 
 	output, err := exec.Command("useradd", args...).CombinedOutput()

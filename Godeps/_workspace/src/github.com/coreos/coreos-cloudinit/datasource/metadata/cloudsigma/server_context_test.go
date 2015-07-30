@@ -43,6 +43,27 @@ func (f *fakeCepgoClient) FetchRaw(key string) ([]byte, error) {
 	return f.raw, f.err
 }
 
+func TestServerContextWithEmptyPublicSSHKey(t *testing.T) {
+	client := new(fakeCepgoClient)
+	scs := NewServerContextService()
+	scs.client = client
+	client.raw = []byte(`{
+		"meta": {
+			"base64_fields": "cloudinit-user-data",
+			"cloudinit-user-data": "I2Nsb3VkLWNvbmZpZwoKaG9zdG5hbWU6IGNvcmVvczE=",
+			"ssh_public_key": ""
+		}
+	}`)
+	metadata, err := scs.FetchMetadata()
+	if err != nil {
+		t.Error(err.Error())
+	}
+
+	if len(metadata.SSHPublicKeys) != 0 {
+		t.Error("There should be no Public SSH Keys provided")
+	}
+}
+
 func TestServerContextFetchMetadata(t *testing.T) {
 	client := new(fakeCepgoClient)
 	scs := NewServerContextService()

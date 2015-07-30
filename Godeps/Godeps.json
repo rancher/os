@@ -14,33 +14,33 @@
 		},
 		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/config",
-			"Comment": "v1.3.2-6-g405c260",
-			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
+			"Comment": "v1.4.1-8-g67c9393",
+			"Rev": "67c9393a0a798054d8a9f0d9dc9d23c70ec776b2"
 		},
 		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/datasource",
-			"Comment": "v1.3.2-6-g405c260",
-			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
+			"Comment": "v1.4.1-8-g67c9393",
+			"Rev": "67c9393a0a798054d8a9f0d9dc9d23c70ec776b2"
 		},
 		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/initialize",
-			"Comment": "v1.3.2-6-g405c260",
-			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
+			"Comment": "v1.4.1-8-g67c9393",
+			"Rev": "67c9393a0a798054d8a9f0d9dc9d23c70ec776b2"
 		},
 		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/network",
-			"Comment": "v1.3.2-6-g405c260",
-			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
+			"Comment": "v1.4.1-8-g67c9393",
+			"Rev": "67c9393a0a798054d8a9f0d9dc9d23c70ec776b2"
 		},
 		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/pkg",
-			"Comment": "v1.3.2-6-g405c260",
-			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
+			"Comment": "v1.4.1-8-g67c9393",
+			"Rev": "67c9393a0a798054d8a9f0d9dc9d23c70ec776b2"
 		},
 		{
 			"ImportPath": "github.com/coreos/coreos-cloudinit/system",
-			"Comment": "v1.3.2-6-g405c260",
-			"Rev": "405c2600b19ae77516c967f8ee8ebde5624d3663"
+			"Comment": "v1.4.1-8-g67c9393",
+			"Rev": "67c9393a0a798054d8a9f0d9dc9d23c70ec776b2"
 		},
 		{
 			"ImportPath": "github.com/coreos/go-systemd/dbus",
@@ -121,7 +121,7 @@
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "4c9e84441078c14677bad5722161ad09146b0c4e"
+			"Rev": "69eb698fe078e24f52c14cc2f7ba6027ddebfd31"
 		},
 		{
 			"ImportPath": "github.com/guelfey/go.dbus",
