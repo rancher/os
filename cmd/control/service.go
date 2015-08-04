@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/codegangsta/cli"
+	"github.com/rancherio/os/compose"
 	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
 )
 
@@ -93,7 +93,7 @@ func enable(c *cli.Context) {
 			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
 				log.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
-			if _, err := docker.LoadServiceResource(service, true, cfg); err != nil {
+			if _, err := compose.LoadServiceResource(service, true, cfg); err != nil {
 				log.Fatalf("could not load service %s", service)
 			}
 			cfg.Rancher.ServicesInclude[service] = true

@@ -7,6 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/fsouza/go-dockerclient"
+	"github.com/rancherio/os/compose"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 )
@@ -88,42 +89,6 @@ func loadImages(cfg *config.CloudConfig) error {
 	return nil
 }
 
-func runContainers(cfg *config.CloudConfig) error {
-	return docker.RunServices("system-init", cfg, cfg.Rancher.Services)
-}
-
-func tailConsole(cfg *config.CloudConfig) error {
-	if !cfg.Rancher.Console.Tail {
-		return nil
-	}
-
-	client, err := docker.NewSystemClient()
-	if err != nil {
-		return err
-	}
-
-	console, ok := cfg.Rancher.Services[config.CONSOLE_CONTAINER]
-	if !ok {
-		log.Error("Console not found")
-		return nil
-	}
-
-	c := docker.NewContainerFromService(config.DOCKER_SYSTEM_HOST, config.CONSOLE_CONTAINER, console)
-	if c.Err != nil {
-		return c.Err
-	}
-
-	log.Infof("Tailing console : %s", c.Name)
-	return client.Logs(dockerClient.LogsOptions{
-		Container:    c.Name,
-		Stdout:       true,
-		Stderr:       true,
-		Follow:       true,
-		OutputStream: os.Stdout,
-		ErrorStream:  os.Stderr,
-	})
-}
-
 func SysInit() error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -132,7 +97,9 @@ func SysInit() error {
 
 	initFuncs := []config.InitFunc{
 		loadImages,
-		runContainers,
+		func(cfg *config.CloudConfig) error {
+			return compose.RunServices(cfg)
+		},
 		func(cfg *config.CloudConfig) error {
 			syscall.Sync()
 			return nil
@@ -141,7 +108,6 @@ func SysInit() error {
 			log.Infof("RancherOS %s started", config.VERSION)
 			return nil
 		},
-		tailConsole,
 	}
 
 	return config.RunInitFuncs(cfg, initFuncs)

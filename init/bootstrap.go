@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/docker/libcompose/project"
 	"github.com/rancher/docker-from-scratch"
+	"github.com/rancherio/os/compose"
 	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/docker"
 	"github.com/rancherio/os/util"
-	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 func autoformat(cfg *config.CloudConfig) error {
@@ -23,16 +23,17 @@ func autoformat(cfg *config.CloudConfig) error {
 	FORMATZERO := "FORMATZERO=" + fmt.Sprint(cfg.Rancher.State.FormatZero)
 	cfg.Rancher.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
 	log.Info("Running Autoformat services")
-	err := docker.RunServices("autoformat", cfg, cfg.Rancher.Autoformat)
+	_, err := compose.RunServiceSet("autoformat", cfg, cfg.Rancher.Autoformat)
 	return err
 }
 
 func runBootstrapContainers(cfg *config.CloudConfig) error {
 	log.Info("Running Bootstrap services")
-	return docker.RunServices("bootstrap", cfg, cfg.Rancher.BootstrapContainers)
+	_, err := compose.RunServiceSet("bootstrap", cfg, cfg.Rancher.BootstrapContainers)
+	return err
 }
 
-func startDocker(cfg *config.Config) (chan interface{}, error) {
+func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
 
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.BootstrapDocker)
 	launchConfig.Fork = true

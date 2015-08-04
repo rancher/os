@@ -30,7 +30,7 @@ var (
 	}
 )
 
-func loadModules(cfg *config.Config) error {
+func loadModules(cfg *config.CloudConfig) error {
 	mounted := map[string]bool{}
 
 	f, err := os.Open("/proc/modules")
@@ -44,7 +44,7 @@ func loadModules(cfg *config.Config) error {
 		mounted[strings.SplitN(reader.Text(), " ", 2)[0]] = true
 	}
 
-	for _, module := range cfg.Modules {
+	for _, module := range cfg.Rancher.Modules {
 		if mounted[module] {
 			continue
 		}
@@ -58,7 +58,7 @@ func loadModules(cfg *config.Config) error {
 	return nil
 }
 
-func sysInit(cfg *config.Config) error {
+func sysInit(cfg *config.CloudConfig) error {
 	args := append([]string{config.SYSINIT_BIN}, os.Args[1:]...)
 
 	cmd := &exec.Cmd{
@@ -83,18 +83,18 @@ func MainInit() {
 	}
 }
 
-func mountState(cfg *config.Config) error {
+func mountState(cfg *config.CloudConfig) error {
 	var err error
 
-	if cfg.State.Dev == "" {
+	if cfg.Rancher.State.Dev == "" {
 		return nil
 	}
 
-	dev := util.ResolveDevice(cfg.State.Dev)
+	dev := util.ResolveDevice(cfg.Rancher.State.Dev)
 	if dev == "" {
-		return fmt.Errorf("Could not resolve device %q", cfg.State.Dev)
+		return fmt.Errorf("Could not resolve device %q", cfg.Rancher.State.Dev)
 	}
-	fsType := cfg.State.FsType
+	fsType := cfg.Rancher.State.FsType
 	if fsType == "auto" {
 		fsType, err = util.GetFsType(dev)
 	}
@@ -108,7 +108,7 @@ func mountState(cfg *config.Config) error {
 	return util.Mount(dev, STATE, fsType, "")
 }
 
-func tryMountState(cfg *config.Config) error {
+func tryMountState(cfg *config.CloudConfig) error {
 	if mountState(cfg) == nil {
 		return nil
 	}
@@ -121,8 +121,8 @@ func tryMountState(cfg *config.Config) error {
 	return mountState(cfg)
 }
 
-func tryMountAndBootstrap(cfg *config.Config) error {
-	if err := tryMountState(cfg); !cfg.State.Required && err != nil {
+func tryMountAndBootstrap(cfg *config.CloudConfig) error {
+	if err := tryMountState(cfg); !cfg.Rancher.State.Required && err != nil {
 		return nil
 	} else if err != nil {
 		return err
@@ -132,15 +132,15 @@ func tryMountAndBootstrap(cfg *config.Config) error {
 	return switchRoot(STATE)
 }
 
-func getLaunchConfig(cfg *config.Config, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
+func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
 	var launchConfig dockerlaunch.Config
 
 	args := dockerlaunch.ParseConfig(&launchConfig, append(dockerCfg.Args, dockerCfg.ExtraArgs...)...)
 
-	launchConfig.DnsConfig.Nameservers = cfg.Network.Dns.Nameservers
-	launchConfig.DnsConfig.Search = cfg.Network.Dns.Search
+	launchConfig.DnsConfig.Nameservers = cfg.Rancher.Network.Dns.Nameservers
+	launchConfig.DnsConfig.Search = cfg.Rancher.Network.Dns.Search
 
-	if !cfg.Debug {
+	if !cfg.Rancher.Debug {
 		launchConfig.LogFile = config.SYSTEM_DOCKER_LOG
 	}
 
@@ -148,17 +148,17 @@ func getLaunchConfig(cfg *config.Config, dockerCfg *config.DockerConfig) (*docke
 }
 
 func RunInit() error {
-	var cfg config.Config
+	var cfg config.CloudConfig
 
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 	// Magic setting to tell Docker to do switch_root and not pivot_root
 	os.Setenv("DOCKER_RAMDISK", "true")
 
 	initFuncs := []config.InitFunc{
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			return dockerlaunch.PrepareFs(&mountConfig)
 		},
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			newCfg, err := config.LoadConfig()
 			if err == nil {
 				newCfg, err = config.LoadConfig()
@@ -167,7 +167,7 @@ func RunInit() error {
 				*cfg = *newCfg
 			}
 
-			if cfg.Debug {
+			if cfg.Rancher.Debug {
 				cfgString, _ := config.Dump(false, true)
 				if cfgString != "" {
 					log.Debugf("Config: %s", cfgString)
@@ -178,7 +178,7 @@ func RunInit() error {
 		},
 		loadModules,
 		tryMountAndBootstrap,
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			return cfg.Reload()
 		},
 		loadModules,
@@ -189,7 +189,7 @@ func RunInit() error {
 		return err
 	}
 
-	launchConfig, args := getLaunchConfig(&cfg, &cfg.SystemDocker)
+	launchConfig, args := getLaunchConfig(&cfg, &cfg.Rancher.SystemDocker)
 
 	log.Info("Launching System Docker")
 	_, err := dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)

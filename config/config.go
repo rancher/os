@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/docker/libcompose/project"
 	"github.com/rancherio/os/util"
-	"github.com/rancherio/rancher-compose/librcompose/project"
 	"gopkg.in/yaml.v2"
 )
 
@@ -139,18 +139,6 @@ func Dump(private, full bool) (string, error) {
 	return string(bytes), err
 }
 
-func (c *CloudConfig) configureConsole() error {
-	if console, ok := c.Rancher.Services[CONSOLE_CONTAINER]; ok {
-		if c.Rancher.Console.Persistent {
-			console.Labels.MapParts()[REMOVE] = "false"
-		} else {
-			console.Labels.MapParts()[REMOVE] = "true"
-		}
-	}
-
-	return nil
-}
-
 func (c *CloudConfig) amendNils() error {
 	if c.Rancher.Environment == nil {
 		c.Rancher.Environment = map[string]string{}
@@ -173,7 +161,6 @@ func (c *CloudConfig) amendNils() error {
 func (c *CloudConfig) readGlobals() error {
 	return util.ShortCircuit(
 		c.readCmdline,
-		c.configureConsole, // TODO: this smells (it is a write hidden inside a read)
 	)
 }
 
@@ -214,27 +201,6 @@ func (c *CloudConfig) Set(key string, value interface{}) error {
 	}
 
 	return c.Reload()
-}
-
-func (d *DockerConfig) BridgeConfig() (string, string) {
-	var name, cidr string
-
-	args := append(d.Args, d.ExtraArgs...)
-	for i, opt := range args {
-		if opt == "-b" && i < len(args)-1 {
-			name = args[i+1]
-		}
-
-		if opt == "--fixed-cidr" && i < len(args)-1 {
-			cidr = args[i+1]
-		}
-	}
-
-	if name == "" || name == "none" {
-		return "", ""
-	} else {
-		return name, cidr
-	}
 }
 
 func (r Repositories) ToArray() []string {

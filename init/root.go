@@ -44,15 +44,14 @@ func copyMoveRoot(rootfs string) error {
 		filename := path.Join("/", file.Name())
 
 		if filename == rootfs {
+			log.Debugf("Skipping Deleting %s", filename)
 			continue
 		}
 
 		log.Debugf("Deleting %s", filename)
-		//if err := os.Remove(filename); err != nil {
 		if err := os.RemoveAll(filename); err != nil {
 			return err
 		}
-		//}
 	}
 
 	return nil
@@ -90,7 +89,7 @@ func switchRoot(rootfs string) error {
 	}
 
 	log.Debugf("Successfully moved to new root at %s", rootfs)
-	os.Setenv("DOCKER_RAMDISK", "false")
+	os.Unsetenv("DOCKER_RAMDISK")
 
 	return nil
 }

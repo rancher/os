@@ -99,7 +99,7 @@ else
     done
 fi
 
-KERNEL_ARGS="rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
+KERNEL_ARGS="rancher.password=rancher rancher.modules=[9p,9pnet_virtio] console=ttyS0 ${QEMU_APPEND}"
 
 if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
 

@@ -47,12 +47,6 @@ func Main() {
 			HideHelp:    true,
 			Subcommands: serviceSubCommands(),
 		},
-		//{
-		//	Name:      "reload",
-		//	ShortName: "a",
-		//	Usage:     "reload configuration of a service and restart the container",
-		//	Action:    reload,
-		//},
 		{
 			Name:        "os",
 			Usage:       "operating system upgrade/downgrade",

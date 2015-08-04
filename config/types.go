@@ -2,12 +2,11 @@ package config
 
 import (
 	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/docker/libcompose/project"
 	"github.com/rancher/netconf"
-	"github.com/rancherio/rancher-compose/librcompose/project"
 )
 
 const (
-	CONSOLE_CONTAINER  = "console"
 	DOCKER_BIN         = "/usr/bin/docker"
 	ROS_BIN            = "/usr/bin/ros"
 	SYSINIT_BIN        = "/usr/bin/ros-sysinit"
@@ -24,7 +23,6 @@ const (
 	HASH          = "io.rancher.os.hash"
 	ID            = "io.rancher.os.id"
 	DETACH        = "io.rancher.os.detach"
-	REMOVE        = "io.rancher.os.remove"
 	CREATE_ONLY   = "io.rancher.os.createonly"
 	RELOAD_CONFIG = "io.rancher.os.reloadconfig"
 	SCOPE         = "io.rancher.os.scope"
@@ -73,8 +71,8 @@ type RancherConfig struct {
 	Autoformat          map[string]*project.ServiceConfig `yaml:"autoformat,omitempty"`
 	BootstrapDocker     DockerConfig                      `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
-	Console             ConsoleConfig                     `yaml:"console,omitempty"`
 	Debug               bool                              `yaml:"debug,omitempty"`
+	Log                 bool                              `yaml:"log,omitempty"`
 	Disable             []string                          `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`
 	Modules             []string                          `yaml:"modules,omitempty"`
@@ -84,13 +82,7 @@ type RancherConfig struct {
 	State               StateConfig                       `yaml:"state,omitempty"`
 	SystemDocker        DockerConfig                      `yaml:"system_docker,omitempty"`
 	Upgrade             UpgradeConfig                     `yaml:"upgrade,omitempty"`
-	UserContainers      []ContainerConfig                 `yaml:"user_containers,omitempty"`
 	UserDocker          DockerConfig                      `yaml:"user_docker,omitempty"`
-}
-
-type ConsoleConfig struct {
-	Tail       bool `yaml:"tail,omitempty"`
-	Persistent bool `yaml:"persistent,omitempty"`
 }
 
 type UpgradeConfig struct {
