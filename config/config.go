@@ -2,58 +2,21 @@ package config
 
 import (
 	"io/ioutil"
-	"os"
 	"strings"
-
-	"github.com/rancherio/rancher-compose/librcompose/project"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancherio/os/util"
+	"github.com/rancherio/rancher-compose/librcompose/project"
 	"gopkg.in/yaml.v2"
 )
 
-func (c *Config) privilegedMerge(newConfig Config) error {
-	err := c.overlay(newConfig)
-	if err != nil {
-		return err
-	}
-
-	for k, v := range newConfig.SystemContainers {
-		c.SystemContainers[k] = v
-	}
-
-	return nil
-}
-
-func (c *Config) overlay(newConfig Config) error {
-	newConfig.clearReadOnly()
-	return util.Convert(&newConfig, c)
-}
-
-func (c *Config) clearReadOnly() {
-	c.BootstrapContainers = make(map[string]*project.ServiceConfig, 0)
-	c.SystemContainers = make(map[string]*project.ServiceConfig, 0)
-}
-
-func clearReadOnly(data map[interface{}]interface{}) map[interface{}]interface{} {
-	newData := make(map[interface{}]interface{})
-	for k, v := range data {
-		newData[k] = v
-	}
-
-	delete(newData, "system_container")
-	delete(newData, "bootstrap_container")
-
-	return newData
-}
-
-func (c *Config) Import(bytes []byte) error {
+func (c *CloudConfig) Import(bytes []byte) error {
 	data, err := readConfig(bytes, PrivateConfigFile)
 	if err != nil {
 		return err
 	}
 
-	if err = saveToDisk(data); err != nil {
+	if err := saveToDisk(data); err != nil {
 		return err
 	}
 
@@ -61,7 +24,7 @@ func (c *Config) Import(bytes []byte) error {
 }
 
 // This function only sets "non-empty" values
-func (c *Config) SetConfig(newConfig *Config) error {
+func (c *CloudConfig) SetConfig(newConfig *CloudConfig) error {
 	bytes, err := yaml.Marshal(newConfig)
 	if err != nil {
 		return err
@@ -70,83 +33,63 @@ func (c *Config) SetConfig(newConfig *Config) error {
 	return c.Merge(bytes)
 }
 
-func (c *Config) Merge(bytes []byte) error {
-	data, err := readSavedConfig(bytes)
+func (c *CloudConfig) Merge(bytes []byte) error {
+	data, err := readConfig(bytes, LocalConfigFile, PrivateConfigFile)
 	if err != nil {
 		return err
 	}
 
-	err = saveToDisk(data)
-	if err != nil {
+	if err := saveToDisk(data); err != nil {
 		return err
 	}
 
 	return c.Reload()
 }
 
-func LoadConfig() (*Config, error) {
+func LoadConfig() (*CloudConfig, error) {
 	cfg := NewConfig()
 	if err := cfg.Reload(); err != nil {
+		log.WithFields(log.Fields{"cfg": cfg}).Panicln(err)
 		return nil, err
 	}
 
-	if cfg.Debug {
+	if cfg.Rancher.Debug {
 		log.SetLevel(log.DebugLevel)
-		if !util.Contains(cfg.UserDocker.Args, "-D") {
-			cfg.UserDocker.Args = append(cfg.UserDocker.Args, "-D")
+		if !util.Contains(cfg.Rancher.UserDocker.Args, "-D") {
+			cfg.Rancher.UserDocker.Args = append(cfg.Rancher.UserDocker.Args, "-D")
 		}
-		if !util.Contains(cfg.SystemDocker.Args, "-D") {
-			cfg.SystemDocker.Args = append(cfg.SystemDocker.Args, "-D")
+		if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
+			cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")
 		}
 	}
 
 	return cfg, nil
 }
 
-func (c *Config) readArgs() error {
-	log.Debug("Reading config args")
-	parts := make([]string, len(os.Args))
-
-	for _, arg := range os.Args[1:] {
-		if strings.HasPrefix(arg, "--") {
-			arg = arg[2:]
-		}
-
-		kv := strings.SplitN(arg, "=", 2)
-		kv[0] = strings.Replace(kv[0], "-", ".", -1)
-		parts = append(parts, strings.Join(kv, "="))
-	}
-
-	cmdLine := strings.Join(parts, " ")
-	if len(cmdLine) == 0 {
-		return nil
-	}
-
-	log.Debugf("Config Args %s", cmdLine)
-
-	cmdLineObj := parseCmdline(strings.TrimSpace(cmdLine))
-
-	return c.merge(cmdLineObj)
-}
-
-func (c *Config) merge(values map[interface{}]interface{}) error {
-	values = clearReadOnly(values)
+func (c *CloudConfig) merge(values map[interface{}]interface{}) error {
 	return util.Convert(values, c)
 }
 
-func (c *Config) readFiles() error {
-	data, err := readSavedConfig(nil)
+func (c *CloudConfig) readFiles() error {
+	data, err := readConfig(nil, CloudConfigFile, LocalConfigFile, PrivateConfigFile)
 	if err != nil {
+		log.Panicln(err)
 		return err
 	}
 
-	return c.merge(data)
+	if err := c.merge(data); err != nil {
+		log.WithFields(log.Fields{"cfg": c, "data": data}).Panicln(err)
+		return err
+	}
+
+	return nil
 }
 
-func (c *Config) readCmdline() error {
+func (c *CloudConfig) readCmdline() error {
 	log.Debug("Reading config cmdline")
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
+		log.Panicln(err)
 		return err
 	}
 
@@ -157,16 +100,21 @@ func (c *Config) readCmdline() error {
 	log.Debugf("Config cmdline %s", cmdLine)
 
 	cmdLineObj := parseCmdline(strings.TrimSpace(string(cmdLine)))
-	return c.merge(cmdLineObj)
+
+	if err := c.merge(cmdLineObj); err != nil {
+		log.WithFields(log.Fields{"cfg": c, "cmdLine": cmdLine, "data": cmdLineObj}).Panicln(err)
+		return err
+	}
+	return nil
 }
 
 func Dump(private, full bool) (string, error) {
-	files := []string{CloudConfigFile, ConfigFile}
+	files := []string{CloudConfigFile, LocalConfigFile}
 	if private {
 		files = append(files, PrivateConfigFile)
 	}
 
-	c := &Config{}
+	c := &CloudConfig{}
 
 	if full {
 		c = NewConfig()
@@ -177,23 +125,23 @@ func Dump(private, full bool) (string, error) {
 		return "", err
 	}
 
-	err = c.merge(data)
-	if err != nil {
+	if err := c.merge(data); err != nil {
 		return "", err
 	}
 
-	err = c.readGlobals()
-	if err != nil {
+	if err := c.readGlobals(); err != nil {
 		return "", err
 	}
+
+	c.amendNils()
 
 	bytes, err := yaml.Marshal(c)
 	return string(bytes), err
 }
 
-func (c *Config) configureConsole() error {
-	if console, ok := c.SystemContainers[CONSOLE_CONTAINER]; ok {
-		if c.Console.Persistent {
+func (c *CloudConfig) configureConsole() error {
+	if console, ok := c.Rancher.Services[CONSOLE_CONTAINER]; ok {
+		if c.Rancher.Console.Persistent {
 			console.Labels.MapParts()[REMOVE] = "false"
 		} else {
 			console.Labels.MapParts()[REMOVE] = "true"
@@ -203,22 +151,41 @@ func (c *Config) configureConsole() error {
 	return nil
 }
 
-func (c *Config) readGlobals() error {
+func (c *CloudConfig) amendNils() error {
+	if c.Rancher.Environment == nil {
+		c.Rancher.Environment = map[string]string{}
+	}
+	if c.Rancher.Autoformat == nil {
+		c.Rancher.Autoformat = map[string]*project.ServiceConfig{}
+	}
+	if c.Rancher.BootstrapContainers == nil {
+		c.Rancher.BootstrapContainers = map[string]*project.ServiceConfig{}
+	}
+	if c.Rancher.Services == nil {
+		c.Rancher.Services = map[string]*project.ServiceConfig{}
+	}
+	if c.Rancher.ServicesInclude == nil {
+		c.Rancher.ServicesInclude = map[string]bool{}
+	}
+	return nil
+}
+
+func (c *CloudConfig) readGlobals() error {
 	return util.ShortCircuit(
 		c.readCmdline,
-		c.readArgs,
-		c.configureConsole,
+		c.configureConsole, // TODO: this smells (it is a write hidden inside a read)
 	)
 }
 
-func (c *Config) Reload() error {
+func (c *CloudConfig) Reload() error {
 	return util.ShortCircuit(
 		c.readFiles,
 		c.readGlobals,
+		c.amendNils,
 	)
 }
 
-func (c *Config) Get(key string) (interface{}, error) {
+func (c *CloudConfig) Get(key string) (interface{}, error) {
 	data := make(map[interface{}]interface{})
 	err := util.Convert(c, &data)
 	if err != nil {
@@ -228,8 +195,8 @@ func (c *Config) Get(key string) (interface{}, error) {
 	return getOrSetVal(key, data, nil), nil
 }
 
-func (c *Config) Set(key string, value interface{}) error {
-	data, err := readSavedConfig(nil)
+func (c *CloudConfig) Set(key string, value interface{}) error {
+	data, err := readConfig(nil, LocalConfigFile, PrivateConfigFile)
 	if err != nil {
 		return err
 	}
@@ -242,8 +209,7 @@ func (c *Config) Set(key string, value interface{}) error {
 		return err
 	}
 
-	err = saveToDisk(data)
-	if err != nil {
+	if err := saveToDisk(data); err != nil {
 		return err
 	}
 

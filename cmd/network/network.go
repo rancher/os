@@ -20,14 +20,14 @@ import (
 func Main() {
 	args := os.Args
 	if len(args) > 1 {
-		fmt.Println("call " + args[0] + " to load network config from rancher.yml config file")
+		fmt.Println("call " + args[0] + " to load network config from cloud-config.yml")
 		return
 	}
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-	ApplyNetworkConfigs(&cfg.Network)
+	ApplyNetworkConfigs(&cfg.Rancher.Network)
 }
 
 func createInterfaces(netCfg *config.NetworkConfig) error {

@@ -249,5 +249,5 @@ func getUpgradeUrl() (string, error) {
 		return "", err
 	}
 
-	return cfg.Upgrade.Url, nil
+	return cfg.Rancher.Upgrade.Url, nil
 }

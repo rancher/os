@@ -1,6 +1,9 @@
 package config
 
-import "github.com/rancherio/rancher-compose/librcompose/project"
+import (
+	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/rancherio/rancher-compose/librcompose/project"
+)
 
 const (
 	CONSOLE_CONTAINER  = "console"
@@ -24,14 +27,17 @@ const (
 	RELOAD_CONFIG = "io.rancher.os.reloadconfig"
 	SCOPE         = "io.rancher.os.scope"
 	SYSTEM        = "system"
+
+	OsConfigFile          = "/os-config.yml"
+	CloudConfigFile       = "/var/lib/rancher/conf/cloud-config.yml"
+	CloudConfigScriptFile = "/var/lib/rancher/conf/cloud-config-script"
+	MetaDataFile          = "/var/lib/rancher/conf/metadata"
+	LocalConfigFile       = "/var/lib/rancher/conf/cloud-config-local.yml"
+	PrivateConfigFile     = "/var/lib/rancher/conf/cloud-config-private.yml"
 )
 
 var (
-	VERSION           string
-	OsConfigFile      = "/os-config.yml"
-	CloudConfigFile   = "/var/lib/rancher/conf/cloud-config-rancher.yml"
-	ConfigFile        = "/var/lib/rancher/conf/rancher.yml"
-	PrivateConfigFile = "/var/lib/rancher/conf/rancher-private.yml"
+	VERSION string
 )
 
 type ContainerConfig struct {
@@ -49,7 +55,16 @@ type Repository struct {
 
 type Repositories map[string]Repository
 
-type Config struct {
+type CloudConfig struct {
+	SSHAuthorizedKeys []string      `yaml:"ssh_authorized_keys"`
+	WriteFiles        []config.File `yaml:"write_files"`
+	Hostname          string        `yaml:"hostname"`
+	Users             []config.User `yaml:"users"`
+
+	Rancher RancherConfig `yaml:"rancher,omitempty"`
+}
+
+type RancherConfig struct {
 	Environment         map[string]string                 `yaml:"environment,omitempty"`
 	Services            map[string]*project.ServiceConfig `yaml:"services,omitempty"`
 	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap,omitempty"`
@@ -65,7 +80,6 @@ type Config struct {
 	Repositories        Repositories                      `yaml:"repositories,omitempty"`
 	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
 	State               StateConfig                       `yaml:"state,omitempty"`
-	SystemContainers    map[string]*project.ServiceConfig `yaml:"system_containers,omitempty"`
 	SystemDocker        DockerConfig                      `yaml:"system_docker,omitempty"`
 	Upgrade             UpgradeConfig                     `yaml:"upgrade,omitempty"`
 	UserContainers      []ContainerConfig                 `yaml:"user_containers,omitempty"`

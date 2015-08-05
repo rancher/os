@@ -20,8 +20,8 @@ func envAction(c *cli.Context) {
 	args := c.Args()
 	osEnv := os.Environ()
 
-	envMap := make(map[string]string, len(cfg.Environment)+len(osEnv))
-	for k, v := range cfg.Environment {
+	envMap := make(map[string]string, len(cfg.Rancher.Environment)+len(osEnv))
+	for k, v := range cfg.Rancher.Environment {
 		envMap[k] = v
 	}
 	for k, v := range util.KVPairs2Map(osEnv) {
