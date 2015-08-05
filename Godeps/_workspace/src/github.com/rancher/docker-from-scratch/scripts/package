@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+. ./scripts/common
+
+docker run --rm -v `pwd`:/go/src/github.com/rancher/docker-from-scratch dockerscratch-build strip --strip-all build/dockerlaunch
+docker build -t $IMAGE -f Dockerfile .
+
+echo Built $IMAGE

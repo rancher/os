@@ -1,0 +1,3 @@
+FROM rancher/dind:v0.5.0
+WORKDIR /source
+

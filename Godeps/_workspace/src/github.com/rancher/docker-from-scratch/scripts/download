@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+: ${ARTIFACTS:=$(pwd)/assets}
+: ${BUILD:=$(pwd)/build}
+
+check()
+{
+    local hash=$1
+    local file=$2
+
+    if [ ! -e "$file" ]; then
+        return 1
+    fi
+
+    CURRENT=$(shasum -a 1 $file | awk '{print $1}')
+
+    [ "$hash" = "$CURRENT" ]
+}
+
+download()
+{
+    mkdir -p ${ARTIFACTS}
+
+    local url=$2
+    local file=${ARTIFACTS}/$(basename $2)
+    local hash=$1
+
+    if ! check $hash $file; then
+        curl -sL $url > $file
+    fi
+
+    if ! check $hash $file; then
+        echo "ERROR: $file does not match checksum $hash, got $CURRENT" 1>&2
+        return 1
+    fi
+}
+
+mkdir -p ${BUILD}
+
+if [ -e base-image/dist/base-files.tar.gz ]; then
+    cp base-image/dist/base-files.tar.gz build/
+else
+    download f9e561b91bfdf6c4641e2bec8a69c9d4577b2ba2 https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.1.0/base-files.tar.gz
+    cp assets/base-files.tar.gz build
+fi
+
+download 1c5ed280185a17f1595084206e10c85599f15299 https://test.docker.com/builds/Linux/x86_64/docker-1.8.0-rc2
+
+cp assets/docker-* build/docker
+chmod +x build/docker

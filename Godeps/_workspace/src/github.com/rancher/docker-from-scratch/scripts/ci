@@ -1,0 +1,14 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)
+
+docker ps >/dev/null 2>&1 || wrapdocker 2>/dev/null || true
+
+./download
+./build
+./package
+
+if [ -z "$NO_TEST" ]; then
+    ./test
+fi

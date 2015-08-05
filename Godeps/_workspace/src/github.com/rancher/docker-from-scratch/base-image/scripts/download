@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+set -x
+
+cd $(dirname $0)/..
+
+: ${ARTIFACTS:=$(pwd)/assets}
+
+check()
+{
+    local hash=$1
+    local file=$2
+
+    if [ ! -e "$file" ]; then
+        return 1
+    fi
+
+    CURRENT=$(sha1sum $file | awk '{print $1}')
+
+    [ "$hash" = "$CURRENT" ]
+}
+
+download()
+{
+    mkdir -p ${ARTIFACTS}
+
+    local url=$2
+    local file=${ARTIFACTS}/$(basename $2)
+    local hash=$1
+
+    if ! check $hash $file; then
+        curl -sL $url > $file
+    fi
+
+    if ! check $hash $file; then
+        echo "ERROR: $file does not match checksum $hash, got $CURRENT" 1>&2
+        return 1
+    fi
+}
+
+download 8efabafe68d21616c7f2ac9fdad8427fc94a015d http://buildroot.uclibc.org/downloads/buildroot-2015.05.tar.bz2

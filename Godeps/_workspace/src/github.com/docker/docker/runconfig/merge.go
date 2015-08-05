@@ -3,10 +3,14 @@ package runconfig
 import (
 	"strings"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/nat"
+	"github.com/docker/docker/pkg/nat"
 )
 
+// Merge merges two Config, the image container configuration (defaults values),
+// and the user container configuration, either passed by the API or generated
+// by the cli.
+// It will mutate the specified user configuration (userConf) with the image
+// configuration where the user configuration is incomplete.
 func Merge(userConf, imageConf *Config) error {
 	if userConf.User == "" {
 		userConf.User = imageConf.User
@@ -24,39 +28,6 @@ func Merge(userConf, imageConf *Config) error {
 		}
 	}
 
-	if len(userConf.PortSpecs) > 0 {
-		if userConf.ExposedPorts == nil {
-			userConf.ExposedPorts = make(nat.PortSet)
-		}
-		ports, _, err := nat.ParsePortSpecs(userConf.PortSpecs)
-		if err != nil {
-			return err
-		}
-		for port := range ports {
-			if _, exists := userConf.ExposedPorts[port]; !exists {
-				userConf.ExposedPorts[port] = struct{}{}
-			}
-		}
-		userConf.PortSpecs = nil
-	}
-	if len(imageConf.PortSpecs) > 0 {
-		// FIXME: I think we can safely remove this. Leaving it for now for the sake of reverse-compat paranoia.
-		logrus.Debugf("Migrating image port specs to container: %s", strings.Join(imageConf.PortSpecs, ", "))
-		if userConf.ExposedPorts == nil {
-			userConf.ExposedPorts = make(nat.PortSet)
-		}
-
-		ports, _, err := nat.ParsePortSpecs(imageConf.PortSpecs)
-		if err != nil {
-			return err
-		}
-		for port := range ports {
-			if _, exists := userConf.ExposedPorts[port]; !exists {
-				userConf.ExposedPorts[port] = struct{}{}
-			}
-		}
-	}
-
 	if len(userConf.Env) == 0 {
 		userConf.Env = imageConf.Env
 	} else {
@@ -67,22 +38,13 @@ func Merge(userConf, imageConf *Config) error {
 				userEnvKey := strings.Split(userEnv, "=")[0]
 				if imageEnvKey == userEnvKey {
 					found = true
+					break
 				}
 			}
 			if !found {
 				userConf.Env = append(userConf.Env, imageEnv)
 			}
 		}
-	}
-
-	if userConf.Labels == nil {
-		userConf.Labels = map[string]string{}
-	}
-	if imageConf.Labels != nil {
-		for l := range userConf.Labels {
-			imageConf.Labels[l] = userConf.Labels[l]
-		}
-		userConf.Labels = imageConf.Labels
 	}
 
 	if userConf.Entrypoint.Len() == 0 {
