@@ -3,102 +3,252 @@ package config
 import (
 	"fmt"
 	"gopkg.in/yaml.v2"
-	"log"
 	"testing"
 
 	"github.com/rancherio/os/util"
+	"github.com/stretchr/testify/require"
+	"strings"
 )
-import "reflect"
 
-func testParseCmdline(t *testing.T) {
-	expected := map[string]interface{}{
-		"rescue":   true,
-		"key1":     "value1",
-		"key2":     "value2",
-		"keyArray": []string{"1", "2"},
-		"obj1": map[string]interface{}{
-			"key3": "3value",
-			"obj2": map[string]interface{}{
-				"key4": true,
+func TestNilMap(t *testing.T) {
+	assert := require.New(t)
+	var m map[string]interface{} = nil
+	assert.True(m == nil)
+}
+
+func TestMapCopy(t *testing.T) {
+	assert := require.New(t)
+	m0 := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "4"}
+	m1 := util.MapCopy(m0)
+
+	delete(m0, "a")
+	assert.Equal(len(m1), len(m0)+1)
+
+	b0 := m0["b"].(map[interface{}]interface{})
+	b1 := m1["b"].(map[interface{}]interface{})
+	b1["e"] = "queer"
+
+	assert.Equal(len(b1), len(b0)+1)
+}
+
+func TestMapsIntersection(t *testing.T) {
+	assert := require.New(t)
+
+	m0 := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "4"}
+	m1 := util.MapCopy(m0)
+
+	delete(m0, "a")
+	b1 := m1["b"].(map[interface{}]interface{})
+	delete(b1, "c")
+	expected := map[interface{}]interface{}{"b": map[interface{}]interface{}{}, "d": "4"}
+	assert.Equal(expected, util.MapsIntersection(m0, m1, util.Equal))
+}
+
+func TestMapsUnion(t *testing.T) {
+	assert := require.New(t)
+
+	m0 := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "4"}
+	m1 := util.MapCopy(m0)
+	m1["e"] = "added"
+	m1["d"] = "replaced"
+
+	delete(m0, "a")
+	b1 := m1["b"].(map[interface{}]interface{})
+	delete(b1, "c")
+	expected := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "replaced", "e": "added"}
+	assert.Equal(expected, util.MapsUnion(m0, m1, util.Replace))
+}
+
+func TestFilterKey(t *testing.T) {
+	assert := require.New(t)
+	data := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"hostname":            "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"ssh": map[interface{}]interface{}{
+				"keys": map[interface{}]interface{}{
+					"dsa":     "dsa-test1",
+					"dsa-pub": "dsa-test2",
+				},
+			},
+			"user_docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
 			},
 		},
-		"key5": 5,
+	}
+	expectedFiltered := map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"ssh": map[interface{}]interface{}{
+				"keys": map[interface{}]interface{}{
+					"dsa":     "dsa-test1",
+					"dsa-pub": "dsa-test2",
+				},
+			},
+		},
+	}
+	expectedRest := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"hostname":            "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"user_docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
+			},
+		},
+	}
+	filtered, rest := filterKey(data, []string{"rancher", "ssh"})
+	assert.Equal(expectedFiltered, filtered)
+	assert.Equal(expectedRest, rest)
+}
+
+func TestFilterDottedKeys(t *testing.T) {
+	assert := require.New(t)
+
+	data := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"hostname":            "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"ssh": map[interface{}]interface{}{
+				"keys": map[interface{}]interface{}{
+					"dsa":     "dsa-test1",
+					"dsa-pub": "dsa-test2",
+				},
+			},
+			"user_docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
+			},
+		},
+	}
+	expectedFiltered := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"rancher": map[interface{}]interface{}{
+			"ssh": map[interface{}]interface{}{
+				"keys": map[interface{}]interface{}{
+					"dsa":     "dsa-test1",
+					"dsa-pub": "dsa-test2",
+				},
+			},
+		},
+	}
+	expectedRest := map[interface{}]interface{}{
+		"hostname": "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"user_docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
+			},
+		},
+	}
+
+	assert.Equal([]string{"rancher", "ssh"}, strings.Split("rancher.ssh", "."))
+	assert.Equal([]string{"ssh_authorized_keys"}, strings.Split("ssh_authorized_keys", "."))
+
+	filtered, rest := filterDottedKeys(data, []string{"ssh_authorized_keys", "rancher.ssh"})
+
+	assert.Equal(expectedFiltered, filtered)
+	assert.Equal(expectedRest, rest)
+}
+
+func TestParseCmdline(t *testing.T) {
+	assert := require.New(t)
+
+	expected := map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"rescue":   true,
+			"key1":     "value1",
+			"key2":     "value2",
+			"keyArray": []string{"1", "2"},
+			"obj1": map[interface{}]interface{}{
+				"key3": "3value",
+				"obj2": map[interface{}]interface{}{
+					"key4": true,
+				},
+			},
+			"key5": 5,
+		},
 	}
 
 	actual := parseCmdline("a b rancher.rescue rancher.keyArray=[1,2] rancher.key1=value1 c rancher.key2=value2 rancher.obj1.key3=3value rancher.obj1.obj2.key4 rancher.key5=5")
 
-	ok := reflect.DeepEqual(actual, expected)
-	if !ok {
-		t.Fatalf("%v != %v", actual, expected)
-	}
+	assert.Equal(expected, actual)
 }
 
 func TestGet(t *testing.T) {
+	assert := require.New(t)
+
 	data := map[interface{}]interface{}{
 		"key": "value",
-		"key2": map[interface{}]interface{}{
-			"subkey": "subvalue",
-			"subnum": 42,
+		"rancher": map[interface{}]interface{}{
+			"key2": map[interface{}]interface{}{
+				"subkey": "subvalue",
+				"subnum": 42,
+			},
 		},
 	}
 
 	tests := map[string]interface{}{
-		"key":          "value",
-		"key2.subkey":  "subvalue",
-		"key2.subnum":  42,
-		"key2.subkey2": "",
-		"foo":          "",
+		"key": "value",
+		"rancher.key2.subkey":  "subvalue",
+		"rancher.key2.subnum":  42,
+		"rancher.key2.subkey2": "",
+		"foo": "",
 	}
 
 	for k, v := range tests {
-		if getOrSetVal(k, data, nil) != v {
-			t.Fatalf("Expected %v, got %v, for key %s", v, getOrSetVal(k, data, nil), k)
-		}
+		assert.Equal(v, getOrSetVal(k, data, nil))
 	}
 }
 
 func TestSet(t *testing.T) {
+	assert := require.New(t)
+
 	data := map[interface{}]interface{}{
 		"key": "value",
-		"key2": map[interface{}]interface{}{
-			"subkey": "subvalue",
-			"subnum": 42,
+		"rancher": map[interface{}]interface{}{
+			"key2": map[interface{}]interface{}{
+				"subkey": "subvalue",
+				"subnum": 42,
+			},
 		},
 	}
 
 	expected := map[interface{}]interface{}{
 		"key": "value2",
-		"key2": map[interface{}]interface{}{
-			"subkey":  "subvalue2",
-			"subkey2": "value",
-			"subkey3": 43,
-			"subnum":  42,
-		},
-		"key3": map[interface{}]interface{}{
-			"subkey3": 44,
+		"rancher": map[interface{}]interface{}{
+			"key2": map[interface{}]interface{}{
+				"subkey":  "subvalue2",
+				"subkey2": "value",
+				"subkey3": 43,
+				"subnum":  42,
+			},
+			"key3": map[interface{}]interface{}{
+				"subkey3": 44,
+			},
 		},
 		"key4": "value4",
 	}
 
 	tests := map[string]interface{}{
-		"key":          "value2",
-		"key2.subkey":  "subvalue2",
-		"key2.subkey2": "value",
-		"key2.subkey3": 43,
-		"key3.subkey3": 44,
-		"key4":         "value4",
+		"key": "value2",
+		"rancher.key2.subkey":  "subvalue2",
+		"rancher.key2.subkey2": "value",
+		"rancher.key2.subkey3": 43,
+		"rancher.key3.subkey3": 44,
+		"key4":                 "value4",
 	}
 
 	for k, v := range tests {
 		getOrSetVal(k, data, v)
-		if getOrSetVal(k, data, nil) != v {
-			t.Fatalf("Expected %v, got %v, for key %s", v, getOrSetVal(k, data, nil), k)
-		}
+		assert.Equal(v, getOrSetVal(k, data, nil))
 	}
 
-	if !reflect.DeepEqual(data, expected) {
-		t.Fatalf("Expected %v, got %v", expected, data)
-	}
+	assert.Equal(expected, data)
 }
 
 type OuterData struct {
@@ -149,43 +299,35 @@ one:
 }
 
 func TestUserDocker(t *testing.T) {
-	config := &Config{
-		UserDocker: DockerConfig{
-			TLS: true,
+	assert := require.New(t)
+
+	config := &CloudConfig{
+		Rancher: RancherConfig{
+			UserDocker: DockerConfig{
+				TLS: true,
+			},
 		},
 	}
 
 	bytes, err := yaml.Marshal(config)
-	if err != nil {
-		log.Fatal(err)
-	}
+	assert.Nil(err)
 
 	config = NewConfig()
 	err = yaml.Unmarshal(bytes, config)
-	if err != nil {
-		log.Fatal(err)
-	}
+	assert.Nil(err)
 
-	data := make(map[interface{}]interface{})
+	data := make(map[interface{}]map[interface{}]interface{})
 	util.Convert(config, data)
 
 	fmt.Println(data)
 
-	val, ok := data["user_docker"]
-	if !ok {
-		t.Fatal("Failed to find user_docker")
-	}
+	val, ok := data["rancher"]["user_docker"]
+	assert.True(ok)
 
-	if m, ok := val.(map[interface{}]interface{}); ok {
-		if v, ok := m["tls"]; ok {
-			if v != true {
-				t.Fatal("user_docker.tls is not true")
-			}
-		} else {
-			t.Fatal("user_docker.tls is not found")
-		}
-	} else {
-		t.Fatal("Bad data")
-	}
+	m, ok := val.(map[interface{}]interface{})
+	assert.True(ok)
+	v, ok := m["tls"]
+	assert.True(ok)
+	assert.True(v.(bool))
 
 }

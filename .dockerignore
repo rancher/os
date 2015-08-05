@@ -1,6 +1,8 @@
 .DS_Store
 .git
 .idea
+bin
+gopath
 tmp
 state
 build

@@ -3,10 +3,59 @@ package config
 import (
 	log "github.com/Sirupsen/logrus"
 
+	"github.com/rancherio/os/util"
 	"regexp"
 	"strconv"
 	"strings"
 )
+
+func filterKey(data map[interface{}]interface{}, key []string) (filtered, rest map[interface{}]interface{}) {
+	if len(key) == 0 {
+		return data, map[interface{}]interface{}{}
+	}
+
+	filtered = map[interface{}]interface{}{}
+	rest = util.MapCopy(data)
+
+	k := key[0]
+	if d, ok := data[k]; ok {
+		switch d := d.(type) {
+
+		case map[interface{}]interface{}:
+			f, r := filterKey(d, key[1:])
+
+			if len(f) != 0 {
+				filtered[k] = f
+			}
+
+			if len(r) != 0 {
+				rest[k] = r
+			} else {
+				delete(rest, k)
+			}
+
+		default:
+			filtered[k] = d
+			delete(rest, k)
+		}
+
+	}
+
+	return
+}
+
+func filterDottedKeys(data map[interface{}]interface{}, keys []string) (filtered, rest map[interface{}]interface{}) {
+	filtered = map[interface{}]interface{}{}
+	rest = util.MapCopy(data)
+
+	for _, key := range keys {
+		f, r := filterKey(data, strings.Split(key, "."))
+		filtered = util.MapsUnion(filtered, f, util.Replace)
+		rest = util.MapsIntersection(rest, r, util.Equal)
+	}
+
+	return
+}
 
 func getOrSetVal(args string, data map[interface{}]interface{}, value interface{}) interface{} {
 	parts := strings.Split(args, ".")
@@ -95,7 +144,7 @@ outer:
 		}
 
 		current := result
-		keys := strings.Split(kv[0], ".")[1:]
+		keys := strings.Split(kv[0], ".")
 		for i, key := range keys {
 			if i == len(keys)-1 {
 				current[key] = DummyMarshall(value)

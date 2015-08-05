@@ -14,24 +14,24 @@ import (
 	"strings"
 )
 
-func autoformat(cfg *config.Config) error {
-	if len(cfg.State.Autoformat) == 0 || util.ResolveDevice(cfg.State.Dev) != "" {
+func autoformat(cfg *config.CloudConfig) error {
+	if len(cfg.Rancher.State.Autoformat) == 0 || util.ResolveDevice(cfg.Rancher.State.Dev) != "" {
 		return nil
 	}
-	AUTOFORMAT := "AUTOFORMAT=" + strings.Join(cfg.State.Autoformat, " ")
-	FORMATZERO := "FORMATZERO=" + fmt.Sprint(cfg.State.FormatZero)
-	cfg.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
+	AUTOFORMAT := "AUTOFORMAT=" + strings.Join(cfg.Rancher.State.Autoformat, " ")
+	FORMATZERO := "FORMATZERO=" + fmt.Sprint(cfg.Rancher.State.FormatZero)
+	cfg.Rancher.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
 	log.Info("Running Autoformat services")
-	err := docker.RunServices("autoformat", cfg, cfg.Autoformat)
+	err := docker.RunServices("autoformat", cfg, cfg.Rancher.Autoformat)
 	return err
 }
 
-func runBootstrapContainers(cfg *config.Config) error {
+func runBootstrapContainers(cfg *config.CloudConfig) error {
 	log.Info("Running Bootstrap services")
-	return docker.RunServices("bootstrap", cfg, cfg.BootstrapContainers)
+	return docker.RunServices("bootstrap", cfg, cfg.Rancher.BootstrapContainers)
 }
 
-func startDocker(cfg *config.Config) (chan interface{}, error) {
+func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
 	for _, d := range []string{config.DOCKER_SYSTEM_HOST, "/var/run"} {
 		err := os.MkdirAll(d, 0700)
 		if err != nil {
@@ -39,8 +39,8 @@ func startDocker(cfg *config.Config) (chan interface{}, error) {
 		}
 	}
 
-	cmd := exec.Command(cfg.BootstrapDocker.Args[0], cfg.BootstrapDocker.Args[1:]...)
-	if cfg.Debug {
+	cmd := exec.Command(cfg.Rancher.BootstrapDocker.Args[0], cfg.Rancher.BootstrapDocker.Args[1:]...)
+	if cfg.Rancher.Debug {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
@@ -67,7 +67,7 @@ func stopDocker(c chan interface{}) error {
 	return os.RemoveAll(config.DOCKER_SYSTEM_HOME)
 }
 
-func bootstrap(cfg *config.Config) error {
+func bootstrap(cfg *config.CloudConfig) error {
 	log.Info("Launching Bootstrap Docker")
 	c, err := startDocker(cfg)
 	if err != nil {

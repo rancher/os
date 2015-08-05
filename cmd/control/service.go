@@ -2,7 +2,7 @@ package control
 
 import (
 	"fmt"
-	"log"
+	log "github.com/Sirupsen/logrus"
 	"strings"
 
 	"github.com/codegangsta/cli"
@@ -44,16 +44,16 @@ func disable(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		if _, ok := cfg.ServicesInclude[service]; !ok {
+		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
 			continue
 		}
 
-		cfg.ServicesInclude[service] = false
+		cfg.Rancher.ServicesInclude[service] = false
 		changed = true
 	}
 
 	if changed {
-		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
+		if err = cfg.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -67,15 +67,15 @@ func del(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		if _, ok := cfg.ServicesInclude[service]; !ok {
+		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
 			continue
 		}
-		delete(cfg.ServicesInclude, service)
+		delete(cfg.Rancher.ServicesInclude, service)
 		changed = true
 	}
 
 	if changed {
-		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
+		if err = cfg.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -89,20 +89,20 @@ func enable(c *cli.Context) {
 	}
 
 	for _, service := range c.Args() {
-		if val, ok := cfg.ServicesInclude[service]; !ok || !val {
+		if val, ok := cfg.Rancher.ServicesInclude[service]; !ok || !val {
 			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
 				log.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
 			if _, err := docker.LoadServiceResource(service, true, cfg); err != nil {
 				log.Fatalf("could not load service %s", service)
 			}
-			cfg.ServicesInclude[service] = true
+			cfg.Rancher.ServicesInclude[service] = true
 			changed = true
 		}
 	}
 
 	if changed {
-		if err = cfg.Set("services_include", cfg.ServicesInclude); err != nil {
+		if err := cfg.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -115,11 +115,11 @@ func list(c *cli.Context) {
 	}
 
 	clone := make(map[string]bool)
-	for service, enabled := range cfg.ServicesInclude {
+	for service, enabled := range cfg.Rancher.ServicesInclude {
 		clone[service] = enabled
 	}
 
-	services, err := util.GetServices(cfg.Repositories.ToArray())
+	services, err := util.GetServices(cfg.Rancher.Repositories.ToArray())
 	if err != nil {
 		log.Fatalf("Failed to get services: %v", err)
 	}

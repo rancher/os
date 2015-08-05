@@ -68,7 +68,7 @@ func run(c *cli.Context) {
 	var wg sync.WaitGroup
 
 	for _, line := range strings.Split(string(input), "\n") {
-		if strings.TrimSpace(line) == "" {
+		if strings.TrimSpace(line) == "" || strings.Index(strings.TrimSpace(line), "#") == 0 {
 			continue
 		}
 		wg.Add(1)

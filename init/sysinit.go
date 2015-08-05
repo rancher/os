@@ -11,24 +11,6 @@ import (
 	"github.com/rancherio/os/docker"
 )
 
-func importImage(client *dockerClient.Client, name, fileName string) error {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	log.Debugf("Importing image for %s", fileName)
-	repo, tag := dockerClient.ParseRepositoryTag(name)
-	return client.ImportImage(dockerClient.ImportImageOptions{
-		Source:      "-",
-		Repository:  repo,
-		Tag:         tag,
-		InputStream: file,
-	})
-}
-
 func hasImage(name string) bool {
 	stamp := path.Join(STATE, name)
 	if _, err := os.Stat(stamp); os.IsNotExist(err) {
@@ -37,7 +19,7 @@ func hasImage(name string) bool {
 	return true
 }
 
-func findImages(cfg *config.Config) ([]string, error) {
+func findImages(cfg *config.CloudConfig) ([]string, error) {
 	log.Debugf("Looking for images at %s", config.IMAGES_PATH)
 
 	result := []string{}
@@ -68,7 +50,7 @@ func findImages(cfg *config.Config) ([]string, error) {
 	return result, nil
 }
 
-func loadImages(cfg *config.Config) error {
+func loadImages(cfg *config.CloudConfig) error {
 	images, err := findImages(cfg)
 	if err != nil || len(images) == 0 {
 		return err
@@ -106,12 +88,12 @@ func loadImages(cfg *config.Config) error {
 	return nil
 }
 
-func runContainers(cfg *config.Config) error {
-	return docker.RunServices("system-init", cfg, cfg.SystemContainers)
+func runContainers(cfg *config.CloudConfig) error {
+	return docker.RunServices("system-init", cfg, cfg.Rancher.Services)
 }
 
-func tailConsole(cfg *config.Config) error {
-	if !cfg.Console.Tail {
+func tailConsole(cfg *config.CloudConfig) error {
+	if !cfg.Rancher.Console.Tail {
 		return nil
 	}
 
@@ -120,7 +102,7 @@ func tailConsole(cfg *config.Config) error {
 		return err
 	}
 
-	console, ok := cfg.SystemContainers[config.CONSOLE_CONTAINER]
+	console, ok := cfg.Rancher.Services[config.CONSOLE_CONTAINER]
 	if !ok {
 		log.Error("Console not found")
 		return nil
@@ -151,11 +133,11 @@ func SysInit() error {
 	initFuncs := []config.InitFunc{
 		loadImages,
 		runContainers,
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			syscall.Sync()
 			return nil
 		},
-		func(cfg *config.Config) error {
+		func(cfg *config.CloudConfig) error {
 			log.Infof("RancherOS %s started", config.VERSION)
 			return nil
 		},

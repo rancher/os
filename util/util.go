@@ -18,6 +18,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/docker/docker/pkg/mount"
+	"reflect"
 )
 
 var (
@@ -154,6 +155,7 @@ func RandSeq(n int) string {
 func Convert(from, to interface{}) error {
 	bytes, err := yaml.Marshal(from)
 	if err != nil {
+		log.WithFields(log.Fields{"from": from}).Panicln(err)
 		return err
 	}
 
@@ -164,37 +166,93 @@ func MergeBytes(left, right []byte) ([]byte, error) {
 	leftMap := make(map[interface{}]interface{})
 	rightMap := make(map[interface{}]interface{})
 
-	err := yaml.Unmarshal(left, &leftMap)
-	if err != nil {
+	if err := yaml.Unmarshal(left, &leftMap); err != nil {
 		return nil, err
 	}
 
-	err = yaml.Unmarshal(right, &rightMap)
-	if err != nil {
+	if err := yaml.Unmarshal(right, &rightMap); err != nil {
 		return nil, err
 	}
 
-	MergeMaps(leftMap, rightMap)
-
-	return yaml.Marshal(leftMap)
+	return yaml.Marshal(MapsUnion(leftMap, rightMap, Replace))
 }
 
-func MergeMaps(left, right map[interface{}]interface{}) {
-	for k, v := range right {
-		merged := false
-		if existing, ok := left[k]; ok {
-			if rightMap, ok := v.(map[interface{}]interface{}); ok {
-				if leftMap, ok := existing.(map[interface{}]interface{}); ok {
-					merged = true
-					MergeMaps(leftMap, rightMap)
+func Copy(d interface{}) interface{} {
+	switch d := d.(type) {
+	case map[interface{}]interface{}:
+		return MapCopy(d)
+	default:
+		return d
+	}
+}
+
+func Replace(l, r interface{}) interface{} {
+	return r
+}
+
+func Equal(l, r interface{}) interface{} {
+	if reflect.DeepEqual(l, r) {
+		return l
+	}
+	return nil
+}
+
+func MapsUnion(left, right map[interface{}]interface{}, op func(interface{}, interface{}) interface{}) map[interface{}]interface{} {
+	result := MapCopy(left)
+
+	for k, r := range right {
+		if l, ok := result[k]; ok {
+			switch l := l.(type) {
+			case map[interface{}]interface{}:
+				switch r := r.(type) {
+				case map[interface{}]interface{}:
+					result[k] = MapsUnion(l, r, op)
+				default:
+					result[k] = op(l, r)
+				}
+			default:
+				result[k] = op(l, r)
+			}
+		} else {
+			result[k] = Copy(r)
+		}
+	}
+
+	return result
+}
+
+func MapsIntersection(left, right map[interface{}]interface{}, op func(interface{}, interface{}) interface{}) map[interface{}]interface{} {
+	result := map[interface{}]interface{}{}
+
+	for k, l := range left {
+		if r, ok := right[k]; ok {
+			switch r := r.(type) {
+			case map[interface{}]interface{}:
+				switch l := l.(type) {
+				case map[interface{}]interface{}:
+					result[k] = MapsIntersection(l, r, op)
+				default:
+					if i := op(l, r); i != nil {
+						result[k] = i
+					}
+				}
+			default:
+				if i := op(l, r); i != nil {
+					result[k] = i
 				}
 			}
 		}
-
-		if !merged {
-			left[k] = v
-		}
 	}
+
+	return result
+}
+
+func MapCopy(data map[interface{}]interface{}) map[interface{}]interface{} {
+	result := map[interface{}]interface{}{}
+	for k, v := range data {
+		result[k] = Copy(v)
+	}
+	return result
 }
 
 func GetServices(urls []string) ([]string, error) {

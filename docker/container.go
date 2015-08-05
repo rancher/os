@@ -282,12 +282,10 @@ func (c *Container) addLink(link string) {
 func (c *Container) parseService() {
 	if c.requiresSyslog() {
 		c.addLink("syslog")
-		log.Infof("[%v]: Implicitly linked to 'syslog'", c.Name)
 	}
 
 	if c.requiresUserDocker() {
 		c.addLink("dockerwait")
-		log.Infof("[%v]: Implicitly linked to 'dockerwait'", c.Name)
 	} else if c.ContainerCfg.Service.Image != "" {
 		client, err := NewClient(c.dockerHost)
 		if err != nil {
@@ -298,7 +296,6 @@ func (c *Container) parseService() {
 		i, _ := client.InspectImage(c.ContainerCfg.Service.Image)
 		if i == nil {
 			c.addLink("network")
-			log.Infof("[%v]: Implicitly linked to 'network'", c.Name)
 		}
 	}
 
@@ -538,6 +535,7 @@ func appendVolumesFrom(client *dockerClient.Client, containerCfg *config.Contain
 }
 
 func (c *Container) start(createOnly, wait bool) *Container {
+	log.Debugf("Container: STARTING '%v', createOnly: %v, !detach: %v, wait: %v", c.Name, createOnly, !c.detach, wait)
 	c.Lookup()
 	c.Stage()
 
@@ -619,9 +617,11 @@ func (c *Container) start(createOnly, wait bool) *Container {
 		}
 	}
 
+	log.Debugf("Container: WAIT? '%v' !c.detach && wait: %v", c.Name, !c.detach && wait)
 	if !c.detach && wait {
 		var exitCode int
 		exitCode, c.Err = client.WaitContainer(c.Container.ID)
+		log.Debugf("Container: FINISHED '%v', exitCode: %v", c.Name, exitCode)
 		if exitCode != 0 {
 			c.Err = errors.New(fmt.Sprintf("Container %s exited with code %d", c.Name, exitCode))
 		}
