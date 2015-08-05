@@ -9,4 +9,4 @@ fi
 
 docker build -t ros-build-base -f Dockerfile.base .
 docker build -t ros-build .
-echo make package | docker run -v /var/run/docker.sock:/var/run/docker.sock --name=ros-build -i ros-build
+./scripts/docker-run.sh make -f Makefile.docker dist
