@@ -9,4 +9,4 @@ fi
 
 docker build -t ros-build-base -f Dockerfile.base .
 docker build -t ros-build .
-./scripts/docker-run.sh make -f Makefile.docker dist
+./scripts/docker-run.sh make -f Makefile.docker build-all
