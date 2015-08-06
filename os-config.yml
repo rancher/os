@@ -1,6 +1,6 @@
 rancher:
   bootstrap:
-    udev:
+    udev-bootstrap:
       image: rancher/os-udev:v0.4.0-dev
       labels:
         io.rancher.os.detach: false
@@ -22,7 +22,7 @@ rancher:
       log_driver: json-file
       net: none
       privileged: true
-    udev:
+    udev-autoformat:
       image: rancher/os-udev:v0.4.0-dev
       labels:
         io.rancher.os.detach: false
@@ -131,26 +131,13 @@ rancher:
       - /usr/bin/ros:/usr/bin/respawn:ro
       - /usr/bin/ros:/usr/bin/system-docker:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
-      - /usr/bin/ros:/usr/sbin/dockerlaunch:ro
+      - /usr/bin/ros:/usr/bin/dockerlaunch:ro
       - /usr/bin/docker:/usr/bin/docker:ro
     console:
       image: rancher/os-console:v0.4.0-dev
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init
-      net: host
-      uts: host
-      pid: host
-      ipc: host
-      privileged: true
-      restart: always
-      volumes_from:
-      - all-volumes
-    docker:
-      image: rancher/os-docker:v0.4.0-dev
-      labels:
-        io.rancher.os.scope: system
-        io.rancher.os.after: network
       net: host
       uts: host
       pid: host
@@ -208,6 +195,8 @@ rancher:
       image: rancher/os-preload:v0.4.0-dev
       labels:
         io.rancher.os.detach: false
+        io.rancher.os.scope: system
+        io.rancher.os.after: console
       privileged: true
       volumes:
       - /var/run/docker.sock:/var/run/docker.sock
