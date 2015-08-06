@@ -28,7 +28,7 @@ const (
 	SCOPE         = "io.rancher.os.scope"
 	SYSTEM        = "system"
 
-	OsConfigFile          = "/os-config.yml"
+	OsConfigFile          = "/usr/share/ros/os-config.yml"
 	CloudConfigFile       = "/var/lib/rancher/conf/cloud-config.yml"
 	CloudConfigScriptFile = "/var/lib/rancher/conf/cloud-config-script"
 	MetaDataFile          = "/var/lib/rancher/conf/metadata"
