@@ -9,4 +9,4 @@ for i in `./ros c images -i os-config.yml`; do
     [ "${FORCE_PULL}" != "1" ] && docker inspect $i >/dev/null 2>&1 || docker pull $i;
 done
 
-docker save `./ros c images -i os-config.yml` > ${INITRD_DIR}/images.tar
+docker save `./ros c images -i os-config.yml` > ${BUILD}/images.tar

@@ -60,7 +60,6 @@ if [ ! -d ${INITRD_TMP} ]; then
     else
         xz -dc ${INITRD} | cpio -idmv
     fi
-    rm -f init
     popd
 fi
 

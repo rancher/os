@@ -1,14 +1,15 @@
-
 include common.make
 
 
 compile: bin/rancheros
+
 
 all: clean ros-build-base build-all
 
 
 ros-build-base:
 	docker build -t ros-build-base -f Dockerfile.base .
+
 
 ros-build-image:
 	docker build -t ros-build .
