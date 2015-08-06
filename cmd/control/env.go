@@ -18,6 +18,9 @@ func envAction(c *cli.Context) {
 	}
 
 	args := c.Args()
+	if len(args) == 0 {
+		return
+	}
 	osEnv := os.Environ()
 
 	envMap := make(map[string]string, len(cfg.Rancher.Environment)+len(osEnv))
