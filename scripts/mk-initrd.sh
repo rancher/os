@@ -15,12 +15,14 @@ cp bin/rancheros           ${INITRD_DIR}/usr/bin/ros
 ln -s usr/bin/ros          ${INITRD_DIR}/init
 ln -s bin                  ${INITRD_DIR}/usr/sbin
 
-docker export $(docker create rancher/docker:1.8.0-rc2) | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerlaunch \
-                                                                                     --exclude=usr/bin/docker       \
-                                                                                     --exclude=usr/share/git-core   \
-                                                                                     --exclude=usr/bin/git          \
-                                                                                     --exclude=usr/bin/ssh          \
-                                                                                     --exclude=usr/libexec/git-core \
-                                                                                     usr
+DFS=$(docker create rancher/docker:1.8.0-rc2)
+trap "docker rm -fv ${DFS}" EXIT
+docker export ${DFS} | tar xvf - -C ${INITRD_DIR}  --exclude=usr/bin/dockerlaunch \
+                                                   --exclude=usr/bin/docker       \
+                                                   --exclude=usr/share/git-core   \
+                                                   --exclude=usr/bin/git          \
+                                                   --exclude=usr/bin/ssh          \
+                                                   --exclude=usr/libexec/git-core \
+                                                   usr
 
 cd ${INITRD_DIR} && find | cpio -H newc -o | lzma -c > ${DIST}/artifacts/initrd
