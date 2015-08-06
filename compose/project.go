@@ -76,7 +76,7 @@ func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) 
 
 func addServices(p *project.Project, cfg *config.CloudConfig, enabled map[string]string, configs map[string]*project.ServiceConfig) {
 	// Note: we ignore errors while loading services
-	for name, serviceConfig := range cfg.Rancher.Services {
+	for name, serviceConfig := range configs {
 		hash := project.GetServiceHash(name, *serviceConfig)
 
 		if enabled[name] == hash {

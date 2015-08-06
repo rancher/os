@@ -13,6 +13,7 @@ cp ${BUILD}/images.tar     ${INITRD_DIR}/usr/share/ros
 cp os-config.yml           ${INITRD_DIR}/usr/share/ros/
 cp bin/rancheros           ${INITRD_DIR}/usr/bin/ros
 ln -s usr/bin/ros          ${INITRD_DIR}/init
+ln -s bin                  ${INITRD_DIR}/usr/sbin
 
 docker export $(docker create rancher/docker:1.8.0-rc2) | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerlaunch \
                                                                                      --exclude=usr/bin/docker       \
