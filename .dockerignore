@@ -7,4 +7,5 @@ tmp
 state
 build
 dist
+assets
 Godeps/_workspace/pkg

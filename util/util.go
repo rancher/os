@@ -345,3 +345,16 @@ func KVPairs2Map(kvs []string) map[string]string {
 	}
 	return r
 }
+
+func TrimSplitN(str, sep string, count int) []string {
+	result := []string{}
+	for _, part := range strings.SplitN(strings.TrimSpace(str), sep, count) {
+		result = append(result, strings.TrimSpace(part))
+	}
+
+	return result
+}
+
+func TrimSplit(str, sep string) []string {
+	return TrimSplitN(str, sep, -1)
+}

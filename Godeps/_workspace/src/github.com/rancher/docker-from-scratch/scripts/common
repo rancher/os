@@ -1,0 +1,2 @@
+VERSION=$(<./scripts/version)
+IMAGE=${IMAGE:-rancher/docker:${VERSION}}

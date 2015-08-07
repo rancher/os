@@ -110,6 +110,8 @@ func execute(line string, wg *sync.WaitGroup) {
 		args := strings.Split(line, " ")
 
 		cmd := exec.Command("setsid", args...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 
 		err := cmd.Start()
 		if err != nil {

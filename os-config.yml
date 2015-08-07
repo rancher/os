@@ -1,6 +1,6 @@
 rancher:
   bootstrap:
-    udev:
+    udev-bootstrap:
       image: rancher/os-udev:v0.4.0-dev
       labels:
         io.rancher.os.detach: false
@@ -22,13 +22,12 @@ rancher:
       log_driver: json-file
       net: none
       privileged: true
-    udev:
+    udev-autoformat:
       image: rancher/os-udev:v0.4.0-dev
       labels:
         io.rancher.os.detach: false
         io.rancher.os.scope: system
-      links:
-      - autoformat
+        io.rancher.os.after: autoformat
       log_driver: json-file
       net: host
       uts: host
@@ -38,8 +37,8 @@ rancher:
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
   bootstrap_docker:
-    args: [docker, -d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
-      -G, root, -H, 'unix:///var/run/system-docker.sock']
+    args: [-d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
+        -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   cloud_init:
     datasources:
     - configdrive:/media/config-2
@@ -89,9 +88,7 @@ rancher:
         io.rancher.os.detach: false
         io.rancher.os.reloadconfig: true
         io.rancher.os.scope: system
-      links:
-      - cloud-init-pre
-      - network
+        io.rancher.os.after: cloud-init-pre,network
       net: host
       uts: host
       privileged: true
@@ -106,8 +103,7 @@ rancher:
         io.rancher.os.detach: false
         io.rancher.os.reloadconfig: true
         io.rancher.os.scope: system
-      links:
-      - preload-system-images
+        io.rancher.os.after: preload-system-images
       net: host
       uts: host
       privileged: true
@@ -124,42 +120,24 @@ rancher:
       privileged: true
       read_only: true
       volumes:
-      - /init:/sbin/halt:ro
-      - /init:/sbin/poweroff:ro
-      - /init:/sbin/reboot:ro
-      - /init:/sbin/shutdown:ro
-      - /init:/sbin/netconf:ro
-      - /init:/usr/bin/cloud-init:ro
-      - /init:/usr/bin/rancherctl:ro
-      - /init:/usr/bin/ros:ro
-      - /init:/usr/bin/respawn:ro
-      - /init:/usr/bin/system-docker:ro
-      - /init:/usr/sbin/wait-for-docker:ro
-      - /lib/modules:/lib/modules
+      - /usr/bin/ros:/sbin/halt:ro
+      - /usr/bin/ros:/sbin/poweroff:ro
+      - /usr/bin/ros:/sbin/reboot:ro
+      - /usr/bin/ros:/sbin/shutdown:ro
+      - /usr/bin/ros:/sbin/netconf:ro
+      - /usr/bin/ros:/usr/bin/cloud-init:ro
+      - /usr/bin/ros:/usr/bin/rancherctl:ro
+      - /usr/bin/ros:/usr/bin/ros:ro
+      - /usr/bin/ros:/usr/bin/respawn:ro
+      - /usr/bin/ros:/usr/bin/system-docker:ro
+      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
+      - /usr/bin/ros:/usr/bin/dockerlaunch:ro
       - /usr/bin/docker:/usr/bin/docker:ro
     console:
       image: rancher/os-console:v0.4.0-dev
       labels:
-        io.rancher.os.remove: true
         io.rancher.os.scope: system
-      links:
-      - cloud-init
-      - dockerwait  # because console runs `loud-init -execute`, which may need docker
-      net: host
-      uts: host
-      pid: host
-      ipc: host
-      privileged: true
-      restart: always
-      volumes_from:
-      - all-volumes
-    docker:
-      image: rancher/os-docker:v0.4.0-dev
-      labels:
-        io.rancher.os.scope: system
-      links:
-      - cloud-init
-      - network
+        io.rancher.os.after: cloud-init
       net: host
       uts: host
       pid: host
@@ -178,27 +156,14 @@ rancher:
       privileged: true
       read_only: true
       volumes:
-      - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/lib/docker:/var/lib/docker
       - /var/lib/system-docker:/var/lib/system-docker
-    dockerwait:
-      image: rancher/os-dockerwait:v0.4.0-dev
-      labels:
-        io.rancher.os.detach: false
-        io.rancher.os.scope: system
-      links:
-      - docker
-      net: host
-      uts: host
-      volumes_from:
-      - all-volumes
     network:
       image: rancher/os-network:v0.4.0-dev
       labels:
         io.rancher.os.detach: false
         io.rancher.os.scope: system
-      links:
-      - cloud-init-pre
+        io.rancher.os.after: cloud-init-pre
       net: host
       uts: host
       privileged: true
@@ -209,9 +174,7 @@ rancher:
       image: rancher/os-ntp:v0.4.0-dev
       labels:
         io.rancher.os.scope: system
-      links:
-      - cloud-init
-      - network
+        io.rancher.os.after: cloud-init, network
       net: host
       uts: host
       privileged: true
@@ -233,8 +196,7 @@ rancher:
       labels:
         io.rancher.os.detach: false
         io.rancher.os.scope: system
-      links:
-      - dockerwait
+        io.rancher.os.after: console
       privileged: true
       volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -264,7 +226,7 @@ rancher:
       read_only: true
       volumes:
       - /dev:/host/dev
-      - /os-config.yml:/os-config.yml
+      - /usr/share/ros/os-config.yml:/usr/share/ros/os-config.yml
       - /var/lib/rancher:/var/lib/rancher
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
@@ -298,8 +260,8 @@ rancher:
       - /home:/home
       - /opt:/opt
   system_docker:
-    args: [docker, -d, --log-driver, syslog, -s, overlay, -b, docker-sys, --fixed-cidr,
-      172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
+    args: [-d, -s, overlay, -b, docker-sys, --fixed-cidr, 172.18.42.1/16,
+      --restart=false, -g, /var/lib/system-docker, -G, root,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:
     url: https://releases.rancher.com/os/versions.yml
@@ -307,4 +269,4 @@ rancher:
   user_docker:
     tls_args: [--tlsverify, --tlscacert=ca.pem, --tlscert=server-cert.pem, --tlskey=server-key.pem,
       '-H=0.0.0.0:2376']
-    args: [docker, -d, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock', --userland-proxy=false]
+    args: [-d, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock', --userland-proxy=false]

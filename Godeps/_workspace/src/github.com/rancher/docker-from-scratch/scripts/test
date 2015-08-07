@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+. ./scripts/common
+
+mkdir -p build/test-cache
+ID=$(docker run -d --privileged -e DOCKER_LAUNCH_DEBUG=true -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) $IMAGE -d -s $(docker info | grep 'Storage Driver' | cut -f2 -d:))
+docker logs -f $ID &
+trap "docker rm -fv $ID" EXIT
+docker exec -i $ID docker build -t test-build git://github.com/rancher/tiny-build.git
+docker exec -i $ID docker version
+docker exec -i $ID docker info
+docker exec -i $ID docker run test-build

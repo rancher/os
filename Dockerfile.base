@@ -18,9 +18,6 @@ RUN cd /usr/src/go/src && ./make.bash --no-clean 2>&1
 ENV GOROOT /usr/src/go
 ENV PATH $GOROOT/bin:$PATH
 
-RUN go clean -i net
-RUN go install -tags netgo std
-
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
 ENV PATH /go/bin:$PATH

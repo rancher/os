@@ -10,18 +10,10 @@ VERSION=${VERSION:?"VERSION not set"}
 BUILD=${BUILD:?"BUILD not set"}
 
 
-CONTAINER_INITRDBASE=$(docker create rancher/os-initrdbase:${VERSION})
-cleanup_initrdbase() {
-    docker rm -v ${CONTAINER_INITRDBASE}
-}
-trap cleanup_initrdbase EXIT
-docker cp ${CONTAINER_INITRDBASE}:/initrd ${BUILD} # copies files to ${BUILD}/initrd
-
-
 CONTAINER_KERNEL=$(docker create rancher/os-kernel:${VERSION})
 cleanup_kernel() {
-    cleanup_initrdbase
     docker rm -v ${CONTAINER_KERNEL}
 }
 trap cleanup_kernel EXIT
+
 docker cp ${CONTAINER_KERNEL}:/kernel ${BUILD} # copies files to ${BUILD}/kernel

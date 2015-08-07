@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+rm -rf build/stage
+mkdir -p build/stage
+mkdir -p dist
+pushd build/stage
+
+BASE=$(echo ../buildroot-*/output/target/)
+
+mkdir -p usr/bin usr/share usr/libexec/git-core
+
+cp $BASE/bin/busybox usr/bin
+cp $BASE/usr/bin/xz usr/bin
+cp $BASE/usr/bin/git usr/bin
+cp $BASE/usr/bin/ssh usr/bin
+cp $BASE/usr/sbin/xtables-multi usr/bin/iptables
+cp -rf $BASE/usr/share/git-core usr/share
+
+ln -s ../../bin/git usr/libexec/git-core/git-clone
+ln -s ../../bin/git usr/libexec/git-core/git-checkout
+ln -s bin usr/sbin
+
+# Okay, this is a hack. I won't tell anyone if you don't.
+# Honestly, who uses git submodules anyways...
+echo '#!/usr/bin/busybox echo' > usr/libexec/git-core/git-submodule
+chmod +x usr/libexec/git-core/git-submodule
+
+ln -s busybox usr/bin/ps
+ln -s busybox usr/bin/modprobe
+
+tar cvzf ../../dist/base-files.tar.gz .

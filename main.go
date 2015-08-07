@@ -6,6 +6,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/reexec"
+	dockerlaunchMain "github.com/rancher/docker-from-scratch/main"
 	"github.com/rancherio/os/cmd/cloudinit"
 	"github.com/rancherio/os/cmd/control"
 	"github.com/rancherio/os/cmd/network"
@@ -14,6 +15,7 @@ import (
 	"github.com/rancherio/os/cmd/sysinit"
 	"github.com/rancherio/os/cmd/systemdocker"
 	"github.com/rancherio/os/cmd/wait"
+	"github.com/rancherio/os/config"
 	osInit "github.com/rancherio/os/init"
 )
 
@@ -37,7 +39,8 @@ func registerCmd(cmd string, mainFunc func()) {
 
 func main() {
 	registerCmd("/init", osInit.MainInit)
-	registerCmd(osInit.SYSINIT, sysinit.Main)
+	registerCmd(config.SYSINIT_BIN, sysinit.Main)
+	registerCmd("/usr/bin/dockerlaunch", dockerlaunchMain.Main)
 	registerCmd("/usr/bin/system-docker", systemdocker.Main)
 	registerCmd("/sbin/poweroff", power.PowerOff)
 	registerCmd("/sbin/reboot", power.Reboot)

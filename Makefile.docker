@@ -1,11 +1,12 @@
 
-DOCKER_BINARY_URL := https://github.com/rancher/docker/releases/download/v1.7.1-ros-1/docker-1.7.1
+DOCKER_BINARY_URL := https://github.com/rancher/docker/releases/download/v1.8.0-rc2-ros/docker-1.8.0-rc2
 
 include common.make
 
 
-bin/rancheros: bin
-	godep go build -tags netgo -ldflags "-X github.com/rancherio/os/config.VERSION $(VERSION) -linkmode external -extldflags -static" -o $@
+bin/rancheros:
+	mkdir -p bin
+	godep go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancherio/os/config.VERSION $(VERSION) -linkmode external -extldflags -static" -o $@
 	strip --strip-all $@
 
 
@@ -13,43 +14,45 @@ pwd := $(shell pwd)
 include scripts/build-common
 CD := $(BUILD)/cd
 
-assets bin $(DIST)/artifacts $(CD)/boot/isolinux:
-	mkdir -p $@
 
-
-DOCKER_BINARY := $(shell basename $(DOCKER_BINARY_URL))
-
-assets/$(DOCKER_BINARY): assets
-	cd assets && curl -OL "$(DOCKER_BINARY_URL)"
-
-assets/docker: assets/$(DOCKER_BINARY)
-	mv assets/$(DOCKER_BINARY) $@
+assets/docker:
+	mkdir -p assets
+	curl -L "$(DOCKER_BINARY_URL)" > $@
 	chmod +x $@
+
 
 copy-images:
 	./scripts/copy-images
 
-$(DIST)/artifacts/vmlinuz: $(DIST)/artifacts copy-images
+
+$(DIST)/artifacts/vmlinuz: copy-images
+	mkdir -p $(DIST)/artifacts
 	mv $(BUILD)/kernel/vmlinuz $@
 
 
 INITRD_DIR := $(BUILD)/initrd
 
-$(INITRD_DIR)/images.tar: bin/rancheros
-	FORCE_PULL=$(FORCE_PULL) INITRD_DIR=$(INITRD_DIR) ./scripts/mk-images-tar.sh
+
+$(BUILD)/images.tar: bin/rancheros os-config.yml
+	FORCE_PULL=$(FORCE_PULL) BUILD=$(BUILD) ./scripts/mk-images-tar.sh
 
 
-$(DIST)/artifacts/initrd: $(DIST)/artifacts bin/rancheros assets/docker copy-images $(INITRD_DIR)/images.tar
+$(DIST)/artifacts/initrd: bin/rancheros assets/docker copy-images $(BUILD)/images.tar
+	mkdir -p $(DIST)/artifacts
 	INITRD_DIR=$(INITRD_DIR) ./scripts/mk-initrd.sh
 
-$(DIST)/artifacts/rancheros.iso: $(DIST)/artifacts/initrd $(CD)/boot/isolinux
+
+$(DIST)/artifacts/rancheros.iso: $(DIST)/artifacts/initrd
 	CD=$(CD) ./scripts/mk-rancheros-iso.sh
+
 
 $(DIST)/artifacts/iso-checksums.txt: $(DIST)/artifacts/rancheros.iso
 	./scripts/mk-iso-checksums-txt.sh
 
+
 version:
 	@echo $(VERSION)
+
 
 build-all: \
 	bin/rancheros \
@@ -59,4 +62,4 @@ build-all: \
 	$(DIST)/artifacts/iso-checksums.txt
 
 
-.PHONY: build-all version copy-images
+.PHONY: build-all version copy-images os-config.yml

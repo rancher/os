@@ -15,7 +15,9 @@ import (
 	dockerClient "github.com/fsouza/go-dockerclient"
 
 	"github.com/codegangsta/cli"
+	"github.com/docker/libcompose/project"
 	"github.com/rancherio/os/cmd/power"
+	"github.com/rancherio/os/compose"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/docker"
 )
@@ -147,7 +149,9 @@ func osUpgrade(c *cli.Context) {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
-	startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"))
+	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot")); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func osVersion(c *cli.Context) {
@@ -164,22 +168,28 @@ func yes(in *bufio.Reader, question string) bool {
 	return strings.ToLower(line[0:1]) == "y"
 }
 
-func startUpgradeContainer(image string, stage, force, reboot bool) {
+func startUpgradeContainer(image string, stage, force, reboot bool) error {
 	in := bufio.NewReader(os.Stdin)
 
-	container := docker.NewContainer(config.DOCKER_SYSTEM_HOST, &config.ContainerConfig{
-		Cmd: "--name=os-upgrade " +
-			"--log-driver=json-file " +
-			"--rm " +
-			"--privileged " +
-			"--net=host " +
-			image + " " +
-			"-t rancher-upgrade " +
-			"-r " + config.VERSION,
-	}).Stage()
+	container, err := compose.CreateService(nil, "os-upgrade", &project.ServiceConfig{
+		LogDriver:  "json-file",
+		Privileged: true,
+		Net:        "host",
+		Image:      image,
+		Labels: project.NewSliceorMap(map[string]string{
+			config.SCOPE: config.SYSTEM,
+		}),
+		Command: project.NewCommand(
+			"-t", "rancher-upgrade",
+			"-r", config.VERSION,
+		),
+	})
+	if err != nil {
+		return err
+	}
 
-	if container.Err != nil {
-		log.Fatal(container.Err)
+	if err := container.Pull(); err != nil {
+		return err
 	}
 
 	if !stage {
@@ -191,46 +201,25 @@ func startUpgradeContainer(image string, stage, force, reboot bool) {
 			}
 		}
 
-		container.Start()
-		if container.Err != nil {
-			log.Fatal(container.Err)
+		if err := container.Start(); err != nil {
+			return err
 		}
 
-		client, err := docker.NewClient(config.DOCKER_SYSTEM_HOST)
-		if err != nil {
-			log.Fatal(err)
+		if err := container.Log(); err != nil {
+			return err
 		}
 
-		go func() {
-			client.Logs(dockerClient.LogsOptions{
-				Container:    container.Container.ID,
-				OutputStream: os.Stdout,
-				ErrorStream:  os.Stderr,
-				Follow:       true,
-				Stdout:       true,
-				Stderr:       true,
-			})
-		}()
-
-		exit, err := client.WaitContainer(container.Container.ID)
-		if err != nil {
-			log.Fatal(err)
+		if err := container.Up(); err != nil {
+			return err
 		}
 
-		if container.Err != nil {
-			log.Fatal(container.Err)
-		}
-
-		if exit == 0 {
-			if reboot && (force || yes(in, "Continue with reboot")) {
-				log.Info("Rebooting")
-				power.Reboot()
-			}
-		} else {
-			log.Error("Upgrade failed")
-			os.Exit(exit)
+		if reboot && (force || yes(in, "Continue with reboot")) {
+			log.Info("Rebooting")
+			power.Reboot()
 		}
 	}
+
+	return nil
 }
 
 func parseBody(body []byte) (*Images, error) {
