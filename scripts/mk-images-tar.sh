@@ -2,6 +2,7 @@
 set -ex
 
 cd $(dirname $0)/..
+. scripts/build-common
 
 ln -sf bin/rancheros ./ros
 

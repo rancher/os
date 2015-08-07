@@ -4,6 +4,8 @@ set -ex
 cd $(dirname $0)/..
 . scripts/build-common
 
+INITRD_DIR=${BUILD}/initrd
+
 rm -rf ${INITRD_DIR}/{usr,init}
 mkdir -p ${INITRD_DIR}/usr/{bin,share/ros}
 
@@ -15,7 +17,7 @@ cp bin/rancheros           ${INITRD_DIR}/usr/bin/ros
 ln -s usr/bin/ros          ${INITRD_DIR}/init
 ln -s bin                  ${INITRD_DIR}/usr/sbin
 
-DFS=$(docker create rancher/docker:1.8.0-rc2)
+DFS=$(docker create ${DFS_IMAGE})
 trap "docker rm -fv ${DFS}" EXIT
 docker export ${DFS} | tar xvf - -C ${INITRD_DIR}  --exclude=usr/bin/dockerlaunch \
                                                    --exclude=usr/bin/docker       \
