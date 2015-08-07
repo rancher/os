@@ -4,6 +4,8 @@ set -ex
 cd $(dirname $0)/..
 . scripts/build-common
 
+CD=${BUILD}/cd
+
 mkdir -p ${CD}/boot/isolinux
 
 cp ${DIST}/artifacts/initrd                   ${CD}/boot
