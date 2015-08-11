@@ -1,8 +1,8 @@
 include common.make
 
-DOCKER_BINARY_URL := https://github.com/rancher/docker/releases/download/v1.8.0-rc2-ros/docker-1.8.0-rc2
+DOCKER_BINARY_URL := https://github.com/rancher/docker/releases/download/v1.8.0-rc3-ros/docker-1.8.0-rc3
 KERNEL_URL        := https://github.com/rancher/os-kernel/releases/download/Ubuntu-3.19.0-26.27/linux-3.19.8-ckt4-rancher-x86.tar.gz
-DFS_IMAGE         := rancher/docker:1.8.0-rc2
+DFS_IMAGE         := rancher/docker:1.8.0-rc3
 
 bin/rancheros:
 	mkdir -p $(dir $@)
