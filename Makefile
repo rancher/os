@@ -18,14 +18,16 @@ ros-build-image:
 bin/rancheros: ros-build-image
 	./scripts/docker-run.sh make -f Makefile.docker $@
 
+	mkdir -p bin
 	docker cp ros-build:/go/src/github.com/rancherio/os/$@ $(dir $@)
 
 
 build-all: ros-build-image
 	./scripts/docker-run.sh make -f Makefile.docker FORCE_PULL=$(FORCE_PULL) $@
 
-	docker cp ros-build:/go/src/github.com/rancherio/os/bin/rancheros bin
-	docker cp ros-build:/go/src/github.com/rancherio/os/dist/artifacts dist
+	mkdir -p bin dist
+	docker cp ros-build:/go/src/github.com/rancherio/os/bin/rancheros bin/
+	docker cp ros-build:/go/src/github.com/rancherio/os/dist/artifacts dist/
 
 
 version:
