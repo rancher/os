@@ -157,6 +157,18 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
+    logrotate:
+      image: rancher/os-logrotate:v0.4.0-dev
+      labels:
+        io.rancher.os.scope: system
+      log_driver: json-file
+      net: none
+      pid: host
+      ipc: host
+      privileged: true
+      restart: always   # logrotate isn't a daemon, so this should really be handled by cron
+      volumes_from:
+      - system-volumes
     network:
       image: rancher/os-network:v0.4.0-dev
       labels:
