@@ -58,4 +58,4 @@ build-all: \
 	$(DIST)/artifacts/iso-checksums.txt
 
 
-.PHONY: build-all version
+.PHONY: build-all version bin/rancheros

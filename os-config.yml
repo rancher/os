@@ -132,7 +132,7 @@ rancher:
       - /usr/bin/ros:/usr/bin/system-docker:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       - /usr/bin/ros:/usr/bin/dockerlaunch:ro
-      - /usr/bin/docker:/usr/bin/docker:ro
+      - /usr/bin/docker:/usr/bin/docker.dist:ro
     console:
       image: rancher/os-console:v0.4.0-dev
       labels:
@@ -157,7 +157,6 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
-      - /var/lib/system-docker:/var/lib/system-docker
     network:
       image: rancher/os-network:v0.4.0-dev
       labels:
@@ -232,8 +231,19 @@ rancher:
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
+      - /run:/run
       - /var/run:/var/run
       - /var/log:/var/log
+    udev-cold:
+      image: rancher/os-udev:v0.4.0-dev
+      labels:
+        io.rancher.os.scope: system
+        io.rancher.os.before: udev
+      net: host
+      uts: host
+      privileged: true
+      volumes_from:
+      - system-volumes
     udev:
       image: rancher/os-udev:v0.4.0-dev
       environment:
