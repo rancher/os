@@ -1,8 +1,8 @@
 package docker
 
 import (
-	shlex "github.com/flynn/go-shlex"
 	"github.com/docker/libcompose/project"
+	shlex "github.com/flynn/go-shlex"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -1,53 +1,151 @@
 package project
 
-type Event string
+import "fmt"
+
+type Event int
 
 const (
 	CONTAINER_ID = "container_id"
 
-	CONTAINER_CREATED = Event("Created container")
-	CONTAINER_STARTED = Event("Started container")
+	NO_EVENT = Event(iota)
 
-	SERVICE_ADD           = Event("Adding")
-	SERVICE_UP_START      = Event("Starting")
-	SERVICE_UP_IGNORED    = Event("Ignoring")
-	SERVICE_UP            = Event("Started")
-	SERVICE_CREATE_START  = Event("Creating")
-	SERVICE_CREATE        = Event("Created")
-	SERVICE_DELETE_START  = Event("Deleting")
-	SERVICE_DELETE        = Event("Deleted")
-	SERVICE_DOWN_START    = Event("Stopping")
-	SERVICE_DOWN          = Event("Stopped")
-	SERVICE_RESTART_START = Event("Restarting")
-	SERVICE_RESTART       = Event("Restarted")
-	SERVICE_PULL_START    = Event("Pulling")
-	SERVICE_PULL          = Event("Pulled")
-	SERVICE_KILL_START    = Event("Killing")
-	SERVICE_KILL          = Event("Killed")
-	SERVICE_START_START   = Event("Starting")
-	SERVICE_START         = Event("Started")
-	SERVICE_BUILD_START   = Event("Building")
-	SERVICE_BUILD         = Event("Built")
+	CONTAINER_CREATED = Event(iota)
+	CONTAINER_STARTED = Event(iota)
 
-	PROJECT_DOWN_START     = Event("Stopping project")
-	PROJECT_DOWN_DONE      = Event("Project stopped")
-	PROJECT_CREATE_START   = Event("Creating project")
-	PROJECT_CREATE_DONE    = Event("Project created")
-	PROJECT_UP_START       = Event("Starting project")
-	PROJECT_UP_DONE        = Event("Project started")
-	PROJECT_DELETE_START   = Event("Deleting project")
-	PROJECT_DELETE_DONE    = Event("Project deleted")
-	PROJECT_RESTART_START  = Event("Restarting project")
-	PROJECT_RESTART_DONE   = Event("Project restarted")
-	PROJECT_RELOAD         = Event("Reloading project")
-	PROJECT_RELOAD_TRIGGER = Event("Triggering project reload")
-	PROJECT_KILL_START     = Event("Killing project")
-	PROJECT_KILL_DONE      = Event("Project killed")
-	PROJECT_START_START    = Event("Starting project")
-	PROJECT_START_DONE     = Event("Project started")
-	PROJECT_BUILD_START    = Event("Building project")
-	PROJECT_BUILD_DONE     = Event("Project built")
+	SERVICE_ADD           = Event(iota)
+	SERVICE_UP_START      = Event(iota)
+	SERVICE_UP_IGNORED    = Event(iota)
+	SERVICE_UP            = Event(iota)
+	SERVICE_CREATE_START  = Event(iota)
+	SERVICE_CREATE        = Event(iota)
+	SERVICE_DELETE_START  = Event(iota)
+	SERVICE_DELETE        = Event(iota)
+	SERVICE_DOWN_START    = Event(iota)
+	SERVICE_DOWN          = Event(iota)
+	SERVICE_RESTART_START = Event(iota)
+	SERVICE_RESTART       = Event(iota)
+	SERVICE_PULL_START    = Event(iota)
+	SERVICE_PULL          = Event(iota)
+	SERVICE_KILL_START    = Event(iota)
+	SERVICE_KILL          = Event(iota)
+	SERVICE_START_START   = Event(iota)
+	SERVICE_START         = Event(iota)
+	SERVICE_BUILD_START   = Event(iota)
+	SERVICE_BUILD         = Event(iota)
+
+	PROJECT_DOWN_START     = Event(iota)
+	PROJECT_DOWN_DONE      = Event(iota)
+	PROJECT_CREATE_START   = Event(iota)
+	PROJECT_CREATE_DONE    = Event(iota)
+	PROJECT_UP_START       = Event(iota)
+	PROJECT_UP_DONE        = Event(iota)
+	PROJECT_DELETE_START   = Event(iota)
+	PROJECT_DELETE_DONE    = Event(iota)
+	PROJECT_RESTART_START  = Event(iota)
+	PROJECT_RESTART_DONE   = Event(iota)
+	PROJECT_RELOAD         = Event(iota)
+	PROJECT_RELOAD_TRIGGER = Event(iota)
+	PROJECT_KILL_START     = Event(iota)
+	PROJECT_KILL_DONE      = Event(iota)
+	PROJECT_START_START    = Event(iota)
+	PROJECT_START_DONE     = Event(iota)
+	PROJECT_BUILD_START    = Event(iota)
+	PROJECT_BUILD_DONE     = Event(iota)
 )
+
+func (e Event) String() string {
+	var m string
+	switch e {
+	case CONTAINER_CREATED:
+		m = "Created container"
+	case CONTAINER_STARTED:
+		m = "Started container"
+
+	case SERVICE_ADD:
+		m = "Adding"
+	case SERVICE_UP_START:
+		m = "Starting"
+	case SERVICE_UP_IGNORED:
+		m = "Ignoring"
+	case SERVICE_UP:
+		m = "Started"
+	case SERVICE_CREATE_START:
+		m = "Creating"
+	case SERVICE_CREATE:
+		m = "Created"
+	case SERVICE_DELETE_START:
+		m = "Deleting"
+	case SERVICE_DELETE:
+		m = "Deleted"
+	case SERVICE_DOWN_START:
+		m = "Stopping"
+	case SERVICE_DOWN:
+		m = "Stopped"
+	case SERVICE_RESTART_START:
+		m = "Restarting"
+	case SERVICE_RESTART:
+		m = "Restarted"
+	case SERVICE_PULL_START:
+		m = "Pulling"
+	case SERVICE_PULL:
+		m = "Pulled"
+	case SERVICE_KILL_START:
+		m = "Killing"
+	case SERVICE_KILL:
+		m = "Killed"
+	case SERVICE_START_START:
+		m = "Starting"
+	case SERVICE_START:
+		m = "Started"
+	case SERVICE_BUILD_START:
+		m = "Building"
+	case SERVICE_BUILD:
+		m = "Built"
+
+	case PROJECT_DOWN_START:
+		m = "Stopping project"
+	case PROJECT_DOWN_DONE:
+		m = "Project stopped"
+	case PROJECT_CREATE_START:
+		m = "Creating project"
+	case PROJECT_CREATE_DONE:
+		m = "Project created"
+	case PROJECT_UP_START:
+		m = "Starting project"
+	case PROJECT_UP_DONE:
+		m = "Project started"
+	case PROJECT_DELETE_START:
+		m = "Deleting project"
+	case PROJECT_DELETE_DONE:
+		m = "Project deleted"
+	case PROJECT_RESTART_START:
+		m = "Restarting project"
+	case PROJECT_RESTART_DONE:
+		m = "Project restarted"
+	case PROJECT_RELOAD:
+		m = "Reloading project"
+	case PROJECT_RELOAD_TRIGGER:
+		m = "Triggering project reload"
+	case PROJECT_KILL_START:
+		m = "Killing project"
+	case PROJECT_KILL_DONE:
+		m = "Project killed"
+	case PROJECT_START_START:
+		m = "Starting project"
+	case PROJECT_START_DONE:
+		m = "Project started"
+	case PROJECT_BUILD_START:
+		m = "Building project"
+	case PROJECT_BUILD_DONE:
+		m = "Project built"
+	}
+
+	if m == "" {
+		m = fmt.Sprintf("Event: %d", int(e))
+	}
+
+	return m
+}
 
 type InfoPart struct {
 	Key, Value string

@@ -250,27 +250,33 @@
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/cli/logger",
-			"Rev": "7dc5362063183024d12cafaa2ba8ea8830b7ab62"
+			"Comment": "v0.0.2-ros",
+			"Rev": "48a1ac9a0aceeea67279b689e446a8dfcdc7033f"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/docker",
-			"Rev": "7dc5362063183024d12cafaa2ba8ea8830b7ab62"
+			"Comment": "v0.0.2-ros",
+			"Rev": "48a1ac9a0aceeea67279b689e446a8dfcdc7033f"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/logger",
-			"Rev": "7dc5362063183024d12cafaa2ba8ea8830b7ab62"
+			"Comment": "v0.0.2-ros",
+			"Rev": "48a1ac9a0aceeea67279b689e446a8dfcdc7033f"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/lookup",
-			"Rev": "7dc5362063183024d12cafaa2ba8ea8830b7ab62"
+			"Comment": "v0.0.2-ros",
+			"Rev": "48a1ac9a0aceeea67279b689e446a8dfcdc7033f"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/project",
-			"Rev": "7dc5362063183024d12cafaa2ba8ea8830b7ab62"
+			"Comment": "v0.0.2-ros",
+			"Rev": "48a1ac9a0aceeea67279b689e446a8dfcdc7033f"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/utils",
-			"Rev": "7dc5362063183024d12cafaa2ba8ea8830b7ab62"
+			"Comment": "v0.0.2-ros",
+			"Rev": "48a1ac9a0aceeea67279b689e446a8dfcdc7033f"
 		},
 		{
 			"ImportPath": "github.com/docker/libcontainer/netlink",
@@ -331,8 +337,8 @@
 		},
 		{
 			"ImportPath": "github.com/rancher/docker-from-scratch",
-			"Comment": "1.8.0-rc3",
-			"Rev": "61019634b705c0d3ac2aa115baf9568bf55393c2"
+			"Comment": "1.8.1",
+			"Rev": "f348f946923bd2938a56f3bee21cf44431e05181"
 		},
 		{
 			"ImportPath": "github.com/rancher/netconf",
