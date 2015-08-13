@@ -95,9 +95,7 @@ func (s *serviceWrapper) Do(wrappers map[string]*serviceWrapper, start, done Eve
 
 	s.state = EXECUTED
 
-	if start != "" {
-		s.project.Notify(start, s.service.Name(), nil)
-	}
+	s.project.Notify(start, s.service.Name(), nil)
 
 	s.err = action(s.service)
 	if s.err == ErrRestart {
@@ -105,7 +103,7 @@ func (s *serviceWrapper) Do(wrappers map[string]*serviceWrapper, start, done Eve
 		s.project.Notify(PROJECT_RELOAD_TRIGGER, s.service.Name(), nil)
 	} else if s.err != nil {
 		log.Errorf("Failed %s %s : %v", start, s.name, s.err)
-	} else if done != "" {
+	} else {
 		s.project.Notify(done, s.service.Name(), nil)
 	}
 }

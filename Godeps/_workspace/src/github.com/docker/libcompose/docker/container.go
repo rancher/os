@@ -199,9 +199,15 @@ func (c *Container) Up(imageName string) error {
 	}
 
 	if !info.State.Running {
-		logrus.Debugf("Starting container: %s: %#v", container.Id)
-		err := c.client.StartContainer(container.Id, nil)
-		return err
+		logrus.Debugf("Starting container: %s: %#v", container.Id, info.HostConfig)
+		err = c.populateAdditionalHostConfig(info.HostConfig)
+		if err != nil {
+			return err
+		}
+
+		if err := c.client.StartContainer(container.Id, nil); err != nil {
+			return err
+		}
 
 		c.service.context.Project.Notify(project.CONTAINER_STARTED, c.service.Name(), map[string]string{
 			"name": c.Name(),
@@ -267,7 +273,13 @@ func (c *Container) createContainer(imageName, oldContainer string) (*dockerclie
 
 	id, err := c.client.CreateContainer(config, c.name)
 	if err != nil && err.Error() == "Not found" {
-		err = c.pull(config.Image)
+		logrus.Debugf("Not Found, pulling image %s", config.Image)
+		if err = c.pull(config.Image); err != nil {
+			return nil, err
+		}
+		if id, err = c.client.CreateContainer(config, c.name); err != nil {
+			return nil, err
+		}
 	}
 
 	if err != nil {

@@ -187,7 +187,7 @@ func (p *Project) Up(services ...string) error {
 
 func (p *Project) Log(services ...string) error {
 	return p.forEach(services, wrapperAction(func(wrapper *serviceWrapper, wrappers map[string]*serviceWrapper) {
-		wrapper.Do(nil, "", "", func(service Service) error {
+		wrapper.Do(nil, NO_EVENT, NO_EVENT, func(service Service) error {
 			return service.Log()
 		})
 	}), nil)
@@ -218,16 +218,11 @@ func (p *Project) Kill(services ...string) error {
 }
 
 func (p *Project) perform(start, done Event, services []string, action wrapperAction, cycleAction serviceAction) error {
-	if start != "" {
-		p.Notify(start, "", nil)
-	}
+	p.Notify(start, "", nil)
 
 	err := p.forEach(services, action, cycleAction)
 
-	if err == nil && done != "" {
-		p.Notify(done, "", nil)
-	}
-
+	p.Notify(done, "", nil)
 	return err
 }
 
@@ -355,6 +350,10 @@ func (p *Project) AddListener(c chan<- ProjectEvent) {
 }
 
 func (p *Project) Notify(event Event, serviceName string, data map[string]string) {
+	if event == NO_EVENT {
+		return
+	}
+
 	projectEvent := ProjectEvent{
 		Event:       event,
 		ServiceName: serviceName,
