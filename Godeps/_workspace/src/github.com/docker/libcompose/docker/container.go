@@ -268,6 +268,7 @@ func (c *Container) createContainer(imageName, oldContainer string) (*dockerclie
 	id, err := c.client.CreateContainer(config, c.name)
 	if err != nil && err.Error() == "Not found" {
 		err = c.pull(config.Image)
+		id, err = c.client.CreateContainer(config, c.name) // TODO fix upstream
 	}
 
 	if err != nil {

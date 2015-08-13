@@ -142,7 +142,8 @@ func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
 
 	go func() {
 		for event := range projectEvents {
-			if event.Event == project.CONTAINER_STARTED && event.ServiceName == "network" {
+			log.WithFields(log.Fields{"event": event}).Debug("Enabling network?")
+			if event.Event == project.SERVICE_UP && event.ServiceName == "network" {
 				network = true
 			}
 		}
