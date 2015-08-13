@@ -7,13 +7,16 @@ mkdir -p build
 
 if [ ! -e build/ca-certificates.crt ]; then
     ID=$(docker run -d ubuntu sh -c "apt-get update && apt-get install -y ca-certificates")
-    docker logs -f $ID &
-    docker wait $ID
-    docker cp $ID:/etc/ssl/certs/ca-certificates.crt build/
-    docker rm -vf $ID || true
+    docker logs -f ${ID} &
+    docker wait ${ID}
+    docker cp ${ID}:/etc/ssl/certs/ca-certificates.crt build/
+    docker rm -vf ${ID} || true
 fi
 
-mkdir -p build
 docker build -f ./scripts/Dockerfile.build -t dockerscratch-build .
 
-docker run --rm -v `pwd`:/go/src/github.com/rancher/docker-from-scratch dockerscratch-build godep go build -ldflags "-linkmode external -extldflags -static" -o build/dockerlaunch ./main
+ID=$(docker run -d dockerscratch-build strip --strip-all build/dockerlaunch)
+trap "docker rm -fv ${ID}" EXIT
+docker logs -f ${ID} &
+docker wait ${ID}
+docker cp ${ID}:/go/src/github.com/rancher/docker-from-scratch/build/dockerlaunch ./build/

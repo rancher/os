@@ -43,11 +43,11 @@ mkdir -p ${BUILD}
 if [ -e base-image/dist/base-files.tar.gz ]; then
     cp base-image/dist/base-files.tar.gz build/
 else
-    download f9e561b91bfdf6c4641e2bec8a69c9d4577b2ba2 https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.1.0/base-files.tar.gz
+    download 920a7e413c34bf94928c3e6c8aad1dcca9bd0128 https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.2.0/base-files.tar.gz
     cp assets/base-files.tar.gz build
 fi
 
-download 1c5ed280185a17f1595084206e10c85599f15299 https://test.docker.com/builds/Linux/x86_64/docker-1.8.0-rc2
+download 342880a7806447539e959df2119580bd56852b24 https://test.docker.com/builds/Linux/x86_64/docker-1.8.0-rc3
 
 cp assets/docker-* build/docker
 chmod +x build/docker

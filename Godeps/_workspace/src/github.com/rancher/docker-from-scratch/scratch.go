@@ -421,6 +421,21 @@ func prepare(config *Config, docker string, args ...string) error {
 		return err
 	}
 
+	if err := setupBin(config, docker); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setupBin(config *Config, docker string) error {
+	if _, err := os.Stat(docker); os.IsNotExist(err) {
+		dist := docker + ".dist"
+		if _, err := os.Stat(dist); err == nil {
+			return os.Symlink(dist, docker)
+		}
+	}
+
 	return nil
 }
 
