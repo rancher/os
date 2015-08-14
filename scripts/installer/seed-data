@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e -x
+
+BASE_DIR=${1}
+CLOUD_DATA=${2}
+IFS=',' read -ra FILES <<< "${3}"
+
+if [ -z ${BASE_DIR} ]; then
+    echo "Need base directory to place files" 1>&2
+    exit 1
+fi
+
+mkdir -p ${BASE_DIR}/lib/rancher/conf/cloud-config.d
+
+cp ${CLOUD_DATA} ${BASE_DIR}/lib/rancher/conf/cloud-config.d/
+
+for f in ${FILES[@]}; do
+    IFS=":" read s d <<< "${f}"
+    mkdir -p $(dirname ${BASE_DIR}/${d})
+    cp -a -T ${s} ${BASE_DIR}/${d}
+done
