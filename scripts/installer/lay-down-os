@@ -1,0 +1,181 @@
+#!/bin/bash
+set -e -x
+
+. $(dirname $0)/version
+
+while getopts "i:f:c:d:t:r:o:p:" OPTION
+do
+    case $OPTION in 
+        i) DIST="$OPTARG" ;;
+        f) FILES="$OPTARG" ;;
+        c) CLOUD_CONFIG="$OPTARG" ;;
+        d) DEVICE="$OPTARG" ;;
+        o) OEM="$OPTARG" ;;
+        p) PARTITION="$OPTARG" ;;
+        r) ROLLBACK_VERSION="$OPTARG" ;;
+        t) ENV="$OPTARG" ;;
+        *) exit 1 ;;
+    esac
+done
+
+DIST=${DIST:-/dist}
+BASE_DIR="/mnt/new_img"
+# TODO: Change this to a number so that users can specify.
+# Will need to make it so that our builds and packer APIs remain consistent.
+PARTITION=${PARTITION:=${DEVICE}1}
+
+device_defined()
+{
+    if [[ -z "$1" ]]; then
+        echo "Need to Pass a device name -d <dev>." 1>&2
+        exit 1
+    fi
+}
+
+format_device()
+{
+    device_defined ${DEVICE}
+    mkfs.ext4 -F -i 4096 -L RANCHER_STATE ${PARTITION}
+}
+
+mount_device() 
+{
+    local label=RANCHER_STATE
+    local raw="${1:-false}"
+
+    mkdir -p ${BASE_DIR}
+
+    if [ "$(lsblk -o name|grep RANCHER_BOOT | wc -l)" -eq "1" ]; then
+        label=RANCHER_BOOT
+    fi
+    
+    local mount_opts="-L ${label}"
+    if [ "${raw}" == "true" ]; then
+        device_defined ${DEVICE}
+        mount_opts=${PARTITION}
+    fi
+
+    mount $mount_opts ${BASE_DIR}
+    trap "umount ${BASE_DIR}" EXIT
+}
+
+create_boot_dirs()
+{
+    mkdir -p ${BASE_DIR}/boot/grub
+}
+
+install_grub() {
+    grub-install --boot-directory=${BASE_DIR}/boot ${DEVICE}
+}
+
+grub2_config(){
+    local grub_cfg=${BASE_DIR}/boot/grub/grub.cfg
+    local append_line="${1}"
+cat >$grub_cfg <<EOF
+set default="0"
+set timeout="1"
+#set fallback=1
+
+menuentry "RancherOS-current" {
+  set root=(hd0,msdos1)
+  linux /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=tty0 console=ttyS0
+  initrd /boot/initrd-${VERSION}-rancheros
+}
+
+EOF
+
+if [ ! -z $ROLLBACK_VERSION ]; then
+    sed -i 's/^#set/set/' ${grub_cfg}
+cat >>$grub_cfg <<EOF
+menuentry "RancherOS-rollback" {
+  set root=(hd0,msdos1)
+  linux /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=tty0 console=ttyS0
+  initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
+}
+EOF
+fi
+
+}
+
+install_rancher()
+{
+    cp ${DIST}/initrd /mnt/new_img/boot/initrd-${VERSION}-rancheros
+    cp ${DIST}/vmlinuz /mnt/new_img/boot/vmlinuz-${VERSION}-rancheros
+}
+
+pvgrub_config()
+{
+    local grub_file=/mnt/new_img/boot/grub/menu.lst
+    local append_line="${1}"
+cat > $grub_file<<EOF
+default 0
+timeout 0
+#fallback 1
+
+hiddenmenu
+
+title RancherOS ${VERSION}-(current)
+root (hd0)
+kernel /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=tty0 console=ttyS0
+initrd /boot/initrd-${VERSION}-rancheros
+
+EOF
+
+if [ ! -z $ROLLBACK_VERSION ]; then
+    sed -i 's/^#\(fallback\)/\1/' $grub_file
+cat >> $grub_file<<EOF
+title RancherOS ${ROLLBACK_VERSION}-(rollback)
+root (hd0)
+kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=tty0 console=ttyS0
+initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
+EOF
+fi
+}
+
+format_and_mount()
+{
+    format_device
+    mount_device
+    create_boot_dirs
+}
+
+KERNEL_ARGS=${KERNEL_ARGS:-""}
+if [ -n ${ENV} ]; then
+    case ${ENV} in
+        "generic")
+            format_and_mount
+            install_grub
+            /scripts/seed-data $BASE_DIR $CLOUD_CONFIG $FILES
+            ;;
+        "amazon-ebs-pv"|"amazon-ebs-hvm")
+            format_and_mount
+            if [ "${ENV}" == "amazon-ebs-hvm" ]; then
+                install_grub
+            fi
+            # AWS Networking recommends disabling.
+            /scripts/seed-data $BASE_DIR $CLOUD_CONFIG $FILES
+            ;;
+        "googlecompute")
+            format_and_mount
+            install_grub
+            /scripts/seed-data $BASE_DIR $CLOUD_CONFIG $FILES
+            ;;
+        "bootstrap")
+            mount_device true
+            create_boot_dirs
+            KERNEL_ARGS="${KERNEL_ARGS} rancher.cloud_init.datasources=[ec2,gce]"
+            ;;
+        "rancher-upgrade")
+            mount_device 
+            create_boot_dirs
+            ;;
+        *)
+            echo "$ENV is not a valid environment" 1>&2
+            exit 1
+            ;;
+    esac
+fi
+
+grub2_config "${KERNEL_ARGS}"
+pvgrub_config "${KERNEL_ARGS}"
+install_rancher

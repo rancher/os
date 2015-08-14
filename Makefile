@@ -8,11 +8,11 @@ all: clean ros-build-base build-all
 
 
 ros-build-base:
-	docker build -t ros-build-base -f Dockerfile.base .
+	docker build -t ros-build-base -f Dockerfile.build-base .
 
 
 ros-build-image:
-	docker build -t ros-build .
+	docker build -t ros-build -f Dockerfile.build .
 
 
 bin/rancheros: ros-build-image

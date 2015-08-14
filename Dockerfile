@@ -1,5 +1,9 @@
-FROM ros-build-base
+FROM debian:jessie
+COPY ./scripts/installer /scripts
+COPY ./scripts/version /scripts/
+RUN /scripts/bootstrap
 
-ENV CONTAINED=1
+COPY ./dist/artifacts/vmlinuz /dist/vmlinuz
+COPY ./dist/artifacts/initrd  /dist/initrd
 
-COPY . ./
+ENTRYPOINT ["/scripts/lay-down-os"]

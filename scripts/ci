@@ -7,6 +7,6 @@ if [ -x "$(which wrapdocker)" ] && ! docker info >/dev/null 2>&1; then
     wrapdocker
 fi
 
-docker build -t ros-build-base -f Dockerfile.base .
-docker build -t ros-build .
+docker build -t ros-build-base -f Dockerfile.build-base .
+docker build -t ros-build -f Dockerfile.build .
 ./scripts/docker-run.sh make -f Makefile.docker build-all
