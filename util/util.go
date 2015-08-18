@@ -152,6 +152,25 @@ func RandSeq(n int) string {
 	return string(b)
 }
 
+func FileCopy(src, dest string) (err error) {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer func() { err = in.Close() }()
+
+	out, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer func() { err = out.Close() }()
+
+	if _, err := io.Copy(out, in); err != nil {
+		return err
+	}
+	return
+}
+
 func Convert(from, to interface{}) error {
 	bytes, err := yaml.Marshal(from)
 	if err != nil {
