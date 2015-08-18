@@ -37,7 +37,7 @@ rancher:
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
   bootstrap_docker:
-    args: [-d, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
+    args: [daemon, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
         -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   cloud_init:
     datasources:
