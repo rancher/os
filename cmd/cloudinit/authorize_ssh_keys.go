@@ -14,7 +14,7 @@ func authorizeSSHKeys(user string, authorizedKeys []string, name string) {
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
 		if err != nil {
-			log.Fatal(err.Error())
+			log.WithFields(log.Fields{"err": err, "user": user, "auth_key": authorizedKey}).Error("Error updating SSH authorized_keys")
 		}
 	}
 }

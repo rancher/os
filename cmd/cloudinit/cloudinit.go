@@ -100,7 +100,8 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 func currentDatasource() (datasource.Datasource, error) {
 	cfg, err := rancherConfig.LoadConfig()
 	if err != nil {
-		log.Fatalf("Failed to read rancher config %v", err)
+		log.WithFields(log.Fields{"err": err}).Error("Failed to read rancher config")
+		return nil, err
 	}
 
 	dss := getDatasources(cfg)
@@ -275,7 +276,7 @@ func executeCloudConfig() error {
 	if cc.Hostname != "" {
 		//set hostname
 		if err := hostname.SetHostname(cc.Hostname); err != nil {
-			log.Fatal(err)
+			log.WithFields(log.Fields{"err": err, "hostname": cc.Hostname}).Error("Error setting hostname")
 		}
 	}
 
@@ -297,7 +298,8 @@ func executeCloudConfig() error {
 		f := system.File{File: file}
 		fullPath, err := system.WriteFile(&f, "/")
 		if err != nil {
-			log.Fatal(err)
+			log.WithFields(log.Fields{"err": err, "path": fullPath}).Error("Error writing file")
+			continue
 		}
 		log.Printf("Wrote file %s to filesystem", fullPath)
 	}
