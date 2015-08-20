@@ -101,7 +101,7 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 
 func runImages(c *cli.Context) {
 	configFile := c.String("input")
-	cfg := config.ReadConfig(configFile)
+	cfg := config.ReadConfig(nil, configFile)
 	if cfg == nil {
 		log.Fatalf("Could not read config from file %v", configFile)
 	}
@@ -165,12 +165,12 @@ func configGet(c *cli.Context) {
 
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Panicln(err)
+		log.WithFields(log.Fields{"err": err}).Fatal("config get: failed to load config")
 	}
 
 	val, err := cfg.Get(arg)
 	if err != nil {
-		log.WithFields(log.Fields{"cfg": cfg, "arg": arg, "val": val}).Panicln(err)
+		log.WithFields(log.Fields{"cfg": cfg, "key": arg, "val": val, "err": err}).Fatal("config get: failed to retrieve value")
 	}
 
 	printYaml := false
