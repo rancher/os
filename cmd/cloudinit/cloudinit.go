@@ -208,15 +208,22 @@ func saveCloudConfig() error {
 			return err
 		}
 	} else if config.IsCloudConfig(userData) {
-		// nothing to do
+		if rancherConfig.ReadConfig(userDataBytes) == nil {
+			log.WithFields(log.Fields{"cloud-config": userData}).Warn("Failed to parse cloud-config, not saving.")
+			userDataBytes = []byte{}
+		}
 	} else {
 		log.Errorf("Unrecognized cloud-init\n%s", userData)
 		userDataBytes = []byte{}
 	}
 
-	if userDataBytes, scriptBytes, err = mergeBaseConfig(userDataBytes, scriptBytes); err != nil {
+	userDataBytesMerged, scriptBytes, err := mergeBaseConfig(userDataBytes, scriptBytes)
+	if err != nil {
 		log.Errorf("Failed to merge base config: %v", err)
-		return err
+	} else if rancherConfig.ReadConfig(userDataBytesMerged) == nil {
+		log.WithFields(log.Fields{"cloud-config": userData}).Warn("Failed to parse merged cloud-config, not merging.")
+	} else {
+		userDataBytes = userDataBytesMerged
 	}
 
 	return saveFiles(userDataBytes, scriptBytes, metadata)
@@ -306,14 +313,14 @@ func Main() {
 	if save {
 		err := saveCloudConfig()
 		if err != nil {
-			log.Fatalf("Failed to save cloud config: %v", err)
+			log.WithFields(log.Fields{"err": err}).Error("Failed to save cloud-config")
 		}
 	}
 
 	if execute {
 		err := executeCloudConfig()
 		if err != nil {
-			log.Fatalf("Failed to save cloud config: %v", err)
+			log.WithFields(log.Fields{"err": err}).Error("Failed to execute cloud-config")
 		}
 	}
 }

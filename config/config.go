@@ -67,6 +67,10 @@ func LoadConfig() (*CloudConfig, error) {
 }
 
 func (c *CloudConfig) merge(values map[interface{}]interface{}) error {
+	t := &CloudConfig{}
+	if err := util.Convert(values, t); err != nil {
+		return err
+	}
 	return util.Convert(values, c)
 }
 

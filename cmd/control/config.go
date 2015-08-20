@@ -101,7 +101,7 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 
 func runImages(c *cli.Context) {
 	configFile := c.String("input")
-	cfg := config.ReadConfig(configFile)
+	cfg := config.ReadConfig(nil, configFile)
 	if cfg == nil {
 		log.Fatalf("Could not read config from file %v", configFile)
 	}
