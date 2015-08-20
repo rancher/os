@@ -168,8 +168,10 @@ func RunInit() error {
 			}
 
 			if cfg.Rancher.Debug {
-				cfgString, _ := config.Dump(false, true)
-				if cfgString != "" {
+				cfgString, err := config.Dump(false, true)
+				if err != nil {
+					log.WithFields(log.Fields{"err": err}).Error("Error serializing config")
+				} else {
 					log.Debugf("Config: %s", cfgString)
 				}
 			}

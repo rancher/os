@@ -155,7 +155,7 @@ func RandSeq(n int) string {
 func Convert(from, to interface{}) error {
 	bytes, err := yaml.Marshal(from)
 	if err != nil {
-		log.WithFields(log.Fields{"from": from}).Panicln(err)
+		log.WithFields(log.Fields{"from": from, "err": err}).Warn("Error serializing to YML")
 		return err
 	}
 

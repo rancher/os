@@ -49,7 +49,7 @@ func (c *CloudConfig) Merge(bytes []byte) error {
 func LoadConfig() (*CloudConfig, error) {
 	cfg := NewConfig()
 	if err := cfg.Reload(); err != nil {
-		log.WithFields(log.Fields{"cfg": cfg}).Panicln(err)
+		log.WithFields(log.Fields{"cfg": cfg, "err": err}).Error("Failed to reload config")
 		return nil, err
 	}
 
@@ -73,12 +73,12 @@ func (c *CloudConfig) merge(values map[interface{}]interface{}) error {
 func (c *CloudConfig) readFiles() error {
 	data, err := readConfig(nil, CloudConfigFile, LocalConfigFile, PrivateConfigFile)
 	if err != nil {
-		log.Panicln(err)
+		log.WithFields(log.Fields{"err": err}).Error("Error reading config files")
 		return err
 	}
 
 	if err := c.merge(data); err != nil {
-		log.WithFields(log.Fields{"cfg": c, "data": data}).Panicln(err)
+		log.WithFields(log.Fields{"cfg": c, "data": data, "err": err}).Error("Error merging config data")
 		return err
 	}
 
@@ -89,7 +89,7 @@ func (c *CloudConfig) readCmdline() error {
 	log.Debug("Reading config cmdline")
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
-		log.Panicln(err)
+		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
 		return err
 	}
 
@@ -102,8 +102,7 @@ func (c *CloudConfig) readCmdline() error {
 	cmdLineObj := parseCmdline(strings.TrimSpace(string(cmdLine)))
 
 	if err := c.merge(cmdLineObj); err != nil {
-		log.WithFields(log.Fields{"cfg": c, "cmdLine": cmdLine, "data": cmdLineObj}).Panicln(err)
-		return err
+		log.WithFields(log.Fields{"cfg": c, "cmdLine": cmdLine, "data": cmdLineObj, "err": err}).Warn("Error adding kernel params to config")
 	}
 	return nil
 }
@@ -129,7 +128,7 @@ func Dump(private, full bool) (string, error) {
 		return "", err
 	}
 
-	if err := c.readGlobals(); err != nil {
+	if err := c.readCmdline(); err != nil {
 		return "", err
 	}
 
@@ -158,16 +157,10 @@ func (c *CloudConfig) amendNils() error {
 	return nil
 }
 
-func (c *CloudConfig) readGlobals() error {
-	return util.ShortCircuit(
-		c.readCmdline,
-	)
-}
-
 func (c *CloudConfig) Reload() error {
 	return util.ShortCircuit(
 		c.readFiles,
-		c.readGlobals,
+		c.readCmdline,
 		c.amendNils,
 	)
 }
