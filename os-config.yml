@@ -274,7 +274,7 @@ rancher:
       --fixed-cidr, 172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:
-    url: https://releases.rancher.com/os/versions.yml
+    url: https://releases.rancher.com/os/releases.yml
     image: rancher/os
   user_docker:
     tls_args: [--tlsverify, --tlscacert=ca.pem, --tlscert=server-cert.pem, --tlskey=server-key.pem,
