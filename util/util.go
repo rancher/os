@@ -181,6 +181,8 @@ func Copy(d interface{}) interface{} {
 	switch d := d.(type) {
 	case map[interface{}]interface{}:
 		return MapCopy(d)
+	case []interface{}:
+		return SliceCopy(d)
 	default:
 		return d
 	}
@@ -197,16 +199,52 @@ func Equal(l, r interface{}) interface{} {
 	return nil
 }
 
+func ExistsIn(x interface{}, s []interface{}) bool {
+	for _, y := range s {
+		if reflect.DeepEqual(x, y) {
+			return true
+		}
+	}
+	return false
+}
+
+func SlicesUnion(left, right []interface{}, op func(interface{}, interface{}) interface{}) []interface{} {
+	result := SliceCopy(left)
+	for _, r := range right {
+		if !ExistsIn(r, result) {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
+func SlicesIntersection(left, right []interface{}, op func(interface{}, interface{}) interface{}) []interface{} {
+	result := []interface{}{}
+	for _, r := range right {
+		if ExistsIn(r, left) {
+			result = append(result, r)
+		}
+	}
+	return result
+}
+
 func MapsUnion(left, right map[interface{}]interface{}, op func(interface{}, interface{}) interface{}) map[interface{}]interface{} {
 	result := MapCopy(left)
 
 	for k, r := range right {
-		if l, ok := result[k]; ok {
+		if l, ok := left[k]; ok {
 			switch l := l.(type) {
 			case map[interface{}]interface{}:
 				switch r := r.(type) {
 				case map[interface{}]interface{}:
 					result[k] = MapsUnion(l, r, op)
+				default:
+					result[k] = op(l, r)
+				}
+			case []interface{}:
+				switch r := r.(type) {
+				case []interface{}:
+					result[k] = SlicesUnion(l, r, op)
 				default:
 					result[k] = op(l, r)
 				}
@@ -226,19 +264,28 @@ func MapsIntersection(left, right map[interface{}]interface{}, op func(interface
 
 	for k, l := range left {
 		if r, ok := right[k]; ok {
-			switch r := r.(type) {
+			switch l := l.(type) {
 			case map[interface{}]interface{}:
-				switch l := l.(type) {
+				switch r := r.(type) {
 				case map[interface{}]interface{}:
 					result[k] = MapsIntersection(l, r, op)
 				default:
-					if i := op(l, r); i != nil {
-						result[k] = i
+					if v := op(l, r); v != nil {
+						result[k] = v
+					}
+				}
+			case []interface{}:
+				switch r := r.(type) {
+				case []interface{}:
+					result[k] = SlicesIntersection(l, r, op)
+				default:
+					if v := op(l, r); v != nil {
+						result[k] = v
 					}
 				}
 			default:
-				if i := op(l, r); i != nil {
-					result[k] = i
+				if v := op(l, r); v != nil {
+					result[k] = v
 				}
 			}
 		}
@@ -249,6 +296,14 @@ func MapsIntersection(left, right map[interface{}]interface{}, op func(interface
 
 func MapCopy(data map[interface{}]interface{}) map[interface{}]interface{} {
 	result := map[interface{}]interface{}{}
+	for k, v := range data {
+		result[k] = Copy(v)
+	}
+	return result
+}
+
+func SliceCopy(data []interface{}) []interface{} {
+	result := make([]interface{}, len(data), len(data))
 	for k, v := range data {
 		result[k] = Copy(v)
 	}
