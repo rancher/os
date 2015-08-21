@@ -10,55 +10,6 @@ import (
 	"strings"
 )
 
-func TestNilMap(t *testing.T) {
-	assert := require.New(t)
-	var m map[string]interface{} = nil
-	assert.True(m == nil)
-}
-
-func TestMapCopy(t *testing.T) {
-	assert := require.New(t)
-	m0 := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "4"}
-	m1 := util.MapCopy(m0)
-
-	delete(m0, "a")
-	assert.Equal(len(m1), len(m0)+1)
-
-	b0 := m0["b"].(map[interface{}]interface{})
-	b1 := m1["b"].(map[interface{}]interface{})
-	b1["e"] = "queer"
-
-	assert.Equal(len(b1), len(b0)+1)
-}
-
-func TestMapsIntersection(t *testing.T) {
-	assert := require.New(t)
-
-	m0 := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "4"}
-	m1 := util.MapCopy(m0)
-
-	delete(m0, "a")
-	b1 := m1["b"].(map[interface{}]interface{})
-	delete(b1, "c")
-	expected := map[interface{}]interface{}{"b": map[interface{}]interface{}{}, "d": "4"}
-	assert.Equal(expected, util.MapsIntersection(m0, m1, util.Equal))
-}
-
-func TestMapsUnion(t *testing.T) {
-	assert := require.New(t)
-
-	m0 := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "4"}
-	m1 := util.MapCopy(m0)
-	m1["e"] = "added"
-	m1["d"] = "replaced"
-
-	delete(m0, "a")
-	b1 := m1["b"].(map[interface{}]interface{})
-	delete(b1, "c")
-	expected := map[interface{}]interface{}{"a": 1, "b": map[interface{}]interface{}{"c": 3}, "d": "replaced", "e": "added"}
-	assert.Equal(expected, util.MapsUnion(m0, m1, util.Replace))
-}
-
 func TestFilterKey(t *testing.T) {
 	assert := require.New(t)
 	data := map[interface{}]interface{}{
