@@ -7,16 +7,21 @@ cd $(dirname $0)/..
 source scripts/build-common
 
 BASE=$(pwd)
+UNAME=$(uname)
+
+# Linux and Darwin SHA1 sum binary are different, pick which to use
+if [ "$UNAME" == "Darwin" ]; then sha1sum=$(which shasum)
+elif [ "$UNAME" == "Linux" ]; then sha1sum=$(which sha1sum);
+fi
 
 KERNEL=${BASE}/dist/artifacts/vmlinuz
 INITRD=${BASE}/dist/artifacts/initrd
 NO_COMPRESS_INITRD=${INITRD}.none
 HD=${BASE}/state/empty-hd.img
 HD_GZ=${BASE}/assets/empty-hd.img.gz
-INITRD_TMP=${BUILD}/$(sha1sum ${INITRD} | awk '{print $1}')
+INITRD_TMP=${BUILD}/$(${sha1sum} ${INITRD} | awk '{print $1}')
 INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
-UNAME=$(uname)
 USER_DATA=cloud-init/openstack/latest/user_data
 
 # PREREQ: brew install coreutils
