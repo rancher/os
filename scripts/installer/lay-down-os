@@ -21,6 +21,7 @@ done
 
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-/scripts/conf/empty.yml}
+CONSOLE=tty0
 BASE_DIR="/mnt/new_img"
 # TODO: Change this to a number so that users can specify.
 # Will need to make it so that our builds and packer APIs remain consistent.
@@ -80,7 +81,7 @@ default ros
 label ros
     kernel /boot/vmlinuz-${VERSION}-rancheros
     initrd /boot/initrd-${VERSION}-rancheros
-    append ${append_line} console=ttyS0 console=tty0
+    append ${append_line} console=${CONSOLE}
 
 EOF
 
@@ -90,7 +91,7 @@ cat >>${extlinux_conf} <<EOF
 label ros-fallback
     kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros
     initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
-    append ${append_line} console=ttyS0 console=tty0
+    append ${append_line} console=${CONSOLE}
 
 EOF
 fi
@@ -116,7 +117,7 @@ hiddenmenu
 
 title RancherOS ${VERSION}-(current)
 root (hd0)
-kernel /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=ttyS0 console=tty0
+kernel /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=${CONSOLE}
 initrd /boot/initrd-${VERSION}-rancheros
 
 EOF
@@ -126,7 +127,7 @@ if [ ! -z ${ROLLBACK_VERSION} ]; then
 cat >> ${grub_file}<<EOF
 title RancherOS ${ROLLBACK_VERSION}-(rollback)
 root (hd0)
-kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=ttyS0 console=tty0
+kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=${CONSOLE}
 initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
 EOF
 fi
@@ -148,6 +149,7 @@ if [ -n ${ENV} ]; then
             /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "amazon-ebs-pv"|"amazon-ebs-hvm")
+            CONSOLE=ttyS0
             format_and_mount
             if [ "${ENV}" == "amazon-ebs-hvm" ]; then
                 install_extlinux
@@ -156,11 +158,13 @@ if [ -n ${ENV} ]; then
             /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "googlecompute")
+            CONSOLE=ttyS0
             format_and_mount
             install_extlinux
             /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "bootstrap")
+            CONSOLE=ttyS0
             mount_device true
             create_boot_dirs
             KERNEL_ARGS="${KERNEL_ARGS} rancher.cloud_init.datasources=[ec2,gce]"
