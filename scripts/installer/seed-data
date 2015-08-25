@@ -12,8 +12,9 @@ if [ -z ${BASE_DIR} ]; then
 fi
 
 mkdir -p ${BASE_DIR}/var/lib/rancher/conf/cloud-config.d
-
-cp ${CLOUD_DATA} ${BASE_DIR}/var/lib/rancher/conf/cloud-config.d/
+if [ "$CLOUD_DATA" != "/scripts/conf/empty.yml" ]; then
+    cp ${CLOUD_DATA} ${BASE_DIR}/var/lib/rancher/conf/cloud-config.d/
+fi
 
 for f in ${FILES[@]}; do
     IFS=":" read s d <<< "${f}"

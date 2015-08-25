@@ -59,6 +59,7 @@ func Main() {
 			HideHelp:    true,
 			Subcommands: tlsConfCommands(),
 		},
+		installCommand,
 	}
 
 	app.Run(os.Args)
