@@ -23,5 +23,5 @@ func (s *ServiceFactory) Create(project *project.Project, name string, serviceCo
 		}
 	}
 
-	return NewService(s, name, serviceConfig, s.Context), nil
+	return NewService(s, name, serviceConfig, s.Context, project), nil
 }
