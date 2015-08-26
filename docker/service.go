@@ -14,32 +14,34 @@ type Service struct {
 	*docker.Service
 	deps    map[string][]string
 	context *docker.Context
+	project *project.Project
 }
 
-func NewService(factory *ServiceFactory, name string, serviceConfig *project.ServiceConfig, context *docker.Context) *Service {
+func NewService(factory *ServiceFactory, name string, serviceConfig *project.ServiceConfig, context *docker.Context, project *project.Project) *Service {
 	return &Service{
 		Service: docker.NewService(name, serviceConfig, context),
 		deps:    factory.Deps,
 		context: context,
+		project: project,
 	}
 }
 
 func (s *Service) DependentServices() []project.ServiceRelationship {
 	rels := s.Service.DependentServices()
 	for _, dep := range s.deps[s.Name()] {
-		rels = appendLink(rels, dep, true)
+		rels = appendLink(rels, dep, true, s.project)
 	}
 
 	if s.requiresSyslog() {
-		rels = appendLink(rels, "syslog", false)
+		rels = appendLink(rels, "syslog", false, s.project)
 	}
 
 	if s.requiresUserDocker() {
 		// Linking to cloud-init is a hack really.  The problem is we need to link to something
 		// that will trigger a reload
-		rels = appendLink(rels, "cloud-init", false)
+		rels = appendLink(rels, "cloud-init", false, s.project)
 	} else if s.missingImage() {
-		rels = appendLink(rels, "network", false)
+		rels = appendLink(rels, "network", false, s.project)
 	}
 	return rels
 }
@@ -62,7 +64,10 @@ func (s *Service) requiresUserDocker() bool {
 	return s.Config().Labels.MapParts()[config.SCOPE] != config.SYSTEM
 }
 
-func appendLink(deps []project.ServiceRelationship, name string, optional bool) []project.ServiceRelationship {
+func appendLink(deps []project.ServiceRelationship, name string, optional bool, p *project.Project) []project.ServiceRelationship {
+	if _, ok := p.Configs[name]; !ok {
+		return deps
+	}
 	rel := project.NewServiceRelationship(name, project.REL_TYPE_LINK)
 	rel.Optional = optional
 	return append(deps, rel)
