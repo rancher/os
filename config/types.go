@@ -91,14 +91,16 @@ type UpgradeConfig struct {
 }
 
 type DockerConfig struct {
-	TLS        bool     `yaml:"tls,omitempty"`
-	TLSArgs    []string `yaml:"tls_args,flow,omitempty"`
-	Args       []string `yaml:"args,flow,omitempty"`
-	ExtraArgs  []string `yaml:"extra_args,flow,omitempty"`
-	ServerCert string   `yaml:"server_cert,omitempty"`
-	ServerKey  string   `yaml:"server_key,omitempty"`
-	CACert     string   `yaml:"ca_cert,omitempty"`
-	CAKey      string   `yaml:"ca_key,omitempty"`
+	TLS            bool     `yaml:"tls,omitempty"`
+	TLSArgs        []string `yaml:"tls_args,flow,omitempty"`
+	Args           []string `yaml:"args,flow,omitempty"`
+	ExtraArgs      []string `yaml:"extra_args,flow,omitempty"`
+	ServerCert     string   `yaml:"server_cert,omitempty"`
+	ServerKey      string   `yaml:"server_key,omitempty"`
+	CACert         string   `yaml:"ca_cert,omitempty"`
+	CAKey          string   `yaml:"ca_key,omitempty"`
+	Environment    []string `yaml:"environment,omitempty"`
+	StorageContext string   `yaml:"storage_context,omitempty"`
 }
 
 type SshConfig struct {

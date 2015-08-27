@@ -14,6 +14,7 @@ import (
 	"github.com/rancherio/os/cmd/respawn"
 	"github.com/rancherio/os/cmd/sysinit"
 	"github.com/rancherio/os/cmd/systemdocker"
+	"github.com/rancherio/os/cmd/userdocker"
 	"github.com/rancherio/os/cmd/wait"
 	"github.com/rancherio/os/config"
 	osInit "github.com/rancherio/os/init"
@@ -41,6 +42,7 @@ func main() {
 	registerCmd("/init", osInit.MainInit)
 	registerCmd(config.SYSINIT_BIN, sysinit.Main)
 	registerCmd("/usr/bin/dockerlaunch", dockerlaunchMain.Main)
+	registerCmd("/usr/bin/user-docker", userdocker.Main)
 	registerCmd("/usr/bin/system-docker", systemdocker.Main)
 	registerCmd("/sbin/poweroff", power.PowerOff)
 	registerCmd("/sbin/reboot", power.Reboot)
