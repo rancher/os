@@ -140,6 +140,7 @@ rancher:
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init
+        io.docker.compose.rebuild: always
       net: host
       uts: host
       pid: host
