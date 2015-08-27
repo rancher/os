@@ -120,19 +120,20 @@ rancher:
       privileged: true
       read_only: true
       volumes:
+      - /usr/bin/docker:/usr/bin/docker.dist:ro
       - /usr/bin/ros:/sbin/halt:ro
+      - /usr/bin/ros:/sbin/netconf:ro
       - /usr/bin/ros:/sbin/poweroff:ro
       - /usr/bin/ros:/sbin/reboot:ro
       - /usr/bin/ros:/sbin/shutdown:ro
-      - /usr/bin/ros:/sbin/netconf:ro
       - /usr/bin/ros:/usr/bin/cloud-init:ro
-      - /usr/bin/ros:/usr/bin/rancherctl:ro
-      - /usr/bin/ros:/usr/bin/ros:ro
-      - /usr/bin/ros:/usr/bin/respawn:ro
-      - /usr/bin/ros:/usr/bin/system-docker:ro
-      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       - /usr/bin/ros:/usr/bin/dockerlaunch:ro
-      - /usr/bin/docker:/usr/bin/docker.dist:ro
+      - /usr/bin/ros:/usr/bin/rancherctl:ro
+      - /usr/bin/ros:/usr/bin/respawn:ro
+      - /usr/bin/ros:/usr/bin/ros:ro
+      - /usr/bin/ros:/usr/bin/system-docker:ro
+      - /usr/bin/ros:/usr/bin/user-docker:ro
+      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
     console:
       image: rancher/os-console:v0.4.0-dev
       labels:
@@ -225,15 +226,16 @@ rancher:
       read_only: true
       volumes:
       - /dev:/host/dev
-      - /usr/share/ros/os-config.yml:/usr/share/ros/os-config.yml
-      - /var/lib/rancher:/var/lib/rancher
-      - /var/lib/rancher/conf:/var/lib/rancher/conf
+      - /etc/docker:/etc/docker
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
-      - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
+      - /lib/modules:/lib/modules
       - /run:/run
-      - /var/run:/var/run
+      - /usr/share/ros/os-config.yml:/usr/share/ros/os-config.yml
+      - /var/lib/rancher/conf:/var/lib/rancher/conf
+      - /var/lib/rancher:/var/lib/rancher
       - /var/log:/var/log
+      - /var/run:/var/run
     udev-cold:
       image: rancher/os-udev:v0.4.0-dev
       labels:
@@ -269,6 +271,20 @@ rancher:
       volumes:
       - /home:/home
       - /opt:/opt
+    docker:
+      image: rancher/os-docker:v0.4.0-dev
+      labels:
+        io.rancher.os.scope: system
+      net: host
+      pid: host
+      ipc: host
+      uts: host
+      privileged: true
+      restart: always
+      volumes_from:
+      - all-volumes
+      volumes:
+      - /sys/fs/cgroup:/host/sys/fs/cgroup
   system_docker:
     args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -b, docker-sys,
       --fixed-cidr, 172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
