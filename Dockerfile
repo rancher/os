@@ -1,8 +1,9 @@
-FROM alpine
-RUN apk update && apk add coreutils util-linux bash parted syslinux e2fsprogs
+FROM debian:jessie
 COPY ./scripts/installer /scripts
 COPY ./scripts/version /scripts/
+RUN /scripts/bootstrap
 
-COPY ./dist/artifacts/vmlinuz ./dist/artifacts/initrd /dist/
+COPY ./dist/artifacts/vmlinuz /dist/vmlinuz
+COPY ./dist/artifacts/initrd  /dist/initrd
 
 ENTRYPOINT ["/scripts/lay-down-os"]
