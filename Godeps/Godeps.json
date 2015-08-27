@@ -250,33 +250,27 @@
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/cli/logger",
-			"Comment": "v0.0.2-ros-1-g6815465",
-			"Rev": "68154659ac7ebd81f0e61b14750393f2fbc0eca4"
+			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/docker",
-			"Comment": "v0.0.2-ros-1-g6815465",
-			"Rev": "68154659ac7ebd81f0e61b14750393f2fbc0eca4"
+			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/logger",
-			"Comment": "v0.0.2-ros-1-g6815465",
-			"Rev": "68154659ac7ebd81f0e61b14750393f2fbc0eca4"
+			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/lookup",
-			"Comment": "v0.0.2-ros-1-g6815465",
-			"Rev": "68154659ac7ebd81f0e61b14750393f2fbc0eca4"
+			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/project",
-			"Comment": "v0.0.2-ros-1-g6815465",
-			"Rev": "68154659ac7ebd81f0e61b14750393f2fbc0eca4"
+			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/utils",
-			"Comment": "v0.0.2-ros-1-g6815465",
-			"Rev": "68154659ac7ebd81f0e61b14750393f2fbc0eca4"
+			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
 		},
 		{
 			"ImportPath": "github.com/docker/libcontainer/netlink",

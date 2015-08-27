@@ -51,37 +51,9 @@ func (s *Service) collectContainers() ([]*Container, error) {
 		return result, nil
 	}
 
-	imageName, err := s.build()
-	if err != nil {
-		return nil, err
-	}
-
 	for _, container := range containers {
 		name := container.Labels[NAME.Str()]
-		c := NewContainer(client, name, s)
-		if s.context.Rebuild {
-			outOfSync, err := c.OutOfSync(imageName)
-			if err != nil {
-				return nil, err
-			}
-			origRebuildLabel := container.Labels[REBUILD.Str()]
-			newRebuildLabel := s.Config().Labels.MapParts()[REBUILD.Str()]
-			rebuildLabelChanged := newRebuildLabel != origRebuildLabel
-			logrus.WithFields(logrus.Fields{
-				"origRebuildLabel": origRebuildLabel,
-				"newRebuildLabel": newRebuildLabel,
-				"rebuildLabelChanged": rebuildLabelChanged}).Debug("Rebuild values")
-			if origRebuildLabel == "always" || rebuildLabelChanged || origRebuildLabel != "false" && outOfSync {
-				logrus.Infof("Rebuilding %s", name)
-				if _, err := c.Rebuild(imageName); err != nil {
-					return nil, err
-				}
-			} else if outOfSync {
-				logrus.Warnf("%s needs rebuilding", name)
-			}
-		}
-
-		result = append(result, c)
+		result = append(result, NewContainer(client, name, s))
 	}
 
 	return result, nil
@@ -203,8 +175,51 @@ func (s *Service) up(imageName string, create bool) error {
 	}
 
 	return s.eachContainer(func(c *Container) error {
+		if s.context.Rebuild && create {
+			if err := s.rebuildIfNeeded(c); err != nil {
+				return err
+			}
+		}
+
 		return c.Up(imageName)
 	})
+}
+
+func (s *Service) rebuildIfNeeded(c *Container) error {
+	imageName, err := s.build()
+	if err != nil {
+		return err
+	}
+
+	outOfSync, err := c.OutOfSync(imageName)
+	if err != nil {
+		return err
+	}
+
+	containerInfo, err := c.findInfo()
+	if containerInfo == nil || err != nil {
+		return err
+	}
+	name := containerInfo.Name[1:]
+
+	origRebuildLabel := containerInfo.Config.Labels[REBUILD.Str()]
+	newRebuildLabel := s.Config().Labels.MapParts()[REBUILD.Str()]
+	rebuildLabelChanged := newRebuildLabel != origRebuildLabel
+	logrus.WithFields(logrus.Fields{
+		"origRebuildLabel":    origRebuildLabel,
+		"newRebuildLabel":     newRebuildLabel,
+		"rebuildLabelChanged": rebuildLabelChanged}).Debug("Rebuild values")
+
+	if origRebuildLabel == "always" || rebuildLabelChanged || origRebuildLabel != "false" && outOfSync {
+		logrus.Infof("Rebuilding %s", name)
+		if _, err := c.Rebuild(imageName); err != nil {
+			return err
+		}
+	} else if outOfSync {
+		logrus.Warnf("%s needs rebuilding", name)
+	}
+
+	return nil
 }
 
 func (s *Service) eachContainer(action func(*Container) error) error {

@@ -106,9 +106,14 @@ func (c *Container) Rebuild(imageName string) (*dockerclient.Container, error) {
 
 	name := info.Name[1:]
 	new_name := fmt.Sprintf("%s_%s", name, info.Id[:12])
+	deleted := false
 	logrus.Debugf("Renaming %s => %s", name, new_name)
 	if err := c.client.RenameContainer(name, new_name); err != nil {
-		return nil, err
+		logrus.Errorf("Rename failed, deleting %s", name)
+		if err := c.client.RemoveContainer(info.Id, true, false); err != nil {
+			return nil, err
+		}
+		deleted = true
 	}
 
 	newContainer, err := c.createContainer(imageName, info.Id)
@@ -117,12 +122,13 @@ func (c *Container) Rebuild(imageName string) (*dockerclient.Container, error) {
 	}
 	logrus.Debugf("Created replacement container %s", newContainer.Id)
 
-	if err := c.client.RemoveContainer(info.Id, true, false); err != nil {
-		logrus.Errorf("Failed to remove old container %s", c.name)
-		return nil, err
+	if !deleted {
+		if err := c.client.RemoveContainer(info.Id, true, false); err != nil {
+			logrus.Errorf("Failed to remove old container %s", c.name)
+			return nil, err
+		}
+		logrus.Debugf("Removed old container %s %s", c.name, info.Id)
 	}
-
-	logrus.Debugf("Removed old container %s %s", c.name, info.Id)
 
 	return newContainer, nil
 }
@@ -199,15 +205,9 @@ func (c *Container) Up(imageName string) error {
 	}
 
 	if !info.State.Running {
-		logrus.Debugf("Starting container: %s: %#v", container.Id, info.HostConfig)
-		err = c.populateAdditionalHostConfig(info.HostConfig)
-		if err != nil {
-			return err
-		}
-
-		if err := c.client.StartContainer(container.Id, nil); err != nil {
-			return err
-		}
+		logrus.Debugf("Starting container: %s", container.Id)
+		err := c.client.StartContainer(container.Id, nil)
+		return err
 
 		c.service.context.Project.Notify(project.CONTAINER_STARTED, c.service.Name(), map[string]string{
 			"name": c.Name(),
