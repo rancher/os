@@ -278,6 +278,7 @@ rancher:
       image: rancher/os-docker:v0.4.0-dev
       labels:
         io.rancher.os.scope: system
+        io.rancher.os.after: console
       net: host
       pid: host
       ipc: host
