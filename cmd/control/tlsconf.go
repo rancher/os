@@ -131,19 +131,13 @@ func tlsConfCreate(c *cli.Context) {
 }
 
 func generate(c *cli.Context) error {
-	generateServer := c.Bool("server")
-	outDir := c.String("dir")
-	hostnames := c.StringSlice("hostname")
-
-	return Generate(generateServer, outDir, hostnames)
-}
-
-func Generate(generateServer bool, outDir string, hostnames []string) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return err
 	}
 
+	generateServer := c.Bool("server")
+	outDir := c.String("dir")
 	if outDir == "" {
 		return fmt.Errorf("out directory (-d, --dir) not specified")
 	}
@@ -167,5 +161,6 @@ func Generate(generateServer bool, outDir string, hostnames []string) error {
 		return err
 	}
 
+	hostnames := c.StringSlice("hostname")
 	return writeCerts(generateServer, hostnames, cfg, certPath, keyPath, caCertPath, caKeyPath)
 }

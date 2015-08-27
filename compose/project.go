@@ -49,10 +49,6 @@ func RunServices(cfg *config.CloudConfig) error {
 	return p.Up()
 }
 
-func GetProject(cfg *config.CloudConfig) (*project.Project, error) {
-	return newCoreServiceProject(cfg)
-}
-
 func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) {
 	clientFactory, err := rosDocker.NewClientFactory(docker.ClientOpts{})
 	if err != nil {

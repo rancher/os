@@ -331,34 +331,14 @@
 			"Rev": "d57d9d2d5be197e12d9dee142d855470d83ce62f"
 		},
 		{
-			"ImportPath": "github.com/opencontainers/runc/libcontainer/cgroups",
-			"Comment": "v0.0.2-32-gb40c790",
-			"Rev": "b40c7901845dcec5950ecb37cb9de178fc2c0604"
-		},
-		{
-			"ImportPath": "github.com/opencontainers/runc/libcontainer/configs",
-			"Comment": "v0.0.2-32-gb40c790",
-			"Rev": "b40c7901845dcec5950ecb37cb9de178fc2c0604"
-		},
-		{
-			"ImportPath": "github.com/opencontainers/runc/libcontainer/nsenter",
-			"Comment": "v0.0.2-32-gb40c790",
-			"Rev": "b40c7901845dcec5950ecb37cb9de178fc2c0604"
-		},
-		{
-			"ImportPath": "github.com/opencontainers/runc/libcontainer/system",
-			"Comment": "v0.0.2-32-gb40c790",
-			"Rev": "b40c7901845dcec5950ecb37cb9de178fc2c0604"
-		},
-		{
 			"ImportPath": "github.com/opencontainers/runc/libcontainer/user",
 			"Comment": "v0.0.2-32-gb40c790",
 			"Rev": "b40c7901845dcec5950ecb37cb9de178fc2c0604"
 		},
 		{
 			"ImportPath": "github.com/rancher/docker-from-scratch",
-			"Comment": "1.8.1-2-gbcc17ea",
-			"Rev": "bcc17eae6f79e46cb65a74e4406cb3bcc24c38fb"
+			"Comment": "1.8.1",
+			"Rev": "f348f946923bd2938a56f3bee21cf44431e05181"
 		},
 		{
 			"ImportPath": "github.com/rancher/netconf",
