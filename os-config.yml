@@ -2,6 +2,8 @@ rancher:
   bootstrap:
     udev-bootstrap:
       image: rancher/os-udev:v0.4.0-dev
+      environment:
+      - BOOTSTRAP=true
       labels:
         io.rancher.os.detach: false
         io.rancher.os.scope: system
