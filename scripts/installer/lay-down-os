@@ -2,10 +2,11 @@
 set -e -x
 
 . $(dirname $0)/version
+VERSION=${VERSION:?"VERSION not set"}
 
 while getopts "i:f:c:d:t:r:o:p:" OPTION
 do
-    case $OPTION in 
+    case ${OPTION} in
         i) DIST="$OPTARG" ;;
         f) FILES="$OPTARG" ;;
         c) CLOUD_CONFIG="$OPTARG" ;;
@@ -20,6 +21,7 @@ done
 
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-/scripts/conf/empty.yml}
+CONSOLE=tty0
 BASE_DIR="/mnt/new_img"
 # TODO: Change this to a number so that users can specify.
 # Will need to make it so that our builds and packer APIs remain consistent.
@@ -56,7 +58,7 @@ mount_device()
         mount_opts=${PARTITION}
     fi
 
-    mount $mount_opts ${BASE_DIR}
+    mount ${mount_opts} ${BASE_DIR}
     trap "umount ${BASE_DIR}" EXIT
 }
 
@@ -72,25 +74,25 @@ install_grub() {
 grub2_config(){
     local grub_cfg=${BASE_DIR}/boot/grub/grub.cfg
     local append_line="${1}"
-cat >$grub_cfg <<EOF
+cat >${grub_cfg} <<EOF
 set default="0"
 set timeout="1"
 #set fallback=1
 
 menuentry "RancherOS-current" {
   set root=(hd0,msdos1)
-  linux /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=ttyS0 console=tty0
+  linux /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=${CONSOLE}
   initrd /boot/initrd-${VERSION}-rancheros
 }
 
 EOF
 
-if [ ! -z $ROLLBACK_VERSION ]; then
+if [ ! -z ${ROLLBACK_VERSION} ]; then
     sed -i 's/^#set/set/' ${grub_cfg}
-cat >>$grub_cfg <<EOF
+cat >>${grub_cfg} <<EOF
 menuentry "RancherOS-rollback" {
   set root=(hd0,msdos1)
-  linux /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=ttyS0 console=tty0
+  linux /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=${CONSOLE}
   initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
 }
 EOF
@@ -100,15 +102,15 @@ fi
 
 install_rancher()
 {
-    cp ${DIST}/initrd /mnt/new_img/boot/initrd-${VERSION}-rancheros
-    cp ${DIST}/vmlinuz /mnt/new_img/boot/vmlinuz-${VERSION}-rancheros
+    cp ${DIST}/initrd ${BASE_DIR}/boot/initrd-${VERSION}-rancheros
+    cp ${DIST}/vmlinuz ${BASE_DIR}/boot/vmlinuz-${VERSION}-rancheros
 }
 
 pvgrub_config()
 {
-    local grub_file=/mnt/new_img/boot/grub/menu.lst
+    local grub_file=${BASE_DIR}/boot/grub/menu.lst
     local append_line="${1}"
-cat > $grub_file<<EOF
+cat > ${grub_file}<<EOF
 default 0
 timeout 0
 #fallback 1
@@ -117,17 +119,17 @@ hiddenmenu
 
 title RancherOS ${VERSION}-(current)
 root (hd0)
-kernel /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=ttyS0 console=tty0
+kernel /boot/vmlinuz-${VERSION}-rancheros ${append_line} console=${CONSOLE}
 initrd /boot/initrd-${VERSION}-rancheros
 
 EOF
 
-if [ ! -z $ROLLBACK_VERSION ]; then
-    sed -i 's/^#\(fallback\)/\1/' $grub_file
-cat >> $grub_file<<EOF
+if [ ! -z ${ROLLBACK_VERSION} ]; then
+    sed -i 's/^#\(fallback\)/\1/' ${grub_file}
+cat >> ${grub_file}<<EOF
 title RancherOS ${ROLLBACK_VERSION}-(rollback)
 root (hd0)
-kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=ttyS0 console=tty0
+kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} console=${CONSOLE}
 initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
 EOF
 fi
@@ -146,22 +148,25 @@ if [ -n ${ENV} ]; then
         "generic")
             format_and_mount
             install_grub
-            /scripts/seed-data $BASE_DIR $CLOUD_CONFIG $FILES
+            /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "amazon-ebs-pv"|"amazon-ebs-hvm")
+            CONSOLE=ttyS0
             format_and_mount
             if [ "${ENV}" == "amazon-ebs-hvm" ]; then
                 install_grub
             fi
             # AWS Networking recommends disabling.
-            /scripts/seed-data $BASE_DIR $CLOUD_CONFIG $FILES
+            /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "googlecompute")
+            CONSOLE=ttyS0
             format_and_mount
             install_grub
-            /scripts/seed-data $BASE_DIR $CLOUD_CONFIG $FILES
+            /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "bootstrap")
+            CONSOLE=ttyS0
             mount_device true
             create_boot_dirs
             KERNEL_ARGS="${KERNEL_ARGS} rancher.cloud_init.datasources=[ec2,gce]"
