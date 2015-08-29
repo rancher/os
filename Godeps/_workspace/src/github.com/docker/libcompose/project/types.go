@@ -158,10 +158,9 @@ type ServiceConfig struct {
 	Build         string            `yaml:"build,omitempty"`
 	CapAdd        []string          `yaml:"cap_add,omitempty"`
 	CapDrop       []string          `yaml:"cap_drop,omitempty"`
-	CpuSet        string            `yaml:"cpu_set,omitempty"`
+	CpuSet        string            `yaml:"cpuset,omitempty"`
 	CpuShares     int64             `yaml:"cpu_shares,omitempty"`
 	Command       Command           `yaml:"command"` // omitempty breaks serialization!
-	Detach        string            `yaml:"detach,omitempty"`
 	Devices       []string          `yaml:"devices,omitempty"`
 	Dns           Stringorslice     `yaml:"dns"`        // omitempty breaks serialization!
 	DnsSearch     Stringorslice     `yaml:"dns_search"` // omitempty breaks serialization!
@@ -176,7 +175,7 @@ type ServiceConfig struct {
 	Links         MaporColonSlice   `yaml:"links"`  // omitempty breaks serialization!
 	LogDriver     string            `yaml:"log_driver,omitempty"`
 	MemLimit      int64             `yaml:"mem_limit,omitempty"`
-	MemSwapLimit  int64             `yaml:"mem_swap_limit,omitempty"`
+	MemSwapLimit  int64             `yaml:"memswap_limit,omitempty"`
 	Name          string            `yaml:"name,omitempty"`
 	Net           string            `yaml:"net,omitempty"`
 	Pid           string            `yaml:"pid,omitempty"`

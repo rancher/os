@@ -9,23 +9,27 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
+// ColorLoggerFactory implements logger.Factory interface using ColorLogger.
 type ColorLoggerFactory struct {
 	maxLength int
 	tty       bool
 }
 
+// ColorLogger implements logger.Logger interface with color support.
 type ColorLogger struct {
 	name        string
 	colorPrefix string
 	factory     *ColorLoggerFactory
 }
 
+// NewColorLoggerFactory creates a new ColorLoggerFactory.
 func NewColorLoggerFactory() *ColorLoggerFactory {
 	return &ColorLoggerFactory{
 		tty: terminal.IsTerminal(int(os.Stdout.Fd())),
 	}
 }
 
+// Create implements logger.Factory.Create.
 func (c *ColorLoggerFactory) Create(name string) logger.Logger {
 	if c.maxLength < len(name) {
 		c.maxLength = len(name)
@@ -38,6 +42,7 @@ func (c *ColorLoggerFactory) Create(name string) logger.Logger {
 	}
 }
 
+// Out implements logger.Logger.Out.
 func (c *ColorLogger) Out(bytes []byte) {
 	if len(bytes) == 0 {
 		return
@@ -47,6 +52,7 @@ func (c *ColorLogger) Out(bytes []byte) {
 	fmt.Print(message)
 }
 
+// Err implements logger.Logger.Err.
 func (c *ColorLogger) Err(bytes []byte) {
 	if len(bytes) == 0 {
 		return

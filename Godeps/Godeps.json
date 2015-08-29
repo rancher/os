@@ -250,27 +250,27 @@
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/cli/logger",
-			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/docker",
-			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/logger",
-			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/lookup",
-			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/project",
-			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
 		},
 		{
 			"ImportPath": "github.com/docker/libcompose/utils",
-			"Rev": "a8ac0a68c0552afe4ddb01c4ba3184e574ac416e"
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
 		},
 		{
 			"ImportPath": "github.com/docker/libcontainer/netlink",

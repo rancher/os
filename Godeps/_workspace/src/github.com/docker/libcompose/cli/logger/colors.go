@@ -3,12 +3,12 @@ package logger
 import "fmt"
 
 var (
-	colorPrefix chan string = make(chan string)
+	colorPrefix = make(chan string)
 )
 
 func generateColors() {
 	i := 0
-	color_order := []string{
+	colorOrder := []string{
 		"36",   // cyan
 		"33",   // yellow
 		"32",   // green
@@ -24,8 +24,8 @@ func generateColors() {
 	}
 
 	for {
-		colorPrefix <- fmt.Sprintf("\033[%sm%%s |\033[0m", color_order[i])
-		i = (i + 1) % len(color_order)
+		colorPrefix <- fmt.Sprintf("\033[%sm%%s |\033[0m", colorOrder[i])
+		i = (i + 1) % len(colorOrder)
 	}
 }
 

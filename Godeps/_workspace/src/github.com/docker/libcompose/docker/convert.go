@@ -36,13 +36,13 @@ func ConvertToApi(c *project.ServiceConfig) (*dockerclient.ContainerConfig, erro
 	}
 
 	var result dockerclient.ContainerConfig
-	err = utils.ConvertByJson(config, &result)
+	err = utils.ConvertByJSON(config, &result)
 	if err != nil {
 		logrus.Errorf("Failed to convert config to API structure: %v\n%#v", err, config)
 		return nil, err
 	}
 
-	err = utils.ConvertByJson(hostConfig, &result.HostConfig)
+	err = utils.ConvertByJSON(hostConfig, &result.HostConfig)
 	if err != nil {
 		logrus.Errorf("Failed to convert hostConfig to API structure: %v\n%#v", err, hostConfig)
 	}
