@@ -150,6 +150,8 @@ rancher:
       restart: always
       volumes_from:
       - all-volumes
+      volumes:
+      - /usr/bin/iptables:/sbin/iptables:ro
     docker-volumes:
       image: rancher/os-state:v0.4.0-dev
       labels:
