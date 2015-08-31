@@ -10,7 +10,6 @@ type Service struct {
 	name          string
 	serviceConfig *project.ServiceConfig
 	context       *Context
-	imageName     string
 }
 
 func NewService(name string, serviceConfig *project.ServiceConfig, context *Context) *Service {
@@ -34,7 +33,12 @@ func (s *Service) DependentServices() []project.ServiceRelationship {
 }
 
 func (s *Service) Create() error {
-	_, err := s.createOne()
+	imageName, err := s.build()
+	if err != nil {
+		return err
+	}
+
+	_, err = s.createOne(imageName)
 	return err
 }
 
@@ -59,8 +63,8 @@ func (s *Service) collectContainers() ([]*Container, error) {
 	return result, nil
 }
 
-func (s *Service) createOne() (*Container, error) {
-	containers, err := s.constructContainers(true, 1)
+func (s *Service) createOne(imageName string) (*Container, error) {
+	containers, err := s.constructContainers(imageName, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -74,24 +78,14 @@ func (s *Service) Build() error {
 }
 
 func (s *Service) build() (string, error) {
-	if s.imageName != "" {
-		return s.imageName, nil
-	}
-
 	if s.context.Builder == nil {
-		s.imageName = s.Config().Image
-	} else {
-		var err error
-		s.imageName, err = s.context.Builder.Build(s.context.Project, s)
-		if err != nil {
-			return "", err
-		}
+		return s.Config().Image, nil
 	}
 
-	return s.imageName, nil
+	return s.context.Builder.Build(s.context.Project, s)
 }
 
-func (s *Service) constructContainers(create bool, count int) ([]*Container, error) {
+func (s *Service) constructContainers(imageName string, count int) ([]*Container, error) {
 	result, err := s.collectContainers()
 	if err != nil {
 		return nil, err
@@ -107,19 +101,12 @@ func (s *Service) constructContainers(create bool, count int) ([]*Container, err
 
 		c := NewContainer(client, containerName, s)
 
-		if create {
-			imageName, err := s.build()
-			if err != nil {
-				return nil, err
-			}
-
-			dockerContainer, err := c.Create(imageName)
-			if err != nil {
-				return nil, err
-			} else {
-				logrus.Debugf("Created container %s: %v", dockerContainer.Id, dockerContainer.Names)
-			}
+		dockerContainer, err := c.Create(imageName)
+		if err != nil {
+			return nil, err
 		}
+
+		logrus.Debugf("Created container %s: %v", dockerContainer.Id, dockerContainer.Names)
 
 		result = append(result, NewContainer(client, containerName, s))
 	}
@@ -167,7 +154,7 @@ func (s *Service) up(imageName string, create bool) error {
 	logrus.Debugf("Found %d existing containers for service %s", len(containers), s.name)
 
 	if len(containers) == 0 && create {
-		c, err := s.createOne()
+		c, err := s.createOne(imageName)
 		if err != nil {
 			return err
 		}
@@ -176,7 +163,7 @@ func (s *Service) up(imageName string, create bool) error {
 
 	return s.eachContainer(func(c *Container) error {
 		if s.context.Rebuild && create {
-			if err := s.rebuildIfNeeded(c); err != nil {
+			if err := s.rebuildIfNeeded(imageName, c); err != nil {
 				return err
 			}
 		}
@@ -185,12 +172,7 @@ func (s *Service) up(imageName string, create bool) error {
 	})
 }
 
-func (s *Service) rebuildIfNeeded(c *Container) error {
-	imageName, err := s.build()
-	if err != nil {
-		return err
-	}
-
+func (s *Service) rebuildIfNeeded(imageName string, c *Container) error {
 	outOfSync, err := c.OutOfSync(imageName)
 	if err != nil {
 		return err
@@ -208,7 +190,8 @@ func (s *Service) rebuildIfNeeded(c *Container) error {
 	logrus.WithFields(logrus.Fields{
 		"origRebuildLabel":    origRebuildLabel,
 		"newRebuildLabel":     newRebuildLabel,
-		"rebuildLabelChanged": rebuildLabelChanged}).Debug("Rebuild values")
+		"rebuildLabelChanged": rebuildLabelChanged,
+		"outOfSync":           outOfSync}).Debug("Rebuild values")
 
 	if origRebuildLabel == "always" || rebuildLabelChanged || origRebuildLabel != "false" && outOfSync {
 		logrus.Infof("Rebuilding %s", name)
@@ -292,23 +275,25 @@ func (s *Service) Scale(scale int) error {
 	}
 
 	if foundCount != scale {
-		_, err := s.constructContainers(true, scale)
+		imageName, err := s.build()
 		if err != nil {
 			return err
 		}
 
+		if _, err = s.constructContainers(imageName, scale); err != nil {
+			return err
+		}
 	}
 
 	return s.up("", false)
 }
 
 func (s *Service) Pull() error {
-	containers, err := s.constructContainers(false, 1)
-	if err != nil {
-		return err
+	if s.Config().Image == "" {
+		return nil
 	}
 
-	return containers[0].Pull()
+	return PullImage(s.context.ClientFactory.Create(s), s, s.Config().Image)
 }
 
 func (s *Service) Containers() ([]project.Container, error) {

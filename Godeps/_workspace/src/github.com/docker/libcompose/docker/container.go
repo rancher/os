@@ -55,10 +55,10 @@ func (c *Container) Info() (project.Info, error) {
 
 	result := project.Info{}
 
-	result = append(result, project.InfoPart{"Name", name(container.Names)})
-	result = append(result, project.InfoPart{"Command", container.Command})
-	result = append(result, project.InfoPart{"State", container.Status})
-	result = append(result, project.InfoPart{"Ports", portString(container.Ports)})
+	result = append(result, project.InfoPart{Key: "Name", Value: name(container.Names)})
+	result = append(result, project.InfoPart{Key: "Command", Value: container.Command})
+	result = append(result, project.InfoPart{Key: "State", Value: container.Status})
+	result = append(result, project.InfoPart{Key: "Ports", Value: portString(container.Ports)})
 
 	return result, nil
 }
@@ -206,8 +206,9 @@ func (c *Container) Up(imageName string) error {
 
 	if !info.State.Running {
 		logrus.Debugf("Starting container: %s", container.Id)
-		err := c.client.StartContainer(container.Id, nil)
-		return err
+		if err := c.client.StartContainer(container.Id, nil); err != nil {
+			return err
+		}
 
 		c.service.context.Project.Notify(project.CONTAINER_STARTED, c.service.Name(), map[string]string{
 			"name": c.Name(),
@@ -218,29 +219,35 @@ func (c *Container) Up(imageName string) error {
 }
 
 func (c *Container) OutOfSync(imageName string) (bool, error) {
-	container, err := c.findExisting()
-	if err != nil || container == nil {
+	info, err := c.findInfo()
+	if err != nil || info == nil {
 		return false, err
 	}
 
-	info, err := c.client.InspectContainer(container.Id)
-	if err != nil {
+	if info.Config.Image != imageName {
+		logrus.Debugf("Images for %s do not match %s!=%s", c.name, info.Config.Image, imageName)
+		return true, nil
+	}
+
+	if info.Config.Labels[HASH.Str()] != c.getHash() {
+		logrus.Debugf("Hashes for %s do not match %s!=%s", c.name, info.Config.Labels[HASH.Str()], c.getHash())
+		return true, nil
+	}
+
+	image, err := c.client.InspectImage(info.Config.Image)
+	if err != nil && (err.Error() == "Not found" || image == nil) {
+		logrus.Debugf("Image %s do not exist, do not know if it's out of sync", info.Config.Image)
+		return false, nil
+	} else if err != nil {
 		return false, err
 	}
 
-	return info.Config.Labels[HASH.Str()] != c.getHash(imageName), nil
+	logrus.Debugf("Checking existing image name vs id: %s == %s", image.Id, info.Image)
+	return image.Id != info.Image, err
 }
 
-func (c *Container) getHash(imageName string) string {
-	serviceConfig := *c.service.Config()
-	imageInfo, err := c.client.InspectImage(imageName)
-	if imageInfo != nil && err == nil {
-		serviceConfig.Image = imageInfo.Id
-	} else {
-		serviceConfig.Image = imageName
-	}
-
-	return project.GetServiceHash(c.service.Name(), serviceConfig)
+func (c *Container) getHash() string {
+	return project.GetServiceHash(c.service.Name(), *c.service.Config())
 }
 
 func (c *Container) createContainer(imageName, oldContainer string) (*dockerclient.Container, error) {
@@ -258,7 +265,7 @@ func (c *Container) createContainer(imageName, oldContainer string) (*dockerclie
 	config.Labels[NAME.Str()] = c.name
 	config.Labels[SERVICE.Str()] = c.service.name
 	config.Labels[PROJECT.Str()] = c.service.context.Project.Name
-	config.Labels[HASH.Str()] = c.getHash(imageName)
+	config.Labels[HASH.Str()] = c.getHash()
 
 	err = c.populateAdditionalHostConfig(&config.HostConfig)
 	if err != nil {
@@ -344,7 +351,7 @@ func (c *Container) addLinks(links map[string]string, service project.Service, r
 
 func (c *Container) addIpc(config *dockerclient.HostConfig, service project.Service, containers []project.Container) (*dockerclient.HostConfig, error) {
 	if len(containers) == 0 {
-		return nil, fmt.Errorf("Failed to find container for IPC %", c.service.Config().Ipc)
+		return nil, fmt.Errorf("Failed to find container for IPC %v", c.service.Config().Ipc)
 	}
 
 	id, err := containers[0].Id()
@@ -358,7 +365,7 @@ func (c *Container) addIpc(config *dockerclient.HostConfig, service project.Serv
 
 func (c *Container) addNetNs(config *dockerclient.HostConfig, service project.Service, containers []project.Container) (*dockerclient.HostConfig, error) {
 	if len(containers) == 0 {
-		return nil, fmt.Errorf("Failed to find container for networks ns %", c.service.Config().Net)
+		return nil, fmt.Errorf("Failed to find container for networks ns %v", c.service.Config().Net)
 	}
 
 	id, err := containers[0].Id()
@@ -434,11 +441,13 @@ func (c *Container) Log() error {
 		}, output)
 		return err
 	}
-
-	return nil
 }
 
 func (c *Container) pull(image string) error {
+	return PullImage(c.client, c.service, image)
+}
+
+func PullImage(client dockerclient.Client, service *Service, image string) error {
 	taglessRemote, tag := parsers.ParseRepositoryTag(image)
 	if tag == "" {
 		image = utils.ImageReference(taglessRemote, tags.DEFAULTTAG)
@@ -450,11 +459,11 @@ func (c *Container) pull(image string) error {
 	}
 
 	authConfig := cliconfig.AuthConfig{}
-	if c.service.context.ConfigFile != nil && repoInfo != nil && repoInfo.Index != nil {
-		authConfig = registry.ResolveAuthConfig(c.service.context.ConfigFile, repoInfo.Index)
+	if service.context.ConfigFile != nil && repoInfo != nil && repoInfo.Index != nil {
+		authConfig = registry.ResolveAuthConfig(service.context.ConfigFile, repoInfo.Index)
 	}
 
-	err = c.client.PullImage(image, &dockerclient.AuthConfig{
+	err = client.PullImage(image, &dockerclient.AuthConfig{
 		Username: authConfig.Username,
 		Password: authConfig.Password,
 		Email:    authConfig.Email,

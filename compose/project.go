@@ -1,6 +1,8 @@
 package compose
 
 import (
+	"fmt"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/cli/logger"
 	"github.com/docker/libcompose/docker"
@@ -115,6 +117,8 @@ func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
 			return err
 		}
 
+		addServices(p, cfg, enabled, cfg.Rancher.Services)
+
 		for service, serviceEnabled := range cfg.Rancher.ServicesInclude {
 			if enabled[service] != "" || !serviceEnabled {
 				continue
@@ -130,6 +134,7 @@ func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
 				continue
 			}
 
+			fmt.Println("Loading config: %s", string(bytes))
 			err = p.Load(bytes)
 			if err != nil {
 				log.Errorf("Failed to load %s : %v", service, err)
@@ -138,8 +143,6 @@ func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
 
 			enabled[service] = service
 		}
-
-		addServices(p, cfg, enabled, cfg.Rancher.Services)
 
 		return nil
 	}
