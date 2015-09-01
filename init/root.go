@@ -40,7 +40,7 @@ func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) 
 		return true, nil
 	}
 
-	if _, err := os.Stat(usrVer); os.IsNotExist(err) {
+	if _, err := os.Stat(usr); err == nil {
 		return false, nil
 	}
 
