@@ -10,7 +10,7 @@ def qemu(request):
 
 def rancheros_version():
     with open('./scripts/version') as f:
-        for ln in iter(f.readline, ''):
+        for ln in f:
             (k, _, v) = ln.partition('=')
             if k == 'VERSION' and v.strip() != '':
                 return v.strip()
@@ -19,13 +19,14 @@ def rancheros_version():
 
 @pytest.mark.timeout(30)
 def test_system_boot(qemu):
-    with qemu.stdout as f:
-        for ln in iter(f.readline, ''):
-            ros_booted_substr = str.find(ln, 'RancherOS {v} started'.format(v=rancheros_version()))
-            print(str.strip(ln))
-            if ros_booted_substr > -1:
-                assert True
-                return
+    version = rancheros_version()
+    print('parsed version: ' + version)
+    for ln in u.iter_lines(qemu.stdout):
+        ros_booted_substr = str.find(ln, 'RancherOS {v} started'.format(v=version))
+        print(str.strip(ln))
+        if ros_booted_substr > -1:
+            assert True
+            return
     assert False
 
 
@@ -38,8 +39,8 @@ def test_run_system_container(qemu):
         './scripts/ssh sudo system-docker run --rm busybox /bin/true', shell=True,
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
-    with ssh, ssh.stdout as f:
-        for ln in iter(f.readline, ''):
-            print(str.strip(ln))
+    for ln in u.iter_lines(ssh.stdout):
+        print(str.strip(ln))
+    ssh.wait()
 
     assert ssh.returncode == 0

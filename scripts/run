@@ -114,7 +114,7 @@ if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
     mkisofs -R -V config-2 -o "${CLOUD_CONFIG_ISO}" "$(pwd)/cloud-init"
 
     echo PWD=`pwd`
-    exec sudo xhyve -A -H -P -u \
+    exec sudo -n xhyve -A -H -P -u \
         -m 4G \
         -s 0:0,hostbridge -s 31,lpc \
         -l com1,stdio \
