@@ -7,10 +7,24 @@ chmod 0600 ./assets/rancher.key
 
 UNAME=$(uname)
 
-if [ "$UNAME" == "Darwin" ]; then
+while [ "$#" -gt 0 ]; do
+    case $1 in
+        --xhyve)
+            shift 1
+            if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
+                XHYVE=1
+            fi
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ "$XHYVE" == "1" ]; then
     HOST=192.168.64.2  #  consult `/var/db/dhcpd_leases` or delete it
     exec ssh -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@${HOST} "$@"
-elif [ "$UNAME" == "Linux" ]; then
+else
     exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@localhost "$@"
 fi
 
