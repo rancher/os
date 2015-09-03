@@ -6,6 +6,7 @@ import time
 def iter_lines(s):
     return iter(s.readline, '')
 
+
 def run_qemu(request, run_args=[]):
     subprocess.check_call('rm -f ./state/empty-hd.img', shell=True)
     print('\nrm ./state/*')
