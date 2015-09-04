@@ -10,3 +10,5 @@ build
 dist
 assets
 Godeps/_workspace/pkg
+tests/integration/.venv*
+tests/integration/.tox
