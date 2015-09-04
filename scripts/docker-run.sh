@@ -10,4 +10,4 @@ if [ -n "$BIND_DIR" ]; then
 fi
 
 docker rm -fv ros-build >/dev/null 2>&1 || true
-exec docker run -i -v /var/run/docker.sock:/var/run/docker.sock $DOCKER_ARGS --name=ros-build ros-build "$@"
+exec docker run --privileged -i -v /var/run/docker.sock:/var/run/docker.sock $DOCKER_ARGS --name=ros-build ros-build "$@"

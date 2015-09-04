@@ -2,7 +2,8 @@ FROM debian:jessie
 RUN apt-get update && \
     apt-get -y dist-upgrade && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential syslinux isolinux xorriso \
-        libblkid-dev libmount-dev libselinux1-dev
+        libblkid-dev libmount-dev libselinux1-dev genisoimage qemu-kvm python-pip
+RUN ln -s /usr/bin/genisoimage /usr/bin/mkisofs
 RUN locale-gen en_US.UTF-8
 RUN curl -sSL https://get.docker.com/ | sh
 
@@ -10,6 +11,8 @@ RUN curl -sSL https://get.docker.com/ | sh
 #ENV LANGUAGE en_US:en
 #ENV LC_ALL en_US.UTF-8
 #ENV TERM linux
+
+RUN pip install tox
 
 ENV GOLANG_VERSION 1.4.2
 RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz | tar -v -C /usr/src -xz

@@ -10,3 +10,5 @@
 /tests/integration/MANIFEST
 /tests/integration/.venv*
 /tests/integration/.tox
+*.pyc
+__pychache__

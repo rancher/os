@@ -60,5 +60,7 @@ build-all: \
 	$(DIST)/artifacts/rancheros.iso \
 	$(DIST)/artifacts/iso-checksums.txt
 
+integration-tests:
+	cd tests/integration && tox
 
-.PHONY: build-all installer version bin/rancheros
+.PHONY: build-all installer version bin/rancheros integration-tests

@@ -7,5 +7,8 @@ gopath
 tmp
 state
 build
-assets
 Godeps/_workspace/pkg
+tests/integration/.venv*
+tests/integration/.tox
+*/*/*/*.pyc
+*/*/*/__pycache__
