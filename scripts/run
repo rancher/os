@@ -22,7 +22,7 @@ HD_GZ=${BASE}/assets/empty-hd.img.gz
 INITRD_TMP=${BUILD}/$(${sha1sum} ${INITRD} | awk '{print $1}')
 INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
-USER_DATA=cloud-init/openstack/latest/user_data
+USER_DATA=${BUILD}/cloud-config/openstack/latest/user_data
 
 # PREREQ: brew install coreutils
 path() {
@@ -43,6 +43,11 @@ while [ "$#" -gt 0 ]; do
             if [ ! -f ${CLOUD_CONFIG} ]; then
                 echo No such file: "'"${CLOUD_CONFIG}"'" 1>&2
                 exit 1
+            fi
+            ;;
+        --xhyve)
+            if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
+                XHYVE=1
             fi
             ;;
         *)
@@ -77,14 +82,15 @@ ln -sf ${INITRD_TMP} ${INITRD_CURRENT}
 mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
 cp bin/rancheros ${INITRD_TMP}/usr/bin/ros
 cp -f os-config.yml ${INITRD_TMP}/usr/share/ros
-cd ${INITRD_TMP}
 
+pushd ${INITRD_TMP}
 find . | cpio -H newc -o > ${INITRD_TEST}
+popd
 
 if [ ! -e ${HD} ]; then
     mkdir -p $(dirname ${HD})
-    if [ "$UNAME" == "Darwin" ]; then qemu-img create -f raw -o size=10G ${HD}
-    elif [ "$UNAME" == "Linux" ]; then gzip -dc ${HD_GZ} > ${HD};
+    if [ "$XHYVE" == "1" ]; then qemu-img create -f raw -o size=10G ${HD}
+    else qemu-img create -f qcow2 -o size=10G ${HD}
     fi
 fi
 
@@ -103,18 +109,18 @@ else
     done
 fi
 
-KERNEL_ARGS="rancher.password=rancher rancher.modules=[9p,9pnet_virtio] console=ttyS0 ${QEMU_APPEND}"
+KERNEL_ARGS="quiet rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
+KERNEL_ARGS="${KERNEL_ARGS} rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
 
-if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
+CLOUD_CONFIG_ISO="${BUILD}/cloud-config.iso"
+rm -rf ${CLOUD_CONFIG_ISO}
 
-    CLOUD_CONFIG_ISO="$(pwd)/cloud-config.iso"
-    rm -rf ${CLOUD_CONFIG_ISO}
+mkisofs -R -V config-2 -o "${CLOUD_CONFIG_ISO}" "$BUILD/cloud-config"
 
-    # PREREQ: brew install cdrtools
-    mkisofs -R -V config-2 -o "${CLOUD_CONFIG_ISO}" "$(pwd)/cloud-init"
+if [ "$XHYVE" == "1" ]; then
 
     echo PWD=`pwd`
-    exec sudo xhyve -A -H -P -u \
+    exec sudo -n xhyve -A -H -P -u \
         -m 4G \
         -s 0:0,hostbridge -s 31,lpc \
         -l com1,stdio \
@@ -122,9 +128,12 @@ if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
         -s 3,ahci-cd,${CLOUD_CONFIG_ISO} \
         -s 4,virtio-blk,${HD} \
         -U a01fb25c-3a19-4759-a47a-2e353e51807d \
-        -f kexec,${KERNEL},${INITRD_TEST},"earlyprintk=serial elevator=noop rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda] ${KERNEL_ARGS}"
+        -f kexec,${KERNEL},${INITRD_TEST},"earlyprintk=serial elevator=noop ${KERNEL_ARGS}"
 
-elif [ "$UNAME" == "Linux" ] && [ -x $(which qemu-system-x86_64) ]; then
+elif [ -x $(which qemu-system-x86_64) ]; then
+    if [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+        KVM_ENABLE="-machine accel=kvm -cpu host"
+    fi
     exec qemu-system-x86_64 -serial stdio \
         -kernel ${KERNEL} \
         -initrd ${INITRD_TEST} \
@@ -132,14 +141,12 @@ elif [ "$UNAME" == "Linux" ] && [ -x $(which qemu-system-x86_64) ]; then
         -net nic,vlan=0,model=virtio \
         -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
         -drive if=virtio,file=${HD} \
-        -machine accel=kvm \
-        -cpu host \
+        ${KVM_ENABLE} \
         -smp 4 \
-        -fsdev local,id=conf,security_model=none,readonly,path=$(pwd)/cloud-init \
-        -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
+        -cdrom ${CLOUD_CONFIG_ISO} \
         -append "${KERNEL_ARGS}" \
-        -serial mon:telnet:localhost:4444,server,nowait \
         -nographic \
+        -display none \
         ${QEMU_ARGS} "${@}"
 else
     exit 42
