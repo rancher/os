@@ -23,6 +23,7 @@ INITRD_TMP=${BUILD}/$(${sha1sum} ${INITRD} | awk '{print $1}')
 INITRD_CURRENT=${BUILD}/initrd-current
 INITRD_TEST=${BUILD}/initrd.test
 USER_DATA=${BUILD}/cloud-config/openstack/latest/user_data
+FORMAT=1
 
 # PREREQ: brew install coreutils
 path() {
@@ -49,6 +50,9 @@ while [ "$#" -gt 0 ]; do
             if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
                 XHYVE=1
             fi
+            ;;
+        --no-format)
+            FORMAT=0
             ;;
         *)
             break
@@ -110,7 +114,9 @@ else
 fi
 
 KERNEL_ARGS="quiet rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
-KERNEL_ARGS="${KERNEL_ARGS} rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
+if [ "$FORMAT" == "1" ]; then
+    KERNEL_ARGS="${KERNEL_ARGS} rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
+fi
 
 CLOUD_CONFIG_ISO="${BUILD}/cloud-config.iso"
 rm -rf ${CLOUD_CONFIG_ISO}
