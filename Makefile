@@ -32,7 +32,7 @@ build-all: ros-build-image
 
 
 installer: ros-build-image
-	./scripts/docker-run.sh make -f Makefile.docker FORCE_PULL=$(FORCE_PULL) $@
+	./scripts/docker-run.sh --rm make -f Makefile.docker FORCE_PULL=$(FORCE_PULL) $@
 
 
 version:
