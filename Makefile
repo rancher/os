@@ -1,4 +1,5 @@
-include common.make
+include build.conf
+FORCE_PULL := 0
 
 
 compile: bin/rancheros
@@ -30,6 +31,10 @@ build-all: ros-build-image
 	docker cp ros-build:/go/src/github.com/rancherio/os/dist/artifacts dist/
 
 
+installer: ros-build-image
+	./scripts/docker-run.sh make -f Makefile.docker FORCE_PULL=$(FORCE_PULL) $@
+
+
 version:
 	@echo $(VERSION)
 
@@ -38,4 +43,4 @@ clean:
 	rm -rf bin build dist gopath .dockerfile
 
 
-.PHONY: all compile clean build-all ros-build-image ros-build-base version bin/rancheros
+.PHONY: all compile clean build-all ros-build-image ros-build-base version bin/rancheros installer

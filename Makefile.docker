@@ -1,8 +1,6 @@
-include common.make
+include build.conf
+FORCE_PULL := 0
 
-DOCKER_BINARY_URL := https://github.com/rancher/docker/releases/download/v1.8.1-ros/docker-1.8.1
-KERNEL_URL        := https://github.com/rancher/os-kernel/releases/download/Ubuntu-3.19.0-27.29-ros1/linux-3.19.8-ckt5-rancher-x86.tar.gz
-DFS_IMAGE         := rancher/docker:1.8.1
 
 bin/rancheros:
 	mkdir -p $(dir $@)
@@ -50,7 +48,7 @@ version:
 	@echo $(VERSION)
 
 installer: $(DIST)/artifacts/initrd $(DIST)/artifacts/vmlinuz
-	docker build -t rancher/os:$(VERSION) .
+	docker build -t $(IMAGE_NAME):$(VERSION) .
 
 build-all: \
 	installer \
