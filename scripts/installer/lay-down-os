@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -x
 
-. $(dirname $0)/version
+. $(dirname $0)/build.conf
 VERSION=${VERSION:?"VERSION not set"}
 
 while getopts "i:f:c:d:t:r:o:p:" OPTION

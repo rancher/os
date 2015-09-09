@@ -1,3 +1,5 @@
+from __future__ import print_function
+import itertools as it
 import pytest
 import subprocess
 import rancherostest.util as u
@@ -9,11 +11,12 @@ def qemu(request):
 
 
 def rancheros_version():
-    with open('./scripts/version') as f:
-        for ln in f:
-            (k, _, v) = ln.partition('=')
-            if k == 'VERSION' and v.strip() != '':
-                return v.strip()
+    with open('./build.conf') as f:
+        for v in it.ifilter(u.non_empty,
+                            it.imap(u.parse_value('VERSION'),
+                                    it.ifilter(u.non_empty,
+                                               it.imap(u.strip_comment('#'), u.iter_lines(f))))):
+            return v
     raise RuntimeError("Could not parse RancherOS version")
 
 
@@ -21,12 +24,14 @@ def rancheros_version():
 def test_system_boot(qemu):
     version = rancheros_version()
     print('parsed version: ' + version)
-    for ln in u.iter_lines(qemu.stdout):
-        ros_booted_substr = str.find(ln, 'RancherOS {v} started'.format(v=version))
-        print(str.strip(ln))
-        if ros_booted_substr > -1:
-            assert True
-            return
+
+    def has_ros_started_substr(s):
+        return str.find(s, 'RancherOS {v} started'.format(v=version)) > -1
+
+    for _ in it.ifilter(has_ros_started_substr,
+                        it.imap(u.with_effect(print), u.iter_lines(qemu.stdout))):
+        assert True
+        return
     assert False
 
 
@@ -40,7 +45,7 @@ def test_run_system_container(qemu):
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
     for ln in u.iter_lines(ssh.stdout):
-        print(str.strip(ln))
+        print(ln)
     ssh.wait()
 
     assert ssh.returncode == 0
