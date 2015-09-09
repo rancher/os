@@ -33,6 +33,16 @@ def with_effect(p):
     return effect
 
 
+def rancheros_version(build_conf):
+    with open(build_conf) as f:
+        for v in it.ifilter(non_empty,
+                            it.imap(parse_value('VERSION'),
+                                    it.ifilter(non_empty,
+                                               it.imap(strip_comment('#'), iter_lines(f))))):
+            return v
+    raise RuntimeError("Could not parse RancherOS version")
+
+
 def run_qemu(request, run_args=[]):
     subprocess.check_call('rm -f ./state/empty-hd.img', shell=True)
     print('\nrm ./state/*')

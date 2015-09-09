@@ -24,6 +24,9 @@ while [ "$#" -gt 0 ]; do
             rm $NAME
             DOCKER_ARGS="${DOCKER_ARGS} --rm"
             ;;
+        -t)
+            DOCKER_ARGS="${DOCKER_ARGS} -t"
+            ;;
         *)
             break
             ;;

@@ -10,19 +10,9 @@ def qemu(request):
     return u.run_qemu(request)
 
 
-def rancheros_version():
-    with open('./build.conf') as f:
-        for v in it.ifilter(u.non_empty,
-                            it.imap(u.parse_value('VERSION'),
-                                    it.ifilter(u.non_empty,
-                                               it.imap(u.strip_comment('#'), u.iter_lines(f))))):
-            return v
-    raise RuntimeError("Could not parse RancherOS version")
-
-
 @pytest.mark.timeout(30)
 def test_system_boot(qemu):
-    version = rancheros_version()
+    version = u.rancheros_version('./build.conf')
     print('parsed version: ' + version)
 
     def has_ros_started_substr(s):
