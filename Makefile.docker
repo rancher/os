@@ -24,7 +24,7 @@ $(DIST)/artifacts/vmlinuz: $(BUILD)/kernel/
 
 
 $(BUILD)/kernel/:
-	mkdir -p $@ && curl -L "$(KERNEL_URL)" | tar -xzf - -C $@ --strip=0
+	mkdir -p $@ && curl -L "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@ --strip=0
 
 
 $(BUILD)/images.tar: bin/rancheros
