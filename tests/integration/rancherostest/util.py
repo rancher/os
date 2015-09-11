@@ -1,10 +1,46 @@
+import itertools as it
 import pytest
 import subprocess
 import time
 
 
 def iter_lines(s):
-    return iter(s.readline, '')
+    return it.imap(str.rstrip, iter(s.readline, ''))
+
+
+def strip_comment(prefix):
+    return lambda s: s.partition(prefix)[0].strip()
+
+
+def non_empty(s):
+    return s != ''
+
+
+def parse_value(var):
+    def get_value(s):
+        (k, _, v) = s.partition('=')
+        (k, v) = (k.strip(), v.strip())
+        if k == var:
+            return v
+        return ''
+    return get_value
+
+
+def with_effect(p):
+    def effect(s):
+        p(s)
+        return s
+    return effect
+
+
+def rancheros_version(build_conf):
+    with open(build_conf) as f:
+        for v in it.ifilter(non_empty,
+                            it.imap(parse_value('VERSION'),
+                                    it.ifilter(non_empty,
+                                               it.imap(strip_comment('#'), iter_lines(f))))):
+            return v
+    raise RuntimeError("Could not parse RancherOS version")
 
 
 def run_qemu(request, run_args=[]):

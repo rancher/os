@@ -1,8 +1,6 @@
-include common.make
+include build.conf
+FORCE_PULL := 0
 
-DOCKER_BINARY_URL := https://github.com/rancher/docker/releases/download/v1.8.1-ros/docker-1.8.1
-KERNEL_URL        := https://github.com/rancher/os-kernel/releases/download/Ubuntu-3.19.0-27.29-ros1/linux-3.19.8-ckt5-rancher-x86.tar.gz
-DFS_IMAGE         := rancher/docker:1.8.1
 
 bin/rancheros:
 	mkdir -p $(dir $@)
@@ -26,7 +24,7 @@ $(DIST)/artifacts/vmlinuz: $(BUILD)/kernel/
 
 
 $(BUILD)/kernel/:
-	mkdir -p $@ && curl -L "$(KERNEL_URL)" | tar -xzf - -C $@ --strip=0
+	mkdir -p $@ && curl -L "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@ --strip=0
 
 
 $(BUILD)/images.tar: bin/rancheros
@@ -38,7 +36,7 @@ $(DIST)/artifacts/initrd: bin/rancheros assets/docker $(BUILD)/kernel/ $(BUILD)/
 	DFS_IMAGE=$(DFS_IMAGE) ./scripts/mk-initrd.sh
 
 
-$(DIST)/artifacts/rancheros.iso: $(DIST)/artifacts/initrd $(DIST)/artifacts/vmlinuz
+$(DIST)/artifacts/rancheros.iso: minimal
 	./scripts/mk-rancheros-iso.sh
 
 
@@ -49,18 +47,16 @@ $(DIST)/artifacts/iso-checksums.txt: $(DIST)/artifacts/rancheros.iso
 version:
 	@echo $(VERSION)
 
-installer: $(DIST)/artifacts/initrd $(DIST)/artifacts/vmlinuz
-	docker build -t rancher/os:$(VERSION) .
+installer: minimal
+	docker build -t $(IMAGE_NAME):$(VERSION) .
 
-build-all: \
-	installer \
-	bin/rancheros \
-	$(DIST)/artifacts/initrd \
-	$(DIST)/artifacts/vmlinuz \
-	$(DIST)/artifacts/rancheros.iso \
-	$(DIST)/artifacts/iso-checksums.txt
+build-all: minimal installer iso
+
+minimal: $(DIST)/artifacts/initrd $(DIST)/artifacts/vmlinuz
+
+iso: $(DIST)/artifacts/rancheros.iso $(DIST)/artifacts/iso-checksums.txt
 
 integration-tests:
 	cd tests/integration && tox
 
-.PHONY: build-all installer version bin/rancheros integration-tests
+.PHONY: build-all minimal iso installer version bin/rancheros integration-tests
