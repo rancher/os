@@ -22,7 +22,7 @@ func TestFilterKey(t *testing.T) {
 					"dsa-pub": "dsa-test2",
 				},
 			},
-			"user_docker": map[interface{}]interface{}{
+			"docker": map[interface{}]interface{}{
 				"ca_key":  "ca_key-test3",
 				"ca_cert": "ca_cert-test4",
 				"args":    []string{"args_test5"},
@@ -43,7 +43,7 @@ func TestFilterKey(t *testing.T) {
 		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
 		"hostname":            "ros-test",
 		"rancher": map[interface{}]interface{}{
-			"user_docker": map[interface{}]interface{}{
+			"docker": map[interface{}]interface{}{
 				"ca_key":  "ca_key-test3",
 				"ca_cert": "ca_cert-test4",
 				"args":    []string{"args_test5"},
@@ -68,7 +68,7 @@ func TestFilterDottedKeys(t *testing.T) {
 					"dsa-pub": "dsa-test2",
 				},
 			},
-			"user_docker": map[interface{}]interface{}{
+			"docker": map[interface{}]interface{}{
 				"ca_key":  "ca_key-test3",
 				"ca_cert": "ca_cert-test4",
 				"args":    []string{"args_test5"},
@@ -89,7 +89,7 @@ func TestFilterDottedKeys(t *testing.T) {
 	expectedRest := map[interface{}]interface{}{
 		"hostname": "ros-test",
 		"rancher": map[interface{}]interface{}{
-			"user_docker": map[interface{}]interface{}{
+			"docker": map[interface{}]interface{}{
 				"ca_key":  "ca_key-test3",
 				"ca_cert": "ca_cert-test4",
 				"args":    []string{"args_test5"},
@@ -254,7 +254,7 @@ func TestUserDocker(t *testing.T) {
 
 	config := &CloudConfig{
 		Rancher: RancherConfig{
-			UserDocker: DockerConfig{
+			Docker: DockerConfig{
 				TLS: true,
 			},
 		},
@@ -272,7 +272,7 @@ func TestUserDocker(t *testing.T) {
 
 	fmt.Println(data)
 
-	val, ok := data["rancher"]["user_docker"]
+	val, ok := data["rancher"]["docker"]
 	assert.True(ok)
 
 	m, ok := val.(map[interface{}]interface{})

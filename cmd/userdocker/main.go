@@ -46,7 +46,7 @@ func Main() {
 }
 
 func enter(cfg *config.CloudConfig) error {
-	context := cfg.Rancher.UserDocker.StorageContext
+	context := cfg.Rancher.Docker.StorageContext
 	if context == "" {
 		context = DEFAULT_STORAGE_CONTEXT
 	}
@@ -211,7 +211,7 @@ func main(cfg *config.CloudConfig) error {
 		return err
 	}
 
-	dockerCfg := cfg.Rancher.UserDocker
+	dockerCfg := cfg.Rancher.Docker
 
 	args := dockerCfg.FullArgs()
 

@@ -81,7 +81,7 @@ type RancherConfig struct {
 	State               StateConfig                       `yaml:"state,omitempty"`
 	SystemDocker        DockerConfig                      `yaml:"system_docker,omitempty"`
 	Upgrade             UpgradeConfig                     `yaml:"upgrade,omitempty"`
-	UserDocker          DockerConfig                      `yaml:"user_docker,omitempty"`
+	Docker              DockerConfig                      `yaml:"docker,omitempty"`
 }
 
 type UpgradeConfig struct {

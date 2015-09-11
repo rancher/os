@@ -55,8 +55,8 @@ func LoadConfig() (*CloudConfig, error) {
 
 	if cfg.Rancher.Debug {
 		log.SetLevel(log.DebugLevel)
-		if !util.Contains(cfg.Rancher.UserDocker.Args, "-D") {
-			cfg.Rancher.UserDocker.Args = append(cfg.Rancher.UserDocker.Args, "-D")
+		if !util.Contains(cfg.Rancher.Docker.Args, "-D") {
+			cfg.Rancher.Docker.Args = append(cfg.Rancher.Docker.Args, "-D")
 		}
 		if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
 			cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")

@@ -69,8 +69,8 @@ func TestSubstituteUserDataVars(t *testing.T) {
 			    interfaces:
 			      eth1:
 			        address: $private_ipv4/16
-			  user_docker:
-			  	 tls_args: ['-H=$public_ipv4:2376']`,
+			  docker:
+			  	tls_args: ['-H=$public_ipv4:2376']`,
 			`write_files:
 			    - path: /etc/environment
 			      content: |
@@ -81,8 +81,8 @@ func TestSubstituteUserDataVars(t *testing.T) {
 			    interfaces:
 			      eth1:
 			        address: 192.0.2.203/16
-			  user_docker:
-			  	 tls_args: ['-H=192.0.2.3:2376']`,
+			  docker:
+			  	tls_args: ['-H=192.0.2.3:2376']`,
 		},
 		{
 			// no metadata
