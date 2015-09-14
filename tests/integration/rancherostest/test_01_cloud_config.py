@@ -1,12 +1,13 @@
 import pytest
 import rancherostest.util as u
+import string
 import subprocess
 import yaml
 
 
 ssh_command = ['ssh', '-p', '2222', '-F', './assets/scripts_ssh_config', '-i', './tests/integration/assets/test.key',
                'rancher@localhost']
-cloud_config_path = './tests/integration/assets/cloud-config-01.yml'
+cloud_config_path = './tests/integration/assets/test_01/cloud-config.yml'
 
 
 @pytest.fixture(scope="module")
@@ -37,6 +38,20 @@ def test_rancher_environment(qemu, cloud_config):
         stderr=subprocess.STDOUT, universal_newlines=True)
 
     assert v.strip() == cloud_config['rancher']['environment']['FLANNEL_NETWORK']
+
+
+@pytest.mark.timeout(40)
+def test_docker_args(qemu, cloud_config):
+    assert qemu is not None
+    u.wait_for_ssh(ssh_command)
+
+    v = subprocess.check_output(
+        ssh_command + ['sh', '-c', 'ps -ef | grep docker'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    expected = string.join(cloud_config['rancher']['docker']['args'])
+
+    assert v.find(expected) != -1
 
 
 @pytest.mark.timeout(40)

@@ -20,10 +20,10 @@ func writeToFile(data interface{}, filename string) error {
 func saveToDisk(data map[interface{}]interface{}) error {
 	private, config := filterDottedKeys(data, []string{
 		"rancher.ssh",
-		"rancher.user_docker.ca_key",
-		"rancher.user_docker.ca_cert",
-		"rancher.user_docker.server_key",
-		"rancher.user_docker.server_cert",
+		"rancher.docker.ca_key",
+		"rancher.docker.ca_cert",
+		"rancher.docker.server_key",
+		"rancher.docker.server_cert",
 	})
 
 	err := writeToFile(config, LocalConfigFile)
