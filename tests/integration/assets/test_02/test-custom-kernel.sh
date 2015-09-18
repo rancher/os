@@ -7,4 +7,4 @@ cp ./tests/integration/assets/test_02/build.conf ./
 
 make -f Makefile.docker minimal
 
-exec ./scripts/run
+exec ./scripts/run --qemu --no-rebuild --fresh

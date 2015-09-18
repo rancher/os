@@ -2,7 +2,8 @@ FROM debian:jessie
 RUN apt-get update && \
     apt-get -y dist-upgrade && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential syslinux isolinux xorriso \
-        libblkid-dev libmount-dev libselinux1-dev cpio python-pip ca-certificates
+        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates
+RUN ln -s /usr/bin/genisoimage /usr/bin/mkisofs
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8

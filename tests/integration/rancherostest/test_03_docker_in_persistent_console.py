@@ -4,8 +4,7 @@ import subprocess
 import yaml
 
 
-ssh_command = ['ssh', '-p', '2222', '-F', './assets/scripts_ssh_config', '-i', './tests/integration/assets/test.key',
-               'rancher@localhost']
+ssh_command = ['./scripts/ssh', '--qemu', '--key', './tests/integration/assets/test.key']
 cloud_config_path = './tests/integration/assets/test_03/cloud-config.yml'
 
 

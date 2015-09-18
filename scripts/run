@@ -7,30 +7,13 @@ cd $(dirname $0)/..
 source scripts/build-common
 
 BASE=$(pwd)
-UNAME=$(uname)
-
-# Linux and Darwin SHA1 sum binary are different, pick which to use
-if [ "$UNAME" == "Darwin" ]; then sha1sum=$(which shasum)
-elif [ "$UNAME" == "Linux" ]; then sha1sum=$(which sha1sum);
-fi
 
 KERNEL=${BASE}/dist/artifacts/vmlinuz
 INITRD=${BASE}/dist/artifacts/initrd
-NO_COMPRESS_INITRD=${INITRD}.none
-HD=${BASE}/state/empty-hd.img
-HD_GZ=${BASE}/assets/empty-hd.img.gz
-INITRD_TMP=${BUILD}/$(${sha1sum} ${INITRD} | awk '{print $1}')
-INITRD_CURRENT=${BUILD}/initrd-current
-INITRD_TEST=${BUILD}/initrd.test
-USER_DATA=${BUILD}/cloud-config/openstack/latest/user_data
-FORMAT=1
 
-# PREREQ: brew install coreutils
-path() {
-    if [ "$UNAME" == "Darwin" ]; then greadlink -f "$1"
-    elif [ "$UNAME" == "Linux" ]; then readlink -f "$1";
-    fi
-}
+QEMU=1
+FORMAT=1
+REBUILD=1
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -38,21 +21,42 @@ while [ "$#" -gt 0 ]; do
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
             ;;
+        --name)
+            shift 1
+            NAME="$1"
+            ;;
         --cloud-config)
             shift 1
-            CLOUD_CONFIG=$(path "$1") || :
+            CLOUD_CONFIG="$1" || :
             if [ ! -f ${CLOUD_CONFIG} ]; then
                 echo No such file: "'"${CLOUD_CONFIG}"'" 1>&2
                 exit 1
             fi
             ;;
         --xhyve)
-            if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
+            if [ -x $(which xhyve) ]; then
                 XHYVE=1
             fi
             ;;
+        --qemu)
+            if [ -x $(which qemu-system-x86_64) ]; then
+                QEMU=1
+            fi
+            ;;
+        --qind)
+            QIND=1
+            ;;
+        --kvm)
+            KVM=1
+            ;;
         --no-format)
             FORMAT=0
+            ;;
+        --no-rebuild)
+            REBUILD=0
+            ;;
+        --fresh)
+            FRESH=1
             ;;
         *)
             break
@@ -66,51 +70,38 @@ if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
     exit 1
 fi
 
-if [ ! -d ${INITRD_TMP} ]; then
-    mkdir -p ${INITRD_TMP}
-    pushd ${INITRD_TMP}
-    if [ -e ${NO_COMPRESS_INITRD} ]; then
-        cat ${NO_COMPRESS_INITRD} | cpio -idmv
-    else
+UNAME=$(uname)
+# Linux and Darwin SHA1 sum binary are different, pick which to use
+if [ "$UNAME" == "Darwin" ]; then sha1sum=$(which shasum)
+elif [ "$UNAME" == "Linux" ]; then sha1sum=$(which sha1sum);
+fi
+
+if [ "$REBUILD" == "1" ]; then
+    INITRD_TMP=${BUILD}/$(${sha1sum} ${INITRD} | awk '{print $1}')
+    INITRD_CURRENT=${BUILD}/initrd-current
+    INITRD_TEST=${BUILD}/initrd.test
+
+    if [ ! -d ${INITRD_TMP} ]; then
+        mkdir -p ${INITRD_TMP}
+        pushd ${INITRD_TMP}
         xz -dc ${INITRD} | cpio -idmv
+        popd
     fi
+
+    if [ -e ${INITRD_CURRENT} ]; then
+        rm -f ${INITRD_CURRENT}
+    fi
+
+    ln -s ${INITRD_TMP} ${INITRD_CURRENT}
+
+    mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
+    cp bin/rancheros ${INITRD_TMP}/usr/bin/ros
+    cp -f os-config.yml ${INITRD_TMP}/usr/share/ros
+
+    pushd ${INITRD_TMP}
+    find . | cpio -H newc -o | gzip > ${INITRD_TEST}
     popd
-fi
-
-if [ -e ${INITRD_CURRENT} ]; then
-    rm -f ${INITRD_CURRENT}
-fi
-
-ln -sf ${INITRD_TMP} ${INITRD_CURRENT}
-
-mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
-cp bin/rancheros ${INITRD_TMP}/usr/bin/ros
-cp -f os-config.yml ${INITRD_TMP}/usr/share/ros
-
-pushd ${INITRD_TMP}
-find . | cpio -H newc -o > ${INITRD_TEST}
-popd
-
-if [ ! -e ${HD} ]; then
-    mkdir -p $(dirname ${HD})
-    if [ "$XHYVE" == "1" ]; then qemu-img create -f raw -o size=10G ${HD}
-    else qemu-img create -f qcow2 -o size=10G ${HD}
-    fi
-fi
-
-mkdir -p $(dirname $USER_DATA)
-
-if [ -n "$CLOUD_CONFIG" ]; then
-    cat ${CLOUD_CONFIG} > ${USER_DATA}
-else
-    echo "#cloud-config" > ${USER_DATA}
-    echo "ssh_authorized_keys:" >> ${USER_DATA}
-    echo "  - $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
-    for i in ${HOME}/.ssh/*.pub; do
-        if [ -e $i ]; then
-            echo "  - $(<$i)" >> ${USER_DATA}
-        fi
-    done
+    INITRD=${INITRD_TEST}
 fi
 
 KERNEL_ARGS="quiet rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
@@ -118,42 +109,114 @@ if [ "$FORMAT" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
 fi
 
-CLOUD_CONFIG_ISO="${BUILD}/cloud-config.iso"
-rm -rf ${CLOUD_CONFIG_ISO}
+if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
+    KVM=1
+fi
 
-mkisofs -R -V config-2 -o "${CLOUD_CONFIG_ISO}" "$BUILD/cloud-config"
+if [ "$XHYVE" == "1" ] || [ "$QEMU" == "1" ]; then
 
-if [ "$XHYVE" == "1" ]; then
-
-    echo PWD=`pwd`
-    exec sudo -n xhyve -A -H -P -u \
-        -m 4G \
-        -s 0:0,hostbridge -s 31,lpc \
-        -l com1,stdio \
-        -s 2:0,virtio-net \
-        -s 3,ahci-cd,${CLOUD_CONFIG_ISO} \
-        -s 4,virtio-blk,${HD} \
-        -U a01fb25c-3a19-4759-a47a-2e353e51807d \
-        -f kexec,${KERNEL},${INITRD_TEST},"earlyprintk=serial elevator=noop ${KERNEL_ARGS}"
-
-elif [ -x $(which qemu-system-x86_64) ]; then
-    if [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
-        KVM_ENABLE="-machine accel=kvm -cpu host"
+    HD=${BASE}/state/hd.img
+    [ "$FRESH" == "1" ] && rm -f ${HD} >/dev/null 2>&1 || :
+    if [ ! -e ${HD} ]; then
+        mkdir -p $(dirname ${HD})
+        if [ "$XHYVE" == "1" ]; then qemu-img create -f raw -o size=10G ${HD}
+        else qemu-img create -f qcow2 -o size=10G ${HD}
+        fi
     fi
-    exec qemu-system-x86_64 -serial stdio \
-        -kernel ${KERNEL} \
-        -initrd ${INITRD_TEST} \
-        -m 1024 \
-        -net nic,vlan=0,model=virtio \
-        -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
-        -drive if=virtio,file=${HD} \
-        ${KVM_ENABLE} \
-        -smp 4 \
-        -cdrom ${CLOUD_CONFIG_ISO} \
-        -append "${KERNEL_ARGS}" \
-        -nographic \
-        -display none \
-        ${QEMU_ARGS} "${@}"
+
+    USER_DATA=${BUILD}/cloud-config/openstack/latest/user_data
+    mkdir -p $(dirname ${USER_DATA})
+    rm -f ${USER_DATA} || :
+    if [ -n "$CLOUD_CONFIG" ]; then
+        cat ${CLOUD_CONFIG} > ${USER_DATA}
+    else
+        echo "#cloud-config" > ${USER_DATA}
+        echo "ssh_authorized_keys:" >> ${USER_DATA}
+        echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
+    fi
+
+    CLOUD_CONFIG_ISO="${BUILD}/cloud-config.iso"
+    rm -rf ${CLOUD_CONFIG_ISO}
+    mkisofs -R -V config-2 -o "${CLOUD_CONFIG_ISO}" "$BUILD/cloud-config"
+
+    if [ "$XHYVE" == "1" ]; then
+
+        exec sudo -n xhyve -A -H -P -u \
+            -m 4G \
+            -s 0:0,hostbridge -s 31,lpc \
+            -l com1,stdio \
+            -s 2:0,virtio-net \
+            -s 3,ahci-cd,${CLOUD_CONFIG_ISO} \
+            -s 4,virtio-blk,${HD} \
+            -U a01fb25c-3a19-4759-a47a-2e353e51807d \
+            -f kexec,${KERNEL},${INITRD},"earlyprintk=serial elevator=noop ${KERNEL_ARGS}" \
+            "${@}"
+
+    elif [ "$QEMU" == "1" ]; then
+
+        if [ "$KVM" == "1" ]; then
+            KVM_ENABLE="-machine accel=kvm -cpu host"
+        fi
+        exec qemu-system-x86_64 -serial stdio \
+            -kernel ${KERNEL} \
+            -initrd ${INITRD} \
+            -m 1024 \
+            -net nic,vlan=0,model=virtio \
+            -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
+            -drive if=virtio,file=${HD} \
+            ${KVM_ENABLE} \
+            -smp 4 \
+            -cdrom ${CLOUD_CONFIG_ISO} \
+            -append "${KERNEL_ARGS}" \
+            -nographic \
+            -display none \
+            ${QEMU_ARGS} \
+            "${@}"
+
+    else
+        exit 42
+    fi
+
+elif [ "$QIND" == "1" ]; then
+
+    NAME=${NAME:-ros-qind}
+
+    if [ "$FRESH" == "1" ]; then
+        docker rm -fv ${NAME} >/dev/null 2>&1 || :
+    fi
+    if ! docker inspect ${NAME} >/dev/null 2>&1; then
+        if [ "$KVM" == "1" ]; then
+            KVM_ENABLE="--device=/dev/kvm:/dev/kvm"
+        fi
+
+        mkdir -p ./tmp
+        TMP=$(mktemp -d ./tmp/ros-qind-XXXXXX)
+        mkdir -p ${TMP}/stuff
+        trap "rm -rf ${TMP}" EXIT
+        ln ${CLOUD_CONFIG} ${KERNEL} ${INITRD} ./assets/rancher.key ./assets/rancher.key.pub ${TMP}/stuff/
+
+        KERNEL_FILE=$(basename ${KERNEL})
+        INITRD_FILE=$(basename ${INITRD})
+
+        if [ -n "$CLOUD_CONFIG" ]; then
+            CLOUD_CONFIG_ENABLE="--cloud-config /stuff/$(basename ${CLOUD_CONFIG})"
+        else
+            SSH_PUB_ENABLE="--ssh-pub /stuff/rancher.key.pub"
+        fi
+
+        docker create --name=${NAME} -it ${KVM_ENABLE} \
+                    rancher/qind \
+                    --hostname "rancher-dev" \
+                    ${CLOUD_CONFIG_ENABLE} \
+                    ${SSH_PUB_ENABLE} \
+                    -m 1G -kernel /stuff/${KERNEL_FILE} -initrd /stuff/${INITRD_FILE} -append "${KERNEL_ARGS}" \
+                    "${@}"
+
+        docker cp ${TMP}/stuff ${NAME}:/stuff
+        rm -rf ${TMP}
+    fi
+    exec docker start -ai ${NAME}
+
 else
     exit 42
 fi
