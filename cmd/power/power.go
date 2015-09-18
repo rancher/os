@@ -129,7 +129,7 @@ func Halt() {
 	reboot(syscall.LINUX_REBOOT_CMD_HALT)
 }
 
-func reboot(code int) {
+func reboot(code uint) {
 	err := shutDownContainers()
 	if err != nil {
 		log.Error(err)
@@ -137,7 +137,7 @@ func reboot(code int) {
 
 	syscall.Sync()
 
-	err = syscall.Reboot(code)
+	err = syscall.Reboot(int(code))
 	if err != nil {
 		log.Fatal(err)
 	}
