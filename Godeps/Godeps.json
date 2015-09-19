@@ -351,8 +351,8 @@
 		},
 		{
 			"ImportPath": "github.com/rancher/docker-from-scratch",
-			"Comment": "1.8.1-2-gbcc17ea",
-			"Rev": "bcc17eae6f79e46cb65a74e4406cb3bcc24c38fb"
+			"Comment": "v1.8.2-1",
+			"Rev": "500f0babfdbfcd55fbdbf6690e4508ceb7323474"
 		},
 		{
 			"ImportPath": "github.com/rancher/netconf",
