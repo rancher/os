@@ -2,24 +2,18 @@ FROM debian:jessie
 RUN apt-get update && \
     apt-get -y dist-upgrade && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential syslinux isolinux xorriso \
-        libblkid-dev libmount-dev libselinux1-dev genisoimage qemu-kvm python-pip
-RUN ln -s /usr/bin/genisoimage /usr/bin/mkisofs
+        libblkid-dev libmount-dev libselinux1-dev cpio python-pip ca-certificates
 RUN locale-gen en_US.UTF-8
-RUN curl -sSL https://get.docker.com/ | sh
-
-#ENV LANG en_US.UTF-8
-#ENV LANGUAGE en_US:en
-#ENV LC_ALL en_US.UTF-8
-#ENV TERM linux
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+ENV TERM xterm
+RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.8.2 > /usr/bin/docker
+RUN chmod +x /usr/bin/docker
 
 RUN pip install tox
 
-ENV GOLANG_VERSION 1.4.2
-RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz | tar -v -C /usr/src -xz
-RUN cd /usr/src/go/src && ./make.bash --no-clean 2>&1
-
-ENV GOROOT /usr/src/go
-ENV PATH $GOROOT/bin:$PATH
+RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -xz -C /usr/local
+ENV PATH $PATH:/usr/local/go/bin
 
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
