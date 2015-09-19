@@ -84,7 +84,7 @@ if [ "$REBUILD" == "1" ]; then
     if [ ! -d ${INITRD_TMP} ]; then
         mkdir -p ${INITRD_TMP}
         pushd ${INITRD_TMP}
-        xz -dc ${INITRD} | cpio -idmv
+        xz -dfc ${INITRD} | gunzip -f | cpio -idm
         popd
     fi
 

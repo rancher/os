@@ -1,5 +1,6 @@
 include build.conf
 FORCE_PULL := 0
+DEV_BUILD  := 0
 
 
 compile: bin/rancheros
@@ -24,7 +25,7 @@ bin/rancheros: ros-build-image
 
 
 build-all: ros-build-image
-	./scripts/docker-run.sh make -f Makefile.docker FORCE_PULL=$(FORCE_PULL) $@
+	./scripts/docker-run.sh make -f Makefile.docker DEV_BUILD=$(DEV_BUILD) FORCE_PULL=$(FORCE_PULL) $@
 
 	mkdir -p bin dist
 	docker cp ros-build:/go/src/github.com/rancherio/os/bin/rancheros bin/
@@ -32,7 +33,7 @@ build-all: ros-build-image
 
 
 installer: ros-build-image
-	./scripts/docker-run.sh --rm make -f Makefile.docker FORCE_PULL=$(FORCE_PULL) $@
+	./scripts/docker-run.sh --rm make -f Makefile.docker DEV_BUILD=$(DEV_BUILD) FORCE_PULL=$(FORCE_PULL) $@
 
 
 version:
