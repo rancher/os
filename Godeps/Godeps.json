@@ -249,6 +249,18 @@
 			"Rev": "f39987afe8d611407887b3094c03d6ba6a766a67"
 		},
 		{
+			"ImportPath": "github.com/docker/libcompose/cli/app",
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
+		},
+		{
+			"ImportPath": "github.com/docker/libcompose/cli/command",
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
+		},
+		{
+			"ImportPath": "github.com/docker/libcompose/cli/docker/app",
+			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
+		},
+		{
 			"ImportPath": "github.com/docker/libcompose/cli/logger",
 			"Rev": "a77147c9909a0ee7055c896826a01cb55352b4d9"
 		},
