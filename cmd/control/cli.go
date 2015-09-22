@@ -60,6 +60,7 @@ func Main() {
 			Subcommands: tlsConfCommands(),
 		},
 		installCommand,
+		composeCommand(),
 	}
 
 	app.Run(os.Args)
