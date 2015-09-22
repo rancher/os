@@ -138,7 +138,7 @@ func CreateSymlinks(pathSets [][]string) error {
 
 func CreateSymlink(src, dest string) error {
 	if _, err := os.Lstat(dest); os.IsNotExist(err) {
-		log.Debugf("Symlinking %s => %s", src, dest)
+		log.Debugf("Symlinking %s => %s", dest, src)
 		if err = os.Symlink(src, dest); err != nil {
 			return err
 		}
@@ -458,14 +458,16 @@ func prepare(config *Config, docker string, args ...string) error {
 
 func setupSystemd(config *Config) error {
 	if !config.EmulateSystemd {
-		cgroups, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/cgroup", os.Getpid()))
-		if err != nil {
-			return err
-		}
+		return nil
+	}
 
-		if !strings.Contains(string(cgroups), "name=systemd") {
-			return nil
-		}
+	cgroups, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/cgroup", os.Getpid()))
+	if err != nil {
+		return err
+	}
+
+	if strings.Contains(string(cgroups), "name=systemd") {
+		return nil
 	}
 
 	if err := createMounts(systemdMounts...); err != nil {

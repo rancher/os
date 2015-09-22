@@ -140,6 +140,7 @@ func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 	launchConfig.DnsConfig.Nameservers = cfg.Rancher.Network.Dns.Nameservers
 	launchConfig.DnsConfig.Search = cfg.Rancher.Network.Dns.Search
 	launchConfig.Environment = dockerCfg.Environment
+	launchConfig.EmulateSystemd = true
 
 	if !cfg.Rancher.Debug {
 		launchConfig.LogFile = config.SYSTEM_DOCKER_LOG
