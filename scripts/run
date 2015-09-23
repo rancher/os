@@ -36,6 +36,7 @@ while [ "$#" -gt 0 ]; do
         --xhyve)
             if [ -x $(which xhyve) ]; then
                 XHYVE=1
+                QEMU=0
             fi
             ;;
         --qemu)
@@ -45,6 +46,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         --qind)
             QIND=1
+            QEMU=0
             ;;
         --kvm)
             KVM=1
