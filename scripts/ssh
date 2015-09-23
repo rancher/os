@@ -20,12 +20,14 @@ while [ "$#" -gt 0 ]; do
             ;;
         --xhyve)
             XHYVE=1
+            QEMU=0
             ;;
         --qemu)
             QEMU=1
             ;;
         --qind)
             QIND=1
+            QEMU=0
             ;;
         --key)
             shift 1
