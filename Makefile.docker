@@ -1,5 +1,6 @@
 include build.conf
 FORCE_PULL := 0
+DEV_BUILD  := 0
 
 
 bin/rancheros:
@@ -33,7 +34,7 @@ $(BUILD)/images.tar: bin/rancheros
 
 $(DIST)/artifacts/initrd: bin/rancheros assets/docker $(BUILD)/kernel/ $(BUILD)/images.tar
 	mkdir -p $(dir $@)
-	DFS_IMAGE=$(DFS_IMAGE) ./scripts/mk-initrd.sh
+	DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh
 
 
 $(DIST)/artifacts/rancheros.iso: minimal

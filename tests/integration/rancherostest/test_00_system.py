@@ -31,8 +31,8 @@ def test_run_system_container(qemu):
     u.wait_for_ssh()
 
     ssh = subprocess.Popen(
-        './scripts/ssh sudo system-docker run --rm busybox /bin/true', shell=True,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        './scripts/ssh --qemu sudo system-docker run --rm busybox /bin/true',
+        shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
     for ln in u.iter_lines(ssh.stdout):
         print(ln)

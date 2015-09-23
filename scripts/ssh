@@ -5,26 +5,52 @@ cd $(dirname $0)/..
 
 chmod 0600 ./assets/rancher.key
 
+QEMU=1
 UNAME=$(uname)
+INTERACTIVE="-it"
 
 while [ "$#" -gt 0 ]; do
     case $1 in
-        --xhyve)
+        --name)
             shift 1
-            if [ "$UNAME" == "Darwin" ] && [ -x $(which xhyve) ]; then
-                XHYVE=1
-            fi
+            NAME="$1"
+            ;;
+        --notty)
+            INTERACTIVE=""
+            ;;
+        --xhyve)
+            XHYVE=1
+            ;;
+        --qemu)
+            QEMU=1
+            ;;
+        --qind)
+            QIND=1
+            ;;
+        --key)
+            shift 1
+            KEY="$1"
             ;;
         *)
             break
             ;;
     esac
+    shift 1
 done
 
 if [ "$XHYVE" == "1" ]; then
     HOST=192.168.64.2  #  consult `/var/db/dhcpd_leases` or delete it
-    exec ssh -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@${HOST} "$@"
+    exec ssh -F ./assets/scripts_ssh_config -i ${KEY:-./assets/rancher.key} rancher@${HOST} "$@"
+elif [ "$QEMU" == "1" ]; then
+    exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ${KEY:-./assets/rancher.key} rancher@localhost "$@"
+elif [ "$QIND" == "1" ]; then
+    NAME=${NAME:-ros-qind}
+    if [ -n "$KEY" ]; then
+        docker inspect ${NAME} >/dev/null 2>&1 || exit 1
+        docker cp ${KEY} ${NAME}:/stuff/$(basename ${KEY})
+        KEY_FILE=/stuff/$(basename ${KEY})
+    fi
+    exec docker exec ${INTERACTIVE} ${NAME} /ssh.sh -i ${KEY_FILE:-/stuff/rancher.key} rancher@localhost "$@"
 else
-    exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ./assets/rancher.key rancher@localhost "$@"
+    exit 42
 fi
-

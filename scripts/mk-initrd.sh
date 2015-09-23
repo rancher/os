@@ -27,4 +27,10 @@ docker export ${DFS} | tar xvf - -C ${INITRD_DIR}  --exclude=usr/bin/dockerlaunc
                                                    --exclude=usr/libexec/git-core \
                                                    usr
 
-cd ${INITRD_DIR} && find | cpio -H newc -o | lzma -c > ${DIST}/artifacts/initrd
+if [ "$DEV_BUILD" == "1" ]; then
+    COMPRESS=gzip
+else
+    COMPRESS=lzma
+fi
+
+cd ${INITRD_DIR} && find | cpio -H newc -o | ${COMPRESS} > ${DIST}/artifacts/initrd

@@ -9,4 +9,4 @@ fi
 
 docker build -t ros-build-base -f Dockerfile.build-base .
 docker build -t ros-build -f Dockerfile.build .
-./scripts/docker-run.sh --name ros-ci make -f Makefile.docker build-all integration-tests
+./scripts/docker-run.sh --name ros-ci make -f Makefile.docker DEV_BUILD=1 minimal integration-tests
