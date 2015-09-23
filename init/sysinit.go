@@ -51,15 +51,15 @@ func findImages(cfg *config.CloudConfig) ([]string, error) {
 	return result, nil
 }
 
-func loadImages(cfg *config.CloudConfig) error {
+func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	images, err := findImages(cfg)
 	if err != nil || len(images) == 0 {
-		return err
+		return cfg, err
 	}
 
 	client, err := docker.NewSystemClient()
 	if err != nil {
-		return err
+		return cfg, err
 	}
 
 	for _, image := range images {
@@ -70,7 +70,7 @@ func loadImages(cfg *config.CloudConfig) error {
 		inputFileName := path.Join(config.IMAGES_PATH, image)
 		input, err := os.Open(inputFileName)
 		if err != nil {
-			return err
+			return cfg, err
 		}
 
 		defer input.Close()
@@ -82,11 +82,11 @@ func loadImages(cfg *config.CloudConfig) error {
 		log.Infof("Done loading images from %s", inputFileName)
 
 		if err != nil {
-			return err
+			return cfg, err
 		}
 	}
 
-	return nil
+	return cfg, nil
 }
 
 func SysInit() error {
@@ -95,20 +95,18 @@ func SysInit() error {
 		return err
 	}
 
-	initFuncs := []config.InitFunc{
+	_, err = config.ChainCfgFuncs(cfg,
 		loadImages,
-		func(cfg *config.CloudConfig) error {
-			return compose.RunServices(cfg)
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			return cfg, compose.RunServices(cfg)
 		},
-		func(cfg *config.CloudConfig) error {
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			syscall.Sync()
-			return nil
+			return cfg, nil
 		},
-		func(cfg *config.CloudConfig) error {
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			log.Infof("RancherOS %s started", config.VERSION)
-			return nil
-		},
-	}
-
-	return config.RunInitFuncs(cfg, initFuncs)
+			return cfg, nil
+		})
+	return err
 }

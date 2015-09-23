@@ -30,12 +30,12 @@ var (
 	}
 )
 
-func loadModules(cfg *config.CloudConfig) error {
+func loadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	mounted := map[string]bool{}
 
 	f, err := os.Open("/proc/modules")
 	if err != nil {
-		return err
+		return cfg, err
 	}
 	defer f.Close()
 
@@ -55,10 +55,10 @@ func loadModules(cfg *config.CloudConfig) error {
 		}
 	}
 
-	return nil
+	return cfg, nil
 }
 
-func sysInit(cfg *config.CloudConfig) error {
+func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 	args := append([]string{config.SYSINIT_BIN}, os.Args[1:]...)
 
 	cmd := &exec.Cmd{
@@ -71,10 +71,10 @@ func sysInit(cfg *config.CloudConfig) error {
 	cmd.Stdout = os.Stdout
 
 	if err := cmd.Start(); err != nil {
-		return err
+		return c, err
 	}
 
-	return os.Stdin.Close()
+	return c, os.Stdin.Close()
 }
 
 func MainInit() {
@@ -121,15 +121,15 @@ func tryMountState(cfg *config.CloudConfig) error {
 	return mountState(cfg)
 }
 
-func tryMountAndBootstrap(cfg *config.CloudConfig) error {
+func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if err := tryMountState(cfg); !cfg.Rancher.State.Required && err != nil {
-		return nil
+		return cfg, nil
 	} else if err != nil {
-		return err
+		return cfg, err
 	}
 
 	log.Debugf("Switching to new root at %s", STATE)
-	return switchRoot(STATE)
+	return cfg, switchRoot(STATE)
 }
 
 func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
@@ -150,27 +150,22 @@ func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 }
 
 func RunInit() error {
-	var cfg config.CloudConfig
-
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 	// Magic setting to tell Docker to do switch_root and not pivot_root
 	os.Setenv("DOCKER_RAMDISK", "true")
 
-	initFuncs := []config.InitFunc{
-		func(cfg *config.CloudConfig) error {
-			return dockerlaunch.PrepareFs(&mountConfig)
+	initFuncs := []config.CfgFunc{
+		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			return c, dockerlaunch.PrepareFs(&mountConfig)
 		},
-		func(cfg *config.CloudConfig) error {
-			newCfg, err := config.LoadConfig()
-			if err == nil {
-				newCfg, err = config.LoadConfig()
-			}
-			if err == nil {
-				*cfg = *newCfg
+		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
+			cfg, err := config.LoadConfig()
+			if err != nil {
+				return cfg, err
 			}
 
 			if cfg.Rancher.Debug {
-				cfgString, err := config.Dump(false, true)
+				cfgString, err := config.Dump(false, false, true)
 				if err != nil {
 					log.WithFields(log.Fields{"err": err}).Error("Error serializing config")
 				} else {
@@ -178,24 +173,25 @@ func RunInit() error {
 				}
 			}
 
-			return err
+			return cfg, nil
 		},
 		loadModules,
 		tryMountAndBootstrap,
-		func(cfg *config.CloudConfig) error {
-			return cfg.Reload()
+		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
+			return config.LoadConfig()
 		},
 		loadModules,
 		sysInit,
 	}
 
-	if err := config.RunInitFuncs(&cfg, initFuncs); err != nil {
+	cfg, err := config.ChainCfgFuncs(nil, initFuncs...)
+	if err != nil {
 		return err
 	}
 
-	launchConfig, args := getLaunchConfig(&cfg, &cfg.Rancher.SystemDocker)
+	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
 
 	log.Info("Launching System Docker")
-	_, err := dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
+	_, err = dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
 	return err
 }

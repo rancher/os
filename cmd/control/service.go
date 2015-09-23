@@ -53,7 +53,7 @@ func disable(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
+		if err = cfg.Save(); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -75,7 +75,7 @@ func del(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
+		if err = cfg.Save(); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -102,7 +102,7 @@ func enable(c *cli.Context) {
 	}
 
 	if changed {
-		if err := cfg.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
+		if err := cfg.Save(); err != nil {
 			log.Fatal(err)
 		}
 	}

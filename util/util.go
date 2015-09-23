@@ -1,101 +1,27 @@
 package util
 
 import (
-	"archive/tar"
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"math/rand"
 	"net/http"
 	"os"
-	"path"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/docker/docker/pkg/mount"
 	"reflect"
 )
 
 var (
-	letters      = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 	ErrNoNetwork = errors.New("Networking not available to load resource")
 	ErrNotFound  = errors.New("Failed to find resource")
 )
 
-func GetOSType() string {
-	f, err := os.Open("/etc/os-release")
-	defer f.Close()
-	if err != nil {
-		return "busybox"
-	}
-	scanner := bufio.NewScanner(f)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if len(line) > 8 && line[:8] == "ID_LIKE=" {
-			return line[8:]
-		}
-	}
-	return "busybox"
-
-}
-
-func Remount(directory, options string) error {
-	return mount.Mount("", directory, "", fmt.Sprintf("remount,%s", options))
-}
-
-func ExtractTar(archive string, dest string) error {
-	f, err := os.Open(archive)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	input := tar.NewReader(f)
-
-	for {
-		header, err := input.Next()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-
-		if header == nil {
-			break
-		}
-
-		fileInfo := header.FileInfo()
-		fileName := path.Join(dest, header.Name)
-		if fileInfo.IsDir() {
-			//log.Debugf("DIR : %s", fileName)
-			err = os.MkdirAll(fileName, fileInfo.Mode())
-			if err != nil {
-				return err
-			}
-		} else {
-			//log.Debugf("FILE: %s", fileName)
-			destFile, err := os.OpenFile(fileName, os.O_RDWR|os.O_CREATE|os.O_TRUNC, fileInfo.Mode())
-			if err != nil {
-				return err
-			}
-
-			_, err = io.Copy(destFile, input)
-			// Not deferring, concerned about holding open too many files
-			destFile.Close()
-
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
+type AnyMap map[interface{}]interface{}
 
 func Contains(values []string, value string) bool {
 	if len(value) == 0 {
@@ -112,45 +38,6 @@ func Contains(values []string, value string) bool {
 }
 
 type ReturnsErr func() error
-
-func ShortCircuit(funcs ...ReturnsErr) error {
-	for _, f := range funcs {
-		err := f()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-type ErrWriter struct {
-	w   io.Writer
-	Err error
-}
-
-func NewErrorWriter(w io.Writer) *ErrWriter {
-	return &ErrWriter{
-		w: w,
-	}
-}
-
-func (e *ErrWriter) Write(buf []byte) *ErrWriter {
-	if e.Err != nil {
-		return e
-	}
-
-	_, e.Err = e.w.Write(buf)
-	return e
-}
-
-func RandSeq(n int) string {
-	b := make([]rune, n)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
-}
 
 func FileCopy(src, dest string) (err error) {
 	in, err := os.Open(src)
@@ -181,21 +68,6 @@ func Convert(from, to interface{}) error {
 	return yaml.Unmarshal(bytes, to)
 }
 
-func MergeBytes(left, right []byte) ([]byte, error) {
-	leftMap := make(map[interface{}]interface{})
-	rightMap := make(map[interface{}]interface{})
-
-	if err := yaml.Unmarshal(left, &leftMap); err != nil {
-		return nil, err
-	}
-
-	if err := yaml.Unmarshal(right, &rightMap); err != nil {
-		return nil, err
-	}
-
-	return yaml.Marshal(MapsUnion(leftMap, rightMap, Replace))
-}
-
 func Copy(d interface{}) interface{} {
 	switch d := d.(type) {
 	case map[interface{}]interface{}:
@@ -218,36 +90,45 @@ func Equal(l, r interface{}) interface{} {
 	return nil
 }
 
-func ExistsIn(x interface{}, s []interface{}) bool {
-	for _, y := range s {
-		if reflect.DeepEqual(x, y) {
-			return true
+func Filter(xs []interface{}, p func(x interface{}) bool) []interface{} {
+	return FlatMap(xs, func(x interface{}) []interface{} {
+		if p(x) {
+			return []interface{}{x}
 		}
-	}
-	return false
+		return []interface{}{}
+	})
 }
 
-func SlicesUnion(left, right []interface{}, op func(interface{}, interface{}) interface{}) []interface{} {
-	result := SliceCopy(left)
-	for _, r := range right {
-		if !ExistsIn(r, result) {
-			result = append(result, r)
+func FilterStrings(xs []string, p func(x string) bool) []string {
+	return FlatMapStrings(xs, func(x string) []string {
+		if p(x) {
+			return []string{x}
 		}
-	}
-	return result
+		return []string{}
+	})
 }
 
-func SlicesIntersection(left, right []interface{}, op func(interface{}, interface{}) interface{}) []interface{} {
+func Map(xs []interface{}, f func(x interface{}) interface{}) []interface{} {
+	return FlatMap(xs, func(x interface{}) []interface{} { return []interface{}{f(x)} })
+}
+
+func FlatMap(xs []interface{}, f func(x interface{}) []interface{}) []interface{} {
 	result := []interface{}{}
-	for _, r := range right {
-		if ExistsIn(r, left) {
-			result = append(result, r)
-		}
+	for _, x := range xs {
+		result = append(result, f(x)...)
 	}
 	return result
 }
 
-func MapsUnion(left, right map[interface{}]interface{}, op func(interface{}, interface{}) interface{}) map[interface{}]interface{} {
+func FlatMapStrings(xs []string, f func(x string) []string) []string {
+	result := []string{}
+	for _, x := range xs {
+		result = append(result, f(x)...)
+	}
+	return result
+}
+
+func MapsUnion(left, right map[interface{}]interface{}) map[interface{}]interface{} {
 	result := MapCopy(left)
 
 	for k, r := range right {
@@ -256,19 +137,12 @@ func MapsUnion(left, right map[interface{}]interface{}, op func(interface{}, int
 			case map[interface{}]interface{}:
 				switch r := r.(type) {
 				case map[interface{}]interface{}:
-					result[k] = MapsUnion(l, r, op)
+					result[k] = MapsUnion(l, r)
 				default:
-					result[k] = op(l, r)
-				}
-			case []interface{}:
-				switch r := r.(type) {
-				case []interface{}:
-					result[k] = SlicesUnion(l, r, op)
-				default:
-					result[k] = op(l, r)
+					result[k] = Replace(l, r)
 				}
 			default:
-				result[k] = op(l, r)
+				result[k] = Replace(l, r)
 			}
 		} else {
 			result[k] = Copy(r)
@@ -278,7 +152,7 @@ func MapsUnion(left, right map[interface{}]interface{}, op func(interface{}, int
 	return result
 }
 
-func MapsIntersection(left, right map[interface{}]interface{}, op func(interface{}, interface{}) interface{}) map[interface{}]interface{} {
+func MapsDifference(left, right map[interface{}]interface{}) map[interface{}]interface{} {
 	result := map[interface{}]interface{}{}
 
 	for k, l := range left {
@@ -287,23 +161,48 @@ func MapsIntersection(left, right map[interface{}]interface{}, op func(interface
 			case map[interface{}]interface{}:
 				switch r := r.(type) {
 				case map[interface{}]interface{}:
-					result[k] = MapsIntersection(l, r, op)
-				default:
-					if v := op(l, r); v != nil {
+					if len(l) == 0 && len(r) == 0 {
+						continue
+					} else if len(l) == 0 {
+						result[k] = l
+					} else if v := MapsDifference(l, r); len(v) > 0 {
 						result[k] = v
 					}
-				}
-			case []interface{}:
-				switch r := r.(type) {
-				case []interface{}:
-					result[k] = SlicesIntersection(l, r, op)
 				default:
-					if v := op(l, r); v != nil {
+					if v := Equal(l, r); v == nil {
+						result[k] = l
+					}
+				}
+			default:
+				if v := Equal(l, r); v == nil {
+					result[k] = l
+				}
+			}
+		} else {
+			result[k] = l
+		}
+	}
+
+	return result
+}
+
+func MapsIntersection(left, right map[interface{}]interface{}) map[interface{}]interface{} {
+	result := map[interface{}]interface{}{}
+
+	for k, l := range left {
+		if r, ok := right[k]; ok {
+			switch l := l.(type) {
+			case map[interface{}]interface{}:
+				switch r := r.(type) {
+				case map[interface{}]interface{}:
+					result[k] = MapsIntersection(l, r)
+				default:
+					if v := Equal(l, r); v != nil {
 						result[k] = v
 					}
 				}
 			default:
-				if v := op(l, r); v != nil {
+				if v := Equal(l, r); v != nil {
 					result[k] = v
 				}
 			}
@@ -325,6 +224,14 @@ func SliceCopy(data []interface{}) []interface{} {
 	result := make([]interface{}, len(data), len(data))
 	for k, v := range data {
 		result[k] = Copy(v)
+	}
+	return result
+}
+
+func ToStrings(data []interface{}) []string {
+	result := make([]string, len(data), len(data))
+	for k, v := range data {
+		result[k] = v.(string)
 	}
 	return result
 }
@@ -352,6 +259,18 @@ func GetServices(urls []string) ([]string, error) {
 		}
 	}
 
+	return result, nil
+}
+
+func DirLs(dir string) ([]interface{}, error) {
+	result := []interface{}{}
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return result, err
+	}
+	for _, f := range files {
+		result = append(result, f)
+	}
 	return result, nil
 }
 
@@ -386,21 +305,6 @@ func LoadResource(location string, network bool, urls []string) ([]byte, error) 
 	}
 
 	return nil, err
-}
-
-func GetValue(kvPairs []string, key string) string {
-	if kvPairs == nil {
-		return ""
-	}
-
-	prefix := key + "="
-	for _, i := range kvPairs {
-		if strings.HasPrefix(i, prefix) {
-			return strings.TrimPrefix(i, prefix)
-		}
-	}
-
-	return ""
 }
 
 func Map2KVPairs(m map[string]string) []string {

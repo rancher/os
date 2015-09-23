@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cloudinit
+package config
 
 import (
 	"net"
@@ -92,7 +92,7 @@ func TestSubstituteUserDataVars(t *testing.T) {
 		},
 	} {
 
-		got := substituteUserDataVars([]byte(tt.input), tt.metadata)
+		got := substituteVars([]byte(tt.input), tt.metadata)
 		if string(got) != tt.out {
 			t.Fatalf("Userdata substitution incorrectly applied.\ngot:\n%s\nwant:\n%s", got, tt.out)
 		}

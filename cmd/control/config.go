@@ -58,12 +58,16 @@ func configSubcommands() []cli.Command {
 					Usage: "File to which to save",
 				},
 				cli.BoolFlag{
+					Name:  "boot, b",
+					Usage: "Include cloud-config provided at boot",
+				},
+				cli.BoolFlag{
 					Name:  "private, p",
-					Usage: "Include private information such as keys",
+					Usage: "Include the generated private keys",
 				},
 				cli.BoolFlag{
 					Name:  "full, f",
-					Usage: "Include full configuration, including internal and default settings",
+					Usage: "Export full configuration, including internal and default settings",
 				},
 			},
 			Action: export,
@@ -101,9 +105,9 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 
 func runImages(c *cli.Context) {
 	configFile := c.String("input")
-	cfg := config.ReadConfig(nil, configFile)
-	if cfg == nil {
-		log.Fatalf("Could not read config from file %v", configFile)
+	cfg, err := config.ReadConfig(nil, false, configFile)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err, "file": configFile}).Fatalf("Could not read config from file")
 	}
 	images := imagesFromConfig(cfg)
 	fmt.Println(strings.Join(images, " "))
@@ -133,8 +137,12 @@ func runImport(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	err = cfg.Import(bytes)
+	cfg, err = cfg.Import(bytes)
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cfg.Save(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -151,8 +159,12 @@ func configSet(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	err = cfg.Set(key, value)
+	cfg, err = cfg.Set(key, value)
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cfg.Save(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -203,14 +215,18 @@ func merge(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	err = cfg.Merge(bytes)
+	cfg, err = cfg.MergeBytes(bytes)
 	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cfg.Save(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func export(c *cli.Context) {
-	content, err := config.Dump(c.Bool("private"), c.Bool("full"))
+	content, err := config.Dump(c.Bool("boot"), c.Bool("private"), c.Bool("full"))
 	if err != nil {
 		log.Fatal(err)
 	}

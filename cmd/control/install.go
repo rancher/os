@@ -86,12 +86,12 @@ func installAction(c *cli.Context) {
 	force := c.Bool("force")
 	reboot := !c.Bool("no-reboot")
 
-	if err := runInstall(cfg, image, installType, cloudConfig, device, force, reboot); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, force, reboot); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 	}
 }
 
-func runInstall(cfg *config.CloudConfig, image, installType, cloudConfig, device string, force, reboot bool) error {
+func runInstall(image, installType, cloudConfig, device string, force, reboot bool) error {
 	in := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("Installing from %s\n", image)
