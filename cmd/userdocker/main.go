@@ -72,26 +72,23 @@ type result struct {
 	Pid int `json:"Pid"`
 }
 
-func expand(first, second string, args []string) ([]string, error) {
-	var err error
+func findProgram(searchPaths ...string) string {
 	prog := ""
 
-	prog, err = exec.LookPath(first)
-	if err != nil {
-		prog, err = exec.LookPath(second)
-	}
-	if err != nil {
-		return nil, err
+	for _, i := range searchPaths {
+		var err error
+		prog, err = exec.LookPath(i)
+		if err == nil {
+			break
+		}
+		prog = i
 	}
 
-	return append([]string{prog}, args...), nil
+	return prog
 }
 
 func runNsenter(pid int) error {
-	args, err := expand(userDocker, "", []string{"main"})
-	if err != nil {
-		return err
-	}
+	args := []string{findProgram(userDocker), "main"}
 
 	r, w, err := os.Pipe()
 	if err != nil {
@@ -227,14 +224,15 @@ func main(cfg *config.CloudConfig) error {
 		}
 	}
 
-	args, err := expand("docker-init", "docker", args)
-	if err != nil {
-		return err
+	prog := findProgram("docker-init", "dockerlaunch", "docker")
+	if strings.Contains(prog, "dockerlaunch") {
+		args = append([]string{prog, "docker"}, args...)
+	} else {
+		args = append([]string{prog}, args...)
 	}
 
 	log.Infof("Running %v", args)
-	err = syscall.Exec(args[0], args, dockerCfg.AppendEnv())
-	return err
+	return syscall.Exec(args[0], args, dockerCfg.AppendEnv())
 }
 
 func switchCgroup(src, target int) error {

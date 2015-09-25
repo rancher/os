@@ -23,6 +23,7 @@ const (
 	iptables      = "/sbin/iptables"
 	modprobe      = "/sbin/modprobe"
 	systemdRoot   = "/sys/fs/cgroup/systemd/user.slice"
+	distSuffix    = ".dist"
 )
 
 var (
@@ -189,7 +190,7 @@ func execDocker(config *Config, docker, cmd string, args []string) (*exec.Cmd, e
 		err := cmd.Start()
 		return cmd, err
 	} else {
-		err := syscall.Exec(docker, append([]string{cmd}, args...), env)
+		err := syscall.Exec(expand(docker), append([]string{cmd}, args...), env)
 		return nil, err
 	}
 }
@@ -481,15 +482,27 @@ func setupSystemd(config *Config) error {
 	return ioutil.WriteFile(path.Join(systemdRoot, "cgroup.procs"), []byte(strconv.Itoa(os.Getpid())+"\n"), 0644)
 }
 
+func expand(bin string) string {
+	expanded, err := exec.LookPath(bin)
+	if err == nil {
+		return expanded
+	}
+	return bin
+}
+
 func setupBin(config *Config, bin string) error {
-	if _, err := os.Stat(bin); os.IsNotExist(err) {
-		dist := bin + ".dist"
-		if _, err := os.Stat(dist); err == nil {
-			return os.Symlink(dist, bin)
-		}
+	expanded, err := exec.LookPath(bin)
+	if err == nil {
+		return nil
 	}
 
-	return nil
+	expanded, err = exec.LookPath(bin + distSuffix)
+	if err != nil {
+		// Purposely not returning error
+		return nil
+	}
+
+	return CreateSymlink(expanded, expanded[:len(expanded)-len(distSuffix)])
 }
 
 func setupLogging(config *Config) error {
