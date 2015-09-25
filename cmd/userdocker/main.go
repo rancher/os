@@ -51,6 +51,8 @@ func enter(cfg *config.CloudConfig) error {
 		context = DEFAULT_STORAGE_CONTEXT
 	}
 
+	log.Infof("Starting Docker in context: %s", context)
+
 	p, err := compose.GetProject(cfg)
 	if err != nil {
 		return err
@@ -150,10 +152,11 @@ func handleTerm(p *os.Process) {
 }
 
 func waitForPid(service string, project *project.Project) (int, error) {
+	log.Infof("Getting PID for service: %s", service)
 	for {
 		if pid, err := getPid(service, project); err != nil || pid == 0 {
 			log.Infof("Waiting for %s : %d : %v", service, pid, err)
-			time.Sleep(250)
+			time.Sleep(1 * time.Second)
 		} else {
 			return pid, err
 		}

@@ -1,8 +1,6 @@
 package compose
 
 import (
-	"fmt"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/cli/logger"
 	"github.com/docker/libcompose/docker"
@@ -134,7 +132,6 @@ func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
 				continue
 			}
 
-			fmt.Println("Loading config: %s", string(bytes))
 			err = p.Load(bytes)
 			if err != nil {
 				log.Errorf("Failed to load %s : %v", service, err)
