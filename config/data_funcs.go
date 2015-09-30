@@ -9,6 +9,21 @@ import (
 	"strings"
 )
 
+type CfgFunc func(*CloudConfig) (*CloudConfig, error)
+
+func ChainCfgFuncs(cfg *CloudConfig, cfgFuncs ...CfgFunc) (*CloudConfig, error) {
+	for i, cfgFunc := range cfgFuncs {
+		log.Debugf("[%d/%d] Starting", i+1, len(cfgFuncs))
+		var err error
+		if cfg, err = cfgFunc(cfg); err != nil {
+			log.Errorf("Failed [%d/%d] %d%%", i+1, len(cfgFuncs), ((i + 1) * 100 / len(cfgFuncs)))
+			return cfg, err
+		}
+		log.Debugf("[%d/%d] Done %d%%", i+1, len(cfgFuncs), ((i + 1) * 100 / len(cfgFuncs)))
+	}
+	return cfg, nil
+}
+
 func filterKey(data map[interface{}]interface{}, key []string) (filtered, rest map[interface{}]interface{}) {
 	if len(key) == 0 {
 		return data, map[interface{}]interface{}{}
@@ -50,18 +65,23 @@ func filterDottedKeys(data map[interface{}]interface{}, keys []string) (filtered
 
 	for _, key := range keys {
 		f, r := filterKey(data, strings.Split(key, "."))
-		filtered = util.MapsUnion(filtered, f, util.Replace)
-		rest = util.MapsIntersection(rest, r, util.Equal)
+		filtered = util.MapsUnion(filtered, f)
+		rest = util.MapsIntersection(rest, r)
 	}
 
 	return
 }
 
-func getOrSetVal(args string, data map[interface{}]interface{}, value interface{}) interface{} {
+func getOrSetVal(args string, data map[interface{}]interface{}, value interface{}) (interface{}, map[interface{}]interface{}) {
 	parts := strings.Split(args, ".")
 
+	tData := data
+	if value != nil {
+		tData = util.MapCopy(data)
+	}
+	t := tData
 	for i, part := range parts {
-		val, ok := data[part]
+		val, ok := t[part]
 		last := i+1 == len(parts)
 
 		// Reached end, set the value
@@ -70,15 +90,15 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 				value = DummyMarshall(s)
 			}
 
-			data[part] = value
-			return value
+			t[part] = value
+			return value, tData
 		}
 
 		// Missing intermediate key, create key
 		if !last && value != nil && !ok {
 			newData := map[interface{}]interface{}{}
-			data[part] = newData
-			data = newData
+			t[part] = newData
+			t = newData
 			continue
 		}
 
@@ -87,7 +107,7 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 		}
 
 		if last {
-			return val
+			return val, tData
 		}
 
 		newData, ok := val.(map[interface{}]interface{})
@@ -95,10 +115,10 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 			break
 		}
 
-		data = newData
+		t = newData
 	}
 
-	return ""
+	return "", tData
 }
 
 func DummyMarshall(value string) interface{} {

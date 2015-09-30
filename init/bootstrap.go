@@ -15,22 +15,23 @@ import (
 	"github.com/rancherio/os/util"
 )
 
-func autoformat(cfg *config.CloudConfig) error {
+func autoformat(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if len(cfg.Rancher.State.Autoformat) == 0 || util.ResolveDevice(cfg.Rancher.State.Dev) != "" {
-		return nil
+		return cfg, nil
 	}
 	AUTOFORMAT := "AUTOFORMAT=" + strings.Join(cfg.Rancher.State.Autoformat, " ")
 	FORMATZERO := "FORMATZERO=" + fmt.Sprint(cfg.Rancher.State.FormatZero)
-	cfg.Rancher.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
+	t := *cfg
+	t.Rancher.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
 	log.Info("Running Autoformat services")
-	_, err := compose.RunServiceSet("autoformat", cfg, cfg.Rancher.Autoformat)
-	return err
+	_, err := compose.RunServiceSet("autoformat", &t, t.Rancher.Autoformat)
+	return &t, err
 }
 
-func runBootstrapContainers(cfg *config.CloudConfig) error {
+func runBootstrapContainers(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	log.Info("Running Bootstrap services")
 	_, err := compose.RunServiceSet("bootstrap", cfg, cfg.Rancher.BootstrapContainers)
-	return err
+	return cfg, err
 }
 
 func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
@@ -70,13 +71,11 @@ func bootstrap(cfg *config.CloudConfig) error {
 		return err
 	}
 
-	initFuncs := []config.InitFunc{
-		loadImages,
-		runBootstrapContainers,
-		autoformat,
-	}
-
 	defer stopDocker(c)
 
-	return config.RunInitFuncs(cfg, initFuncs)
+	_, err = config.ChainCfgFuncs(cfg,
+		loadImages,
+		runBootstrapContainers,
+		autoformat)
+	return err
 }

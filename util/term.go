@@ -1,3 +1,5 @@
+// +build linux
+
 package util
 
 import "github.com/kless/term"

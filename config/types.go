@@ -28,17 +28,24 @@ const (
 	SCOPE         = "io.rancher.os.scope"
 	SYSTEM        = "system"
 
-	OsConfigFile          = "/usr/share/ros/os-config.yml"
-	CloudConfigFile       = "/var/lib/rancher/conf/cloud-config.yml"
-	CloudConfigScriptFile = "/var/lib/rancher/conf/cloud-config-script"
-	MetaDataFile          = "/var/lib/rancher/conf/metadata"
-	LocalConfigFile       = "/var/lib/rancher/conf/cloud-config-local.yml"
-	PrivateConfigFile     = "/var/lib/rancher/conf/cloud-config-private.yml"
+	OsConfigFile           = "/usr/share/ros/os-config.yml"
+	CloudConfigDir         = "/var/lib/rancher/conf/cloud-config.d"
+	CloudConfigBootFile    = "/var/lib/rancher/conf/cloud-config.d/boot.yml"
+	CloudConfigPrivateFile = "/var/lib/rancher/conf/cloud-config.d/private.yml"
+	CloudConfigScriptFile  = "/var/lib/rancher/conf/cloud-config-script"
+	MetaDataFile           = "/var/lib/rancher/conf/metadata"
+	CloudConfigFile        = "/var/lib/rancher/conf/cloud-config.yml"
 )
 
 var (
 	VERSION string
 )
+
+func init() {
+	if VERSION == "" {
+		VERSION = "v0.0.0-dev"
+	}
+}
 
 type ContainerConfig struct {
 	Id             string                 `yaml:"id,omitempty"`
@@ -119,8 +126,13 @@ type CloudInit struct {
 	Datasources []string `yaml:"datasources,omitempty"`
 }
 
-func init() {
-	if VERSION == "" {
-		VERSION = "v0.0.0-dev"
+func (r Repositories) ToArray() []string {
+	result := make([]string, 0, len(r))
+	for _, repo := range r {
+		if repo.Url != "" {
+			result = append(result, repo.Url)
+		}
 	}
+
+	return result
 }

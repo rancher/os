@@ -65,16 +65,21 @@ func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig,
 			return err
 		}
 
-		return cfg.SetConfig(&config.CloudConfig{
-			Rancher: config.RancherConfig{
-				Docker: config.DockerConfig{
-					CAKey:      cfg.Rancher.Docker.CAKey,
-					CACert:     cfg.Rancher.Docker.CACert,
-					ServerCert: string(cert),
-					ServerKey:  string(key),
+		cfg, err = cfg.Merge(map[interface{}]interface{}{
+			"rancher": map[interface{}]interface{}{
+				"docker": map[interface{}]interface{}{
+					"ca_key":      cfg.Rancher.Docker.CAKey,
+					"ca_cert":     cfg.Rancher.Docker.CACert,
+					"server_cert": string(cert),
+					"server_key":  string(key),
 				},
 			},
 		})
+		if err != nil {
+			return err
+		}
+
+		return cfg.Save()
 	}
 
 	if err := ioutil.WriteFile(certPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
@@ -101,11 +106,11 @@ func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
 			return err
 		}
 
-		err = cfg.SetConfig(&config.CloudConfig{
-			Rancher: config.RancherConfig{
-				Docker: config.DockerConfig{
-					CAKey:  string(caKey),
-					CACert: string(caCert),
+		cfg, err = cfg.Merge(map[interface{}]interface{}{
+			"rancher": map[interface{}]interface{}{
+				"docker": map[interface{}]interface{}{
+					"ca_key":  string(caKey),
+					"ca_cert": string(caCert),
 				},
 			},
 		})
@@ -113,7 +118,7 @@ func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
 			return err
 		}
 
-		return nil
+		return cfg.Save()
 	}
 
 	if err := ioutil.WriteFile(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {

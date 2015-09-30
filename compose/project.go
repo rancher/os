@@ -35,7 +35,7 @@ func RunServiceSet(name string, cfg *config.CloudConfig, configs map[string]*pro
 		return nil, err
 	}
 
-	addServices(p, cfg, map[string]string{}, configs)
+	addServices(p, map[interface{}]interface{}{}, configs)
 
 	return p, p.Up()
 }
@@ -78,8 +78,9 @@ func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) 
 	return docker.NewProject(context)
 }
 
-func addServices(p *project.Project, cfg *config.CloudConfig, enabled map[string]string, configs map[string]*project.ServiceConfig) {
+func addServices(p *project.Project, enabled map[interface{}]interface{}, configs map[string]*project.ServiceConfig) map[interface{}]interface{} {
 	// Note: we ignore errors while loading services
+	unchanged := true
 	for name, serviceConfig := range configs {
 		hash := project.GetServiceHash(name, *serviceConfig)
 
@@ -92,14 +93,19 @@ func addServices(p *project.Project, cfg *config.CloudConfig, enabled map[string
 			continue
 		}
 
+		if unchanged {
+			enabled = util.MapCopy(enabled)
+			unchanged = false
+		}
 		enabled[name] = hash
 	}
+	return enabled
 }
 
 func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
 	network := false
 	projectEvents := make(chan project.ProjectEvent)
-	enabled := make(map[string]string)
+	enabled := map[interface{}]interface{}{}
 
 	p, err := newProject("os", cfg)
 	if err != nil {
@@ -110,15 +116,16 @@ func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
 	p.AddListener(projectEvents)
 
 	p.ReloadCallback = func() error {
-		err := cfg.Reload()
+		var err error
+		cfg, err = config.LoadConfig()
 		if err != nil {
 			return err
 		}
 
-		addServices(p, cfg, enabled, cfg.Rancher.Services)
+		enabled = addServices(p, enabled, cfg.Rancher.Services)
 
 		for service, serviceEnabled := range cfg.Rancher.ServicesInclude {
-			if enabled[service] != "" || !serviceEnabled {
+			if _, ok := enabled[service]; ok || !serviceEnabled {
 				continue
 			}
 

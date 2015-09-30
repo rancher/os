@@ -152,7 +152,8 @@ func TestGet(t *testing.T) {
 	}
 
 	for k, v := range tests {
-		assert.Equal(v, getOrSetVal(k, data, nil))
+		val, _ := getOrSetVal(k, data, nil)
+		assert.Equal(v, val)
 	}
 }
 
@@ -195,8 +196,10 @@ func TestSet(t *testing.T) {
 	}
 
 	for k, v := range tests {
-		getOrSetVal(k, data, v)
-		assert.Equal(v, getOrSetVal(k, data, nil))
+		_, tData := getOrSetVal(k, data, v)
+		val, _ := getOrSetVal(k, tData, nil)
+		data = tData
+		assert.Equal(v, val)
 	}
 
 	assert.Equal(expected, data)
@@ -267,8 +270,8 @@ func TestUserDocker(t *testing.T) {
 	err = yaml.Unmarshal(bytes, config)
 	assert.Nil(err)
 
-	data := make(map[interface{}]map[interface{}]interface{})
-	util.Convert(config, data)
+	data := map[interface{}]map[interface{}]interface{}{}
+	util.Convert(config, &data)
 
 	fmt.Println(data)
 
