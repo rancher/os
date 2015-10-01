@@ -2,14 +2,64 @@ package control
 
 import (
 	"fmt"
-	log "github.com/Sirupsen/logrus"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/docker/libcompose/cli/command"
+	dockerApp "github.com/docker/libcompose/cli/docker/app"
+	"github.com/docker/libcompose/project"
 	"github.com/rancherio/os/compose"
 	"github.com/rancherio/os/config"
 	"github.com/rancherio/os/util"
 )
+
+type projectFactory struct {
+}
+
+func (p *projectFactory) Create(c *cli.Context) (*project.Project, error) {
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+
+	return compose.GetProject(cfg)
+}
+
+func beforeApp(c *cli.Context) error {
+	if c.GlobalBool("verbose") {
+		logrus.SetLevel(logrus.DebugLevel)
+	}
+	return nil
+}
+
+func serviceCommand() cli.Command {
+	factory := &projectFactory{}
+
+	app := cli.Command{}
+	app.Name = "service"
+	app.ShortName = "s"
+	app.Usage = "Command line interface for services and compose."
+	app.Before = beforeApp
+	app.Flags = append(command.CommonFlags(), dockerApp.DockerClientFlags()...)
+	app.Subcommands = append(serviceSubCommands(),
+		command.BuildCommand(factory),
+		command.CreateCommand(factory),
+		command.UpCommand(factory),
+		command.StartCommand(factory),
+		command.LogsCommand(factory),
+		command.RestartCommand(factory),
+		command.StopCommand(factory),
+		command.ScaleCommand(factory),
+		command.RmCommand(factory),
+		command.PullCommand(factory),
+		command.KillCommand(factory),
+		command.PortCommand(factory),
+		command.PsCommand(factory),
+	)
+
+	return app
+}
 
 func serviceSubCommands() []cli.Command {
 	return []cli.Command{
@@ -40,7 +90,7 @@ func disable(c *cli.Context) {
 	changed := false
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
 	for _, service := range c.Args() {
@@ -54,7 +104,7 @@ func disable(c *cli.Context) {
 
 	if changed {
 		if err = cfg.Save(); err != nil {
-			log.Fatal(err)
+			logrus.Fatal(err)
 		}
 	}
 }
@@ -63,7 +113,7 @@ func del(c *cli.Context) {
 	changed := false
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
 	for _, service := range c.Args() {
@@ -76,7 +126,7 @@ func del(c *cli.Context) {
 
 	if changed {
 		if err = cfg.Save(); err != nil {
-			log.Fatal(err)
+			logrus.Fatal(err)
 		}
 	}
 }
@@ -85,16 +135,16 @@ func enable(c *cli.Context) {
 	changed := false
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
 	for _, service := range c.Args() {
 		if val, ok := cfg.Rancher.ServicesInclude[service]; !ok || !val {
 			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
-				log.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
+				logrus.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
 			if _, err := compose.LoadServiceResource(service, true, cfg); err != nil {
-				log.Fatalf("could not load service %s", service)
+				logrus.Fatalf("could not load service %s", service)
 			}
 			cfg.Rancher.ServicesInclude[service] = true
 			changed = true
@@ -103,7 +153,7 @@ func enable(c *cli.Context) {
 
 	if changed {
 		if err := cfg.Save(); err != nil {
-			log.Fatal(err)
+			logrus.Fatal(err)
 		}
 	}
 }
@@ -111,7 +161,7 @@ func enable(c *cli.Context) {
 func list(c *cli.Context) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
-		log.Fatal(err)
+		logrus.Fatal(err)
 	}
 
 	clone := make(map[string]bool)
@@ -121,7 +171,7 @@ func list(c *cli.Context) {
 
 	services, err := util.GetServices(cfg.Rancher.Repositories.ToArray())
 	if err != nil {
-		log.Fatalf("Failed to get services: %v", err)
+		logrus.Fatalf("Failed to get services: %v", err)
 	}
 
 	for _, service := range services {

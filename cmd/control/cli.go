@@ -40,13 +40,7 @@ func Main() {
 			SkipFlagParsing: true,
 			Action:          envAction,
 		},
-		{
-			Name:        "service",
-			ShortName:   "s",
-			Usage:       "service settings",
-			HideHelp:    true,
-			Subcommands: serviceSubCommands(),
-		},
+		serviceCommand(),
 		{
 			Name:        "os",
 			Usage:       "operating system upgrade/downgrade",
@@ -60,7 +54,6 @@ func Main() {
 			Subcommands: tlsConfCommands(),
 		},
 		installCommand,
-		composeCommand(),
 	}
 
 	app.Run(os.Args)
