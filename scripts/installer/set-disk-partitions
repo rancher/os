@@ -28,10 +28,10 @@ if [ "$PARTITION_COUNT" -gt "1" ]; then
             exit 1
         fi
     done
-
-    dd if=/dev/zero of=${DEVICE} bs=512 count=1
-    partprobe ${DEVICE}
 fi
+
+dd if=/dev/zero of=${DEVICE} bs=512 count=2048
+partprobe ${DEVICE}
 
 fdisk ${DEVICE} <<EOF
 n

@@ -1,7 +1,6 @@
 import pytest
 import rancherostest.util as u
 import subprocess
-import yaml
 
 
 ssh_command = ['./scripts/ssh', '--qemu', '--key', './tests/integration/assets/test.key']
@@ -11,11 +10,6 @@ cloud_config_path = './tests/integration/assets/test_03/cloud-config.yml'
 @pytest.fixture(scope="module")
 def qemu(request):
     return u.run_qemu(request, ['--cloud-config', cloud_config_path])
-
-
-@pytest.fixture(scope="module")
-def cloud_config():
-    return yaml.load(open(cloud_config_path))
 
 
 @pytest.mark.timeout(40)
