@@ -40,17 +40,8 @@ func RunServiceSet(name string, cfg *config.CloudConfig, configs map[string]*pro
 	return p, p.Up()
 }
 
-func RunServices(cfg *config.CloudConfig) error {
-	p, err := newCoreServiceProject(cfg)
-	if err != nil {
-		return err
-	}
-
-	return p.Up()
-}
-
-func GetProject(cfg *config.CloudConfig) (*project.Project, error) {
-	return newCoreServiceProject(cfg)
+func GetProject(cfg *config.CloudConfig, networkingAvailable bool) (*project.Project, error) {
+	return newCoreServiceProject(cfg, networkingAvailable)
 }
 
 func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) {
@@ -102,8 +93,7 @@ func addServices(p *project.Project, enabled map[interface{}]interface{}, config
 	return enabled
 }
 
-func newCoreServiceProject(cfg *config.CloudConfig) (*project.Project, error) {
-	network := false
+func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Project, error) {
 	projectEvents := make(chan project.ProjectEvent)
 	enabled := map[interface{}]interface{}{}
 
