@@ -23,7 +23,7 @@ func (p *projectFactory) Create(c *cli.Context) (*project.Project, error) {
 		return nil, err
 	}
 
-	return compose.GetProject(cfg)
+	return compose.GetProject(cfg, true)
 }
 
 func beforeApp(c *cli.Context) error {

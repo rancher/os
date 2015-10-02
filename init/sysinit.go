@@ -98,7 +98,11 @@ func SysInit() error {
 	_, err = config.ChainCfgFuncs(cfg,
 		loadImages,
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			return cfg, compose.RunServices(cfg)
+			p, err := compose.GetProject(cfg, false)
+			if err != nil {
+				return cfg, err
+			}
+			return cfg, p.Up()
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			syscall.Sync()
