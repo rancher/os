@@ -30,6 +30,8 @@ var (
 	mounts = [][]string{
 		{"devtmpfs", "/dev", "devtmpfs", ""},
 		{"none", "/dev/pts", "devpts", ""},
+		{"shm", "/dev/shm", "tmpfs", "rw,nosuid,nodev,noexec,relatime,size=65536k"},
+		{"mqueue", "/dev/mqueue", "mqueue", "rw,nosuid,nodev,noexec,relatime"},
 		{"none", "/proc", "proc", ""},
 		{"none", "/run", "tmpfs", ""},
 		{"none", "/sys", "sysfs", ""},
