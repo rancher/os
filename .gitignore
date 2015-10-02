@@ -1,5 +1,5 @@
 .DS_Store
-/assets
+/assets/ca.crt
 /state
 /bin
 /build
