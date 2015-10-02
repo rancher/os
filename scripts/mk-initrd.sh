@@ -28,7 +28,7 @@ docker export ${DFS} | tar xvf - -C ${INITRD_DIR}  --exclude=usr/bin/dockerlaunc
                                                    usr
 
 if [ "$DEV_BUILD" == "1" ]; then
-    COMPRESS=gzip
+    COMPRESS="gzip -1"
 else
     COMPRESS=lzma
 fi
