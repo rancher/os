@@ -80,7 +80,7 @@ rancher:
       privileged: true
       read_only: true
       volumes_from:
-      - docker-volumes
+      - container-data-volumes
       - command-volumes
       - user-volumes
       - system-volumes
@@ -152,7 +152,7 @@ rancher:
       - all-volumes
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
-    docker-volumes:
+    container-data-volumes:
       image: rancher/os-state:v0.4.0-dev
       labels:
         io.rancher.os.createonly: true
@@ -163,6 +163,7 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
+      - /var/lib/rkt:/var/lib/rkt
     network:
       image: rancher/os-network:v0.4.0-dev
       labels:
@@ -232,6 +233,7 @@ rancher:
       volumes:
       - /dev:/host/dev
       - /etc/docker:/etc/docker
+      - /etc/rkt:/etc/rkt
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /lib/firmware:/lib/firmware
       - /lib/modules:/lib/modules
