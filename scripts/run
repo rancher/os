@@ -13,6 +13,7 @@ INITRD=${BASE}/dist/artifacts/initrd
 
 QEMU=1
 FORMAT=1
+RM_USR=1
 REBUILD=1
 
 while [ "$#" -gt 0 ]; do
@@ -53,6 +54,9 @@ while [ "$#" -gt 0 ]; do
             ;;
         --no-format)
             FORMAT=0
+            ;;
+        --no-rm-usr)
+            RM_USR=0
             ;;
         --no-rebuild)
             REBUILD=0
@@ -109,6 +113,9 @@ fi
 KERNEL_ARGS="quiet rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
 if [ "$FORMAT" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
+fi
+if [ "$RM_USR" == "1" ]; then
+    KERNEL_ARGS="${KERNEL_ARGS} rancher.rm_usr"
 fi
 
 if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then

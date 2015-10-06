@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"strings"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -31,15 +30,6 @@ func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) 
 		log.Errorf("Failed to cleanup temp directory %s: %v", tmpDir, err)
 	}
 
-	if strings.HasSuffix(usrVer, "dev") {
-		log.Debugf("Deleteing old usr: %s", usr)
-		if err := os.RemoveAll(usr); err != nil {
-			// Don't care if this fails
-			log.Errorf("Failed to remove %s: %v", usr, err)
-		}
-		return true, nil
-	}
-
 	if _, err := os.Stat(usr); err == nil {
 		return false, nil
 	}
@@ -47,11 +37,19 @@ func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) 
 	return true, nil
 }
 
-func copyMoveRoot(rootfs string) error {
+func copyMoveRoot(rootfs string, rmUsr bool) error {
 	usrVer := fmt.Sprintf("usr-%s", config.VERSION)
 	usr := path.Join(rootfs, usrVer)
 	targetUsr := path.Join(rootfs, "usr")
 	tmpDir := path.Join(rootfs, "tmp")
+
+	if rmUsr {
+		log.Warnf("Development setup. Removing old usr: %s", usr)
+		if err := os.RemoveAll(usr); err != nil {
+			// Don't care if this fails
+			log.Errorf("Failed to remove %s: %v", usr, err)
+		}
+	}
 
 	if cont, err := cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir); !cont {
 		return err
@@ -100,7 +98,7 @@ func copyMoveRoot(rootfs string) error {
 	return nil
 }
 
-func switchRoot(rootfs string) error {
+func switchRoot(rootfs string, rmUsr bool) error {
 	for _, i := range []string{"/dev", "/sys", "/proc", "/run"} {
 		log.Debugf("Moving mount %s to %s", i, path.Join(rootfs, i))
 		if err := os.MkdirAll(path.Join(rootfs, i), 0755); err != nil {
@@ -111,7 +109,7 @@ func switchRoot(rootfs string) error {
 		}
 	}
 
-	if err := copyMoveRoot(rootfs); err != nil {
+	if err := copyMoveRoot(rootfs, rmUsr); err != nil {
 		return err
 	}
 
