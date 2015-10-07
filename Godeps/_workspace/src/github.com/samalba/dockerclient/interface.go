@@ -16,7 +16,9 @@ type Client interface {
 	CreateContainer(config *ContainerConfig, name string) (string, error)
 	ContainerLogs(id string, options *LogOptions) (io.ReadCloser, error)
 	ContainerChanges(id string) ([]*ContainerChanges, error)
-	Exec(config *ExecConfig) (string, error)
+	ExecCreate(config *ExecConfig) (string, error)
+	ExecStart(id string, config *ExecConfig) error
+	ExecResize(id string, width, height int) error
 	StartContainer(id string, config *HostConfig) error
 	StopContainer(id string, timeout int) error
 	RestartContainer(id string, timeout int) error
@@ -33,14 +35,23 @@ type Client interface {
 	StopAllMonitorStats()
 	TagImage(nameOrID string, repo string, tag string, force bool) error
 	Version() (*Version, error)
-	PullImage(name string, auth *AuthConfig) error
+	PullImage(name string, auth *AuthConfig, out ...io.Writer) error
 	LoadImage(reader io.Reader) error
 	RemoveContainer(id string, force, volumes bool) error
 	ListImages(all bool) ([]*Image, error)
-	RemoveImage(name string) ([]*ImageDelete, error)
+	RemoveImage(name string, force bool) ([]*ImageDelete, error)
 	PauseContainer(name string) error
 	UnpauseContainer(name string) error
 	RenameContainer(oldName string, newName string) error
 	ImportImage(source string, repository string, tag string, tar io.Reader) (io.ReadCloser, error)
 	BuildImage(image *BuildImage) (io.ReadCloser, error)
+	ListVolumes() ([]*Volume, error)
+	RemoveVolume(name string) error
+	CreateVolume(request *VolumeCreateRequest) (*Volume, error)
+	ListNetworks(filters string) ([]*NetworkResource, error)
+	InspectNetwork(id string) (*NetworkResource, error)
+	CreateNetwork(config *NetworkCreate) (*NetworkCreateResponse, error)
+	ConnectNetwork(id, container string) error
+	DisconnectNetwork(id, container string) error
+	RemoveNetwork(id string) error
 }

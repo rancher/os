@@ -14,6 +14,9 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
+	"github.com/docker/docker/pkg/jsonmessage"
+	"github.com/docker/docker/pkg/term"
 )
 
 const (
@@ -272,6 +275,56 @@ func (client *DockerClient) readJSONStream(stream io.ReadCloser, decode func(*js
 	return resultChan
 }
 
+func (client *DockerClient) ExecCreate(config *ExecConfig) (string, error) {
+	data, err := json.Marshal(config)
+	if err != nil {
+		return "", err
+	}
+	uri := fmt.Sprintf("/%s/containers/%s/exec", APIVersion, config.Container)
+	resp, err := client.doRequest("POST", uri, data, nil)
+	if err != nil {
+		return "", err
+	}
+	var createExecResp struct {
+		Id string
+	}
+	if err = json.Unmarshal(resp, &createExecResp); err != nil {
+		return "", err
+	}
+	return createExecResp.Id, nil
+}
+
+func (client *DockerClient) ExecStart(id string, config *ExecConfig) error {
+	data, err := json.Marshal(config)
+	if err != nil {
+		return err
+	}
+
+	uri := fmt.Sprintf("/%s/exec/%s/start", APIVersion, id)
+	if _, err := client.doRequest("POST", uri, data, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (client *DockerClient) ExecResize(id string, width, height int) error {
+	v := url.Values{}
+
+	w := strconv.Itoa(width)
+	h := strconv.Itoa(height)
+
+	v.Set("w", w)
+	v.Set("h", h)
+
+	uri := fmt.Sprintf("/%s/exec/%s/resize?%s", APIVersion, id, v.Encode())
+	if _, err := client.doRequest("POST", client.URL.String()+uri, nil, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (client *DockerClient) StartContainer(id string, config *HostConfig) error {
 	data, err := json.Marshal(config)
 	if err != nil {
@@ -475,11 +528,11 @@ func (client *DockerClient) Version() (*Version, error) {
 	return version, nil
 }
 
-func (client *DockerClient) PullImage(name string, auth *AuthConfig) error {
+func (client *DockerClient) PullImage(name string, auth *AuthConfig, out ...io.Writer) (err error) {
 	v := url.Values{}
 	v.Set("fromImage", name)
 	uri := fmt.Sprintf("/%s/images/create?%s", APIVersion, v.Encode())
-	req, err := http.NewRequest("POST", client.URL.String()+uri, nil)
+	req, _ := http.NewRequest("POST", client.URL.String()+uri, nil)
 	if auth != nil {
 		encoded_auth, err := auth.encode()
 		if err != nil {
@@ -487,9 +540,10 @@ func (client *DockerClient) PullImage(name string, auth *AuthConfig) error {
 		}
 		req.Header.Add("X-Registry-Auth", encoded_auth)
 	}
-	resp, err := client.HTTPClient.Do(req)
+	var resp *http.Response
+	resp, err = client.HTTPClient.Do(req)
 	if err != nil {
-		return err
+		return
 	}
 
 	defer resp.Body.Close()
@@ -504,16 +558,39 @@ func (client *DockerClient) PullImage(name string, auth *AuthConfig) error {
 		return fmt.Errorf("%s", string(data))
 	}
 
+	errorReader := io.Reader(resp.Body)
+	var cliOut io.Writer
+	if len(out) > 0 {
+		cliOut = out[0]
+	}
+	if cliOut != nil {
+		pipeReader, pipeWriter := io.Pipe()
+		streamErrChan := make(chan error)
+		defer func() {
+			pipeWriter.Close()
+			if err == nil {
+				err = <-streamErrChan
+			}
+		}()
+		errorReader = io.TeeReader(resp.Body, pipeWriter)
+		go func() {
+			fd, isTerminalIn := term.GetFdInfo(cliOut)
+			streamErrChan <- jsonmessage.DisplayJSONMessagesStream(pipeReader, cliOut, fd, isTerminalIn)
+		}()
+	}
 	var finalObj map[string]interface{}
-	for decoder := json.NewDecoder(resp.Body); err == nil; err = decoder.Decode(&finalObj) {
+	for decoder := json.NewDecoder(errorReader); err == nil; err = decoder.Decode(&finalObj) {
 	}
 	if err != io.EOF {
-		return err
+		return
+	} else {
+		err = nil
 	}
-	if err, ok := finalObj["error"]; ok {
-		return fmt.Errorf("%v", err)
+	if errObj, ok := finalObj["error"]; ok {
+		err = fmt.Errorf("%v", errObj)
+		return
 	}
-	return nil
+	return
 }
 
 func (client *DockerClient) InspectImage(id string) (*ImageInfo, error) {
@@ -576,8 +653,14 @@ func (client *DockerClient) ListImages(all bool) ([]*Image, error) {
 	return images, nil
 }
 
-func (client *DockerClient) RemoveImage(name string) ([]*ImageDelete, error) {
-	uri := fmt.Sprintf("/%s/images/%s", APIVersion, name)
+func (client *DockerClient) RemoveImage(name string, force bool) ([]*ImageDelete, error) {
+	argForce := 0
+	if force {
+		argForce = 1
+	}
+
+	args := fmt.Sprintf("force=%d", argForce)
+	uri := fmt.Sprintf("/%s/images/%s?%s", APIVersion, name, args)
 	data, err := client.doRequest("DELETE", uri, nil, nil)
 	if err != nil {
 		return nil, err
@@ -604,30 +687,6 @@ func (client *DockerClient) UnpauseContainer(id string) error {
 		return err
 	}
 	return nil
-}
-
-func (client *DockerClient) Exec(config *ExecConfig) (string, error) {
-	data, err := json.Marshal(config)
-	if err != nil {
-		return "", err
-	}
-	uri := fmt.Sprintf("/containers/%s/exec", config.Container)
-	resp, err := client.doRequest("POST", uri, data, nil)
-	if err != nil {
-		return "", err
-	}
-	var createExecResp struct {
-		Id string
-	}
-	if err = json.Unmarshal(resp, &createExecResp); err != nil {
-		return "", err
-	}
-	uri = fmt.Sprintf("/exec/%s/start", createExecResp.Id)
-	resp, err = client.doRequest("POST", uri, data, nil)
-	if err != nil {
-		return "", err
-	}
-	return createExecResp.Id, nil
 }
 
 func (client *DockerClient) RenameContainer(oldName string, newName string) error {
@@ -711,4 +770,114 @@ func (client *DockerClient) BuildImage(image *BuildImage) (io.ReadCloser, error)
 
 	uri := fmt.Sprintf("/%s/build?%s", APIVersion, v.Encode())
 	return client.doStreamRequest("POST", uri, image.Context, headers)
+}
+
+func (client *DockerClient) ListVolumes() ([]*Volume, error) {
+	uri := fmt.Sprintf("/%s/volumes", APIVersion)
+	data, err := client.doRequest("GET", uri, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	var volumesList VolumesListResponse
+	if err := json.Unmarshal(data, &volumesList); err != nil {
+		return nil, err
+	}
+	return volumesList.Volumes, nil
+}
+
+func (client *DockerClient) RemoveVolume(name string) error {
+	uri := fmt.Sprintf("/%s/volumes/%s", APIVersion, name)
+	_, err := client.doRequest("DELETE", uri, nil, nil)
+	return err
+}
+
+func (client *DockerClient) CreateVolume(request *VolumeCreateRequest) (*Volume, error) {
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	uri := fmt.Sprintf("/%s/volumes", APIVersion)
+	data, err = client.doRequest("POST", uri, data, nil)
+	if err != nil {
+		return nil, err
+	}
+	volume := &Volume{}
+	err = json.Unmarshal(data, volume)
+	return volume, err
+}
+
+func (client *DockerClient) ListNetworks(filters string) ([]*NetworkResource, error) {
+	uri := fmt.Sprintf("/%s/networks", APIVersion)
+
+	if filters != "" {
+		uri += "&filters=" + filters
+	}
+
+	data, err := client.doRequest("GET", uri, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := []*NetworkResource{}
+	err = json.Unmarshal(data, &ret)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (client *DockerClient) InspectNetwork(id string) (*NetworkResource, error) {
+	uri := fmt.Sprintf("/%s/networks/%s", APIVersion, id)
+
+	data, err := client.doRequest("GET", uri, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &NetworkResource{}
+	err = json.Unmarshal(data, ret)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func (client *DockerClient) CreateNetwork(config *NetworkCreate) (*NetworkCreateResponse, error) {
+	data, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+	uri := fmt.Sprintf("/%s/networks/create", APIVersion)
+	data, err = client.doRequest("POST", uri, data, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &NetworkCreateResponse{}
+	err = json.Unmarshal(data, ret)
+	return ret, nil
+}
+
+func (client *DockerClient) ConnectNetwork(id, container string) error {
+	data, err := json.Marshal(NetworkConnect{Container: container})
+	if err != nil {
+		return err
+	}
+	uri := fmt.Sprintf("/%s/networks/%s/connect", APIVersion, id)
+	_, err = client.doRequest("POST", uri, data, nil)
+	return err
+}
+
+func (client *DockerClient) DisconnectNetwork(id, container string) error {
+	data, err := json.Marshal(NetworkDisconnect{Container: container})
+	if err != nil {
+		return err
+	}
+	uri := fmt.Sprintf("/%s/networks/%s/disconnect", APIVersion, id)
+	_, err = client.doRequest("POST", uri, data, nil)
+	return err
+}
+
+func (client *DockerClient) RemoveNetwork(id string) error {
+	uri := fmt.Sprintf("/%s/networks/%s", APIVersion, id)
+	_, err := client.doRequest("DELETE", uri, nil, nil)
+	return err
 }
