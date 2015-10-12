@@ -7,9 +7,9 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/fsouza/go-dockerclient"
-	"github.com/rancherio/os/compose"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/docker"
+	"github.com/rancher/os/compose"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/docker"
 )
 
 func hasImage(name string) bool {

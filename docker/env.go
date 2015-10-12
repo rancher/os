@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/docker/libcompose/project"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 type ConfigEnvironment struct {

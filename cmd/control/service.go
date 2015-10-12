@@ -9,9 +9,9 @@ import (
 	"github.com/docker/libcompose/cli/command"
 	dockerApp "github.com/docker/libcompose/cli/docker/app"
 	"github.com/docker/libcompose/project"
-	"github.com/rancherio/os/compose"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/compose"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 type projectFactory struct {

@@ -10,9 +10,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/docker-from-scratch"
-	"github.com/rancherio/os/compose"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/compose"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 func autoformat(cfg *config.CloudConfig) (*config.CloudConfig, error) {

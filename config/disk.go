@@ -10,7 +10,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/docker/libcompose/project"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/util"
 	"gopkg.in/yaml.v2"
 )
 

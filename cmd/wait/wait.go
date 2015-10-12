@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/docker"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/docker"
 )
 
 func Main() {

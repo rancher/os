@@ -5,7 +5,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"testing"
 
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/util"
 	"github.com/stretchr/testify/require"
 	"strings"
 )

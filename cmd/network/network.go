@@ -7,7 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/rancher/netconf"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 func Main() {

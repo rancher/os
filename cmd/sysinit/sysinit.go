@@ -2,7 +2,7 @@ package sysinit
 
 import (
 	log "github.com/Sirupsen/logrus"
-	initPkg "github.com/rancherio/os/init"
+	initPkg "github.com/rancher/os/init"
 )
 
 func Main() {

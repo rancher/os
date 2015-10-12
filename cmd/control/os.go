@@ -16,10 +16,10 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/docker/libcompose/project"
-	"github.com/rancherio/os/cmd/power"
-	"github.com/rancherio/os/compose"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/docker"
+	"github.com/rancher/os/cmd/power"
+	"github.com/rancher/os/compose"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/docker"
 )
 
 type Images struct {

@@ -6,7 +6,7 @@ if [ -n "$BIND_DIR" ]; then
     if [ "$BIND_DIR" = "." ]; then
         BIND_DIR=$(pwd)
     fi
-    DOCKER_ARGS="-t -v $BIND_DIR:/go/src/github.com/rancherio/os"
+    DOCKER_ARGS="-t -v $BIND_DIR:/go/src/github.com/rancher/os"
 fi
 if [ -c /dev/kvm ] || [ "${KVM}" == "1" ]; then
     DOCKER_ARGS="${DOCKER_ARGS} --device=/dev/kvm:/dev/kvm"

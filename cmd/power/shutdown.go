@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 func Main() {
