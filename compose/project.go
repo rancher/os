@@ -5,9 +5,9 @@ import (
 	"github.com/docker/libcompose/cli/logger"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	"github.com/rancherio/os/config"
-	rosDocker "github.com/rancherio/os/docker"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/config"
+	rosDocker "github.com/rancher/os/docker"
+	"github.com/rancher/os/util"
 )
 
 func CreateService(cfg *config.CloudConfig, name string, serviceConfig *project.ServiceConfig) (project.Service, error) {

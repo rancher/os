@@ -6,7 +6,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 func Main() {

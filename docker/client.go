@@ -2,7 +2,7 @@ package docker
 
 import (
 	dockerClient "github.com/fsouza/go-dockerclient"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 const (

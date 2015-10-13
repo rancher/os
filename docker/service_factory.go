@@ -3,7 +3,7 @@ package docker
 import (
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/util"
 )
 
 type ServiceFactory struct {

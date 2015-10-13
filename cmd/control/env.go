@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 func envAction(c *cli.Context) {

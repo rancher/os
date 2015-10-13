@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 func configSubcommands() []cli.Command {

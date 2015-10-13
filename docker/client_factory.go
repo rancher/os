@@ -7,8 +7,8 @@ import (
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
 	"github.com/docker/machine/log"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 	"github.com/samalba/dockerclient"
 )
 

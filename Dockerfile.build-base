@@ -22,4 +22,4 @@ ENV PATH /go/bin:$PATH
 
 RUN go get github.com/tools/godep
 
-WORKDIR /go/src/github.com/rancherio/os
+WORKDIR /go/src/github.com/rancher/os

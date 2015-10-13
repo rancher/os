@@ -10,7 +10,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	machineUtil "github.com/docker/machine/utils"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 const (

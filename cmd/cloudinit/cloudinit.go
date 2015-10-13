@@ -38,8 +38,8 @@ import (
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/rancher/netconf"
-	"github.com/rancherio/os/cmd/cloudinit/hostname"
-	rancherConfig "github.com/rancherio/os/config"
+	"github.com/rancher/os/cmd/cloudinit/hostname"
+	rancherConfig "github.com/rancher/os/config"
 )
 
 const (

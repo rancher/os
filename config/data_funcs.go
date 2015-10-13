@@ -3,7 +3,7 @@ package config
 import (
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/util"
 	"regexp"
 	"strconv"
 	"strings"

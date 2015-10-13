@@ -14,9 +14,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	"github.com/rancherio/os/cmd/control"
-	"github.com/rancherio/os/compose"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/cmd/control"
+	"github.com/rancher/os/compose"
+	"github.com/rancher/os/config"
 
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	_ "github.com/opencontainers/runc/libcontainer/nsenter"

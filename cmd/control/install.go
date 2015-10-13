@@ -9,9 +9,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancherio/os/cmd/power"
-	"github.com/rancherio/os/config"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/cmd/power"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 var installCommand = cli.Command{

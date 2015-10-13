@@ -12,7 +12,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/fsouza/go-dockerclient"
 
-	"github.com/rancherio/os/docker"
+	"github.com/rancher/os/docker"
 )
 
 const (

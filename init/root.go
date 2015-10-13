@@ -11,7 +11,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/rancher/docker-from-scratch"
-	"github.com/rancherio/os/config"
+	"github.com/rancher/os/config"
 )
 
 func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) {

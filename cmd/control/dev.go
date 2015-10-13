@@ -3,7 +3,7 @@ package control
 import (
 	"fmt"
 	"github.com/codegangsta/cli"
-	"github.com/rancherio/os/util"
+	"github.com/rancher/os/util"
 )
 
 func devAction(c *cli.Context) {

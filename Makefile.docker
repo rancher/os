@@ -6,7 +6,7 @@ GODEP := godep
 
 bin/rancheros:
 	mkdir -p $(dir $@)
-	$(GODEP) go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancherio/os/config.VERSION $(VERSION) -linkmode external -extldflags -static" -o $@
+	$(GODEP) go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION $(VERSION) -linkmode external -extldflags -static" -o $@
 	strip --strip-all $@
 
 
