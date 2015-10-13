@@ -78,6 +78,7 @@ type RancherConfig struct {
 	BootstrapDocker     DockerConfig                      `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
 	Debug               bool                              `yaml:"debug,omitempty"`
+	RmUsr               bool                              `yaml:"rm_usr,omitempty"`
 	Log                 bool                              `yaml:"log,omitempty"`
 	Disable             []string                          `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`

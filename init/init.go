@@ -129,7 +129,7 @@ func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) 
 	}
 
 	log.Debugf("Switching to new root at %s", STATE)
-	return cfg, switchRoot(STATE)
+	return cfg, switchRoot(STATE, cfg.Rancher.RmUsr)
 }
 
 func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
