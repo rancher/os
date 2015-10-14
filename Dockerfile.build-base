@@ -13,7 +13,7 @@ RUN chmod +x /usr/bin/docker
 
 RUN pip install tox
 
-RUN curl -sSL https://storage.googleapis.com/golang/go1.4.2.linux-amd64.tar.gz | tar -xz -C /usr/local
+RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -xz -C /usr/local
 ENV PATH $PATH:/usr/local/go/bin
 
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
