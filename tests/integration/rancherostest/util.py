@@ -48,7 +48,7 @@ def rancheros_version(build_conf):
 
 def run_qemu(request, run_args=[]):
     print('\nStarting QEMU')
-    p = subprocess.Popen(['./scripts/run', '--qemu', '--no-rebuild', '--fresh'] + run_args,
+    p = subprocess.Popen(['./scripts/run', '--qemu', '--no-rebuild', '--no-rm-usr', '--fresh'] + run_args,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
     def fin():
