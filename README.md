@@ -15,26 +15,26 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.3.3 - Docker 1.7 - Linux 3.19.2**
+**v0.4.0 - Docker 1.8.3 - Linux 4.2**
 
 ### ISO
 
 https://releases.rancher.com/os/latest/rancheros.iso  
-https://releases.rancher.com/os/v0.3.3/rancheros.iso  
+https://releases.rancher.com/os/v0.4.0/rancheros.iso  
 
 ### Additional Downloads
 
-https://releases.rancher.com/os/latest/machine-rancheros.iso  
-https://releases.rancher.com/os/latest/iso-checksums.txt  
-https://releases.rancher.com/os/latest/rancheros-033-gce-01.tar.gz  
-https://releases.rancher.com/os/latest/vmlinuz  
-https://releases.rancher.com/os/latest/initrd  
+https://releases.rancher.com/os/latest/initrd
+https://releases.rancher.com/os/latest/iso-checksums.txt
+https://releases.rancher.com/os/latest/rancheros-v0.4.0.tar.gz
+https://releases.rancher.com/os/latest/rancheros.iso
+https://releases.rancher.com/os/latest/vmlinuz
 
-https://releases.rancher.com/os/v0.3.3/machine-rancheros.iso  
-https://releases.rancher.com/os/v0.3.3/iso-checksums.txt  
-https://releases.rancher.com/os/v0.3.3/rancheros-033-gce-01.tar.gz  
-https://releases.rancher.com/os/v0.3.3/vmlinuz  
-https://releases.rancher.com/os/v0.3.3/initrd  
+https://releases.rancher.com/os/v0.4.0/initrd
+https://releases.rancher.com/os/v0.4.0/iso-checksums.txt
+https://releases.rancher.com/os/v0.4.0/rancheros-v0.4.0.tar.gz
+https://releases.rancher.com/os/v0.4.0/rancheros.iso
+https://releases.rancher.com/os/v0.4.0/vmlinuz
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
@@ -46,15 +46,15 @@ We have 2 different [virtualization types of AMIs](http://docs.aws.amazon.com/AW
 
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | PV |  [ami-748a2774](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-748a2774)
-ap-southeast-1 | PV |  [ami-3ae8e968](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-3ae8e968)
-ap-southeast-2 | PV |  [ami-3531750f](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-3531750f)
-eu-central-1 | PV |  [ami-d2b982cf](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-d2b982cf)
-eu-west-1 | PV |  [ami-fcb7f78b](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-fcb7f78b)
-sa-east-1 | PV |  [ami-6361ec7e](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-6361ec7e)
-us-east-1 | PV |  [ami-8f2eede4](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-8f2eede4)
-us-west-1 | PV |  [ami-77a15133](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-77a15133)
-us-west-2 | PV |  [ami-bfbfb98f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-bfbfb98f)
+ap-northeast-1 | PV |  [ami-e21d71e2](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-e21d71e2)
+ap-southeast-1 | PV |  [ami-a0b2a1f2](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-a0b2a1f2)
+ap-southeast-2 | PV |  [ami-71fbb14b](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-71fbb14b)
+eu-central-1 | PV |  [ami-aa818db7](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-aa818db7)
+eu-west-1 | PV |  [ami-215a6456](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-215a6456)
+sa-east-1 | PV |  [ami-9c8b33f0](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-9c8b33f0)
+us-east-1 | PV |  [ami-85c09fe0](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-85c09fe0)
+us-west-1 | PV |  [ami-0f1fdc4b](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-0f1fdc4b)
+us-west-2 | PV |  [ami-4a04e679](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-4a04e679)
 
 **HVM**
 
@@ -62,30 +62,30 @@ HVM was introduced in v0.3.0 and only supports v0.3.0+.
 
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | HVM |  [ami-788a2778](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-788a2778)
-ap-southeast-1 | HVM |  [ami-26e8e974](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-26e8e974)
-ap-southeast-2 | HVM |  [ami-2b317511](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-2b317511)
-eu-central-1 | HVM |  [ami-c8b982d5](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-c8b982d5)
-eu-west-1 | HVM |  [ami-e0b7f797](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-e0b7f797)
-sa-east-1 | HVM |  [ami-9f61ec82](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-9f61ec82)
-us-east-1 | HVM |  [ami-772dee1c](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-772dee1c)
-us-west-1 | HVM |  [ami-19a1515d](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-19a1515d)
-us-west-2 | HVM |  [ami-c5bfb9f5](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-c5bfb9f5)
+ap-northeast-1 | HVM |  [ami-1c1e721c](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-1c1e721c)
+ap-southeast-1 | HVM |  [ami-50b1a202](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-50b1a202)
+ap-southeast-2 | HVM |  [ami-77fbb14d](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-77fbb14d)
+eu-central-1 | HVM |  [ami-a6818dbb](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-a6818dbb)
+eu-west-1 | HVM |  [ami-175a6460](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-175a6460)
+sa-east-1 | HVM |  [ami-e6962e8a](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-e6962e8a)
+us-east-1 | HVM |  [ami-95c09ff0](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-95c09ff0)
+us-west-1 | HVM |  [ami-151fdc51](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-151fdc51)
+us-west-2 | HVM |  [ami-b804e68b](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-b804e68b)
 
 ### Google Compute Engine (Experimental)
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS v0.3.0 or later.
 
-[Download Image](https://github.com/rancher/os/releases/download/v0.3.3/rancheros-033-gce-01.tar.gz)
+[Download Image](https://github.com/rancher/os/releases/download/v0.4.0/rancheros-v0.4.0.tar.gz)
 
-Please follow the directions at our [docs to launch in GCE](http://os.docs.rancher.com/docs/running-rancheros/cloud/gce/). 
+Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/). 
 
 #### Known issues/ToDos
  * Add GCE daemon support. (Manages users)
 
 ## Documentation for RancherOS
 
-Please refer to our [RancherOS Documentation](http://os.docs.rancher.com/) website to read all about RancherOS. It has detailed information on how RancherOS works, getting-started and other details.
+Please refer to our [RancherOS Documentation](http://docs.rancher.com/os/) website to read all about RancherOS. It has detailed information on how RancherOS works, getting-started and other details.
 
 ## Support, Discussion, and Community
 If you need any help with RancherOS or Rancher, please join us at either our [Rancher forums](http://forums.rancher.com) or [#rancher IRC channel](http://webchat.freenode.net/?channels=rancher) where most of our team hangs out at.
