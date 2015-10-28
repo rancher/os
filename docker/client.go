@@ -5,11 +5,6 @@ import (
 	"github.com/rancher/os/config"
 )
 
-const (
-	MAX_WAIT = 30000
-	INTERVAL = 100
-)
-
 func NewSystemClient() (*dockerClient.Client, error) {
 	return NewClient(config.DOCKER_SYSTEM_HOST)
 }
