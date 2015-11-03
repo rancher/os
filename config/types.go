@@ -47,17 +47,8 @@ func init() {
 	}
 }
 
-type ContainerConfig struct {
-	Id             string                 `yaml:"id,omitempty"`
-	Cmd            string                 `yaml:"run,omitempty"`
-	MigrateVolumes bool                   `yaml:"migrate_volumes,omitempty"`
-	ReloadConfig   bool                   `yaml:"reload_config,omitempty"`
-	CreateOnly     bool                   `yaml:create_only,omitempty`
-	Service        *project.ServiceConfig `yaml:service,omitempty`
-}
-
 type Repository struct {
-	Url string `yaml:url,omitempty`
+	Url string `yaml:"url,omitempty"`
 }
 
 type Repositories map[string]Repository
