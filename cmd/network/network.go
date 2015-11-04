@@ -7,6 +7,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/rancher/netconf"
+	"github.com/rancher/os/cmd/cloudinit"
 	"github.com/rancher/os/config"
 )
 
@@ -20,6 +21,8 @@ func Main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// Purposely ignore error
+	cloudinit.SetHostname(cfg)
 	if err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network); err != nil {
 		log.Fatal(err)
 	}
