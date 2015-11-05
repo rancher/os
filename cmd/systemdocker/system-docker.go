@@ -19,7 +19,7 @@ func Main() {
 
 	newEnv = append(newEnv, "DOCKER_HOST="+config.DOCKER_SYSTEM_HOST)
 
-	os.Args[0] = "/usr/bin/docker.dist"
+	os.Args[0] = config.DOCKER_DIST_BIN
 	if err := syscall.Exec(os.Args[0], os.Args, newEnv); err != nil {
 		log.Fatal(err)
 	}
