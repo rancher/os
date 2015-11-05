@@ -8,6 +8,7 @@ import (
 
 const (
 	DOCKER_BIN         = "/usr/bin/docker"
+	DOCKER_DIST_BIN    = "/usr/bin/docker.dist"
 	ROS_BIN            = "/usr/bin/ros"
 	SYSINIT_BIN        = "/usr/bin/ros-sysinit"
 	DOCKER_SYSTEM_HOME = "/var/lib/system-docker"
