@@ -168,17 +168,26 @@ func fetchUserData() ([]byte, datasource.Metadata, error) {
 	return userDataBytes, metadata, nil
 }
 
+func SetHostname(cc *rancherConfig.CloudConfig) error {
+	if cc.Hostname != "" {
+		//set hostname
+		if err := hostname.SetHostname(cc.Hostname); err != nil {
+			log.WithFields(log.Fields{"err": err, "hostname": cc.Hostname}).Error("Error setting hostname")
+			return err
+		}
+	}
+
+	return nil
+}
+
 func executeCloudConfig() error {
 	cc, err := rancherConfig.LoadConfig()
 	if err != nil {
 		return err
 	}
 
-	if cc.Hostname != "" {
-		//set hostname
-		if err := hostname.SetHostname(cc.Hostname); err != nil {
-			log.WithFields(log.Fields{"err": err, "hostname": cc.Hostname}).Error("Error setting hostname")
-		}
+	if err := SetHostname(cc); err != nil {
+		return err
 	}
 
 	if len(cc.SSHAuthorizedKeys) > 0 {
