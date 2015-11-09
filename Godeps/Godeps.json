@@ -368,7 +368,7 @@
 		},
 		{
 			"ImportPath": "github.com/rancher/netconf",
-			"Rev": "157105e12d6963f6a1c5765540261f6878f0de89"
+			"Rev": "b9aeb623c8ef9551d79efec57ee059658c1ac89c"
 		},
 		{
 			"ImportPath": "github.com/ryanuber/go-glob",

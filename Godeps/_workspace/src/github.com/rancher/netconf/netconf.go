@@ -42,6 +42,8 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 		return err
 	}
 
+	dhcpLinks := []string{}
+
 	//apply network config
 	for _, link := range links {
 		linkName := link.Attrs().Name
@@ -80,10 +82,22 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 		}
 
 		if match.Match != "" {
-			err = applyNetConf(link, match)
-			if err != nil {
+			if match.DHCP {
+				dhcpLinks = append(dhcpLinks, link.Attrs().Name)
+			} else if err = applyNetConf(link, match); err != nil {
 				log.Errorf("Failed to apply settings to %s : %v", linkName, err)
 			}
+		}
+	}
+
+	if len(dhcpLinks) > 0 {
+		log.Infof("Running DHCP on %v", dhcpLinks)
+		dhcpcdArgs := append([]string{"-MA4", "-e", "force_hostname=true"}, dhcpLinks...)
+		cmd := exec.Command("dhcpcd", dhcpcdArgs...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
 		}
 	}
 
@@ -95,15 +109,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 }
 
 func applyNetConf(link netlink.Link, netConf InterfaceConfig) error {
-	if netConf.DHCP {
-		log.Infof("Running DHCP on %s", link.Attrs().Name)
-		cmd := exec.Command("dhcpcd", "-A4", "-e", "force_hostname=true", link.Attrs().Name)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			log.Error(err)
-		}
-	} else if netConf.IPV4LL {
+	if netConf.IPV4LL {
 		if err := AssignLinkLocalIP(link); err != nil {
 			log.Errorf("IPV4LL set failed: %v", err)
 			return err
