@@ -89,7 +89,7 @@ rancher:
         io.rancher.os.detach: false
         io.rancher.os.reloadconfig: true
         io.rancher.os.scope: system
-        io.rancher.os.after: cloud-init-pre,network
+        io.rancher.os.after: cloud-init-pre, wait-for-network
       net: host
       uts: host
       privileged: true
@@ -124,6 +124,7 @@ rancher:
       - /usr/bin/docker:/usr/bin/docker.dist:ro
       - /usr/bin/ros:/sbin/halt:ro
       - /usr/bin/ros:/sbin/netconf:ro
+      - /usr/bin/ros:/sbin/wait-for-network:ro
       - /usr/bin/ros:/sbin/poweroff:ro
       - /usr/bin/ros:/sbin/reboot:ro
       - /usr/bin/ros:/sbin/shutdown:ro
@@ -166,11 +167,23 @@ rancher:
     network:
       image: rancher/os-network:v0.4.1-dev
       labels:
-        io.rancher.os.detach: false
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init-pre
       net: host
       uts: host
+      pid: host
+      privileged: true
+      volumes_from:
+      - command-volumes
+      - system-volumes
+    wait-for-network:
+      image: rancher/os-network:v0.4.1-dev
+      command: wait-for-network
+      labels:
+        io.rancher.os.detach: false
+        io.rancher.os.scope: system
+        io.rancher.os.after: network
+      pid: host
       privileged: true
       volumes_from:
       - command-volumes
@@ -179,7 +192,7 @@ rancher:
       image: rancher/os-ntp:v0.4.1-dev
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: cloud-init, network
+        io.rancher.os.after: cloud-init, wait-for-network
       net: host
       uts: host
       privileged: true
