@@ -122,19 +122,19 @@ rancher:
       read_only: true
       volumes:
       - /usr/bin/docker:/usr/bin/docker.dist:ro
-      - /usr/bin/ros:/sbin/halt:ro
-      - /usr/bin/ros:/sbin/netconf:ro
-      - /usr/bin/ros:/sbin/wait-for-network:ro
+      - /usr/bin/ros:/usr/bin/dockerlaunch:ro
+      - /usr/bin/ros:/usr/bin/user-docker:ro
+      - /usr/bin/ros:/usr/bin/system-docker:ro
       - /usr/bin/ros:/sbin/poweroff:ro
       - /usr/bin/ros:/sbin/reboot:ro
+      - /usr/bin/ros:/sbin/halt:ro
       - /usr/bin/ros:/sbin/shutdown:ro
-      - /usr/bin/ros:/usr/bin/cloud-init:ro
-      - /usr/bin/ros:/usr/bin/dockerlaunch:ro
-      - /usr/bin/ros:/usr/bin/rancherctl:ro
       - /usr/bin/ros:/usr/bin/respawn:ro
-      - /usr/bin/ros:/usr/bin/ros:ro
-      - /usr/bin/ros:/usr/bin/system-docker:ro
-      - /usr/bin/ros:/usr/bin/user-docker:ro
+      - /usr/bin/ros:/usr/sbin/rancherctl:ro
+      - /usr/bin/ros:/usr/sbin/ros:ro
+      - /usr/bin/ros:/usr/bin/cloud-init:ro
+      - /usr/bin/ros:/usr/sbin/netconf:ro
+      - /usr/bin/ros:/usr/sbin/wait-for-network:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
     console:
       image: rancher/os-console:v0.4.1-dev
