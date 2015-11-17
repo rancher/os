@@ -54,6 +54,33 @@ def test_docker_args(qemu, cloud_config):
 
 
 @pytest.mark.timeout(40)
+def test_docker_tls_args(qemu, cloud_config):
+    assert qemu is not None
+    u.wait_for_ssh(ssh_command)
+
+    subprocess.check_call(
+        ssh_command + ['sudo', 'ros', 'tls', 'generate', '-s', '--hostname', '10.10.2.120', '-d', '~/.docker'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    subprocess.check_call(
+        ssh_command + ['sudo', 'ros', 'config', 'set', 'rancher.docker.tls', 'true'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    subprocess.check_call(
+        ssh_command + ['sudo', 'system-docker', 'restart', 'docker'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+    u.wait_for_ssh(ssh_command)
+
+    v = subprocess.check_output(
+        ssh_command + ['sh', '-c', 'ps -ef | grep docker'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    expected = string.join(cloud_config['rancher']['docker']['tls_args'])
+
+    assert v.find(expected) != -1
+
+
+@pytest.mark.timeout(40)
 def test_rancher_network(qemu, cloud_config):
     assert qemu is not None
     u.wait_for_ssh(ssh_command)
