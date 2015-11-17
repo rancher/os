@@ -297,30 +297,16 @@ func setupNetworking(config *Config) error {
 	return nil
 }
 
-func getValue(index int, args []string) string {
-	val := args[index]
-	parts := strings.SplitN(val, "=", 2)
-	if len(parts) == 1 {
-		if len(args) > index+1 {
-			return args[index+1]
-		} else {
-			return ""
-		}
-	} else {
-		return parts[2]
-	}
-}
-
 func ParseConfig(config *Config, args ...string) []string {
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "--bip") {
-			config.BridgeAddress = getValue(i, args)
+			config.BridgeAddress = util.GetValue(i, args)
 		} else if strings.HasPrefix(arg, "--fixed-cidr") {
-			config.BridgeAddress = getValue(i, args)
+			config.BridgeAddress = util.GetValue(i, args)
 		} else if strings.HasPrefix(arg, "-b") || strings.HasPrefix(arg, "--bridge") {
-			config.BridgeName = getValue(i, args)
+			config.BridgeName = util.GetValue(i, args)
 		} else if strings.HasPrefix(arg, "--mtu") {
-			mtu, err := strconv.Atoi(getValue(i, args))
+			mtu, err := strconv.Atoi(util.GetValue(i, args))
 			if err != nil {
 				config.BridgeMtu = mtu
 			}
@@ -380,7 +366,7 @@ func touchSockets(args ...string) error {
 
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "-H") {
-			val := getValue(i, args)
+			val := util.GetValue(i, args)
 			if strings.HasPrefix(val, "unix://") {
 				val = val[len("unix://"):]
 				log.Debugf("Creating temp file at %s", val)
