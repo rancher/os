@@ -47,7 +47,7 @@ else
     cp assets/base-files.tar.gz build
 fi
 
-download ad3618b980105d907aae7bba40ca3ababb7c3d6d https://get.docker.com/builds/Linux/x86_64/docker-1.8.2
+download 9da1e4d4cac3b117bb0cd7da66201fe1fc9953ab https://test.docker.com/builds/Linux/x86_64/docker-1.9.1-rc1
 
 cp assets/docker-* build/docker
 chmod +x build/docker

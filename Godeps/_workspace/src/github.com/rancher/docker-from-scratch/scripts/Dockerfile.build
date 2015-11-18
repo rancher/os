@@ -1,4 +1,4 @@
-FROM golang:1.4.2-cross
+FROM golang:1.4.3-cross
 
 RUN go get github.com/mitchellh/gox
 RUN go get github.com/tools/godep
