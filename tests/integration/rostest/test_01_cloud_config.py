@@ -54,6 +54,18 @@ def test_docker_args(qemu, cloud_config):
 
 
 @pytest.mark.timeout(40)
+def test_dhcpcd(qemu, cloud_config):
+    assert qemu is not None
+    u.wait_for_ssh(ssh_command)
+
+    v = subprocess.check_output(
+        ssh_command + ['sh', '-c', 'ps -ef | grep dhcpcd'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    assert v.find('dhcpcd -M') != -1
+
+
+@pytest.mark.timeout(40)
 def test_docker_tls_args(qemu, cloud_config):
     assert qemu is not None
     u.wait_for_ssh(ssh_command)
