@@ -1,5 +1,5 @@
 import pytest
-import rancherostest.util as u
+import rostest.util as u
 import subprocess
 
 
