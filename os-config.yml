@@ -130,8 +130,7 @@ rancher:
       - /usr/bin/ros:/sbin/halt:ro
       - /usr/bin/ros:/sbin/shutdown:ro
       - /usr/bin/ros:/usr/bin/respawn:ro
-      - /usr/bin/ros:/usr/sbin/rancherctl:ro
-      - /usr/bin/ros:/usr/sbin/ros:ro
+      - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/bin/ros:/usr/bin/cloud-init:ro
       - /usr/bin/ros:/usr/sbin/netconf:ro
       - /usr/bin/ros:/usr/sbin/wait-for-network:ro

@@ -33,7 +33,7 @@ def test_rancher_environment(qemu, cloud_config):
     u.wait_for_ssh(ssh_command)
 
     v = subprocess.check_output(
-        ssh_command + ['sudo', 'rancherctl', 'env', 'printenv', 'FLANNEL_NETWORK'],
+        ssh_command + ['sudo', 'ros', 'env', 'printenv', 'FLANNEL_NETWORK'],
         stderr=subprocess.STDOUT, universal_newlines=True)
 
     assert v.strip() == cloud_config['rancher']['environment']['FLANNEL_NETWORK']
