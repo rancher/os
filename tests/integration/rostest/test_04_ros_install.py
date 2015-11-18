@@ -1,5 +1,5 @@
 import pytest
-import rancherostest.util as u
+import rostest.util as u
 import subprocess
 
 
@@ -19,7 +19,7 @@ def test_ros_install_on_formatted_disk(qemu):
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
     subprocess.check_call(ssh_command + ['sudo', 'ros', 'install', '-f', '--no-reboot', '-d', '/dev/vda',
-                                         '-i', 'rancher/os:v0.4.0-dev-test.135'],
+                                         '-i', 'rancher/os:v0.4.1'],
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
     subprocess.call(ssh_command + ['sudo', 'reboot'],

@@ -1,5 +1,5 @@
 import pytest
-import rancherostest.util as u
+import rostest.util as u
 import subprocess
 
 
@@ -17,13 +17,13 @@ def test_system_docker_survives_custom_docker_install(qemu):
     assert qemu is not None
     u.wait_for_ssh(ssh_command)
     subprocess.check_call(ssh_command + ['curl', '-OL',
-                                         'https://get.docker.com/builds/Linux/x86_64/docker-1.9.0'],
+                                         'https://experimental.docker.com/builds/Linux/x86_64/docker-1.10.0-dev'],
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
-    subprocess.check_call(ssh_command + ['chmod', '+x', '/home/rancher/docker-1.9.0'],
+    subprocess.check_call(ssh_command + ['chmod', '+x', '/home/rancher/docker-1.10.0-dev'],
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
-    subprocess.check_call(ssh_command + ['sudo', 'ln', '-sf', '/home/rancher/docker-1.9.0', '/usr/bin/docker'],
+    subprocess.check_call(ssh_command + ['sudo', 'ln', '-sf', '/home/rancher/docker-1.10.0-dev', '/usr/bin/docker'],
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
     subprocess.check_call(ssh_command + ['sudo', 'system-docker', 'restart', 'docker'],

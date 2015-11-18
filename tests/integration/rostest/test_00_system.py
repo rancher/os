@@ -2,7 +2,7 @@ from __future__ import print_function
 import itertools as it
 import pytest
 import subprocess
-import rancherostest.util as u
+import rostest.util as u
 
 
 @pytest.fixture(scope="module")

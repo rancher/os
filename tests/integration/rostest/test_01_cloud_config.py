@@ -1,5 +1,5 @@
 import pytest
-import rancherostest.util as u
+import rostest.util as u
 import string
 import subprocess
 import yaml
@@ -33,7 +33,7 @@ def test_rancher_environment(qemu, cloud_config):
     u.wait_for_ssh(ssh_command)
 
     v = subprocess.check_output(
-        ssh_command + ['sudo', 'rancherctl', 'env', 'printenv', 'FLANNEL_NETWORK'],
+        ssh_command + ['sudo', 'ros', 'env', 'printenv', 'FLANNEL_NETWORK'],
         stderr=subprocess.STDOUT, universal_newlines=True)
 
     assert v.strip() == cloud_config['rancher']['environment']['FLANNEL_NETWORK']
@@ -51,6 +51,18 @@ def test_docker_args(qemu, cloud_config):
     expected = string.join(cloud_config['rancher']['docker']['args'])
 
     assert v.find(expected) != -1
+
+
+@pytest.mark.timeout(40)
+def test_dhcpcd(qemu, cloud_config):
+    assert qemu is not None
+    u.wait_for_ssh(ssh_command)
+
+    v = subprocess.check_output(
+        ssh_command + ['sh', '-c', 'ps -ef | grep dhcpcd'],
+        stderr=subprocess.STDOUT, universal_newlines=True)
+
+    assert v.find('dhcpcd -M') != -1
 
 
 @pytest.mark.timeout(40)
