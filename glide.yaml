@@ -139,8 +139,7 @@ import:
   - libcontainer/user
 
 - package: github.com/rancher/docker-from-scratch
-  version: 588dcdd57c10ac0c60a87b47c9c2df6d0a506979
-  repo:    https://github.com/imikushin/docker-from-scratch.git
+  version: 1.9.1
   subpackages:
   - .
   - util
