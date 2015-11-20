@@ -1,12 +1,11 @@
 include build.conf
 FORCE_PULL := 0
 DEV_BUILD  := 0
-GODEP := godep
 
 
 bin/rancheros:
 	mkdir -p $(dir $@)
-	$(GODEP) go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION $(VERSION) -linkmode external -extldflags -static" -o $@
+	go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION $(VERSION) -linkmode external -extldflags -static" -o $@
 	strip --strip-all $@
 
 
