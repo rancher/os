@@ -118,6 +118,10 @@ import:
 
 - package: github.com/guelfey/go.dbus
   version: f6a3a2366cc39b8479cadc499d3c735fb10fbdda
+  subpackages:
+  - .
+  - introspect
+  - prop
 
 - package: github.com/j-keck/arping
   version: 4f4d2c8983a18e2c9c63a3f339bc9a998c4557bc
@@ -137,6 +141,9 @@ import:
 - package: github.com/rancher/docker-from-scratch
   version: 588dcdd57c10ac0c60a87b47c9c2df6d0a506979
   repo:    https://github.com/imikushin/docker-from-scratch.git
+  subpackages:
+  - .
+  - util
 
 - package: github.com/rancher/netconf
   version: b9aeb623c8ef9551d79efec57ee059658c1ac89c
@@ -146,6 +153,8 @@ import:
 
 - package: github.com/samalba/dockerclient
   version: 16320a397fb98ba77c00283de77930e37b7a2153
+  subpackages:
+  - .
 
 - package: github.com/stretchr/testify
   version: 089c7181b8c728499929ff09b62d3fdd8df8adff

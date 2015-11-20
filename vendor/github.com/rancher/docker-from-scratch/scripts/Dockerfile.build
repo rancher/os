@@ -1,9 +1,0 @@
-FROM golang:1.5.1
-
-WORKDIR /go/src/github.com/rancher/docker-from-scratch
-
-COPY . .
-
-ENV GO15VENDOREXPERIMENT 1
-
-RUN go build -ldflags "-linkmode external -extldflags -static" -o build/dockerlaunch ./main
