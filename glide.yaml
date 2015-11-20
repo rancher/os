@@ -9,6 +9,7 @@ import:
 
 - package: github.com/coreos/coreos-cloudinit
   version: 405c2600b19ae77516c967f8ee8ebde5624d3663
+  repo:    https://github.com/rancher/coreos-cloudinit.git
   subpackages:
   - config
   - datasource
@@ -72,6 +73,7 @@ import:
 
 - package: github.com/docker/libcompose
   version: a77147c9909a0ee7055c896826a01cb55352b4d9
+  repo:    https://github.com/rancher/libcompose.git
   subpackages:
   - cli/app
   - cli/command
