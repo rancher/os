@@ -5,6 +5,7 @@ DEV_BUILD  := 0
 
 bin/rancheros:
 	mkdir -p $(dir $@)
+	go generate
 	go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION $(VERSION) -linkmode external -extldflags -static" -o $@
 	strip --strip-all $@
 
