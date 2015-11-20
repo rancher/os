@@ -2,7 +2,7 @@ package: github.com/rancher/os
 
 import:
 - package: github.com/Sirupsen/logrus
-  version: 0b189e019aabcec0af8e433b10b3073ad9382b44
+  version: v0.8.7
 
 - package: github.com/codegangsta/cli
   version: 8ce64f19ff08029a69d11b7615c9b591245450ad
@@ -108,7 +108,7 @@ import:
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 
 - package: github.com/fsouza/go-dockerclient
-  version: 4c9e84441078c14677bad5722161ad09146b0c4e
+  version: c3e8735e510cf8bc6d439300ff2fc247b1f2867c
 
 - package: github.com/gorilla/context
   version: 215affda49addc4c8ef7e2534915df2c8c35c6cd

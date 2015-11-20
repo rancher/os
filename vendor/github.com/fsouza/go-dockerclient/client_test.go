@@ -5,14 +5,21 @@
 package docker
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/fsouza/go-dockerclient/external/github.com/hashicorp/go-cleanhttp"
 )
 
 func TestNewAPIClient(t *testing.T) {
@@ -23,9 +30,6 @@ func TestNewAPIClient(t *testing.T) {
 	}
 	if client.endpoint != endpoint {
 		t.Errorf("Expected endpoint %s. Got %s.", endpoint, client.endpoint)
-	}
-	if client.HTTPClient != http.DefaultClient {
-		t.Errorf("Expected http.Client %#v. Got %#v.", http.DefaultClient, client.HTTPClient)
 	}
 	// test unix socket endpoints
 	endpoint = "unix:///var/run/docker.sock"
@@ -77,8 +81,53 @@ func TestNewVersionedClient(t *testing.T) {
 	if client.endpoint != endpoint {
 		t.Errorf("Expected endpoint %s. Got %s.", endpoint, client.endpoint)
 	}
-	if client.HTTPClient != http.DefaultClient {
-		t.Errorf("Expected http.Client %#v. Got %#v.", http.DefaultClient, client.HTTPClient)
+	if reqVersion := client.requestedAPIVersion.String(); reqVersion != "1.12" {
+		t.Errorf("Wrong requestAPIVersion. Want %q. Got %q.", "1.12", reqVersion)
+	}
+	if client.SkipServerVersionCheck {
+		t.Error("Expected SkipServerVersionCheck to be false, got true")
+	}
+}
+
+func TestNewVersionedClientFromEnv(t *testing.T) {
+	endpoint := "tcp://localhost:2376"
+	endpointURL := "http://localhost:2376"
+	os.Setenv("DOCKER_HOST", endpoint)
+	os.Setenv("DOCKER_TLS_VERIFY", "")
+	client, err := NewVersionedClientFromEnv("1.12")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if client.endpoint != endpoint {
+		t.Errorf("Expected endpoint %s. Got %s.", endpoint, client.endpoint)
+	}
+	if client.endpointURL.String() != endpointURL {
+		t.Errorf("Expected endpointURL %s. Got %s.", endpoint, client.endpoint)
+	}
+	if reqVersion := client.requestedAPIVersion.String(); reqVersion != "1.12" {
+		t.Errorf("Wrong requestAPIVersion. Want %q. Got %q.", "1.12", reqVersion)
+	}
+	if client.SkipServerVersionCheck {
+		t.Error("Expected SkipServerVersionCheck to be false, got true")
+	}
+}
+
+func TestNewVersionedClientFromEnvTLS(t *testing.T) {
+	endpoint := "tcp://localhost:2376"
+	endpointURL := "https://localhost:2376"
+	base, _ := os.Getwd()
+	os.Setenv("DOCKER_CERT_PATH", filepath.Join(base, "/testing/data/"))
+	os.Setenv("DOCKER_HOST", endpoint)
+	os.Setenv("DOCKER_TLS_VERIFY", "1")
+	client, err := NewVersionedClientFromEnv("1.12")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if client.endpoint != endpoint {
+		t.Errorf("Expected endpoint %s. Got %s.", endpoint, client.endpoint)
+	}
+	if client.endpointURL.String() != endpointURL {
+		t.Errorf("Expected endpointURL %s. Got %s.", endpoint, client.endpoint)
 	}
 	if reqVersion := client.requestedAPIVersion.String(); reqVersion != "1.12" {
 		t.Errorf("Wrong requestAPIVersion. Want %q. Got %q.", "1.12", reqVersion)
@@ -146,7 +195,6 @@ func TestNewTLSClient(t *testing.T) {
 		{"tcp://localhost:4000", "https"},
 		{"http://localhost:4000", "https"},
 	}
-
 	for _, tt := range tests {
 		client, err := newTLSClient(tt.endpoint)
 		if err != nil {
@@ -156,6 +204,16 @@ func TestNewTLSClient(t *testing.T) {
 		if got != tt.expected {
 			t.Errorf("endpointURL.Scheme: Got %s. Want %s.", got, tt.expected)
 		}
+	}
+}
+
+func TestEndpoint(t *testing.T) {
+	client, err := NewVersionedClient("http://localhost:4243", "1.12")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if endpoint := client.Endpoint(); endpoint != client.endpoint {
+		t.Errorf("Client.Endpoint(): want %q. Got %q", client.endpoint, endpoint)
 	}
 }
 
@@ -183,8 +241,34 @@ func TestGetURL(t *testing.T) {
 	}
 }
 
+func TestGetFakeUnixURL(t *testing.T) {
+	var tests = []struct {
+		endpoint string
+		path     string
+		expected string
+	}{
+		{"unix://var/run/docker.sock", "/", "http://unix.sock/"},
+		{"unix://var/run/docker.socket", "/", "http://unix.sock/"},
+		{"unix://var/run/docker.sock", "/containers/ps", "http://unix.sock/containers/ps"},
+	}
+	for _, tt := range tests {
+		client, _ := NewClient(tt.endpoint)
+		client.endpoint = tt.endpoint
+		client.SkipServerVersionCheck = true
+		got := client.getFakeUnixURL(tt.path)
+		if got != tt.expected {
+			t.Errorf("getURL(%q): Got %s. Want %s.", tt.path, got, tt.expected)
+		}
+	}
+}
+
 func TestError(t *testing.T) {
-	err := newError(400, []byte("bad parameter"))
+	fakeBody := ioutil.NopCloser(bytes.NewBufferString("bad parameter"))
+	resp := &http.Response{
+		StatusCode: 400,
+		Body:       fakeBody,
+	}
+	err := newError(resp)
 	expected := Error{Status: 400, Message: "bad parameter"}
 	if !reflect.DeepEqual(expected, *err) {
 		t.Errorf("Wrong error type. Want %#v. Got %#v.", expected, *err)
@@ -321,6 +405,58 @@ func TestPingFailingWrongStatus(t *testing.T) {
 	expectedErrMsg := "API error (202): "
 	if err.Error() != expectedErrMsg {
 		t.Fatalf("Expected error to be %q, got: %q", expectedErrMsg, err.Error())
+	}
+}
+
+func TestPingErrorWithUnixSocket(t *testing.T) {
+	go func() {
+		li, err := net.Listen("unix", "/tmp/echo.sock")
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer li.Close()
+		if err != nil {
+			t.Fatalf("Expected to get listener, but failed: %#v", err)
+		}
+
+		fd, err := li.Accept()
+		if err != nil {
+			t.Fatalf("Expected to accept connection, but failed: %#v", err)
+		}
+
+		buf := make([]byte, 512)
+		nr, err := fd.Read(buf)
+
+		// Create invalid response message to trigger error.
+		data := buf[0:nr]
+		for i := 0; i < 10; i++ {
+			data[i] = 63
+		}
+
+		_, err = fd.Write(data)
+		if err != nil {
+			t.Fatalf("Expected to write to socket, but failed: %#v", err)
+		}
+
+		return
+	}()
+
+	// Wait for unix socket to listen
+	time.Sleep(10 * time.Millisecond)
+
+	endpoint := "unix:///tmp/echo.sock"
+	u, _ := parseEndpoint(endpoint, false)
+	client := Client{
+		HTTPClient:             cleanhttp.DefaultClient(),
+		Dialer:                 &net.Dialer{},
+		endpoint:               endpoint,
+		endpointURL:            u,
+		SkipServerVersionCheck: true,
+	}
+
+	err := client.Ping()
+	if err == nil {
+		t.Fatal("Expected non nil error, got nil")
 	}
 }
 

@@ -4,9 +4,7 @@
 
 package docker
 
-import (
-	"testing"
-)
+import "testing"
 
 func TestChangeString(t *testing.T) {
 	var tests = []struct {

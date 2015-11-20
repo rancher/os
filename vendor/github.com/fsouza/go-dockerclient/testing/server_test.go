@@ -5,9 +5,11 @@
 package testing
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"net"
 	"net/http"
@@ -15,6 +17,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -181,7 +184,7 @@ func TestListRunningContainers(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) == 0 {
+	if len(got) != 0 {
 		t.Errorf("ListRunningContainers: Want 0. Got %d.", len(got))
 	}
 }
@@ -212,6 +215,9 @@ func TestCreateContainer(t *testing.T) {
 	}
 	if stored.Config.User != "ubuntu" {
 		t.Errorf("CreateContainer: wrong config. Expected: %q. Returned: %q.", "ubuntu", stored.Config.User)
+	}
+	if stored.Config.Hostname != returned.ID[:12] {
+		t.Errorf("CreateContainer: wrong hostname. Expected: %q. Returned: %q.", returned.ID[:12], stored.Config.Hostname)
 	}
 	expectedBind := []string{"/var/run/docker.sock:/var/run/docker.sock:rw"}
 	if !reflect.DeepEqual(stored.HostConfig.Binds, expectedBind) {
@@ -576,7 +582,7 @@ func TestStartContainer(t *testing.T) {
 		t.Error("StartContainer: did not set the container to running state")
 	}
 	if gotMemory := server.containers[0].HostConfig.Memory; gotMemory != memory {
-		t.Errorf("StartContainer: wrong HostConfig. Wants %d of memory. Got %s", memory, gotMemory)
+		t.Errorf("StartContainer: wrong HostConfig. Wants %d of memory. Got %d", memory, gotMemory)
 	}
 }
 
@@ -620,8 +626,8 @@ func TestStartContainerAlreadyRunning(t *testing.T) {
 	path := fmt.Sprintf("/containers/%s/start", server.containers[0].ID)
 	request, _ := http.NewRequest("POST", path, bytes.NewBuffer([]byte("null")))
 	server.ServeHTTP(recorder, request)
-	if recorder.Code != http.StatusBadRequest {
-		t.Errorf("StartContainer: wrong status code. Want %d. Got %d.", http.StatusBadRequest, recorder.Code)
+	if recorder.Code != http.StatusNotModified {
+		t.Errorf("StartContainer: wrong status code. Want %d. Got %d.", http.StatusNotModified, recorder.Code)
 	}
 }
 
@@ -841,22 +847,41 @@ func TestWaitContainerNotFound(t *testing.T) {
 	}
 }
 
+type HijackableResponseRecorder struct {
+	httptest.ResponseRecorder
+	readCh chan []byte
+}
+
+func (r *HijackableResponseRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	myConn, otherConn := net.Pipe()
+	r.readCh = make(chan []byte)
+	go func() {
+		data, _ := ioutil.ReadAll(myConn)
+		r.readCh <- data
+	}()
+	return otherConn, nil, nil
+}
+
+func (r *HijackableResponseRecorder) HijackBuffer() string {
+	return string(<-r.readCh)
+}
+
 func TestAttachContainer(t *testing.T) {
 	server := DockerServer{}
 	addContainers(&server, 1)
 	server.containers[0].State.Running = true
 	server.buildMuxer()
-	recorder := httptest.NewRecorder()
+	recorder := &HijackableResponseRecorder{}
 	path := fmt.Sprintf("/containers/%s/attach?logs=1", server.containers[0].ID)
 	request, _ := http.NewRequest("POST", path, nil)
 	server.ServeHTTP(recorder, request)
 	lines := []string{
-		fmt.Sprintf("\x01\x00\x00\x00\x03\x00\x00\x00Container %q is running", server.containers[0].ID),
-		"What happened?",
-		"Something happened",
+		"\x01\x00\x00\x00\x00\x00\x00\x15Container is running",
+		"\x01\x00\x00\x00\x00\x00\x00\x0fWhat happened?",
+		"\x01\x00\x00\x00\x00\x00\x00\x13Something happened",
 	}
 	expected := strings.Join(lines, "\n") + "\n"
-	if body := recorder.Body.String(); body == expected {
+	if body := recorder.HijackBuffer(); body != expected {
 		t.Errorf("AttachContainer: wrong body. Want %q. Got %q.", expected, body)
 	}
 }
@@ -864,12 +889,50 @@ func TestAttachContainer(t *testing.T) {
 func TestAttachContainerNotFound(t *testing.T) {
 	server := DockerServer{}
 	server.buildMuxer()
-	recorder := httptest.NewRecorder()
+	recorder := &HijackableResponseRecorder{}
 	path := "/containers/abc123/attach?logs=1"
 	request, _ := http.NewRequest("POST", path, nil)
 	server.ServeHTTP(recorder, request)
 	if recorder.Code != http.StatusNotFound {
 		t.Errorf("AttachContainer: wrong status. Want %d. Got %d.", http.StatusNotFound, recorder.Code)
+	}
+}
+
+func TestAttachContainerWithStreamBlocks(t *testing.T) {
+	server := DockerServer{}
+	addContainers(&server, 1)
+	server.containers[0].State.Running = true
+	server.buildMuxer()
+	path := fmt.Sprintf("/containers/%s/attach?logs=1&stdout=1&stream=1", server.containers[0].ID)
+	request, _ := http.NewRequest("POST", path, nil)
+	done := make(chan string)
+	go func() {
+		recorder := &HijackableResponseRecorder{}
+		server.ServeHTTP(recorder, request)
+		done <- recorder.HijackBuffer()
+	}()
+	select {
+	case <-done:
+		t.Fatalf("attach stream returned before container is stopped")
+	case <-time.After(500 * time.Millisecond):
+	}
+	server.cMut.Lock()
+	server.containers[0].State.Running = false
+	server.cMut.Unlock()
+	var body string
+	select {
+	case body = <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatalf("timed out waiting for attach to finish")
+	}
+	lines := []string{
+		"\x01\x00\x00\x00\x00\x00\x00\x15Container is running",
+		"\x01\x00\x00\x00\x00\x00\x00\x0fWhat happened?",
+		"\x01\x00\x00\x00\x00\x00\x00\x13Something happened",
+	}
+	expected := strings.Join(lines, "\n") + "\n"
+	if body != expected {
+		t.Errorf("AttachContainer: wrong body. Want %q. Got %q.", expected, body)
 	}
 }
 
@@ -1404,6 +1467,7 @@ func TestCreateExecContainer(t *testing.T) {
 	if got.ID != serverExec.ID {
 		t.Errorf("CreateExec: wrong value. Want %#v. Got %#v.", serverExec.ID, got.ID)
 	}
+
 	expected := docker.ExecInspect{
 		ID: got.ID,
 		ProcessConfig: docker.ExecProcessConfig{
@@ -1412,6 +1476,7 @@ func TestCreateExecContainer(t *testing.T) {
 		},
 		Container: *server.containers[0],
 	}
+
 	if !reflect.DeepEqual(*serverExec, expected) {
 		t.Errorf("InspectContainer: wrong value. Want:\n%#v\nGot:\n%#v\n", expected, *serverExec)
 	}
@@ -1458,6 +1523,8 @@ func TestInspectExecContainer(t *testing.T) {
 	got2.Container.Config = expected.Container.Config
 	got2.Container.Created = expected.Container.Created
 	got2.Container.NetworkSettings = expected.Container.NetworkSettings
+	got2.Container.ExecIDs = expected.Container.ExecIDs
+
 	if !reflect.DeepEqual(got2, expected) {
 		t.Errorf("InspectContainer: wrong value. Want:\n%#v\nGot:\n%#v\n", expected, got2)
 	}
@@ -1590,4 +1657,191 @@ func waitExec(url, execID string, running bool, maxTry int) (*docker.ExecInspect
 		exec, err = client.InspectExec(exec.ID)
 	}
 	return exec, err
+}
+
+func TestStatsContainer(t *testing.T) {
+	server, err := NewServer("127.0.0.1:0", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Stop()
+	addContainers(server, 2)
+	server.buildMuxer()
+	expected := docker.Stats{}
+	expected.CPUStats.CPUUsage.TotalUsage = 20
+	server.PrepareStats(server.containers[0].ID, func(id string) docker.Stats {
+		return expected
+	})
+	recorder := httptest.NewRecorder()
+	path := fmt.Sprintf("/containers/%s/stats?stream=false", server.containers[0].ID)
+	request, _ := http.NewRequest("GET", path, nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Errorf("StatsContainer: wrong status. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	body := recorder.Body.Bytes()
+	var got docker.Stats
+	err = json.Unmarshal(body, &got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got.Read = time.Time{}
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("StatsContainer: wrong value. Want %#v. Got %#v.", expected, got)
+	}
+}
+
+type safeWriter struct {
+	sync.Mutex
+	*httptest.ResponseRecorder
+}
+
+func (w *safeWriter) Write(buf []byte) (int, error) {
+	w.Lock()
+	defer w.Unlock()
+	return w.ResponseRecorder.Write(buf)
+}
+
+func TestStatsContainerStream(t *testing.T) {
+	server, err := NewServer("127.0.0.1:0", nil, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer server.Stop()
+	addContainers(server, 2)
+	server.buildMuxer()
+	expected := docker.Stats{}
+	expected.CPUStats.CPUUsage.TotalUsage = 20
+	server.PrepareStats(server.containers[0].ID, func(id string) docker.Stats {
+		time.Sleep(50 * time.Millisecond)
+		return expected
+	})
+	recorder := &safeWriter{
+		ResponseRecorder: httptest.NewRecorder(),
+	}
+	path := fmt.Sprintf("/containers/%s/stats?stream=true", server.containers[0].ID)
+	request, _ := http.NewRequest("GET", path, nil)
+	go func() {
+		server.ServeHTTP(recorder, request)
+	}()
+	time.Sleep(200 * time.Millisecond)
+	recorder.Lock()
+	defer recorder.Unlock()
+	body := recorder.Body.Bytes()
+	parts := bytes.Split(body, []byte("\n"))
+	if len(parts) < 2 {
+		t.Errorf("StatsContainer: wrong number of parts. Want at least 2. Got %#v.", len(parts))
+	}
+	var got docker.Stats
+	err = json.Unmarshal(parts[0], &got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got.Read = time.Time{}
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("StatsContainer: wrong value. Want %#v. Got %#v.", expected, got)
+	}
+}
+
+func addNetworks(server *DockerServer, n int) {
+	server.netMut.Lock()
+	defer server.netMut.Unlock()
+	for i := 0; i < n; i++ {
+		netid := fmt.Sprintf("%x", rand.Int()%10000)
+		network := docker.Network{
+			Name: netid,
+			ID:   fmt.Sprintf("%x", rand.Int()%10000),
+			Type: "bridge",
+			Endpoints: []*docker.Endpoint{
+				{
+					Name:    "blah",
+					ID:      fmt.Sprintf("%x", rand.Int()%10000),
+					Network: netid,
+				},
+			},
+		}
+		server.networks = append(server.networks, &network)
+	}
+}
+
+func TestListNetworks(t *testing.T) {
+	server := DockerServer{}
+	addNetworks(&server, 2)
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("GET", "/networks", nil)
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK {
+		t.Errorf("ListNetworks: wrong status. Want %d. Got %d.", http.StatusOK, recorder.Code)
+	}
+	expected := make([]docker.Network, 2)
+	for i, network := range server.networks {
+		expected[i] = docker.Network{
+			ID:        network.ID,
+			Name:      network.Name,
+			Type:      network.Type,
+			Endpoints: network.Endpoints,
+		}
+	}
+	var got []docker.Network
+	err := json.NewDecoder(recorder.Body).Decode(&got)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("ListNetworks. Want %#v. Got %#v.", expected, got)
+	}
+}
+
+type createNetworkResponse struct {
+	ID string `json:"ID"`
+}
+
+func TestCreateNetwork(t *testing.T) {
+	server := DockerServer{}
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	netid := fmt.Sprintf("%x", rand.Int()%10000)
+	netname := fmt.Sprintf("%x", rand.Int()%10000)
+	body := fmt.Sprintf(`{"ID": "%s", "Name": "%s", "Type": "bridge" }`, netid, netname)
+	request, _ := http.NewRequest("POST", "/networks", strings.NewReader(body))
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusCreated {
+		t.Errorf("CreateNetwork: wrong status. Want %d. Got %d.", http.StatusCreated, recorder.Code)
+	}
+
+	var returned createNetworkResponse
+	err := json.NewDecoder(recorder.Body).Decode(&returned)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stored := server.networks[0]
+	if returned.ID != stored.ID {
+		t.Errorf("CreateNetwork: ID mismatch. Stored: %q. Returned: %q.", stored.ID, returned)
+	}
+}
+
+func TestCreateNetworkInvalidBody(t *testing.T) {
+	server := DockerServer{}
+	server.buildMuxer()
+	recorder := httptest.NewRecorder()
+	request, _ := http.NewRequest("POST", "/networks", strings.NewReader("whaaaaaat---"))
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusBadRequest {
+		t.Errorf("CreateNetwork: wrong status. Want %d. Got %d.", http.StatusBadRequest, recorder.Code)
+	}
+}
+
+func TestCreateNetworkDuplicateName(t *testing.T) {
+	server := DockerServer{}
+	server.buildMuxer()
+	addNetworks(&server, 1)
+	server.networks[0].Name = "mynetwork"
+	recorder := httptest.NewRecorder()
+	body := fmt.Sprintf(`{"ID": "%s", "Name": "mynetwork", "Type": "bridge" }`, fmt.Sprintf("%x", rand.Int()%10000))
+	request, _ := http.NewRequest("POST", "/networks", strings.NewReader(body))
+	server.ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusForbidden {
+		t.Errorf("CreateNetwork: wrong status. Want %d. Got %d.", http.StatusForbidden, recorder.Code)
+	}
 }

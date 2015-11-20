@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,12 +22,14 @@ import (
 func newTestClient(rt *FakeRoundTripper) Client {
 	endpoint := "http://localhost:4243"
 	u, _ := parseEndpoint("http://localhost:4243", false)
+	testAPIVersion, _ := NewAPIVersion("1.17")
 	client := Client{
 		HTTPClient:             &http.Client{Transport: rt},
-		transport:              &http.Transport{},
+		Dialer:                 &net.Dialer{},
 		endpoint:               endpoint,
 		endpointURL:            u,
 		SkipServerVersionCheck: true,
+		serverAPIVersion:       testAPIVersion,
 	}
 	return client
 }
@@ -679,6 +682,7 @@ func TestBuildImageParameters(t *testing.T) {
 		Memswap:             2048,
 		CPUShares:           10,
 		CPUSetCPUs:          "0-3",
+		Ulimits:             []ULimit{{Name: "nofile", Soft: 100, Hard: 200}},
 		InputStream:         &buf,
 		OutputStream:        &buf,
 	}
@@ -698,6 +702,7 @@ func TestBuildImageParameters(t *testing.T) {
 		"memswap":    {"2048"},
 		"cpushares":  {"10"},
 		"cpusetcpus": {"0-3"},
+		"ulimits":    {"[{\"Name\":\"nofile\",\"Soft\":100,\"Hard\":200}]"},
 	}
 	got := map[string][]string(req.URL.Query())
 	if !reflect.DeepEqual(got, expected) {
@@ -959,6 +964,47 @@ func TestSearchImages(t *testing.T) {
 	}
 	client := newTestClient(&FakeRoundTripper{message: body, status: http.StatusOK})
 	result, err := client.SearchImages("cassandra")
+	if err != nil {
+		t.Error(err)
+	}
+	if !reflect.DeepEqual(result, expected) {
+		t.Errorf("SearchImages: Wrong return value. Want %#v. Got %#v.", expected, result)
+	}
+}
+
+func TestSearchImagesEx(t *testing.T) {
+	body := `[
+	{
+		"description":"A container with Cassandra 2.0.3",
+		"is_official":true,
+		"is_automated":true,
+		"name":"poklet/cassandra",
+		"star_count":17
+	},
+	{
+		"description":"A container with Cassandra 2.0.3",
+		"is_official":true,
+		"is_automated":false,
+		"name":"poklet/cassandra",
+		"star_count":17
+	}
+	,
+	{
+		"description":"A container with Cassandra 2.0.3",
+		"is_official":false,
+		"is_automated":true,
+		"name":"poklet/cassandra",
+		"star_count":17
+	}
+]`
+	var expected []APIImageSearch
+	err := json.Unmarshal([]byte(body), &expected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	client := newTestClient(&FakeRoundTripper{message: body, status: http.StatusOK})
+	auth := AuthConfiguration{}
+	result, err := client.SearchImagesEx("cassandra", auth)
 	if err != nil {
 		t.Error(err)
 	}
