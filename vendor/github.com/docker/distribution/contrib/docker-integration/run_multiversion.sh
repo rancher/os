@@ -56,7 +56,7 @@ for v in $versions; do
 	docker cp "$ID:/usr/local/bin/docker" "$tmpdir/docker-$v"
 
 	echo "Running tests with Docker $v"
-	DOCKER_BINARY="$binpath" DOCKER_VOLUME="$volume" ./run.sh
+	DOCKER_BINARY="$binpath" DOCKER_VOLUME="$volume" run.sh
 
 	# Cleanup.
 	docker rm -f "$ID"
@@ -71,7 +71,7 @@ ID=$(docker create dockerswarm/dind-master)
 docker cp "$ID:/usr/local/bin/docker" "$tmpdir/docker-master"
 
 echo "Running tests with Docker master"
-DOCKER_BINARY="$binpath" DOCKER_VOLUME="$volume" ./run.sh
+DOCKER_BINARY="$binpath" DOCKER_VOLUME="$volume" run.sh
 
 # Cleanup.
 docker rm -f "$ID"
