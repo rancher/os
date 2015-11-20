@@ -547,3 +547,28 @@ func LaunchDocker(config *Config, docker string, args ...string) (*exec.Cmd, err
 
 	return runOrExec(config, docker, args...)
 }
+
+func Main() {
+	if os.Getenv("DOCKER_LAUNCH_DEBUG") == "true" {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	if len(os.Args) < 2 {
+		log.Fatalf("Usage Example: %s /usr/bin/docker -d -D", os.Args[0])
+	}
+
+	args := []string{}
+	if len(os.Args) > 1 {
+		args = os.Args[2:]
+	}
+
+	var config Config
+	args = ParseConfig(&config, args...)
+
+	log.Debugf("Launch config %#v", config)
+
+	_, err := LaunchDocker(&config, os.Args[1], args...)
+	if err != nil {
+		log.Fatal(err)
+	}
+}

@@ -1,12 +1,9 @@
-FROM golang:1.4.3-cross
-
-RUN go get github.com/mitchellh/gox
-RUN go get github.com/tools/godep
-
-ENV GOPATH /go/src/github.com/rancher/docker-from-scratch/Godeps/_workspace:/go
+FROM golang:1.5.1
 
 WORKDIR /go/src/github.com/rancher/docker-from-scratch
 
 COPY . .
 
-RUN godep go build -ldflags "-linkmode external -extldflags -static" -o build/dockerlaunch ./main
+ENV GO15VENDOREXPERIMENT 1
+
+RUN go build -ldflags "-linkmode external -extldflags -static" -o build/dockerlaunch ./main

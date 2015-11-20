@@ -135,7 +135,8 @@ import:
   - libcontainer/user
 
 - package: github.com/rancher/docker-from-scratch
-  version: 29561830fcace9eef5dbbfc4008474e5425d34eb
+  version: 588dcdd57c10ac0c60a87b47c9c2df6d0a506979
+  repo:    https://github.com/imikushin/docker-from-scratch.git
 
 - package: github.com/rancher/netconf
   version: b9aeb623c8ef9551d79efec57ee059658c1ac89c
