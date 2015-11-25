@@ -1,7 +1,9 @@
 #!/bin/bash
 set -e -x
 
-. $(dirname $0)/build.conf
+SCRIPTS_DIR=$(dirname ${0})
+
+. "${SCRIPTS_DIR}/build.conf"
 VERSION=${VERSION:?"VERSION not set"}
 
 while getopts "i:f:c:d:t:r:o:p:" OPTION
@@ -20,7 +22,7 @@ do
 done
 
 DIST=${DIST:-/dist}
-CLOUD_CONFIG=${CLOUD_CONFIG:-/scripts/conf/empty.yml}
+CLOUD_CONFIG=${CLOUD_CONFIG:-"${SCRIPTS_DIR}/conf/empty.yml"}
 CONSOLE=tty0
 BASE_DIR="/mnt/new_img"
 # TODO: Change this to a number so that users can specify.
@@ -148,7 +150,7 @@ if [ -n ${ENV} ]; then
         "generic")
             format_and_mount
             install_grub
-            /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "amazon-ebs-pv"|"amazon-ebs-hvm")
             CONSOLE=ttyS0
@@ -157,13 +159,13 @@ if [ -n ${ENV} ]; then
                 install_grub
             fi
             # AWS Networking recommends disabling.
-            /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "googlecompute")
             CONSOLE=ttyS0
             format_and_mount
             install_grub
-            /scripts/seed-data ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "bootstrap")
             CONSOLE=ttyS0
