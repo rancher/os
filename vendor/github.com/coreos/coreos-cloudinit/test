@@ -1,0 +1,66 @@
+#!/bin/bash -e
+#
+# Run all coreos-cloudinit tests
+#   ./test
+#   ./test -v
+#
+# Run tests for one package
+#   PKG=initialize ./test
+#
+
+# Invoke ./cover for HTML output
+COVER=${COVER:-"-cover"}
+
+source ./build
+
+declare -a TESTPKGS=(
+	config
+	config/validate
+	datasource
+	datasource/configdrive
+	datasource/file
+	datasource/metadata
+	datasource/metadata/cloudsigma
+	datasource/metadata/digitalocean
+	datasource/metadata/ec2
+	datasource/proc_cmdline
+	datasource/test
+	datasource/url
+	datasource/waagent
+	initialize
+	network
+	pkg
+	system
+)
+
+if [ -z "$PKG" ]; then
+	GOFMTPATH="${TESTPKGS[*]} *.go"
+	# prepend repo path to each package
+	TESTPKGS="${TESTPKGS[*]/#/${REPO_PATH}/} ./"
+else
+	GOFMTPATH="$TESTPKGS"
+	# strip out slashes and dots from PKG=./foo/
+	TESTPKGS=${PKG//\//}
+	TESTPKGS=${TESTPKGS//./}
+	TESTPKGS=${TESTPKGS/#/${REPO_PATH}/}
+fi
+
+echo "Running tests..."
+go test -i ${TESTPKGS}
+go test ${COVER} $@ ${TESTPKGS}
+
+echo "Checking gofmt..."
+fmtRes=$(gofmt -l $GOFMTPATH)
+if [ -n "$fmtRes" ]; then
+	echo "$fmtRes"
+	exit 1
+fi
+
+echo "Checking govet..."
+vetRes=$(go vet $TESTPKGS)
+if [ -n "${vetRes}" ]; then
+ echo -e "govet checking failed:\n${vetRes}"
+ exit 255
+fi
+
+echo "Success"

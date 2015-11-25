@@ -13,13 +13,12 @@ RUN chmod +x /usr/bin/docker
 
 RUN pip install tox
 
-RUN curl -sSL https://storage.googleapis.com/golang/go1.4.3.linux-amd64.tar.gz | tar -xz -C /usr/local
+RUN curl -sSL https://storage.googleapis.com/golang/go1.5.1.linux-amd64.tar.gz | tar -xz -C /usr/local
 ENV PATH $PATH:/usr/local/go/bin
 
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
 ENV PATH /go/bin:$PATH
-
-RUN go get github.com/tools/godep
+ENV GO15VENDOREXPERIMENT 1
 
 WORKDIR /go/src/github.com/rancher/os

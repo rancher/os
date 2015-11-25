@@ -6,7 +6,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/reexec"
-	dockerlaunchMain "github.com/rancher/docker-from-scratch/main"
+	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/cmd/cloudinit"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/cmd/network"
@@ -42,7 +42,7 @@ func registerCmd(cmd string, mainFunc func()) {
 func main() {
 	registerCmd("/init", osInit.MainInit)
 	registerCmd(config.SYSINIT_BIN, sysinit.Main)
-	registerCmd("/usr/bin/dockerlaunch", dockerlaunchMain.Main)
+	registerCmd("/usr/bin/dockerlaunch", dockerlaunch.Main)
 	registerCmd("/usr/bin/user-docker", userdocker.Main)
 	registerCmd("/usr/bin/system-docker", systemdocker.Main)
 	registerCmd("/sbin/poweroff", power.PowerOff)

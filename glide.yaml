@@ -1,0 +1,184 @@
+package: github.com/rancher/os
+
+import:
+- package: github.com/Sirupsen/logrus
+  version: v0.8.7
+
+- package: github.com/codegangsta/cli
+  version: 8ce64f19ff08029a69d11b7615c9b591245450ad
+
+- package: github.com/coreos/coreos-cloudinit
+  version: 405c2600b19ae77516c967f8ee8ebde5624d3663
+  repo:    https://github.com/rancher/coreos-cloudinit.git
+  subpackages:
+  - config
+  - datasource
+  - initialize
+  - network
+  - pkg
+  - system
+
+- package: github.com/coreos/go-systemd
+  version: 4fbc5060a317b142e6c7bfbedb65596d5f0ab99b
+  subpackages:
+  - dbus
+
+- package: github.com/coreos/yaml
+  version: 6b16a5714269b2f70720a45406b1babd947a17ef
+
+- package: github.com/docker/distribution
+  version: a0c63372fad430b7ab08d2763cb7d9e2c512c384
+
+- package: github.com/docker/docker
+  version: f39987afe8d611407887b3094c03d6ba6a766a67
+  subpackages:
+  - api
+  - autogen/dockerversion
+  - cliconfig
+  - daemon/network
+  - graph/tags
+  - image
+  - opts
+  - pkg/archive
+  - pkg/fileutils
+  - pkg/homedir
+  - pkg/httputils
+  - pkg/ioutils
+  - pkg/jsonmessage
+  - pkg/mflag
+  - pkg/mount
+  - pkg/nat
+  - pkg/parsers
+  - pkg/pools
+  - pkg/promise
+  - pkg/random
+  - pkg/reexec
+  - pkg/stdcopy
+  - pkg/stringid
+  - pkg/symlink
+  - pkg/system
+  - pkg/tarsum
+  - pkg/term
+  - pkg/timeutils
+  - pkg/tlsconfig
+  - pkg/ulimit
+  - pkg/units
+  - pkg/urlutil
+  - pkg/useragent
+  - pkg/version
+  - registry
+  - runconfig
+  - utils
+  - volume
+
+- package: github.com/docker/libcompose
+  version: a77147c9909a0ee7055c896826a01cb55352b4d9
+  repo:    https://github.com/rancher/libcompose.git
+  subpackages:
+  - cli/app
+  - cli/command
+  - cli/docker/app
+  - cli/logger
+  - docker
+  - logger
+  - lookup
+  - project
+  - utils
+
+- package: github.com/docker/libcontainer
+  version: 83a102cc68a09d890cce3b6c2e5c14c49e6373a0
+  subpackages:
+  - netlink
+
+- package: github.com/docker/libnetwork
+  version: 0cc39f87276366ef6f22961ef2018d957d662724
+  subpackages:
+  - resolvconf
+
+- package: github.com/docker/libtrust
+  version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
+
+- package: github.com/docker/machine
+  version: 4a8e93ac9bc2ced1c3bc4a43c03fdaa1c2749205
+  subpackages:
+  - log
+  - utils
+
+- package: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff
+
+- package: github.com/fsouza/go-dockerclient
+  version: c3e8735e510cf8bc6d439300ff2fc247b1f2867c
+
+- package: github.com/gorilla/context
+  version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
+
+- package: github.com/gorilla/mux
+  version: f15e0c49460fd49eebe2bcc8486b05d1bef68d3a
+
+- package: github.com/guelfey/go.dbus
+  version: f6a3a2366cc39b8479cadc499d3c735fb10fbdda
+  subpackages:
+  - .
+  - introspect
+  - prop
+
+- package: github.com/j-keck/arping
+  version: 4f4d2c8983a18e2c9c63a3f339bc9a998c4557bc
+
+- package: github.com/kless/term
+  version: d57d9d2d5be197e12d9dee142d855470d83ce62f
+
+- package: github.com/opencontainers/runc
+  version: b40c7901845dcec5950ecb37cb9de178fc2c0604
+  subpackages:
+  - libcontainer/cgroups
+  - libcontainer/configs
+  - libcontainer/nsenter
+  - libcontainer/system
+  - libcontainer/user
+
+- package: github.com/rancher/docker-from-scratch
+  version: 1.9.1
+  subpackages:
+  - .
+  - util
+
+- package: github.com/rancher/netconf
+  version: b9aeb623c8ef9551d79efec57ee059658c1ac89c
+
+- package: github.com/ryanuber/go-glob
+  version: 0067a9abd927e50aed5190662702f81231413ae0
+
+- package: github.com/samalba/dockerclient
+  version: 16320a397fb98ba77c00283de77930e37b7a2153
+  subpackages:
+  - .
+
+- package: github.com/stretchr/testify
+  version: 089c7181b8c728499929ff09b62d3fdd8df8adff
+  subpackages:
+  - assert
+  - require
+
+- package: github.com/vishvananda/netlink
+  version: ae3e7dba57271b4e976c4f91637861ee477135e2
+
+- package: golang.org/x/crypto
+  version: 2f3083f6163ef51179ad42ed523a18c9a1141467
+  subpackages:
+  - ssh/terminal
+
+- package: golang.org/x/net
+  version: 84ba27dd5b2d8135e9da1395277f2c9333a2ffda
+  subpackages:
+  - context
+
+- package: google.golang.org/cloud
+  version: c97f5f9979a8582f3ab72873a51979619801248b
+  subpackages:
+  - compute/metadata
+  - internal
+
+- package: gopkg.in/yaml.v2
+  version: a1c4bcb6c278a41992e2f4f0f29a44b4146daa5c
