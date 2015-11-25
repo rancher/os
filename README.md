@@ -60,6 +60,8 @@ us-west-2 | HVM |  [ami-49cedf28](https://console.aws.amazon.com/ec2/home?region
 
 **Paravirtual**
 
+Region | Type | AMI
+---|--- | ---
 ap-northeast-1 | PV |  [ami-2bd5f545](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-2bd5f545)
 ap-southeast-1 | PV |  [ami-76529415](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-76529415)
 ap-southeast-2 | PV |  [ami-0b085168](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-0b085168)
