@@ -1,0 +1,34 @@
+package: github.com/rancher/docker-from-scratch
+
+import:
+- package: github.com/Sirupsen/logrus
+  version: 3cb248e9df77413d58a6330dde84236d04c197d5
+
+- package: github.com/docker/docker
+  version: a3857cc3799e2a92b92f07842c03b442490f01ab
+  subpackages:
+  - pkg/ioutils
+  - pkg/mount
+
+- package: github.com/docker/libnetwork
+  version: f1c5671f1ee2133055144e566cd8b3a0ae4f0433
+  subpackages:
+  - resolvconf
+
+- package: github.com/j-keck/arping
+  version: 4f4d2c8983a18e2c9c63a3f339bc9a998c4557bc
+
+- package: github.com/rancher/netconf
+  version: 7dbbacc56c018f16f9123d5ea8cee6e174d44c8b
+
+- package: github.com/ryanuber/go-glob
+  version: 0067a9abd927e50aed5190662702f81231413ae0
+
+- package: github.com/stretchr/testify
+  version: 089c7181b8c728499929ff09b62d3fdd8df8adff
+  subpackages:
+  - assert
+  - require
+
+- package: github.com/vishvananda/netlink
+  version: ea0402b9dbdee2126f48508a441835ddcabc7d1e
