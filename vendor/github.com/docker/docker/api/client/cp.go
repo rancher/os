@@ -15,6 +15,7 @@ import (
 	Cli "github.com/docker/docker/cli"
 	"github.com/docker/docker/pkg/archive"
 	flag "github.com/docker/docker/pkg/mflag"
+	"github.com/docker/docker/pkg/system"
 )
 
 type copyDirection int
@@ -42,8 +43,8 @@ func (cli *DockerCli) CmdCp(args ...string) error {
 		"cp",
 		[]string{"CONTAINER:PATH LOCALPATH|-", "LOCALPATH|- CONTAINER:PATH"},
 		strings.Join([]string{
-			"Copy files/folders between a container and your host.\n",
-			"Use '-' as the source to read a tar archive from stdin\n",
+			Cli.DockerCommands["cp"].Description,
+			"\nUse '-' as the source to read a tar archive from stdin\n",
 			"and extract it to a directory destination in a container.\n",
 			"Use '-' as the destination to stream a tar archive of a\n",
 			"container source to stdout.",
@@ -101,7 +102,7 @@ func (cli *DockerCli) CmdCp(args ...string) error {
 // client, a `:` could be part of an absolute Windows path, in which case it
 // is immediately proceeded by a backslash.
 func splitCpArg(arg string) (container, path string) {
-	if filepath.IsAbs(arg) {
+	if system.IsAbs(arg) {
 		// Explicit local absolute path, e.g., `C:\foo` or `/foo`.
 		return "", arg
 	}
@@ -232,6 +233,20 @@ func (cli *DockerCli) copyToContainer(srcPath, dstContainer, dstPath string) (er
 	// Prepare destination copy info by stat-ing the container path.
 	dstInfo := archive.CopyInfo{Path: dstPath}
 	dstStat, err := cli.statContainerPath(dstContainer, dstPath)
+
+	// If the destination is a symbolic link, we should evaluate it.
+	if err == nil && dstStat.Mode&os.ModeSymlink != 0 {
+		linkTarget := dstStat.LinkTarget
+		if !system.IsAbs(linkTarget) {
+			// Join with the parent directory.
+			dstParent, _ := archive.SplitPathDirEntry(dstPath)
+			linkTarget = filepath.Join(dstParent, linkTarget)
+		}
+
+		dstInfo.Path = linkTarget
+		dstStat, err = cli.statContainerPath(dstContainer, linkTarget)
+	}
+
 	// Ignore any error and assume that the parent directory of the destination
 	// path exists, in which case the copy may still succeed. If there is any
 	// type of conflict (e.g., non-directory overwriting an existing directory
@@ -242,15 +257,26 @@ func (cli *DockerCli) copyToContainer(srcPath, dstContainer, dstPath string) (er
 		dstInfo.Exists, dstInfo.IsDir = true, dstStat.Mode.IsDir()
 	}
 
-	var content io.Reader
+	var (
+		content         io.Reader
+		resolvedDstPath string
+	)
+
 	if srcPath == "-" {
 		// Use STDIN.
 		content = os.Stdin
+		resolvedDstPath = dstInfo.Path
 		if !dstInfo.IsDir {
 			return fmt.Errorf("destination %q must be a directory", fmt.Sprintf("%s:%s", dstContainer, dstPath))
 		}
 	} else {
-		srcArchive, err := archive.TarResource(srcPath)
+		// Prepare source copy info.
+		srcInfo, err := archive.CopyInfoSourcePath(srcPath)
+		if err != nil {
+			return err
+		}
+
+		srcArchive, err := archive.TarResource(srcInfo)
 		if err != nil {
 			return err
 		}
@@ -261,12 +287,6 @@ func (cli *DockerCli) copyToContainer(srcPath, dstContainer, dstPath string) (er
 		// alter the archive that we upload so that when the server extracts
 		// it to the specified directory in the container we get the disired
 		// copy behavior.
-
-		// Prepare source copy info.
-		srcInfo, err := archive.CopyInfoStatPath(srcPath, true)
-		if err != nil {
-			return err
-		}
 
 		// See comments in the implementation of `archive.PrepareArchiveCopy`
 		// for exactly what goes into deciding how and whether the source
@@ -280,12 +300,12 @@ func (cli *DockerCli) copyToContainer(srcPath, dstContainer, dstPath string) (er
 		}
 		defer preparedArchive.Close()
 
-		dstPath = dstDir
+		resolvedDstPath = dstDir
 		content = preparedArchive
 	}
 
 	query := make(url.Values, 2)
-	query.Set("path", filepath.ToSlash(dstPath)) // Normalize the paths used in the API.
+	query.Set("path", filepath.ToSlash(resolvedDstPath)) // Normalize the paths used in the API.
 	// Do not allow for an existing directory to be overwritten by a non-directory and vice versa.
 	query.Set("noOverwriteDirNonDir", "true")
 

@@ -5,3 +5,4 @@
 /base-image/build/
 /base-image/cache/
 /base-image/dist/
+/.vendor

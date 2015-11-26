@@ -120,6 +120,11 @@ type StructSliceorMap struct {
 	Bars []string   `yaml:"bars"`
 }
 
+type StructCommand struct {
+	Entrypoint Command `yaml:"entrypoint,flow,omitempty"`
+	Command    Command `yaml:"command,flow,omitempty"`
+}
+
 func TestSliceOrMapYaml(t *testing.T) {
 	str := `{foos: [bar=baz, far=faz]}`
 
@@ -191,4 +196,25 @@ func TestMaporsliceYaml(t *testing.T) {
 	assert.Equal(t, 2, len(s2.Foo.parts))
 	assert.True(t, contains(s2.Foo.parts, "bar=baz"))
 	assert.True(t, contains(s2.Foo.parts, "far=faz"))
+}
+
+var sampleStructCommand = `command: bash`
+
+func TestUnmarshalCommand(t *testing.T) {
+	s := &StructCommand{}
+	err := yaml.Unmarshal([]byte(sampleStructCommand), s)
+
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"bash"}, s.Command.Slice())
+	assert.Nil(t, s.Entrypoint.Slice())
+
+	bytes, err := yaml.Marshal(s)
+	assert.Nil(t, err)
+
+	s2 := &StructCommand{}
+	err = yaml.Unmarshal(bytes, s2)
+
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"bash"}, s.Command.Slice())
+	assert.Nil(t, s.Entrypoint.Slice())
 }

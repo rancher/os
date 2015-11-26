@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"sync"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	"github.com/docker/machine/log"
+	dockerclient "github.com/fsouza/go-dockerclient"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
-	"github.com/samalba/dockerclient"
 )
 
 type ClientFactory struct {
-	userClient   dockerclient.Client
-	systemClient dockerclient.Client
+	userClient   *dockerclient.Client
+	systemClient *dockerclient.Client
 	userOnce     sync.Once
 	systemOnce   sync.Once
 }
@@ -42,7 +42,7 @@ func NewClientFactory(opts docker.ClientOpts) (docker.ClientFactory, error) {
 	}, nil
 }
 
-func (c *ClientFactory) Create(service project.Service) dockerclient.Client {
+func (c *ClientFactory) Create(service project.Service) *dockerclient.Client {
 	if IsSystemContainer(service.Config()) {
 		waitFor(&c.systemOnce, c.systemClient, config.DOCKER_SYSTEM_HOST)
 		return c.systemClient
@@ -52,7 +52,7 @@ func (c *ClientFactory) Create(service project.Service) dockerclient.Client {
 	return c.userClient
 }
 
-func waitFor(once *sync.Once, client dockerclient.Client, endpoint string) {
+func waitFor(once *sync.Once, client *dockerclient.Client, endpoint string) {
 	once.Do(func() {
 		err := ClientOK(endpoint, func() bool {
 			_, err := client.Info()

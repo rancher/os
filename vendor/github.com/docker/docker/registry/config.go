@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/docker/distribution/registry/api/v2"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/opts"
 	flag "github.com/docker/docker/pkg/mflag"
@@ -23,23 +23,19 @@ type Options struct {
 const (
 	// DefaultNamespace is the default namespace
 	DefaultNamespace = "docker.io"
-	// DefaultV2Registry is the URI of the default v2 registry
-	DefaultV2Registry = "https://registry-1.docker.io"
 	// DefaultRegistryVersionHeader is the name of the default HTTP header
 	// that carries Registry version info
 	DefaultRegistryVersionHeader = "Docker-Distribution-Api-Version"
-	// DefaultV1Registry is the URI of the default v1 registry
-	DefaultV1Registry = "https://index.docker.io"
-
-	// CertsDir is the directory where certificates are stored
-	CertsDir = "/etc/docker/certs.d"
 
 	// IndexServer is the v1 registry server used for user auth + account creation
 	IndexServer = DefaultV1Registry + "/v1/"
 	// IndexName is the name of the index
 	IndexName = "docker.io"
+
 	// NotaryServer is the endpoint serving the Notary trust server
 	NotaryServer = "https://notary.docker.io"
+
+	// IndexServer = "https://registry-stage.hub.docker.com/v1/"
 )
 
 var (
@@ -48,6 +44,10 @@ var (
 	ErrInvalidRepositoryName = errors.New("Invalid repository name (ex: \"registry.domain.tld/myrepos\")")
 
 	emptyServiceConfig = NewServiceConfig(nil)
+
+	// V2Only controls access to legacy registries.  If it is set to true via the
+	// command line flag the daemon will not attempt to contact v1 legacy registries
+	V2Only = false
 )
 
 // InstallFlags adds command-line options to the top-level flag parser for
@@ -57,6 +57,7 @@ func (options *Options) InstallFlags(cmd *flag.FlagSet, usageFn func(string) str
 	cmd.Var(&options.Mirrors, []string{"-registry-mirror"}, usageFn("Preferred Docker registry mirror"))
 	options.InsecureRegistries = opts.NewListOpts(ValidateIndexName)
 	cmd.Var(&options.InsecureRegistries, []string{"-insecure-registry"}, usageFn("Enable insecure registry communication"))
+	cmd.BoolVar(&V2Only, []string{"-disable-legacy-registry"}, false, "Do not contact legacy registries")
 }
 
 type netIPNet net.IPNet
@@ -225,7 +226,8 @@ func validateRemoteName(remoteName string) error {
 		}
 	}
 
-	return v2.ValidateRepositoryName(remoteName)
+	_, err := reference.WithName(remoteName)
+	return err
 }
 
 func validateNoSchema(reposName string) error {
@@ -299,14 +301,17 @@ func splitReposName(reposName string) (string, string) {
 }
 
 // NewRepositoryInfo validates and breaks down a repository name into a RepositoryInfo
-func (config *ServiceConfig) NewRepositoryInfo(reposName string) (*RepositoryInfo, error) {
+func (config *ServiceConfig) NewRepositoryInfo(reposName string, bySearch bool) (*RepositoryInfo, error) {
 	if err := validateNoSchema(reposName); err != nil {
 		return nil, err
 	}
 
 	indexName, remoteName := splitReposName(reposName)
-	if err := validateRemoteName(remoteName); err != nil {
-		return nil, err
+
+	if !bySearch {
+		if err := validateRemoteName(remoteName); err != nil {
+			return nil, err
+		}
 	}
 
 	repoInfo := &RepositoryInfo{
@@ -358,7 +363,18 @@ func (repoInfo *RepositoryInfo) GetSearchTerm() string {
 // ParseRepositoryInfo performs the breakdown of a repository name into a RepositoryInfo, but
 // lacks registry configuration.
 func ParseRepositoryInfo(reposName string) (*RepositoryInfo, error) {
-	return emptyServiceConfig.NewRepositoryInfo(reposName)
+	return emptyServiceConfig.NewRepositoryInfo(reposName, false)
+}
+
+// ParseIndexInfo will use repository name to get back an indexInfo.
+func ParseIndexInfo(reposName string) (*IndexInfo, error) {
+	indexName, _ := splitReposName(reposName)
+
+	indexInfo, err := emptyServiceConfig.NewIndexInfo(indexName)
+	if err != nil {
+		return nil, err
+	}
+	return indexInfo, nil
 }
 
 // NormalizeLocalName transforms a repository name into a normalize LocalName

@@ -5,121 +5,37 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"runtime"
+	"strings"
 	"testing"
+
+	"github.com/docker/docker/pkg/stringutils"
 )
 
-func TestEntrypointMarshalJSON(t *testing.T) {
-	entrypoints := map[*Entrypoint]string{
-		nil:                                            "",
-		&Entrypoint{}:                                  "null",
-		&Entrypoint{[]string{"/bin/sh", "-c", "echo"}}: `["/bin/sh","-c","echo"]`,
-	}
-
-	for entrypoint, expected := range entrypoints {
-		data, err := entrypoint.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if string(data) != expected {
-			t.Fatalf("Expected %v, got %v", expected, string(data))
-		}
-	}
-}
-
-func TestEntrypointUnmarshalJSON(t *testing.T) {
-	parts := map[string][]string{
-		"":   {"default", "values"},
-		"[]": {},
-		`["/bin/sh","-c","echo"]`: {"/bin/sh", "-c", "echo"},
-	}
-	for json, expectedParts := range parts {
-		entrypoint := &Entrypoint{
-			[]string{"default", "values"},
-		}
-		if err := entrypoint.UnmarshalJSON([]byte(json)); err != nil {
-			t.Fatal(err)
-		}
-
-		actualParts := entrypoint.Slice()
-		if len(actualParts) != len(expectedParts) {
-			t.Fatalf("Expected %v parts, got %v (%v)", len(expectedParts), len(actualParts), expectedParts)
-		}
-		for index, part := range actualParts {
-			if part != expectedParts[index] {
-				t.Fatalf("Expected %v, got %v", expectedParts, actualParts)
-				break
-			}
-		}
-	}
-}
-
-func TestCommandToString(t *testing.T) {
-	commands := map[*Command]string{
-		&Command{[]string{""}}:           "",
-		&Command{[]string{"one"}}:        "one",
-		&Command{[]string{"one", "two"}}: "one two",
-	}
-	for command, expected := range commands {
-		toString := command.ToString()
-		if toString != expected {
-			t.Fatalf("Expected %v, got %v", expected, toString)
-		}
-	}
-}
-
-func TestCommandMarshalJSON(t *testing.T) {
-	commands := map[*Command]string{
-		nil:        "",
-		&Command{}: "null",
-		&Command{[]string{"/bin/sh", "-c", "echo"}}: `["/bin/sh","-c","echo"]`,
-	}
-
-	for command, expected := range commands {
-		data, err := command.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if string(data) != expected {
-			t.Fatalf("Expected %v, got %v", expected, string(data))
-		}
-	}
-}
-
-func TestCommandUnmarshalJSON(t *testing.T) {
-	parts := map[string][]string{
-		"":   {"default", "values"},
-		"[]": {},
-		`["/bin/sh","-c","echo"]`: {"/bin/sh", "-c", "echo"},
-	}
-	for json, expectedParts := range parts {
-		command := &Command{
-			[]string{"default", "values"},
-		}
-		if err := command.UnmarshalJSON([]byte(json)); err != nil {
-			t.Fatal(err)
-		}
-
-		actualParts := command.Slice()
-		if len(actualParts) != len(expectedParts) {
-			t.Fatalf("Expected %v parts, got %v (%v)", len(expectedParts), len(actualParts), expectedParts)
-		}
-		for index, part := range actualParts {
-			if part != expectedParts[index] {
-				t.Fatalf("Expected %v, got %v", expectedParts, actualParts)
-				break
-			}
-		}
-	}
+type f struct {
+	file       string
+	entrypoint *stringutils.StrSlice
 }
 
 func TestDecodeContainerConfig(t *testing.T) {
-	fixtures := []struct {
-		file       string
-		entrypoint *Entrypoint
-	}{
-		{"fixtures/container_config_1_14.json", NewEntrypoint()},
-		{"fixtures/container_config_1_17.json", NewEntrypoint("bash")},
-		{"fixtures/container_config_1_19.json", NewEntrypoint("bash")},
+
+	var (
+		fixtures []f
+		image    string
+	)
+
+	if runtime.GOOS != "windows" {
+		image = "ubuntu"
+		fixtures = []f{
+			{"fixtures/unix/container_config_1_14.json", stringutils.NewStrSlice()},
+			{"fixtures/unix/container_config_1_17.json", stringutils.NewStrSlice("bash")},
+			{"fixtures/unix/container_config_1_19.json", stringutils.NewStrSlice("bash")},
+		}
+	} else {
+		image = "windows"
+		fixtures = []f{
+			{"fixtures/windows/container_config_1_19.json", stringutils.NewStrSlice("cmd")},
+		}
 	}
 
 	for _, f := range fixtures {
@@ -133,96 +49,71 @@ func TestDecodeContainerConfig(t *testing.T) {
 			t.Fatal(fmt.Errorf("Error parsing %s: %v", f, err))
 		}
 
-		if c.Image != "ubuntu" {
-			t.Fatalf("Expected ubuntu image, found %s\n", c.Image)
+		if c.Image != image {
+			t.Fatalf("Expected %s image, found %s\n", image, c.Image)
 		}
 
 		if c.Entrypoint.Len() != f.entrypoint.Len() {
 			t.Fatalf("Expected %v, found %v\n", f.entrypoint, c.Entrypoint)
 		}
 
-		if h.Memory != 1000 {
+		if h != nil && h.Memory != 1000 {
 			t.Fatalf("Expected memory to be 1000, found %d\n", h.Memory)
 		}
 	}
 }
 
-func TestEntrypointUnmarshalString(t *testing.T) {
-	var e *Entrypoint
-	echo, err := json.Marshal("echo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(echo, &e); err != nil {
-		t.Fatal(err)
+// TestDecodeContainerConfigIsolation validates the isolation level passed
+// to the daemon in the hostConfig structure. Note this is platform specific
+// as to what level of container isolation is supported.
+func TestDecodeContainerConfigIsolation(t *testing.T) {
+
+	// An invalid isolation level
+	if _, _, err := callDecodeContainerConfigIsolation("invalid"); err != nil {
+		if !strings.Contains(err.Error(), `invalid --isolation: "invalid"`) {
+			t.Fatal(err)
+		}
 	}
 
-	slice := e.Slice()
-	if len(slice) != 1 {
-		t.Fatalf("expected 1 element after unmarshal: %q", slice)
+	// Blank isolation level (== default)
+	if _, _, err := callDecodeContainerConfigIsolation(""); err != nil {
+		t.Fatal("Blank isolation should have succeeded")
 	}
 
-	if slice[0] != "echo" {
-		t.Fatalf("expected `echo`, got: %q", slice[0])
+	// Default isolation level
+	if _, _, err := callDecodeContainerConfigIsolation("default"); err != nil {
+		t.Fatal("default isolation should have succeeded")
+	}
+
+	// Hyper-V Containers isolation level (Valid on Windows only)
+	if runtime.GOOS == "windows" {
+		if _, _, err := callDecodeContainerConfigIsolation("hyperv"); err != nil {
+			t.Fatal("hyperv isolation should have succeeded")
+		}
+	} else {
+		if _, _, err := callDecodeContainerConfigIsolation("hyperv"); err != nil {
+			if !strings.Contains(err.Error(), `invalid --isolation: "hyperv"`) {
+				t.Fatal(err)
+			}
+		}
 	}
 }
 
-func TestEntrypointUnmarshalSlice(t *testing.T) {
-	var e *Entrypoint
-	echo, err := json.Marshal([]string{"echo"})
-	if err != nil {
-		t.Fatal(err)
+// callDecodeContainerConfigIsolation is a utility function to call
+// DecodeContainerConfig for validating isolation levels
+func callDecodeContainerConfigIsolation(isolation string) (*Config, *HostConfig, error) {
+	var (
+		b   []byte
+		err error
+	)
+	w := ContainerConfigWrapper{
+		Config: &Config{},
+		HostConfig: &HostConfig{
+			NetworkMode: "none",
+			Isolation:   IsolationLevel(isolation)},
 	}
-	if err := json.Unmarshal(echo, &e); err != nil {
-		t.Fatal(err)
+	if b, err = json.Marshal(w); err != nil {
+		return nil, nil, fmt.Errorf("Error on marshal %s", err.Error())
 	}
-
-	slice := e.Slice()
-	if len(slice) != 1 {
-		t.Fatalf("expected 1 element after unmarshal: %q", slice)
-	}
-
-	if slice[0] != "echo" {
-		t.Fatalf("expected `echo`, got: %q", slice[0])
-	}
-}
-
-func TestCommandUnmarshalSlice(t *testing.T) {
-	var e *Command
-	echo, err := json.Marshal([]string{"echo"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(echo, &e); err != nil {
-		t.Fatal(err)
-	}
-
-	slice := e.Slice()
-	if len(slice) != 1 {
-		t.Fatalf("expected 1 element after unmarshal: %q", slice)
-	}
-
-	if slice[0] != "echo" {
-		t.Fatalf("expected `echo`, got: %q", slice[0])
-	}
-}
-
-func TestCommandUnmarshalString(t *testing.T) {
-	var e *Command
-	echo, err := json.Marshal("echo")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(echo, &e); err != nil {
-		t.Fatal(err)
-	}
-
-	slice := e.Slice()
-	if len(slice) != 1 {
-		t.Fatalf("expected 1 element after unmarshal: %q", slice)
-	}
-
-	if slice[0] != "echo" {
-		t.Fatalf("expected `echo`, got: %q", slice[0])
-	}
+	return DecodeContainerConfig(bytes.NewReader(b))
 }

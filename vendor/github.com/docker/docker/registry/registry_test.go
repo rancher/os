@@ -23,7 +23,7 @@ const (
 
 func spawnTestRegistrySession(t *testing.T) *Session {
 	authConfig := &cliconfig.AuthConfig{}
-	endpoint, err := NewEndpoint(makeIndex("/v1/"), nil)
+	endpoint, err := NewEndpoint(makeIndex("/v1/"), nil, APIVersionUnknown)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,7 +50,7 @@ func spawnTestRegistrySession(t *testing.T) *Session {
 
 func TestPingRegistryEndpoint(t *testing.T) {
 	testPing := func(index *IndexInfo, expectedStandalone bool, assertMessage string) {
-		ep, err := NewEndpoint(index, nil)
+		ep, err := NewEndpoint(index, nil, APIVersionUnknown)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -70,7 +70,7 @@ func TestPingRegistryEndpoint(t *testing.T) {
 func TestEndpoint(t *testing.T) {
 	// Simple wrapper to fail test if err != nil
 	expandEndpoint := func(index *IndexInfo) *Endpoint {
-		endpoint, err := NewEndpoint(index, nil)
+		endpoint, err := NewEndpoint(index, nil, APIVersionUnknown)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -79,7 +79,7 @@ func TestEndpoint(t *testing.T) {
 
 	assertInsecureIndex := func(index *IndexInfo) {
 		index.Secure = true
-		_, err := NewEndpoint(index, nil)
+		_, err := NewEndpoint(index, nil, APIVersionUnknown)
 		assertNotEqual(t, err, nil, index.Name+": Expected error for insecure index")
 		assertEqual(t, strings.Contains(err.Error(), "insecure-registry"), true, index.Name+": Expected insecure-registry  error for insecure index")
 		index.Secure = false
@@ -87,7 +87,7 @@ func TestEndpoint(t *testing.T) {
 
 	assertSecureIndex := func(index *IndexInfo) {
 		index.Secure = true
-		_, err := NewEndpoint(index, nil)
+		_, err := NewEndpoint(index, nil, APIVersionUnknown)
 		assertNotEqual(t, err, nil, index.Name+": Expected cert error for secure index")
 		assertEqual(t, strings.Contains(err.Error(), "certificate signed by unknown authority"), true, index.Name+": Expected cert error for secure index")
 		index.Secure = false
@@ -153,7 +153,7 @@ func TestEndpoint(t *testing.T) {
 	}
 	for _, address := range badEndpoints {
 		index.Name = address
-		_, err := NewEndpoint(index, nil)
+		_, err := NewEndpoint(index, nil, APIVersionUnknown)
 		checkNotEqual(t, err, nil, "Expected error while expanding bad endpoint")
 	}
 }
@@ -185,7 +185,7 @@ func TestGetRemoteImageJSON(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	assertEqual(t, size, 154, "Expected size 154")
+	assertEqual(t, size, int64(154), "Expected size 154")
 	if len(json) <= 0 {
 		t.Fatal("Expected non-empty json")
 	}
@@ -677,6 +677,35 @@ func TestNewIndexInfo(t *testing.T) {
 	testIndexInfo(config, expectedIndexInfos)
 }
 
+func TestMirrorEndpointLookup(t *testing.T) {
+	containsMirror := func(endpoints []APIEndpoint) bool {
+		for _, pe := range endpoints {
+			if pe.URL == "my.mirror" {
+				return true
+			}
+		}
+		return false
+	}
+	s := Service{Config: makeServiceConfig([]string{"my.mirror"}, nil)}
+	imageName := IndexName + "/test/image"
+
+	pushAPIEndpoints, err := s.LookupPushEndpoints(imageName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if containsMirror(pushAPIEndpoints) {
+		t.Fatal("Push endpoint should not contain mirror")
+	}
+
+	pullAPIEndpoints, err := s.LookupPullEndpoints(imageName)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !containsMirror(pullAPIEndpoints) {
+		t.Fatal("Pull endpoint should contain mirror")
+	}
+}
+
 func TestPushRegistryTag(t *testing.T) {
 	r := spawnTestRegistrySession(t)
 	err := r.PushRegistryTag("foo42/bar", imageID, "stable", makeURL("/v1/"))
@@ -738,12 +767,18 @@ func TestValidRemoteName(t *testing.T) {
 		// Allow embedded hyphens.
 		"docker-rules/docker",
 
+		// Allow multiple hyphens as well.
+		"docker---rules/docker",
+
 		//Username doc and image name docker being tested.
 		"doc/docker",
 
 		// single character names are now allowed.
 		"d/docker",
 		"jess/t",
+
+		// Consecutive underscores.
+		"dock__er/docker",
 	}
 	for _, repositoryName := range validRepositoryNames {
 		if err := validateRemoteName(repositoryName); err != nil {
@@ -771,8 +806,10 @@ func TestValidRemoteName(t *testing.T) {
 
 		"_docker/_docker",
 
-		// Disallow consecutive hyphens.
-		"dock--er/docker",
+		// Disallow consecutive periods.
+		"dock..er/docker",
+		"dock_.er/docker",
+		"dock-.er/docker",
 
 		// No repository.
 		"docker/",

@@ -7,15 +7,15 @@ import (
 
 	"github.com/docker/docker/api"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/autogen/dockerversion"
 	Cli "github.com/docker/docker/cli"
+	"github.com/docker/docker/dockerversion"
 	flag "github.com/docker/docker/pkg/mflag"
 	"github.com/docker/docker/utils"
 )
 
 var versionTemplate = `Client:
  Version:      {{.Client.Version}}
- API version:  {{.Client.ApiVersion}}
+ API version:  {{.Client.APIVersion}}
  Go version:   {{.Client.GoVersion}}
  Git commit:   {{.Client.GitCommit}}
  Built:        {{.Client.BuildTime}}
@@ -24,7 +24,7 @@ var versionTemplate = `Client:
 
 Server:
  Version:      {{.Server.Version}}
- API version:  {{.Server.ApiVersion}}
+ API version:  {{.Server.APIVersion}}
  Go version:   {{.Server.GoVersion}}
  Git commit:   {{.Server.GitCommit}}
  Built:        {{.Server.BuildTime}}
@@ -43,7 +43,7 @@ type versionData struct {
 //
 // Usage: docker version
 func (cli *DockerCli) CmdVersion(args ...string) (err error) {
-	cmd := Cli.Subcmd("version", nil, "Show the Docker version information.", true)
+	cmd := Cli.Subcmd("version", nil, Cli.DockerCommands["version"].Description, true)
 	tmplStr := cmd.String([]string{"f", "#format", "-format"}, "", "Format the output using the given go template")
 	cmd.Require(flag.Exact, 0)
 
@@ -60,11 +60,11 @@ func (cli *DockerCli) CmdVersion(args ...string) (err error) {
 
 	vd := versionData{
 		Client: types.Version{
-			Version:      dockerversion.VERSION,
-			ApiVersion:   api.Version,
+			Version:      dockerversion.Version,
+			APIVersion:   api.Version,
 			GoVersion:    runtime.Version(),
-			GitCommit:    dockerversion.GITCOMMIT,
-			BuildTime:    dockerversion.BUILDTIME,
+			GitCommit:    dockerversion.GitCommit,
+			BuildTime:    dockerversion.BuildTime,
 			Os:           runtime.GOOS,
 			Arch:         runtime.GOARCH,
 			Experimental: utils.ExperimentalBuild(),

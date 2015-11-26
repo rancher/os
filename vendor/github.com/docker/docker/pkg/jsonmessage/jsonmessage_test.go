@@ -3,12 +3,12 @@ package jsonmessage
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/pkg/timeutils"
-	"strings"
 )
 
 func TestError(t *testing.T) {
@@ -45,7 +45,7 @@ func TestProgress(t *testing.T) {
 	}
 
 	// this number can't be negative gh#7136
-	expected = "[==================================================>]     50 B/40 B"
+	expected = "[==================================================>]     50 B"
 	jp5 := JSONProgress{Current: 50, Total: 40}
 	if jp5.String() != expected {
 		t.Fatalf("Expected %q, got %q", expected, jp5.String())
@@ -53,7 +53,7 @@ func TestProgress(t *testing.T) {
 }
 
 func TestJSONMessageDisplay(t *testing.T) {
-	now := time.Now().Unix()
+	now := time.Now()
 	messages := map[JSONMessage][]string{
 		// Empty
 		JSONMessage{}: {"\n", "\n"},
@@ -66,13 +66,34 @@ func TestJSONMessageDisplay(t *testing.T) {
 		},
 		// General
 		JSONMessage{
-			Time:   now,
+			Time:   now.Unix(),
 			ID:     "ID",
 			From:   "From",
 			Status: "status",
 		}: {
-			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(now, 0).Format(timeutils.RFC3339NanoFixed)),
-			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(now, 0).Format(timeutils.RFC3339NanoFixed)),
+			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(now.Unix(), 0).Format(timeutils.RFC3339NanoFixed)),
+			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(now.Unix(), 0).Format(timeutils.RFC3339NanoFixed)),
+		},
+		// General, with nano precision time
+		JSONMessage{
+			TimeNano: now.UnixNano(),
+			ID:       "ID",
+			From:     "From",
+			Status:   "status",
+		}: {
+			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(0, now.UnixNano()).Format(timeutils.RFC3339NanoFixed)),
+			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(0, now.UnixNano()).Format(timeutils.RFC3339NanoFixed)),
+		},
+		// General, with both times Nano is preferred
+		JSONMessage{
+			Time:     now.Unix(),
+			TimeNano: now.UnixNano(),
+			ID:       "ID",
+			From:     "From",
+			Status:   "status",
+		}: {
+			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(0, now.UnixNano()).Format(timeutils.RFC3339NanoFixed)),
+			fmt.Sprintf("%v ID: (from From) status\n", time.Unix(0, now.UnixNano()).Format(timeutils.RFC3339NanoFixed)),
 		},
 		// Stream over status
 		JSONMessage{

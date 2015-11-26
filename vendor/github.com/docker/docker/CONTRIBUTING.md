@@ -25,7 +25,7 @@ The Docker maintainers take security seriously. If you discover a security
 issue, please bring it to their attention right away!
 
 Please **DO NOT** file a public issue, instead send your report privately to
-[security@docker.com](mailto:security@docker.com), 
+[security@docker.com](mailto:security@docker.com).
 
 Security reports are greatly appreciated and we will publicly thank you for it.
 We also like to send gifts&mdash;if you're into Docker schwag, make sure to let
@@ -42,14 +42,17 @@ and will thank you for it!
 Check that [our issue database](https://github.com/docker/docker/issues)
 doesn't already include that problem or suggestion before submitting an issue.
 If you find a match, add a quick "+1" or "I have this problem too." Doing this
-helps prioritize the most common problems and requests.
+helps prioritize the most common problems and requests. **DO NOT DO THAT** to
+subscribe to the issue unless you have something meaningful to add to the
+conversation. The best way to subscribe the issue is by clicking Subscribe
+button in top right of the page.
 
 When reporting issues, please include your host OS (Ubuntu 12.04, Fedora 19,
 etc). Please include:
 
 * The output of `uname -a`.
 * The output of `docker version`.
-* The output of `docker -D info`.
+* The output of `docker info`.
 
 Please also include the steps required to reproduce the problem if possible and
 applicable. This information will help us review and fix your issue faster.
@@ -163,7 +166,7 @@ However, there might be a way to implement that feature *on top of* Docker.
   <tr>
     <td>Stack Overflow</td>
     <td>
-      Stack Overflow has over 7000K Docker questions listed. We regularly
+      Stack Overflow has over 17000 Docker questions listed. We regularly
       monitor <a href="https://stackoverflow.com/search?tab=newest&q=docker" target="_blank">Docker questions</a>
       and so do many other knowledgeable Docker users.
     </td>
@@ -224,7 +227,7 @@ high majority of submissions should have a single commit, so if in doubt: squash
 down to one.
 
 After every commit, [make sure the test suite passes]
-((https://docs.docker.com/project/test-and-docs/)). Include documentation
+(https://docs.docker.com/project/test-and-docs/). Include documentation
 changes in the same pull request so that a revert would remove all traces of
 the feature or fix.
 

@@ -182,7 +182,7 @@ func getPid(service string, project *project.Project) (int, error) {
 		return 0, err
 	}
 
-	id, err := containers[0].Id()
+	id, err := containers[0].ID()
 	if err != nil {
 		return 0, err
 	}

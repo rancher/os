@@ -10,6 +10,7 @@ import (
 	"github.com/docker/distribution/context"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest"
+	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/registry/storage/cache/memory"
 	"github.com/docker/distribution/registry/storage/driver"
 	"github.com/docker/distribution/registry/storage/driver/inmemory"
@@ -29,7 +30,10 @@ type manifestStoreTestEnv struct {
 func newManifestStoreTestEnv(t *testing.T, name, tag string) *manifestStoreTestEnv {
 	ctx := context.Background()
 	driver := inmemory.New()
-	registry := NewRegistryWithDriver(ctx, driver, memory.NewInMemoryBlobDescriptorCacheProvider(), true, true, false)
+	registry, err := NewRegistry(ctx, driver, BlobDescriptorCacheProvider(memory.NewInMemoryBlobDescriptorCacheProvider()), EnableDelete, EnableRedirect)
+	if err != nil {
+		t.Fatalf("error creating registry: %v", err)
+	}
 
 	repo, err := registry.Repository(ctx, name)
 	if err != nil {
@@ -72,7 +76,7 @@ func TestManifestStorage(t *testing.T) {
 		}
 	}
 
-	m := manifest.Manifest{
+	m := schema1.Manifest{
 		Versioned: manifest.Versioned{
 			SchemaVersion: 1,
 		},
@@ -91,7 +95,7 @@ func TestManifestStorage(t *testing.T) {
 		dgst := digest.Digest(ds)
 
 		testLayers[digest.Digest(dgst)] = rs
-		m.FSLayers = append(m.FSLayers, manifest.FSLayer{
+		m.FSLayers = append(m.FSLayers, schema1.FSLayer{
 			BlobSum: dgst,
 		})
 	}
@@ -101,7 +105,7 @@ func TestManifestStorage(t *testing.T) {
 		t.Fatalf("unexpected error generating private key: %v", err)
 	}
 
-	sm, merr := manifest.Sign(&m, pk)
+	sm, merr := schema1.Sign(&m, pk)
 	if merr != nil {
 		t.Fatalf("error signing manifest: %v", err)
 	}
@@ -229,7 +233,7 @@ func TestManifestStorage(t *testing.T) {
 		t.Fatalf("unexpected error generating private key: %v", err)
 	}
 
-	sm2, err := manifest.Sign(&m, pk2)
+	sm2, err := schema1.Sign(&m, pk2)
 	if err != nil {
 		t.Fatalf("unexpected error signing manifest: %v", err)
 	}
@@ -257,7 +261,7 @@ func TestManifestStorage(t *testing.T) {
 		t.Fatalf("unexpected error fetching manifest: %v", err)
 	}
 
-	if _, err := manifest.Verify(fetched); err != nil {
+	if _, err := schema1.Verify(fetched); err != nil {
 		t.Fatalf("unexpected error verifying manifest: %v", err)
 	}
 
@@ -348,7 +352,10 @@ func TestManifestStorage(t *testing.T) {
 		t.Errorf("Deleted manifest get returned non-nil")
 	}
 
-	r := NewRegistryWithDriver(ctx, env.driver, memory.NewInMemoryBlobDescriptorCacheProvider(), false, true, false)
+	r, err := NewRegistry(ctx, env.driver, BlobDescriptorCacheProvider(memory.NewInMemoryBlobDescriptorCacheProvider()), EnableRedirect)
+	if err != nil {
+		t.Fatalf("error creating registry: %v", err)
+	}
 	repo, err := r.Repository(ctx, env.name)
 	if err != nil {
 		t.Fatalf("unexpected error getting repo: %v", err)
@@ -361,4 +368,38 @@ func TestManifestStorage(t *testing.T) {
 	if err == nil {
 		t.Errorf("Unexpected success deleting while disabled")
 	}
+}
+
+// TestLinkPathFuncs ensures that the link path functions behavior are locked
+// down and implemented as expected.
+func TestLinkPathFuncs(t *testing.T) {
+	for _, testcase := range []struct {
+		repo       string
+		digest     digest.Digest
+		linkPathFn linkPathFunc
+		expected   string
+	}{
+		{
+			repo:       "foo/bar",
+			digest:     "sha256:deadbeaf",
+			linkPathFn: blobLinkPath,
+			expected:   "/docker/registry/v2/repositories/foo/bar/_layers/sha256/deadbeaf/link",
+		},
+		{
+			repo:       "foo/bar",
+			digest:     "sha256:deadbeaf",
+			linkPathFn: manifestRevisionLinkPath,
+			expected:   "/docker/registry/v2/repositories/foo/bar/_manifests/revisions/sha256/deadbeaf/link",
+		},
+	} {
+		p, err := testcase.linkPathFn(testcase.repo, testcase.digest)
+		if err != nil {
+			t.Fatalf("unexpected error calling linkPathFn(pm, %q, %q): %v", testcase.repo, testcase.digest, err)
+		}
+
+		if p != testcase.expected {
+			t.Fatalf("incorrect path returned: %q != %q", p, testcase.expected)
+		}
+	}
+
 }

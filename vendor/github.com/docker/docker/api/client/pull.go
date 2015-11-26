@@ -15,7 +15,7 @@ import (
 //
 // Usage: docker pull [OPTIONS] IMAGENAME[:TAG|@DIGEST]
 func (cli *DockerCli) CmdPull(args ...string) error {
-	cmd := Cli.Subcmd("pull", []string{"NAME[:TAG|@DIGEST]"}, "Pull an image or a repository from a registry", true)
+	cmd := Cli.Subcmd("pull", []string{"NAME[:TAG|@DIGEST]"}, Cli.DockerCommands["pull"].Description, true)
 	allTags := cmd.Bool([]string{"a", "-all-tags"}, false, "Download all tagged images in the repository")
 	addTrustedFlags(cmd, true)
 	cmd.Require(flag.Exact, 1)
@@ -25,7 +25,7 @@ func (cli *DockerCli) CmdPull(args ...string) error {
 
 	taglessRemote, tag := parsers.ParseRepositoryTag(remote)
 	if tag == "" && !*allTags {
-		tag = tags.DEFAULTTAG
+		tag = tags.DefaultTag
 		fmt.Fprintf(cli.out, "Using default tag: %s\n", tag)
 	} else if tag != "" && *allTags {
 		return fmt.Errorf("tag can't be used with --all-tags/-a")

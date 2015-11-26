@@ -130,11 +130,11 @@ we intend to take advantage of it in the Engine.
 ## 2.1 Docker exec
 
 We won't accept patches expanding the surface of `docker exec`, which we intend to keep as a
-*debugging* feature, as well as being strongly dependent on the the Runtime ingredient effort.
+*debugging* feature, as well as being strongly dependent on the Runtime ingredient effort.
 
 ## 2.2 Dockerfile syntax
 
-The Dockerfile syntax as we know it is simple, and has proven succesful in supporting all our
+The Dockerfile syntax as we know it is simple, and has proven successful in supporting all our
 [official images](https://github.com/docker-library/official-images). Although this is *not* a
 definitive move, we temporarily won't accept more patches to the Dockerfile syntax for several
 reasons:

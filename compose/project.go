@@ -57,9 +57,9 @@ func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) 
 		ClientFactory: clientFactory,
 		Context: project.Context{
 			ProjectName:       name,
+			NoRecreate:        true, // for libcompose to not recreate on project reload, looping up the boot :)
 			EnvironmentLookup: rosDocker.NewConfigEnvironment(cfg),
 			ServiceFactory:    serviceFactory,
-			Rebuild:           true,
 			Log:               cfg.Rancher.Log,
 			LoggerFactory:     logger.NewColorLoggerFactory(),
 		},
@@ -73,7 +73,7 @@ func addServices(p *project.Project, enabled map[interface{}]interface{}, config
 	// Note: we ignore errors while loading services
 	unchanged := true
 	for name, serviceConfig := range configs {
-		hash := project.GetServiceHash(name, *serviceConfig)
+		hash := project.GetServiceHash(name, serviceConfig)
 
 		if enabled[name] == hash {
 			continue
@@ -94,7 +94,7 @@ func addServices(p *project.Project, enabled map[interface{}]interface{}, config
 }
 
 func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Project, error) {
-	projectEvents := make(chan project.ProjectEvent)
+	projectEvents := make(chan project.Event)
 	enabled := map[interface{}]interface{}{}
 
 	p, err := newProject("os", cfg)
@@ -143,7 +143,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 
 	go func() {
 		for event := range projectEvents {
-			if event.Event == project.CONTAINER_STARTED && event.ServiceName == "network" {
+			if event.EventType == project.EventContainerStarted && event.ServiceName == "network" {
 				network = true
 			}
 		}

@@ -43,6 +43,7 @@ type Image struct {
 	Architecture    string    `json:"Architecture,omitempty" yaml:"Architecture,omitempty"`
 	Size            int64     `json:"Size,omitempty" yaml:"Size,omitempty"`
 	VirtualSize     int64     `json:"VirtualSize,omitempty" yaml:"VirtualSize,omitempty"`
+	RepoDigests     []string  `json:"RepoDigests,omitempty" yaml:"RepoDigests,omitempty"`
 }
 
 // ImagePre012 serves the same purpose as the Image type except that it is for

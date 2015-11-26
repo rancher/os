@@ -4,6 +4,7 @@
 *.so
 
 # Folders
+integration-tmp/
 _obj
 _test
 
@@ -22,12 +23,14 @@ _testmain.go
 *.exe
 *.test
 *.prof
+cmd/dnet/dnet
 
 # Coverage
 *.tmp
 *.coverprofile
 
-# IDE files
+# IDE files and folders
 .project
+.settings/
 
 libnetwork-build.created

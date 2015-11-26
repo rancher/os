@@ -10,7 +10,7 @@ import:
   - .
 
 - package: github.com/codegangsta/cli
-  version: 8ce64f19ff08029a69d11b7615c9b591245450ad
+  version: 0302d3914d2a6ad61404584cdae6e6dbc9c03599
 
 - package: github.com/coreos/coreos-cloudinit
   version: 405c2600b19ae77516c967f8ee8ebde5624d3663
@@ -32,15 +32,30 @@ import:
   version: 6b16a5714269b2f70720a45406b1babd947a17ef
 
 - package: github.com/docker/distribution
-  version: a0c63372fad430b7ab08d2763cb7d9e2c512c384
+  version: c6c9194e9c6097f84b0ff468a741086ff7704aa3
+  subpackages:
+  - context
+  - digest
+  - manifest/schema1
+  - reference
+  - registry/api/errcode
+  - registry/api/v2
+  - registry/client
+  - registry/client/auth
+  - registry/client/transport
+  - registry/storage/cache
+  - registry/storage/cache/memory
+  - uuid
 
 - package: github.com/docker/docker
-  version: f39987afe8d611407887b3094c03d6ba6a766a67
+  version: 58b270c338e831ac6668a29788c72d202f9fc251
   subpackages:
   - api
   - autogen/dockerversion
   - cliconfig
   - daemon/network
+  - dockerversion
+  - errors
   - graph/tags
   - image
   - opts
@@ -48,6 +63,7 @@ import:
   - pkg/fileutils
   - pkg/homedir
   - pkg/httputils
+  - pkg/idtools
   - pkg/ioutils
   - pkg/jsonmessage
   - pkg/mflag
@@ -58,8 +74,10 @@ import:
   - pkg/promise
   - pkg/random
   - pkg/reexec
+  - pkg/signal
   - pkg/stdcopy
   - pkg/stringid
+  - pkg/stringutils
   - pkg/symlink
   - pkg/system
   - pkg/tarsum
@@ -77,7 +95,7 @@ import:
   - volume
 
 - package: github.com/docker/libcompose
-  version: 0919e089edff3ba95d84119228f46d414882ded1
+  version: 3e678b6a30d314e86441cbd9ad01534b7534d53a
   subpackages:
   - cli
   - docker
@@ -92,7 +110,7 @@ import:
   - netlink
 
 - package: github.com/docker/libnetwork
-  version: 0cc39f87276366ef6f22961ef2018d957d662724
+  version: 5305ea570b85d61dd0fd261cd7e1680da1884678
   subpackages:
   - resolvconf
 
@@ -109,16 +127,16 @@ import:
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 
 - package: github.com/fsouza/go-dockerclient
-  version: c3e8735e510cf8bc6d439300ff2fc247b1f2867c
+  version: b515e07d61c4e873407b54c4843b0f3ac9aa16f1
   subpackages:
   - .
   - external
 
 - package: github.com/gorilla/context
-  version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
+  version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
 
 - package: github.com/gorilla/mux
-  version: f15e0c49460fd49eebe2bcc8486b05d1bef68d3a
+  version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
 
 - package: github.com/guelfey/go.dbus
   version: f6a3a2366cc39b8479cadc499d3c735fb10fbdda
@@ -134,7 +152,7 @@ import:
   version: d57d9d2d5be197e12d9dee142d855470d83ce62f
 
 - package: github.com/opencontainers/runc
-  version: b40c7901845dcec5950ecb37cb9de178fc2c0604
+  version: 1349b37bd56f4f5ce2690b5b2c0f53f88a261c67
   subpackages:
   - libcontainer/cgroups
   - libcontainer/configs
@@ -143,7 +161,7 @@ import:
   - libcontainer/user
 
 - package: github.com/rancher/docker-from-scratch
-  version: 1.9.1
+  version: 1.9.1-1
   subpackages:
   - .
   - util
@@ -155,13 +173,13 @@ import:
   version: 0067a9abd927e50aed5190662702f81231413ae0
 
 - package: github.com/stretchr/testify
-  version: 089c7181b8c728499929ff09b62d3fdd8df8adff
+  version: a1f97990ddc16022ec7610326dd9bce31332c116
   subpackages:
   - assert
   - require
 
 - package: github.com/vishvananda/netlink
-  version: ae3e7dba57271b4e976c4f91637861ee477135e2
+  version: edcd99c0881a4de0fdb3818af6b24f4ee6948464
 
 - package: golang.org/x/crypto
   version: 2f3083f6163ef51179ad42ed523a18c9a1141467

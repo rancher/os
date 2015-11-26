@@ -456,6 +456,7 @@ func (c *Container) Log() error {
 	l := c.service.context.LoggerFactory.Create(c.name)
 
 	err = c.client.Logs(dockerclient.LogsOptions{
+		Container:    c.name,
 		Follow:       true,
 		Stdout:       true,
 		Stderr:       true,
@@ -464,6 +465,7 @@ func (c *Container) Log() error {
 		ErrorStream:  &logger.Wrapper{Logger: l, Err: true},
 		RawTerminal:  info.Config.Tty,
 	})
+	logrus.WithFields(logrus.Fields{"Logger": l, "err": err}).Debug("c.client.Logs() returned error")
 
 	return err
 }

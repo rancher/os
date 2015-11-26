@@ -20,17 +20,18 @@ import (
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/api"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/cliconfig"
+	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/signal"
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/docker/docker/pkg/term"
 	"github.com/docker/docker/registry"
+	"github.com/docker/docker/utils"
 )
 
 var (
-	errConnectionRefused = errors.New("Cannot connect to the Docker daemon. Is 'docker -d' running on this host?")
+	errConnectionFailed = errors.New("Cannot connect to the Docker daemon. Is the docker daemon running on this host?")
 )
 
 type serverResponse struct {
@@ -76,7 +77,7 @@ func (cli *DockerCli) clientRequest(method, path string, in io.Reader, headers m
 		req.Header.Set(k, v)
 	}
 
-	req.Header.Set("User-Agent", "Docker-Client/"+dockerversion.VERSION+" ("+runtime.GOOS+")")
+	req.Header.Set("User-Agent", "Docker-Client/"+dockerversion.Version+" ("+runtime.GOOS+")")
 	req.URL.Host = cli.addr
 	req.URL.Scheme = cli.scheme
 
@@ -94,13 +95,14 @@ func (cli *DockerCli) clientRequest(method, path string, in io.Reader, headers m
 	if resp != nil {
 		serverResp.statusCode = resp.StatusCode
 	}
+
 	if err != nil {
-		if strings.Contains(err.Error(), "connection refused") {
-			return serverResp, errConnectionRefused
+		if utils.IsTimeout(err) || strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "dial unix") {
+			return serverResp, errConnectionFailed
 		}
 
-		if cli.tlsConfig == nil {
-			return serverResp, fmt.Errorf("%v.\n* Are you trying to connect to a TLS-enabled daemon without TLS?\n* Is your docker daemon up and running?", err)
+		if cli.tlsConfig == nil && strings.Contains(err.Error(), "malformed HTTP response") {
+			return serverResp, fmt.Errorf("%v.\n* Are you trying to connect to a TLS-enabled daemon without TLS?", err)
 		}
 		if cli.tlsConfig != nil && strings.Contains(err.Error(), "remote error: bad certificate") {
 			return serverResp, fmt.Errorf("The server probably has client authentication (--tlsverify) enabled. Please check your TLS client certification settings: %v", err)
@@ -125,48 +127,51 @@ func (cli *DockerCli) clientRequest(method, path string, in io.Reader, headers m
 	return serverResp, nil
 }
 
-func (cli *DockerCli) clientRequestAttemptLogin(method, path string, in io.Reader, out io.Writer, index *registry.IndexInfo, cmdName string) (io.ReadCloser, int, error) {
-	cmdAttempt := func(authConfig cliconfig.AuthConfig) (io.ReadCloser, int, error) {
-		buf, err := json.Marshal(authConfig)
-		if err != nil {
-			return nil, -1, err
-		}
-		registryAuthHeader := []string{
-			base64.URLEncoding.EncodeToString(buf),
-		}
-
-		// begin the request
-		serverResp, err := cli.clientRequest(method, path, in, map[string][]string{
-			"X-Registry-Auth": registryAuthHeader,
-		})
-		if err == nil && out != nil {
-			// If we are streaming output, complete the stream since
-			// errors may not appear until later.
-			err = cli.streamBody(serverResp.body, serverResp.header.Get("Content-Type"), true, out, nil)
-		}
-		if err != nil {
-			// Since errors in a stream appear after status 200 has been written,
-			// we may need to change the status code.
-			if strings.Contains(err.Error(), "Authentication is required") ||
-				strings.Contains(err.Error(), "Status 401") ||
-				strings.Contains(err.Error(), "401 Unauthorized") ||
-				strings.Contains(err.Error(), "status code 401") {
-				serverResp.statusCode = http.StatusUnauthorized
-			}
-		}
-		return serverResp.body, serverResp.statusCode, err
+// cmdAttempt builds the corresponding registry Auth Header from the given
+// authConfig. It returns the servers body, status, error response
+func (cli *DockerCli) cmdAttempt(authConfig cliconfig.AuthConfig, method, path string, in io.Reader, out io.Writer) (io.ReadCloser, int, error) {
+	buf, err := json.Marshal(authConfig)
+	if err != nil {
+		return nil, -1, err
 	}
+	registryAuthHeader := []string{
+		base64.URLEncoding.EncodeToString(buf),
+	}
+
+	// begin the request
+	serverResp, err := cli.clientRequest(method, path, in, map[string][]string{
+		"X-Registry-Auth": registryAuthHeader,
+	})
+	if err == nil && out != nil {
+		// If we are streaming output, complete the stream since
+		// errors may not appear until later.
+		err = cli.streamBody(serverResp.body, serverResp.header.Get("Content-Type"), true, out, nil)
+	}
+	if err != nil {
+		// Since errors in a stream appear after status 200 has been written,
+		// we may need to change the status code.
+		if strings.Contains(err.Error(), "Authentication is required") ||
+			strings.Contains(err.Error(), "Status 401") ||
+			strings.Contains(err.Error(), "401 Unauthorized") ||
+			strings.Contains(err.Error(), "status code 401") {
+			serverResp.statusCode = http.StatusUnauthorized
+		}
+	}
+	return serverResp.body, serverResp.statusCode, err
+}
+
+func (cli *DockerCli) clientRequestAttemptLogin(method, path string, in io.Reader, out io.Writer, index *registry.IndexInfo, cmdName string) (io.ReadCloser, int, error) {
 
 	// Resolve the Auth config relevant for this server
 	authConfig := registry.ResolveAuthConfig(cli.configFile, index)
-	body, statusCode, err := cmdAttempt(authConfig)
+	body, statusCode, err := cli.cmdAttempt(authConfig, method, path, in, out)
 	if statusCode == http.StatusUnauthorized {
 		fmt.Fprintf(cli.out, "\nPlease login prior to %s:\n", cmdName)
 		if err = cli.CmdLogin(index.GetAuthConfigKey()); err != nil {
 			return nil, -1, err
 		}
 		authConfig = registry.ResolveAuthConfig(cli.configFile, index)
-		return cmdAttempt(authConfig)
+		return cli.cmdAttempt(authConfig, method, path, in, out)
 	}
 	return body, statusCode, err
 }
@@ -277,7 +282,7 @@ func getExitCode(cli *DockerCli, containerID string) (bool, int, error) {
 	serverResp, err := cli.call("GET", "/containers/"+containerID+"/json", nil, nil)
 	if err != nil {
 		// If we can't connect, then the daemon probably died.
-		if err != errConnectionRefused {
+		if err != errConnectionFailed {
 			return false, -1, err
 		}
 		return false, -1, nil
@@ -299,7 +304,7 @@ func getExecExitCode(cli *DockerCli, execID string) (bool, int, error) {
 	serverResp, err := cli.call("GET", "/exec/"+execID+"/json", nil, nil)
 	if err != nil {
 		// If we can't connect, then the daemon probably died.
-		if err != errConnectionRefused {
+		if err != errConnectionFailed {
 			return false, -1, err
 		}
 		return false, -1, nil

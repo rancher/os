@@ -75,7 +75,7 @@ func TestNetworkCreate(t *testing.T) {
 	jsonNetwork := `{
              "ID": "8dfafdbc3a40",
              "Name": "foobar",
-             "Type": "bridge"
+             "Driver": "bridge"
         }`
 	var expected Network
 	err := json.Unmarshal([]byte(jsonNetwork), &expected)
@@ -84,7 +84,7 @@ func TestNetworkCreate(t *testing.T) {
 	}
 
 	client := newTestClient(&FakeRoundTripper{message: jsonID, status: http.StatusOK})
-	opts := CreateNetworkOptions{"foobar", "bridge", nil}
+	opts := CreateNetworkOptions{"foobar", false, "bridge", IPAMOptions{}, nil}
 	network, err := client.CreateNetwork(opts)
 	if err != nil {
 		t.Fatal(err)

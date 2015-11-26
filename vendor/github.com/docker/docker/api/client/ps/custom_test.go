@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/pkg/stringid"
 )
 
-func TestContainerContextID(t *testing.T) {
+func TestContainerPsContext(t *testing.T) {
 	containerID := stringid.GenerateRandomID()
 	unix := time.Now().Unix()
 
@@ -23,16 +23,39 @@ func TestContainerContextID(t *testing.T) {
 		call      func() string
 	}{
 		{types.Container{ID: containerID}, true, stringid.TruncateID(containerID), idHeader, ctx.ID},
+		{types.Container{ID: containerID}, false, containerID, idHeader, ctx.ID},
 		{types.Container{Names: []string{"/foobar_baz"}}, true, "foobar_baz", namesHeader, ctx.Names},
 		{types.Container{Image: "ubuntu"}, true, "ubuntu", imageHeader, ctx.Image},
+		{types.Container{Image: "verylongimagename"}, true, "verylongimagename", imageHeader, ctx.Image},
+		{types.Container{Image: "verylongimagename"}, false, "verylongimagename", imageHeader, ctx.Image},
+		{types.Container{
+			Image:   "a5a665ff33eced1e0803148700880edab4",
+			ImageID: "a5a665ff33eced1e0803148700880edab4269067ed77e27737a708d0d293fbf5",
+		},
+			true,
+			"a5a665ff33ec",
+			imageHeader,
+			ctx.Image,
+		},
+		{types.Container{
+			Image:   "a5a665ff33eced1e0803148700880edab4",
+			ImageID: "a5a665ff33eced1e0803148700880edab4269067ed77e27737a708d0d293fbf5",
+		},
+			false,
+			"a5a665ff33eced1e0803148700880edab4",
+			imageHeader,
+			ctx.Image,
+		},
 		{types.Container{Image: ""}, true, "<no image>", imageHeader, ctx.Image},
 		{types.Container{Command: "sh -c 'ls -la'"}, true, `"sh -c 'ls -la'"`, commandHeader, ctx.Command},
-		{types.Container{Created: int(unix)}, true, time.Unix(unix, 0).String(), createdAtHeader, ctx.CreatedAt},
+		{types.Container{Created: unix}, true, time.Unix(unix, 0).String(), createdAtHeader, ctx.CreatedAt},
 		{types.Container{Ports: []types.Port{{PrivatePort: 8080, PublicPort: 8080, Type: "tcp"}}}, true, "8080/tcp", portsHeader, ctx.Ports},
 		{types.Container{Status: "RUNNING"}, true, "RUNNING", statusHeader, ctx.Status},
 		{types.Container{SizeRw: 10}, true, "10 B", sizeHeader, ctx.Size},
 		{types.Container{SizeRw: 10, SizeRootFs: 20}, true, "10 B (virtual 20 B)", sizeHeader, ctx.Size},
+		{types.Container{}, true, "", labelsHeader, ctx.Labels},
 		{types.Container{Labels: map[string]string{"cpu": "6", "storage": "ssd"}}, true, "cpu=6,storage=ssd", labelsHeader, ctx.Labels},
+		{types.Container{Created: unix}, true, "Less than a second", runningForHeader, ctx.RunningFor},
 	}
 
 	for _, c := range cases {
@@ -67,8 +90,8 @@ func TestContainerContextID(t *testing.T) {
 		}
 	}
 
-	c := types.Container{Labels: map[string]string{"com.docker.swarm.swarm-id": "33", "com.docker.swarm.node_name": "ubuntu"}}
-	ctx = containerContext{c: c, trunc: true}
+	c1 := types.Container{Labels: map[string]string{"com.docker.swarm.swarm-id": "33", "com.docker.swarm.node_name": "ubuntu"}}
+	ctx = containerContext{c: c1, trunc: true}
 
 	sid := ctx.Label("com.docker.swarm.swarm-id")
 	node := ctx.Label("com.docker.swarm.node_name")
@@ -85,4 +108,19 @@ func TestContainerContextID(t *testing.T) {
 		t.Fatalf("Expected %s, was %s\n", "SWARM ID\tNODE NAME", h)
 
 	}
+
+	c2 := types.Container{}
+	ctx = containerContext{c: c2, trunc: true}
+
+	label := ctx.Label("anything.really")
+	if label != "" {
+		t.Fatalf("Expected an empty string, was %s", label)
+	}
+
+	ctx = containerContext{c: c2, trunc: true}
+	fullHeader := ctx.fullHeader()
+	if fullHeader != "" {
+		t.Fatalf("Expected fullHeader to be empty, was %s", fullHeader)
+	}
+
 }

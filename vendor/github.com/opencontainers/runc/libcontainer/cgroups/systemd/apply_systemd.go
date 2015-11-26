@@ -12,7 +12,8 @@ import (
 	"sync"
 	"time"
 
-	systemd "github.com/coreos/go-systemd/dbus"
+	systemdDbus "github.com/coreos/go-systemd/dbus"
+	systemdUtil "github.com/coreos/go-systemd/util"
 	"github.com/godbus/dbus"
 	"github.com/opencontainers/runc/libcontainer/cgroups"
 	"github.com/opencontainers/runc/libcontainer/cgroups/fs"
@@ -33,17 +34,18 @@ type subsystem interface {
 }
 
 var subsystems = map[string]subsystem{
-	"devices":    &fs.DevicesGroup{},
-	"memory":     &fs.MemoryGroup{},
-	"cpu":        &fs.CpuGroup{},
-	"cpuset":     &fs.CpusetGroup{},
-	"cpuacct":    &fs.CpuacctGroup{},
-	"blkio":      &fs.BlkioGroup{},
-	"hugetlb":    &fs.HugetlbGroup{},
-	"perf_event": &fs.PerfEventGroup{},
-	"freezer":    &fs.FreezerGroup{},
-	"net_prio":   &fs.NetPrioGroup{},
-	"net_cls":    &fs.NetClsGroup{},
+	"devices":      &fs.DevicesGroup{},
+	"memory":       &fs.MemoryGroup{},
+	"cpu":          &fs.CpuGroup{},
+	"cpuset":       &fs.CpusetGroup{},
+	"cpuacct":      &fs.CpuacctGroup{},
+	"blkio":        &fs.BlkioGroup{},
+	"hugetlb":      &fs.HugetlbGroup{},
+	"perf_event":   &fs.PerfEventGroup{},
+	"freezer":      &fs.FreezerGroup{},
+	"net_prio":     &fs.NetPrioGroup{},
+	"net_cls":      &fs.NetClsGroup{},
+	"name=systemd": &fs.NameGroup{},
 }
 
 const (
@@ -52,21 +54,20 @@ const (
 
 var (
 	connLock                        sync.Mutex
-	theConn                         *systemd.Conn
+	theConn                         *systemdDbus.Conn
 	hasStartTransientUnit           bool
 	hasTransientDefaultDependencies bool
 )
 
-func newProp(name string, units interface{}) systemd.Property {
-	return systemd.Property{
+func newProp(name string, units interface{}) systemdDbus.Property {
+	return systemdDbus.Property{
 		Name:  name,
 		Value: dbus.MakeVariant(units),
 	}
 }
 
 func UseSystemd() bool {
-	s, err := os.Stat("/run/systemd/system")
-	if err != nil || !s.IsDir() {
+	if !systemdUtil.IsRunningSystemd() {
 		return false
 	}
 
@@ -75,7 +76,7 @@ func UseSystemd() bool {
 
 	if theConn == nil {
 		var err error
-		theConn, err = systemd.New()
+		theConn, err = systemdDbus.New()
 		if err != nil {
 			return false
 		}
@@ -84,7 +85,7 @@ func UseSystemd() bool {
 		hasStartTransientUnit = true
 
 		// But if we get UnknownMethod error we don't
-		if _, err := theConn.StartTransientUnit("test.scope", "invalid"); err != nil {
+		if _, err := theConn.StartTransientUnit("test.scope", "invalid", nil, nil); err != nil {
 			if dbusError, ok := err.(dbus.Error); ok {
 				if dbusError.Name == "org.freedesktop.DBus.Error.UnknownMethod" {
 					hasStartTransientUnit = false
@@ -99,7 +100,7 @@ func UseSystemd() bool {
 		scope := fmt.Sprintf("libcontainer-%d-systemd-test-default-dependencies.scope", os.Getpid())
 		testScopeExists := true
 		for i := 0; i <= testScopeWait; i++ {
-			if _, err := theConn.StopUnit(scope, "replace"); err != nil {
+			if _, err := theConn.StopUnit(scope, "replace", nil); err != nil {
 				if dbusError, ok := err.(dbus.Error); ok {
 					if strings.Contains(dbusError.Name, "org.freedesktop.systemd1.NoSuchUnit") {
 						testScopeExists = false
@@ -118,7 +119,7 @@ func UseSystemd() bool {
 		// Assume StartTransientUnit on a scope allows DefaultDependencies
 		hasTransientDefaultDependencies = true
 		ddf := newProp("DefaultDependencies", false)
-		if _, err := theConn.StartTransientUnit(scope, "replace", ddf); err != nil {
+		if _, err := theConn.StartTransientUnit(scope, "replace", []systemdDbus.Property{ddf}, nil); err != nil {
 			if dbusError, ok := err.(dbus.Error); ok {
 				if strings.Contains(dbusError.Name, "org.freedesktop.DBus.Error.PropertyReadOnly") {
 					hasTransientDefaultDependencies = false
@@ -127,7 +128,7 @@ func UseSystemd() bool {
 		}
 
 		// Not critical because of the stop unit logic above.
-		theConn.StopUnit(scope, "replace")
+		theConn.StopUnit(scope, "replace", nil)
 	}
 	return hasStartTransientUnit
 }
@@ -147,7 +148,7 @@ func (m *Manager) Apply(pid int) error {
 		c          = m.Cgroups
 		unitName   = getUnitName(c)
 		slice      = "system.slice"
-		properties []systemd.Property
+		properties []systemdDbus.Property
 	)
 
 	if c.Slice != "" {
@@ -155,8 +156,8 @@ func (m *Manager) Apply(pid int) error {
 	}
 
 	properties = append(properties,
-		systemd.PropSlice(slice),
-		systemd.PropDescription("docker container "+c.Name),
+		systemdDbus.PropSlice(slice),
+		systemdDbus.PropDescription("docker container "+c.Name),
 		newProp("PIDs", []uint32{uint32(pid)}),
 	)
 
@@ -176,7 +177,6 @@ func (m *Manager) Apply(pid int) error {
 		properties = append(properties,
 			newProp("MemoryLimit", uint64(c.Memory)))
 	}
-	// TODO: MemoryReservation and MemorySwap not available in systemd
 
 	if c.CpuShares != 0 {
 		properties = append(properties,
@@ -198,7 +198,7 @@ func (m *Manager) Apply(pid int) error {
 		}
 	}
 
-	if _, err := theConn.StartTransientUnit(unitName, "replace", properties...); err != nil {
+	if _, err := theConn.StartTransientUnit(unitName, "replace", properties, nil); err != nil {
 		return err
 	}
 
@@ -212,6 +212,7 @@ func (m *Manager) Apply(pid int) error {
 		return err
 	}
 
+	// TODO: MemoryReservation and MemorySwap not available in systemd
 	if err := joinMemory(c, pid); err != nil {
 		return err
 	}
@@ -234,6 +235,10 @@ func (m *Manager) Apply(pid int) error {
 	}
 
 	if err := joinHugetlb(c, pid); err != nil {
+		return err
+	}
+
+	if err := joinPerfEvent(c, pid); err != nil {
 		return err
 	}
 	// FIXME: Systemd does have `BlockIODeviceWeight` property, but we got problem
@@ -269,7 +274,7 @@ func (m *Manager) Apply(pid int) error {
 func (m *Manager) Destroy() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	theConn.StopUnit(getUnitName(m.Cgroups), "replace")
+	theConn.StopUnit(getUnitName(m.Cgroups), "replace", nil)
 	if err := cgroups.RemovePaths(m.Paths); err != nil {
 		return err
 	}
@@ -298,7 +303,7 @@ func join(c *configs.Cgroup, subsystem string, pid int) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if err := os.MkdirAll(path, 0755); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return "", err
 	}
 	if err := writeFile(path, "cgroup.procs", strconv.Itoa(pid)); err != nil {
@@ -406,12 +411,11 @@ func (m *Manager) Freeze(state configs.FreezerState) error {
 }
 
 func (m *Manager) GetPids() ([]int, error) {
-	path, err := getSubsystemPath(m.Cgroups, "cpu")
+	path, err := getSubsystemPath(m.Cgroups, "devices")
 	if err != nil {
 		return nil, err
 	}
-
-	return cgroups.ReadProcsFile(path)
+	return cgroups.GetPids(path)
 }
 
 func (m *Manager) GetStats() (*cgroups.Stats, error) {
@@ -478,7 +482,7 @@ func setKernelMemory(c *configs.Cgroup) error {
 		return err
 	}
 
-	if err := os.MkdirAll(path, 0755); err != nil && !os.IsExist(err) {
+	if err := os.MkdirAll(path, 0755); err != nil {
 		return err
 	}
 
@@ -501,6 +505,12 @@ func joinMemory(c *configs.Cgroup, pid int) error {
 	// -1 disables memoryswap
 	if c.MemorySwap > 0 {
 		err = writeFile(path, "memory.memsw.limit_in_bytes", strconv.FormatInt(c.MemorySwap, 10))
+		if err != nil {
+			return err
+		}
+	}
+	if c.MemoryReservation > 0 {
+		err = writeFile(path, "memory.soft_limit_in_bytes", strconv.FormatInt(c.MemoryReservation, 10))
 		if err != nil {
 			return err
 		}
@@ -547,28 +557,37 @@ func joinBlkio(c *configs.Cgroup, pid int) error {
 	if err != nil {
 		return err
 	}
-	if c.BlkioWeightDevice != "" {
-		if err := writeFile(path, "blkio.weight_device", c.BlkioWeightDevice); err != nil {
+	// systemd doesn't directly support this in the dbus properties
+	if c.BlkioLeafWeight != 0 {
+		if err := writeFile(path, "blkio.leaf_weight", strconv.FormatUint(uint64(c.BlkioLeafWeight), 10)); err != nil {
 			return err
 		}
 	}
-	if c.BlkioThrottleReadBpsDevice != "" {
-		if err := writeFile(path, "blkio.throttle.read_bps_device", c.BlkioThrottleReadBpsDevice); err != nil {
+	for _, wd := range c.BlkioWeightDevice {
+		if err := writeFile(path, "blkio.weight_device", wd.WeightString()); err != nil {
+			return err
+		}
+		if err := writeFile(path, "blkio.leaf_weight_device", wd.LeafWeightString()); err != nil {
 			return err
 		}
 	}
-	if c.BlkioThrottleWriteBpsDevice != "" {
-		if err := writeFile(path, "blkio.throttle.write_bps_device", c.BlkioThrottleWriteBpsDevice); err != nil {
+	for _, td := range c.BlkioThrottleReadBpsDevice {
+		if err := writeFile(path, "blkio.throttle.read_bps_device", td.String()); err != nil {
 			return err
 		}
 	}
-	if c.BlkioThrottleReadIOpsDevice != "" {
-		if err := writeFile(path, "blkio.throttle.read_iops_device", c.BlkioThrottleReadIOpsDevice); err != nil {
+	for _, td := range c.BlkioThrottleWriteBpsDevice {
+		if err := writeFile(path, "blkio.throttle.write_bps_device", td.String()); err != nil {
 			return err
 		}
 	}
-	if c.BlkioThrottleWriteIOpsDevice != "" {
-		if err := writeFile(path, "blkio.throttle.write_iops_device", c.BlkioThrottleWriteIOpsDevice); err != nil {
+	for _, td := range c.BlkioThrottleReadIOPSDevice {
+		if err := writeFile(path, "blkio.throttle.read_iops_device", td.String()); err != nil {
+			return err
+		}
+	}
+	for _, td := range c.BlkioThrottleWriteIOPSDevice {
+		if err := writeFile(path, "blkio.throttle.write_iops_device", td.String()); err != nil {
 			return err
 		}
 	}
@@ -584,4 +603,14 @@ func joinHugetlb(c *configs.Cgroup, pid int) error {
 
 	hugetlb := subsystems["hugetlb"]
 	return hugetlb.Set(path, c)
+}
+
+func joinPerfEvent(c *configs.Cgroup, pid int) error {
+	path, err := join(c, "perf_event", pid)
+	if err != nil && !cgroups.IsNotFound(err) {
+		return err
+	}
+
+	perfEvent := subsystems["perf_event"]
+	return perfEvent.Set(path, c)
 }

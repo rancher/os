@@ -1,14 +1,17 @@
 package graph
 
 import (
+	"bufio"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"io/ioutil"
-	"os"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest"
+	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/progressreader"
 	"github.com/docker/docker/pkg/streamformatter"
@@ -19,23 +22,25 @@ import (
 	"golang.org/x/net/context"
 )
 
+const compressionBufSize = 32768
+
 type v2Pusher struct {
 	*TagStore
 	endpoint  registry.APIEndpoint
-	localRepo Repository
+	localRepo repository
 	repoInfo  *registry.RepositoryInfo
 	config    *ImagePushConfig
 	sf        *streamformatter.StreamFormatter
 	repo      distribution.Repository
 
-	// layersSeen is the set of layers known to exist on the remote side.
+	// layersPushed is the set of layers known to exist on the remote side.
 	// This avoids redundant queries when pushing multiple tags that
 	// involve the same layers.
-	layersSeen map[string]bool
+	layersPushed map[digest.Digest]bool
 }
 
 func (p *v2Pusher) Push() (fallback bool, err error) {
-	p.repo, err = NewV2Repository(p.repoInfo, p.endpoint, p.config.MetaHeaders, p.config.AuthConfig)
+	p.repo, err = newV2Repository(p.repoInfo, p.endpoint, p.config.MetaHeaders, p.config.AuthConfig, "push", "pull")
 	if err != nil {
 		logrus.Debugf("Error getting v2 registry: %v", err)
 		return true, err
@@ -62,8 +67,8 @@ func (p *v2Pusher) getImageTags(askedTag string) ([]string, error) {
 
 func (p *v2Pusher) pushV2Repository(tag string) error {
 	localName := p.repoInfo.LocalName
-	if _, err := p.poolAdd("push", localName); err != nil {
-		return err
+	if _, found := p.poolAdd("push", localName); found {
+		return fmt.Errorf("push or pull %s is already in progress", localName)
 	}
 	defer p.poolRemove("push", localName)
 
@@ -92,20 +97,22 @@ func (p *v2Pusher) pushV2Tag(tag string) error {
 		return fmt.Errorf("tag does not exist: %s", tag)
 	}
 
+	layersSeen := make(map[string]bool)
+
 	layer, err := p.graph.Get(layerID)
 	if err != nil {
 		return err
 	}
 
-	m := &manifest.Manifest{
+	m := &schema1.Manifest{
 		Versioned: manifest.Versioned{
 			SchemaVersion: 1,
 		},
 		Name:         p.repo.Name(),
 		Tag:          tag,
 		Architecture: layer.Architecture,
-		FSLayers:     []manifest.FSLayer{},
-		History:      []manifest.History{},
+		FSLayers:     []schema1.FSLayer{},
+		History:      []schema1.History{},
 	}
 
 	var metadata runconfig.Config
@@ -120,7 +127,11 @@ func (p *v2Pusher) pushV2Tag(tag string) error {
 			return err
 		}
 
-		if p.layersSeen[layer.ID] {
+		// break early if layer has already been seen in this image,
+		// this prevents infinite loops on layers which loopback, this
+		// cannot be prevented since layer IDs are not merkle hashes
+		// TODO(dmcgowan): throw error if no valid use case is found
+		if layersSeen[layer.ID] {
 			break
 		}
 
@@ -132,16 +143,18 @@ func (p *v2Pusher) pushV2Tag(tag string) error {
 			}
 		}
 
-		jsonData, err := p.graph.RawJSON(layer.ID)
-		if err != nil {
-			return fmt.Errorf("cannot retrieve the path for %s: %s", layer.ID, err)
-		}
-
 		var exists bool
-		dgst, err := p.graph.GetDigest(layer.ID)
+		dgst, err := p.graph.getLayerDigestWithLock(layer.ID)
 		switch err {
 		case nil:
-			_, err := p.repo.Blobs(nil).Stat(nil, dgst)
+			if p.layersPushed[dgst] {
+				exists = true
+				// break out of switch, it is already known that
+				// the push is not needed and therefore doing a
+				// stat is unnecessary
+				break
+			}
+			_, err := p.repo.Blobs(context.Background()).Stat(context.Background(), dgst)
 			switch err {
 			case nil:
 				exists = true
@@ -152,7 +165,7 @@ func (p *v2Pusher) pushV2Tag(tag string) error {
 				out.Write(p.sf.FormatProgress(stringid.TruncateID(layer.ID), "Image push failed", nil))
 				return err
 			}
-		case ErrDigestNotSet:
+		case errDigestNotSet:
 			// nop
 		case digest.ErrDigestInvalidFormat, digest.ErrDigestUnsupported:
 			return fmt.Errorf("error getting image checksum: %v", err)
@@ -161,25 +174,34 @@ func (p *v2Pusher) pushV2Tag(tag string) error {
 		// if digest was empty or not saved, or if blob does not exist on the remote repository,
 		// then fetch it.
 		if !exists {
-			if pushDigest, err := p.pushV2Image(p.repo.Blobs(nil), layer); err != nil {
+			var pushDigest digest.Digest
+			if pushDigest, err = p.pushV2Image(p.repo.Blobs(context.Background()), layer); err != nil {
 				return err
-			} else if pushDigest != dgst {
+			}
+			if dgst == "" {
 				// Cache new checksum
-				if err := p.graph.SetDigest(layer.ID, pushDigest); err != nil {
+				if err := p.graph.setLayerDigestWithLock(layer.ID, pushDigest); err != nil {
 					return err
 				}
-				dgst = pushDigest
 			}
+			dgst = pushDigest
 		}
 
-		m.FSLayers = append(m.FSLayers, manifest.FSLayer{BlobSum: dgst})
-		m.History = append(m.History, manifest.History{V1Compatibility: string(jsonData)})
+		// read v1Compatibility config, generate new if needed
+		jsonData, err := p.graph.generateV1CompatibilityChain(layer.ID)
+		if err != nil {
+			return err
+		}
 
-		p.layersSeen[layer.ID] = true
+		m.FSLayers = append(m.FSLayers, schema1.FSLayer{BlobSum: dgst})
+		m.History = append(m.History, schema1.History{V1Compatibility: string(jsonData)})
+
+		layersSeen[layer.ID] = true
+		p.layersPushed[dgst] = true
 	}
 
 	logrus.Infof("Signed manifest for %s:%s using daemon's key: %s", p.repo.Name(), tag, p.trustKey.KeyID())
-	signed, err := manifest.Sign(m, p.trustKey)
+	signed, err := schema1.Sign(m, p.trustKey)
 	if err != nil {
 		return err
 	}
@@ -202,62 +224,78 @@ func (p *v2Pusher) pushV2Tag(tag string) error {
 func (p *v2Pusher) pushV2Image(bs distribution.BlobService, img *image.Image) (digest.Digest, error) {
 	out := p.config.OutStream
 
-	out.Write(p.sf.FormatProgress(stringid.TruncateID(img.ID), "Buffering to Disk", nil))
+	out.Write(p.sf.FormatProgress(stringid.TruncateID(img.ID), "Preparing", nil))
 
 	image, err := p.graph.Get(img.ID)
 	if err != nil {
 		return "", err
 	}
-	arch, err := p.graph.TarLayer(image)
+	arch, err := p.graph.tarLayer(image)
 	if err != nil {
 		return "", err
 	}
-
-	tf, err := p.graph.newTempFile()
-	if err != nil {
-		return "", err
-	}
-	defer func() {
-		tf.Close()
-		os.Remove(tf.Name())
-	}()
-
-	size, dgst, err := bufferToFile(tf, arch)
-	if err != nil {
-		return "", err
-	}
+	defer arch.Close()
 
 	// Send the layer
-	logrus.Debugf("rendered layer for %s of [%d] size", img.ID, size)
-	layerUpload, err := bs.Create(nil)
+	layerUpload, err := bs.Create(context.Background())
 	if err != nil {
 		return "", err
 	}
 	defer layerUpload.Close()
 
 	reader := progressreader.New(progressreader.Config{
-		In:        ioutil.NopCloser(tf),
+		In:        ioutil.NopCloser(arch), // we'll take care of close here.
 		Out:       out,
 		Formatter: p.sf,
-		Size:      int(size),
-		NewLines:  false,
-		ID:        stringid.TruncateID(img.ID),
-		Action:    "Pushing",
+
+		// TODO(stevvooe): This may cause a size reporting error. Try to get
+		// this from tar-split or elsewhere. The main issue here is that we
+		// don't want to buffer to disk *just* to calculate the size.
+		Size: img.Size,
+
+		NewLines: false,
+		ID:       stringid.TruncateID(img.ID),
+		Action:   "Pushing",
 	})
-	n, err := layerUpload.ReadFrom(reader)
+
+	digester := digest.Canonical.New()
+	// HACK: The MultiWriter doesn't write directly to layerUpload because
+	// we must make sure the ReadFrom is used, not Write. Using Write would
+	// send a PATCH request for every Write call.
+	pipeReader, pipeWriter := io.Pipe()
+	// Use a bufio.Writer to avoid excessive chunking in HTTP request.
+	bufWriter := bufio.NewWriterSize(io.MultiWriter(pipeWriter, digester.Hash()), compressionBufSize)
+	compressor := gzip.NewWriter(bufWriter)
+
+	go func() {
+		_, err := io.Copy(compressor, reader)
+		if err == nil {
+			err = compressor.Close()
+		}
+		if err == nil {
+			err = bufWriter.Flush()
+		}
+		if err != nil {
+			pipeWriter.CloseWithError(err)
+		} else {
+			pipeWriter.Close()
+		}
+	}()
+
+	out.Write(p.sf.FormatProgress(stringid.TruncateID(img.ID), "Pushing", nil))
+	nn, err := layerUpload.ReadFrom(pipeReader)
+	pipeReader.Close()
 	if err != nil {
 		return "", err
 	}
-	if n != size {
-		return "", fmt.Errorf("short upload: only wrote %d of %d", n, size)
-	}
 
-	desc := distribution.Descriptor{Digest: dgst}
-	if _, err := layerUpload.Commit(nil, desc); err != nil {
+	dgst := digester.Digest()
+	if _, err := layerUpload.Commit(context.Background(), distribution.Descriptor{Digest: dgst}); err != nil {
 		return "", err
 	}
 
-	out.Write(p.sf.FormatProgress(stringid.TruncateID(img.ID), "Image successfully pushed", nil))
+	logrus.Debugf("uploaded layer %s (%s), %d bytes", img.ID, dgst, nn)
+	out.Write(p.sf.FormatProgress(stringid.TruncateID(img.ID), "Pushed", nil))
 
 	return dgst, nil
 }

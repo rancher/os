@@ -170,8 +170,8 @@ func TestNewTLSVersionedClientInvalidCA(t *testing.T) {
 
 func TestNewClientInvalidEndpoint(t *testing.T) {
 	cases := []string{
-		"htp://localhost:3243", "http://localhost:a", "localhost:8080",
-		"", "localhost", "http://localhost:8080:8383", "http://localhost:65536",
+		"htp://localhost:3243", "http://localhost:a",
+		"", "http://localhost:8080:8383", "http://localhost:65536",
 		"https://localhost:-20",
 	}
 	for _, c := range cases {
@@ -181,6 +181,19 @@ func TestNewClientInvalidEndpoint(t *testing.T) {
 		}
 		if !reflect.DeepEqual(err, ErrInvalidEndpoint) {
 			t.Errorf("NewClient(%q): Got invalid error for invalid endpoint. Want %#v. Got %#v.", c, ErrInvalidEndpoint, err)
+		}
+	}
+}
+
+func TestNewClientNoSchemeEndpoint(t *testing.T) {
+	cases := []string{"localhost", "localhost:8080"}
+	for _, c := range cases {
+		client, err := NewClient(c)
+		if client == nil {
+			t.Errorf("Want client for scheme-less endpoint, got <nil>")
+		}
+		if err != nil {
+			t.Errorf("Got unexpected error scheme-less endpoint: %q", err)
 		}
 	}
 }

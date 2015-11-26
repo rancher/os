@@ -64,14 +64,14 @@ func (s *TagStore) Load(inTar io.ReadCloser, outStream io.Writer) error {
 	}
 	defer reposJSONFile.Close()
 
-	repositories := map[string]Repository{}
+	repositories := map[string]repository{}
 	if err := json.NewDecoder(reposJSONFile).Decode(&repositories); err != nil {
 		return err
 	}
 
 	for imageName, tagMap := range repositories {
 		for tag, address := range tagMap {
-			if err := s.SetLoad(imageName, tag, address, true, outStream); err != nil {
+			if err := s.setLoad(imageName, tag, address, true, outStream); err != nil {
 				return err
 			}
 		}
@@ -106,17 +106,14 @@ func (s *TagStore) recursiveLoad(address, tmpImageDir string) error {
 		}
 
 		// ensure no two downloads of the same layer happen at the same time
-		if c, err := s.poolAdd("pull", "layer:"+img.ID); err != nil {
-			if c != nil {
-				logrus.Debugf("Image (id: %s) load is already running, waiting: %v", img.ID, err)
-				<-c
-				return nil
-			}
-
-			return err
+		poolKey := "layer:" + img.ID
+		broadcaster, found := s.poolAdd("pull", poolKey)
+		if found {
+			logrus.Debugf("Image (id: %s) load is already running, waiting", img.ID)
+			return broadcaster.Wait()
 		}
 
-		defer s.poolRemove("pull", "layer:"+img.ID)
+		defer s.poolRemove("pull", poolKey)
 
 		if img.Parent != "" {
 			if !s.graph.Exists(img.Parent) {
@@ -125,11 +122,13 @@ func (s *TagStore) recursiveLoad(address, tmpImageDir string) error {
 				}
 			}
 		}
-		if err := s.graph.Register(img, layer); err != nil {
+		if err := s.graph.Register(v1Descriptor{img}, layer); err != nil {
 			return err
 		}
+		logrus.Debugf("Completed processing %s", address)
+		return nil
 	}
-	logrus.Debugf("Completed processing %s", address)
+	logrus.Debugf("already loaded %s", address)
 
 	return nil
 }

@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/util"
-	"gopkg.in/yaml.v2"
 )
 
 var osConfig *CloudConfig
@@ -32,6 +32,7 @@ func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*Cl
 			return nil, err
 		}
 		c, _ = amendNils(c)
+		c, _ = amendContainerNames(c)
 		return c, nil
 	} else {
 		return nil, err
@@ -42,7 +43,8 @@ func LoadConfig() (*CloudConfig, error) {
 	cfg, err := ChainCfgFuncs(NewConfig(),
 		readFilesAndMetadata,
 		readCmdline,
-		amendNils)
+		amendNils,
+		amendContainerNames)
 	if err != nil {
 		log.WithFields(log.Fields{"cfg": cfg, "err": err}).Error("Failed to load config")
 		return nil, err
@@ -130,7 +132,7 @@ func readFilesAndMetadata(c *CloudConfig) (*CloudConfig, error) {
 	files := append(CloudConfigDirFiles(), CloudConfigFile)
 	data, err := readConfig(nil, true, files...)
 	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("Error reading config files")
+		log.WithFields(log.Fields{"err": err, "files": files}).Error("Error reading config files")
 		return c, err
 	}
 
@@ -186,6 +188,20 @@ func amendNils(c *CloudConfig) (*CloudConfig, error) {
 	return &t, nil
 }
 
+func amendContainerNames(c *CloudConfig) (*CloudConfig, error) {
+	for _, scm := range []map[string]*project.ServiceConfig{
+		c.Rancher.Autoformat,
+		c.Rancher.BootstrapContainers,
+		c.Rancher.Services,
+	} {
+		for k, v := range scm {
+			v.Name = k
+			v.ContainerName = k
+		}
+	}
+	return c, nil
+}
+
 func writeToFile(data interface{}, filename string) error {
 	content, err := yaml.Marshal(data)
 	if err != nil {
@@ -221,6 +237,9 @@ func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map
 		content, err := readConfigFile(file)
 		if err != nil {
 			return nil, err
+		}
+		if len(content) == 0 {
+			continue
 		}
 		if substituteMetadataVars {
 			content = substituteVars(content, metadata)

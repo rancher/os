@@ -72,7 +72,7 @@ func TestCreateVolume(t *testing.T) {
 	if req.Method != expectedMethod {
 		t.Errorf("CreateVolume(): Wrong HTTP method. Want %s. Got %s.", expectedMethod, req.Method)
 	}
-	u, _ := url.Parse(client.getURL("/volumes"))
+	u, _ := url.Parse(client.getURL("/volumes/create"))
 	if req.URL.Path != u.Path {
 		t.Errorf("CreateVolume(): Wrong request path. Want %q. Got %q.", u.Path, req.URL.Path)
 	}

@@ -3,19 +3,37 @@ package daemon
 import (
 	"io"
 	"os/exec"
+	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/daemon/execdriver"
+	derr "github.com/docker/docker/errors"
 	"github.com/docker/docker/pkg/stringid"
 	"github.com/docker/docker/runconfig"
+	"github.com/docker/docker/utils"
 )
 
 const (
 	defaultTimeIncrement = 100
 	loggerCloseTimeout   = 10 * time.Second
 )
+
+// containerSupervisor defines the interface that a supervisor must implement
+type containerSupervisor interface {
+	// LogContainerEvent generates events related to a given container
+	LogContainerEvent(*Container, string)
+	// Cleanup ensures that the container is properly unmounted
+	Cleanup(*Container)
+	// StartLogging starts the logging driver for the container
+	StartLogging(*Container) error
+	// Run starts a container
+	Run(c *Container, pipes *execdriver.Pipes, startCallback execdriver.DriverCallback) (execdriver.ExitStatus, error)
+	// IsShuttingDown tells whether the supervisor is shutting down or not
+	IsShuttingDown() bool
+}
 
 // containerMonitor monitors the execution of a container's main process.
 // If a restart policy is specified for the container the monitor will ensure that the
@@ -24,6 +42,9 @@ const (
 // and the rootfs
 type containerMonitor struct {
 	mux sync.Mutex
+
+	// supervisor keeps track of the container and the events it generates
+	supervisor containerSupervisor
 
 	// container is the container being monitored
 	container *Container
@@ -57,8 +78,9 @@ type containerMonitor struct {
 
 // newContainerMonitor returns an initialized containerMonitor for the provided container
 // honoring the provided restart policy
-func newContainerMonitor(container *Container, policy runconfig.RestartPolicy) *containerMonitor {
+func (daemon *Daemon) newContainerMonitor(container *Container, policy runconfig.RestartPolicy) *containerMonitor {
 	return &containerMonitor{
+		supervisor:    daemon,
 		container:     container,
 		restartPolicy: policy,
 		timeIncrement: defaultTimeIncrement,
@@ -86,7 +108,7 @@ func (m *containerMonitor) ExitOnNext() {
 // unmounts the contatiner's root filesystem
 func (m *containerMonitor) Close() error {
 	// Cleanup networking and mounts
-	m.container.cleanup()
+	m.supervisor.Cleanup(m.container)
 
 	// FIXME: here is race condition between two RUN instructions in Dockerfile
 	// because they share same runconfig and change image. Must be fixed
@@ -119,6 +141,10 @@ func (m *containerMonitor) Start() error {
 		}
 		m.Close()
 	}()
+	// reset stopped flag
+	if m.container.HasBeenManuallyStopped {
+		m.container.HasBeenManuallyStopped = false
+	}
 
 	// reset the restart count
 	m.container.RestartCount = -1
@@ -126,7 +152,7 @@ func (m *containerMonitor) Start() error {
 	for {
 		m.container.RestartCount++
 
-		if err := m.container.startLogging(); err != nil {
+		if err := m.supervisor.StartLogging(m.container); err != nil {
 			m.resetContainer(false)
 
 			return err
@@ -134,18 +160,37 @@ func (m *containerMonitor) Start() error {
 
 		pipes := execdriver.NewPipes(m.container.stdin, m.container.stdout, m.container.stderr, m.container.Config.OpenStdin)
 
-		m.container.LogEvent("start")
+		m.logEvent("start")
 
 		m.lastStartTime = time.Now()
 
-		if exitStatus, err = m.container.daemon.Run(m.container, pipes, m.callback); err != nil {
+		if exitStatus, err = m.supervisor.Run(m.container, pipes, m.callback); err != nil {
 			// if we receive an internal error from the initial start of a container then lets
 			// return it instead of entering the restart loop
+			// set to 127 for container cmd not found/does not exist)
+			if strings.Contains(err.Error(), "executable file not found") ||
+				strings.Contains(err.Error(), "no such file or directory") ||
+				strings.Contains(err.Error(), "system cannot find the file specified") {
+				if m.container.RestartCount == 0 {
+					m.container.ExitCode = 127
+					m.resetContainer(false)
+					return derr.ErrorCodeCmdNotFound
+				}
+			}
+			// set to 126 for container cmd can't be invoked errors
+			if strings.Contains(err.Error(), syscall.EACCES.Error()) {
+				if m.container.RestartCount == 0 {
+					m.container.ExitCode = 126
+					m.resetContainer(false)
+					return derr.ErrorCodeCmdCouldNotBeInvoked
+				}
+			}
+
 			if m.container.RestartCount == 0 {
 				m.container.ExitCode = -1
 				m.resetContainer(false)
 
-				return err
+				return derr.ErrorCodeCantStart.WithArgs(m.container.ID, utils.GetErrorMessage(err))
 			}
 
 			logrus.Errorf("Error running container: %s", err)
@@ -157,11 +202,8 @@ func (m *containerMonitor) Start() error {
 		m.resetMonitor(err == nil && exitStatus.ExitCode == 0)
 
 		if m.shouldRestart(exitStatus.ExitCode) {
-			m.container.SetRestarting(&exitStatus)
-			if exitStatus.OOMKilled {
-				m.container.LogEvent("oom")
-			}
-			m.container.LogEvent("die")
+			m.container.setRestarting(&exitStatus)
+			m.logEvent("die")
 			m.resetContainer(true)
 
 			// sleep with a small time increment between each restart to help avoid issues cased by quickly
@@ -175,10 +217,8 @@ func (m *containerMonitor) Start() error {
 			}
 			continue
 		}
-		if exitStatus.OOMKilled {
-			m.container.LogEvent("oom")
-		}
-		m.container.LogEvent("die")
+
+		m.logEvent("die")
 		m.resetContainer(true)
 		return err
 	}
@@ -223,11 +263,12 @@ func (m *containerMonitor) shouldRestart(exitCode int) bool {
 
 	// do not restart if the user or docker has requested that this container be stopped
 	if m.shouldStop {
+		m.container.HasBeenManuallyStopped = !m.supervisor.IsShuttingDown()
 		return false
 	}
 
 	switch {
-	case m.restartPolicy.IsAlways():
+	case m.restartPolicy.IsAlways(), m.restartPolicy.IsUnlessStopped():
 		return true
 	case m.restartPolicy.IsOnFailure():
 		// the default value of 0 for MaximumRetryCount means that we will not enforce a maximum count
@@ -245,7 +286,14 @@ func (m *containerMonitor) shouldRestart(exitCode int) bool {
 
 // callback ensures that the container's state is properly updated after we
 // received ack from the execution drivers
-func (m *containerMonitor) callback(processConfig *execdriver.ProcessConfig, pid int) {
+func (m *containerMonitor) callback(processConfig *execdriver.ProcessConfig, pid int, chOOM <-chan struct{}) error {
+	go func() {
+		_, ok := <-chOOM
+		if ok {
+			m.logEvent("oom")
+		}
+	}()
+
 	if processConfig.Tty {
 		// The callback is called after the process Start()
 		// so we are in the parent process. In TTY mode, stdin/out/err is the PtySlave
@@ -265,9 +313,10 @@ func (m *containerMonitor) callback(processConfig *execdriver.ProcessConfig, pid
 		close(m.startSignal)
 	}
 
-	if err := m.container.ToDisk(); err != nil {
+	if err := m.container.toDiskLocking(); err != nil {
 		logrus.Errorf("Error saving container to disk: %v", err)
 	}
+	return nil
 }
 
 // resetContainer resets the container's IO and ensures that the command is able to be executed again
@@ -336,4 +385,8 @@ func (m *containerMonitor) resetContainer(lock bool) {
 		Dir:         c.Dir,
 		SysProcAttr: c.SysProcAttr,
 	}
+}
+
+func (m *containerMonitor) logEvent(action string) {
+	m.supervisor.LogContainerEvent(m.container, action)
 }

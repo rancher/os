@@ -2,7 +2,10 @@
 
 package daemon
 
-import "github.com/docker/docker/api/types"
+import (
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/versions/v1p19"
+)
 
 // This sets platform-specific fields
 func setPlatformSpecificContainerFields(container *Container, contJSONBase *types.ContainerJSONBase) *types.ContainerJSONBase {
@@ -14,7 +17,8 @@ func setPlatformSpecificContainerFields(container *Container, contJSONBase *type
 	return contJSONBase
 }
 
-func (daemon *Daemon) ContainerInspectPre120(name string) (*types.ContainerJSONPre120, error) {
+// ContainerInspectPre120 gets containers for pre 1.20 APIs.
+func (daemon *Daemon) ContainerInspectPre120(name string) (*v1p19.ContainerJSON, error) {
 	container, err := daemon.Get(name)
 	if err != nil {
 		return nil, err
@@ -23,7 +27,7 @@ func (daemon *Daemon) ContainerInspectPre120(name string) (*types.ContainerJSONP
 	container.Lock()
 	defer container.Unlock()
 
-	base, err := daemon.getInspectData(container)
+	base, err := daemon.getInspectData(container, false)
 	if err != nil {
 		return nil, err
 	}
@@ -35,15 +39,26 @@ func (daemon *Daemon) ContainerInspectPre120(name string) (*types.ContainerJSONP
 		volumesRW[m.Destination] = m.RW
 	}
 
-	config := &types.ContainerConfig{
-		container.Config,
-		container.hostConfig.Memory,
-		container.hostConfig.MemorySwap,
-		container.hostConfig.CPUShares,
-		container.hostConfig.CpusetCpus,
+	config := &v1p19.ContainerConfig{
+		Config:          container.Config,
+		MacAddress:      container.Config.MacAddress,
+		NetworkDisabled: container.Config.NetworkDisabled,
+		ExposedPorts:    container.Config.ExposedPorts,
+		VolumeDriver:    container.hostConfig.VolumeDriver,
+		Memory:          container.hostConfig.Memory,
+		MemorySwap:      container.hostConfig.MemorySwap,
+		CPUShares:       container.hostConfig.CPUShares,
+		CPUSet:          container.hostConfig.CpusetCpus,
 	}
+	networkSettings := daemon.getBackwardsCompatibleNetworkSettings(container.NetworkSettings)
 
-	return &types.ContainerJSONPre120{base, volumes, volumesRW, config}, nil
+	return &v1p19.ContainerJSON{
+		ContainerJSONBase: base,
+		Volumes:           volumes,
+		VolumesRW:         volumesRW,
+		Config:            config,
+		NetworkSettings:   networkSettings,
+	}, nil
 }
 
 func addMountPoints(container *Container) []types.MountPoint {

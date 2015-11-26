@@ -27,6 +27,7 @@ const (
 	CREATE_ONLY   = "io.rancher.os.createonly"
 	RELOAD_CONFIG = "io.rancher.os.reloadconfig"
 	SCOPE         = "io.rancher.os.scope"
+	REBUILD       = "io.docker.compose.rebuild"
 	SYSTEM        = "system"
 
 	OsConfigFile           = "/usr/share/ros/os-config.yml"

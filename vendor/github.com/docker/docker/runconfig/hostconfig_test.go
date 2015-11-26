@@ -1,13 +1,15 @@
+// +build !windows
+
 package runconfig
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"testing"
 )
 
+// TODO Windows: This will need addressing for a Windows daemon.
 func TestNetworkModeTest(t *testing.T) {
 	networkModes := map[NetworkMode][]bool{
 		// private, bridge, host, container, none, default
@@ -22,7 +24,7 @@ func TestNetworkModeTest(t *testing.T) {
 	}
 	networkModeNames := map[NetworkMode]string{
 		"":                         "",
-		"something:weird":          "",
+		"something:weird":          "something:weird",
 		"bridge":                   "bridge",
 		DefaultDaemonNetworkMode(): "bridge",
 		"host":           "host",
@@ -160,53 +162,6 @@ func TestRestartPolicy(t *testing.T) {
 	}
 }
 
-func TestLxcConfigMarshalJSON(t *testing.T) {
-	lxcConfigs := map[*LxcConfig]string{
-		nil:          "",
-		&LxcConfig{}: "null",
-		&LxcConfig{
-			[]KeyValuePair{{"key1", "value1"}},
-		}: `[{"Key":"key1","Value":"value1"}]`,
-	}
-
-	for lxcconfig, expected := range lxcConfigs {
-		data, err := lxcconfig.MarshalJSON()
-		if err != nil {
-			t.Fatal(err)
-		}
-		if string(data) != expected {
-			t.Fatalf("Expected %v, got %v", expected, string(data))
-		}
-	}
-}
-
-func TestLxcConfigUnmarshalJSON(t *testing.T) {
-	keyvaluePairs := map[string][]KeyValuePair{
-		"":   {{"key1", "value1"}},
-		"[]": {},
-		`[{"Key":"key2","Value":"value2"}]`: {{"key2", "value2"}},
-	}
-	for json, expectedParts := range keyvaluePairs {
-		lxcConfig := &LxcConfig{
-			[]KeyValuePair{{"key1", "value1"}},
-		}
-		if err := lxcConfig.UnmarshalJSON([]byte(json)); err != nil {
-			t.Fatal(err)
-		}
-
-		actualParts := lxcConfig.Slice()
-		if len(actualParts) != len(expectedParts) {
-			t.Fatalf("Expected %v keyvaluePairs, got %v (%v)", len(expectedParts), len(actualParts), expectedParts)
-		}
-		for index, part := range actualParts {
-			if part != expectedParts[index] {
-				t.Fatalf("Expected %v, got %v", expectedParts, actualParts)
-				break
-			}
-		}
-	}
-}
-
 func TestMergeConfigs(t *testing.T) {
 	expectedHostname := "hostname"
 	expectedContainerIDFile := "containerIdFile"
@@ -232,8 +187,8 @@ func TestDecodeHostConfig(t *testing.T) {
 	fixtures := []struct {
 		file string
 	}{
-		{"fixtures/container_hostconfig_1_14.json"},
-		{"fixtures/container_hostconfig_1_19.json"},
+		{"fixtures/unix/container_hostconfig_1_14.json"},
+		{"fixtures/unix/container_hostconfig_1_19.json"},
 	}
 
 	for _, f := range fixtures {
@@ -262,42 +217,5 @@ func TestDecodeHostConfig(t *testing.T) {
 		if c.CapDrop.Len() != 1 && c.CapDrop.Slice()[0] != "NET_ADMIN" {
 			t.Fatalf("Expected CapDrop MKNOD, got %v", c.CapDrop)
 		}
-	}
-}
-
-func TestCapListUnmarshalSliceAndString(t *testing.T) {
-	var cl *CapList
-	cap0, err := json.Marshal([]string{"CAP_SOMETHING"})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(cap0, &cl); err != nil {
-		t.Fatal(err)
-	}
-
-	slice := cl.Slice()
-	if len(slice) != 1 {
-		t.Fatalf("expected 1 element after unmarshal: %q", slice)
-	}
-
-	if slice[0] != "CAP_SOMETHING" {
-		t.Fatalf("expected `CAP_SOMETHING`, got: %q", slice[0])
-	}
-
-	cap1, err := json.Marshal("CAP_SOMETHING")
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := json.Unmarshal(cap1, &cl); err != nil {
-		t.Fatal(err)
-	}
-
-	slice = cl.Slice()
-	if len(slice) != 1 {
-		t.Fatalf("expected 1 element after unmarshal: %q", slice)
-	}
-
-	if slice[0] != "CAP_SOMETHING" {
-		t.Fatalf("expected `CAP_SOMETHING`, got: %q", slice[0])
 	}
 }

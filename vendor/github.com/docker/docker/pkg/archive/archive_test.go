@@ -160,7 +160,7 @@ func TestExtensionXz(t *testing.T) {
 
 func TestCmdStreamLargeStderr(t *testing.T) {
 	cmd := exec.Command("/bin/sh", "-c", "dd if=/dev/zero bs=1k count=1000 of=/dev/stderr; echo hello")
-	out, err := CmdStream(cmd, nil)
+	out, _, err := cmdStream(cmd, nil)
 	if err != nil {
 		t.Fatalf("Failed to start command: %s", err)
 	}
@@ -181,7 +181,7 @@ func TestCmdStreamLargeStderr(t *testing.T) {
 
 func TestCmdStreamBad(t *testing.T) {
 	badCmd := exec.Command("/bin/sh", "-c", "echo hello; echo >&2 error couldn\\'t reverse the phase pulser; exit 1")
-	out, err := CmdStream(badCmd, nil)
+	out, _, err := cmdStream(badCmd, nil)
 	if err != nil {
 		t.Fatalf("Failed to start command: %s", err)
 	}
@@ -196,7 +196,7 @@ func TestCmdStreamBad(t *testing.T) {
 
 func TestCmdStreamGood(t *testing.T) {
 	cmd := exec.Command("/bin/sh", "-c", "echo hello; exit 0")
-	out, err := CmdStream(cmd, nil)
+	out, _, err := cmdStream(cmd, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -695,7 +695,7 @@ func TestTarWithOptions(t *testing.T) {
 		{&TarOptions{ExcludePatterns: []string{"2"}}, 1},
 		{&TarOptions{ExcludePatterns: []string{"1", "folder*"}}, 2},
 		{&TarOptions{IncludeFiles: []string{"1", "1"}}, 2},
-		{&TarOptions{Name: "test", IncludeFiles: []string{"1"}}, 4},
+		{&TarOptions{IncludeFiles: []string{"1"}, RebaseNames: map[string]string{"1": "test"}}, 4},
 	}
 	for _, testCase := range cases {
 		changes, err := tarUntar(t, origin, testCase.opts)

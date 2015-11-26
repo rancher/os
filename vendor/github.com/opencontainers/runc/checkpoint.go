@@ -23,6 +23,7 @@ var checkpointCommand = cli.Command{
 		cli.BoolFlag{Name: "shell-job", Usage: "allow shell jobs"},
 		cli.StringFlag{Name: "page-server", Value: "", Usage: "ADDRESS:PORT of the page server"},
 		cli.BoolFlag{Name: "file-locks", Usage: "handle file locks, for safety"},
+		cli.StringFlag{Name: "manage-cgroups-mode", Value: "", Usage: "cgroups mode: 'soft' (default), 'full' and 'strict'."},
 	},
 	Action: func(context *cli.Context) {
 		container, err := getContainer(context)
@@ -30,8 +31,16 @@ var checkpointCommand = cli.Command{
 			fatal(err)
 		}
 		options := criuOptions(context)
+		status, err := container.Status()
+		if err != nil {
+			fatal(err)
+		}
+		if status == libcontainer.Checkpointed {
+			fatal(fmt.Errorf("Container with id %s already checkpointed", context.GlobalString("id")))
+		}
 		// these are the mandatory criu options for a container
 		setPageServer(context, options)
+		setManageCgroupsMode(context, options)
 		if err := container.Checkpoint(options); err != nil {
 			fatal(err)
 		}
@@ -54,13 +63,28 @@ func setPageServer(context *cli.Context, options *libcontainer.CriuOpts) {
 		if len(addressPort) != 2 {
 			fatal(fmt.Errorf("Use --page-server ADDRESS:PORT to specify page server"))
 		}
-		port_int, err := strconv.Atoi(addressPort[1])
+		portInt, err := strconv.Atoi(addressPort[1])
 		if err != nil {
 			fatal(fmt.Errorf("Invalid port number"))
 		}
 		options.PageServer = libcontainer.CriuPageServerInfo{
 			Address: addressPort[0],
-			Port:    int32(port_int),
+			Port:    int32(portInt),
+		}
+	}
+}
+
+func setManageCgroupsMode(context *cli.Context, options *libcontainer.CriuOpts) {
+	if cgOpt := context.String("manage-cgroups-mode"); cgOpt != "" {
+		switch cgOpt {
+		case "soft":
+			options.ManageCgroupsMode = libcontainer.CRIU_CG_MODE_SOFT
+		case "full":
+			options.ManageCgroupsMode = libcontainer.CRIU_CG_MODE_FULL
+		case "strict":
+			options.ManageCgroupsMode = libcontainer.CRIU_CG_MODE_STRICT
+		default:
+			fatal(fmt.Errorf("Invalid manage cgroups mode"))
 		}
 	}
 }

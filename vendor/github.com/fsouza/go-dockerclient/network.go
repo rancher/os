@@ -17,26 +17,30 @@ var ErrNetworkAlreadyExists = errors.New("network already exists")
 
 // Network represents a network.
 //
-// See https://goo.gl/FDkCdQ for more details.
+// See https://goo.gl/1kmPKZ for more details.
 type Network struct {
-	Name      string      `json:"name"`
-	ID        string      `json:"id"`
-	Type      string      `json:"type"`
-	Endpoints []*Endpoint `json:"endpoints"`
+	Name       string
+	ID         string `json:"Id"`
+	Scope      string
+	Driver     string
+	Containers map[string]Endpoint
+	Options    map[string]string
 }
 
-// Endpoint represents an endpoint.
+// Endpoint contains network resources allocated and used for a container in a network
 //
-// See https://goo.gl/FDkCdQ for more details.
+// See https://goo.gl/1kmPKZ for more details.
 type Endpoint struct {
-	Name    string `json:"name"`
-	ID      string `json:"id"`
-	Network string `json:"network"`
+	Name        string
+	ID          string `json:"EndpointID"`
+	MacAddress  string
+	IPv4Address string
+	IPv6Address string
 }
 
 // ListNetworks returns all networks.
 //
-// See https://goo.gl/4hCNtZ for more details.
+// See https://goo.gl/1kmPKZ for more details.
 func (c *Client) ListNetworks() ([]Network, error) {
 	resp, err := c.do("GET", "/networks", doOptions{})
 	if err != nil {
@@ -52,7 +56,7 @@ func (c *Client) ListNetworks() ([]Network, error) {
 
 // NetworkInfo returns information about a network by its ID.
 //
-// See https://goo.gl/4hCNtZ for more details.
+// See https://goo.gl/1kmPKZ for more details.
 func (c *Client) NetworkInfo(id string) (*Network, error) {
 	path := "/networks/" + id
 	resp, err := c.do("GET", path, doOptions{})
@@ -73,17 +77,37 @@ func (c *Client) NetworkInfo(id string) (*Network, error) {
 // CreateNetworkOptions specify parameters to the CreateNetwork function and
 // (for now) is the expected body of the "create network" http request message
 //
-// See https://goo.gl/FDkCdQ for more details.
+// See https://goo.gl/1kmPKZ for more details.
 type CreateNetworkOptions struct {
-	Name    string                 `json:"Name"`
-	Driver  string                 `json:"Driver"`
-	Options map[string]interface{} `json:"options"`
+	Name           string                 `json:"Name"`
+	CheckDuplicate bool                   `json:"CheckDuplicate"`
+	Driver         string                 `json:"Driver"`
+	IPAM           IPAMOptions            `json:"IPAM"`
+	Options        map[string]interface{} `json:"options"`
+}
+
+// IPAMOptions controls IP Address Management when creating a network
+//
+// See https://goo.gl/T8kRVH for more details.
+type IPAMOptions struct {
+	Driver string       `json:"Driver"`
+	Config []IPAMConfig `json:"IPAMConfig"`
+}
+
+// IPAMConfig represents IPAM configurations
+//
+// See https://goo.gl/T8kRVH for more details.
+type IPAMConfig struct {
+	Subnet     string            `json:",omitempty"`
+	IPRange    string            `json:",omitempty"`
+	Gateway    string            `json:",omitempty"`
+	AuxAddress map[string]string `json:"AuxiliaryAddresses,omitempty"`
 }
 
 // CreateNetwork creates a new network, returning the network instance,
 // or an error in case of failure.
 //
-// See https://goo.gl/FDkCdQ for more details.
+// See https://goo.gl/1kmPKZ for more details.
 func (c *Client) CreateNetwork(opts CreateNetworkOptions) (*Network, error) {
 	resp, err := c.do(
 		"POST",
@@ -113,14 +137,14 @@ func (c *Client) CreateNetwork(opts CreateNetworkOptions) (*Network, error) {
 
 	network.Name = opts.Name
 	network.ID = cnr.ID
-	network.Type = opts.Driver
+	network.Driver = opts.Driver
 
 	return &network, nil
 }
 
 // RemoveNetwork removes a network or an error in case of failure.
 //
-// See https://goo.gl/FDkCdQ for more details.
+// See https://goo.gl/1kmPKZ for more details.
 func (c *Client) RemoveNetwork(id string) error {
 	resp, err := c.do("DELETE", "/networks/"+id, doOptions{})
 	if err != nil {

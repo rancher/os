@@ -14,7 +14,8 @@ import (
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/context"
 	"github.com/docker/distribution/digest"
-	"github.com/docker/distribution/manifest"
+	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/v2"
 	"github.com/docker/distribution/registry/client/transport"
 	"github.com/docker/distribution/registry/storage/cache"
@@ -96,9 +97,9 @@ func (r *registry) Repositories(ctx context.Context, entries []string, last stri
 	return numFilled, returnErr
 }
 
-// NewRepository creates a new Repository for the given repository name and base URL
+// NewRepository creates a new Repository for the given repository name and base URL.
 func NewRepository(ctx context.Context, name, baseURL string, transport http.RoundTripper) (distribution.Repository, error) {
-	if err := v2.ValidateRepositoryName(name); err != nil {
+	if _, err := reference.ParseNamed(name); err != nil {
 		return nil, err
 	}
 
@@ -211,8 +212,6 @@ func (ms *manifests) Tags() ([]string, error) {
 		}
 
 		return tagsResponse.Tags, nil
-	} else if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
 	}
 	return nil, handleErrorResponse(resp)
 }
@@ -242,7 +241,7 @@ func (ms *manifests) ExistsByTag(tag string) (bool, error) {
 	return false, handleErrorResponse(resp)
 }
 
-func (ms *manifests) Get(dgst digest.Digest) (*manifest.SignedManifest, error) {
+func (ms *manifests) Get(dgst digest.Digest) (*schema1.SignedManifest, error) {
 	// Call by Tag endpoint since the API uses the same
 	// URL endpoint for tags and digests.
 	return ms.GetByTag(dgst.String())
@@ -262,7 +261,7 @@ func AddEtagToTag(tag, etag string) distribution.ManifestServiceOption {
 	}
 }
 
-func (ms *manifests) GetByTag(tag string, options ...distribution.ManifestServiceOption) (*manifest.SignedManifest, error) {
+func (ms *manifests) GetByTag(tag string, options ...distribution.ManifestServiceOption) (*schema1.SignedManifest, error) {
 	for _, option := range options {
 		err := option(ms)
 		if err != nil {
@@ -288,9 +287,9 @@ func (ms *manifests) GetByTag(tag string, options ...distribution.ManifestServic
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode == http.StatusNotModified {
-		return nil, nil
+		return nil, distribution.ErrManifestNotModified
 	} else if SuccessStatus(resp.StatusCode) {
-		var sm manifest.SignedManifest
+		var sm schema1.SignedManifest
 		decoder := json.NewDecoder(resp.Body)
 
 		if err := decoder.Decode(&sm); err != nil {
@@ -301,7 +300,7 @@ func (ms *manifests) GetByTag(tag string, options ...distribution.ManifestServic
 	return nil, handleErrorResponse(resp)
 }
 
-func (ms *manifests) Put(m *manifest.SignedManifest) error {
+func (ms *manifests) Put(m *schema1.SignedManifest) error {
 	manifestURL, err := ms.ub.BuildManifestURL(ms.name, m.Tag)
 	if err != nil {
 		return err
@@ -358,25 +357,18 @@ type blobs struct {
 	distribution.BlobDeleter
 }
 
-func sanitizeLocation(location, source string) (string, error) {
+func sanitizeLocation(location, base string) (string, error) {
+	baseURL, err := url.Parse(base)
+	if err != nil {
+		return "", err
+	}
+
 	locationURL, err := url.Parse(location)
 	if err != nil {
 		return "", err
 	}
 
-	if locationURL.Scheme == "" {
-		sourceURL, err := url.Parse(source)
-		if err != nil {
-			return "", err
-		}
-		locationURL = &url.URL{
-			Scheme: sourceURL.Scheme,
-			Host:   sourceURL.Host,
-			Path:   location,
-		}
-		location = locationURL.String()
-	}
-	return location, nil
+	return baseURL.ResolveReference(locationURL).String(), nil
 }
 
 func (bs *blobs) Stat(ctx context.Context, dgst digest.Digest) (distribution.Descriptor, error) {

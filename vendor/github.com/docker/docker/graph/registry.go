@@ -7,10 +7,12 @@ import (
 	"net/url"
 	"time"
 
+	"strings"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/digest"
-	"github.com/docker/distribution/manifest"
+	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/distribution/registry/client/auth"
 	"github.com/docker/distribution/registry/client/transport"
@@ -27,8 +29,10 @@ func (dcs dumbCredentialStore) Basic(*url.URL) (string, string) {
 	return dcs.auth.Username, dcs.auth.Password
 }
 
-// NewV2Repository creates a v2 only repository.
-func NewV2Repository(repoInfo *registry.RepositoryInfo, endpoint registry.APIEndpoint, metaHeaders http.Header, authConfig *cliconfig.AuthConfig) (distribution.Repository, error) {
+// newV2Repository returns a repository (v2 only). It creates a HTTP transport
+// providing timeout settings and authentication support, and also verifies the
+// remote API version.
+func newV2Repository(repoInfo *registry.RepositoryInfo, endpoint registry.APIEndpoint, metaHeaders http.Header, authConfig *cliconfig.AuthConfig, actions ...string) (distribution.Repository, error) {
 	ctx := context.Background()
 
 	repoName := repoInfo.CanonicalName
@@ -55,9 +59,9 @@ func NewV2Repository(repoInfo *registry.RepositoryInfo, endpoint registry.APIEnd
 	authTransport := transport.NewTransport(base, modifiers...)
 	pingClient := &http.Client{
 		Transport: authTransport,
-		Timeout:   5 * time.Second,
+		Timeout:   15 * time.Second,
 	}
-	endpointStr := endpoint.URL + "/v2/"
+	endpointStr := strings.TrimRight(endpoint.URL, "/") + "/v2/"
 	req, err := http.NewRequest("GET", endpointStr, nil)
 	if err != nil {
 		return nil, err
@@ -89,7 +93,7 @@ func NewV2Repository(repoInfo *registry.RepositoryInfo, endpoint registry.APIEnd
 	}
 
 	creds := dumbCredentialStore{auth: authConfig}
-	tokenHandler := auth.NewTokenHandler(authTransport, creds, repoName, "push", "pull")
+	tokenHandler := auth.NewTokenHandler(authTransport, creds, repoName, actions...)
 	basicHandler := auth.NewBasicHandler(creds)
 	modifiers = append(modifiers, auth.NewAuthorizer(challengeManager, tokenHandler, basicHandler))
 	tr := transport.NewTransport(base, modifiers...)
@@ -97,11 +101,12 @@ func NewV2Repository(repoInfo *registry.RepositoryInfo, endpoint registry.APIEnd
 	return client.NewRepository(ctx, repoName, endpoint.URL, tr)
 }
 
-func digestFromManifest(m *manifest.SignedManifest, localName string) (digest.Digest, int, error) {
+func digestFromManifest(m *schema1.SignedManifest, localName string) (digest.Digest, int, error) {
 	payload, err := m.Payload()
 	if err != nil {
-		logrus.Debugf("could not retrieve manifest payload: %v", err)
-		return "", 0, err
+		// If this failed, the signatures section was corrupted
+		// or missing. Treat the entire manifest as the payload.
+		payload = m.Raw
 	}
 	manifestDigest, err := digest.FromBytes(payload)
 	if err != nil {

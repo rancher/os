@@ -793,6 +793,9 @@ func (e *Error) Error() string {
 }
 
 func parseEndpoint(endpoint string, tls bool) (*url.URL, error) {
+	if endpoint != "" && !strings.Contains(endpoint, "://") {
+		endpoint = "tcp://" + endpoint
+	}
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return nil, ErrInvalidEndpoint

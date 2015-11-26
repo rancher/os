@@ -14,7 +14,7 @@ import (
 //
 // Usage: docker logout [SERVER]
 func (cli *DockerCli) CmdLogout(args ...string) error {
-	cmd := Cli.Subcmd("logout", []string{"[SERVER]"}, "Log out from a Docker registry, if no server is\nspecified \""+registry.IndexServer+"\" is the default.", true)
+	cmd := Cli.Subcmd("logout", []string{"[SERVER]"}, Cli.DockerCommands["logout"].Description+".\nIf no server is specified \""+registry.IndexServer+"\" is the default.", true)
 	cmd.Require(flag.Max, 1)
 
 	cmd.ParseFlags(args, true)
@@ -26,13 +26,14 @@ func (cli *DockerCli) CmdLogout(args ...string) error {
 
 	if _, ok := cli.configFile.AuthConfigs[serverAddress]; !ok {
 		fmt.Fprintf(cli.out, "Not logged in to %s\n", serverAddress)
-	} else {
-		fmt.Fprintf(cli.out, "Remove login credentials for %s\n", serverAddress)
-		delete(cli.configFile.AuthConfigs, serverAddress)
-
-		if err := cli.configFile.Save(); err != nil {
-			return fmt.Errorf("Failed to save docker config: %v", err)
-		}
+		return nil
 	}
+
+	fmt.Fprintf(cli.out, "Remove login credentials for %s\n", serverAddress)
+	delete(cli.configFile.AuthConfigs, serverAddress)
+	if err := cli.configFile.Save(); err != nil {
+		return fmt.Errorf("Failed to save docker config: %v", err)
+	}
+
 	return nil
 }

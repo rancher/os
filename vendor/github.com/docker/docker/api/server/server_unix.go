@@ -9,36 +9,25 @@ import (
 	"strconv"
 
 	"github.com/Sirupsen/logrus"
-	"github.com/docker/docker/daemon"
 	"github.com/docker/docker/pkg/sockets"
-	"github.com/docker/docker/pkg/systemd"
-	"github.com/docker/docker/pkg/version"
-	"github.com/docker/docker/runconfig"
 	"github.com/docker/libnetwork/portallocator"
+
+	systemdActivation "github.com/coreos/go-systemd/activation"
 )
 
-const (
-	// See http://git.kernel.org/cgit/linux/kernel/git/tip/tip.git/tree/kernel/sched/sched.h?id=8cd9234c64c584432f6992fe944ca9e46ca8ea76#n269
-	linuxMinCPUShares = 2
-	linuxMaxCPUShares = 262144
-)
-
-// newServer sets up the required serverClosers and does protocol specific checking.
-func (s *Server) newServer(proto, addr string) ([]serverCloser, error) {
+// newServer sets up the required HTTPServers and does protocol specific checking.
+// newServer does not set any muxers, you should set it later to Handler field
+func (s *Server) newServer(proto, addr string) ([]*HTTPServer, error) {
 	var (
 		err error
 		ls  []net.Listener
 	)
 	switch proto {
 	case "fd":
-		ls, err = systemd.ListenFD(addr)
+		ls, err = listenFD(addr)
 		if err != nil {
 			return nil, err
 		}
-		// We don't want to start serving on these sockets until the
-		// daemon is initialized and installed. Otherwise required handlers
-		// won't be ready.
-		<-s.start
 	case "tcp":
 		l, err := s.initTCPSocket(addr)
 		if err != nil {
@@ -54,33 +43,16 @@ func (s *Server) newServer(proto, addr string) ([]serverCloser, error) {
 	default:
 		return nil, fmt.Errorf("Invalid protocol format: %q", proto)
 	}
-	var res []serverCloser
+	var res []*HTTPServer
 	for _, l := range ls {
 		res = append(res, &HTTPServer{
 			&http.Server{
-				Addr:    addr,
-				Handler: s.router,
+				Addr: addr,
 			},
 			l,
 		})
 	}
 	return res, nil
-}
-
-// AcceptConnections allows clients to connect to the API server.
-// Referenced Daemon is notified about this server, and waits for the
-// daemon acknowledgement before the incoming connections are accepted.
-func (s *Server) AcceptConnections(d *daemon.Daemon) {
-	// Tell the init daemon we are accepting requests
-	s.daemon = d
-	s.registerSubRouter()
-	go systemd.SdNotify("READY=1")
-	// close the lock so the listeners start accepting connections
-	select {
-	case <-s.start:
-	default:
-		close(s.start)
-	}
 }
 
 func allocateDaemonPort(addr string) error {
@@ -110,27 +82,42 @@ func allocateDaemonPort(addr string) error {
 	return nil
 }
 
-func adjustCPUShares(version version.Version, hostConfig *runconfig.HostConfig) {
-	if version.LessThan("1.19") {
-		if hostConfig != nil && hostConfig.CPUShares > 0 {
-			// Handle unsupported CpuShares
-			if hostConfig.CPUShares < linuxMinCPUShares {
-				logrus.Warnf("Changing requested CpuShares of %d to minimum allowed of %d", hostConfig.CPUShares, linuxMinCPUShares)
-				hostConfig.CPUShares = linuxMinCPUShares
-			} else if hostConfig.CPUShares > linuxMaxCPUShares {
-				logrus.Warnf("Changing requested CpuShares of %d to maximum allowed of %d", hostConfig.CPUShares, linuxMaxCPUShares)
-				hostConfig.CPUShares = linuxMaxCPUShares
-			}
+// listenFD returns the specified socket activated files as a slice of
+// net.Listeners or all of the activated files if "*" is given.
+func listenFD(addr string) ([]net.Listener, error) {
+	// socket activation
+	listeners, err := systemdActivation.Listeners(false)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(listeners) == 0 {
+		return nil, fmt.Errorf("No sockets found")
+	}
+
+	// default to all fds just like unix:// and tcp://
+	if addr == "" || addr == "*" {
+		return listeners, nil
+	}
+
+	fdNum, err := strconv.Atoi(addr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse systemd address, should be number: %v", err)
+	}
+	fdOffset := fdNum - 3
+	if len(listeners) < int(fdOffset)+1 {
+		return nil, fmt.Errorf("Too few socket activated files passed in")
+	}
+	if listeners[fdOffset] == nil {
+		return nil, fmt.Errorf("failed to listen on systemd activated file at fd %d", fdOffset+3)
+	}
+	for i, ls := range listeners {
+		if i == fdOffset || ls == nil {
+			continue
+		}
+		if err := ls.Close(); err != nil {
+			logrus.Errorf("Failed to close systemd activated file at fd %d: %v", fdOffset+3, err)
 		}
 	}
-}
-
-// getContainersByNameDownlevel performs processing for pre 1.20 APIs. This
-// is only relevant on non-Windows daemons.
-func getContainersByNameDownlevel(w http.ResponseWriter, s *Server, namevar string) error {
-	containerJSONRaw, err := s.daemon.ContainerInspectPre120(namevar)
-	if err != nil {
-		return err
-	}
-	return writeJSON(w, http.StatusOK, containerJSONRaw)
+	return []net.Listener{listeners[fdOffset]}, nil
 }

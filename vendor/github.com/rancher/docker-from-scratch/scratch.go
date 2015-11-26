@@ -274,7 +274,7 @@ func setupNetworking(config *Config) error {
 	}
 
 	if len(config.DnsConfig.Nameservers) != 0 {
-		if err := resolvconf.Build("/etc/resolv.conf", config.DnsConfig.Nameservers, config.DnsConfig.Search); err != nil {
+		if _, err := resolvconf.Build("/etc/resolv.conf", config.DnsConfig.Nameservers, config.DnsConfig.Search, nil); err != nil {
 			return err
 		}
 	}

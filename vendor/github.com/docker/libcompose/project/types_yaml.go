@@ -15,9 +15,6 @@ type Stringorslice struct {
 
 // MarshalYAML implements the Marshaller interface.
 func (s Stringorslice) MarshalYAML() (tag string, value interface{}, err error) {
-	if s.parts == nil {
-		return "", []string{}, nil
-	}
 	return "", s.parts, nil
 }
 
@@ -67,9 +64,6 @@ type Command struct {
 
 // MarshalYAML implements the Marshaller interface.
 func (s Command) MarshalYAML() (tag string, value interface{}, err error) {
-	if s.parts == nil {
-		return "", []string{}, nil
-	}
 	return "", s.parts, nil
 }
 
@@ -113,9 +107,6 @@ type SliceorMap struct {
 
 // MarshalYAML implements the Marshaller interface.
 func (s SliceorMap) MarshalYAML() (tag string, value interface{}, err error) {
-	if s.parts == nil {
-		return "", map[string]string{}, nil
-	}
 	return "", s.parts, nil
 }
 
@@ -169,9 +160,6 @@ type MaporEqualSlice struct {
 
 // MarshalYAML implements the Marshaller interface.
 func (s MaporEqualSlice) MarshalYAML() (tag string, value interface{}, err error) {
-	if s.parts == nil {
-		return "", []string{}, nil
-	}
 	return "", s.parts, nil
 }
 
@@ -214,9 +202,6 @@ type MaporColonSlice struct {
 
 // MarshalYAML implements the Marshaller interface.
 func (s MaporColonSlice) MarshalYAML() (tag string, value interface{}, err error) {
-	if s.parts == nil {
-		return "", []string{}, nil
-	}
 	return "", s.parts, nil
 }
 
@@ -259,9 +244,6 @@ type MaporSpaceSlice struct {
 
 // MarshalYAML implements the Marshaller interface.
 func (s MaporSpaceSlice) MarshalYAML() (tag string, value interface{}, err error) {
-	if s.parts == nil {
-		return "", []string{}, nil
-	}
 	return "", s.parts, nil
 }
 

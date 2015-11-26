@@ -16,7 +16,7 @@ import (
 //
 // Usage: docker info
 func (cli *DockerCli) CmdInfo(args ...string) error {
-	cmd := Cli.Subcmd("info", nil, "Display system-wide information", true)
+	cmd := Cli.Subcmd("info", nil, Cli.DockerCommands["info"].Description, true)
 	cmd.Require(flag.Exact, 0)
 
 	cmd.ParseFlags(args, true)
@@ -35,6 +35,7 @@ func (cli *DockerCli) CmdInfo(args ...string) error {
 
 	fmt.Fprintf(cli.out, "Containers: %d\n", info.Containers)
 	fmt.Fprintf(cli.out, "Images: %d\n", info.Images)
+	ioutils.FprintfIfNotEmpty(cli.out, "Server Version: %s\n", info.ServerVersion)
 	ioutils.FprintfIfNotEmpty(cli.out, "Storage Driver: %s\n", info.Driver)
 	if info.DriverStatus != nil {
 		for _, pair := range info.DriverStatus {
@@ -52,17 +53,17 @@ func (cli *DockerCli) CmdInfo(args ...string) error {
 
 	if info.Debug {
 		fmt.Fprintf(cli.out, "Debug mode (server): %v\n", info.Debug)
-		fmt.Fprintf(cli.out, "File Descriptors: %d\n", info.NFd)
-		fmt.Fprintf(cli.out, "Goroutines: %d\n", info.NGoroutines)
-		fmt.Fprintf(cli.out, "System Time: %s\n", info.SystemTime)
-		fmt.Fprintf(cli.out, "EventsListeners: %d\n", info.NEventsListener)
-		fmt.Fprintf(cli.out, "Init SHA1: %s\n", info.InitSha1)
-		fmt.Fprintf(cli.out, "Init Path: %s\n", info.InitPath)
-		fmt.Fprintf(cli.out, "Docker Root Dir: %s\n", info.DockerRootDir)
+		fmt.Fprintf(cli.out, " File Descriptors: %d\n", info.NFd)
+		fmt.Fprintf(cli.out, " Goroutines: %d\n", info.NGoroutines)
+		fmt.Fprintf(cli.out, " System Time: %s\n", info.SystemTime)
+		fmt.Fprintf(cli.out, " EventsListeners: %d\n", info.NEventsListener)
+		fmt.Fprintf(cli.out, " Init SHA1: %s\n", info.InitSha1)
+		fmt.Fprintf(cli.out, " Init Path: %s\n", info.InitPath)
+		fmt.Fprintf(cli.out, " Docker Root Dir: %s\n", info.DockerRootDir)
 	}
 
-	ioutils.FprintfIfNotEmpty(cli.out, "Http Proxy: %s\n", info.HttpProxy)
-	ioutils.FprintfIfNotEmpty(cli.out, "Https Proxy: %s\n", info.HttpsProxy)
+	ioutils.FprintfIfNotEmpty(cli.out, "Http Proxy: %s\n", info.HTTPProxy)
+	ioutils.FprintfIfNotEmpty(cli.out, "Https Proxy: %s\n", info.HTTPSProxy)
 	ioutils.FprintfIfNotEmpty(cli.out, "No Proxy: %s\n", info.NoProxy)
 
 	if info.IndexServerAddress != "" {
@@ -72,7 +73,8 @@ func (cli *DockerCli) CmdInfo(args ...string) error {
 			fmt.Fprintf(cli.out, "Registry: %v\n", info.IndexServerAddress)
 		}
 	}
-	// Only output these warnings if the server supports these features
+
+	// Only output these warnings if the server does not support these features
 	if h, err := httputils.ParseServerHeader(serverResp.header.Get("Server")); err == nil {
 		if h.OS != "windows" {
 			if !info.MemoryLimit {
@@ -82,12 +84,12 @@ func (cli *DockerCli) CmdInfo(args ...string) error {
 				fmt.Fprintf(cli.err, "WARNING: No swap limit support\n")
 			}
 			if !info.IPv4Forwarding {
-				fmt.Fprintf(cli.err, "WARNING: IPv4 forwarding is disabled.\n")
+				fmt.Fprintf(cli.err, "WARNING: IPv4 forwarding is disabled\n")
 			}
 			if !info.BridgeNfIptables {
 				fmt.Fprintf(cli.err, "WARNING: bridge-nf-call-iptables is disabled\n")
 			}
-			if !info.BridgeNfIp6tables {
+			if !info.BridgeNfIP6tables {
 				fmt.Fprintf(cli.err, "WARNING: bridge-nf-call-ip6tables is disabled\n")
 			}
 		}
@@ -100,9 +102,13 @@ func (cli *DockerCli) CmdInfo(args ...string) error {
 		}
 	}
 
-	if info.ExperimentalBuild {
-		fmt.Fprintf(cli.out, "Experimental: true\n")
+	ioutils.FprintfIfTrue(cli.out, "Experimental: %v\n", info.ExperimentalBuild)
+	if info.ClusterStore != "" {
+		fmt.Fprintf(cli.out, "Cluster store: %s\n", info.ClusterStore)
 	}
 
+	if info.ClusterAdvertise != "" {
+		fmt.Fprintf(cli.out, "Cluster advertise: %s\n", info.ClusterAdvertise)
+	}
 	return nil
 }

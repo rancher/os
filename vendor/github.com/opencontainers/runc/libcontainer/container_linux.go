@@ -118,6 +118,13 @@ func (c *linuxContainer) Start(process *Process) error {
 	return nil
 }
 
+func (c *linuxContainer) Signal(s os.Signal) error {
+	if err := c.initProcess.signal(s); err != nil {
+		return newSystemError(err)
+	}
+	return nil
+}
+
 func (c *linuxContainer) newParentProcess(p *Process, doInit bool) (parentProcess, error) {
 	parentPipe, childPipe, err := newPipe()
 	if err != nil {
@@ -164,6 +171,7 @@ func (c *linuxContainer) newInitProcess(p *Process, cmd *exec.Cmd, parentPipe, c
 			// user mappings are not supported
 			return nil, err
 		}
+		enableSetgroups(cmd.SysProcAttr)
 		// Default to root user when user namespaces are enabled.
 		if cmd.SysProcAttr.Credential == nil {
 			cmd.SysProcAttr.Credential = &syscall.Credential{}
@@ -177,6 +185,7 @@ func (c *linuxContainer) newInitProcess(p *Process, cmd *exec.Cmd, parentPipe, c
 		parentPipe: parentPipe,
 		manager:    c.cgroupManager,
 		config:     c.newInitConfig(p),
+		container:  c,
 	}, nil
 }
 
@@ -239,6 +248,18 @@ func (c *linuxContainer) Destroy() error {
 		err = rerr
 	}
 	c.initProcess = nil
+	if c.config.Hooks != nil {
+		s := configs.HookState{
+			Version: c.config.Version,
+			ID:      c.id,
+			Root:    c.config.Rootfs,
+		}
+		for _, hook := range c.config.Hooks.Poststop {
+			if err := hook.Run(s); err != nil {
+				return err
+			}
+		}
+	}
 	return err
 }
 
@@ -268,30 +289,62 @@ func addArgsFromEnv(evar string, args *[]string) {
 	fmt.Printf(">>> criu %v\n", *args)
 }
 
-func (c *linuxContainer) checkCriuVersion() error {
-	var x, y, z int
+// check Criu version greater than or equal to min_version
+func (c *linuxContainer) checkCriuVersion(min_version string) error {
+	var x, y, z, versionReq int
+
+	_, err := fmt.Sscanf(min_version, "%d.%d.%d\n", &x, &y, &z) // 1.5.2
+	if err != nil {
+		_, err = fmt.Sscanf(min_version, "Version: %d.%d\n", &x, &y) // 1.6
+	}
+	versionReq = x*10000 + y*100 + z
 
 	out, err := exec.Command(c.criuPath, "-V").Output()
 	if err != nil {
-		return err
+		return fmt.Errorf("Unable to execute CRIU command: %s", c.criuPath)
 	}
 
-	n, err := fmt.Sscanf(string(out), "Version: %d.%d.%d\n", &x, &y, &z) // 1.5.2
-	if err != nil {
-		n, err = fmt.Sscanf(string(out), "Version: %d.%d\n", &x, &y) // 1.6
-	}
-	if n < 2 || err != nil {
-		return fmt.Errorf("Unable to parse the CRIU version: %s %d %s", out, n, err)
+	x = 0
+	y = 0
+	z = 0
+	if ep := strings.Index(string(out), "-"); ep >= 0 {
+		// criu Git version format
+		var version string
+		if sp := strings.Index(string(out), "GitID"); sp > 0 {
+			version = string(out)[sp:ep]
+		} else {
+			return fmt.Errorf("Unable to parse the CRIU version: %s", c.criuPath)
+		}
+
+		n, err := fmt.Sscanf(string(version), "GitID: v%d.%d.%d", &x, &y, &z) // 1.5.2
+		if err != nil {
+			n, err = fmt.Sscanf(string(version), "GitID: v%d.%d", &x, &y) // 1.6
+			y++
+		} else {
+			z++
+		}
+		if n < 2 || err != nil {
+			return fmt.Errorf("Unable to parse the CRIU version: %s %d %s", version, n, err)
+		}
+	} else {
+		// criu release version format
+		n, err := fmt.Sscanf(string(out), "Version: %d.%d.%d\n", &x, &y, &z) // 1.5.2
+		if err != nil {
+			n, err = fmt.Sscanf(string(out), "Version: %d.%d\n", &x, &y) // 1.6
+		}
+		if n < 2 || err != nil {
+			return fmt.Errorf("Unable to parse the CRIU version: %s %d %s", out, n, err)
+		}
 	}
 
-	if x*10000+y*100+z < 10502 {
-		return fmt.Errorf("CRIU version must be 1.5.2 or higher")
+	if x*10000+y*100+z < versionReq {
+		return fmt.Errorf("CRIU version must be %s or higher", min_version)
 	}
 
 	return nil
 }
 
-const descriptors_filename = "descriptors.json"
+const descriptorsFilename = "descriptors.json"
 
 func (c *linuxContainer) addCriuDumpMount(req *criurpc.CriuReq, m *configs.Mount) {
 	mountDest := m.Destination
@@ -310,7 +363,7 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	if err := c.checkCriuVersion(); err != nil {
+	if err := c.checkCriuVersion("1.5.2"); err != nil {
 		return err
 	}
 
@@ -368,6 +421,14 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 		}
 	}
 
+	// append optional manage cgroups mode
+	if criuOpts.ManageCgroupsMode != 0 {
+		if err := c.checkCriuVersion("1.7"); err != nil {
+			return err
+		}
+		rpcOpts.ManageCgroupsMode = proto.Uint32(uint32(criuOpts.ManageCgroupsMode))
+	}
+
 	t := criurpc.CriuReqType_DUMP
 	req := &criurpc.CriuReq{
 		Type: &t,
@@ -398,12 +459,12 @@ func (c *linuxContainer) Checkpoint(criuOpts *CriuOpts) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(filepath.Join(criuOpts.ImagesDirectory, descriptors_filename), fdsJSON, 0655)
+	err = ioutil.WriteFile(filepath.Join(criuOpts.ImagesDirectory, descriptorsFilename), fdsJSON, 0655)
 	if err != nil {
 		return err
 	}
 
-	err = c.criuSwrk(nil, req, criuOpts)
+	err = c.criuSwrk(nil, req, criuOpts, false)
 	if err != nil {
 		return err
 	}
@@ -427,7 +488,7 @@ func (c *linuxContainer) Restore(process *Process, criuOpts *CriuOpts) error {
 	c.m.Lock()
 	defer c.m.Unlock()
 
-	if err := c.checkCriuVersion(); err != nil {
+	if err := c.checkCriuVersion("1.5.2"); err != nil {
 		return err
 	}
 
@@ -496,6 +557,7 @@ func (c *linuxContainer) Restore(process *Process, criuOpts *CriuOpts) error {
 			FileLocks:      proto.Bool(criuOpts.FileLocks),
 		},
 	}
+
 	for _, m := range c.config.Mounts {
 		switch m.Device {
 		case "bind":
@@ -524,13 +586,27 @@ func (c *linuxContainer) Restore(process *Process, criuOpts *CriuOpts) error {
 			break
 		}
 	}
+	for _, i := range criuOpts.VethPairs {
+		veth := new(criurpc.CriuVethPair)
+		veth.IfOut = proto.String(i.HostInterfaceName)
+		veth.IfIn = proto.String(i.ContainerInterfaceName)
+		req.Opts.Veths = append(req.Opts.Veths, veth)
+	}
+
+	// append optional manage cgroups mode
+	if criuOpts.ManageCgroupsMode != 0 {
+		if err := c.checkCriuVersion("1.7"); err != nil {
+			return err
+		}
+		req.Opts.ManageCgroupsMode = proto.Uint32(uint32(criuOpts.ManageCgroupsMode))
+	}
 
 	var (
 		fds    []string
 		fdJSON []byte
 	)
 
-	if fdJSON, err = ioutil.ReadFile(filepath.Join(criuOpts.ImagesDirectory, descriptors_filename)); err != nil {
+	if fdJSON, err = ioutil.ReadFile(filepath.Join(criuOpts.ImagesDirectory, descriptorsFilename)); err != nil {
 		return err
 	}
 
@@ -547,19 +623,42 @@ func (c *linuxContainer) Restore(process *Process, criuOpts *CriuOpts) error {
 		}
 	}
 
-	err = c.criuSwrk(process, req, criuOpts)
+	err = c.criuSwrk(process, req, criuOpts, true)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *CriuOpts) error {
+func (c *linuxContainer) criuApplyCgroups(pid int, req *criurpc.CriuReq) error {
+	if err := c.cgroupManager.Apply(pid); err != nil {
+		return err
+	}
+
+	path := fmt.Sprintf("/proc/%d/cgroup", pid)
+	cgroupsPaths, err := cgroups.ParseCgroupFile(path)
+	if err != nil {
+		return err
+	}
+
+	for c, p := range cgroupsPaths {
+		cgroupRoot := &criurpc.CgroupRoot{
+			Ctrl: proto.String(c),
+			Path: proto.String(p),
+		}
+		req.Opts.CgRoot = append(req.Opts.CgRoot, cgroupRoot)
+	}
+
+	return nil
+}
+
+func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *CriuOpts, applyCgroups bool) error {
 	fds, err := syscall.Socketpair(syscall.AF_LOCAL, syscall.SOCK_SEQPACKET|syscall.SOCK_CLOEXEC, 0)
 	if err != nil {
 		return err
 	}
 
+	logPath := filepath.Join(opts.WorkDirectory, req.GetOpts().GetLogFile())
 	criuClient := os.NewFile(uintptr(fds[0]), "criu-transport-client")
 	criuServer := os.NewFile(uintptr(fds[1]), "criu-transport-server")
 	defer criuClient.Close()
@@ -586,6 +685,13 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 			return
 		}
 	}()
+
+	if applyCgroups {
+		err := c.criuApplyCgroups(cmd.Process.Pid, req)
+		if err != nil {
+			return err
+		}
+	}
 
 	var extFds []string
 	if process != nil {
@@ -623,7 +729,8 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 			return err
 		}
 		if !resp.GetSuccess() {
-			return fmt.Errorf("criu failed: type %s errno %d", req.GetType().String(), resp.GetCrErrno())
+			typeString := req.GetType().String()
+			return fmt.Errorf("criu failed: type %s errno %d\nlog file: %s", typeString, resp.GetCrErrno(), logPath)
 		}
 
 		t := resp.GetType()
@@ -663,7 +770,7 @@ func (c *linuxContainer) criuSwrk(process *Process, req *criurpc.CriuReq, opts *
 		return err
 	}
 	if !st.Success() {
-		return fmt.Errorf("criu failed: %s", st.String())
+		return fmt.Errorf("criu failed: %s\nlog file: %s", st.String(), logPath)
 	}
 	return nil
 }

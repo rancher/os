@@ -13,7 +13,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/docker/docker/autogen/dockerversion"
+	"github.com/docker/distribution/registry/api/errcode"
+	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/fileutils"
 	"github.com/docker/docker/pkg/stringid"
@@ -59,7 +60,7 @@ func isValidDockerInitPath(target string, selfPath string) bool { // target and 
 	if target == "" {
 		return false
 	}
-	if dockerversion.IAMSTATIC == "true" {
+	if dockerversion.IAmStatic == "true" {
 		if selfPath == "" {
 			return false
 		}
@@ -76,7 +77,7 @@ func isValidDockerInitPath(target string, selfPath string) bool { // target and 
 		}
 		return os.SameFile(targetFileInfo, selfPathFileInfo)
 	}
-	return dockerversion.INITSHA1 != "" && dockerInitSha1(target) == dockerversion.INITSHA1
+	return dockerversion.InitSHA1 != "" && dockerInitSha1(target) == dockerversion.InitSHA1
 }
 
 // DockerInitPath figures out the path of our dockerinit (which may be SelfPath())
@@ -88,7 +89,7 @@ func DockerInitPath(localCopy string) string {
 	}
 	var possibleInits = []string{
 		localCopy,
-		dockerversion.INITPATH,
+		dockerversion.InitPath,
 		filepath.Join(filepath.Dir(selfPath), "dockerinit"),
 
 		// FHS 3.0 Draft: "/usr/libexec includes internal binaries that are not intended to be executed directly by users or shell scripts. Applications may use a single subdirectory under /usr/libexec."
@@ -199,9 +200,13 @@ func ReplaceOrAppendEnvValues(defaults, overrides []string) []string {
 // can be read and returns an error if some files can't be read
 // symlinks which point to non-existing files don't trigger an error
 func ValidateContextDirectory(srcPath string, excludes []string) error {
-	return filepath.Walk(filepath.Join(srcPath, "."), func(filePath string, f os.FileInfo, err error) error {
+	contextRoot, err := getContextRoot(srcPath)
+	if err != nil {
+		return err
+	}
+	return filepath.Walk(contextRoot, func(filePath string, f os.FileInfo, err error) error {
 		// skip this directory/file if it's not in the path, it won't get added to the context
-		if relFilePath, err := filepath.Rel(srcPath, filePath); err != nil {
+		if relFilePath, err := filepath.Rel(contextRoot, filePath); err != nil {
 			return err
 		} else if skip, err := fileutils.Matches(relFilePath, excludes); err != nil {
 			return err
@@ -242,17 +247,11 @@ func ValidateContextDirectory(srcPath string, excludes []string) error {
 // ReadDockerIgnore reads a .dockerignore file and returns the list of file patterns
 // to ignore. Note this will trim whitespace from each line as well
 // as use GO's "clean" func to get the shortest/cleanest path for each.
-func ReadDockerIgnore(path string) ([]string, error) {
-	// Note that a missing .dockerignore file isn't treated as an error
-	reader, err := os.Open(path)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return nil, fmt.Errorf("Error reading '%s': %v", path, err)
-		}
+func ReadDockerIgnore(reader io.ReadCloser) ([]string, error) {
+	if reader == nil {
 		return nil, nil
 	}
 	defer reader.Close()
-
 	scanner := bufio.NewScanner(reader)
 	var excludes []string
 
@@ -264,8 +263,8 @@ func ReadDockerIgnore(path string) ([]string, error) {
 		pattern = filepath.Clean(pattern)
 		excludes = append(excludes, pattern)
 	}
-	if err = scanner.Err(); err != nil {
-		return nil, fmt.Errorf("Error reading '%s': %v", path, err)
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("Error reading .dockerignore: %v", err)
 	}
 	return excludes, nil
 }
@@ -285,4 +284,23 @@ func ImageReference(repo, ref string) string {
 // is of the form <algorithm>:<digest>.
 func DigestReference(ref string) bool {
 	return strings.Contains(ref, ":")
+}
+
+// GetErrorMessage returns the human readable message associated with
+// the passed-in error. In some cases the default Error() func returns
+// something that is less than useful so based on its types this func
+// will go and get a better piece of text.
+func GetErrorMessage(err error) string {
+	switch err.(type) {
+	case errcode.Error:
+		e, _ := err.(errcode.Error)
+		return e.Message
+
+	case errcode.ErrorCode:
+		ec, _ := err.(errcode.ErrorCode)
+		return ec.Message()
+
+	default:
+		return err.Error()
+	}
 }

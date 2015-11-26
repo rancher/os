@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"testing"
 
 	"github.com/rancher/os/util"
@@ -215,6 +215,7 @@ type Data struct {
 }
 
 func TestMapMerge(t *testing.T) {
+	assert := require.New(t)
 	one := `
 one:
   two: true`
@@ -222,34 +223,20 @@ one:
 one:
   three: true`
 
-	data := make(map[string]map[string]bool)
-	yaml.Unmarshal([]byte(one), data)
-	yaml.Unmarshal([]byte(two), data)
+	data := map[string]map[string]bool{}
+	yaml.Unmarshal([]byte(one), &data)
+	yaml.Unmarshal([]byte(two), &data)
 
-	if _, ok := data["one"]; !ok {
-		t.Fatal("one not found")
-	}
-
-	if !data["one"]["three"] {
-		t.Fatal("three not found")
-	}
-
-	if data["one"]["two"] {
-		t.Fatal("two not found")
-	}
+	assert.NotNil(data["one"])
+	assert.True(data["one"]["three"])
+	assert.False(data["one"]["two"])
 
 	data2 := &OuterData{}
 	yaml.Unmarshal([]byte(one), data2)
 	yaml.Unmarshal([]byte(two), data2)
 
-	if !data2.One.Three {
-		t.Fatal("three not found")
-	}
-
-	if !data2.One.Two {
-		t.Fatal("two not found")
-	}
-
+	assert.True(data2.One.Three)
+	assert.True(data2.One.Two)
 }
 
 func TestUserDocker(t *testing.T) {
@@ -266,16 +253,19 @@ func TestUserDocker(t *testing.T) {
 	bytes, err := yaml.Marshal(config)
 	assert.Nil(err)
 
-	config = NewConfig()
+	config = &CloudConfig{}
+	assert.False(config.Rancher.Docker.TLS)
 	err = yaml.Unmarshal(bytes, config)
 	assert.Nil(err)
+	assert.True(config.Rancher.Docker.TLS)
 
-	data := map[interface{}]map[interface{}]interface{}{}
-	util.Convert(config, &data)
+	data := map[interface{}]interface{}{}
+	err = util.Convert(config, &data)
+	assert.Nil(err)
 
 	fmt.Println(data)
 
-	val, ok := data["rancher"]["docker"]
+	val, ok := data["rancher"].(map[interface{}]interface{})["docker"]
 	assert.True(ok)
 
 	m, ok := val.(map[interface{}]interface{})

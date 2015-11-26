@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/docker/docker/autogen/dockerversion"
 	"github.com/docker/docker/daemon/graphdriver"
+	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/pkg/stringid"
 )
@@ -73,7 +73,7 @@ func TestInterruptedRegister(t *testing.T) {
 		Created: time.Now(),
 	}
 	w.CloseWithError(errors.New("But I'm not a tarball!")) // (Nobody's perfect, darling)
-	graph.Register(image, badArchive)
+	graph.Register(v1Descriptor{image}, badArchive)
 	if _, err := graph.Get(image.ID); err == nil {
 		t.Fatal("Image should not exist after Register is interrupted")
 	}
@@ -82,7 +82,7 @@ func TestInterruptedRegister(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := graph.Register(image, goodArchive); err != nil {
+	if err := graph.Register(v1Descriptor{image}, goodArchive); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -106,8 +106,8 @@ func TestGraphCreate(t *testing.T) {
 	if img.Comment != "Testing" {
 		t.Fatalf("Wrong comment: should be '%s', not '%s'", "Testing", img.Comment)
 	}
-	if img.DockerVersion != dockerversion.VERSION {
-		t.Fatalf("Wrong docker_version: should be '%s', not '%s'", dockerversion.VERSION, img.DockerVersion)
+	if img.DockerVersion != dockerversion.Version {
+		t.Fatalf("Wrong docker_version: should be '%s', not '%s'", dockerversion.Version, img.DockerVersion)
 	}
 	images := graph.Map()
 	if l := len(images); l != 1 {
@@ -130,7 +130,7 @@ func TestRegister(t *testing.T) {
 		Comment: "testing",
 		Created: time.Now(),
 	}
-	err = graph.Register(image, archive)
+	err = graph.Register(v1Descriptor{image}, archive)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -212,7 +212,7 @@ func TestDelete(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Test delete twice (pull -> rm -> pull -> rm)
-	if err := graph.Register(img1, archive); err != nil {
+	if err := graph.Register(v1Descriptor{img1}, archive); err != nil {
 		t.Fatal(err)
 	}
 	if err := graph.Delete(img1.ID); err != nil {
@@ -246,9 +246,19 @@ func TestByParent(t *testing.T) {
 		Created: time.Now(),
 		Parent:  parentImage.ID,
 	}
-	_ = graph.Register(parentImage, archive1)
-	_ = graph.Register(childImage1, archive2)
-	_ = graph.Register(childImage2, archive3)
+
+	err := graph.Register(v1Descriptor{parentImage}, archive1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = graph.Register(v1Descriptor{childImage1}, archive2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = graph.Register(v1Descriptor{childImage2}, archive3)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	byParent := graph.ByParent()
 	numChildren := len(byParent[parentImage.ID])
@@ -281,11 +291,11 @@ func tempGraph(t *testing.T) (*Graph, graphdriver.Driver) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	driver, err := graphdriver.New(tmp, nil)
+	driver, err := graphdriver.New(tmp, nil, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	graph, err := NewGraph(tmp, driver)
+	graph, err := NewGraph(tmp, driver, nil, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,7 +6,8 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/docker/libnetwork/netutils"
+	"github.com/docker/docker/pkg/ioutils"
+	_ "github.com/docker/libnetwork/testutils"
 )
 
 func TestGet(t *testing.T) {
@@ -18,8 +19,15 @@ func TestGet(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if string(resolvConfUtils) != string(resolvConfSystem) {
+	if string(resolvConfUtils.Content) != string(resolvConfSystem) {
 		t.Fatalf("/etc/resolv.conf and GetResolvConf have different content.")
+	}
+	hashSystem, err := ioutils.HashData(bytes.NewReader(resolvConfSystem))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resolvConfUtils.Hash != hashSystem {
+		t.Fatalf("/etc/resolv.conf and GetResolvConf have different hashes.")
 	}
 }
 
@@ -98,6 +106,32 @@ nameserver 4.30.20.100`: {"foo.example.com", "example.com"},
 	}
 }
 
+func TestGetOptions(t *testing.T) {
+	for resolv, result := range map[string][]string{
+		`options opt1`:           {"opt1"},
+		`options opt1 # ignored`: {"opt1"},
+		` 	  options 	 opt1 	  `: {"opt1"},
+		` 	  options 	 opt1 	  # ignored`: {"opt1"},
+		`options opt1 opt2 opt3`:           {"opt1", "opt2", "opt3"},
+		`options opt1 opt2 opt3 # ignored`: {"opt1", "opt2", "opt3"},
+		`	   options 	 opt1 	 opt2 	 opt3 	`: {"opt1", "opt2", "opt3"},
+		`	   options 	 opt1 	 opt2 	 opt3 	# ignored`: {"opt1", "opt2", "opt3"},
+		``:                   {},
+		`# ignored`:          {},
+		`nameserver 1.2.3.4`: {},
+		`nameserver 1.2.3.4
+options opt1 opt2 opt3`: {"opt1", "opt2", "opt3"},
+		`nameserver 1.2.3.4
+options opt1 opt2
+options opt3 opt4`: {"opt3", "opt4"},
+	} {
+		test := GetOptions([]byte(resolv))
+		if !strSlicesEqual(test, result) {
+			t.Fatalf("Wrong options string {%s} should be %v. Input: %s", test, result, resolv)
+		}
+	}
+}
+
 func strSlicesEqual(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
@@ -119,7 +153,7 @@ func TestBuild(t *testing.T) {
 	}
 	defer os.Remove(file.Name())
 
-	err = Build(file.Name(), []string{"ns1", "ns2", "ns3"}, []string{"search1"})
+	_, err = Build(file.Name(), []string{"ns1", "ns2", "ns3"}, []string{"search1"}, []string{"opt1"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +163,7 @@ func TestBuild(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if expected := "nameserver ns1\nnameserver ns2\nnameserver ns3\nsearch search1\n"; !bytes.Contains(content, []byte(expected)) {
+	if expected := "search search1\nnameserver ns1\nnameserver ns2\nnameserver ns3\noptions opt1\n"; !bytes.Contains(content, []byte(expected)) {
 		t.Fatalf("Expected to find '%s' got '%s'", expected, content)
 	}
 }
@@ -141,7 +175,7 @@ func TestBuildWithZeroLengthDomainSearch(t *testing.T) {
 	}
 	defer os.Remove(file.Name())
 
-	err = Build(file.Name(), []string{"ns1", "ns2", "ns3"}, []string{"."})
+	_, err = Build(file.Name(), []string{"ns1", "ns2", "ns3"}, []string{"."}, []string{"opt1"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -151,7 +185,32 @@ func TestBuildWithZeroLengthDomainSearch(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if expected := "nameserver ns1\nnameserver ns2\nnameserver ns3\n"; !bytes.Contains(content, []byte(expected)) {
+	if expected := "nameserver ns1\nnameserver ns2\nnameserver ns3\noptions opt1\n"; !bytes.Contains(content, []byte(expected)) {
+		t.Fatalf("Expected to find '%s' got '%s'", expected, content)
+	}
+	if notExpected := "search ."; bytes.Contains(content, []byte(notExpected)) {
+		t.Fatalf("Expected to not find '%s' got '%s'", notExpected, content)
+	}
+}
+
+func TestBuildWithNoOptions(t *testing.T) {
+	file, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(file.Name())
+
+	_, err = Build(file.Name(), []string{"ns1", "ns2", "ns3"}, []string{"search1"}, []string{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	content, err := ioutil.ReadFile(file.Name())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if expected := "search search1\nnameserver ns1\nnameserver ns2\nnameserver ns3\n"; !bytes.Contains(content, []byte(expected)) {
 		t.Fatalf("Expected to find '%s' got '%s'", expected, content)
 	}
 	if notExpected := "search ."; bytes.Contains(content, []byte(notExpected)) {
@@ -163,51 +222,51 @@ func TestFilterResolvDns(t *testing.T) {
 	ns0 := "nameserver 10.16.60.14\nnameserver 10.16.60.21\n"
 
 	if result, _ := FilterResolvDNS([]byte(ns0), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed No Localhost: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed No Localhost: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
 	ns1 := "nameserver 10.16.60.14\nnameserver 10.16.60.21\nnameserver 127.0.0.1\n"
 	if result, _ := FilterResolvDNS([]byte(ns1), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
 	ns1 = "nameserver 10.16.60.14\nnameserver 127.0.0.1\nnameserver 10.16.60.21\n"
 	if result, _ := FilterResolvDNS([]byte(ns1), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
 	ns1 = "nameserver 127.0.1.1\nnameserver 10.16.60.14\nnameserver 10.16.60.21\n"
 	if result, _ := FilterResolvDNS([]byte(ns1), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
 	ns1 = "nameserver ::1\nnameserver 10.16.60.14\nnameserver 127.0.2.1\nnameserver 10.16.60.21\n"
 	if result, _ := FilterResolvDNS([]byte(ns1), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
 	ns1 = "nameserver 10.16.60.14\nnameserver ::1\nnameserver 10.16.60.21\nnameserver ::1"
 	if result, _ := FilterResolvDNS([]byte(ns1), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed Localhost: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
 	// with IPv6 disabled (false param), the IPv6 nameserver should be removed
 	ns1 = "nameserver 10.16.60.14\nnameserver 2002:dead:beef::1\nnameserver 10.16.60.21\nnameserver ::1"
 	if result, _ := FilterResolvDNS([]byte(ns1), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed Localhost+IPv6 off: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed Localhost+IPv6 off: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
@@ -215,8 +274,8 @@ func TestFilterResolvDns(t *testing.T) {
 	ns0 = "nameserver 10.16.60.14\nnameserver 2002:dead:beef::1\nnameserver 10.16.60.21\n"
 	ns1 = "nameserver 10.16.60.14\nnameserver 2002:dead:beef::1\nnameserver 10.16.60.21\nnameserver ::1"
 	if result, _ := FilterResolvDNS([]byte(ns1), true); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed Localhost+IPv6 on: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed Localhost+IPv6 on: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
@@ -224,8 +283,8 @@ func TestFilterResolvDns(t *testing.T) {
 	ns0 = "\nnameserver 8.8.8.8\nnameserver 8.8.4.4\nnameserver 2001:4860:4860::8888\nnameserver 2001:4860:4860::8844"
 	ns1 = "nameserver 127.0.0.1\nnameserver ::1\nnameserver 127.0.2.1"
 	if result, _ := FilterResolvDNS([]byte(ns1), true); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed no Localhost+IPv6 enabled: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed no Localhost+IPv6 enabled: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 
@@ -233,8 +292,8 @@ func TestFilterResolvDns(t *testing.T) {
 	ns0 = "\nnameserver 8.8.8.8\nnameserver 8.8.4.4"
 	ns1 = "nameserver 127.0.0.1\nnameserver ::1\nnameserver 127.0.2.1"
 	if result, _ := FilterResolvDNS([]byte(ns1), false); result != nil {
-		if ns0 != string(result) {
-			t.Fatalf("Failed no Localhost+IPv6 enabled: expected \n<%s> got \n<%s>", ns0, string(result))
+		if ns0 != string(result.Content) {
+			t.Fatalf("Failed no Localhost+IPv6 enabled: expected \n<%s> got \n<%s>", ns0, string(result.Content))
 		}
 	}
 }

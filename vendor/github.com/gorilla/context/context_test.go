@@ -98,7 +98,7 @@ func parallelReader(r *http.Request, key string, iterations int, wait, done chan
 func parallelWriter(r *http.Request, key, value string, iterations int, wait, done chan struct{}) {
 	<-wait
 	for i := 0; i < iterations; i++ {
-		Set(r, key, value)
+		Get(r, key)
 	}
 	done <- struct{}{}
 

@@ -13,8 +13,8 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -78,17 +78,19 @@ func (cli *DockerCli) certificateDirectory(server string) (string, error) {
 	return filepath.Join(cliconfig.ConfigDir(), "tls", u.Host), nil
 }
 
-func trustServer(index *registry.IndexInfo) string {
+func trustServer(index *registry.IndexInfo) (string, error) {
 	if s := os.Getenv("DOCKER_CONTENT_TRUST_SERVER"); s != "" {
-		if !strings.HasPrefix(s, "https://") {
-			return "https://" + s
+		urlObj, err := url.Parse(s)
+		if err != nil || urlObj.Scheme != "https" {
+			return "", fmt.Errorf("valid https URL required for trust server, got %s", s)
 		}
-		return s
+
+		return s, nil
 	}
 	if index.Official {
-		return registry.NotaryServer
+		return registry.NotaryServer, nil
 	}
-	return "https://" + index.Name
+	return "https://" + index.Name, nil
 }
 
 type simpleCredentialStore struct {
@@ -100,9 +102,9 @@ func (scs simpleCredentialStore) Basic(u *url.URL) (string, string) {
 }
 
 func (cli *DockerCli) getNotaryRepository(repoInfo *registry.RepositoryInfo, authConfig cliconfig.AuthConfig) (*client.NotaryRepository, error) {
-	server := trustServer(repoInfo.Index)
-	if !strings.HasPrefix(server, "https://") {
-		return nil, errors.New("unsupported scheme: https required for trust server")
+	server, err := trustServer(repoInfo.Index)
+	if err != nil {
+		return nil, err
 	}
 
 	var cfg = tlsconfig.ClientDefault
@@ -143,15 +145,21 @@ func (cli *DockerCli) getNotaryRepository(repoInfo *registry.RepositoryInfo, aut
 	if err != nil {
 		return nil, err
 	}
-	resp, err := pingClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
 
 	challengeManager := auth.NewSimpleChallengeManager()
-	if err := challengeManager.AddResponse(resp); err != nil {
-		return nil, err
+
+	resp, err := pingClient.Do(req)
+	if err != nil {
+		// Ignore error on ping to operate in offline mode
+		logrus.Debugf("Error pinging notary server %q: %s", endpointStr, err)
+	} else {
+		defer resp.Body.Close()
+
+		// Add response to the challenge manager to parse out
+		// authentication header and register authentication method
+		if err := challengeManager.AddResponse(resp); err != nil {
+			return nil, err
+		}
 	}
 
 	creds := simpleCredentialStore{auth: authConfig}
@@ -176,12 +184,33 @@ func convertTarget(t client.Target) (target, error) {
 }
 
 func (cli *DockerCli) getPassphraseRetriever() passphrase.Retriever {
-	baseRetriever := passphrase.PromptRetrieverWithInOut(cli.in, cli.out)
+	aliasMap := map[string]string{
+		"root":     "root",
+		"snapshot": "repository",
+		"targets":  "repository",
+	}
+	baseRetriever := passphrase.PromptRetrieverWithInOut(cli.in, cli.out, aliasMap)
 	env := map[string]string{
 		"root":     os.Getenv("DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE"),
-		"targets":  os.Getenv("DOCKER_CONTENT_TRUST_TARGET_PASSPHRASE"),
-		"snapshot": os.Getenv("DOCKER_CONTENT_TRUST_SNAPSHOT_PASSPHRASE"),
+		"snapshot": os.Getenv("DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE"),
+		"targets":  os.Getenv("DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE"),
 	}
+
+	// Backwards compatibility with old env names. We should remove this in 1.10
+	if env["root"] == "" {
+		if passphrase := os.Getenv("DOCKER_CONTENT_TRUST_OFFLINE_PASSPHRASE"); passphrase != "" {
+			env["root"] = passphrase
+			fmt.Fprintf(cli.err, "[DEPRECATED] The environment variable DOCKER_CONTENT_TRUST_OFFLINE_PASSPHRASE has been deprecated and will be removed in v1.10. Please use DOCKER_CONTENT_TRUST_ROOT_PASSPHRASE\n")
+		}
+	}
+	if env["snapshot"] == "" || env["targets"] == "" {
+		if passphrase := os.Getenv("DOCKER_CONTENT_TRUST_TAGGING_PASSPHRASE"); passphrase != "" {
+			env["snapshot"] = passphrase
+			env["targets"] = passphrase
+			fmt.Fprintf(cli.err, "[DEPRECATED] The environment variable DOCKER_CONTENT_TRUST_TAGGING_PASSPHRASE has been deprecated and will be removed in v1.10. Please use DOCKER_CONTENT_TRUST_REPOSITORY_PASSPHRASE\n")
+		}
+	}
+
 	return func(keyName string, alias string, createNew bool, numAttempts int) (string, bool, error) {
 		if v := env[alias]; v != "" {
 			return v, numAttempts > 1, nil
@@ -242,6 +271,8 @@ func notaryError(err error) error {
 		return fmt.Errorf("remote repository out-of-date: %v", err)
 	case trustmanager.ErrKeyNotFound:
 		return fmt.Errorf("signing keys not found: %v", err)
+	case *net.OpError:
+		return fmt.Errorf("error contacting notary server: %v", err)
 	}
 
 	return err
@@ -309,6 +340,22 @@ func (cli *DockerCli) trustedPull(repoInfo *registry.RepositoryInfo, ref registr
 		}
 	}
 	return nil
+}
+
+func selectKey(keys map[string]string) string {
+	if len(keys) == 0 {
+		return ""
+	}
+
+	keyIDs := []string{}
+	for k := range keys {
+		keyIDs = append(keyIDs, k)
+	}
+
+	// TODO(dmcgowan): let user choose if multiple keys, now pick consistently
+	sort.Strings(keyIDs)
+
+	return keyIDs[0]
 }
 
 func targetStream(in io.Writer) (io.WriteCloser, <-chan []target) {
@@ -409,16 +456,13 @@ func (cli *DockerCli) trustedPush(repoInfo *registry.RepositoryInfo, tag string,
 
 	ks := repo.KeyStoreManager
 	keys := ks.RootKeyStore().ListKeys()
-	var rootKey string
 
-	if len(keys) == 0 {
+	rootKey := selectKey(keys)
+	if rootKey == "" {
 		rootKey, err = ks.GenRootKey("ecdsa")
 		if err != nil {
 			return err
 		}
-	} else {
-		// TODO(dmcgowan): let user choose
-		rootKey = keys[0]
 	}
 
 	cryptoService, err := ks.GetRootCryptoService(rootKey)

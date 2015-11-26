@@ -1,3 +1,5 @@
+//go:generate pluginrpc-gen -i $GOFILE -o proxy.go -type volumeDriver -name VolumeDriver
+
 package volumedrivers
 
 import (
@@ -12,6 +14,30 @@ import (
 // $ extpoint-gen Driver > volume/extpoint.go
 
 var drivers = &driverExtpoint{extensions: make(map[string]volume.Driver)}
+
+// NewVolumeDriver returns a driver has the given name mapped on the given client.
+func NewVolumeDriver(name string, c client) volume.Driver {
+	proxy := &volumeDriverProxy{c}
+	return &volumeDriverAdapter{name, proxy}
+}
+
+type opts map[string]string
+
+// volumeDriver defines the available functions that volume plugins must implement.
+// This interface is only defined to generate the proxy objects.
+// It's not intended to be public or reused.
+type volumeDriver interface {
+	// Create a volume with the given name
+	Create(name string, opts opts) (err error)
+	// Remove the volume with the given name
+	Remove(name string) (err error)
+	// Get the mountpoint of the given volume
+	Path(name string) (mountpoint string, err error)
+	// Mount the given volume and return the mountpoint
+	Mount(name string) (mountpoint string, err error)
+	// Unmount the given volume
+	Unmount(name string) (err error)
+}
 
 type driverExtpoint struct {
 	extensions map[string]volume.Driver
@@ -51,8 +77,8 @@ func Unregister(name string) bool {
 // there is a VolumeDriver plugin available with the given name.
 func Lookup(name string) (volume.Driver, error) {
 	drivers.Lock()
-	defer drivers.Unlock()
 	ext, ok := drivers.extensions[name]
+	drivers.Unlock()
 	if ok {
 		return ext, nil
 	}
@@ -61,7 +87,22 @@ func Lookup(name string) (volume.Driver, error) {
 		return nil, fmt.Errorf("Error looking up volume plugin %s: %v", name, err)
 	}
 
+	drivers.Lock()
+	defer drivers.Unlock()
+	if ext, ok := drivers.extensions[name]; ok {
+		return ext, nil
+	}
+
 	d := NewVolumeDriver(name, pl.Client)
 	drivers.extensions[name] = d
 	return d, nil
+}
+
+// GetDriver returns a volume driver by it's name.
+// If the driver is empty, it looks for the local driver.
+func GetDriver(name string) (volume.Driver, error) {
+	if name == "" {
+		name = volume.DefaultDriverName
+	}
+	return Lookup(name)
 }

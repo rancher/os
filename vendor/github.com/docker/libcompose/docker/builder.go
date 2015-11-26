@@ -136,10 +136,21 @@ func CreateTar(p *project.Project, name string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("Cannot locate Dockerfile: %s", origDockerfile)
 	}
 	var includes = []string{"."}
+	var excludes []string
 
-	excludes, err := utils.ReadDockerIgnore(path.Join(root, ".dockerignore"))
+	dockerIgnorePath := path.Join(root, ".dockerignore")
+	dockerIgnore, err := os.Open(dockerIgnorePath)
 	if err != nil {
-		return nil, err
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+		logrus.Warnf("Error while reading .dockerignore (%s) : %s", dockerIgnorePath, err.Error())
+		excludes = make([]string, 0)
+	} else {
+		excludes, err = utils.ReadDockerIgnore(dockerIgnore)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// If .dockerignore mentions .dockerignore or the Dockerfile
