@@ -244,6 +244,7 @@ rancher:
       volumes:
       - /dev:/host/dev
       - /etc/docker:/etc/docker
+      - /etc/resolv.conf:/etc/resolv.conf
       - /etc/rkt:/etc/rkt
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /lib/firmware:/lib/firmware
