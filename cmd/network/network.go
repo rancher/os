@@ -7,6 +7,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
+	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/netconf"
 	"github.com/rancher/os/cmd/cloudinit"
 	"github.com/rancher/os/config"
@@ -37,7 +38,13 @@ func Main() {
 	}
 	cloudinit.SetHostname(cfg) // ignore error
 	if err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network); err != nil {
-		log.Fatal(err)
+		log.Error(err)
+	}
+	if cfg.Rancher.Network.Dns.Override {
+		log.WithFields(log.Fields{"nameservers": cfg.Rancher.Network.Dns.Nameservers}).Info("Override nameservers")
+		if err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.Dns.Nameservers, cfg.Rancher.Network.Dns.Search); err != nil {
+			log.Error(err)
+		}
 	}
 	if _, err := os.Create(NETWORK_DONE); err != nil {
 		log.Error(err)
