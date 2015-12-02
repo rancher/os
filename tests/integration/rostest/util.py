@@ -61,5 +61,9 @@ def run_qemu(request, run_args=[]):
 
 @pytest.mark.timeout(10)
 def wait_for_ssh(ssh_command=['./scripts/ssh', '--qemu']):
+    i = 0
+    print('\nWaiting for ssh and docker... ' + str(i))
     while subprocess.call(ssh_command + ['docker version >/dev/null 2>&1']) != 0:
+        i += 1
+        print('\nWaiting for ssh and docker... ' + str(i))
         time.sleep(1)

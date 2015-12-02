@@ -18,7 +18,7 @@ docker exec -it daemon docker ps
 
 ```bash
 # Daemon
-docker run --name daemon --privileged -d rancher/docker -d -s aufs
+docker run --name daemon --privileged -d rancher/docker daemon -s aufs
 
 # Client
 docker exec -it daemon docker ps
@@ -37,7 +37,7 @@ FROM ubuntu
 ADD files.tar /
 ENTRYPOINT ["/usr/bin/dockerlaunch", "/usr/bin/docker"]
 VOLUME /var/lib/docker
-CMD ["-d", "-s", "overlay"]
+CMD ["daemon", "-s", "overlay"]
 
 EOF
 
