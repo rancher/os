@@ -113,9 +113,6 @@ func (s *Service) Up() error {
 	if err := s.Service.Create(); err != nil {
 		return err
 	}
-	if labels[config.CREATE_ONLY] == "true" {
-		return s.checkReload(labels)
-	}
 	shouldRebuild, err := s.shouldRebuild()
 	if err != nil {
 		return err
@@ -130,6 +127,10 @@ func (s *Service) Up() error {
 				return err
 			}
 		}
+		s.rename()
+	}
+	if labels[config.CREATE_ONLY] == "true" {
+		return s.checkReload(labels)
 	}
 	if err := s.Service.Up(); err != nil {
 		return err
@@ -185,4 +186,18 @@ func (s *Service) wait() error {
 	}
 
 	return nil
+}
+
+func (s *Service) rename() error {
+	client, info, err := s.getContainer()
+	if err != nil || info == nil {
+		return err
+	}
+
+	if len(info.Name) > 0 && info.Name[1:] != s.Name() {
+		logrus.Debugf("Renaming container %s => %s", info.Name[1:], s.Name())
+		return client.RenameContainer(dockerclient.RenameContainerOptions{ID: info.ID, Name: s.Name()})
+	} else {
+		return nil
+	}
 }
