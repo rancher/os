@@ -420,7 +420,7 @@ func (c *Container) Log() error {
 		Follow: true,
 		Stdout: true,
 		Stderr: true,
-		Tail:   10,
+		Tail:   0,
 	})
 	if err != nil {
 		return err

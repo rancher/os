@@ -200,7 +200,7 @@ func (client *DockerClient) ContainerLogs(id string, options *LogOptions) (io.Re
 	v.Add("stdout", strconv.FormatBool(options.Stdout))
 	v.Add("stderr", strconv.FormatBool(options.Stderr))
 	v.Add("timestamps", strconv.FormatBool(options.Timestamps))
-	if options.Tail > 0 {
+	if options.Tail >= 0 {
 		v.Add("tail", strconv.FormatInt(options.Tail, 10))
 	}
 
