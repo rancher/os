@@ -16,6 +16,7 @@ import (
 	"github.com/docker/libcompose/logger"
 	"github.com/docker/libcompose/project"
 	"github.com/samalba/dockerclient"
+	"os"
 )
 
 type Container struct {
@@ -467,7 +468,7 @@ func PullImage(client dockerclient.Client, service *Service, image string) error
 		Username: authConfig.Username,
 		Password: authConfig.Password,
 		Email:    authConfig.Email,
-	})
+	}, os.Stderr)
 
 	if err != nil {
 		logrus.Errorf("Failed to pull image %s: %v", image, err)

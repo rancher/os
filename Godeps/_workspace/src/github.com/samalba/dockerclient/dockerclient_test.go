@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -29,6 +30,16 @@ func testDockerClient(t *testing.T) *DockerClient {
 		t.Fatal("Cannot init the docker client")
 	}
 	return client
+}
+
+func ExampleDockerClient_PullImage() {
+	docker, err := NewDockerClient("unix:///var/run/docker.sock", nil)
+	if err != nil {
+		panic(err)
+	}
+	if err := docker.PullImage("busybox", nil, os.Stdout); err != nil {
+		panic(err)
+	}
 }
 
 func TestInfo(t *testing.T) {
@@ -70,14 +81,14 @@ func TestWait(t *testing.T) {
 
 func TestPullImage(t *testing.T) {
 	client := testDockerClient(t)
-	err := client.PullImage("busybox", nil)
+	err := client.PullImage("busybox", nil) // old clients do not break on the API change
 	if err != nil {
-		t.Fatal("unable to pull busybox")
+		t.Fatal("unable to pull busybox: %v", err)
 	}
 
-	err = client.PullImage("haproxy", nil)
+	err = client.PullImage("haproxy", nil, os.Stderr) // io.Writer is optional
 	if err != nil {
-		t.Fatal("unable to pull haproxy")
+		t.Fatal("unable to pull haproxy: %v", err)
 	}
 
 	err = client.PullImage("wrongimg", nil)
@@ -119,6 +130,7 @@ func TestListContainersWithSize(t *testing.T) {
 	cnt := containers[0]
 	assertEqual(t, cnt.SizeRw, int64(123), "")
 }
+
 func TestListContainersWithFilters(t *testing.T) {
 	client := testDockerClient(t)
 	containers, err := client.ListContainers(true, true, "{'id':['332375cfbc23edb921a21026314c3497674ba8bdcb2c85e0e65ebf2017f688ce']}")
