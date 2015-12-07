@@ -2,6 +2,7 @@ package compose
 
 import (
 	log "github.com/Sirupsen/logrus"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/libcompose/cli/logger"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
@@ -129,6 +130,16 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 				continue
 			}
 
+			m := map[interface{}]interface{}{}
+			if err := yaml.Unmarshal(bytes, &m); err != nil {
+				log.Errorf("Failed to parse YAML configuration: %s : %v", service, err)
+				continue
+			}
+			bytes, err = yaml.Marshal(config.StringifyValues(m))
+			if err != nil {
+				log.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
+				continue
+			}
 			err = p.Load(bytes)
 			if err != nil {
 				log.Errorf("Failed to load %s : %v", service, err)

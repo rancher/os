@@ -55,6 +55,53 @@ func TestFilterKey(t *testing.T) {
 	assert.Equal(expectedRest, rest)
 }
 
+func TestStringifyValues(t *testing.T) {
+	assert := require.New(t)
+	data := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"hostname":            "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"services": map[interface{}]interface{}{
+				"my-service": map[interface{}]interface{}{
+					"command": []interface{}{"echo", 1, false, "nothing"},
+					"labels": map[interface{}]interface{}{
+						"some-bool": true,
+						"some-num":  42,
+					},
+					"dsa-pub": "dsa-test2",
+				},
+			},
+			"docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
+			},
+		},
+	}
+	expected := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"hostname":            "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"services": map[interface{}]interface{}{
+				"my-service": map[interface{}]interface{}{
+					"command": []interface{}{"echo", "1", "false", "nothing"},
+					"labels": map[interface{}]interface{}{
+						"some-bool": "true",
+						"some-num":  "42",
+					},
+					"dsa-pub": "dsa-test2",
+				},
+			},
+			"docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
+			},
+		},
+	}
+	assert.Equal(expected, StringifyValues(data))
+}
+
 func TestFilterDottedKeys(t *testing.T) {
 	assert := require.New(t)
 
