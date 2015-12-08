@@ -8,7 +8,7 @@ RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 ENV TERM xterm
-RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.8.3 > /usr/bin/docker
+RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.9.1 > /usr/bin/docker
 RUN chmod +x /usr/bin/docker
 
 RUN pip install tox
