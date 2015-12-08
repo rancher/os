@@ -21,12 +21,13 @@ const (
 func tlsConfCommands() []cli.Command {
 	return []cli.Command{
 		{
-			Name:   "generate",
-			Usage:  "generates new set of TLS configuration certs",
-			Action: tlsConfCreate,
+			Name:      "generate",
+			ShortName: "gen",
+			Usage:     "generates new set of TLS configuration certs",
+			Action:    tlsConfCreate,
 			Flags: []cli.Flag{
 				cli.StringSliceFlag{
-					Name:  "hostname",
+					Name:  "hostname, H",
 					Usage: "the hostname for which you want to generate the certificate",
 					Value: &cli.StringSlice{"localhost"},
 				},
@@ -68,8 +69,6 @@ func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig,
 		cfg, err = cfg.Merge(map[interface{}]interface{}{
 			"rancher": map[interface{}]interface{}{
 				"docker": map[interface{}]interface{}{
-					"ca_key":      cfg.Rancher.Docker.CAKey,
-					"ca_cert":     cfg.Rancher.Docker.CACert,
 					"server_cert": string(cert),
 					"server_key":  string(key),
 				},
@@ -79,7 +78,7 @@ func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig,
 			return err
 		}
 
-		return cfg.Save()
+		return cfg.Save() // certPath, keyPath are already written to by machineUtil.GenerateCert()
 	}
 
 	if err := ioutil.WriteFile(certPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
@@ -90,20 +89,20 @@ func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig,
 
 }
 
-func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
+func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) (*config.CloudConfig, error) {
 	if cfg.Rancher.Docker.CACert == "" {
 		if err := machineUtil.GenerateCACertificate(caCertPath, caKeyPath, NAME, BITS); err != nil {
-			return err
+			return nil, err
 		}
 
 		caCert, err := ioutil.ReadFile(caCertPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		caKey, err := ioutil.ReadFile(caKeyPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		cfg, err = cfg.Merge(map[interface{}]interface{}{
@@ -115,17 +114,25 @@ func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
 			},
 		})
 		if err != nil {
-			return err
+			return nil, err
 		}
 
-		return cfg.Save()
+		if err = cfg.Save(); err != nil {
+			return nil, err
+		}
+
+		return cfg, nil // caCertPath, caKeyPath are already written to by machineUtil.GenerateCACertificate()
 	}
 
 	if err := ioutil.WriteFile(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
-		return err
+		return nil, err
 	}
 
-	return ioutil.WriteFile(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400)
+	if err := ioutil.WriteFile(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
+		return nil, err
+	}
+
+	return cfg, nil
 }
 
 func tlsConfCreate(c *cli.Context) {
@@ -168,7 +175,8 @@ func Generate(generateServer bool, outDir string, hostnames []string) error {
 		}
 	}
 
-	if err := writeCaCerts(cfg, caCertPath, caKeyPath); err != nil {
+	cfg, err = writeCaCerts(cfg, caCertPath, caKeyPath)
+	if err != nil {
 		return err
 	}
 
