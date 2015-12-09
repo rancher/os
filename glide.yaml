@@ -95,7 +95,7 @@ import:
   - volume
 
 - package: github.com/docker/libcompose
-  version: 3e678b6a30d314e86441cbd9ad01534b7534d53a
+  version: 5cad17e57c7c5a2faa180b75c5beb90afc7dde05
   subpackages:
   - cli
   - docker

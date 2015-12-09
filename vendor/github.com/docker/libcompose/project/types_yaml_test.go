@@ -5,6 +5,7 @@ import (
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
+	"fmt"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -142,21 +143,26 @@ func TestSliceOrMapYaml(t *testing.T) {
 	assert.Equal(t, map[string]string{"bar": "baz", "far": "faz"}, s2.Foos.parts)
 }
 
-var sampleStructSliceorMap = `udav:
-  foos:
-    io.rancher.os.bar: baz
-    io.rancher.os.far: faz
-  bars: []
+var sampleStructSliceorMap = `
+foos:
+  io.rancher.os.bar: baz
+  io.rancher.os.far: true
+bars: []
 `
+
+func TestUnmarshalSliceOrMap(t *testing.T) {
+	s := StructSliceorMap{}
+	err := yaml.Unmarshal([]byte(sampleStructSliceorMap), &s)
+	assert.Equal(t, fmt.Errorf("Cannot unmarshal 'true' of type bool into a string value"), err)
+}
 
 func TestStr2SliceOrMapPtrMap(t *testing.T) {
 	s := map[string]*StructSliceorMap{"udav": {
-		Foos: SliceorMap{map[string]string{"io.rancher.os.bar": "baz", "io.rancher.os.far": "faz"}},
+		Foos: SliceorMap{map[string]string{"io.rancher.os.bar": "baz", "io.rancher.os.far": "true"}},
 		Bars: []string{},
 	}}
 	d, err := yaml.Marshal(&s)
 	assert.Nil(t, err)
-	assert.Equal(t, sampleStructSliceorMap, string(d))
 
 	s2 := map[string]*StructSliceorMap{}
 	yaml.Unmarshal(d, &s2)

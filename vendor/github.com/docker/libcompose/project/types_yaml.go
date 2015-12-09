@@ -18,13 +18,25 @@ func (s Stringorslice) MarshalYAML() (tag string, value interface{}, err error) 
 	return "", s.parts, nil
 }
 
+func toStrings(s []interface{}) ([]string, error) {
+	r := make([]string, len(s))
+	for k, v := range s {
+		if sv, ok := v.(string); ok {
+			r[k] = sv
+		} else {
+			return nil, fmt.Errorf("Cannot unmarshal '%v' of type %T into a string value", v, v)
+		}
+	}
+	return r, nil
+}
+
 // UnmarshalYAML implements the Unmarshaller interface.
 func (s *Stringorslice) UnmarshalYAML(tag string, value interface{}) error {
 	switch value := value.(type) {
 	case []interface{}:
-		parts := make([]string, len(value))
-		for k, v := range value {
-			parts[k] = v.(string)
+		parts, err := toStrings(value)
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	case string:
@@ -72,9 +84,9 @@ func (s *Command) UnmarshalYAML(tag string, value interface{}) error {
 	var err error
 	switch value := value.(type) {
 	case []interface{}:
-		parts := make([]string, len(value))
-		for k, v := range value {
-			parts[k] = v.(string)
+		parts, err := toStrings(value)
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	case string:
@@ -116,21 +128,33 @@ func (s *SliceorMap) UnmarshalYAML(tag string, value interface{}) error {
 	case map[interface{}]interface{}:
 		parts := map[string]string{}
 		for k, v := range value {
-			parts[k.(string)] = v.(string)
+			if sk, ok := k.(string); ok {
+				if sv, ok := v.(string); ok {
+					parts[sk] = sv
+				} else {
+					return fmt.Errorf("Cannot unmarshal '%v' of type %T into a string value", v, v)
+				}
+			} else {
+				return fmt.Errorf("Cannot unmarshal '%v' of type %T into a string value", k, k)
+			}
 		}
 		s.parts = parts
 	case []interface{}:
 		parts := map[string]string{}
-		for _, str := range value {
-			str := strings.TrimSpace(str.(string))
-			keyValueSlice := strings.SplitN(str, "=", 2)
+		for _, s := range value {
+			if str, ok := s.(string); ok {
+				str := strings.TrimSpace(str)
+				keyValueSlice := strings.SplitN(str, "=", 2)
 
-			key := keyValueSlice[0]
-			val := ""
-			if len(keyValueSlice) == 2 {
-				val = keyValueSlice[1]
+				key := keyValueSlice[0]
+				val := ""
+				if len(keyValueSlice) == 2 {
+					val = keyValueSlice[1]
+				}
+				parts[key] = val
+			} else {
+				return fmt.Errorf("Cannot unmarshal '%v' of type %T into a string value", s, s)
 			}
-			parts[key] = val
 		}
 		s.parts = parts
 	default:
@@ -163,19 +187,35 @@ func (s MaporEqualSlice) MarshalYAML() (tag string, value interface{}, err error
 	return "", s.parts, nil
 }
 
+func toSepMapParts(value map[interface{}]interface{}, sep string) ([]string, error) {
+	parts := make([]string, 0, len(value))
+	for k, v := range value {
+		if sk, ok := k.(string); ok {
+			if sv, ok := v.(string); ok {
+				parts = append(parts, sk+sep+sv)
+			} else {
+				return nil, fmt.Errorf("Cannot unmarshal '%v' of type %T into a string value", v, v)
+			}
+		} else {
+			return nil, fmt.Errorf("Cannot unmarshal '%v' of type %T into a string value", k, k)
+		}
+	}
+	return parts, nil
+}
+
 // UnmarshalYAML implements the Unmarshaller interface.
 func (s *MaporEqualSlice) UnmarshalYAML(tag string, value interface{}) error {
 	switch value := value.(type) {
 	case []interface{}:
-		parts := make([]string, len(value))
-		for k, v := range value {
-			parts[k] = v.(string)
+		parts, err := toStrings(value)
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	case map[interface{}]interface{}:
-		parts := make([]string, 0, len(value))
-		for k, v := range value {
-			parts = append(parts, strings.Join([]string{k.(string), v.(string)}, "="))
+		parts, err := toSepMapParts(value, "=")
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	default:
@@ -209,15 +249,15 @@ func (s MaporColonSlice) MarshalYAML() (tag string, value interface{}, err error
 func (s *MaporColonSlice) UnmarshalYAML(tag string, value interface{}) error {
 	switch value := value.(type) {
 	case []interface{}:
-		parts := make([]string, len(value))
-		for k, v := range value {
-			parts[k] = v.(string)
+		parts, err := toStrings(value)
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	case map[interface{}]interface{}:
-		parts := make([]string, 0, len(value))
-		for k, v := range value {
-			parts = append(parts, strings.Join([]string{k.(string), v.(string)}, ":"))
+		parts, err := toSepMapParts(value, ":")
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	default:
@@ -251,15 +291,15 @@ func (s MaporSpaceSlice) MarshalYAML() (tag string, value interface{}, err error
 func (s *MaporSpaceSlice) UnmarshalYAML(tag string, value interface{}) error {
 	switch value := value.(type) {
 	case []interface{}:
-		parts := make([]string, len(value))
-		for k, v := range value {
-			parts[k] = v.(string)
+		parts, err := toStrings(value)
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	case map[interface{}]interface{}:
-		parts := make([]string, 0, len(value))
-		for k, v := range value {
-			parts = append(parts, strings.Join([]string{k.(string), v.(string)}, " "))
+		parts, err := toSepMapParts(value, " ")
+		if err != nil {
+			return err
 		}
 		s.parts = parts
 	default:
