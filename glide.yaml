@@ -6,8 +6,6 @@ import:
 
 - package: github.com/cloudfoundry-incubator/candiedyaml
   version: 55a459c2d9da2b078f0725e5fb324823b2c71702
-  subpackages:
-  - .
 
 - package: github.com/codegangsta/cli
   version: 0302d3914d2a6ad61404584cdae6e6dbc9c03599
@@ -15,122 +13,39 @@ import:
 - package: github.com/coreos/coreos-cloudinit
   version: 405c2600b19ae77516c967f8ee8ebde5624d3663
   repo:    https://github.com/rancher/coreos-cloudinit.git
-  subpackages:
-  - config
-  - datasource
-  - initialize
-  - network
-  - pkg
-  - system
 
 - package: github.com/coreos/go-systemd
   version: 4fbc5060a317b142e6c7bfbedb65596d5f0ab99b
-  subpackages:
-  - dbus
 
 - package: github.com/coreos/yaml
   version: 6b16a5714269b2f70720a45406b1babd947a17ef
 
 - package: github.com/docker/distribution
   version: c6c9194e9c6097f84b0ff468a741086ff7704aa3
-  subpackages:
-  - context
-  - digest
-  - manifest/schema1
-  - reference
-  - registry/api/errcode
-  - registry/api/v2
-  - registry/client
-  - registry/client/auth
-  - registry/client/transport
-  - registry/storage/cache
-  - registry/storage/cache/memory
-  - uuid
 
 - package: github.com/docker/docker
   version: 58b270c338e831ac6668a29788c72d202f9fc251
-  subpackages:
-  - api
-  - autogen/dockerversion
-  - cliconfig
-  - daemon/network
-  - dockerversion
-  - errors
-  - graph/tags
-  - image
-  - opts
-  - pkg/archive
-  - pkg/fileutils
-  - pkg/homedir
-  - pkg/httputils
-  - pkg/idtools
-  - pkg/ioutils
-  - pkg/jsonmessage
-  - pkg/mflag
-  - pkg/mount
-  - pkg/nat
-  - pkg/parsers
-  - pkg/pools
-  - pkg/promise
-  - pkg/random
-  - pkg/reexec
-  - pkg/signal
-  - pkg/stdcopy
-  - pkg/stringid
-  - pkg/stringutils
-  - pkg/symlink
-  - pkg/system
-  - pkg/tarsum
-  - pkg/term
-  - pkg/timeutils
-  - pkg/tlsconfig
-  - pkg/ulimit
-  - pkg/units
-  - pkg/urlutil
-  - pkg/useragent
-  - pkg/version
-  - registry
-  - runconfig
-  - utils
-  - volume
 
 - package: github.com/docker/libcompose
   version: 5cad17e57c7c5a2faa180b75c5beb90afc7dde05
-  subpackages:
-  - cli
-  - docker
-  - logger
-  - lookup
-  - project
-  - utils
 
 - package: github.com/docker/libcontainer
   version: 83a102cc68a09d890cce3b6c2e5c14c49e6373a0
-  subpackages:
-  - netlink
 
 - package: github.com/docker/libnetwork
   version: 5305ea570b85d61dd0fd261cd7e1680da1884678
-  subpackages:
-  - resolvconf
 
 - package: github.com/docker/libtrust
   version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
 
 - package: github.com/docker/machine
   version: 4a8e93ac9bc2ced1c3bc4a43c03fdaa1c2749205
-  subpackages:
-  - log
-  - utils
 
 - package: github.com/flynn/go-shlex
   version: 3f9db97f856818214da2e1057f8ad84803971cff
 
 - package: github.com/fsouza/go-dockerclient
   version: b515e07d61c4e873407b54c4843b0f3ac9aa16f1
-  subpackages:
-  - .
-  - external
 
 - package: github.com/gorilla/context
   version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
@@ -140,10 +55,6 @@ import:
 
 - package: github.com/guelfey/go.dbus
   version: f6a3a2366cc39b8479cadc499d3c735fb10fbdda
-  subpackages:
-  - .
-  - introspect
-  - prop
 
 - package: github.com/j-keck/arping
   version: 4f4d2c8983a18e2c9c63a3f339bc9a998c4557bc
@@ -153,18 +64,9 @@ import:
 
 - package: github.com/opencontainers/runc
   version: 1349b37bd56f4f5ce2690b5b2c0f53f88a261c67
-  subpackages:
-  - libcontainer/cgroups
-  - libcontainer/configs
-  - libcontainer/nsenter
-  - libcontainer/system
-  - libcontainer/user
 
 - package: github.com/rancher/docker-from-scratch
   version: 1.9.1-1
-  subpackages:
-  - .
-  - util
 
 - package: github.com/rancher/netconf
   version: 02925e7cf5a0f0bb0aa5360ee260ef7378e5eff8
@@ -174,35 +76,21 @@ import:
 
 - package: github.com/stretchr/testify
   version: a1f97990ddc16022ec7610326dd9bce31332c116
-  subpackages:
-  - assert
-  - require
 
 - package: github.com/davecgh/go-spew
   version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
-  subpackages:
-  - spew
 
 - package: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
-  subpackages:
-  - difflib
 
 - package: github.com/vishvananda/netlink
   version: edcd99c0881a4de0fdb3818af6b24f4ee6948464
 
 - package: golang.org/x/crypto
   version: 2f3083f6163ef51179ad42ed523a18c9a1141467
-  subpackages:
-  - ssh/terminal
 
 - package: golang.org/x/net
   version: 84ba27dd5b2d8135e9da1395277f2c9333a2ffda
-  subpackages:
-  - context
 
 - package: google.golang.org/cloud
   version: c97f5f9979a8582f3ab72873a51979619801248b
-  subpackages:
-  - compute/metadata
-  - internal
