@@ -219,7 +219,7 @@ func main(cfg *config.CloudConfig) error {
 
 	if dockerCfg.TLS {
 		log.Debug("Generating TLS certs if needed")
-		if err := control.Generate(true, "/etc/docker/tls", []string{"localhost"}); err != nil {
+		if err := control.Generate(true, "/etc/docker/tls", []string{"127.0.0.1", "*", "*.*", "*.*.*", "*.*.*.*"}); err != nil {
 			return err
 		}
 	}
