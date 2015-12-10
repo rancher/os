@@ -273,6 +273,19 @@ func setupNetworking(config *Config) error {
 		return nil
 	}
 
+	hostname, err := os.Hostname();
+	if err != nil {
+		return err
+	}
+	tryCreateFile("/etc/hosts", `127.0.0.1    localhost
+::1    localhost ip6-localhost ip6-loopback
+fe00::0    ip6-localnet
+ff00::0    ip6-mcastprefix
+ff02::1    ip6-allnodes
+ff02::2    ip6-allrouters
+
+127.0.1.1       `+hostname)
+
 	if len(config.DnsConfig.Nameservers) != 0 {
 		if _, err := resolvconf.Build("/etc/resolv.conf", config.DnsConfig.Nameservers, config.DnsConfig.Search, nil); err != nil {
 			return err

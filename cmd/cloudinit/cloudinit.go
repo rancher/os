@@ -22,6 +22,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -38,7 +39,6 @@ import (
 	"github.com/coreos/coreos-cloudinit/pkg"
 	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/rancher/netconf"
-	"github.com/rancher/os/cmd/cloudinit/hostname"
 	rancherConfig "github.com/rancher/os/config"
 )
 
@@ -168,16 +168,20 @@ func fetchUserData() ([]byte, datasource.Metadata, error) {
 	return userDataBytes, metadata, nil
 }
 
-func SetHostname(cc *rancherConfig.CloudConfig) error {
+func SetHostname(cc *rancherConfig.CloudConfig) (string, error) {
+	name, _ := os.Hostname()
 	if cc.Hostname != "" {
+		name = cc.Hostname
+	}
+	if name != "" {
 		//set hostname
-		if err := hostname.SetHostname(cc.Hostname); err != nil {
-			log.WithFields(log.Fields{"err": err, "hostname": cc.Hostname}).Error("Error setting hostname")
-			return err
+		if err := syscall.Sethostname([]byte(name)); err != nil {
+			log.WithFields(log.Fields{"err": err, "hostname": name}).Error("Error setting hostname")
+			return "", err
 		}
 	}
 
-	return nil
+	return name, nil
 }
 
 func executeCloudConfig() error {
@@ -186,7 +190,7 @@ func executeCloudConfig() error {
 		return err
 	}
 
-	if err := SetHostname(cc); err != nil {
+	if _, err := SetHostname(cc); err != nil {
 		return err
 	}
 
