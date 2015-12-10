@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"testing"
 
 	"github.com/rancher/os/util"
@@ -53,6 +53,53 @@ func TestFilterKey(t *testing.T) {
 	filtered, rest := filterKey(data, []string{"rancher", "ssh"})
 	assert.Equal(expectedFiltered, filtered)
 	assert.Equal(expectedRest, rest)
+}
+
+func TestStringifyValues(t *testing.T) {
+	assert := require.New(t)
+	data := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"hostname":            "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"services": map[interface{}]interface{}{
+				"my-service": map[interface{}]interface{}{
+					"command": []interface{}{"echo", 1, false, "nothing"},
+					"labels": map[interface{}]interface{}{
+						"some-bool": true,
+						"some-num":  42,
+					},
+					"dsa-pub": "dsa-test2",
+				},
+			},
+			"docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
+			},
+		},
+	}
+	expected := map[interface{}]interface{}{
+		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
+		"hostname":            "ros-test",
+		"rancher": map[interface{}]interface{}{
+			"services": map[interface{}]interface{}{
+				"my-service": map[interface{}]interface{}{
+					"command": []interface{}{"echo", "1", "false", "nothing"},
+					"labels": map[interface{}]interface{}{
+						"some-bool": "true",
+						"some-num":  "42",
+					},
+					"dsa-pub": "dsa-test2",
+				},
+			},
+			"docker": map[interface{}]interface{}{
+				"ca_key":  "ca_key-test3",
+				"ca_cert": "ca_cert-test4",
+				"args":    []string{"args_test5"},
+			},
+		},
+	}
+	assert.Equal(expected, StringifyValues(data))
 }
 
 func TestFilterDottedKeys(t *testing.T) {
@@ -215,6 +262,7 @@ type Data struct {
 }
 
 func TestMapMerge(t *testing.T) {
+	assert := require.New(t)
 	one := `
 one:
   two: true`
@@ -222,34 +270,20 @@ one:
 one:
   three: true`
 
-	data := make(map[string]map[string]bool)
-	yaml.Unmarshal([]byte(one), data)
-	yaml.Unmarshal([]byte(two), data)
+	data := map[string]map[string]bool{}
+	yaml.Unmarshal([]byte(one), &data)
+	yaml.Unmarshal([]byte(two), &data)
 
-	if _, ok := data["one"]; !ok {
-		t.Fatal("one not found")
-	}
-
-	if !data["one"]["three"] {
-		t.Fatal("three not found")
-	}
-
-	if data["one"]["two"] {
-		t.Fatal("two not found")
-	}
+	assert.NotNil(data["one"])
+	assert.True(data["one"]["three"])
+	assert.False(data["one"]["two"])
 
 	data2 := &OuterData{}
 	yaml.Unmarshal([]byte(one), data2)
 	yaml.Unmarshal([]byte(two), data2)
 
-	if !data2.One.Three {
-		t.Fatal("three not found")
-	}
-
-	if !data2.One.Two {
-		t.Fatal("two not found")
-	}
-
+	assert.True(data2.One.Three)
+	assert.True(data2.One.Two)
 }
 
 func TestUserDocker(t *testing.T) {
@@ -266,16 +300,19 @@ func TestUserDocker(t *testing.T) {
 	bytes, err := yaml.Marshal(config)
 	assert.Nil(err)
 
-	config = NewConfig()
+	config = &CloudConfig{}
+	assert.False(config.Rancher.Docker.TLS)
 	err = yaml.Unmarshal(bytes, config)
 	assert.Nil(err)
+	assert.True(config.Rancher.Docker.TLS)
 
-	data := map[interface{}]map[interface{}]interface{}{}
-	util.Convert(config, &data)
+	data := map[interface{}]interface{}{}
+	err = util.Convert(config, &data)
+	assert.Nil(err)
 
 	fmt.Println(data)
 
-	val, ok := data["rancher"]["docker"]
+	val, ok := data["rancher"].(map[interface{}]interface{})["docker"]
 	assert.True(ok)
 
 	m, ok := val.(map[interface{}]interface{})

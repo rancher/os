@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	log "github.com/Sirupsen/logrus"
 

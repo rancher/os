@@ -1,9 +1,11 @@
 package config
 
 import (
+	"fmt"
+
 	log "github.com/Sirupsen/logrus"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/util"
-	"gopkg.in/yaml.v2"
 )
 
 func (c *CloudConfig) Import(bytes []byte) (*CloudConfig, error) {
@@ -12,12 +14,7 @@ func (c *CloudConfig) Import(bytes []byte) (*CloudConfig, error) {
 		return c, err
 	}
 
-	cfg := NewConfig()
-	if err := util.Convert(data, cfg); err != nil {
-		return c, err
-	}
-
-	return cfg, nil
+	return NewConfig().Merge(data)
 }
 
 func (c *CloudConfig) MergeBytes(bytes []byte) (*CloudConfig, error) {
@@ -28,9 +25,73 @@ func (c *CloudConfig) MergeBytes(bytes []byte) (*CloudConfig, error) {
 	return c.Merge(data)
 }
 
+var keysToStringify = []string{
+	"command",
+	"dns",
+	"dns_search",
+	"entrypoint",
+	"env_file",
+	"environment",
+	"labels",
+	"links",
+}
+
+func isPathToStringify(path []interface{}) bool {
+	l := len(path)
+	if l == 0 {
+		return false
+	}
+	if sk, ok := path[l-1].(string); ok {
+		return util.Contains(keysToStringify, sk)
+	}
+	return false
+}
+
+func stringifyValue(data interface{}, path []interface{}) interface{} {
+	switch data := data.(type) {
+	case map[interface{}]interface{}:
+		result := make(map[interface{}]interface{}, len(data))
+		if isPathToStringify(path) {
+			for k, v := range data {
+				switch v := v.(type) {
+				case []interface{}:
+					result[k] = stringifyValue(v, append(path, k))
+				case map[interface{}]interface{}:
+					result[k] = stringifyValue(v, append(path, k))
+				default:
+					result[k] = fmt.Sprint(v)
+				}
+			}
+		} else {
+			for k, v := range data {
+				result[k] = stringifyValue(v, append(path, k))
+			}
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(data))
+		if isPathToStringify(path) {
+			for k, v := range data {
+				result[k] = fmt.Sprint(v)
+			}
+		} else {
+			for k, v := range data {
+				result[k] = stringifyValue(v, append(path, k))
+			}
+		}
+		return result
+	default:
+		return data
+	}
+}
+
+func StringifyValues(data map[interface{}]interface{}) map[interface{}]interface{} {
+	return stringifyValue(data, nil).(map[interface{}]interface{})
+}
+
 func (c *CloudConfig) Merge(values map[interface{}]interface{}) (*CloudConfig, error) {
 	t := *c
-	if err := util.Convert(values, &t); err != nil {
+	if err := util.Convert(StringifyValues(values), &t); err != nil {
 		return c, err
 	}
 	return &t, nil

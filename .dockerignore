@@ -1,6 +1,7 @@
 .DS_Store
 .git
 .idea
+.vendor
 .dockerignore
 bin
 gopath

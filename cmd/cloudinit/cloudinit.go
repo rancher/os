@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/yaml.v2"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/config"

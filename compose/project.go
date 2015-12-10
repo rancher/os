@@ -2,6 +2,7 @@ package compose
 
 import (
 	log "github.com/Sirupsen/logrus"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/libcompose/cli/logger"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
@@ -57,9 +58,9 @@ func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) 
 		ClientFactory: clientFactory,
 		Context: project.Context{
 			ProjectName:       name,
+			NoRecreate:        true, // for libcompose to not recreate on project reload, looping up the boot :)
 			EnvironmentLookup: rosDocker.NewConfigEnvironment(cfg),
 			ServiceFactory:    serviceFactory,
-			Rebuild:           true,
 			Log:               cfg.Rancher.Log,
 			LoggerFactory:     logger.NewColorLoggerFactory(),
 		},
@@ -73,7 +74,7 @@ func addServices(p *project.Project, enabled map[interface{}]interface{}, config
 	// Note: we ignore errors while loading services
 	unchanged := true
 	for name, serviceConfig := range configs {
-		hash := project.GetServiceHash(name, *serviceConfig)
+		hash := project.GetServiceHash(name, serviceConfig)
 
 		if enabled[name] == hash {
 			continue
@@ -94,7 +95,7 @@ func addServices(p *project.Project, enabled map[interface{}]interface{}, config
 }
 
 func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Project, error) {
-	projectEvents := make(chan project.ProjectEvent)
+	projectEvents := make(chan project.Event)
 	enabled := map[interface{}]interface{}{}
 
 	p, err := newProject("os", cfg)
@@ -129,6 +130,16 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 				continue
 			}
 
+			m := map[interface{}]interface{}{}
+			if err := yaml.Unmarshal(bytes, &m); err != nil {
+				log.Errorf("Failed to parse YAML configuration: %s : %v", service, err)
+				continue
+			}
+			bytes, err = yaml.Marshal(config.StringifyValues(m))
+			if err != nil {
+				log.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
+				continue
+			}
 			err = p.Load(bytes)
 			if err != nil {
 				log.Errorf("Failed to load %s : %v", service, err)
@@ -143,7 +154,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 
 	go func() {
 		for event := range projectEvents {
-			if event.Event == project.CONTAINER_STARTED && event.ServiceName == "network" {
+			if event.EventType == project.EventContainerStarted && event.ServiceName == "network" {
 				network = true
 			}
 		}

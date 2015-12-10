@@ -5,7 +5,7 @@ rancher:
       environment:
       - BOOTSTRAP=true
       labels:
-        io.rancher.os.detach: false
+        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
       log_driver: json-file
       net: host
@@ -19,7 +19,7 @@ rancher:
     autoformat:
       image: rancher/os-autoformat:v0.4.2-dev
       labels:
-        io.rancher.os.detach: false
+        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
       log_driver: json-file
       net: none
@@ -27,7 +27,7 @@ rancher:
     udev-autoformat:
       image: rancher/os-udev:v0.4.2-dev
       labels:
-        io.rancher.os.detach: false
+        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: autoformat
       log_driver: json-file
@@ -72,7 +72,7 @@ rancher:
     all-volumes:
       image: rancher/os-state:v0.4.2-dev
       labels:
-        io.rancher.os.createonly: true
+        io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
       log_driver: json-file
       net: none
@@ -86,8 +86,8 @@ rancher:
     cloud-init:
       image: rancher/os-cloudinit:v0.4.2-dev
       labels:
-        io.rancher.os.detach: false
-        io.rancher.os.reloadconfig: true
+        io.rancher.os.detach: "false"
+        io.rancher.os.reloadconfig: "true"
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init-pre, wait-for-network
       net: host
@@ -101,8 +101,8 @@ rancher:
       environment:
       - CLOUD_INIT_NETWORK=false
       labels:
-        io.rancher.os.detach: false
-        io.rancher.os.reloadconfig: true
+        io.rancher.os.detach: "false"
+        io.rancher.os.reloadconfig: "true"
         io.rancher.os.scope: system
         io.rancher.os.after: preload-system-images
       net: host
@@ -114,7 +114,7 @@ rancher:
     command-volumes:
       image: rancher/os-state:v0.4.2-dev
       labels:
-        io.rancher.os.createonly: true
+        io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
       log_driver: json-file
       net: none
@@ -154,7 +154,7 @@ rancher:
     container-data-volumes:
       image: rancher/os-state:v0.4.2-dev
       labels:
-        io.rancher.os.createonly: true
+        io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
       log_driver: json-file
       net: none
@@ -179,7 +179,7 @@ rancher:
       image: rancher/os-network:v0.4.2-dev
       command: wait-for-network
       labels:
-        io.rancher.os.detach: false
+        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: network
       pid: host
@@ -199,7 +199,7 @@ rancher:
     preload-system-images:
       image: rancher/os-preload:v0.4.2-dev
       labels:
-        io.rancher.os.detach: false
+        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
       privileged: true
       volumes:
@@ -211,7 +211,7 @@ rancher:
     preload-user-images:
       image: rancher/os-preload:v0.4.2-dev
       labels:
-        io.rancher.os.detach: false
+        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: console
       privileged: true
@@ -235,7 +235,7 @@ rancher:
     system-volumes:
       image: rancher/os-state:v0.4.2-dev
       labels:
-        io.rancher.os.createonly: true
+        io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
       log_driver: json-file
       net: none
@@ -270,7 +270,7 @@ rancher:
       environment:
       - DAEMON=true
       labels:
-        io.rancher.os.detach: true
+        io.rancher.os.detach: "true"
         io.rancher.os.scope: system
       net: host
       uts: host
@@ -281,7 +281,7 @@ rancher:
     user-volumes:
       image: rancher/os-state:v0.4.2-dev
       labels:
-        io.rancher.os.createonly: true
+        io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
       log_driver: json-file
       net: none
