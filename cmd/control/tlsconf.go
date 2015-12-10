@@ -1,7 +1,6 @@
 package control
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -157,7 +156,12 @@ func Generate(generateServer bool, outDir string, hostnames []string) error {
 	}
 
 	if outDir == "" {
-		return fmt.Errorf("out directory (-d, --dir) not specified")
+		if generateServer {
+			outDir = "/etc/docker/tls"
+		} else {
+			outDir = "/home/rancher/.docker"
+		}
+		log.Infof("Out directory (-d, --dir) not specified, using default: %s", outDir)
 	}
 	caCertPath := filepath.Join(outDir, "ca.pem")
 	caKeyPath := filepath.Join(outDir, "ca-key.pem")
@@ -179,6 +183,17 @@ func Generate(generateServer bool, outDir string, hostnames []string) error {
 	if err != nil {
 		return err
 	}
+	if err := writeCerts(generateServer, hostnames, cfg, certPath, keyPath, caCertPath, caKeyPath); err != nil {
+		return err
+	}
 
-	return writeCerts(generateServer, hostnames, cfg, certPath, keyPath, caCertPath, caKeyPath)
+	if !generateServer {
+		if err := filepath.Walk(outDir, func(path string, info os.FileInfo, err error) error {
+			return os.Chown(path, 1100, 1100) // rancher:rancher
+		}); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
