@@ -2,6 +2,8 @@
 
 set -e -x
 
+SCRIPTS_DIR=$(dirname ${0})
+
 BASE_DIR=${1}
 CLOUD_DATA=${2}
 IFS=',' read -ra FILES <<< "${3}"
@@ -12,7 +14,7 @@ if [ -z ${BASE_DIR} ]; then
 fi
 
 mkdir -p ${BASE_DIR}/var/lib/rancher/conf/cloud-config.d
-if [ "$CLOUD_DATA" != "/scripts/conf/empty.yml" ]; then
+if [ "${CLOUD_DATA}" != "${SCRIPTS_DIR}/conf/empty.yml" ]; then
     cp ${CLOUD_DATA} ${BASE_DIR}/var/lib/rancher/conf/cloud-config.d/
 fi
 
