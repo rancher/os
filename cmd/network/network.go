@@ -1,9 +1,12 @@
 package network
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -36,9 +39,33 @@ func Main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cloudinit.SetHostname(cfg) // ignore error
+	hostname, _ := cloudinit.SetHostname(cfg) // ignore error
+	log.Infof("Network: hostname: '%s'", hostname)
 	if err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network); err != nil {
 		log.Error(err)
+	}
+	hostname, _ = cloudinit.SetHostname(cfg) // ignore error
+	log.Infof("Network: hostname: '%s' (from DHCP, if not set by cloud-config)", hostname)
+	if hostname != "" {
+		hosts, err := os.Open("/etc/hosts")
+		defer hosts.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+		lines := bufio.NewScanner(hosts)
+		hostsContent := ""
+		for lines.Scan() {
+			line := strings.TrimSpace(lines.Text())
+			fields := strings.Fields(line)
+			if len(fields) > 0 && fields[0] == "127.0.1.1" {
+				hostsContent += "127.0.1.1 " + hostname + "\n"
+				continue
+			}
+			hostsContent += line + "\n"
+		}
+		if err := ioutil.WriteFile("/etc/hosts", []byte(hostsContent), 0600); err != nil {
+			log.Error(err)
+		}
 	}
 	if cfg.Rancher.Network.Dns.Override {
 		log.WithFields(log.Fields{"nameservers": cfg.Rancher.Network.Dns.Nameservers}).Info("Override nameservers")

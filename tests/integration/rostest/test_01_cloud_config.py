@@ -75,7 +75,7 @@ def test_docker_tls_args(qemu, cloud_config):
         stderr=subprocess.STDOUT, universal_newlines=True)
 
     subprocess.check_call(
-        ssh_command + ['docker', '--tlsverify', '-H', '127.0.0.1:2376', 'version'],
+        ssh_command + ['docker', '--tlsverify', 'version'],
         stderr=subprocess.STDOUT, universal_newlines=True)
 
 
