@@ -174,7 +174,7 @@ if [ "$XHYVE" == "1" ] || [ "$QEMU" == "1" ]; then
             -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
             -drive if=virtio,file=${HD} \
             ${KVM_ENABLE} \
-            -smp 4 \
+            -smp 1 \
             -cdrom ${CLOUD_CONFIG_ISO} \
             -append "${KERNEL_ARGS}" \
             -nographic \
