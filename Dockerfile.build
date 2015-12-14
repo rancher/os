@@ -1,4 +1,0 @@
-FROM ros-build-base
-
-COPY . ./
-COPY .dockerignore.docker .dockerignore

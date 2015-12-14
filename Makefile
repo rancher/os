@@ -3,45 +3,62 @@ FORCE_PULL := 0
 DEV_BUILD  := 0
 
 
-compile: bin/rancheros
+installer: minimal
+	docker build -t $(IMAGE_NAME):$(VERSION) .
+
+bin/rancheros:
+	mkdir -p $(dir $@)
+	go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION=$(VERSION) -linkmode external -extldflags -static" -o $@
+	strip --strip-all $@
 
 
-all: clean ros-build-base build-all
+pwd := $(shell pwd)
+include scripts/build-common
 
 
-ros-build-base:
-	docker build -t ros-build-base -f Dockerfile.build-base .
+assets/docker:
+	mkdir -p $(dir $@)
+	curl -L "$(DOCKER_BINARY_URL)" > $@
+	chmod +x $@
 
 
-ros-build-image:
-	docker build -t ros-build -f Dockerfile.build .
+$(DIST)/artifacts/vmlinuz: $(BUILD)/kernel/
+	mkdir -p $(dir $@)
+	mv $(BUILD)/kernel/boot/vmlinuz* $@
 
 
-bin/rancheros: ros-build-image
-	./scripts/docker-run.sh make -f Makefile.docker $@
-
-	mkdir -p bin
-	docker cp ros-build:/go/src/github.com/rancher/os/$@ $(dir $@)
+$(BUILD)/kernel/:
+	mkdir -p $@
+	([ -e "$(COMPILED_KERNEL_URL)" ] && cat "$(COMPILED_KERNEL_URL)" || curl -L "$(COMPILED_KERNEL_URL)") | tar -xzf - -C $@
 
 
-build-all: ros-build-image
-	./scripts/docker-run.sh make -f Makefile.docker DEV_BUILD=$(DEV_BUILD) FORCE_PULL=$(FORCE_PULL) $@
-
-	mkdir -p bin dist
-	docker cp ros-build:/go/src/github.com/rancher/os/bin/rancheros bin/
-	docker cp ros-build:/go/src/github.com/rancher/os/dist/artifacts dist/
+$(BUILD)/images.tar: bin/rancheros
+	FORCE_PULL=$(FORCE_PULL) ./scripts/mk-images-tar.sh
 
 
-installer: ros-build-image
-	./scripts/docker-run.sh --rm make -f Makefile.docker DEV_BUILD=$(DEV_BUILD) FORCE_PULL=$(FORCE_PULL) $@
+$(DIST)/artifacts/initrd: bin/rancheros assets/docker $(BUILD)/kernel/ $(BUILD)/images.tar
+	mkdir -p $(dir $@)
+	DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh
+
+
+$(DIST)/artifacts/rancheros.iso: minimal
+	./scripts/mk-rancheros-iso.sh
+
+
+$(DIST)/artifacts/iso-checksums.txt: $(DIST)/artifacts/rancheros.iso
+	./scripts/mk-iso-checksums-txt.sh
 
 
 version:
 	@echo $(VERSION)
 
+all: minimal installer iso
 
-clean:
-	rm -rf bin build dist gopath .dockerfile
+minimal: $(DIST)/artifacts/initrd $(DIST)/artifacts/vmlinuz
 
+iso: $(DIST)/artifacts/rancheros.iso $(DIST)/artifacts/iso-checksums.txt
 
-.PHONY: all compile clean build-all ros-build-image ros-build-base version bin/rancheros installer
+test: minimal
+	cd tests/integration && tox
+
+.PHONY: build-all minimal iso installer version bin/rancheros integration-tests
