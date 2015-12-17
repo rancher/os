@@ -76,11 +76,11 @@ def flush_out(stdout, substr='RancherOS '):
 
 
 @pytest.mark.timeout(10)
-def wait_for_ssh(qemu, ssh_command=['./scripts/ssh', '--qemu']):
+def wait_for_ssh(qemu, ssh_command=['./scripts/ssh', '--qemu'], command=['docker version >/dev/null 2>&1']):
     i = 0
     assert qemu.returncode is None
     print('\nWaiting for ssh and docker... ' + str(i))
-    while subprocess.call(ssh_command + ['docker version >/dev/null 2>&1']) != 0:
+    while subprocess.call(ssh_command + command) != 0:
         i += 1
         print('\nWaiting for ssh and docker... ' + str(i))
         time.sleep(1)

@@ -64,6 +64,11 @@ def test_dhcpcd(qemu, cloud_config):
 
 
 @pytest.mark.timeout(40)
+def test_services_include(qemu, cloud_config):
+    u.wait_for_ssh(qemu, ssh_command, ['docker inspect kernel-headers >/dev/null 2>&1'])
+
+
+@pytest.mark.timeout(40)
 def test_docker_tls_args(qemu, cloud_config):
     u.wait_for_ssh(qemu, ssh_command)
 
