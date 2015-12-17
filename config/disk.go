@@ -27,8 +27,7 @@ func NewConfig() *CloudConfig {
 func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*CloudConfig, error) {
 	if data, err := readConfig(bytes, substituteMetadataVars, files...); err == nil {
 		c := &CloudConfig{}
-		c, err := c.Merge(data)
-		if err != nil {
+		if err := util.Convert(data, c); err != nil {
 			return nil, err
 		}
 		c, _ = amendNils(c)
