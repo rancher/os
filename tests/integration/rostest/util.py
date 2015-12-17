@@ -1,8 +1,10 @@
+from __future__ import print_function
+
 import itertools as it
-import pytest
 import subprocess
 import time
 
+import pytest
 
 ros_test = 'ros-test'
 
@@ -26,6 +28,7 @@ def parse_value(var):
         if k == var:
             return v
         return ''
+
     return get_value
 
 
@@ -33,6 +36,7 @@ def with_effect(p):
     def effect(s):
         p(s)
         return s
+
     return effect
 
 
@@ -50,20 +54,34 @@ def run_qemu(request, run_args=[]):
     print('\nStarting QEMU')
     p = subprocess.Popen(['./scripts/run', '--qemu', '--no-rebuild', '--no-rm-usr', '--fresh'] + run_args,
                          stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+    assert p.returncode is None
 
     def fin():
         print('\nTerminating QEMU')
         p.terminate()
+        p.wait()
 
     request.addfinalizer(fin)
     return p
 
 
+def has_substr(token):
+    return lambda s: str.find(s, token) > -1
+
+
+def flush_out(stdout, substr='RancherOS '):
+    for _ in it.ifilter(has_substr(substr),
+                        it.imap(with_effect(print), iter_lines(stdout))):
+        return
+
+
 @pytest.mark.timeout(10)
-def wait_for_ssh(ssh_command=['./scripts/ssh', '--qemu']):
+def wait_for_ssh(qemu, ssh_command=['./scripts/ssh', '--qemu']):
     i = 0
+    assert qemu.returncode is None
     print('\nWaiting for ssh and docker... ' + str(i))
     while subprocess.call(ssh_command + ['docker version >/dev/null 2>&1']) != 0:
         i += 1
         print('\nWaiting for ssh and docker... ' + str(i))
         time.sleep(1)
+        assert qemu.returncode is None

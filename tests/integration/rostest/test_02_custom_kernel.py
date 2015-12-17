@@ -1,7 +1,8 @@
 from __future__ import print_function
-import itertools as it
-import pytest
+
 import subprocess
+
+import pytest
 import rostest.util as u
 
 
@@ -15,6 +16,7 @@ def build_and_run(request):
     def fin():
         print('\nTerminating docker-run test-custom-kernel')
         p.terminate()
+        p.wait()
 
     request.addfinalizer(fin)
     return p
@@ -25,11 +27,4 @@ def test_system_boot(build_and_run):
     version = u.rancheros_version('./tests/integration/assets/test_02/build.conf')
     print('parsed version: ' + version)
 
-    def has_ros_started_substr(s):
-        return str.find(s, 'RancherOS {v} started'.format(v=version)) > -1
-
-    for _ in it.ifilter(has_ros_started_substr,
-                        it.imap(u.with_effect(print), u.iter_lines(build_and_run.stdout))):
-        assert True
-        return
-    assert False
+    u.flush_out(build_and_run.stdout, 'RancherOS {v} started'.format(v=version))

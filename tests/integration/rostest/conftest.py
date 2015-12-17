@@ -1,6 +1,7 @@
+import subprocess
+
 import os
 import pytest
-import subprocess
 
 
 @pytest.fixture(scope="session", autouse=True)
