@@ -16,8 +16,8 @@ package configdrive
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 
@@ -93,7 +93,7 @@ func (cd *configDrive) openstackVersionRoot() string {
 }
 
 func (cd *configDrive) tryReadFile(filename string) ([]byte, error) {
-	fmt.Printf("Attempting to read from %q\n", filename)
+	log.Printf("Attempting to read from %q\n", filename)
 	data, err := cd.readFile(filename)
 	if os.IsNotExist(err) {
 		err = nil

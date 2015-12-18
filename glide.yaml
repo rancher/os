@@ -11,7 +11,7 @@ import:
   version: 0302d3914d2a6ad61404584cdae6e6dbc9c03599
 
 - package: github.com/coreos/coreos-cloudinit
-  version: 405c2600b19ae77516c967f8ee8ebde5624d3663
+  version: 65031e1ab2d3574544d26f5b5d7ddddd0032fd00
   repo:    https://github.com/rancher/coreos-cloudinit.git
 
 - package: github.com/coreos/go-systemd

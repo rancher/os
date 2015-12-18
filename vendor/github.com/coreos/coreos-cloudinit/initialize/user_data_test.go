@@ -47,7 +47,7 @@ func TestParseHeaderCRLF(t *testing.T) {
 }
 
 func TestParseConfigCRLF(t *testing.T) {
-	contents := "#cloud-config\r\nhostname: foo\r\nssh_authorized_keys:\r\n  - foobar\r\n"
+	contents := "#cloud-config \r\nhostname: foo\r\nssh_authorized_keys:\r\n  - foobar\r\n"
 	ud, err := ParseUserData(contents)
 	if err != nil {
 		t.Fatalf("Failed parsing config: %v", err)

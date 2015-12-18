@@ -130,7 +130,17 @@ type bondInterface struct {
 }
 
 func (b *bondInterface) Netdev() string {
-	return fmt.Sprintf("[NetDev]\nKind=bond\nName=%s\n", b.name)
+	config := fmt.Sprintf("[NetDev]\nKind=bond\nName=%s\n", b.name)
+	if b.hwaddr != nil {
+		config += fmt.Sprintf("MACAddress=%s\n", b.hwaddr.String())
+	}
+
+	config += fmt.Sprintf("\n[Bond]\n")
+	for _, name := range sortedKeys(b.options) {
+		config += fmt.Sprintf("%s=%s\n", name, b.options[name])
+	}
+
+	return config
 }
 
 func (b *bondInterface) Type() string {

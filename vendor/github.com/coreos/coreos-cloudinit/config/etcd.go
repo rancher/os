@@ -16,7 +16,7 @@ package config
 
 type Etcd struct {
 	Addr                     string  `yaml:"addr"                          env:"ETCD_ADDR"`
-	AdvertiseClientURLs      string  `yaml:"advertise_client_urls"         env:"ETCD_ADVERTISE_CLIENT_URLS"`
+	AdvertiseClientURLs      string  `yaml:"advertise_client_urls"         env:"ETCD_ADVERTISE_CLIENT_URLS"       deprecated:"etcd2 options no longer work for etcd"`
 	BindAddr                 string  `yaml:"bind_addr"                     env:"ETCD_BIND_ADDR"`
 	CAFile                   string  `yaml:"ca_file"                       env:"ETCD_CA_FILE"`
 	CertFile                 string  `yaml:"cert_file"                     env:"ETCD_CERT_FILE"`
@@ -26,26 +26,26 @@ type Etcd struct {
 	CorsOrigins              string  `yaml:"cors"                          env:"ETCD_CORS"`
 	DataDir                  string  `yaml:"data_dir"                      env:"ETCD_DATA_DIR"`
 	Discovery                string  `yaml:"discovery"                     env:"ETCD_DISCOVERY"`
-	DiscoveryFallback        string  `yaml:"discovery_fallback"            env:"ETCD_DISCOVERY_FALLBACK"`
-	DiscoverySRV             string  `yaml:"discovery_srv"                 env:"ETCD_DISCOVERY_SRV"`
-	DiscoveryProxy           string  `yaml:"discovery_proxy"               env:"ETCD_DISCOVERY_PROXY"`
-	ElectionTimeout          int     `yaml:"election_timeout"              env:"ETCD_ELECTION_TIMEOUT"`
-	ForceNewCluster          bool    `yaml:"force_new_cluster"             env:"ETCD_FORCE_NEW_CLUSTER"`
+	DiscoveryFallback        string  `yaml:"discovery_fallback"            env:"ETCD_DISCOVERY_FALLBACK"          deprecated:"etcd2 options no longer work for etcd"`
+	DiscoverySRV             string  `yaml:"discovery_srv"                 env:"ETCD_DISCOVERY_SRV"               deprecated:"etcd2 options no longer work for etcd"`
+	DiscoveryProxy           string  `yaml:"discovery_proxy"               env:"ETCD_DISCOVERY_PROXY"             deprecated:"etcd2 options no longer work for etcd"`
+	ElectionTimeout          int     `yaml:"election_timeout"              env:"ETCD_ELECTION_TIMEOUT"            deprecated:"etcd2 options no longer work for etcd"`
+	ForceNewCluster          bool    `yaml:"force_new_cluster"             env:"ETCD_FORCE_NEW_CLUSTER"           deprecated:"etcd2 options no longer work for etcd"`
 	GraphiteHost             string  `yaml:"graphite_host"                 env:"ETCD_GRAPHITE_HOST"`
-	HeartbeatInterval        int     `yaml:"heartbeat_interval"            env:"ETCD_HEARTBEAT_INTERVAL"`
+	HeartbeatInterval        int     `yaml:"heartbeat_interval"            env:"ETCD_HEARTBEAT_INTERVAL"          deprecated:"etcd2 options no longer work for etcd"`
 	HTTPReadTimeout          float64 `yaml:"http_read_timeout"             env:"ETCD_HTTP_READ_TIMEOUT"`
 	HTTPWriteTimeout         float64 `yaml:"http_write_timeout"            env:"ETCD_HTTP_WRITE_TIMEOUT"`
-	InitialAdvertisePeerURLs string  `yaml:"initial_advertise_peer_urls"   env:"ETCD_INITIAL_ADVERTISE_PEER_URLS"`
-	InitialCluster           string  `yaml:"initial_cluster"               env:"ETCD_INITIAL_CLUSTER"`
-	InitialClusterState      string  `yaml:"initial_cluster_state"         env:"ETCD_INITIAL_CLUSTER_STATE"`
-	InitialClusterToken      string  `yaml:"initial_cluster_token"         env:"ETCD_INITIAL_CLUSTER_TOKEN"`
+	InitialAdvertisePeerURLs string  `yaml:"initial_advertise_peer_urls"   env:"ETCD_INITIAL_ADVERTISE_PEER_URLS" deprecated:"etcd2 options no longer work for etcd"`
+	InitialCluster           string  `yaml:"initial_cluster"               env:"ETCD_INITIAL_CLUSTER"             deprecated:"etcd2 options no longer work for etcd"`
+	InitialClusterState      string  `yaml:"initial_cluster_state"         env:"ETCD_INITIAL_CLUSTER_STATE"       deprecated:"etcd2 options no longer work for etcd"`
+	InitialClusterToken      string  `yaml:"initial_cluster_token"         env:"ETCD_INITIAL_CLUSTER_TOKEN"       deprecated:"etcd2 options no longer work for etcd"`
 	KeyFile                  string  `yaml:"key_file"                      env:"ETCD_KEY_FILE"`
-	ListenClientURLs         string  `yaml:"listen_client_urls"            env:"ETCD_LISTEN_CLIENT_URLS"`
-	ListenPeerURLs           string  `yaml:"listen_peer_urls"              env:"ETCD_LISTEN_PEER_URLS"`
+	ListenClientURLs         string  `yaml:"listen_client_urls"            env:"ETCD_LISTEN_CLIENT_URLS"          deprecated:"etcd2 options no longer work for etcd"`
+	ListenPeerURLs           string  `yaml:"listen_peer_urls"              env:"ETCD_LISTEN_PEER_URLS"            deprecated:"etcd2 options no longer work for etcd"`
 	MaxResultBuffer          int     `yaml:"max_result_buffer"             env:"ETCD_MAX_RESULT_BUFFER"`
 	MaxRetryAttempts         int     `yaml:"max_retry_attempts"            env:"ETCD_MAX_RETRY_ATTEMPTS"`
-	MaxSnapshots             int     `yaml:"max_snapshots"                 env:"ETCD_MAX_SNAPSHOTS"`
-	MaxWALs                  int     `yaml:"max_wals"                      env:"ETCD_MAX_WALS"`
+	MaxSnapshots             int     `yaml:"max_snapshots"                 env:"ETCD_MAX_SNAPSHOTS"               deprecated:"etcd2 options no longer work for etcd"`
+	MaxWALs                  int     `yaml:"max_wals"                      env:"ETCD_MAX_WALS"                    deprecated:"etcd2 options no longer work for etcd"`
 	Name                     string  `yaml:"name"                          env:"ETCD_NAME"`
 	PeerAddr                 string  `yaml:"peer_addr"                     env:"ETCD_PEER_ADDR"`
 	PeerBindAddr             string  `yaml:"peer_bind_addr"                env:"ETCD_PEER_BIND_ADDR"`
@@ -56,7 +56,7 @@ type Etcd struct {
 	PeerKeyFile              string  `yaml:"peer_key_file"                 env:"ETCD_PEER_KEY_FILE"`
 	Peers                    string  `yaml:"peers"                         env:"ETCD_PEERS"`
 	PeersFile                string  `yaml:"peers_file"                    env:"ETCD_PEERS_FILE"`
-	Proxy                    string  `yaml:"proxy"                         env:"ETCD_PROXY"`
+	Proxy                    string  `yaml:"proxy"                         env:"ETCD_PROXY"                       deprecated:"etcd2 options no longer work for etcd"`
 	RetryInterval            float64 `yaml:"retry_interval"                env:"ETCD_RETRY_INTERVAL"`
 	Snapshot                 bool    `yaml:"snapshot"                      env:"ETCD_SNAPSHOT"`
 	SnapshotCount            int     `yaml:"snapshot_count"                env:"ETCD_SNAPSHOTCOUNT"`

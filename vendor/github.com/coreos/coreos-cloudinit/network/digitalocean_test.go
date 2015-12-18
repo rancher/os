@@ -52,6 +52,14 @@ func TestParseNameservers(t *testing.T) {
 	}
 }
 
+func mkInvalidMAC() error {
+	if isGo15 {
+		return &net.AddrError{Err: "invalid MAC address", Addr: "bad"}
+	} else {
+		return errors.New("invalid MAC address: bad")
+	}
+}
+
 func TestParseInterface(t *testing.T) {
 	for _, tt := range []struct {
 		cfg      digitalocean.Interface
@@ -64,7 +72,7 @@ func TestParseInterface(t *testing.T) {
 			cfg: digitalocean.Interface{
 				MAC: "bad",
 			},
-			err: errors.New("invalid MAC address: bad"),
+			err: mkInvalidMAC(),
 		},
 		{
 			cfg: digitalocean.Interface{
@@ -250,6 +258,70 @@ func TestParseInterface(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			cfg: digitalocean.Interface{
+				MAC: "01:23:45:67:89:AB",
+				AnchorIPv4: &digitalocean.Address{
+					IPAddress: "bad",
+					Netmask:   "255.255.0.0",
+				},
+			},
+			nss: []net.IP{},
+			err: errors.New("could not parse \"bad\" as anchor IPv4 address"),
+		},
+		{
+			cfg: digitalocean.Interface{
+				MAC: "01:23:45:67:89:AB",
+				AnchorIPv4: &digitalocean.Address{
+					IPAddress: "1.2.3.4",
+					Netmask:   "bad",
+				},
+			},
+			nss: []net.IP{},
+			err: errors.New("could not parse \"bad\" as anchor IPv4 mask"),
+		},
+		{
+			cfg: digitalocean.Interface{
+				MAC: "01:23:45:67:89:AB",
+				IPv4: &digitalocean.Address{
+					IPAddress: "1.2.3.4",
+					Netmask:   "255.255.0.0",
+					Gateway:   "5.6.7.8",
+				},
+				AnchorIPv4: &digitalocean.Address{
+					IPAddress: "7.8.9.10",
+					Netmask:   "255.255.0.0",
+				},
+			},
+			useRoute: true,
+			nss:      []net.IP{},
+			iface: &logicalInterface{
+				hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}),
+				config: configMethodStatic{
+					addresses: []net.IPNet{
+						{
+							IP:   net.ParseIP("1.2.3.4"),
+							Mask: net.IPMask(net.ParseIP("255.255.0.0")),
+						},
+						{
+							IP:   net.ParseIP("7.8.9.10"),
+							Mask: net.IPMask(net.ParseIP("255.255.0.0")),
+						},
+					},
+					nameservers: []net.IP{},
+					routes: []route{
+						{
+							destination: net.IPNet{IP: net.IPv4zero, Mask: net.IPMask(net.IPv4zero)},
+							gateway:     net.ParseIP("5.6.7.8"),
+						},
+						{
+							destination: net.IPNet{IP: net.IPv4zero, Mask: net.IPMask(net.IPv4zero)},
+						},
+					},
+				},
+			},
+		},
 	} {
 		iface, err := parseInterface(tt.cfg, tt.nss, tt.useRoute)
 		if !errorsEqual(tt.err, err) {
@@ -337,13 +409,13 @@ func TestParseInterfaces(t *testing.T) {
 			cfg: digitalocean.Interfaces{
 				Public: []digitalocean.Interface{{MAC: "bad"}},
 			},
-			err: errors.New("invalid MAC address: bad"),
+			err: mkInvalidMAC(),
 		},
 		{
 			cfg: digitalocean.Interfaces{
 				Private: []digitalocean.Interface{{MAC: "bad"}},
 			},
-			err: errors.New("invalid MAC address: bad"),
+			err: mkInvalidMAC(),
 		},
 	} {
 		ifaces, err := parseInterfaces(tt.cfg, tt.nss)
@@ -358,27 +430,37 @@ func TestParseInterfaces(t *testing.T) {
 
 func TestProcessDigitalOceanNetconf(t *testing.T) {
 	for _, tt := range []struct {
-		cfg    string
+		cfg    digitalocean.Metadata
 		ifaces []InterfaceGenerator
 		err    error
 	}{
 		{
-			cfg: ``,
-		},
-		{
-			cfg: `{"dns":{"nameservers":["bad"]}}`,
+			cfg: digitalocean.Metadata{
+				DNS: digitalocean.DNS{
+					Nameservers: []string{"bad"},
+				},
+			},
 			err: errors.New("could not parse \"bad\" as nameserver IP address"),
 		},
 		{
-			cfg: `{"interfaces":{"public":[{"ipv4":{"ip_address":"bad"}}]}}`,
+			cfg: digitalocean.Metadata{
+				Interfaces: digitalocean.Interfaces{
+					Public: []digitalocean.Interface{
+						digitalocean.Interface{
+							IPv4: &digitalocean.Address{
+								IPAddress: "bad",
+							},
+						},
+					},
+				},
+			},
 			err: errors.New("could not parse \"bad\" as IPv4 address"),
 		},
 		{
-			cfg:    `{}`,
 			ifaces: []InterfaceGenerator{},
 		},
 	} {
-		ifaces, err := ProcessDigitalOceanNetconf([]byte(tt.cfg))
+		ifaces, err := ProcessDigitalOceanNetconf(tt.cfg)
 		if !errorsEqual(tt.err, err) {
 			t.Fatalf("bad error (%q): want %q, got %q", tt.cfg, tt.err, err)
 		}

@@ -52,7 +52,7 @@ func TestInterfaceGenerators(t *testing.T) {
 		},
 		{
 			name:    "testname",
-			netdev:  "[NetDev]\nKind=bond\nName=testname\n",
+			netdev:  "[NetDev]\nKind=bond\nName=testname\n\n[Bond]\n",
 			network: "[Match]\nName=testname\n\n[Network]\nBond=testbond1\nVLAN=testvlan1\nVLAN=testvlan2\nDHCP=true\n",
 			kind:    "bond",
 			iface: &bondInterface{logicalInterface: logicalInterface{

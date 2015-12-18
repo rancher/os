@@ -135,6 +135,7 @@ func Apply(cfg config.CloudConfig, ifaces []network.InterfaceGenerator, env *Env
 
 	for _, ccu := range []CloudConfigUnit{
 		system.Etcd{Etcd: cfg.CoreOS.Etcd},
+		system.Etcd2{Etcd2: cfg.CoreOS.Etcd2},
 		system.Fleet{Fleet: cfg.CoreOS.Fleet},
 		system.Locksmith{Locksmith: cfg.CoreOS.Locksmith},
 		system.Update{Update: cfg.CoreOS.Update, ReadConfig: system.DefaultReadConfig},

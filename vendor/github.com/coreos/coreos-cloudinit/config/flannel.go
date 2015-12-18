@@ -23,4 +23,5 @@ type Flannel struct {
 	IPMasq        string `yaml:"ip_masq"        env:"FLANNELD_IP_MASQ"`
 	SubnetFile    string `yaml:"subnet_file"    env:"FLANNELD_SUBNET_FILE"`
 	Iface         string `yaml:"interface"      env:"FLANNELD_IFACE"`
+	PublicIP      string `yaml:"public_ip"      env:"FLANNELD_PUBLIC_IP"`
 }

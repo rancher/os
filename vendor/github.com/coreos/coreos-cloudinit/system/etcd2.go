@@ -12,34 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package initialize
+package system
 
 import (
-	"errors"
-	"log"
-
 	"github.com/coreos/coreos-cloudinit/config"
 )
 
-var (
-	ErrIgnitionConfig = errors.New("not a config (found Ignition)")
-)
+// Etcd2 is a top-level structure which embeds its underlying configuration,
+// config.Etcd2, and provides the system-specific Unit().
+type Etcd2 struct {
+	config.Etcd2
+}
 
-func ParseUserData(contents string) (interface{}, error) {
-	if len(contents) == 0 {
-		return nil, nil
-	}
-
-	switch {
-	case config.IsScript(contents):
-		log.Printf("Parsing user-data as script")
-		return config.NewScript(contents)
-	case config.IsCloudConfig(contents):
-		log.Printf("Parsing user-data as cloud-config")
-		return config.NewCloudConfig(contents)
-	case config.IsIgnitionConfig(contents):
-		return nil, ErrIgnitionConfig
-	default:
-		return nil, errors.New("Unrecognized user-data format")
-	}
+// Units creates a Unit file drop-in for etcd, using any configured options.
+func (ee Etcd2) Units() []Unit {
+	return []Unit{{config.Unit{
+		Name:    "etcd2.service",
+		Runtime: true,
+		DropIns: []config.UnitDropIn{{
+			Name:    "20-cloudinit.conf",
+			Content: serviceContents(ee.Etcd2),
+		}},
+	}}}
 }

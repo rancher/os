@@ -16,6 +16,8 @@ package config
 
 type Fleet struct {
 	AgentTTL                string  `yaml:"agent_ttl"                 env:"FLEET_AGENT_TTL"`
+	AuthorizedKeysFile      string  `yaml:"authorized_keys_file"      env:"FLEET_AUTHORIZED_KEYS_FILE"`
+	DisableEngine           bool    `yaml:"disable_engine"            env:"FLEET_DISABLE_ENGINE"`
 	EngineReconcileInterval float64 `yaml:"engine_reconcile_interval" env:"FLEET_ENGINE_RECONCILE_INTERVAL"`
 	EtcdCAFile              string  `yaml:"etcd_cafile"               env:"FLEET_ETCD_CAFILE"`
 	EtcdCertFile            string  `yaml:"etcd_certfile"             env:"FLEET_ETCD_CERTFILE"`
@@ -25,5 +27,7 @@ type Fleet struct {
 	EtcdServers             string  `yaml:"etcd_servers"              env:"FLEET_ETCD_SERVERS"`
 	Metadata                string  `yaml:"metadata"                  env:"FLEET_METADATA"`
 	PublicIP                string  `yaml:"public_ip"                 env:"FLEET_PUBLIC_IP"`
+	TokenLimit              int     `yaml:"token_limit"               env:"FLEET_TOKEN_LIMIT"`
 	Verbosity               int     `yaml:"verbosity"                 env:"FLEET_VERBOSITY"`
+	VerifyUnits             bool    `yaml:"verify_units"              env:"FLEET_VERIFY_UNITS"`
 }

@@ -15,7 +15,6 @@
 package system
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os/exec"
@@ -59,7 +58,7 @@ func downNetworkInterfaces(interfaces []network.InterfaceGenerator) error {
 		if systemInterface, ok := sysInterfaceMap[iface.Name()]; ok {
 			log.Printf("Taking down interface %q\n", systemInterface.Name)
 			if err := netlink.NetworkLinkDown(systemInterface); err != nil {
-				fmt.Printf("Error while downing interface %q (%s). Continuing...\n", systemInterface.Name, err)
+				log.Printf("Error while downing interface %q (%s). Continuing...\n", systemInterface.Name, err)
 			}
 		}
 	}
