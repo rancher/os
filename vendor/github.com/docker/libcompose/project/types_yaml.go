@@ -19,6 +19,9 @@ func (s Stringorslice) MarshalYAML() (tag string, value interface{}, err error) 
 }
 
 func toStrings(s []interface{}) ([]string, error) {
+	if len(s) == 0 {
+		return nil, nil
+	}
 	r := make([]string, len(s))
 	for k, v := range s {
 		if sv, ok := v.(string); ok {
@@ -81,7 +84,6 @@ func (s Command) MarshalYAML() (tag string, value interface{}, err error) {
 
 // UnmarshalYAML implements the Unmarshaller interface.
 func (s *Command) UnmarshalYAML(tag string, value interface{}) error {
-	var err error
 	switch value := value.(type) {
 	case []interface{}:
 		parts, err := toStrings(value)
@@ -90,11 +92,15 @@ func (s *Command) UnmarshalYAML(tag string, value interface{}) error {
 		}
 		s.parts = parts
 	case string:
-		s.parts, err = shlex.Split(value)
+		parts, err := shlex.Split(value)
+		if err != nil {
+			return err
+		}
+		s.parts = parts
 	default:
 		return fmt.Errorf("Failed to unmarshal Command: %#v", value)
 	}
-	return err
+	return nil
 }
 
 // ToString returns the parts of the command as a string (joined by spaces).
@@ -188,6 +194,9 @@ func (s MaporEqualSlice) MarshalYAML() (tag string, value interface{}, err error
 }
 
 func toSepMapParts(value map[interface{}]interface{}, sep string) ([]string, error) {
+	if len(value) == 0 {
+		return nil, nil
+	}
 	parts := make([]string, 0, len(value))
 	for k, v := range value {
 		if sk, ok := k.(string); ok {
