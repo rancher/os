@@ -1,7 +1,10 @@
 #!/bin/bash -e
 
+NAME="coreos-cloudinit"
 ORG_PATH="github.com/coreos"
-REPO_PATH="${ORG_PATH}/coreos-cloudinit"
+REPO_PATH="${ORG_PATH}/${NAME}"
+VERSION=$(git describe --dirty --tags)
+GLDFLAGS="-X main.version \"${VERSION}\""
 
 if [ ! -h gopath/src/${REPO_PATH} ]; then
 	mkdir -p gopath/src/${ORG_PATH}
@@ -11,4 +14,4 @@ fi
 export GOBIN=${PWD}/bin
 export GOPATH=${PWD}/gopath
 
-go build -o bin/coreos-cloudinit ${REPO_PATH}
+go build -ldflags "${GLDFLAGS}" -o ${GOBIN}/${NAME} ${REPO_PATH}

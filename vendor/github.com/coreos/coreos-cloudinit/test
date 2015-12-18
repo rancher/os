@@ -1,19 +1,8 @@
 #!/bin/bash -e
-#
-# Run all coreos-cloudinit tests
-#   ./test
-#   ./test -v
-#
-# Run tests for one package
-#   PKG=initialize ./test
-#
-
-# Invoke ./cover for HTML output
-COVER=${COVER:-"-cover"}
 
 source ./build
 
-declare -a TESTPKGS=(
+SRC="
 	config
 	config/validate
 	datasource
@@ -26,41 +15,29 @@ declare -a TESTPKGS=(
 	datasource/proc_cmdline
 	datasource/test
 	datasource/url
+	datasource/vmware
 	datasource/waagent
 	initialize
 	network
 	pkg
 	system
-)
+	.
+"
 
-if [ -z "$PKG" ]; then
-	GOFMTPATH="${TESTPKGS[*]} *.go"
-	# prepend repo path to each package
-	TESTPKGS="${TESTPKGS[*]/#/${REPO_PATH}/} ./"
-else
-	GOFMTPATH="$TESTPKGS"
-	# strip out slashes and dots from PKG=./foo/
-	TESTPKGS=${PKG//\//}
-	TESTPKGS=${TESTPKGS//./}
-	TESTPKGS=${TESTPKGS/#/${REPO_PATH}/}
-fi
-
-echo "Running tests..."
-go test -i ${TESTPKGS}
-go test ${COVER} $@ ${TESTPKGS}
+echo "Checking gofix..."
+go tool fix -diff $SRC
 
 echo "Checking gofmt..."
-fmtRes=$(gofmt -l $GOFMTPATH)
-if [ -n "$fmtRes" ]; then
-	echo "$fmtRes"
-	exit 1
-fi
+gofmt -d -e $SRC
+
+# split SRC into an array and prepend REPO_PATH to each local package for go vet
+split_vet=(${SRC// / })
+VET_TEST="${REPO_PATH} ${split_vet[@]/#/${REPO_PATH}/}"
 
 echo "Checking govet..."
-vetRes=$(go vet $TESTPKGS)
-if [ -n "${vetRes}" ]; then
- echo -e "govet checking failed:\n${vetRes}"
- exit 255
-fi
+go vet $VET_TEST
+
+echo "Running tests..."
+go test -timeout 60s -cover $@ ${VET_TEST} --race
 
 echo "Success"

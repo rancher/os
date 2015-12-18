@@ -77,3 +77,10 @@ coreos:
         addr: 203.0.113.29:4001
         peer-addr: 192.0.2.13:7001
 ```
+
+## Bugs
+
+Please use the [CoreOS issue tracker][bugs] to report all bugs, issues, and feature requests.
+
+[bugs]: https://github.com/coreos/bugs/issues/new?labels=component/cloud-init
+

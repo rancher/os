@@ -15,6 +15,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
+	"errors"
 	"reflect"
 	"testing"
 
@@ -86,4 +89,59 @@ func TestMergeConfigs(t *testing.T) {
 			t.Errorf("bad config (%d): want %#v, got %#v", i, tt.out, out)
 		}
 	}
+}
+
+func mustDecode(in string) []byte {
+	out, err := base64.StdEncoding.DecodeString(in)
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+func TestDecompressIfGzip(t *testing.T) {
+	tests := []struct {
+		in []byte
+
+		out []byte
+		err error
+	}{
+		{
+			in: nil,
+
+			out: nil,
+			err: nil,
+		},
+		{
+			in: []byte{},
+
+			out: []byte{},
+			err: nil,
+		},
+		{
+			in: mustDecode("H4sIAJWV/VUAA1NOzskvTdFNzs9Ly0wHABt6mQENAAAA"),
+
+			out: []byte("#cloud-config"),
+			err: nil,
+		},
+		{
+			in: []byte("#cloud-config"),
+
+			out: []byte("#cloud-config"),
+			err: nil,
+		},
+		{
+			in: mustDecode("H4sCORRUPT=="),
+
+			out: nil,
+			err: errors.New("any error"),
+		},
+	}
+	for i, tt := range tests {
+		out, err := decompressIfGzip(tt.in)
+		if !bytes.Equal(out, tt.out) || (tt.err != nil && err == nil) {
+			t.Errorf("bad gzip (%d): want (%s, %#v), got (%s, %#v)", i, string(tt.out), tt.err, string(out), err)
+		}
+	}
+
 }

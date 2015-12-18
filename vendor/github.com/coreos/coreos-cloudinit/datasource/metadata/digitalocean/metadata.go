@@ -38,10 +38,11 @@ type Address struct {
 }
 
 type Interface struct {
-	IPv4 *Address `json:"ipv4"`
-	IPv6 *Address `json:"ipv6"`
-	MAC  string   `json:"mac"`
-	Type string   `json:"type"`
+	IPv4       *Address `json:"ipv4"`
+	IPv6       *Address `json:"ipv6"`
+	AnchorIPv4 *Address `json:"anchor_ipv4"`
+	MAC        string   `json:"mac"`
+	Type       string   `json:"type"`
 }
 
 type Interfaces struct {
@@ -100,7 +101,7 @@ func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	for i, key := range m.PublicKeys {
 		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
-	metadata.NetworkConfig = data
+	metadata.NetworkConfig = m
 
 	return
 }

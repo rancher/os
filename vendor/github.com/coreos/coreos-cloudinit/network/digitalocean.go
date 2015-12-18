@@ -15,7 +15,6 @@
 package network
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -23,26 +22,18 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 )
 
-func ProcessDigitalOceanNetconf(config []byte) ([]InterfaceGenerator, error) {
+func ProcessDigitalOceanNetconf(config digitalocean.Metadata) ([]InterfaceGenerator, error) {
 	log.Println("Processing DigitalOcean network config")
-	if len(config) == 0 {
-		return nil, nil
-	}
-
-	var cfg digitalocean.Metadata
-	if err := json.Unmarshal(config, &cfg); err != nil {
-		return nil, err
-	}
 
 	log.Println("Parsing nameservers")
-	nameservers, err := parseNameservers(cfg.DNS)
+	nameservers, err := parseNameservers(config.DNS)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("Parsed %d nameservers\n", len(nameservers))
 
 	log.Println("Parsing interfaces")
-	generators, err := parseInterfaces(cfg.Interfaces, nameservers)
+	generators, err := parseInterfaces(config.Interfaces, nameservers)
 	if err != nil {
 		return nil, err
 	}
@@ -52,9 +43,9 @@ func ProcessDigitalOceanNetconf(config []byte) ([]InterfaceGenerator, error) {
 	return generators, nil
 }
 
-func parseNameservers(cfg digitalocean.DNS) ([]net.IP, error) {
-	nameservers := make([]net.IP, 0, len(cfg.Nameservers))
-	for _, ns := range cfg.Nameservers {
+func parseNameservers(config digitalocean.DNS) ([]net.IP, error) {
+	nameservers := make([]net.IP, 0, len(config.Nameservers))
+	for _, ns := range config.Nameservers {
 		if ip := net.ParseIP(ns); ip == nil {
 			return nil, fmt.Errorf("could not parse %q as nameserver IP address", ns)
 		} else {
@@ -64,16 +55,16 @@ func parseNameservers(cfg digitalocean.DNS) ([]net.IP, error) {
 	return nameservers, nil
 }
 
-func parseInterfaces(cfg digitalocean.Interfaces, nameservers []net.IP) ([]InterfaceGenerator, error) {
-	generators := make([]InterfaceGenerator, 0, len(cfg.Public)+len(cfg.Private))
-	for _, iface := range cfg.Public {
+func parseInterfaces(config digitalocean.Interfaces, nameservers []net.IP) ([]InterfaceGenerator, error) {
+	generators := make([]InterfaceGenerator, 0, len(config.Public)+len(config.Private))
+	for _, iface := range config.Public {
 		if generator, err := parseInterface(iface, nameservers, true); err == nil {
 			generators = append(generators, &physicalInterface{*generator})
 		} else {
 			return nil, err
 		}
 	}
-	for _, iface := range cfg.Private {
+	for _, iface := range config.Private {
 		if generator, err := parseInterface(iface, []net.IP{}, false); err == nil {
 			generators = append(generators, &physicalInterface{*generator})
 		} else {
@@ -132,6 +123,28 @@ func parseInterface(iface digitalocean.Interface, nameservers []net.IP, useRoute
 					Mask: net.IPMask(net.IPv6zero),
 				},
 				gateway: gateway,
+			})
+		}
+	}
+	if iface.AnchorIPv4 != nil {
+		var ip, mask net.IP
+		if ip = net.ParseIP(iface.AnchorIPv4.IPAddress); ip == nil {
+			return nil, fmt.Errorf("could not parse %q as anchor IPv4 address", iface.AnchorIPv4.IPAddress)
+		}
+		if mask = net.ParseIP(iface.AnchorIPv4.Netmask); mask == nil {
+			return nil, fmt.Errorf("could not parse %q as anchor IPv4 mask", iface.AnchorIPv4.Netmask)
+		}
+		addresses = append(addresses, net.IPNet{
+			IP:   ip,
+			Mask: net.IPMask(mask),
+		})
+
+		if useRoute {
+			routes = append(routes, route{
+				destination: net.IPNet{
+					IP:   net.IPv4zero,
+					Mask: net.IPMask(net.IPv4zero),
+				},
 			})
 		}
 	}

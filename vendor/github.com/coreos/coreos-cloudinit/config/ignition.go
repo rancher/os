@@ -12,27 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package datasource
+package config
 
 import (
-	"net"
+	"encoding/json"
 )
 
-type Datasource interface {
-	IsAvailable() bool
-	AvailabilityChanges() bool
-	ConfigRoot() string
-	FetchMetadata() (Metadata, error)
-	FetchUserdata() ([]byte, error)
-	Type() string
-}
-
-type Metadata struct {
-	PublicIPv4    net.IP
-	PublicIPv6    net.IP
-	PrivateIPv4   net.IP
-	PrivateIPv6   net.IP
-	Hostname      string
-	SSHPublicKeys map[string]string
-	NetworkConfig interface{}
+func IsIgnitionConfig(userdata string) bool {
+	var cfg struct {
+		Version *int `json:"ignitionVersion" yaml:"ignition_version"`
+	}
+	return (json.Unmarshal([]byte(userdata), &cfg) == nil && cfg.Version != nil)
 }
