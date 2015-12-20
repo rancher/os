@@ -34,6 +34,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/file"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata/packet"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/pkg"
@@ -288,6 +289,11 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 				}
 				dss = append(dss, file.NewDatasource(gceCloudConfigFile))
 			}
+		case "packet":
+			if !network {
+				enablePacketNetwork(&cfg.Rancher)
+			}
+			dss = append(dss, packet.NewDatasource("https://metadata.packet.net/"))
 		}
 	}
 
