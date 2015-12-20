@@ -27,7 +27,7 @@ import:
   version: 58b270c338e831ac6668a29788c72d202f9fc251
 
 - package: github.com/docker/libcompose
-  version: 5cad17e57c7c5a2faa180b75c5beb90afc7dde05
+  version: d4939c5f375cfe102e04810cf0db4127cfbb1875
 
 - package: github.com/docker/libcontainer
   version: 83a102cc68a09d890cce3b6c2e5c14c49e6373a0

@@ -1,5 +1,5 @@
 # This file describes the standard way to build libcompose, using docker
-FROM golang:1.5.1
+FROM golang:1.5.2
 
 RUN apt-get update && apt-get install -y \
     iptables \

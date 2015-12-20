@@ -90,11 +90,16 @@ func StringifyValues(data map[interface{}]interface{}) map[interface{}]interface
 }
 
 func (c *CloudConfig) Merge(values map[interface{}]interface{}) (*CloudConfig, error) {
-	t := *c
-	if err := util.Convert(StringifyValues(values), &t); err != nil {
+	d := map[interface{}]interface{}{}
+	if err := util.Convert(c, &d); err != nil {
 		return c, err
 	}
-	return &t, nil
+	r := util.MapsUnion(d, StringifyValues(values))
+	t := &CloudConfig{}
+	if err := util.Convert(r, t); err != nil {
+		return c, err
+	}
+	return t, nil
 }
 
 func Dump(boot, private, full bool) (string, error) {
