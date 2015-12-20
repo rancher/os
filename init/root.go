@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -84,7 +85,7 @@ func copyMoveRoot(rootfs string, rmUsr bool) error {
 	for _, file := range files {
 		filename := path.Join("/", file.Name())
 
-		if filename == rootfs {
+		if filename == rootfs || strings.HasPrefix(rootfs, filename+"/") {
 			log.Debugf("Skipping Deleting %s", filename)
 			continue
 		}
@@ -98,7 +99,23 @@ func copyMoveRoot(rootfs string, rmUsr bool) error {
 	return nil
 }
 
-func switchRoot(rootfs string, rmUsr bool) error {
+func switchRoot(rootfs, subdir string, rmUsr bool) error {
+	if subdir != "" {
+		fullRootfs := path.Join(rootfs, subdir)
+		if _, err := os.Stat(fullRootfs); os.IsNotExist(err) {
+			if err := os.MkdirAll(fullRootfs, 0755); err != nil {
+				log.Errorf("Failed to create directory %s: %v", fullRootfs, err)
+				return err
+			}
+		}
+
+		log.Debugf("Bind mounting mount %s to %s", fullRootfs, rootfs)
+		if err := syscall.Mount(fullRootfs, rootfs, "", syscall.MS_BIND, ""); err != nil {
+			log.Errorf("Failed to bind mount subdir for %s: %v", fullRootfs, err)
+			return err
+		}
+	}
+
 	for _, i := range []string{"/dev", "/sys", "/proc", "/run"} {
 		log.Debugf("Moving mount %s to %s", i, path.Join(rootfs, i))
 		if err := os.MkdirAll(path.Join(rootfs, i), 0755); err != nil {
@@ -113,23 +130,27 @@ func switchRoot(rootfs string, rmUsr bool) error {
 		return err
 	}
 
+	log.Debugf("chdir %s", rootfs)
 	if err := syscall.Chdir(rootfs); err != nil {
 		return err
 	}
 
+	log.Debugf("mount MS_MOVE %s", rootfs)
 	if err := syscall.Mount(rootfs, "/", "", syscall.MS_MOVE, ""); err != nil {
 		return err
 	}
 
+	log.Debug("chroot .")
 	if err := syscall.Chroot("."); err != nil {
 		return err
 	}
 
+	log.Debug("chdir /")
 	if err := syscall.Chdir("/"); err != nil {
 		return err
 	}
 
-	log.Debugf("Successfully moved to new root at %s", rootfs)
+	log.Debugf("Successfully moved to new root at %s", path.Join(rootfs, subdir))
 	os.Unsetenv("DOCKER_RAMDISK")
 
 	return nil
