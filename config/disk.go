@@ -18,7 +18,7 @@ var osConfig *CloudConfig
 
 func NewConfig() *CloudConfig {
 	if osConfig == nil {
-		osConfig, _ = ReadConfig(nil, true, OsConfigFile)
+		osConfig, _ = ReadConfig(nil, true, OsConfigFile, OemConfigFile)
 	}
 	newCfg := *osConfig
 	return &newCfg
@@ -200,7 +200,7 @@ func amendContainerNames(c *CloudConfig) (*CloudConfig, error) {
 	return c, nil
 }
 
-func writeToFile(data interface{}, filename string) error {
+func WriteToFile(data interface{}, filename string) error {
 	content, err := yaml.Marshal(data)
 	if err != nil {
 		return err
@@ -218,12 +218,12 @@ func saveToDisk(data map[interface{}]interface{}) error {
 		"rancher.docker.server_cert",
 	})
 
-	err := writeToFile(config, CloudConfigFile)
+	err := WriteToFile(config, CloudConfigFile)
 	if err != nil {
 		return err
 	}
 
-	return writeToFile(private, CloudConfigPrivateFile)
+	return WriteToFile(private, CloudConfigPrivateFile)
 }
 
 func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map[interface{}]interface{}, error) {

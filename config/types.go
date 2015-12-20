@@ -7,6 +7,7 @@ import (
 )
 
 const (
+	OEM                = "/usr/share/ros/oem"
 	DOCKER_BIN         = "/usr/bin/docker"
 	DOCKER_DIST_BIN    = "/usr/bin/docker.dist"
 	ROS_BIN            = "/usr/bin/ros"
@@ -40,7 +41,8 @@ const (
 )
 
 var (
-	VERSION string
+	OemConfigFile = OEM + "/oem-config.yml"
+	VERSION       string
 )
 
 func init() {
@@ -111,6 +113,8 @@ type StateConfig struct {
 	Required   bool     `yaml:"required,omitempty"`
 	Autoformat []string `yaml:"autoformat,omitempty"`
 	FormatZero bool     `yaml:"formatzero,omitempty"`
+	OemFsType  string   `yaml:"oem_fstype,omitempty"`
+	OemDev     string   `yaml:"oem_dev,omitempty"`
 }
 
 type CloudInit struct {

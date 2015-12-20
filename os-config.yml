@@ -58,6 +58,8 @@ rancher:
   state:
     fstype: auto
     dev: LABEL=RANCHER_STATE
+    oem_fstype: auto
+    oem_dev: LABEL=RANCHER_OEM
   services:
     acpid:
       image: rancher/os-acpid:v0.4.3-dev
@@ -251,7 +253,7 @@ rancher:
       - /lib/firmware:/lib/firmware
       - /lib/modules:/lib/modules
       - /run:/run
-      - /usr/share/ros/os-config.yml:/usr/share/ros/os-config.yml
+      - /usr/share/ros:/usr/share/ros
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/lib/rancher:/var/lib/rancher
       - /var/log:/var/log
