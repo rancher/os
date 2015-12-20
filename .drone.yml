@@ -1,3 +1,6 @@
-image: rancher/dind:v1.9.1-rancher1
-script:
- - ./scripts/ci
+build:
+  image: rancher/dapper:1.9.1
+  volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
+  commands:
+  - dapper -k -O make DEV_BUILD=1 test
