@@ -94,6 +94,19 @@ func addServices(p *project.Project, enabled map[interface{}]interface{}, config
 	return enabled
 }
 
+func adjustContainerNames(m map[interface{}]interface{}) map[interface{}]interface{} {
+	for k, v := range m {
+		if k, ok := k.(string); ok {
+			if v, ok := v.(map[interface{}]interface{}); ok {
+				if _, ok := v["container_name"]; !ok {
+					v["container_name"] = k
+				}
+			}
+		}
+	}
+	return m
+}
+
 func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Project, error) {
 	projectEvents := make(chan project.Event)
 	enabled := map[interface{}]interface{}{}
@@ -135,7 +148,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 				log.Errorf("Failed to parse YAML configuration: %s : %v", service, err)
 				continue
 			}
-			bytes, err = yaml.Marshal(config.StringifyValues(m))
+			bytes, err = yaml.Marshal(adjustContainerNames(config.StringifyValues(m)))
 			if err != nil {
 				log.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
 				continue

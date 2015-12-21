@@ -194,7 +194,6 @@ func amendContainerNames(c *CloudConfig) (*CloudConfig, error) {
 		c.Rancher.Services,
 	} {
 		for k, v := range scm {
-			v.Name = k
 			v.ContainerName = k
 		}
 	}
