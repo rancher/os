@@ -113,6 +113,8 @@ type StateConfig struct {
 	Required   bool     `yaml:"required,omitempty"`
 	Autoformat []string `yaml:"autoformat,omitempty"`
 	FormatZero bool     `yaml:"formatzero,omitempty"`
+	MdadmScan  bool     `yaml:"mdadm_scan,omitempty"`
+	Script     string   `yaml:"script,omitempty"`
 	OemFsType  string   `yaml:"oem_fstype,omitempty"`
 	OemDev     string   `yaml:"oem_dev,omitempty"`
 }
