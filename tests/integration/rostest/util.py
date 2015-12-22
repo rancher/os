@@ -85,3 +85,19 @@ def wait_for_ssh(qemu, ssh_command=['./scripts/ssh', '--qemu'], command=['docker
         print('\nWaiting for ssh and docker... ' + str(i))
         time.sleep(1)
         assert qemu.returncode is None
+
+
+class SSH:
+    def __init__(self, qemu, ssh_command=['./scripts/ssh', '--qemu']):
+        self._qemu = qemu
+        self._ssh_command = ssh_command
+        self._waited = False
+
+    def check_call(self, *args, **kw):
+        if not self._waited:
+            wait_for_ssh(self._qemu, ssh_command=self._ssh_command)
+            self._waited = True
+
+        kw['stderr'] = subprocess.STDOUT
+        kw['universal_newlines'] = True
+        return subprocess.check_call(self._ssh_command + list(args), **kw)

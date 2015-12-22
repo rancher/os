@@ -17,6 +17,7 @@ RUN curl -sSL https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz |
 RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.9.1 > /usr/bin/docker
 RUN chmod +x /usr/bin/docker
 
+ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
 ENV DAPPER_OUTPUT ./bin ./dist
 ENV DAPPER_RUN_ARGS --privileged

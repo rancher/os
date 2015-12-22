@@ -104,6 +104,7 @@ type DockerConfig struct {
 }
 
 type StateConfig struct {
+	Directory  string   `yaml:"directory,omitempty"`
 	FsType     string   `yaml:"fstype,omitempty"`
 	Dev        string   `yaml:"dev,omitempty"`
 	Required   bool     `yaml:"required,omitempty"`

@@ -83,18 +83,17 @@ func MainInit() {
 	}
 }
 
-func mountState(cfg *config.CloudConfig) error {
+func mountConfigured(display, dev, fsType, target string) error {
 	var err error
 
-	if cfg.Rancher.State.Dev == "" {
+	if dev == "" {
 		return nil
 	}
 
-	dev := util.ResolveDevice(cfg.Rancher.State.Dev)
+	dev = util.ResolveDevice(dev)
 	if dev == "" {
-		return fmt.Errorf("Could not resolve device %q", cfg.Rancher.State.Dev)
+		return fmt.Errorf("Could not resolve device %q", dev)
 	}
-	fsType := cfg.Rancher.State.FsType
 	if fsType == "auto" {
 		fsType, err = util.GetFsType(dev)
 	}
@@ -104,8 +103,12 @@ func mountState(cfg *config.CloudConfig) error {
 	}
 
 	log.Debugf("FsType has been set to %s", fsType)
-	log.Infof("Mounting state device %s to %s", dev, STATE)
-	return util.Mount(dev, STATE, fsType, "")
+	log.Infof("Mounting %s device %s to %s", display, dev, target)
+	return util.Mount(dev, target, fsType, "")
+}
+
+func mountState(cfg *config.CloudConfig) error {
+	return mountConfigured("state", cfg.Rancher.State.Dev, cfg.Rancher.State.FsType, STATE)
 }
 
 func tryMountState(cfg *config.CloudConfig) error {
@@ -128,8 +131,9 @@ func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) 
 		return cfg, err
 	}
 
-	log.Debugf("Switching to new root at %s", STATE)
-	return cfg, switchRoot(STATE, cfg.Rancher.RmUsr)
+	log.Debugf("Switching to new root at %s %s", STATE, cfg.Rancher.State.Directory)
+	err := switchRoot(STATE, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr)
+	return cfg, err
 }
 
 func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
