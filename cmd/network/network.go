@@ -73,8 +73,10 @@ func Main() {
 			log.Error(err)
 		}
 	}
-	if _, err := os.Create(NETWORK_DONE); err != nil {
+	if f, err := os.Create(NETWORK_DONE); err != nil {
 		log.Error(err)
+	} else {
+		f.Close()
 	}
 	sendTerm(WAIT_FOR_NETWORK)
 	select {}
