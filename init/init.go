@@ -194,8 +194,12 @@ func RunInit() error {
 	}
 
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
+	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
 
 	log.Info("Launching System Docker")
 	_, err = dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
-	return err
+	if err != nil {
+		return err
+	}
+	return pidOne()
 }

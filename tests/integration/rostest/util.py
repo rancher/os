@@ -84,6 +84,8 @@ def wait_for_ssh(qemu, ssh_command=['./scripts/ssh', '--qemu'], command=['docker
         i += 1
         print('\nWaiting for ssh and docker... ' + str(i))
         time.sleep(1)
+        if i > 60:
+            raise 'Failed to connect to SSH'
         assert qemu.returncode is None
 
 
