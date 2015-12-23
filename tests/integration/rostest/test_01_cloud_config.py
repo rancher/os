@@ -3,6 +3,7 @@ import subprocess
 
 import pytest
 import rostest.util as u
+from rostest.util import SSH
 import yaml
 
 ssh_command = ['./scripts/ssh', '--qemu', '--key', './tests/integration/assets/test.key']
@@ -91,3 +92,12 @@ def test_rancher_network(qemu, cloud_config):
 
     assert v.split(' ')[2] == 'eth1'
     assert v.split(' ')[5] + '/24' == cloud_config['rancher']['network']['interfaces']['eth1']['address']
+
+
+def test_docker_not_pid_one(qemu):
+    SSH(qemu, ssh_command=ssh_command).check_call('bash', '-c', '''
+    set -e -x
+    for i in $(pidof docker); do
+        [ $i != 1 ]
+    done
+    '''.strip())
