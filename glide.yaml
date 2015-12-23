@@ -69,7 +69,7 @@ import:
   version: 1.9.1-2
 
 - package: github.com/rancher/netconf
-  version: 02925e7cf5a0f0bb0aa5360ee260ef7378e5eff8
+  version: 8080e4909627bbdf51d7f427211a7c0517136373
 
 - package: github.com/ryanuber/go-glob
   version: 0067a9abd927e50aed5190662702f81231413ae0
