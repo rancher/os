@@ -111,6 +111,19 @@ func mountState(cfg *config.CloudConfig) error {
 	return mountConfigured("state", cfg.Rancher.State.Dev, cfg.Rancher.State.FsType, STATE)
 }
 
+func mountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+	if cfg == nil {
+		var err error
+		if cfg, err = config.LoadConfig(); err != nil {
+			return cfg, err
+		}
+	}
+	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OEM); err != nil {
+		log.Infof("Not mounting OEM: %v", err)
+	}
+	return cfg, nil
+}
+
 func tryMountState(cfg *config.CloudConfig) error {
 	if mountState(cfg) == nil {
 		return nil
@@ -132,8 +145,10 @@ func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) 
 	}
 
 	log.Debugf("Switching to new root at %s %s", STATE, cfg.Rancher.State.Directory)
-	err := switchRoot(STATE, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr)
-	return cfg, err
+	if err := switchRoot(STATE, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr); err != nil {
+		return cfg, err
+	}
+	return mountOem(cfg)
 }
 
 func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
@@ -162,6 +177,7 @@ func RunInit() error {
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dockerlaunch.PrepareFs(&mountConfig)
 		},
+		mountOem,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg, err := config.LoadConfig()
 			if err != nil {

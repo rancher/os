@@ -100,6 +100,10 @@ func copyMoveRoot(rootfs string, rmUsr bool) error {
 }
 
 func switchRoot(rootfs, subdir string, rmUsr bool) error {
+	if err := syscall.Unmount(config.OEM, 0); err != nil {
+		log.Debugf("Not umounting OEM: %v", err)
+	}
+
 	if subdir != "" {
 		fullRootfs := path.Join(rootfs, subdir)
 		if _, err := os.Stat(fullRootfs); os.IsNotExist(err) {

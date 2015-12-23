@@ -152,7 +152,7 @@ func (c *CloudConfig) Set(key string, value interface{}) (*CloudConfig, error) {
 }
 
 func (c *CloudConfig) Save() error {
-	files := append([]string{OsConfigFile}, CloudConfigDirFiles()...)
+	files := append([]string{OsConfigFile, OemConfigFile}, CloudConfigDirFiles()...)
 	files = util.FilterStrings(files, func(x string) bool { return x != CloudConfigPrivateFile })
 	exCfg, err := ChainCfgFuncs(nil,
 		func(_ *CloudConfig) (*CloudConfig, error) {
