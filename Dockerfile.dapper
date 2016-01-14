@@ -13,7 +13,7 @@ ENV PATH /go/bin:$PATH
 ENV GO15VENDOREXPERIMENT 1
 
 RUN pip install tox
-RUN curl -sSL https://storage.googleapis.com/golang/go1.5.2.linux-amd64.tar.gz | tar -xz -C /usr/local
+RUN curl -sSL https://storage.googleapis.com/golang/go1.5.3.linux-amd64.tar.gz | tar -xz -C /usr/local
 RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.9.1 > /usr/bin/docker
 RUN chmod +x /usr/bin/docker
 
