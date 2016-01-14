@@ -94,3 +94,7 @@ import:
 
 - package: google.golang.org/cloud
   version: c97f5f9979a8582f3ab72873a51979619801248b
+
+- package: github.com/packethost/packngo
+  version: 92012705236896736875186c9e49557897c6af90
+  repo:    https://github.com/ibuildthecloud/packngo.git
