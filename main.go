@@ -57,6 +57,9 @@ func main() {
 	registerCmd("/usr/sbin/wait-for-docker", wait.Main)
 
 	if !reexec.Init() {
-		log.Fatalf("Failed to find an entry point for %s", os.Args[0])
+		reexec.Register(os.Args[0], control.Main)
+		if !reexec.Init() {
+			log.Fatalf("Failed to find an entry point for %s", os.Args[0])
+		}
 	}
 }

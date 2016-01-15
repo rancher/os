@@ -1,9 +1,9 @@
-FROM debian:jessie
+FROM ubuntu:15.10
+
 RUN apt-get update && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential syslinux isolinux xorriso \
-        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-RUN ln -s /usr/bin/genisoimage /usr/bin/mkisofs
+        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates
+
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
 ENV PATH $PATH:/usr/local/go/bin
@@ -14,8 +14,8 @@ ENV GO15VENDOREXPERIMENT 1
 
 RUN pip install tox
 RUN curl -sSL https://storage.googleapis.com/golang/go1.5.3.linux-amd64.tar.gz | tar -xz -C /usr/local
-RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.9.1 > /usr/bin/docker
-RUN chmod +x /usr/bin/docker
+RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.9.1 > /usr/local/bin/docker
+RUN chmod +x /usr/local/bin/docker
 
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
@@ -25,3 +25,33 @@ ENV SHELL /bin/bash
 WORKDIR ${DAPPER_SOURCE}
 
 COPY .dockerignore.docker .dockerignore
+
+RUN cd /usr/local/src && \
+    for i in libselinux pcre3 util-linux; do \
+        apt-get build-dep -y $i && \
+        apt-get source -y $i \
+    ;done
+
+RUN apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
+RUN cd /usr/local/src/pcre3-* && \
+    autoreconf && \
+    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ ./configure --host=arm-linux-gnueabihf --prefix=/usr/arm-linux-gnueabihf && \
+    make -j$(nproc) && \
+    make install
+
+RUN cd /usr/local/src/libselinux-* && \
+    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ make CFLAGS=-Wall && \
+    make PREFIX=/usr/arm-linux-gnueabihf DESTDIR=/usr/arm-linux-gnueabihf install
+
+RUN cd /usr/local/src/util-linux-* && \
+    autoreconf && \
+    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ ./configure --host=arm-linux-gnueabihf --prefix=/usr/arm-linux-gnueabihf \
+        --disable-all-programs \
+        --enable-libmount \
+        --enable-libblkid \
+        --enable-libuuid \
+        --enable-mount && \
+    make -j$(nproc) && \
+    make install
+
+CMD make all

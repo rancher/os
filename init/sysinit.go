@@ -27,7 +27,7 @@ func findImages(cfg *config.CloudConfig) ([]string, error) {
 
 	dir, err := os.Open(config.IMAGES_PATH)
 	if os.IsNotExist(err) {
-		log.Debugf("Not loading images, %s does not exist")
+		log.Debugf("Not loading images, %s does not exist", config.IMAGES_PATH)
 		return result, nil
 	}
 	if err != nil {

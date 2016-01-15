@@ -1,0 +1,4 @@
+---
+available:
+  - rancher/os:v0.4.3_arm
+current: rancher/os:v0.4.3_arm
