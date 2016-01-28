@@ -81,6 +81,7 @@ type RancherConfig struct {
 	Modules             []string                          `yaml:"modules,omitempty"`
 	Network             netconf.NetworkConfig             `yaml:"network,omitempty"`
 	Repositories        Repositories                      `yaml:"repositories,omitempty"`
+	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
 	State               StateConfig                       `yaml:"state,omitempty"`
 	SystemDocker        DockerConfig                      `yaml:"system_docker,omitempty"`
 	Upgrade             UpgradeConfig                     `yaml:"upgrade,omitempty"`
@@ -105,6 +106,10 @@ type DockerConfig struct {
 	Environment    []string `yaml:"environment,omitempty"`
 	StorageContext string   `yaml:"storage_context,omitempty"`
 	Exec           bool     `yaml:"exec,omitempty"`
+}
+
+type SshConfig struct {
+	Keys map[string]string `yaml:"keys,omitempty"`
 }
 
 type StateConfig struct {
