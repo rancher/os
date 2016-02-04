@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
@@ -109,13 +110,23 @@ func mergeMetadata(cc *CloudConfig, md datasource.Metadata) *CloudConfig {
 			out.Hostname = md.Hostname
 		}
 	}
-	for _, key := range md.SSHPublicKeys {
+
+	// Sort SSH keys by key name
+	keys := []string{}
+	for k := range md.SSHPublicKeys {
+		keys = append(keys, k)
+	}
+
+	sort.Sort(sort.StringSlice(keys))
+
+	for _, k := range keys {
 		if !dirty {
 			out = &(*cc)
 			dirty = true
 		}
-		out.SSHAuthorizedKeys = append(out.SSHAuthorizedKeys, key)
+		out.SSHAuthorizedKeys = append(out.SSHAuthorizedKeys, md.SSHPublicKeys[k])
 	}
+
 	return out
 }
 

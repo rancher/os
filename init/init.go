@@ -119,7 +119,9 @@ func mountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		}
 	}
 	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OEM); err != nil {
-		log.Infof("Not mounting OEM: %v", err)
+		log.Debugf("Not mounting OEM: %v", err)
+	} else {
+		log.Infof("Mounted OEM: %s", cfg.Rancher.State.OemDev)
 	}
 	return cfg, nil
 }

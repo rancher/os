@@ -163,6 +163,9 @@ func (c *CloudConfig) Save() error {
 	if err != nil {
 		return err
 	}
+
+	exCfg = mergeMetadata(exCfg, readMetadata())
+
 	exData := map[interface{}]interface{}{}
 	if err := util.Convert(exCfg, &exData); err != nil {
 		return err
