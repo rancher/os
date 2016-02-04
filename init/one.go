@@ -9,7 +9,7 @@ import (
 )
 
 func pidOne() error {
-	c := make(chan os.Signal)
+	c := make(chan os.Signal, 2048)
 	signal.Notify(c, syscall.SIGCHLD)
 
 	for range c {
