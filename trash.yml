@@ -2,13 +2,13 @@ package: github.com/rancher/os
 
 import:
 - package: github.com/Sirupsen/logrus
-  version: v0.8.7
+  version: v0.9.0
 
 - package: github.com/cloudfoundry-incubator/candiedyaml
   version: 55a459c2d9da2b078f0725e5fb324823b2c71702
 
 - package: github.com/codegangsta/cli
-  version: 0302d3914d2a6ad61404584cdae6e6dbc9c03599
+  version: v1.2.0
 
 - package: github.com/coreos/coreos-cloudinit
   version: 65031e1ab2d3574544d26f5b5d7ddddd0032fd00
@@ -21,7 +21,7 @@ import:
   version: 6b16a5714269b2f70720a45406b1babd947a17ef
 
 - package: github.com/docker/distribution
-  version: c6c9194e9c6097f84b0ff468a741086ff7704aa3
+  version: v2.3.0
 
 - package: github.com/docker/docker
   version: 58b270c338e831ac6668a29788c72d202f9fc251
@@ -33,7 +33,7 @@ import:
   version: 83a102cc68a09d890cce3b6c2e5c14c49e6373a0
 
 - package: github.com/docker/libnetwork
-  version: 5305ea570b85d61dd0fd261cd7e1680da1884678
+  version: v0.5.6
 
 - package: github.com/docker/libtrust
   version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
