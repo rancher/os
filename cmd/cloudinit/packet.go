@@ -3,6 +3,8 @@ package cloudinit
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -81,6 +83,10 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 		Rancher: rancherConfig.RancherConfig{
 			Network: netCfg,
 		},
+	}
+
+	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile, 0700)); err != nil {
+		logrus.Errorf("Failed to create directory for file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
 	}
 
 	if err := rancherConfig.WriteToFile(cc, rancherConfig.CloudConfigNetworkFile); err != nil {
