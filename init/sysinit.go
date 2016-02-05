@@ -79,11 +79,11 @@ func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		err = client.LoadImage(dockerClient.LoadImageOptions{
 			InputStream: input,
 		})
-		log.Infof("Done loading images from %s", inputFileName)
-
 		if err != nil {
 			return cfg, err
 		}
+
+		log.Infof("Done loading images from %s", inputFileName)
 	}
 
 	return cfg, nil
