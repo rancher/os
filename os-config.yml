@@ -1,7 +1,7 @@
 rancher:
   bootstrap:
     state-script:
-      image: rancher/os-statescript:v0.4.3-dev
+      image: rancher/os-statescript:v0.4.3-rc1
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -17,7 +17,7 @@ rancher:
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/share/ros:/usr/share/ros:ro
     udev-bootstrap:
-      image: rancher/os-udev:v0.4.3-dev
+      image: rancher/os-udev:v0.4.3-rc1
       environment:
       - BOOTSTRAP=true
       labels:
@@ -33,7 +33,7 @@ rancher:
       - /lib/firmware:/lib/firmware
   autoformat:
     autoformat:
-      image: rancher/os-autoformat:v0.4.3-dev
+      image: rancher/os-autoformat:v0.4.3-rc1
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -41,7 +41,7 @@ rancher:
       net: none
       privileged: true
     udev-autoformat:
-      image: rancher/os-udev:v0.4.3-dev
+      image: rancher/os-udev:v0.4.3-rc1
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -70,7 +70,7 @@ rancher:
         address: 127.0.0.1/8
   repositories:
     core:
-      url: https://raw.githubusercontent.com/rancher/os-services/v0.4.3-dev
+      url: https://raw.githubusercontent.com/rancher/os-services/v0.4.3-rc1
   state:
     fstype: auto
     dev: LABEL=RANCHER_STATE
@@ -78,7 +78,7 @@ rancher:
     oem_dev: LABEL=RANCHER_OEM
   services:
     acpid:
-      image: rancher/os-acpid:v0.4.3-dev
+      image: rancher/os-acpid:v0.4.3-rc1
       labels:
         io.rancher.os.scope: system
       net: host
@@ -88,7 +88,7 @@ rancher:
       - command-volumes
       - system-volumes
     all-volumes:
-      image: rancher/os-state:v0.4.3-dev
+      image: rancher/os-state:v0.4.3-rc1
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -102,7 +102,7 @@ rancher:
       - user-volumes
       - system-volumes
     cloud-init:
-      image: rancher/os-cloudinit:v0.4.3-dev
+      image: rancher/os-cloudinit:v0.4.3-rc1
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.reloadconfig: "true"
@@ -115,7 +115,7 @@ rancher:
       - command-volumes
       - system-volumes
     cloud-init-pre:
-      image: rancher/os-cloudinit:v0.4.3-dev
+      image: rancher/os-cloudinit:v0.4.3-rc1
       environment:
       - CLOUD_INIT_NETWORK=false
       labels:
@@ -130,7 +130,7 @@ rancher:
       - command-volumes
       - system-volumes
     command-volumes:
-      image: rancher/os-state:v0.4.3-dev
+      image: rancher/os-state:v0.4.3-rc1
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -154,7 +154,7 @@ rancher:
       - /usr/bin/ros:/usr/sbin/wait-for-network:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
     console:
-      image: rancher/os-console:v0.4.3-dev
+      image: rancher/os-console:v0.4.3-rc1
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init
@@ -170,7 +170,7 @@ rancher:
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
     container-data-volumes:
-      image: rancher/os-state:v0.4.3-dev
+      image: rancher/os-state:v0.4.3-rc1
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -182,7 +182,7 @@ rancher:
       - /var/lib/docker:/var/lib/docker
       - /var/lib/rkt:/var/lib/rkt
     network:
-      image: rancher/os-network:v0.4.3-dev
+      image: rancher/os-network:v0.4.3-rc1
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init-pre
@@ -194,7 +194,7 @@ rancher:
       - command-volumes
       - system-volumes
     wait-for-network:
-      image: rancher/os-network:v0.4.3-dev
+      image: rancher/os-network:v0.4.3-rc1
       command: wait-for-network
       labels:
         io.rancher.os.detach: "false"
@@ -206,7 +206,7 @@ rancher:
       - command-volumes
       - system-volumes
     ntp:
-      image: rancher/os-ntp:v0.4.3-dev
+      image: rancher/os-ntp:v0.4.3-rc1
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init, wait-for-network
@@ -215,7 +215,7 @@ rancher:
       privileged: true
       restart: always
     preload-system-images:
-      image: rancher/os-preload:v0.4.3-dev
+      image: rancher/os-preload:v0.4.3-rc1
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -227,7 +227,7 @@ rancher:
       - command-volumes
       - system-volumes
     preload-user-images:
-      image: rancher/os-preload:v0.4.3-dev
+      image: rancher/os-preload:v0.4.3-rc1
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -240,7 +240,7 @@ rancher:
       - command-volumes
       - system-volumes
     syslog:
-      image: rancher/os-syslog:v0.4.3-dev
+      image: rancher/os-syslog:v0.4.3-rc1
       labels:
         io.rancher.os.scope: system
       log_driver: json-file
@@ -251,7 +251,7 @@ rancher:
       volumes_from:
       - system-volumes
     system-volumes:
-      image: rancher/os-state:v0.4.3-dev
+      image: rancher/os-state:v0.4.3-rc1
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -275,7 +275,7 @@ rancher:
       - /var/log:/var/log
       - /var/run:/var/run
     udev-cold:
-      image: rancher/os-udev:v0.4.3-dev
+      image: rancher/os-udev:v0.4.3-rc1
       labels:
         io.rancher.os.scope: system
         io.rancher.os.before: udev
@@ -285,7 +285,7 @@ rancher:
       volumes_from:
       - system-volumes
     udev:
-      image: rancher/os-udev:v0.4.3-dev
+      image: rancher/os-udev:v0.4.3-rc1
       environment:
       - DAEMON=true
       labels:
@@ -298,7 +298,7 @@ rancher:
       volumes_from:
       - system-volumes
     user-volumes:
-      image: rancher/os-state:v0.4.3-dev
+      image: rancher/os-state:v0.4.3-rc1
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -310,7 +310,7 @@ rancher:
       - /home:/home
       - /opt:/opt
     docker:
-      image: rancher/os-docker:v0.4.3-dev
+      image: rancher/os-docker:v0.4.3-rc1
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: console
