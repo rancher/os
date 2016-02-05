@@ -1,6 +1,7 @@
 #!/bin/bash
 
-rm -rf $(dirname $0)/build
+cd $(dirname $0)
+rm -rf ./build
 
 export NO_TEST=true
-exec $(dirname $0)/scripts/ci
+dapper ./scripts/ci

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/packethost/packngo/metadata"
