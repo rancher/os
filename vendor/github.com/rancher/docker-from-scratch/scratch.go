@@ -520,8 +520,8 @@ func setupLogging(config *Config) error {
 		return err
 	}
 
-	syscall.Dup2(int(output.Fd()), int(os.Stdout.Fd()))
-	syscall.Dup2(int(output.Fd()), int(os.Stderr.Fd()))
+	syscall.Dup3(int(output.Fd()), int(os.Stdout.Fd()), 0)
+	syscall.Dup3(int(output.Fd()), int(os.Stderr.Fd()), 0)
 
 	return nil
 }

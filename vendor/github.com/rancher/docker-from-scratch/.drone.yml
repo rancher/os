@@ -1,3 +1,6 @@
-image: rancher/dind:v0.5.0
-script:
- - ./scripts/ci
+build:
+  image: rancher/dapper:1.9.1
+  volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
+  commands:
+  - dapper ./scripts/ci
