@@ -107,18 +107,11 @@ func (reg *registry) Scope() distribution.Scope {
 // Repository returns an instance of the repository tied to the registry.
 // Instances should not be shared between goroutines but are cheap to
 // allocate. In general, they should be request scoped.
-func (reg *registry) Repository(ctx context.Context, canonicalName string) (distribution.Repository, error) {
-	if _, err := reference.ParseNamed(canonicalName); err != nil {
-		return nil, distribution.ErrRepositoryNameInvalid{
-			Name:   canonicalName,
-			Reason: err,
-		}
-	}
-
+func (reg *registry) Repository(ctx context.Context, canonicalName reference.Named) (distribution.Repository, error) {
 	var descriptorCache distribution.BlobDescriptorService
 	if reg.blobDescriptorCacheProvider != nil {
 		var err error
-		descriptorCache, err = reg.blobDescriptorCacheProvider.RepositoryScoped(canonicalName)
+		descriptorCache, err = reg.blobDescriptorCacheProvider.RepositoryScoped(canonicalName.Name())
 		if err != nil {
 			return nil, err
 		}
@@ -136,13 +129,22 @@ func (reg *registry) Repository(ctx context.Context, canonicalName string) (dist
 type repository struct {
 	*registry
 	ctx             context.Context
-	name            string
+	name            reference.Named
 	descriptorCache distribution.BlobDescriptorService
 }
 
 // Name returns the name of the repository.
-func (repo *repository) Name() string {
+func (repo *repository) Name() reference.Named {
 	return repo.name
+}
+
+func (repo *repository) Tags(ctx context.Context) distribution.TagService {
+	tags := &tagStore{
+		repository: repo,
+		blobStore:  repo.registry.blobStore,
+	}
+
+	return tags
 }
 
 // Manifests returns an instance of ManifestService. Instantiation is cheap and
@@ -156,39 +158,51 @@ func (repo *repository) Manifests(ctx context.Context, options ...distribution.M
 		blobLinkPath,
 	}
 
+	blobStore := &linkedBlobStore{
+		ctx:           ctx,
+		blobStore:     repo.blobStore,
+		repository:    repo,
+		deleteEnabled: repo.registry.deleteEnabled,
+		blobAccessController: &linkedBlobStatter{
+			blobStore:   repo.blobStore,
+			repository:  repo,
+			linkPathFns: manifestLinkPathFns,
+		},
+
+		// TODO(stevvooe): linkPath limits this blob store to only
+		// manifests. This instance cannot be used for blob checks.
+		linkPathFns: manifestLinkPathFns,
+	}
+
 	ms := &manifestStore{
 		ctx:        ctx,
 		repository: repo,
-		revisionStore: &revisionStore{
+		blobStore:  blobStore,
+		schema1Handler: &signedManifestHandler{
 			ctx:        ctx,
 			repository: repo,
-			blobStore: &linkedBlobStore{
-				ctx:           ctx,
-				blobStore:     repo.blobStore,
-				repository:    repo,
-				deleteEnabled: repo.registry.deleteEnabled,
-				blobAccessController: &linkedBlobStatter{
-					blobStore:   repo.blobStore,
-					repository:  repo,
-					linkPathFns: manifestLinkPathFns,
-				},
-
-				// TODO(stevvooe): linkPath limits this blob store to only
-				// manifests. This instance cannot be used for blob checks.
-				linkPathFns:            manifestLinkPathFns,
-				resumableDigestEnabled: repo.resumableDigestEnabled,
+			blobStore:  blobStore,
+			signatures: &signatureStore{
+				ctx:        ctx,
+				repository: repo,
+				blobStore:  repo.blobStore,
 			},
 		},
-		tagStore: &tagStore{
+		schema2Handler: &schema2ManifestHandler{
 			ctx:        ctx,
 			repository: repo,
-			blobStore:  repo.registry.blobStore,
+			blobStore:  blobStore,
+		},
+		manifestListHandler: &manifestListHandler{
+			ctx:        ctx,
+			repository: repo,
+			blobStore:  blobStore,
 		},
 	}
 
 	// Apply options
 	for _, option := range options {
-		err := option(ms)
+		err := option.Apply(ms)
 		if err != nil {
 			return nil, err
 		}
@@ -212,6 +226,7 @@ func (repo *repository) Blobs(ctx context.Context) distribution.BlobStore {
 	}
 
 	return &linkedBlobStore{
+		registry:             repo.registry,
 		blobStore:            repo.blobStore,
 		blobServer:           repo.blobServer,
 		blobAccessController: statter,
@@ -223,13 +238,5 @@ func (repo *repository) Blobs(ctx context.Context) distribution.BlobStore {
 		linkPathFns:            []linkPathFunc{blobLinkPath},
 		deleteEnabled:          repo.registry.deleteEnabled,
 		resumableDigestEnabled: repo.resumableDigestEnabled,
-	}
-}
-
-func (repo *repository) Signatures() distribution.SignatureService {
-	return &signatureStore{
-		repository: repo,
-		blobStore:  repo.blobStore,
-		ctx:        repo.ctx,
 	}
 }

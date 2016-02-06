@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -86,7 +87,7 @@ func createController() error {
 func createTestNetwork(networkType, networkName string, netOption options.Generic, ipamV4Configs, ipamV6Configs []*libnetwork.IpamConf) (libnetwork.Network, error) {
 	return controller.NewNetwork(networkType, networkName,
 		libnetwork.NetworkOptionGeneric(netOption),
-		libnetwork.NetworkOptionIpam(ipamapi.DefaultIPAM, "", ipamV4Configs, ipamV6Configs))
+		libnetwork.NetworkOptionIpam(ipamapi.DefaultIPAM, "", ipamV4Configs, ipamV6Configs, nil))
 }
 
 func getEmptyGenericOption() map[string]interface{} {
@@ -134,7 +135,7 @@ func TestNull(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ep.Delete(); err != nil {
+	if err := ep.Delete(false); err != nil {
 		t.Fatal(err)
 	}
 
@@ -212,11 +213,11 @@ func TestHost(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ep1.Delete(); err != nil {
+	if err := ep1.Delete(false); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := ep2.Delete(); err != nil {
+	if err := ep2.Delete(false); err != nil {
 		t.Fatal(err)
 	}
 
@@ -248,7 +249,7 @@ func TestHost(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := ep3.Delete(); err != nil {
+	if err := ep3.Delete(false); err != nil {
 		t.Fatal(err)
 	}
 
@@ -304,7 +305,60 @@ func TestBridge(t *testing.T) {
 		t.Fatalf("Incomplete data for port mapping in endpoint operational data: %d", len(pm))
 	}
 
-	if err := ep.Delete(); err != nil {
+	if err := ep.Delete(false); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := network.Delete(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+// Testing IPV6 from MAC address
+func TestBridgeIpv6FromMac(t *testing.T) {
+	if !testutils.IsRunningInContainer() {
+		defer testutils.SetupTestOSContext(t)()
+	}
+
+	netOption := options.Generic{
+		netlabel.GenericData: options.Generic{
+			"BridgeName":         "testipv6mac",
+			"EnableIPv6":         true,
+			"EnableICC":          true,
+			"EnableIPMasquerade": true,
+		},
+	}
+	ipamV4ConfList := []*libnetwork.IpamConf{&libnetwork.IpamConf{PreferredPool: "192.168.100.0/24", Gateway: "192.168.100.1"}}
+	ipamV6ConfList := []*libnetwork.IpamConf{&libnetwork.IpamConf{PreferredPool: "fe90::/64", Gateway: "fe90::22"}}
+
+	network, err := controller.NewNetwork(bridgeNetType, "testipv6mac",
+		libnetwork.NetworkOptionGeneric(netOption),
+		libnetwork.NetworkOptionIpam(ipamapi.DefaultIPAM, "", ipamV4ConfList, ipamV6ConfList, nil),
+		libnetwork.NetworkOptionDeferIPv6Alloc(true))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mac := net.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
+	epOption := options.Generic{netlabel.MacAddress: mac}
+
+	ep, err := network.CreateEndpoint("testep", libnetwork.EndpointOptionGeneric(epOption))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	iface := ep.Info().Iface()
+	if !bytes.Equal(iface.MacAddress(), mac) {
+		t.Fatalf("Unexpected mac address: %v", iface.MacAddress())
+	}
+
+	ip, expIP, _ := net.ParseCIDR("fe90::aabb:ccdd:eeff/64")
+	expIP.IP = ip
+	if !types.CompareIPNet(expIP, iface.AddressIPv6()) {
+		t.Fatalf("Expected %v. Got: %v", expIP, iface.AddressIPv6())
+	}
+
+	if err := ep.Delete(false); err != nil {
 		t.Fatal(err)
 	}
 
@@ -460,7 +514,7 @@ func TestDeleteNetworkWithActiveEndpoints(t *testing.T) {
 	}
 
 	// Done testing. Now cleanup.
-	if err := ep.Delete(); err != nil {
+	if err := ep.Delete(false); err != nil {
 		t.Fatal(err)
 	}
 
@@ -532,7 +586,7 @@ func TestUnknownEndpoint(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	err = ep.Delete()
+	err = ep.Delete(false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -570,7 +624,7 @@ func TestNetworkEndpointsWalkers(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep11.Delete(); err != nil {
+		if err := ep11.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -580,7 +634,7 @@ func TestNetworkEndpointsWalkers(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep12.Delete(); err != nil {
+		if err := ep12.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -698,7 +752,7 @@ func TestDuplicateEndpoint(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep.Delete(); err != nil {
+		if err := ep.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -707,7 +761,7 @@ func TestDuplicateEndpoint(t *testing.T) {
 	defer func() {
 		// Cleanup ep2 as well, else network cleanup might fail for failure cases
 		if ep2 != nil {
-			if err := ep2.Delete(); err != nil {
+			if err := ep2.Delete(false); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -850,7 +904,7 @@ func TestNetworkQuery(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep11.Delete(); err != nil {
+		if err := ep11.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -860,7 +914,7 @@ func TestNetworkQuery(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep12.Delete(); err != nil {
+		if err := ep12.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -951,11 +1005,19 @@ func TestEndpointJoin(t *testing.T) {
 	}
 
 	// Create network 1 and add 2 endpoint: ep11, ep12
-	n1, err := createTestNetwork(bridgeNetType, "testnetwork1", options.Generic{
+	netOption := options.Generic{
 		netlabel.GenericData: options.Generic{
-			"BridgeName": "testnetwork1",
+			"BridgeName":         "testnetwork1",
+			"EnableIPv6":         true,
+			"EnableICC":          true,
+			"EnableIPMasquerade": true,
 		},
-	}, nil, nil)
+	}
+	ipamV6ConfList := []*libnetwork.IpamConf{&libnetwork.IpamConf{PreferredPool: "fe90::/64", Gateway: "fe90::22"}}
+	n1, err := controller.NewNetwork(bridgeNetType, "testnetwork1",
+		libnetwork.NetworkOptionGeneric(netOption),
+		libnetwork.NetworkOptionIpam(ipamapi.DefaultIPAM, "", nil, ipamV6ConfList, nil),
+		libnetwork.NetworkOptionDeferIPv6Alloc(true))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -970,7 +1032,7 @@ func TestEndpointJoin(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep1.Delete(); err != nil {
+		if err := ep1.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -981,9 +1043,15 @@ func TestEndpointJoin(t *testing.T) {
 	if iface.Address() != nil && iface.Address().IP.To4() == nil {
 		t.Fatalf("Invalid IP address returned: %v", iface.Address())
 	}
+	if iface.AddressIPv6() != nil && iface.AddressIPv6().IP == nil {
+		t.Fatalf("Invalid IPv6 address returned: %v", iface.Address())
+	}
 
-	if info.Gateway().To4() != nil {
+	if len(info.Gateway()) != 0 {
 		t.Fatalf("Expected empty gateway for an empty endpoint. Instead found a gateway: %v", info.Gateway())
+	}
+	if len(info.GatewayIPv6()) != 0 {
+		t.Fatalf("Expected empty gateway for an empty ipv6 endpoint. Instead found a gateway: %v", info.GatewayIPv6())
 	}
 
 	if info.Sandbox() != nil {
@@ -1036,8 +1104,11 @@ func TestEndpointJoin(t *testing.T) {
 
 	// Validate if ep.Info() only gives valid gateway and sandbox key after has container has joined.
 	info = ep1.Info()
-	if info.Gateway().To4() == nil {
+	if len(info.Gateway()) == 0 {
 		t.Fatalf("Expected a valid gateway for a joined endpoint. Instead found an invalid gateway: %v", info.Gateway())
+	}
+	if len(info.GatewayIPv6()) == 0 {
+		t.Fatalf("Expected a valid ipv6 gateway for a joined endpoint. Instead found an invalid gateway: %v", info.GatewayIPv6())
 	}
 
 	if info.Sandbox() == nil {
@@ -1079,7 +1150,7 @@ func TestEndpointJoin(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep2.Delete(); err != nil {
+		if err := ep2.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -1142,6 +1213,14 @@ func (f *fakeSandbox) SetKey(key string) error {
 	return nil
 }
 
+func (f *fakeSandbox) ResolveName(name string) net.IP {
+	return nil
+}
+
+func (f *fakeSandbox) ResolveIP(ip string) string {
+	return ""
+}
+
 func TestExternalKey(t *testing.T) {
 	externalKeyTest(t, false)
 }
@@ -1174,7 +1253,7 @@ func externalKeyTest(t *testing.T, reexec bool) {
 		t.Fatal(err)
 	}
 	defer func() {
-		err = ep.Delete()
+		err = ep.Delete(false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1185,7 +1264,7 @@ func externalKeyTest(t *testing.T, reexec bool) {
 		t.Fatal(err)
 	}
 	defer func() {
-		err = ep2.Delete()
+		err = ep2.Delete(false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1323,7 +1402,7 @@ func TestEndpointDeleteWithActiveContainer(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		err = ep.Delete()
+		err = ep.Delete(false)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -1352,7 +1431,7 @@ func TestEndpointDeleteWithActiveContainer(t *testing.T) {
 		}
 	}()
 
-	err = ep.Delete()
+	err = ep.Delete(false)
 	if err == nil {
 		t.Fatal("Expected to fail. But instead succeeded")
 	}
@@ -1386,7 +1465,7 @@ func TestEndpointMultipleJoins(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep.Delete(); err != nil {
+		if err := ep.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -1510,7 +1589,7 @@ func TestontainerInvalidLeave(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := ep.Delete(); err != nil {
+		if err := ep.Delete(false); err != nil {
 			t.Fatal(err)
 		}
 	}()
@@ -1627,6 +1706,7 @@ func TestEnableIPv6(t *testing.T) {
 	}
 
 	tmpResolvConf := []byte("search pommesfrites.fr\nnameserver 12.34.56.78\nnameserver 2001:4860:4860::8888\n")
+	expectedResolvConf := []byte("search pommesfrites.fr\nnameserver 127.0.0.11\noptions ndots:0\n")
 	//take a copy of resolv.conf for restoring after test completes
 	resolvConfSystem, err := ioutil.ReadFile("/etc/resolv.conf")
 	if err != nil {
@@ -1645,7 +1725,7 @@ func TestEnableIPv6(t *testing.T) {
 			"BridgeName": "testnetwork",
 		},
 	}
-	ipamV6ConfList := []*libnetwork.IpamConf{&libnetwork.IpamConf{PreferredPool: "fe80::/64"}}
+	ipamV6ConfList := []*libnetwork.IpamConf{&libnetwork.IpamConf{PreferredPool: "fe99::/64", Gateway: "fe99::9"}}
 
 	n, err := createTestNetwork("bridge", "testnetwork", netOption, nil, ipamV6ConfList)
 	if err != nil {
@@ -1689,8 +1769,8 @@ func TestEnableIPv6(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(content, tmpResolvConf) {
-		t.Fatalf("Expected:\n%s\nGot:\n%s", string(tmpResolvConf), string(content))
+	if !bytes.Equal(content, expectedResolvConf) {
+		t.Fatalf("Expected:\n%s\nGot:\n%s", string(expectedResolvConf), string(content))
 	}
 
 	if err != nil {
@@ -1722,7 +1802,7 @@ func TestResolvConfHost(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ep1, err := n.CreateEndpoint("ep1", nil)
+	ep1, err := n.CreateEndpoint("ep1", libnetwork.CreateOptionDisableResolution())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1783,9 +1863,8 @@ func TestResolvConf(t *testing.T) {
 	}
 
 	tmpResolvConf1 := []byte("search pommesfrites.fr\nnameserver 12.34.56.78\nnameserver 2001:4860:4860::8888\n")
-	expectedResolvConf1 := []byte("search pommesfrites.fr\nnameserver 12.34.56.78\n")
 	tmpResolvConf2 := []byte("search pommesfrites.fr\nnameserver 112.34.56.78\nnameserver 2001:4860:4860::8888\n")
-	expectedResolvConf2 := []byte("search pommesfrites.fr\nnameserver 112.34.56.78\n")
+	expectedResolvConf1 := []byte("search pommesfrites.fr\nnameserver 127.0.0.11\noptions ndots:0\n")
 	tmpResolvConf3 := []byte("search pommesfrites.fr\nnameserver 113.34.56.78\n")
 
 	//take a copy of resolv.conf for restoring after test completes
@@ -1894,8 +1973,8 @@ func TestResolvConf(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(content, expectedResolvConf2) {
-		t.Fatalf("Expected:\n%s\nGot:\n%s", string(expectedResolvConf2), string(content))
+	if !bytes.Equal(content, expectedResolvConf1) {
+		t.Fatalf("Expected:\n%s\nGot:\n%s", string(expectedResolvConf1), string(content))
 	}
 
 	if err := ioutil.WriteFile(resolvConfPath, tmpResolvConf3, 0644); err != nil {
@@ -2255,7 +2334,7 @@ func runParallelTests(t *testing.T, thrNumber int) {
 			t.Fatal(err)
 		}
 	} else {
-		err = ep.Delete()
+		err = ep.Delete(false)
 		if err != nil {
 			t.Fatal(err)
 		}

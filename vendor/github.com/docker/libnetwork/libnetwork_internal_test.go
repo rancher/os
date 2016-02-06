@@ -34,6 +34,30 @@ func TestDriverRegistration(t *testing.T) {
 	}
 }
 
+func TestIpamDriverRegistration(t *testing.T) {
+	c, err := New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Stop()
+
+	err = c.(*controller).RegisterIpamDriver("", nil)
+	if err == nil {
+		t.Fatalf("Expected failure, but suceeded")
+	}
+	if _, ok := err.(types.BadRequestError); !ok {
+		t.Fatalf("Failed for unexpected reason: %v", err)
+	}
+
+	err = c.(*controller).RegisterIpamDriver(ipamapi.DefaultIPAM, nil)
+	if err == nil {
+		t.Fatalf("Expected failure, but suceeded")
+	}
+	if _, ok := err.(types.ForbiddenError); !ok {
+		t.Fatalf("Failed for unexpected reason: %v", err)
+	}
+}
+
 func TestNetworkMarshalling(t *testing.T) {
 	n := &network{
 		name:        "Miao",
@@ -43,20 +67,19 @@ func TestNetworkMarshalling(t *testing.T) {
 		networkType: "bridge",
 		enableIPv6:  true,
 		persist:     true,
+		ipamOptions: map[string]string{
+			netlabel.MacAddress: "a:b:c:d:e:f",
+		},
 		ipamV4Config: []*IpamConf{
 			&IpamConf{
 				PreferredPool: "10.2.0.0/16",
 				SubPool:       "10.2.0.0/24",
-				Options: map[string]string{
-					netlabel.MacAddress: "a:b:c:d:e:f",
-				},
-				Gateway:      "",
-				AuxAddresses: nil,
+				Gateway:       "",
+				AuxAddresses:  nil,
 			},
 			&IpamConf{
 				PreferredPool: "10.2.0.0/16",
 				SubPool:       "10.2.1.0/24",
-				Options:       nil,
 				Gateway:       "10.2.1.254",
 			},
 		},
@@ -241,7 +264,6 @@ func compareIpamConfList(listA, listB []*IpamConf) bool {
 		b = listB[i]
 		if a.PreferredPool != b.PreferredPool ||
 			a.SubPool != b.SubPool ||
-			!compareStringMaps(a.Options, b.Options) ||
 			a.Gateway != b.Gateway || !compareStringMaps(a.AuxAddresses, b.AuxAddresses) {
 			return false
 		}
@@ -350,7 +372,7 @@ func TestIpamReleaseOnNetDriverFailures(t *testing.T) {
 
 	// Test whether ipam state release is invoked  on network create failure from net driver
 	// by checking whether subsequent network creation requesting same gateway IP succeeds
-	ipamOpt := NetworkOptionIpam(ipamapi.DefaultIPAM, "", []*IpamConf{&IpamConf{PreferredPool: "10.34.0.0/16", Gateway: "10.34.255.254"}}, nil)
+	ipamOpt := NetworkOptionIpam(ipamapi.DefaultIPAM, "", []*IpamConf{&IpamConf{PreferredPool: "10.34.0.0/16", Gateway: "10.34.255.254"}}, nil, nil)
 	if _, err := c.NewNetwork(badDriverName, "badnet1", ipamOpt); err == nil {
 		t.Fatalf("bad network driver should have failed network creation")
 	}
@@ -374,7 +396,7 @@ func TestIpamReleaseOnNetDriverFailures(t *testing.T) {
 	}
 
 	// Now create good bridge network with different gateway
-	ipamOpt2 := NetworkOptionIpam(ipamapi.DefaultIPAM, "", []*IpamConf{&IpamConf{PreferredPool: "10.34.0.0/16", Gateway: "10.34.255.253"}}, nil)
+	ipamOpt2 := NetworkOptionIpam(ipamapi.DefaultIPAM, "", []*IpamConf{&IpamConf{PreferredPool: "10.34.0.0/16", Gateway: "10.34.255.253"}}, nil, nil)
 	gnw, err = c.NewNetwork("bridge", "goodnet2", ipamOpt2)
 	if err != nil {
 		t.Fatal(err)
@@ -385,7 +407,7 @@ func TestIpamReleaseOnNetDriverFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer ep.Delete()
+	defer ep.Delete(false)
 
 	expectedIP, _ := types.ParseCIDR("10.34.0.1/16")
 	if !types.CompareIPNet(ep.Info().Iface().Address(), expectedIP) {
