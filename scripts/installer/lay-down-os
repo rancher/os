@@ -50,7 +50,7 @@ mount_device()
 
     mkdir -p ${BASE_DIR}
 
-    if [ "$(lsblk -o name|grep RANCHER_BOOT | wc -l)" -eq "1" ]; then
+    if [ "$(lsblk -o label|grep RANCHER_BOOT | wc -l)" -gt "0" ]; then
         label=RANCHER_BOOT
     fi
     
