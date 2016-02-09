@@ -3,6 +3,8 @@ package cloudinit
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"path"
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -40,7 +42,7 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 	bondCfg := netconf.InterfaceConfig{
 		Addresses: []string{},
 		BondOpts: map[string]string{
-			"lacp-rate":        "1",
+			"lacp_rate":        "1",
 			"xmit_hash_policy": "layer3+4",
 			"downdelay":        "200",
 			"updelay":          "200",
@@ -81,6 +83,10 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 		Rancher: rancherConfig.RancherConfig{
 			Network: netCfg,
 		},
+	}
+
+	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile), 0700); err != nil {
+		logrus.Errorf("Failed to create directory for file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
 	}
 
 	if err := rancherConfig.WriteToFile(cc, rancherConfig.CloudConfigNetworkFile); err != nil {

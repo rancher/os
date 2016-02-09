@@ -44,6 +44,7 @@ var (
 
 type Config struct {
 	Fork            bool
+	PidOne          bool
 	CommandName     string
 	DnsConfig       netconf.DnsConfig
 	BridgeName      string
@@ -190,6 +191,12 @@ func execDocker(config *Config, docker, cmd string, args []string) (*exec.Cmd, e
 		}
 		cmd.Env = env
 		err := cmd.Start()
+		if err != nil {
+			return cmd, err
+		}
+		if config.PidOne {
+			PidOne()
+		}
 		return cmd, err
 	} else {
 		err := syscall.Exec(expand(docker), append([]string{cmd}, args...), env)
@@ -273,7 +280,7 @@ func setupNetworking(config *Config) error {
 		return nil
 	}
 
-	hostname, err := os.Hostname();
+	hostname, err := os.Hostname()
 	if err != nil {
 		return err
 	}
@@ -299,7 +306,7 @@ ff02::2    ip6-allrouters
 				config.BridgeName: {
 					Address: config.BridgeAddress,
 					MTU:     config.BridgeMtu,
-					Bridge:  true,
+					Bridge:  "true",
 				},
 			},
 		}); err != nil {
@@ -577,6 +584,11 @@ func Main() {
 
 	var config Config
 	args = ParseConfig(&config, args...)
+
+	if os.Getenv("DOCKER_LAUNCH_REAP") == "true" {
+		config.Fork = true
+		config.PidOne = true
+	}
 
 	log.Debugf("Launch config %#v", config)
 

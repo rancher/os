@@ -19,7 +19,7 @@ import:
   version: 4f4d2c8983a18e2c9c63a3f339bc9a998c4557bc
 
 - package: github.com/rancher/netconf
-  version: 02925e7cf5a0f0bb0aa5360ee260ef7378e5eff8
+  version: bf95fd720be9de4f7aa3a4a529b70f2865dd0fc7
 
 - package: github.com/ryanuber/go-glob
   version: 0067a9abd927e50aed5190662702f81231413ae0
@@ -32,3 +32,6 @@ import:
 
 - package: github.com/vishvananda/netlink
   version: edcd99c0881a4de0fdb3818af6b24f4ee6948464
+
+- package: github.com/flynn/go-shlex
+  version: 3f9db97f856818214da2e1057f8ad84803971cff

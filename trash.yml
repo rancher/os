@@ -66,10 +66,10 @@ import:
   version: 1349b37bd56f4f5ce2690b5b2c0f53f88a261c67
 
 - package: github.com/rancher/docker-from-scratch
-  version: 1.10.0
+  version: v1.10.0-1
 
 - package: github.com/rancher/netconf
-  version: 8080e4909627bbdf51d7f427211a7c0517136373
+  version: d7d620ef4ea62a9d04b51c7b3d9dc83fe7ffaa1b
 
 - package: github.com/ryanuber/go-glob
   version: 0067a9abd927e50aed5190662702f81231413ae0

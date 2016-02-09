@@ -17,25 +17,20 @@ const (
 )
 
 type Bonding struct {
-	err  error
 	name string
 }
 
-func (b *Bonding) Error() error {
-	return b.err
-}
-
-func (b *Bonding) init() {
+func (b *Bonding) init() error {
 	_, err := os.Stat(bondingMasters)
 	if os.IsNotExist(err) {
 		logrus.Info("Loading bonding kernel module")
 		cmd := exec.Command("modprobe", "bonding")
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdin
-		b.err = cmd.Run()
-		if b.err != nil {
+		err = cmd.Run()
+		if err != nil {
 			for i := 0; i < 30; i++ {
-				if _, err := os.Stat(bondingMasters); err == nil {
+				if _, err = os.Stat(bondingMasters); err == nil {
 					break
 				}
 				time.Sleep(100 * time.Millisecond)
@@ -43,9 +38,7 @@ func (b *Bonding) init() {
 		}
 	}
 	_, err = os.Stat(bondingMasters)
-	if err != nil {
-		b.err = err
-	}
+	return err
 }
 
 func contains(file, word string) (bool, error) {
@@ -63,67 +56,88 @@ func contains(file, word string) (bool, error) {
 	return false, nil
 }
 
-func (b *Bonding) AddSlave(slave string) {
-	if b.err != nil {
-		return
-	}
-
-	if ok, err := contains(base+b.name+"/bonding/slaves", slave); err != nil {
-		b.err = err
-		return
-	} else if ok {
-		return
-	}
-
-	link, err := netlink.LinkByName(slave)
+func (b *Bonding) linkDown() error {
+	link, err := netlink.LinkByName(b.name)
 	if err != nil {
-		b.err = err
-		return
+		return err
 	}
 
-	b.err = netlink.LinkSetDown(link)
-	if b.err != nil {
-		return
+	return netlink.LinkSetDown(link)
+}
+
+func (b *Bonding) ListSlaves() ([]string, error) {
+	file := base + b.name + "/bonding/slaves"
+	words, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []string{}
+	for _, s := range strings.Split(strings.TrimSpace(string(words)), " ") {
+		if s != "" {
+			result = append(result, s)
+		}
+	}
+	return result, nil
+}
+
+func (b *Bonding) RemoveSlave(slave string) error {
+	if ok, err := contains(base+b.name+"/bonding/slaves", slave); err != nil {
+		return err
+	} else if !ok {
+		return nil
+	}
+
+	p := base + b.name + "/bonding/slaves"
+	logrus.Infof("Removing slave %s from master %s", slave, b.name)
+	return ioutil.WriteFile(p, []byte("-"+slave), 0644)
+}
+
+func (b *Bonding) AddSlave(slave string) error {
+	if ok, err := contains(base+b.name+"/bonding/slaves", slave); err != nil {
+		return err
+	} else if ok {
+		return nil
 	}
 
 	p := base + b.name + "/bonding/slaves"
 	logrus.Infof("Adding slave %s to master %s", slave, b.name)
-	b.err = ioutil.WriteFile(p, []byte("+"+slave), 0644)
+	return ioutil.WriteFile(p, []byte("+"+slave), 0644)
 }
 
-func (b *Bonding) Opt(key, value string) {
-	if b.err != nil {
-		return
+func (b *Bonding) Opt(key, value string) error {
+	if key == "mode" {
+		// Don't care about errors here
+		b.linkDown()
+		slaves, _ := b.ListSlaves()
+		for _, slave := range slaves {
+			b.RemoveSlave(slave)
+		}
 	}
 
 	p := base + b.name + "/bonding/" + key
-	b.err = ioutil.WriteFile(p, []byte(value), 0644)
-	if b.err != nil {
-		logrus.Errorf("Failed to set %s=%s on %s", key, value, b.name)
+	if err := ioutil.WriteFile(p, []byte(value), 0644); err != nil {
+		logrus.Errorf("Failed to set %s=%s on %s: %v", key, value, b.name, err)
+		return err
 	} else {
 		logrus.Infof("Set %s=%s on %s", key, value, b.name)
 	}
+
+	return nil
 }
 
-func (b *Bonding) Clear() {
-	b.err = nil
-}
-
-func Bond(name string) *Bonding {
+func Bond(name string) (*Bonding, error) {
 	b := &Bonding{name: name}
-	b.init()
-	if b.err != nil {
-		return b
+	if err := b.init(); err != nil {
+		return nil, err
 	}
 
 	if ok, err := contains(bondingMasters, name); err != nil {
-		b.err = err
-		return b
+		return nil, err
 	} else if ok {
-		return b
+		return b, nil
 	}
 
 	logrus.Infof("Creating bond %s", name)
-	b.err = ioutil.WriteFile(bondingMasters, []byte("+"+name), 0644)
-	return b
+	return b, ioutil.WriteFile(bondingMasters, []byte("+"+name), 0644)
 }

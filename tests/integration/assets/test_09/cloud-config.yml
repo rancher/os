@@ -1,0 +1,25 @@
+#cloud-config
+rancher:
+  network:
+    interfaces:
+      eth0:
+        address: 10.0.2.15/24
+        gateway: 10.0.2.2
+      br0:
+        vlans: 100
+      eth1:
+        vlans: 100,200:foobar
+      eth1.100:
+        bridge: br0
+      br0.100:
+        address: 123.123.123.123/32
+      eth6:
+        bond: bond0
+      eth7:
+        bond: bond0
+      bond0:
+        bond_opts:
+          mode: 1
+        address: 123.123.123.124/32
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC85w9stZyiLQp/DkVO6fqwiShYcj1ClKdtCqgHtf+PLpJkFReSFu8y21y+ev09gsSMRRrjF7yt0pUHV6zncQhVeqsZtgc5WbELY2DOYUGmRn/CCvPbXovoBrQjSorqlBmpuPwsStYLr92Xn+VVsMNSUIegHY22DphGbDKG85vrKB8HxUxGIDxFBds/uE8FhSy+xsoyT/jUZDK6pgq2HnGl6D81ViIlKecpOpWlW3B+fea99ADNyZNVvDzbHE5pcI3VRw8u59WmpWOUgT6qacNVACl8GqpBvQk8sw7O/X9DSZHCKafeD9G5k+GYbAUz92fKWrx/lOXfUXPS3+c8dRIF
