@@ -8,9 +8,9 @@ if [ "$1" != "--dev" ]; then
   echo
   echo For \"developer\" builds, run ./build.sh --dev
   echo
-  dapper -k make all
+  dapper make all
 else
-  dapper -k make DEV_BUILD=1 all
+  dapper make DEV_BUILD=1 all
 fi
 
 

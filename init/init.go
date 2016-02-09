@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/rancher/docker-from-scratch"
@@ -17,6 +18,9 @@ import (
 
 const (
 	STATE string = "/state"
+
+	TMPFS_MAGIC int64 = 0x01021994
+	RAMFS_MAGIC int64 = 0x858458f6
 )
 
 var (
@@ -140,15 +144,17 @@ func tryMountState(cfg *config.CloudConfig) error {
 }
 
 func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	if err := tryMountState(cfg); !cfg.Rancher.State.Required && err != nil {
-		return cfg, nil
-	} else if err != nil {
-		return cfg, err
-	}
+	if isInitrd() {
+		if err := tryMountState(cfg); !cfg.Rancher.State.Required && err != nil {
+			return cfg, nil
+		} else if err != nil {
+			return cfg, err
+		}
 
-	log.Debugf("Switching to new root at %s %s", STATE, cfg.Rancher.State.Directory)
-	if err := switchRoot(STATE, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr); err != nil {
-		return cfg, err
+		log.Debugf("Switching to new root at %s %s", STATE, cfg.Rancher.State.Directory)
+		if err := switchRoot(STATE, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr); err != nil {
+			return cfg, err
+		}
 	}
 	return mountOem(cfg)
 }
@@ -170,10 +176,21 @@ func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 	return &launchConfig, args
 }
 
+func isInitrd() bool {
+	var stat syscall.Statfs_t
+	syscall.Statfs("/", &stat)
+	return int64(stat.Type) == TMPFS_MAGIC || int64(stat.Type) == RAMFS_MAGIC
+}
+
 func RunInit() error {
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
-	// Magic setting to tell Docker to do switch_root and not pivot_root
-	os.Setenv("DOCKER_RAMDISK", "true")
+	if isInitrd() {
+		log.Debug("Booting off an in-memory filesystem")
+		// Magic setting to tell Docker to do switch_root and not pivot_root
+		os.Setenv("DOCKER_RAMDISK", "true")
+	} else {
+		log.Debug("Booting off a persistent filesystem")
+	}
 
 	initFuncs := []config.CfgFunc{
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {

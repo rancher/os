@@ -1,13 +1,15 @@
 #!/bin/bash
 set -ex
 
+suffix=""
+[ "$ARCH" == "amd64" ] || suffix="_${ARCH}"
+
 cd $(dirname $0)/..
 . scripts/build-common
 
-ln -sf bin/rancheros ./ros
-
-for i in `./ros c images -i os-config.yml`; do
+images="$(build/host_ros c images -i os-config${suffix}.yml)"
+for i in ${images}; do
     [ "${FORCE_PULL}" != "1" ] && docker inspect $i >/dev/null 2>&1 || docker pull $i;
 done
 
-docker save `./ros c images -i os-config.yml` > ${BUILD}/images.tar
+docker save ${images} > ${BUILD}/images.tar

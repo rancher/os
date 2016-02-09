@@ -101,8 +101,8 @@ if [ "$REBUILD" == "1" ]; then
     ln -s ${INITRD_TMP} ${INITRD_CURRENT}
 
     mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
-    cp bin/rancheros ${INITRD_TMP}/usr/bin/ros
-    cp -f os-config.yml ${INITRD_TMP}/usr/share/ros
+    cp bin/ros ${INITRD_TMP}/usr/bin/
+    cp -f os-config.yml ${INITRD_TMP}/usr/share/ros/
 
     pushd ${INITRD_TMP}
     find . | cpio -H newc -o | gzip > ${INITRD_TEST}
