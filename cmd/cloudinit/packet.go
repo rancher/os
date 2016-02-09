@@ -42,7 +42,7 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 	bondCfg := netconf.InterfaceConfig{
 		Addresses: []string{},
 		BondOpts: map[string]string{
-			"lacp-rate":        "1",
+			"lacp_rate":        "1",
 			"xmit_hash_policy": "layer3+4",
 			"downdelay":        "200",
 			"updelay":          "200",
@@ -85,7 +85,7 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 		},
 	}
 
-	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile, 0700)); err != nil {
+	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile), 0700); err != nil {
 		logrus.Errorf("Failed to create directory for file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
 	}
 
