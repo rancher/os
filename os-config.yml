@@ -64,11 +64,6 @@ rancher:
   network:
     dns:
       nameservers: [8.8.8.8, 8.8.4.4]
-    interfaces:
-      eth*:
-        dhcp: true
-      lo:
-        address: 127.0.0.1/8
   repositories:
     core:
       url: https://raw.githubusercontent.com/rancher/os-services/v0.4.3-dev

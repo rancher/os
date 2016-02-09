@@ -3,11 +3,11 @@ package netconf
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
 	"strings"
+	"sync"
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
@@ -18,142 +18,206 @@ import (
 )
 
 const (
-	CONF       = "/var/lib/rancher/conf"
-	NET_SCRIPT = "/var/lib/rancher/conf/network.sh"
+	CONF = "/var/lib/rancher/conf"
+	MODE = "mode"
 )
 
-func createInterfaces(netCfg *NetworkConfig) error {
-	for name, iface := range netCfg.Interfaces {
-		if iface.Bridge {
-			bridge := netlink.Bridge{}
-			bridge.LinkAttrs.Name = name
+var (
+	defaultDhcpArgs = []string{"dhcpcd", "-MA4", "-e", "force_hostname=true"}
+)
 
-			if err := netlink.LinkAdd(&bridge); err != nil {
+func createInterfaces(netCfg *NetworkConfig) {
+	configured := map[string]bool{}
+
+	for name, iface := range netCfg.Interfaces {
+		if iface.Bridge == "true" {
+			if _, err := NewBridge(name); err != nil {
 				log.Errorf("Failed to create bridge %s: %v", name, err)
 			}
-		} else if iface.Bond != "" {
-			bondIface, ok := netCfg.Interfaces[iface.Bond]
-			if !ok {
-				log.Errorf("Failed to find bond configuration for [%s]", iface.Bond)
-				continue
+		} else if iface.Bridge != "" {
+			if _, err := NewBridge(iface.Bridge); err != nil {
+				log.Errorf("Failed to create bridge %s: %v", iface.Bridge, err)
 			}
-			bond := Bond(iface.Bond)
-			if bond.Error() != nil {
-				log.Errorf("Failed to create bond [%s]: %v", iface.Bond, bond.Error())
+		} else if iface.Bond != "" {
+			bond, err := Bond(iface.Bond)
+			if err != nil {
+				log.Errorf("Failed to create bond %s: %v", iface.Bond, err)
 				continue
 			}
 
-			for k, v := range bondIface.BondOpts {
-				bond.Opt(k, v)
-				bond.Clear()
+			if !configured[iface.Bond] {
+				if bondIface, ok := netCfg.Interfaces[iface.Bond]; ok {
+					// Other settings depends on mode, so set it first
+					if v, ok := bondIface.BondOpts[MODE]; ok {
+						bond.Opt(MODE, v)
+					}
+
+					for k, v := range bondIface.BondOpts {
+						if k != MODE {
+							bond.Opt(k, v)
+						}
+					}
+					configured[iface.Bond] = true
+				}
 			}
 		}
 	}
-
-	return nil
 }
 
-func runScript(netCfg *NetworkConfig) error {
-	if netCfg.Script == "" {
-		return nil
+func createSlaveInterfaces(netCfg *NetworkConfig) {
+	links, err := netlink.LinkList()
+	if err != nil {
+		log.Errorf("Failed to list links: %v", err)
+		return
 	}
 
-	if _, err := os.Stat(CONF); os.IsNotExist(err) {
-		if err := os.MkdirAll(CONF, 0700); err != nil {
-			return err
+	for _, link := range links {
+		match, ok := findMatch(link, netCfg)
+		if !ok {
+			continue
+		}
+
+		vlanDefs, err := ParseVlanDefinitions(match.Vlans)
+		if err != nil {
+			log.Errorf("Failed to create vlans on device %s: %v", link.Attrs().Name, err)
+			continue
+		}
+
+		for _, vlanDef := range vlanDefs {
+			if _, err = NewVlan(link, vlanDef.Name, vlanDef.Id); err != nil {
+				log.Errorf("Failed to create vlans on device %s, id %d: %v", link.Attrs().Name, vlanDef.Id, err)
+			}
+		}
+	}
+}
+
+func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool) {
+	linkName := link.Attrs().Name
+	var match InterfaceConfig
+	exactMatch := false
+	found := false
+
+	for key, netConf := range netCfg.Interfaces {
+		if netConf.Match == "" {
+			netConf.Match = key
+		}
+
+		if netConf.Match == "" {
+			continue
+		}
+
+		if strings.HasPrefix(netConf.Match, "mac") {
+			haAddr, err := net.ParseMAC(netConf.Match[4:])
+			if err != nil {
+				log.Errorf("Failed to parse mac %s: %v", netConf.Match[4:], err)
+				continue
+			}
+
+			// Don't match mac address of the bond because it is the same as the slave
+			if bytes.Compare(haAddr, link.Attrs().HardwareAddr) == 0 && link.Attrs().Name != netConf.Bond {
+				// MAC address match is used over all other matches
+				return netConf, true
+			}
+		}
+
+		if !exactMatch && glob.Glob(netConf.Match, linkName) {
+			match = netConf
+			found = true
+		}
+
+		if netConf.Match == linkName {
+			// Found exact match, use it over wildcard match
+			match = netConf
+			exactMatch = true
 		}
 	}
 
-	if err := ioutil.WriteFile(NET_SCRIPT, []byte(netCfg.Script), 0700); err != nil {
-		return err
+	return match, exactMatch || found
+}
+
+func populateDefault(netCfg *NetworkConfig) {
+	if netCfg.Interfaces == nil {
+		netCfg.Interfaces = map[string]InterfaceConfig{}
 	}
 
-	cmd := exec.Command(NET_SCRIPT)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if len(netCfg.Interfaces) == 0 {
+		netCfg.Interfaces["eth*"] = InterfaceConfig{
+			DHCP: true,
+		}
+	}
+
+	if _, ok := netCfg.Interfaces["lo"]; !ok {
+		netCfg.Interfaces["lo"] = InterfaceConfig{
+			Address: "127.0.0.1/8",
+		}
+	}
 }
 
 func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
-	log.Debugf("Config: %#v", netCfg)
-	if err := runScript(netCfg); err != nil {
-		log.Errorf("Failed to run script: %v", err)
-	}
+	populateDefault(netCfg)
 
-	if err := createInterfaces(netCfg); err != nil {
-		return err
-	}
+	log.Debugf("Config: %#v", netCfg)
+	runCmds(netCfg.PreCmds, "")
+
+	createInterfaces(netCfg)
+
+	createSlaveInterfaces(netCfg)
 
 	links, err := netlink.LinkList()
 	if err != nil {
 		return err
 	}
 
-	dhcpLinks := []string{}
+	dhcpLinks := map[string]string{}
 
 	//apply network config
 	for _, link := range links {
 		linkName := link.Attrs().Name
-		var match InterfaceConfig
-
-		for key, netConf := range netCfg.Interfaces {
-			if netConf.Match == "" {
-				netConf.Match = key
-			}
-
-			if netConf.Match == "" {
-				continue
-			}
-
-			if len(netConf.Match) > 4 && strings.ToLower(netConf.Match[:3]) == "mac" {
-				haAddr, err := net.ParseMAC(netConf.Match[4:])
-				if err != nil {
-					return err
-				}
-				// Don't match mac address of the bond because it is the same as the slave
-				if bytes.Compare(haAddr, link.Attrs().HardwareAddr) == 0 && link.Attrs().Name != netConf.Bond {
-					// MAC address match is used over all other matches
-					match = netConf
-					break
-				}
-			}
-
-			// "" means match has not been found
-			if match.Match == "" && matches(linkName, netConf.Match) {
-				match = netConf
-			}
-
-			if netConf.Match == linkName {
-				// Found exact match, use it over wildcard match
-				match = netConf
-			}
-		}
-
-		if match.Match != "" {
+		if match, ok := findMatch(link, netCfg); ok {
 			if match.DHCP {
-				dhcpLinks = append(dhcpLinks, link.Attrs().Name)
-			} else if err = applyNetConf(link, match); err != nil {
+				dhcpLinks[link.Attrs().Name] = match.DHCPArgs
+			} else if err = applyInterfaceConfig(link, match); err != nil {
 				log.Errorf("Failed to apply settings to %s : %v", linkName, err)
 			}
 		}
 	}
 
-	if len(dhcpLinks) > 0 {
-		log.Infof("Running DHCP on %v", dhcpLinks)
-		dhcpcdArgs := append([]string{"-MA4", "-e", "force_hostname=true"}, dhcpLinks...)
-		cmd := exec.Command("dhcpcd", dhcpcdArgs...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			log.Error(err)
+	//run dhcp
+	wg := sync.WaitGroup{}
+	for iface, args := range dhcpLinks {
+		wg.Add(1)
+		go func(iface, args string) {
+			runDhcp(iface, args)
+			wg.Done()
+		}(iface, args)
+	}
+	wg.Wait()
+
+	runCmds(netCfg.PostCmds, "")
+	return err
+}
+
+func runDhcp(iface string, argstr string) {
+	log.Infof("Running DHCP on %s", iface)
+	args := []string{}
+	if argstr != "" {
+		var err error
+		args, err = shlex.Split(argstr)
+		if err != nil {
+			log.Errorf("Failed to parse [%s]: %v", argstr, err)
 		}
 	}
-
-	if err != nil {
-		return err
+	if len(args) == 0 {
+		args = defaultDhcpArgs
 	}
 
-	return nil
+	args = append(args, iface)
+	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
 }
 
 func linkUp(link netlink.Link, netConf InterfaceConfig) error {
@@ -207,15 +271,27 @@ func setGateway(gateway string) error {
 	return nil
 }
 
-func applyNetConf(link netlink.Link, netConf InterfaceConfig) error {
+func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	if netConf.Bond != "" {
-		b := Bond(netConf.Bond)
-		b.AddSlave(link.Attrs().Name)
-		if b.Error() != nil {
-			return b.Error()
+		b, err := Bond(netConf.Bond)
+		if err != nil {
+			return err
 		}
+		if err := b.AddSlave(link.Attrs().Name); err != nil {
+			return err
+		}
+		return nil
+	}
 
-		return linkUp(link, netConf)
+	if netConf.Bridge != "" && netConf.Bridge != "true" {
+		b, err := NewBridge(netConf.Bridge)
+		if err != nil {
+			return err
+		}
+		if err := b.AddLink(link); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	if netConf.IPV4LL {
@@ -223,16 +299,18 @@ func applyNetConf(link netlink.Link, netConf InterfaceConfig) error {
 			log.Errorf("IPV4LL set failed: %v", err)
 			return err
 		}
-	} else if netConf.Address == "" && len(netConf.Addresses) == 0 {
-		return nil
 	} else {
+		addresses := []string{}
+
 		if netConf.Address != "" {
-			err := applyAddress(netConf.Address, link, netConf)
-			if err != nil {
-				log.Errorf("Failed to apply address %s to %s: %v", netConf.Address, link.Attrs().Name, err)
-			}
+			addresses = append(addresses, netConf.Address)
 		}
-		for _, address := range netConf.Addresses {
+
+		if len(netConf.Addresses) > 0 {
+			addresses = append(addresses, netConf.Addresses...)
+		}
+
+		for _, address := range addresses {
 			err := applyAddress(address, link, netConf)
 			if err != nil {
 				log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
@@ -247,6 +325,8 @@ func applyNetConf(link netlink.Link, netConf InterfaceConfig) error {
 		}
 	}
 
+	runCmds(netConf.PreUp, link.Attrs().Name)
+
 	if err := linkUp(link, netConf); err != nil {
 		return err
 	}
@@ -259,30 +339,31 @@ func applyNetConf(link netlink.Link, netConf InterfaceConfig) error {
 		log.Errorf("Fail to set gateway %s", netConf.Gateway)
 	}
 
-	for _, postUp := range netConf.PostUp {
-		postUp = strings.TrimSpace(postUp)
-		if postUp == "" {
-			continue
-		}
-
-		args, err := shlex.Split(strings.Replace(postUp, "$iface", link.Attrs().Name, -1))
-		if err != nil {
-			log.Errorf("Failed to parse command [%s]: %v", postUp, err)
-			continue
-		}
-
-		cmd := exec.Command(args[0], args[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			log.Errorf("Failed to run command [%s]: %v", postUp, err)
-			continue
-		}
-	}
+	runCmds(netConf.PostUp, link.Attrs().Name)
 
 	return nil
 }
 
-func matches(link, conf string) bool {
-	return glob.Glob(conf, link)
+func runCmds(cmds []string, iface string) {
+	for _, cmd := range cmds {
+		cmd = strings.TrimSpace(cmd)
+		if cmd == "" {
+			continue
+		}
+
+		args, err := shlex.Split(strings.Replace(cmd, "$iface", iface, -1))
+		if err != nil {
+			log.Errorf("Failed to parse command [%s]: %v", cmd, err)
+			continue
+		}
+
+		log.Infof("Running command %s %v", args[0], args[1:])
+		cmd := exec.Command(args[0], args[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Errorf("Failed to run command [%s]: %v", cmd, err)
+			continue
+		}
+	}
 }
