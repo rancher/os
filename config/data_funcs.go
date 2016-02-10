@@ -123,7 +123,7 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 
 func DummyMarshall(value string) interface{} {
 	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-		result := []string{}
+		result := []interface{}{}
 		for _, i := range strings.Split(value[1:len(value)-1], ",") {
 			result = append(result, strings.TrimSpace(i))
 		}

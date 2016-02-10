@@ -34,3 +34,18 @@ ip link show dev eth7 | grep 'master bond0'
 SCRIPT
 sudo bash test-merge
     '''.strip())
+
+
+def test_network_dns_ros_set(qemu):
+    SSH(qemu).check_call('bash', '-c', '''
+set -x -e
+
+sudo ros config set rancher.network.dns.search '[a,b]'
+if [ "$(sudo ros config get rancher.network.dns.search)" == "- a
+ - b
+
+ " ]; then
+    sudo ros config get rancher.network.dns.search
+    exit 1
+ fi
+    '''.strip())
