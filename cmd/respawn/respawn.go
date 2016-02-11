@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -22,6 +23,8 @@ var (
 )
 
 func Main() {
+	runtime.GOMAXPROCS(1)
+	runtime.LockOSThread()
 	app := cli.NewApp()
 
 	app.Flags = []cli.Flag{
@@ -109,9 +112,12 @@ func execute(line string, wg *sync.WaitGroup) {
 	for {
 		args := strings.Split(line, " ")
 
-		cmd := exec.Command("setsid", args...)
+		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setsid: true,
+		}
 
 		err := cmd.Start()
 		if err != nil {
