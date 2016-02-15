@@ -20,9 +20,9 @@ WORKDIR ${DAPPER_SOURCE}/assets
 RUN curl -OL https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.3.1/base-files_amd64.tar.gz
 RUN curl -OL https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.3.1/base-files_arm.tar.gz
 
-RUN curl -o ./docker_amd64 -L https://get.docker.com/builds/Linux/x86_64/docker-1.10.0 && \
+RUN curl -o ./docker_amd64 -L https://get.docker.com/builds/Linux/x86_64/docker-1.10.1 && \
     chmod +x ./docker_amd64
-RUN curl -o ./docker_arm -L https://github.com/rancher/docker/releases/download/v1.10.0-ros_arm/docker-1.10.0 && \
+RUN curl -o ./docker_arm -L https://github.com/rancher/docker/releases/download/v1.10.1-ros_arm/docker-1.10.1 && \
     chmod +x ./docker_arm
 
 WORKDIR ${DAPPER_SOURCE}
