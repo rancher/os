@@ -1,0 +1,15 @@
+FROM debian:jessie
+ENV DAPPER_RUN_ARGS --device /dev/kvm
+ENV DAPPER_OUTPUT dist
+RUN apt-get update -y
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    libguestfs-tools curl zip linux-image-amd64 unzip
+RUN mkdir -p /source/assets
+
+RUN curl -fL http://downloads.hypriot.com/hypriot-rpi-20151115-132854.img.zip > /source/assets/hypriot.img.zip
+RUN cd /source/assets && \
+    unzip hypriot.img.zip
+RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm.tar.gz > /source/assets/rootfs_arm.tar.gz
+
+WORKDIR /source
+CMD ["./scripts/build.sh"]
