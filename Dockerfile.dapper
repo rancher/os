@@ -2,7 +2,7 @@ FROM ubuntu:15.10
 
 RUN apt-get update && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential syslinux isolinux xorriso \
-        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates
+        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates pkg-config
 
 RUN locale-gen en_US.UTF-8
 ENV LANG en_US.UTF-8
