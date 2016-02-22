@@ -220,6 +220,10 @@ func RunInit() error {
 			return config.LoadConfig()
 		},
 		loadModules,
+		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			return c, dockerlaunch.PrepareFs(&mountConfig)
+		},
+		initializeSelinux,
 		sysInit,
 	}
 
@@ -236,5 +240,6 @@ func RunInit() error {
 	if err != nil {
 		return err
 	}
+
 	return pidOne()
 }

@@ -1,5 +1,6 @@
 FROM golang:1.5.3
 
+RUN apt-get update && apt-get -y install libselinux-dev pkg-config
 RUN curl -o /usr/local/bin/docker -L https://get.docker.com/builds/Linux/x86_64/docker-1.9.1 && \
     chmod +x /usr/local/bin/docker
 

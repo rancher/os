@@ -27,6 +27,9 @@ assets/docker:
 	curl -L "$(DOCKER_BINARY_URL)" > $@
 	chmod +x $@
 
+assets/selinux/policy.29:
+	mkdir -p $(dir $@)
+	curl -L "$(SELINUX_POLICY_URL)" > $@
 
 ifdef COMPILED_KERNEL_URL
 
@@ -43,7 +46,7 @@ $(BUILD)/kernel/:
 	curl -L "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@
 
 
-$(DIST)/artifacts/initrd: bin/ros assets/docker $(BUILD)/kernel/ $(BUILD)/images.tar
+$(DIST)/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 $(BUILD)/kernel/ $(BUILD)/images.tar
 	mkdir -p $(dir $@)
 	ARCH=$(ARCH) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh $@
 

@@ -14,6 +14,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libnetwork/resolvconf"
+	"github.com/rancher/docker-from-scratch/selinux"
 	"github.com/rancher/docker-from-scratch/util"
 	"github.com/rancher/netconf"
 )
@@ -37,6 +38,9 @@ var (
 		{"none", "/sys", "sysfs", ""},
 		{"none", "/sys/fs/cgroup", "tmpfs", ""},
 	}
+	optionalMounts = [][]string{
+		{"none", "/sys/fs/selinux", "selinuxfs", ""},
+	}
 	systemdMounts = [][]string{
 		{"systemd", "/sys/fs/cgroup/systemd", "cgroup", "none,name=systemd"},
 	}
@@ -56,6 +60,7 @@ type Config struct {
 	EmulateSystemd  bool
 	NoFiles         uint64
 	Environment     []string
+	GraphDirectory  string
 }
 
 func createMounts(mounts ...[]string) error {
@@ -68,6 +73,16 @@ func createMounts(mounts ...[]string) error {
 	}
 
 	return nil
+}
+
+func createOptionalMounts(mounts ...[]string) {
+	for _, mount := range mounts {
+		log.Debugf("Mounting %s %s %s %s", mount[0], mount[1], mount[2], mount[3])
+		err := util.Mount(mount[0], mount[1], mount[2], mount[3])
+		if err != nil {
+			log.Debugf("Unable to mount %s %s %s %s: %s", mount[0], mount[1], mount[2], mount[3], err)
+		}
+	}
 }
 
 func createDirs(dirs ...string) error {
@@ -213,6 +228,22 @@ func copyDefault(folder, name string) error {
 	return nil
 }
 
+func copyDefaultFolder(folder string) error {
+	defaultFolder := path.Join(defaultPrefix, folder)
+	files, _ := ioutil.ReadDir(defaultFolder)
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+
+		if err := copyDefault(folder, file.Name()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func defaultFiles(files ...string) error {
 	for _, file := range files {
 		dir := path.Dir(file)
@@ -220,6 +251,14 @@ func defaultFiles(files ...string) error {
 		if err := copyDefault(dir, name); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+func defaultFolders(folders ...string) error {
+	for _, folder := range folders {
+		copyDefaultFolder(folder)
 	}
 
 	return nil
@@ -330,6 +369,8 @@ func ParseConfig(config *Config, args ...string) []string {
 			if err != nil {
 				config.BridgeMtu = mtu
 			}
+		} else if strings.HasPrefix(arg, "-g") || strings.HasPrefix(arg, "--graph") {
+			config.GraphDirectory = util.GetValue(i, args)
 		}
 	}
 
@@ -363,11 +404,17 @@ func PrepareFs(config *Config) error {
 		return err
 	}
 
+	createOptionalMounts(optionalMounts...)
+
 	if err := mountCgroups(config.CgroupHierarchy); err != nil {
 		return err
 	}
 
-	if err := createLayout(); err != nil {
+	if err := createLayout(config); err != nil {
+		return err
+	}
+
+	if err := firstPrepare(); err != nil {
 		return err
 	}
 
@@ -405,10 +452,22 @@ func touchSockets(args ...string) error {
 	return nil
 }
 
-func createLayout() error {
+func createLayout(config *Config) error {
 	if err := createDirs("/tmp", "/root/.ssh", "/var"); err != nil {
 		return err
 	}
+
+	graphDirectory := config.GraphDirectory
+
+	if config.GraphDirectory == "" {
+		graphDirectory = "/var/lib/docker"
+	}
+
+	if err := createDirs(graphDirectory); err != nil {
+		return err
+	}
+
+	selinux.SetFileContext(graphDirectory, "system_u:object_r:var_lib_t:s0")
 
 	return CreateSymlinks([][]string{
 		{"usr/lib", "/lib"},
@@ -417,13 +476,22 @@ func createLayout() error {
 	})
 }
 
-func prepare(config *Config, docker string, args ...string) error {
+func firstPrepare() error {
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 
 	if err := defaultFiles(
 		"/etc/ssl/certs/ca-certificates.crt",
 		"/etc/passwd",
 		"/etc/group",
+	); err != nil {
+		return err
+	}
+
+	if err := defaultFolders(
+		"/etc/selinux",
+		"/etc/selinux/ros",
+		"/etc/selinux/ros/policy",
+		"/etc/selinux/ros/contexts",
 	); err != nil {
 		return err
 	}
@@ -435,6 +503,11 @@ func prepare(config *Config, docker string, args ...string) error {
 	if err := createGroup(); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func secondPrepare(config *Config, docker string, args ...string) error {
 
 	if err := setupNetworking(config); err != nil {
 		return err
@@ -548,7 +621,7 @@ func setUlimit(cfg *Config) error {
 }
 
 func runOrExec(config *Config, docker string, args ...string) (*exec.Cmd, error) {
-	if err := prepare(config, docker, args...); err != nil {
+	if err := secondPrepare(config, docker, args...); err != nil {
 		return nil, err
 	}
 
