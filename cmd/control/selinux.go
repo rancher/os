@@ -49,7 +49,7 @@ func selinuxCommand() cli.Command {
 			"-v", "/etc/selinux:/etc/selinux",
 			"-v", "/var/lib/selinux:/var/lib/selinux",
 			"-v", "/usr/share/selinux:/usr/share/selinux",
-			fmt.Sprintf("rancher/selinuxtools:%s", config.VERSION), "bash"}
+			fmt.Sprintf("rancher/os-selinuxtools:%s", config.VERSION), "bash"}
 		syscall.Exec("/bin/system-docker", argv, []string{})
 	}
 
