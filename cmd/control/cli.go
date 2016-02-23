@@ -54,6 +54,7 @@ func Main() {
 			Subcommands: tlsConfCommands(),
 		},
 		installCommand,
+		selinuxCommand(),
 	}
 
 	app.Run(os.Args)
