@@ -102,7 +102,7 @@ if [ "$REBUILD" == "1" ]; then
 
     mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
     cp bin/ros ${INITRD_TMP}/usr/bin/
-    cp -f os-config.yml ${INITRD_TMP}/usr/share/ros/
+    cp -f os-config.yml ${INITRD_TMP}/usr/share/ros/ #FIXME: generate os-config.yml from os-config.tpl.yml
 
     pushd ${INITRD_TMP}
     find . | cpio -H newc -o | gzip > ${INITRD_TEST}

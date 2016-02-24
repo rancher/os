@@ -29,7 +29,7 @@ cp assets/docker           ${INITRD_DIR}/usr/bin/docker
 if [ "$IS_ROOTFS" == "0" ]; then
   cp ${BUILD}/images.tar     ${INITRD_DIR}/usr/share/ros/
 fi
-cp os-config${suffix}.yml  ${INITRD_DIR}/usr/share/ros/os-config.yml
+cp build/os-config.yml     ${INITRD_DIR}/usr/share/ros/
 cp bin/ros                 ${INITRD_DIR}/usr/bin/
 ln -s usr/bin/ros          ${INITRD_DIR}/init
 ln -s bin                  ${INITRD_DIR}/usr/sbin

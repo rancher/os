@@ -70,7 +70,11 @@ test: minimal
 endif
 
 
-$(BUILD)/images.tar: build/host_ros
+build/os-config.yml: build/host_ros
+	ARCH=$(ARCH) VERSION=$(VERSION) ./scripts/gen-os-config.sh $@
+
+
+$(BUILD)/images.tar: build/host_ros build/os-config.yml
 	ARCH=$(ARCH) FORCE_PULL=$(FORCE_PULL) ./scripts/mk-images-tar.sh
 
 
