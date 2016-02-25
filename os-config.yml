@@ -256,6 +256,7 @@ rancher:
       privileged: true
       read_only: true
       volumes:
+      - /boot:/boot
       - /dev:/host/dev
       - /etc/docker:/etc/docker
       - /etc/hosts:/etc/hosts
