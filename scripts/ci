@@ -3,4 +3,5 @@ set -ex
 
 cd $(dirname $0)/..
 
-dapper -k -O make DEV_BUILD=1 test
+dapper -O make ARCH=arm rootfs
+dapper -O make DEV_BUILD=1 test
