@@ -74,7 +74,7 @@ $(BUILD)/images.tar: build/host_ros
 	ARCH=$(ARCH) FORCE_PULL=$(FORCE_PULL) ./scripts/mk-images-tar.sh
 
 
-$(DIST)/artifacts/rootfs.tar.gz: bin/ros assets/docker $(BUILD)/images.tar
+$(DIST)/artifacts/rootfs.tar.gz: bin/ros assets/docker $(BUILD)/images.tar assets/selinux/policy.29
 	mkdir -p $(dir $@)
 	ARCH=$(ARCH) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) IS_ROOTFS=1 ./scripts/mk-initrd.sh $@
 

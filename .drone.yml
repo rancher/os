@@ -3,4 +3,5 @@ build:
   volumes:
   - /var/run/docker.sock:/var/run/docker.sock
   commands:
-  - dapper -k -O make DEV_BUILD=1 test
+  - dapper -O make ARCH=arm rootfs
+  - dapper -O make DEV_BUILD=1 test

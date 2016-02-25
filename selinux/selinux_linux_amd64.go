@@ -1,5 +1,3 @@
-// +build linux
-
 package selinux
 
 // #cgo pkg-config: libselinux libsepol
