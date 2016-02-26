@@ -20,7 +20,7 @@ func CreateService(cfg *config.CloudConfig, name string, serviceConfig *project.
 		}
 	}
 
-	p, err := RunServiceSet("once", cfg, map[string]*project.ServiceConfig{
+	p, err := CreateServiceSet("once", cfg, map[string]*project.ServiceConfig{
 		name: serviceConfig,
 	})
 	if err != nil {
@@ -30,13 +30,22 @@ func CreateService(cfg *config.CloudConfig, name string, serviceConfig *project.
 	return p.CreateService(name)
 }
 
-func RunServiceSet(name string, cfg *config.CloudConfig, configs map[string]*project.ServiceConfig) (*project.Project, error) {
+func CreateServiceSet(name string, cfg *config.CloudConfig, configs map[string]*project.ServiceConfig) (*project.Project, error) {
 	p, err := newProject(name, cfg)
 	if err != nil {
 		return nil, err
 	}
 
 	addServices(p, map[interface{}]interface{}{}, configs)
+
+	return p, nil
+}
+
+func RunServiceSet(name string, cfg *config.CloudConfig, configs map[string]*project.ServiceConfig) (*project.Project, error) {
+	p, err := CreateServiceSet(name, cfg, configs)
+	if err != nil {
+		return nil, err
+	}
 
 	return p, p.Up()
 }

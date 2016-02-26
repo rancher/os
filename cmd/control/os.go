@@ -201,15 +201,11 @@ func startUpgradeContainer(image string, stage, force, reboot bool) error {
 			}
 		}
 
-		if err := container.Start(); err != nil {
+		if err := container.Up(); err != nil {
 			return err
 		}
 
 		if err := container.Log(); err != nil {
-			return err
-		}
-
-		if err := container.Up(); err != nil {
 			return err
 		}
 
