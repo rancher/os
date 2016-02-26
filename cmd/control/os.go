@@ -213,6 +213,10 @@ func startUpgradeContainer(image string, stage, force, reboot bool) error {
 			return err
 		}
 
+		if err := container.Delete(); err != nil {
+			return err
+		}
+
 		if reboot && (force || yes(in, "Continue with reboot")) {
 			log.Info("Rebooting")
 			power.Reboot()
