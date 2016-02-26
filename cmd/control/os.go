@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"syscall"
 
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -49,6 +50,10 @@ func osSubcommands() []cli.Command {
 				cli.BoolFlag{
 					Name:  "no-reboot",
 					Usage: "do not reboot after upgrade",
+				},
+				cli.BoolFlag{
+					Name:  "kexec",
+					Usage: "reboot using kexec",
 				},
 			},
 		},
@@ -149,7 +154,7 @@ func osUpgrade(c *cli.Context) {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
-	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot")); err != nil {
+	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"), c.Bool("kexec")); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -168,7 +173,7 @@ func yes(in *bufio.Reader, question string) bool {
 	return strings.ToLower(line[0:1]) == "y"
 }
 
-func startUpgradeContainer(image string, stage, force, reboot bool) error {
+func startUpgradeContainer(image string, stage, force, reboot, kexec bool) error {
 	in := bufio.NewReader(os.Stdin)
 
 	container, err := compose.CreateService(nil, "os-upgrade", &project.ServiceConfig{
@@ -214,6 +219,17 @@ func startUpgradeContainer(image string, stage, force, reboot bool) error {
 		}
 
 		if reboot && (force || yes(in, "Continue with reboot")) {
+			if kexec {
+				log.Info("Rebooting using kexec")
+
+				version := strings.Split(image, ":")[1]
+				vmlinuz := fmt.Sprintf("/boot/vmlinuz-%s-rancheros", version)
+				initrd := fmt.Sprintf("--initrd=/boot/initrd-%s-rancheros", version)
+				argv := []string{"kexec", "-l", vmlinuz, initrd, "-f"}
+
+				return syscall.Exec("/sbin/kexec", argv, os.Environ())
+			}
+
 			log.Info("Rebooting")
 			power.Reboot()
 		}
