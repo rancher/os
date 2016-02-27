@@ -6,7 +6,7 @@ SCRIPTS_DIR=$(dirname ${0})
 . "${SCRIPTS_DIR}/build.conf"
 VERSION=${VERSION:?"VERSION not set"}
 
-while getopts "i:f:c:d:t:r:o:p:" OPTION
+while getopts "i:f:c:d:t:r:o:p:k" OPTION
 do
     case ${OPTION} in
         i) DIST="$OPTARG" ;;
@@ -16,6 +16,7 @@ do
         o) OEM="$OPTARG" ;;
         p) PARTITION="$OPTARG" ;;
         r) ROLLBACK_VERSION="$OPTARG" ;;
+        k) KEXEC=y ;;
         t) ENV="$OPTARG" ;;
         *) exit 1 ;;
     esac
@@ -187,3 +188,7 @@ fi
 grub2_config "${KERNEL_ARGS}"
 pvgrub_config "${KERNEL_ARGS}"
 install_rancher
+
+if [ "$KEXEC" = "y" ]; then
+    kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd -f
+fi
