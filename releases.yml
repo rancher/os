@@ -1,7 +1,0 @@
----
-available:
-  - rancher/os:v0.4.0
-  - rancher/os:v0.4.1
-  - rancher/os:v0.4.2
-  - rancher/os:v0.4.3
-current: rancher/os:v0.4.3

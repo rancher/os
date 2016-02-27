@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"text/template"
 
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -48,6 +49,12 @@ func configSubcommands() []cli.Command {
 					Usage: "File from which to read config",
 				},
 			},
+		},
+		{
+			Name:     "generate",
+			Usage:    "Generate a configuration file from a template",
+			Action:   runGenerate,
+			HideHelp: true,
 		},
 		{
 			Name:  "export",
@@ -111,6 +118,30 @@ func runImages(c *cli.Context) {
 	}
 	images := imagesFromConfig(cfg)
 	fmt.Println(strings.Join(images, " "))
+}
+
+func runGenerate(c *cli.Context) {
+	if err := genTpl(os.Stdin, os.Stdout); err != nil {
+		log.Fatalf("Failed to generate config, err: '%s'", err)
+	}
+}
+
+func genTpl(in io.Reader, out io.Writer) error {
+	bytes, err := ioutil.ReadAll(in)
+	if err != nil {
+		log.Fatal("Could not read from stdin")
+	}
+	tpl := template.Must(template.New("osconfig").Parse(string(bytes)))
+	return tpl.Execute(out, env2map(os.Environ()))
+}
+
+func env2map(env []string) map[string]string {
+	m := make(map[string]string, len(env))
+	for _, s := range env {
+		d := strings.Split(s, "=")
+		m[d[0]] = d[1]
+	}
+	return m
 }
 
 func runImport(c *cli.Context) {
