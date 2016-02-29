@@ -22,15 +22,15 @@ mkdir -p ${INITRD_DIR}/usr/{bin,share/ros}
 mkdir -p ${INITRD_DIR}/var/lib/system-docker
 mkdir -p ${INITRD_DIR}/usr/etc/selinux/ros/{policy,contexts}
 
-if [ "$IS_ROOTFS" == "0" ]; then
+if [[ "$IS_ROOTFS" == "0" ]]; then
   cp -rf ${BUILD}/kernel/lib ${INITRD_DIR}/usr/
-fi
-cp assets/docker           ${INITRD_DIR}/usr/bin/docker
-if [ "$IS_ROOTFS" == "0" ]; then
   cp ${BUILD}/images.tar     ${INITRD_DIR}/usr/share/ros/
 fi
-cp build/os-config.yml     ${INITRD_DIR}/usr/share/ros/
+
+cp assets/docker           ${INITRD_DIR}/usr/bin/
 cp bin/ros                 ${INITRD_DIR}/usr/bin/
+cp build/os-config.yml     ${INITRD_DIR}/usr/share/ros/
+
 ln -s usr/bin/ros          ${INITRD_DIR}/init
 ln -s bin                  ${INITRD_DIR}/usr/sbin
 ln -s usr/sbin             ${INITRD_DIR}/sbin
@@ -44,15 +44,19 @@ cp assets/selinux/failsafe_context  ${INITRD_DIR}/usr/etc/selinux/ros/contexts/
 DFS_ARCH=$(docker create ${DFS_ARCH_IMAGE})
 trap "docker rm -fv ${DFS_ARCH}" EXIT
 
-docker export ${DFS_ARCH} | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerlaunch \
-                                                       --exclude=usr/bin/docker       \
-                                                       --exclude=usr/share/git-core   \
-                                                       --exclude=usr/bin/git          \
-                                                       --exclude=usr/bin/ssh          \
-                                                       --exclude=usr/libexec/git-core \
-                                                       usr
+docker export ${DFS_ARCH} | tar -xC ${INITRD_DIR} \
+  --exclude=usr/bin/dockerlaunch \
+  --exclude=usr/bin/docker       \
+  --exclude=usr/share/git-core   \
+  --exclude=usr/bin/git          \
+  --exclude=usr/bin/ssh          \
+  --exclude=usr/libexec/git-core \
+  usr
 
-if [ "$IS_ROOTFS" == "1" ]; then
+if [[ "$IS_ROOTFS" == "1" ]]; then
+
+  # Load images.tar into an amd64 docker-from-scratch docker daemon
+  # And move /var/lib/docker/{image,overlay} to ${INITRD_DIR}/var/lib/system-docker
   DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE})
   trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
   docker exec -i ${DFS} docker load < ${BUILD}/images.tar
