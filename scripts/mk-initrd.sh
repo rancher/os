@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-TARGET=${1}
+TARGET=$(pwd)/${1}
 
 ARCH=${ARCH:-"amd64"}
 DFS_IMAGE=${DFS_IMAGE:?"DFS_IMAGE not set"}
