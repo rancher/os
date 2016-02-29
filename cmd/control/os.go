@@ -50,6 +50,10 @@ func osSubcommands() []cli.Command {
 					Name:  "no-reboot",
 					Usage: "do not reboot after upgrade",
 				},
+				cli.BoolFlag{
+					Name:  "kexec",
+					Usage: "reboot using kexec",
+				},
 			},
 		},
 		{
@@ -149,7 +153,7 @@ func osUpgrade(c *cli.Context) {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
-	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot")); err != nil {
+	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"), c.Bool("kexec")); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -168,21 +172,28 @@ func yes(in *bufio.Reader, question string) bool {
 	return strings.ToLower(line[0:1]) == "y"
 }
 
-func startUpgradeContainer(image string, stage, force, reboot bool) error {
+func startUpgradeContainer(image string, stage, force, reboot, kexec bool) error {
 	in := bufio.NewReader(os.Stdin)
+
+	command := []string{
+		"-t", "rancher-upgrade",
+		"-r", config.VERSION,
+	}
+
+	if kexec {
+		command = append(command, "-k")
+	}
 
 	container, err := compose.CreateService(nil, "os-upgrade", &project.ServiceConfig{
 		LogDriver:  "json-file",
 		Privileged: true,
 		Net:        "host",
+		Pid:        "host",
 		Image:      image,
 		Labels: project.NewSliceorMap(map[string]string{
 			config.SCOPE: config.SYSTEM,
 		}),
-		Command: project.NewCommand(
-			"-t", "rancher-upgrade",
-			"-r", config.VERSION,
-		),
+		Command: project.NewCommand(command...),
 	})
 	if err != nil {
 		return err
