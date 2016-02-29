@@ -54,3 +54,5 @@ RUN cd /usr/local/src/util-linux-* && \
     make install
 
 CMD make all
+
+ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml
