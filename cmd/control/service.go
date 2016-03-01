@@ -132,26 +132,29 @@ func del(c *cli.Context) {
 }
 
 func enable(c *cli.Context) {
-	changed := false
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		logrus.Fatal(err)
 	}
+
+	var enabledServices []string
 
 	for _, service := range c.Args() {
 		if val, ok := cfg.Rancher.ServicesInclude[service]; !ok || !val {
 			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
 				logrus.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
-			if _, err := compose.LoadServiceResource(service, true, cfg); err != nil {
-				logrus.Fatalf("could not load service %s", service)
-			}
+
 			cfg.Rancher.ServicesInclude[service] = true
-			changed = true
+			enabledServices = append(enabledServices, service)
 		}
 	}
 
-	if changed {
+	if len(enabledServices) > 0 {
+		if err := compose.StageServices(cfg, enabledServices...); err != nil {
+			logrus.Fatal(err)
+		}
+
 		if err := cfg.Save(); err != nil {
 			logrus.Fatal(err)
 		}

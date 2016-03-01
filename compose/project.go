@@ -1,6 +1,7 @@
 package compose
 
 import (
+	"fmt"
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/libcompose/cli/logger"
@@ -189,6 +190,46 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 	}
 
 	return p, nil
+}
+
+func StageServices(cfg *config.CloudConfig, services ...string) error {
+	p, err := newProject("stage-services", cfg)
+	if err != nil {
+		return err
+	}
+
+	for _, service := range services {
+		bytes, err := LoadServiceResource(service, true, cfg)
+		if err != nil {
+			return fmt.Errorf("Failed to load %s : %v", service, err)
+		}
+
+		m := map[interface{}]interface{}{}
+		if err := yaml.Unmarshal(bytes, &m); err != nil {
+			return fmt.Errorf("Failed to parse YAML configuration: %s : %v", service, err)
+		}
+
+		bytes, err = yaml.Marshal(config.StringifyValues(m))
+		if err != nil {
+			fmt.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
+		}
+
+		err = p.Load(bytes)
+		if err != nil {
+			fmt.Errorf("Failed to load %s : %v", service, err)
+		}
+	}
+
+	// Reduce service configurations to just image and labels
+	for serviceName, serviceConfig := range p.Configs {
+		p.Configs[serviceName] = &project.ServiceConfig{
+			Image:  serviceConfig.Image,
+			Labels: serviceConfig.Labels,
+		}
+
+	}
+
+	return p.Pull()
 }
 
 func LoadServiceResource(name string, network bool, cfg *config.CloudConfig) ([]byte, error) {
