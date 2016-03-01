@@ -3,7 +3,7 @@ set -ex
 
 TARGET=$(pwd)/${1}
 
-ARCH=${ARCH:-"amd64"}
+ARCH=${ARCH:?"ARCH not set"}
 DFS_IMAGE=${DFS_IMAGE:?"DFS_IMAGE not set"}
 IS_ROOTFS=${IS_ROOTFS:-0}
 
@@ -53,12 +53,12 @@ docker export ${DFS_ARCH} | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerl
                                                        usr
 
 if [ "$IS_ROOTFS" == "1" ]; then
-  DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE})
+  DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_ARCH_IMAGE})
   trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
   docker exec -i ${DFS} docker load < ${BUILD}/images.tar
   docker stop ${DFS}
-  docker run --rm --volumes-from=${DFS} debian:jessie tar -c -C /var/lib/docker ./image | tar -x -C ${INITRD_DIR}/var/lib/system-docker
-  docker run --rm --volumes-from=${DFS} debian:jessie tar -c -C /var/lib/docker ./overlay | tar -x -C ${INITRD_DIR}/var/lib/system-docker
+  docker run --rm --volumes-from=${DFS} rancher/os-dapper-base tar -c -C /var/lib/docker ./image | tar -x -C ${INITRD_DIR}/var/lib/system-docker
+  docker run --rm --volumes-from=${DFS} rancher/os-dapper-base tar -c -C /var/lib/docker ./overlay | tar -x -C ${INITRD_DIR}/var/lib/system-docker
 
   cd ${INITRD_DIR}
 

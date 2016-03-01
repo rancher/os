@@ -1,6 +1,7 @@
 FORCE_PULL := 0
 DEV_BUILD  := 0
 ARCH       := amd64
+SUFFIX := $(if $(filter-out amd64,$(ARCH)),_$(ARCH))
 
 include build.conf
 include build.conf.$(ARCH)
@@ -12,11 +13,7 @@ bin/ros:
 
 build/host_ros: bin/ros
 	mkdir -p $(dir $@)
-ifeq "$(ARCH)" "amd64"
 	ln -sf ../bin/ros $@
-else
-	ARCH=amd64 VERSION=$(VERSION) ./scripts/mk-ros.sh $@
-endif
 
 
 assets/docker:
@@ -31,11 +28,11 @@ assets/selinux/policy.29:
 ifdef COMPILED_KERNEL_URL
 
 installer: minimal
-	docker build -t $(IMAGE_NAME):$(VERSION) .
+	docker build -t $(IMAGE_NAME):$(VERSION)$(SUFFIX) -f Dockerfile.$(ARCH) .
 
 dist/artifacts/vmlinuz: build/kernel/
 	mkdir -p $(dir $@)
-	mv build/kernel/boot/vmlinuz* $@
+	mv $(or $(wildcard build/kernel/boot/vmlinuz*), $(wildcard build/kernel/boot/vmlinux*)) $@
 
 
 build/kernel/:

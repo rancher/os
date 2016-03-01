@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/bin/sh
 set -ex
 
 cd $(dirname $0)/..
+. ./scripts/dapper-common
 
-dapper -O make ARCH=arm rootfs
-dapper -O make DEV_BUILD=1 test
+dapper -d -O make ARCH=${ARCH} DEV_BUILD=1 test

@@ -1,1 +1,4 @@
-DOCKER_BINARY_URL=https://github.com/rancher/docker/releases/download/v1.10.2-ros_arm/docker-1.10.2
+DAPPER_BASE=armhf/ubuntu:16.04
+TOOLCHAIN=arm-linux-gnueabihf
+
+DOCKER_BINARY_URL=https://github.com/rancher/docker/releases/download/v1.10.2-arm2/docker-1.10.2_arm

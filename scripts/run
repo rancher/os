@@ -7,6 +7,9 @@ cd $(dirname $0)/..
 source scripts/build-common
 
 BASE=$(pwd)
+UNAME=$(uname)
+QEMUARCH=$(uname -m)
+[ "${UNAME}" == "Darwin" ] && QEMUARCH=x86_64
 
 KERNEL=${BASE}/dist/artifacts/vmlinuz
 INITRD=${BASE}/dist/artifacts/initrd
@@ -41,7 +44,7 @@ while [ "$#" -gt 0 ]; do
             fi
             ;;
         --qemu)
-            if [ -x $(which qemu-system-x86_64) ]; then
+            if [ -x $(which qemu-system-${QEMUARCH}) ]; then
                 QEMU=1
             fi
             ;;
@@ -76,7 +79,6 @@ if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
     exit 1
 fi
 
-UNAME=$(uname)
 # Linux and Darwin SHA1 sum binary are different, pick which to use
 if [ "$UNAME" == "Darwin" ]; then sha1sum=$(which shasum)
 elif [ "$UNAME" == "Linux" ]; then sha1sum=$(which sha1sum);
@@ -102,7 +104,7 @@ if [ "$REBUILD" == "1" ]; then
 
     mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
     cp bin/ros ${INITRD_TMP}/usr/bin/
-    cp -f os-config.yml ${INITRD_TMP}/usr/share/ros/ #FIXME: generate os-config.yml from os-config.tpl.yml
+    cp -f build/os-config.yml ${INITRD_TMP}/usr/share/ros/
 
     pushd ${INITRD_TMP}
     find . | cpio -H newc -o | gzip > ${INITRD_TEST}
@@ -166,7 +168,7 @@ if [ "$XHYVE" == "1" ] || [ "$QEMU" == "1" ]; then
         if [ "$KVM" == "1" ]; then
             KVM_ENABLE="-machine accel=kvm -cpu host"
         fi
-        exec qemu-system-x86_64 -serial stdio \
+        exec qemu-system-${QEMUARCH} -serial stdio \
             -kernel ${KERNEL} \
             -initrd ${INITRD} \
             -m 1024 \

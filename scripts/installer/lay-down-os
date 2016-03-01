@@ -21,6 +21,7 @@ do
         *) exit 1 ;;
     esac
 done
+[ "$ARCH" == "arm" && "$ENV" != "rancher-upgrade" ] && ENV=arm
 
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-"${SCRIPTS_DIR}/conf/empty.yml"}
@@ -151,6 +152,10 @@ if [ -n ${ENV} ]; then
         "generic")
             format_and_mount
             install_grub
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            ;;
+        "arm")
+            format_and_mount
             "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "amazon-ebs-pv"|"amazon-ebs-hvm")

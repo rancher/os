@@ -1,0 +1,5 @@
+DAPPER_BASE=aarch64/ubuntu:16.04
+TOOLCHAIN=aarch64-linux-gnu
+
+DOCKER_BINARY_URL=https://github.com/rancher/docker/releases/download/v1.10.2-arm2/docker-1.10.2_arm64
+COMPILED_KERNEL_URL=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.1.18-arm64/linux-4.1.18-arm64.tar.gz

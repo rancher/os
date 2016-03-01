@@ -12,3 +12,4 @@
 /tests/integration/.tox
 *.pyc
 __pychache__
+.docker-env.*

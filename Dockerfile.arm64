@@ -1,0 +1,15 @@
+FROM aarch64/debian:jessie
+ENV DEBIAN_FRONTEND noninteractive
+ENV ARCH arm
+
+RUN apt-get update && apt-get install -y parted
+
+# TODO add kexec-tools: build from sources for aarch64
+
+COPY ./scripts/installer /scripts
+COPY ./build.conf /scripts/
+
+COPY ./dist/artifacts/vmlinuz /dist/
+COPY ./dist/artifacts/initrd  /dist/
+
+ENTRYPOINT ["/scripts/lay-down-os"]

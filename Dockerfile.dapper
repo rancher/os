@@ -1,58 +1,71 @@
-FROM ubuntu:15.10
+FROM rancher/os-dapper-base
+
+ARG ARCH
+ENV ARCH ${ARCH}
+ARG DOCKER_BINARY_URL
+ENV DOCKER_BINARY_URL ${DOCKER_BINARY_URL}
 
 RUN apt-get update && \
-    apt-get -y install locales sudo vim less curl wget git rsync build-essential syslinux isolinux xorriso \
-        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates pkg-config
+    apt-get -y install locales sudo vim less curl wget git rsync build-essential isolinux xorriso gccgo \
+        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates pkg-config tox
 
-RUN locale-gen en_US.UTF-8
-ENV LANG en_US.UTF-8
-ENV PATH $PATH:/usr/local/go/bin
+RUN mkdir -p /usr/local && cd /usr/local && \
+    wget -O - https://storage.googleapis.com/golang/go1.6.src.tar.gz | tar -xz && \
+    cd go/src && GOROOT_BOOTSTRAP=/usr GOARCH=${ARCH} GOHOSTARCH=${ARCH} ./make.bash
+
+ENV PATH /usr/local/go/bin:$PATH
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
 ENV PATH /go/bin:$PATH
 
-RUN pip install tox
-RUN curl -sSL https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz | tar -xz -C /usr/local
-RUN curl -sL https://get.docker.com/builds/Linux/x86_64/docker-1.10.2 > /usr/local/bin/docker
+RUN wget -O - ${DOCKER_BINARY_URL} > /usr/local/bin/docker
 RUN chmod +x /usr/local/bin/docker
 
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
-ENV DAPPER_OUTPUT ./bin ./dist
+ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml
 ENV DAPPER_RUN_ARGS --privileged
 ENV SHELL /bin/bash
 WORKDIR ${DAPPER_SOURCE}
 
-COPY .dockerignore.docker .dockerignore
+COPY .dockerignore.dapper .dockerignore
 
-RUN cd /usr/local/src && \
-    for i in libselinux pcre3 util-linux; do \
-        apt-get build-dep -y $i && \
-        apt-get source -y $i \
-    ;done
+CMD make
 
-RUN apt-get install -y gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf
-RUN cd /usr/local/src/pcre3-* && \
-    autoreconf && \
-    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ ./configure --host=arm-linux-gnueabihf --prefix=/usr/arm-linux-gnueabihf && \
-    make -j$(nproc) && \
-    make install
+ARG TOOLCHAIN
+ENV TOOLCHAIN ${TOOLCHAIN}
 
-RUN cd /usr/local/src/libselinux-* && \
-    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ make CFLAGS=-Wall && \
-    make PREFIX=/usr/arm-linux-gnueabihf DESTDIR=/usr/arm-linux-gnueabihf install
+RUN if [ "${TOOLCHAIN}" != "" ]; then \
+        cd /usr/local/src && \
+        for i in libselinux pcre3 util-linux; do \
+            apt-get build-dep -y $i && \
+            apt-get source -y $i \
+        ;done \
+     ;fi
 
-RUN cd /usr/local/src/util-linux-* && \
-    autoreconf && \
-    CC=arm-linux-gnueabihf-gcc CXX=arm-linux-gnueabihf-g++ ./configure --host=arm-linux-gnueabihf --prefix=/usr/arm-linux-gnueabihf \
-        --disable-all-programs \
-        --enable-libmount \
-        --enable-libblkid \
-        --enable-libuuid \
-        --enable-mount && \
-    make -j$(nproc) && \
-    make install
+RUN if [ "${TOOLCHAIN}" != "" ]; then \
+        cd /usr/local/src/pcre3-* && \
+        autoreconf && \
+        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ ./configure --host=${TOOLCHAIN} --prefix=/usr/${TOOLCHAIN} && \
+        make -j$(nproc) && \
+        make install \
+    ;fi
 
-CMD make all
+RUN if [ "${TOOLCHAIN}" != "" ]; then \
+        cd /usr/local/src/libselinux-* && \
+        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ make CFLAGS=-Wall && \
+        make PREFIX=/usr/${TOOLCHAIN} DESTDIR=/usr/${TOOLCHAIN} install \
+    ;fi
 
-ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml
+RUN if [ "${TOOLCHAIN}" != "" ]; then \
+        cd /usr/local/src/util-linux-* && \
+        autoreconf && \
+        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ ./configure --host=${TOOLCHAIN} --prefix=/usr/${TOOLCHAIN} \
+            --disable-all-programs \
+            --enable-libmount \
+            --enable-libblkid \
+            --enable-libuuid \
+            --enable-mount && \
+        make -j$(nproc) && \
+        make install \
+    ;fi
