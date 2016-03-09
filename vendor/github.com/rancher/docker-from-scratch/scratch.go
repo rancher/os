@@ -453,7 +453,7 @@ func touchSockets(args ...string) error {
 }
 
 func createLayout(config *Config) error {
-	if err := createDirs("/tmp", "/root/.ssh", "/var"); err != nil {
+	if err := createDirs("/tmp", "/root/.ssh", "/var", "/usr/lib"); err != nil {
 		return err
 	}
 
