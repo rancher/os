@@ -3,14 +3,9 @@ set -ex
 
 TARGET=$(pwd)/${1}
 
-ARCH=${ARCH:?"ARCH not set"}
+SUFFIX=${SUFFIX:-""}
 DFS_IMAGE=${DFS_IMAGE:?"DFS_IMAGE not set"}
 IS_ROOTFS=${IS_ROOTFS:-0}
-
-suffix=""
-[ "$ARCH" == "amd64" ] || suffix="_${ARCH}"
-
-DFS_ARCH_IMAGE=${DFS_IMAGE}${suffix}
 
 cd $(dirname $0)/..
 . scripts/build-common
@@ -41,7 +36,7 @@ cp assets/selinux/seusers           ${INITRD_DIR}/usr/etc/selinux/ros/
 cp assets/selinux/lxc_contexts      ${INITRD_DIR}/usr/etc/selinux/ros/contexts/
 cp assets/selinux/failsafe_context  ${INITRD_DIR}/usr/etc/selinux/ros/contexts/
 
-DFS_ARCH=$(docker create ${DFS_ARCH_IMAGE})
+DFS_ARCH=$(docker create ${DFS_IMAGE}${SUFFIX})
 trap "docker rm -fv ${DFS_ARCH}" EXIT
 
 docker export ${DFS_ARCH} | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerlaunch \
@@ -53,7 +48,7 @@ docker export ${DFS_ARCH} | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerl
                                                        usr
 
 if [ "$IS_ROOTFS" == "1" ]; then
-  DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_ARCH_IMAGE})
+  DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE})
   trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
   docker exec -i ${DFS} docker load < ${BUILD}/images.tar
   docker stop ${DFS}

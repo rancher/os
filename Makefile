@@ -1,5 +1,6 @@
 FORCE_PULL := 0
 DEV_BUILD  := 0
+HOST_ARCH   := amd64
 ARCH       := amd64
 SUFFIX := $(if $(filter-out amd64,$(ARCH)),_$(ARCH))
 
@@ -13,7 +14,11 @@ bin/ros:
 
 build/host_ros: bin/ros
 	mkdir -p $(dir $@)
+ifeq "$(ARCH)" "$(HOST_ARCH)"
 	ln -sf ../bin/ros $@
+else
+	ARCH=$(HOST_ARCH) TOOLCHAIN= VERSION=$(VERSION) ./scripts/mk-ros.sh $@
+endif
 
 
 assets/docker:
@@ -42,7 +47,7 @@ build/kernel/:
 
 dist/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 build/kernel/ build/images.tar
 	mkdir -p $(dir $@)
-	ARCH=$(ARCH) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh $@
+	SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh $@
 
 
 dist/artifacts/rancheros.iso: minimal
@@ -74,7 +79,7 @@ build/images.tar: build/host_ros build/os-config.yml
 
 dist/artifacts/rootfs.tar.gz: bin/ros assets/docker build/images.tar assets/selinux/policy.29
 	mkdir -p $(dir $@)
-	ARCH=$(ARCH) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) IS_ROOTFS=1 ./scripts/mk-initrd.sh $@
+	SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) IS_ROOTFS=1 ./scripts/mk-initrd.sh $@
 
 
 dist/artifacts/iso-checksums.txt: dist/artifacts/rancheros.iso

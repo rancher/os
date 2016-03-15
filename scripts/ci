@@ -4,4 +4,4 @@ set -ex
 cd $(dirname $0)/..
 . ./scripts/dapper-common
 
-dapper -d -O make ARCH=${ARCH} DEV_BUILD=1 test
+dapper -d -O make HOST_ARCH=${HOST_ARCH} ARCH=${ARCH} DEV_BUILD=1 test

@@ -1,21 +1,20 @@
 #!/bin/sh
 set -ex
 
-guessArch() {
-  docker version | grep 'OS/Arch:' | tail -n+2 | awk '{print $2}' | cut -f2 -d'/'
-}
-
-ARCH=${ARCH:-"$(guessArch)"}
-ARCH=${ARCH:?"Failed to guess ARCH"}
-export ARCH
+HOST_ARCH=${HOST_ARCH:-$(docker version | grep 'OS/Arch:' | tail -n+2 | awk '{print $2}' | cut -f2 -d'/')}
+HOST_ARCH=${HOST_ARCH:?"Failed to guess HOST_ARCH"}
+ARCH=${ARCH:-"$HOST_ARCH"}
+export HOST_ARCH ARCH
 
 cd $(dirname $0)/..
 
-[ -f "./.docker-env.${ARCH}" ] && . ./.docker-env.${ARCH} || echo "WARNING: missing .docker-env.${ARCH} (to use an ${ARCH} docker host)"
+[ -f "./.docker-env.${HOST_ARCH}" ] && . ./.docker-env.${HOST_ARCH} || echo "WARNING: missing .docker-env.${HOST_ARCH} (to use an ${HOST_ARCH} docker host)"
+
+. ./build.conf.${HOST_ARCH}
+export HOST_DOCKER_BINARY_URL=${DOCKER_BINARY_URL}
+docker inspect $DAPPER_BASE >/dev/null 2>&1 || docker pull $DAPPER_BASE
+docker tag $DAPPER_BASE rancher/os-dapper-base
 
 set -a
 . ./build.conf.${ARCH}
 set +a
-
-docker inspect $DAPPER_BASE >/dev/null 2>&1 || docker pull $DAPPER_BASE
-docker tag $DAPPER_BASE rancher/os-dapper-base

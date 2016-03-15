@@ -1,24 +1,23 @@
 FROM rancher/os-dapper-base
 
-ARG ARCH
-ENV ARCH ${ARCH}
-ARG DOCKER_BINARY_URL
-ENV DOCKER_BINARY_URL ${DOCKER_BINARY_URL}
-
 RUN apt-get update && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential isolinux xorriso gccgo \
         libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates pkg-config tox
 
+ARG HOST_ARCH
+ENV HOST_ARCH ${HOST_ARCH}
 RUN mkdir -p /usr/local && cd /usr/local && \
     wget -O - https://storage.googleapis.com/golang/go1.6.src.tar.gz | tar -xz && \
-    cd go/src && GOROOT_BOOTSTRAP=/usr GOARCH=${ARCH} GOHOSTARCH=${ARCH} ./make.bash
+    cd go/src && GOROOT_BOOTSTRAP=/usr GOARCH=${HOST_ARCH} GOHOSTARCH=${HOST_ARCH} ./make.bash
 
 ENV PATH /usr/local/go/bin:$PATH
 RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
 ENV PATH /go/bin:$PATH
 
-RUN wget -O - ${DOCKER_BINARY_URL} > /usr/local/bin/docker
+ARG HOST_DOCKER_BINARY_URL
+ENV HOST_DOCKER_BINARY_URL ${HOST_DOCKER_BINARY_URL}
+RUN wget -O - ${HOST_DOCKER_BINARY_URL} > /usr/local/bin/docker
 RUN chmod +x /usr/local/bin/docker
 
 ENV DAPPER_DOCKER_SOCKET true
@@ -34,6 +33,10 @@ CMD make
 
 ARG TOOLCHAIN
 ENV TOOLCHAIN ${TOOLCHAIN}
+
+RUN if [ "${TOOLCHAIN}" != "" ] && ! which ${TOOLCHAIN}-gcc; then \
+        apt-get install -y gcc-${TOOLCHAIN} g++-${TOOLCHAIN} \
+    ;fi
 
 RUN if [ "${TOOLCHAIN}" != "" ]; then \
         cd /usr/local/src && \
