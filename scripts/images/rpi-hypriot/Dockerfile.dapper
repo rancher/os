@@ -1,15 +1,19 @@
 FROM debian:jessie
-ENV DAPPER_RUN_ARGS --device /dev/kvm
+ENV DAPPER_RUN_ARGS --privileged
 ENV DAPPER_OUTPUT dist
 RUN apt-get update -y
 RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    libguestfs-tools curl zip linux-image-amd64 unzip
+    ca-certificates curl dosfstools tree zip
 RUN mkdir -p /source/assets
 
-RUN curl -fL http://downloads.hypriot.com/hypriot-rpi-20151115-132854.img.zip > /source/assets/hypriot.img.zip
-RUN cd /source/assets && \
-    unzip hypriot.img.zip
+# RancherOS for ARM
 RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm.tar.gz > /source/assets/rootfs_arm.tar.gz
+
+# Hypriot Kernel 4.1.17+ and bootfiles for RPi2
+RUN curl -fL http://downloads.hypriot.com/raspberrypi-bootloader_20160212-075712_armhf.deb > /source/assets/raspberrypi-bootloader_20160212-075712_armhf.deb
+
+# Bootfiles to support Raspberry Pi 3 B
+RUN curl -fL http://downloads.hypriot.com/rpi3-bootfiles.tar.gz > /source/assets/rpi3-bootfiles.tar.gz
 
 WORKDIR /source
 CMD ["./scripts/build.sh"]
