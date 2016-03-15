@@ -1,16 +1,11 @@
 #!/bin/bash
 set -ex
 
-TARGET=${1}
+TARGET=$(pwd)/${1}
 
-ARCH=${ARCH:-"amd64"}
+SUFFIX=${SUFFIX:-""}
 DFS_IMAGE=${DFS_IMAGE:?"DFS_IMAGE not set"}
 IS_ROOTFS=${IS_ROOTFS:-0}
-
-suffix=""
-[ "$ARCH" == "amd64" ] || suffix="_${ARCH}"
-
-DFS_ARCH_IMAGE=${DFS_IMAGE}${suffix}
 
 cd $(dirname $0)/..
 . scripts/build-common
@@ -41,7 +36,7 @@ cp assets/selinux/seusers           ${INITRD_DIR}/usr/etc/selinux/ros/
 cp assets/selinux/lxc_contexts      ${INITRD_DIR}/usr/etc/selinux/ros/contexts/
 cp assets/selinux/failsafe_context  ${INITRD_DIR}/usr/etc/selinux/ros/contexts/
 
-DFS_ARCH=$(docker create ${DFS_ARCH_IMAGE})
+DFS_ARCH=$(docker create ${DFS_IMAGE}${SUFFIX})
 trap "docker rm -fv ${DFS_ARCH}" EXIT
 
 docker export ${DFS_ARCH} | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerlaunch \
@@ -57,8 +52,8 @@ if [ "$IS_ROOTFS" == "1" ]; then
   trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
   docker exec -i ${DFS} docker load < ${BUILD}/images.tar
   docker stop ${DFS}
-  docker run --rm --volumes-from=${DFS} debian:jessie tar -c -C /var/lib/docker ./image | tar -x -C ${INITRD_DIR}/var/lib/system-docker
-  docker run --rm --volumes-from=${DFS} debian:jessie tar -c -C /var/lib/docker ./overlay | tar -x -C ${INITRD_DIR}/var/lib/system-docker
+  docker run --rm --volumes-from=${DFS} rancher/os-dapper-base tar -c -C /var/lib/docker ./image | tar -x -C ${INITRD_DIR}/var/lib/system-docker
+  docker run --rm --volumes-from=${DFS} rancher/os-dapper-base tar -c -C /var/lib/docker ./overlay | tar -x -C ${INITRD_DIR}/var/lib/system-docker
 
   cd ${INITRD_DIR}
 

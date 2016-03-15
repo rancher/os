@@ -1,6 +1,8 @@
 FORCE_PULL := 0
 DEV_BUILD  := 0
+HOST_ARCH   := amd64
 ARCH       := amd64
+SUFFIX := $(if $(filter-out amd64,$(ARCH)),_$(ARCH))
 
 include build.conf
 include build.conf.$(ARCH)
@@ -12,14 +14,11 @@ bin/ros:
 
 build/host_ros: bin/ros
 	mkdir -p $(dir $@)
-ifeq "$(ARCH)" "amd64"
+ifeq "$(ARCH)" "$(HOST_ARCH)"
 	ln -sf ../bin/ros $@
 else
-	ARCH=amd64 VERSION=$(VERSION) ./scripts/mk-ros.sh $@
+	ARCH=$(HOST_ARCH) TOOLCHAIN= VERSION=$(VERSION) ./scripts/mk-ros.sh $@
 endif
-
-pwd := $(shell pwd)
-include scripts/build-common
 
 
 assets/docker:
@@ -34,33 +33,33 @@ assets/selinux/policy.29:
 ifdef COMPILED_KERNEL_URL
 
 installer: minimal
-	docker build -t $(IMAGE_NAME):$(VERSION) .
+	docker build -t $(IMAGE_NAME):$(VERSION)$(SUFFIX) -f Dockerfile.$(ARCH) .
 
-$(DIST)/artifacts/vmlinuz: $(BUILD)/kernel/
+dist/artifacts/vmlinuz: build/kernel/
 	mkdir -p $(dir $@)
-	mv $(BUILD)/kernel/boot/vmlinuz* $@
+	mv $(or $(wildcard build/kernel/boot/vmlinuz*), $(wildcard build/kernel/boot/vmlinux*)) $@
 
 
-$(BUILD)/kernel/:
+build/kernel/:
 	mkdir -p $@
 	curl -L "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@
 
 
-$(DIST)/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 $(BUILD)/kernel/ $(BUILD)/images.tar
+dist/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 build/kernel/ build/images.tar
 	mkdir -p $(dir $@)
-	ARCH=$(ARCH) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh $@
+	SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh $@
 
 
-$(DIST)/artifacts/rancheros.iso: minimal
+dist/artifacts/rancheros.iso: minimal
 	./scripts/mk-rancheros-iso.sh
 
 all: minimal installer iso
 
-initrd: $(DIST)/artifacts/initrd
+initrd: dist/artifacts/initrd
 
-minimal: initrd $(DIST)/artifacts/vmlinuz
+minimal: initrd dist/artifacts/vmlinuz
 
-iso: $(DIST)/artifacts/rancheros.iso $(DIST)/artifacts/iso-checksums.txt
+iso: dist/artifacts/rancheros.iso dist/artifacts/iso-checksums.txt
 
 test: minimal
 	cd tests/integration && tox
@@ -74,22 +73,22 @@ build/os-config.yml: build/host_ros
 	ARCH=$(ARCH) VERSION=$(VERSION) ./scripts/gen-os-config.sh $@
 
 
-$(BUILD)/images.tar: build/host_ros build/os-config.yml
+build/images.tar: build/host_ros build/os-config.yml
 	ARCH=$(ARCH) FORCE_PULL=$(FORCE_PULL) ./scripts/mk-images-tar.sh
 
 
-$(DIST)/artifacts/rootfs.tar.gz: bin/ros assets/docker $(BUILD)/images.tar assets/selinux/policy.29
+dist/artifacts/rootfs.tar.gz: bin/ros assets/docker build/images.tar assets/selinux/policy.29
 	mkdir -p $(dir $@)
-	ARCH=$(ARCH) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) IS_ROOTFS=1 ./scripts/mk-initrd.sh $@
+	SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) IS_ROOTFS=1 ./scripts/mk-initrd.sh $@
 
 
-$(DIST)/artifacts/iso-checksums.txt: $(DIST)/artifacts/rancheros.iso
+dist/artifacts/iso-checksums.txt: dist/artifacts/rancheros.iso
 	./scripts/mk-iso-checksums-txt.sh
 
 
 version:
 	@echo $(VERSION)
 
-rootfs: $(DIST)/artifacts/rootfs.tar.gz
+rootfs: dist/artifacts/rootfs.tar.gz
 
 .PHONY: rootfs version bin/ros

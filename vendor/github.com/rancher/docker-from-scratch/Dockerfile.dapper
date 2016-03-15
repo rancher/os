@@ -1,13 +1,13 @@
-FROM golang:1.5.3
+FROM golang:1.6
 
 RUN apt-get update && apt-get -y install libselinux-dev pkg-config
-RUN curl -o /usr/local/bin/docker -L https://get.docker.com/builds/Linux/x86_64/docker-1.9.1 && \
+RUN wget -O /usr/local/bin/docker -L https://get.docker.com/builds/Linux/x86_64/docker-1.10.2 && \
     chmod +x /usr/local/bin/docker
 
 ENV DAPPER_SOURCE /go/src/github.com/rancher/docker-from-scratch
 ENV DAPPER_OUTPUT ""
 ENV DAPPER_DOCKER_SOCKET true
-ENV DAPPER_ENV NO_TEST
+ENV DAPPER_ENV NO_TEST ARCH
 
 ENV GO15VENDOREXPERIMENT 1
 
@@ -18,21 +18,24 @@ WORKDIR ${DAPPER_SOURCE}
 RUN mkdir -p assets
 
 WORKDIR ${DAPPER_SOURCE}/assets
-RUN curl -OL https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.3.1/base-files_amd64.tar.gz
-RUN curl -OL https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.3.1/base-files_arm.tar.gz
+RUN wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_amd64.tar.gz
+RUN wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_arm.tar.gz
+RUN wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_arm64.tar.gz
 
-RUN curl -o ./docker_amd64 -L https://get.docker.com/builds/Linux/x86_64/docker-1.10.2 && \
+RUN wget -O ./docker_amd64 -L https://get.docker.com/builds/Linux/x86_64/docker-1.10.2 && \
     chmod +x ./docker_amd64
-RUN curl -o ./docker_arm -L https://github.com/rancher/docker/releases/download/v1.10.2-ros_arm/docker-1.10.2 && \
+RUN wget -O ./docker_arm -L https://github.com/rancher/docker/releases/download/v1.10.2-arm2/docker-1.10.2_arm && \
     chmod +x ./docker_arm
+RUN wget -O ./docker_arm64 -L https://github.com/rancher/docker/releases/download/v1.10.2-arm2/docker-1.10.2_arm64 && \
+    chmod +x ./docker_arm64
 
 WORKDIR ${DAPPER_SOURCE}
 
 COPY ./scripts/crosstools.list /etc/apt/sources.list.d/
 
 RUN sh -c 'curl http://emdebian.org/tools/debian/emdebian-toolchain-archive.key | apt-key add -' && \
-    dpkg --add-architecture armhf && \
+    dpkg --add-architecture armhf && dpkg --add-architecture arm64 && \
     apt-get update && \
-    apt-get install -y crossbuild-essential-armhf
+    apt-get install -y crossbuild-essential-armhf crossbuild-essential-arm64
 
 CMD ./scripts/ci

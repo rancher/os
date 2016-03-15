@@ -3,7 +3,7 @@
 package util
 
 /*
-#cgo LDFLAGS: -lmount -lblkid -luuid -lselinux
+#cgo LDFLAGS: -lmount -lblkid -luuid
 #include<blkid/blkid.h>
 #include<libmount/libmount.h>
 #include<stdlib.h>
@@ -33,11 +33,4 @@ func GetFsType(device string) (string, error) {
 		return C.GoString(cString), nil
 	}
 	return "", errors.New("Error while getting fstype")
-}
-
-func intToBool(value C.int) bool {
-	if value == 0 {
-		return false
-	}
-	return true
 }

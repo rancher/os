@@ -1,7 +1,6 @@
 build:
-  image: rancher/dapper:1.9.1
+  image: rancher/dapper:1.10.2
   volumes:
   - /var/run/docker.sock:/var/run/docker.sock
   commands:
-  - dapper -O make ARCH=arm rootfs
-  - dapper -O make DEV_BUILD=1 test
+  - ./scripts/ci
