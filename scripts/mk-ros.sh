@@ -13,7 +13,7 @@ strip_bin=$(which strip)
 if [ "${TOOLCHAIN}" != "" ]; then
   export CC=/usr/bin/${TOOLCHAIN}-gcc
   export CGO_ENABLED=1
-  strip_bin=/usr/${TOOLCHAIN}/bin/strip
+  strip_bin=/usr/bin/${TOOLCHAIN}-strip
 fi
 GOARCH=${ARCH} go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION=${VERSION} -linkmode external -extldflags -static" -o ${ros}
 ${strip_bin} --strip-all ${ros}
