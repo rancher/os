@@ -3,6 +3,7 @@ package control
 import (
 	"os"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
 )
@@ -15,6 +16,12 @@ func Main() {
 	app.Version = config.VERSION
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
+	app.Before = func(c *cli.Context) error {
+		if os.Geteuid() != 0 {
+			log.Fatalf("%s: Need to be root", os.Args[0])
+		}
+		return nil
+	}
 
 	app.Commands = []cli.Command{
 		{
