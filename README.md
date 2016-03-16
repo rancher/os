@@ -28,13 +28,13 @@ https://releases.rancher.com/os/v0.4.2/rancheros.iso
 
 * https://releases.rancher.com/os/latest/initrd
 * https://releases.rancher.com/os/latest/iso-checksums.txt
-* https://releases.rancher.com/os/latest/rancheros-v0.4.1.tar.gz
+* https://releases.rancher.com/os/latest/rancheros-v0.4.2.tar.gz
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/vmlinuz
 
 * https://releases.rancher.com/os/v0.4.2/initrd
 * https://releases.rancher.com/os/v0.4.2/iso-checksums.txt
-* https://releases.rancher.com/os/v0.4.1/rancheros-v0.4.1.tar.gz
+* https://releases.rancher.com/os/v0.4.2/rancheros-v0.4.2.tar.gz
 * https://releases.rancher.com/os/v0.4.2/rancheros.iso
 * https://releases.rancher.com/os/v0.4.2/vmlinuz
 
