@@ -6,10 +6,28 @@ cd $(dirname $0)/..
 
 source scripts/build-common
 
+HOST_ARCH=${HOST_ARCH:-amd64}
+ARCH=${ARCH:-amd64}
+
+declare -A qemuarch=( ["amd64"]="x86_64" ["arm"]="arm" ["arm64"]="aarch64" )
+declare -A ttycons=( ["amd64"]="ttyS0" ["arm"]="ttyAMA0" ["arm64"]="ttyAMA0" )
+declare -A machine=( ["amd64"]="" ["arm"]="-M virt -cpu cortex-a8" ["arm64"]="-M virt -cpu cortex-a57" )
+declare -A network=(
+    ["amd64"]="-net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev"
+    ["arm"]="-netdev user,id=unet,hostfwd=tcp::2222-:22,hostname=rancher-dev -device virtio-net-device,netdev=unet"
+)
+network["arm64"]=${network["arm"]}
+
+hd_amd64() {
+    echo "-drive if=virtio,file=$1"
+}
+hd_arm() {
+    echo "-drive if=none,file=$1,id=hd0 -device virtio-blk-device,drive=hd0"
+}
+declare -A hd=( ["amd64"]="hd_amd64" ["arm"]="hd_arm" ["arm64"]="hd_arm" )
+
 BASE=$(pwd)
 UNAME=$(uname)
-QEMUARCH=$(uname -m)
-[ "${UNAME}" == "Darwin" ] && QEMUARCH=x86_64
 
 KERNEL=${BASE}/dist/artifacts/vmlinuz
 INITRD=${BASE}/dist/artifacts/initrd
@@ -43,10 +61,12 @@ while [ "$#" -gt 0 ]; do
                 QEMU=0
             fi
             ;;
+        --arch)
+            shift 1
+            ARCH="$1"
+            ;;
         --qemu)
-            if [ -x $(which qemu-system-${QEMUARCH}) ]; then
-                QEMU=1
-            fi
+            QEMU=1
             ;;
         --qind)
             QIND=1
@@ -73,6 +93,13 @@ while [ "$#" -gt 0 ]; do
     esac
     shift 1
 done
+
+QEMUARCH=${qemuarch["${ARCH}"]}
+TTYCONS=${ttycons["${ARCH}"]}
+
+if [ "$QEMU" == "1" ] && ! which qemu-system-${QEMUARCH}; then
+    QEMU=0
+fi
 
 if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
     echo "Failed to find ${KERNEL} or ${INITRD}" 1>&2
@@ -112,7 +139,7 @@ if [ "$REBUILD" == "1" ]; then
     INITRD=${INITRD_TEST}
 fi
 
-KERNEL_ARGS="quiet rancher.password=rancher console=ttyS0 ${QEMU_APPEND}"
+KERNEL_ARGS="quiet rancher.password=rancher console=${TTYCONS} ${QEMU_APPEND}"
 if [ "$FORMAT" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
 fi
@@ -165,16 +192,16 @@ if [ "$XHYVE" == "1" ] || [ "$QEMU" == "1" ]; then
 
     elif [ "$QEMU" == "1" ]; then
 
-        if [ "$KVM" == "1" ]; then
+        if [ "$KVM" == "1" ] && [ "$ARCH" == "$HOST_ARCH" ]; then
             KVM_ENABLE="-machine accel=kvm -cpu host"
         fi
         exec qemu-system-${QEMUARCH} -serial stdio \
+            ${machine["$ARCH"]} \
             -kernel ${KERNEL} \
             -initrd ${INITRD} \
             -m 1024 \
-            -net nic,vlan=0,model=virtio \
-            -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev \
-            -drive if=virtio,file=${HD} \
+            ${network["$ARCH"]} \
+            $(eval "${hd["$ARCH"]} ${HD}") \
             ${KVM_ENABLE} \
             -smp 1 \
             -cdrom ${CLOUD_CONFIG_ISO} \
