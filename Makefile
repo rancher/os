@@ -62,7 +62,7 @@ minimal: initrd dist/artifacts/vmlinuz
 iso: dist/artifacts/rancheros.iso dist/artifacts/iso-checksums.txt
 
 test: minimal
-	cd tests/integration && tox
+	cd tests/integration && HOST_ARCH=$(HOST_ARCH) ARCH=$(ARCH) tox
 
 .PHONY: all minimal initrd iso installer test
 
