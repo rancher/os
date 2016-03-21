@@ -66,7 +66,7 @@ import:
   version: 1349b37bd56f4f5ce2690b5b2c0f53f88a261c67
 
 - package: github.com/rancher/docker-from-scratch
-  version: v1.10.2-1
+  version: v1.10.3
 
 - package: github.com/rancher/netconf
   version: d7d620ef4ea62a9d04b51c7b3d9dc83fe7ffaa1b

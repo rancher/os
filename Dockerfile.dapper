@@ -40,7 +40,7 @@ RUN if [ "${TOOLCHAIN}" != "" ] && ! which ${TOOLCHAIN}-gcc; then \
 
 RUN if [ "${TOOLCHAIN}" != "" ]; then \
         cd /usr/local/src && \
-        for i in libselinux pcre3 util-linux; do \
+        for i in libselinux libsepol pcre3 util-linux; do \
             apt-get build-dep -y $i && \
             apt-get source -y $i \
         ;done \
@@ -56,6 +56,9 @@ RUN if [ "${TOOLCHAIN}" != "" ]; then \
 
 RUN if [ "${TOOLCHAIN}" != "" ]; then \
         cd /usr/local/src/libselinux-* && \
+        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ make CFLAGS=-Wall && \
+        make PREFIX=/usr/${TOOLCHAIN} DESTDIR=/usr/${TOOLCHAIN} install && \
+        cd /usr/local/src/libsepol-* && \
         CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ make CFLAGS=-Wall && \
         make PREFIX=/usr/${TOOLCHAIN} DESTDIR=/usr/${TOOLCHAIN} install \
     ;fi
