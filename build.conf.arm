@@ -3,3 +3,4 @@ TOOLCHAIN=arm-linux-gnueabihf
 
 COMPILED_KERNEL_URL= #empty
 DOCKER_BINARY_URL=https://github.com/rancher/docker/releases/download/v1.10.3-ros1/docker-1.10.3_arm
+OS_RELEASES_YML=https://releases.rancher.com/os/releases_arm.yml
