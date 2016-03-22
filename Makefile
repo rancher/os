@@ -23,12 +23,12 @@ endif
 
 assets/docker:
 	mkdir -p $(dir $@)
-	curl -L "$(DOCKER_BINARY_URL)" > $@
+	wget -O - "$(DOCKER_BINARY_URL)" > $@
 	chmod +x $@
 
 assets/selinux/policy.29:
 	mkdir -p $(dir $@)
-	curl -L "$(SELINUX_POLICY_URL)" > $@
+	wget -O - "$(SELINUX_POLICY_URL)" > $@
 
 ifdef COMPILED_KERNEL_URL
 
@@ -42,7 +42,7 @@ dist/artifacts/vmlinuz: build/kernel/
 
 build/kernel/:
 	mkdir -p $@
-	curl -L "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@
+	wget -O - "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@
 
 
 dist/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 build/kernel/ build/images.tar
