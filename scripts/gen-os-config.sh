@@ -5,6 +5,7 @@ cd $(dirname $0)/..
 
 set -a
 . build.conf
+. build.conf.${ARCH}
 
 SUFFIX=""
 [ "${ARCH}" == "amd64" ] || SUFFIX="_${ARCH}"
