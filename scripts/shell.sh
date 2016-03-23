@@ -4,4 +4,4 @@ set -e
 cd $(dirname $0)/..
 . ./scripts/dapper-common
 
-exec dapper -s
+exec dapper -d -s
