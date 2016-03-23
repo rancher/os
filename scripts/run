@@ -11,7 +11,8 @@ ARCH=${ARCH:-amd64}
 
 declare -A qemuarch=( ["amd64"]="x86_64" ["arm"]="arm" ["arm64"]="aarch64" )
 declare -A ttycons=( ["amd64"]="ttyS0" ["arm"]="ttyAMA0" ["arm64"]="ttyAMA0" )
-declare -A machine=( ["amd64"]="" ["arm"]="-M virt -cpu cortex-a8" ["arm64"]="-M virt -cpu cortex-a57" )
+declare -A machine=( ["amd64"]="" ["arm"]="-M virt" ["arm64"]="-M virt" )
+declare -A cpu=( ["amd64"]="" ["arm"]="-cpu cortex-a8" ["arm64"]="-cpu cortex-a57" )
 declare -A network=(
     ["amd64"]="-net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev"
     ["arm"]="-netdev user,id=unet,hostfwd=tcp::2222-:22,hostname=rancher-dev -device virtio-net-device,netdev=unet"
@@ -192,17 +193,20 @@ if [ "$XHYVE" == "1" ] || [ "$QEMU" == "1" ]; then
 
     elif [ "$QEMU" == "1" ]; then
 
+        CPU=${cpu["$ARCH"]}
         if [ "$KVM" == "1" ] && [ "$ARCH" == "$HOST_ARCH" ]; then
-            KVM_ENABLE="-machine accel=kvm -cpu host"
+            KVM_ENABLE="-enable-kvm"
+            CPU="-cpu host"
         fi
         exec qemu-system-${QEMUARCH} -serial stdio \
+            ${KVM_ENABLE} \
+            ${CPU} \
             ${machine["$ARCH"]} \
             -kernel ${KERNEL} \
             -initrd ${INITRD} \
             -m 1024 \
             ${network["$ARCH"]} \
             $(eval "${hd["$ARCH"]} ${HD}") \
-            ${KVM_ENABLE} \
             -smp 1 \
             -cdrom ${CLOUD_CONFIG_ISO} \
             -append "${KERNEL_ARGS}" \
