@@ -21,7 +21,7 @@ do
         *) exit 1 ;;
     esac
 done
-[ "$ARCH" == "arm" && "$ENV" != "rancher-upgrade" ] && ENV=arm
+[[ "$ARCH" == "arm" && "$ENV" != "rancher-upgrade" ]] && ENV=arm
 
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-"${SCRIPTS_DIR}/conf/empty.yml"}
