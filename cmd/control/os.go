@@ -199,8 +199,16 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool) error
 		return err
 	}
 
-	if err := container.Pull(); err != nil {
+	client, err := docker.NewSystemClient()
+	if err != nil {
 		return err
+	}
+
+	// Only pull image if not found locally
+	if _, err := client.InspectImage(image); err != nil {
+		if err := container.Pull(); err != nil {
+			return err
+		}
 	}
 
 	if !stage {
