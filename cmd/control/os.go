@@ -212,6 +212,12 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool) error
 			}
 		}
 
+		// If there is already an upgrade container, delete it
+		// Up() should to this, but currently does not due to a bug
+		if err := container.Delete(); err != nil {
+			return err
+		}
+
 		if err := container.Up(); err != nil {
 			return err
 		}
