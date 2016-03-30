@@ -63,7 +63,7 @@ func installAction(c *cli.Context) {
 		log.WithFields(log.Fields{"err": err}).Fatal("ros install: failed to load config")
 	}
 	if image == "" {
-		image = cfg.Rancher.Upgrade.Image + ":" + config.VERSION
+		image = cfg.Rancher.Upgrade.Image + ":" + config.VERSION + config.SUFFIX
 	}
 
 	installType := c.String("install-type")

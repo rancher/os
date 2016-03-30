@@ -4,6 +4,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/netconf"
+	"runtime"
 )
 
 const (
@@ -44,11 +45,19 @@ const (
 var (
 	OemConfigFile = OEM + "/oem-config.yml"
 	VERSION       string
+	ARCH          string
+	SUFFIX        string
 )
 
 func init() {
 	if VERSION == "" {
 		VERSION = "v0.0.0-dev"
+	}
+	if ARCH == "" {
+		ARCH = runtime.GOARCH
+	}
+	if SUFFIX == "" && ARCH != "amd64" {
+		SUFFIX = "_" + ARCH
 	}
 }
 
