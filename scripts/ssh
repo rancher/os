@@ -18,10 +18,6 @@ while [ "$#" -gt 0 ]; do
         --notty)
             INTERACTIVE=""
             ;;
-        --xhyve)
-            XHYVE=1
-            QEMU=0
-            ;;
         --qemu)
             QEMU=1
             ;;
@@ -40,10 +36,7 @@ while [ "$#" -gt 0 ]; do
     shift 1
 done
 
-if [ "$XHYVE" == "1" ]; then
-    HOST=192.168.64.2  #  consult `/var/db/dhcpd_leases` or delete it
-    exec ssh -F ./assets/scripts_ssh_config -i ${KEY:-./assets/rancher.key} rancher@${HOST} "$@"
-elif [ "$QEMU" == "1" ]; then
+if [ "$QEMU" == "1" ]; then
     exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ${KEY:-./assets/rancher.key} rancher@localhost "$@"
 elif [ "$QIND" == "1" ]; then
     NAME=${NAME:-ros-qind}
