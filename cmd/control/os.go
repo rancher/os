@@ -212,10 +212,15 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool) error
 	}
 
 	if !stage {
-		fmt.Printf("Upgrading to %s\n", image)
+		imageSplit := strings.Split(image, ":")
+		if len(imageSplit) > 1 && imageSplit[1] == config.VERSION {
+			if !force && !yes(in, fmt.Sprintf("Already at version %s. Continue anyways", imageSplit[1])) {
+				os.Exit(1)
+			}
+		} else {
+			fmt.Printf("Upgrading to %s\n", image)
 
-		if !force {
-			if !yes(in, "Continue") {
+			if !force && !yes(in, "Continue") {
 				os.Exit(1)
 			}
 		}
