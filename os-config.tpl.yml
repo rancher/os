@@ -178,6 +178,7 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
+      - /var/lib/system-docker:/var/lib/system-docker
       - /var/lib/rkt:/var/lib/rkt
     network:
       image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
