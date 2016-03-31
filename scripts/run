@@ -196,6 +196,7 @@ if [ "$QEMU" == "1" ]; then
         CPU="-cpu host"
     fi
     exec qemu-system-${QEMUARCH} -serial stdio \
+        -rtc base=utc,clock=host \
         ${KVM_ENABLE} \
         ${CPU} \
         ${machine["$ARCH"]} \
