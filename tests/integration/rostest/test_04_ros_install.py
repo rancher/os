@@ -20,7 +20,7 @@ def test_ros_install_on_formatted_disk(qemu):
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
     subprocess.check_call(ssh_command + ['sudo', 'ros', 'install', '-f', '--no-reboot', '-d', '/dev/vda',
-                                         '-i', 'rancher/os:v0.4.1'],
+                                         '-i', 'rancher/os:v0.4.4-dev' + u.suffix],
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
     subprocess.call(ssh_command + ['sudo', 'reboot'],

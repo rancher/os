@@ -1,12 +1,18 @@
 from __future__ import print_function
 
 import itertools as it
+import os
 import subprocess
 import time
 
 import pytest
 
 ros_test = 'ros-test'
+arch = os.environ['ARCH']
+
+suffix = ''
+if arch != 'amd64':
+    suffix = '_' + arch
 
 
 def iter_lines(s):

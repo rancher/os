@@ -14,10 +14,13 @@ def qemu(request):
     return q
 
 
+nginx = {'amd64': 'nginx', 'arm': 'armhfbuild/nginx', 'arm64': 'armhfbuild/nginx'}
+
+
 @pytest.mark.timeout(40)
 def test_reboot_with_container_running(qemu):
     u.wait_for_ssh(qemu, ssh_command)
-    subprocess.check_call(ssh_command + ['docker', 'run', '-d', '--restart=always', 'nginx'],
+    subprocess.check_call(ssh_command + ['docker', 'run', '-d', '--restart=always', nginx[u.arch]],
                           stderr=subprocess.STDOUT, universal_newlines=True)
 
     subprocess.call(ssh_command + ['sudo', 'reboot'],

@@ -10,10 +10,14 @@ ssh_command = ['./scripts/ssh', '--qemu', '--key', './tests/integration/assets/t
 cloud_config_path = './tests/integration/assets/test_01/cloud-config.yml'
 
 
+net_args = {'amd64': ['-net', 'nic,vlan=1,model=virtio', '-net', 'user,vlan=1,net=10.10.2.0/24'],
+            'arm64': ['-netdev', 'user,id=net1,net=10.10.2.0/24', '-device', 'virtio-net-device,netdev=net1']}
+net_args['arm'] = net_args['arm64']
+
+
 @pytest.fixture(scope="module")
 def qemu(request):
-    q = u.run_qemu(request, ['--cloud-config', cloud_config_path,
-                             '-net', 'nic,vlan=1,model=virtio', '-net', 'user,vlan=1,net=10.10.2.0/24'])
+    q = u.run_qemu(request, ['--cloud-config', cloud_config_path] + net_args[u.arch])
     u.flush_out(q.stdout)
     return q
 
