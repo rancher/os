@@ -30,6 +30,10 @@ assets/selinux/policy.29:
 	mkdir -p $(dir $@)
 	curl -L "$(SELINUX_POLICY_URL)" > $@
 
+assets/modules.tar.gz:
+	mkdir -p $(dir $@)
+	curl -L "$(VBOX_MODULES_URL)" > $@
+
 ifdef COMPILED_KERNEL_URL
 
 installer: minimal
@@ -45,9 +49,10 @@ build/kernel/:
 	curl -L "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@
 
 
-dist/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 build/kernel/ build/images.tar
+dist/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 build/kernel/ build/images.tar assets/modules.tar.gz
 	mkdir -p $(dir $@)
-	SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) ./scripts/mk-initrd.sh $@
+	SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) \
+	       KERNEL_RELEASE=$(KERNEL_RELEASE) ARCH=$(ARCH) ./scripts/mk-initrd.sh $@
 
 
 dist/artifacts/rancheros.iso: minimal
@@ -77,7 +82,7 @@ build/images.tar: build/host_ros build/os-config.yml
 	ARCH=$(ARCH) FORCE_PULL=$(FORCE_PULL) ./scripts/mk-images-tar.sh
 
 
-dist/artifacts/rootfs.tar.gz: bin/ros assets/docker build/images.tar assets/selinux/policy.29
+dist/artifacts/rootfs.tar.gz: bin/ros assets/docker build/images.tar assets/selinux/policy.29 assets/modules.tar.gz
 	mkdir -p $(dir $@)
 	SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) IS_ROOTFS=1 ./scripts/mk-initrd.sh $@
 

@@ -36,6 +36,11 @@ cp assets/selinux/seusers           ${INITRD_DIR}/usr/etc/selinux/ros/
 cp assets/selinux/lxc_contexts      ${INITRD_DIR}/usr/etc/selinux/ros/contexts/
 cp assets/selinux/failsafe_context  ${INITRD_DIR}/usr/etc/selinux/ros/contexts/
 
+if [ "$ARCH" == "amd64" ]; then
+  KERNEL_RELEASE=$(tar xvf assets/modules.tar.gz -C ${INITRD_DIR} | cut -f4 -d/ | cut -f1 -d ' ')
+  depmod -a -b ${INITRD_DIR}/usr $KERNEL_RELEASE
+fi
+
 DFS_ARCH=$(docker create ${DFS_IMAGE}${SUFFIX})
 trap "docker rm -fv ${DFS_ARCH}" EXIT
 
