@@ -3,9 +3,8 @@ package config
 import (
 	log "github.com/Sirupsen/logrus"
 
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/util"
-	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -87,7 +86,7 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 		// Reached end, set the value
 		if last && value != nil {
 			if s, ok := value.(string); ok {
-				value = DummyMarshall(s)
+				value = unmarshalOrReturnString(s)
 			}
 
 			t[part] = value
@@ -121,28 +120,11 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 	return "", tData
 }
 
-func DummyMarshall(value string) interface{} {
-	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-		result := []interface{}{}
-		for _, i := range strings.Split(value[1:len(value)-1], ",") {
-			result = append(result, strings.TrimSpace(i))
-		}
-		return result
+func unmarshalOrReturnString(value string) (result interface{}) {
+	if err := yaml.Unmarshal([]byte(value), &result); err != nil {
+		result = value
 	}
-
-	if value == "true" {
-		return true
-	} else if value == "false" {
-		return false
-	} else if ok, _ := regexp.MatchString("^[0-9]+$", value); ok {
-		i, err := strconv.Atoi(value)
-		if err != nil {
-			panic(err)
-		}
-		return i
-	}
-
-	return value
+	return
 }
 
 func parseCmdline(cmdLine string) map[interface{}]interface{} {
@@ -167,7 +149,7 @@ outer:
 		keys := strings.Split(kv[0], ".")
 		for i, key := range keys {
 			if i == len(keys)-1 {
-				current[key] = DummyMarshall(value)
+				current[key] = unmarshalOrReturnString(value)
 			} else {
 				if obj, ok := current[key]; ok {
 					if newCurrent, ok := obj.(map[interface{}]interface{}); ok {
