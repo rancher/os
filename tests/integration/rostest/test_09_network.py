@@ -21,7 +21,7 @@ def qemu(request):
 
 
 def test_network_conf(qemu):
-    SSH(qemu).check_call('bash', '-c', '''cat > test-merge << "SCRIPT"
+    SSH(qemu).check_call('''cat > test-merge << "SCRIPT"
 set -x -e
 
 ip link show dev br0
@@ -37,7 +37,7 @@ sudo bash test-merge
 
 
 def test_network_dns_ros_set(qemu):
-    SSH(qemu).check_call('bash', '-c', '''
+    SSH(qemu).check_call('''
 set -x -e
 
 sudo ros config set rancher.network.dns.search '[a,b]'

@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 cd $(dirname $0)/..
 
@@ -195,6 +194,7 @@ if [ "$QEMU" == "1" ]; then
         KVM_ENABLE="-enable-kvm"
         CPU="-cpu host"
     fi
+    set -x
     exec qemu-system-${QEMUARCH} -serial stdio \
         -rtc base=utc,clock=host \
         ${KVM_ENABLE} \
@@ -202,7 +202,7 @@ if [ "$QEMU" == "1" ]; then
         ${machine["$ARCH"]} \
         -kernel ${KERNEL} \
         -initrd ${INITRD} \
-        -m 1024 \
+        -m 2048 \
         ${network["$ARCH"]} \
         $(eval "${cd["$ARCH"]} ${CCIMG}") \
         $(eval "${hd["$ARCH"]} ${HD}") \
@@ -240,6 +240,7 @@ elif [ "$QIND" == "1" ]; then
             SSH_PUB_ENABLE="--ssh-pub /stuff/rancher.key.pub"
         fi
 
+        set -x
         docker create --name=${NAME} -it ${KVM_ENABLE} \
                     rancher/qind \
                     --hostname "rancher-dev" \

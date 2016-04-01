@@ -75,15 +75,12 @@ def test_services_include(qemu, cloud_config):
 
 @pytest.mark.timeout(40)
 def test_docker_tls_args(qemu, cloud_config):
-    u.wait_for_ssh(qemu, ssh_command)
-
-    subprocess.check_call(
-        ssh_command + ['sudo', 'ros', 'tls', 'gen'],
-        stderr=subprocess.STDOUT, universal_newlines=True)
-
-    subprocess.check_call(
-        ssh_command + ['docker', '--tlsverify', 'version'],
-        stderr=subprocess.STDOUT, universal_newlines=True)
+    SSH(qemu, ssh_command).check_call('''
+set -e -x
+sudo ros tls gen
+sleep 3
+docker --tlsverify version
+    '''.strip())
 
 
 @pytest.mark.timeout(40)
@@ -99,9 +96,9 @@ def test_rancher_network(qemu, cloud_config):
 
 
 def test_docker_not_pid_one(qemu):
-    SSH(qemu, ssh_command=ssh_command).check_call('bash', '-c', '''
-    set -e -x
-    for i in $(pidof docker); do
-        [ $i != 1 ]
-    done
+    SSH(qemu, ssh_command).check_call('''
+set -e -x
+for i in $(pidof docker); do
+    [ $i != 1 ]
+done
     '''.strip())
