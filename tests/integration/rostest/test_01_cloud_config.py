@@ -1,5 +1,4 @@
 import string
-import subprocess
 
 import pytest
 import rostest.util as u
@@ -10,8 +9,10 @@ ssh_command = ['./scripts/ssh', '--qemu', '--key', './tests/integration/assets/t
 cloud_config_path = './tests/integration/assets/test_01/cloud-config.yml'
 
 
-net_args = {'amd64': ['-net', 'nic,vlan=1,model=virtio', '-net', 'user,vlan=1,net=10.10.2.0/24'],
-            'arm64': ['-netdev', 'user,id=net1,net=10.10.2.0/24', '-device', 'virtio-net-device,netdev=net1']}
+net_args = {'amd64': ['-net', 'nic,vlan=1,model=virtio,macaddr=52:54:00:12:34:59',
+                      '-net', 'user,vlan=1,net=10.10.2.0/24'],
+            'arm64': ['-netdev', 'user,id=net1,net=10.10.2.0/24',
+                      '-device', 'virtio-net-device,netdev=net1,mac=52:54:00:12:34:59']}
 net_args['arm'] = net_args['arm64']
 
 
@@ -35,22 +36,18 @@ def test_ssh_authorized_keys(qemu):
 
 @pytest.mark.timeout(40)
 def test_rancher_environment(qemu, cloud_config):
-    u.wait_for_ssh(qemu, ssh_command)
-
-    v = subprocess.check_output(
-        ssh_command + ['sudo', 'ros', 'env', 'printenv', 'FLANNEL_NETWORK'],
-        stderr=subprocess.STDOUT, universal_newlines=True)
+    v = SSH(qemu, ssh_command).check_output('''
+sudo ros env printenv FLANNEL_NETWORK
+    '''.strip())
 
     assert v.strip() == cloud_config['rancher']['environment']['FLANNEL_NETWORK']
 
 
 @pytest.mark.timeout(40)
 def test_docker_args(qemu, cloud_config):
-    u.wait_for_ssh(qemu, ssh_command)
-
-    v = subprocess.check_output(
-        ssh_command + ['sh', '-c', 'ps -ef | grep docker'],
-        stderr=subprocess.STDOUT, universal_newlines=True)
+    v = SSH(qemu, ssh_command).check_output('''
+ps -ef | grep docker
+    '''.strip())
 
     expected = string.join(cloud_config['rancher']['docker']['args'])
 
@@ -59,11 +56,9 @@ def test_docker_args(qemu, cloud_config):
 
 @pytest.mark.timeout(40)
 def test_dhcpcd(qemu, cloud_config):
-    u.wait_for_ssh(qemu, ssh_command)
-
-    v = subprocess.check_output(
-        ssh_command + ['sh', '-c', 'ps -ef | grep dhcpcd'],
-        stderr=subprocess.STDOUT, universal_newlines=True)
+    v = SSH(qemu, ssh_command).check_output('''
+ps -ef | grep dhcpcd
+    '''.strip())
 
     assert v.find('dhcpcd -M') != -1
 
@@ -78,21 +73,19 @@ def test_docker_tls_args(qemu, cloud_config):
     SSH(qemu, ssh_command).check_call('''
 set -e -x
 sudo ros tls gen
-sleep 3
+sleep 5
 docker --tlsverify version
     '''.strip())
 
 
 @pytest.mark.timeout(40)
 def test_rancher_network(qemu, cloud_config):
-    u.wait_for_ssh(qemu, ssh_command)
+    v = SSH(qemu, ssh_command).check_output('''
+ip route get to 10.10.2.120
+    '''.strip())
 
-    v = subprocess.check_output(
-        ssh_command + ['ip', 'route', 'get', 'to', '10.10.2.120'],
-        stderr=subprocess.STDOUT, universal_newlines=True)
-
-    assert v.split(' ')[2] == 'eth1'
-    assert v.split(' ')[5] + '/24' == cloud_config['rancher']['network']['interfaces']['eth1']['address']
+    assert v.split(' ')[5] + '/24' == \
+        cloud_config['rancher']['network']['interfaces']['mac=52:54:00:12:34:59']['address']
 
 
 def test_docker_not_pid_one(qemu):
