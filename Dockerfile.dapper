@@ -2,7 +2,7 @@ FROM rancher/os-dapper-base
 
 RUN apt-get update && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential isolinux xorriso gccgo \
-        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm qemu python-pip ca-certificates pkg-config tox
+        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm qemu python-pip ca-certificates pkg-config tox module-init-tools
 
 ARG HOST_ARCH
 ENV HOST_ARCH ${HOST_ARCH}
