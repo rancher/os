@@ -1,6 +1,7 @@
 package util
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -66,6 +67,25 @@ func Convert(from, to interface{}) error {
 	}
 
 	return yaml.Unmarshal(bytes, to)
+}
+
+func ConvertIgnoreOmitEmpty(from, to interface{}) error {
+	var buffer bytes.Buffer
+
+	encoder := yaml.NewEncoder(&buffer)
+	encoder.IgnoreOmitEmpty = true
+
+	if err := encoder.Encode(from); err != nil {
+		return err
+	}
+
+	decoder := yaml.NewDecoder(&buffer)
+
+	if err := decoder.Decode(to); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Copy(d interface{}) interface{} {

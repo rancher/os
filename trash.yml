@@ -5,7 +5,8 @@ import:
   version: v0.9.0
 
 - package: github.com/cloudfoundry-incubator/candiedyaml
-  version: 55a459c2d9da2b078f0725e5fb324823b2c71702
+  version: 01cbc92901719f599b11f3a7e3b1768d7002b0bb
+  repo:    https://github.com/rancher/candiedyaml
 
 - package: github.com/codegangsta/cli
   version: v1.2.0
