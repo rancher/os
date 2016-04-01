@@ -62,6 +62,15 @@ var _ = Describe("Decode", func() {
 			Expect(err).NotTo(HaveOccurred())
 			Expect(v).To(Equal(map[interface{}]interface{}{"": ""}))
 		})
+
+		It("Decodes strings starting with a colon", func() {
+			d := NewDecoder(strings.NewReader(`:colon
+`))
+			var v interface{}
+			err := d.Decode(&v)
+			Expect(err).NotTo(HaveOccurred())
+			Expect(v).To(Equal(":colon"))
+		})
 	})
 
 	Context("Sequence", func() {

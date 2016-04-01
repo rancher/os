@@ -211,7 +211,7 @@ func configGet(c *cli.Context) {
 		log.WithFields(log.Fields{"err": err}).Fatal("config get: failed to load config")
 	}
 
-	val, err := cfg.Get(arg)
+	val, err := cfg.GetIgnoreOmitEmpty(arg)
 	if err != nil {
 		log.WithFields(log.Fields{"cfg": cfg, "key": arg, "val": val, "err": err}).Fatal("config get: failed to retrieve value")
 	}

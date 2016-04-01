@@ -140,6 +140,16 @@ func (c *CloudConfig) Get(key string) (interface{}, error) {
 	return v, nil
 }
 
+func (c *CloudConfig) GetIgnoreOmitEmpty(key string) (interface{}, error) {
+	data := map[interface{}]interface{}{}
+	if err := util.ConvertIgnoreOmitEmpty(c, &data); err != nil {
+		return nil, err
+	}
+
+	v, _ := getOrSetVal(key, data, nil)
+	return v, nil
+}
+
 func (c *CloudConfig) Set(key string, value interface{}) (*CloudConfig, error) {
 	data := map[interface{}]interface{}{}
 	if err := util.Convert(c, &data); err != nil {

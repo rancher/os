@@ -25,7 +25,8 @@ func main() {
     println("File does not exist:", err.Error())
     os.Exit(1)
   }
-  
+  defer file.Close()
+
   document := new(interface{})
   decoder := candiedyaml.NewDecoder(file)
   err = decoder.Decode(document)
@@ -41,7 +42,8 @@ func main() {
     println("Failed to open file for writing:", err.Error())
     os.Exit(1)
   }
-  
+  defer fileToWrite.Close()
+
   encoder := candiedyaml.NewEncoder(fileToWrite)
   err = encoder.Encode(document)
 

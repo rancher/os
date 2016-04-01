@@ -57,6 +57,8 @@ type Encoder struct {
 	event   yaml_event_t
 	flow    bool
 	err     error
+
+	IgnoreOmitEmpty bool
 }
 
 func Marshal(v interface{}) ([]byte, error) {
@@ -174,7 +176,7 @@ func (e *Encoder) emitStruct(tag string, v reflect.Value) {
 	e.mapping(tag, func() {
 		for _, f := range fields {
 			fv := fieldByIndex(v, f.index)
-			if !fv.IsValid() || f.omitEmpty && isEmptyValue(fv) {
+			if !fv.IsValid() || f.omitEmpty && isEmptyValue(fv) && !e.IgnoreOmitEmpty {
 				continue
 			}
 
