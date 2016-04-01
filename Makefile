@@ -32,7 +32,11 @@ assets/selinux/policy.29:
 
 assets/modules.tar.gz:
 	mkdir -p $(dir $@)
+ifeq "$(ARCH)" "amd64"
 	curl -L "$(VBOX_MODULES_URL)" > $@
+else
+	touch $@
+endif
 
 ifdef COMPILED_KERNEL_URL
 
