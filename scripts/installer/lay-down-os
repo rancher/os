@@ -6,7 +6,7 @@ SCRIPTS_DIR=$(dirname ${0})
 . "${SCRIPTS_DIR}/build.conf"
 VERSION=${VERSION:?"VERSION not set"}
 
-while getopts "i:f:c:d:t:r:o:p:k" OPTION
+while getopts "i:f:c:d:t:r:o:p:k:a" OPTION
 do
     case ${OPTION} in
         i) DIST="$OPTARG" ;;
@@ -17,6 +17,7 @@ do
         p) PARTITION="$OPTARG" ;;
         r) ROLLBACK_VERSION="$OPTARG" ;;
         k) KEXEC=y ;;
+        a) APPEND="$OPTARG" ;;
         t) ENV="$OPTARG" ;;
         *) exit 1 ;;
     esac
@@ -195,5 +196,8 @@ pvgrub_config "${KERNEL_ARGS}"
 install_rancher
 
 if [ "$KEXEC" = "y" ]; then
-    kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd -f
+    if [ "$APPEND" = "" ]; then
+        APPEND=$(cat /proc/cmdline)
+    fi
+    kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd --append="$APPEND" -f
 fi
