@@ -18,12 +18,15 @@ def test_system_boot(qemu):
     u.flush_out(qemu.stdout, 'RancherOS {v} started'.format(v=version))
 
 
+busybox = {'amd64': 'busybox', 'arm': 'armhf/busybox', 'arm64': 'aarch64/busybox'}
+
+
 @pytest.mark.timeout(60)
 def test_run_system_container(qemu):
     u.wait_for_ssh(qemu)
 
     ssh = subprocess.Popen(
-        './scripts/ssh --qemu sudo system-docker run --rm busybox /bin/true',
+        './scripts/ssh --qemu sudo system-docker run --rm ' + busybox[u.arch] + ' /bin/true',
         shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
 
     for ln in u.iter_lines(ssh.stdout):

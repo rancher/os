@@ -39,6 +39,7 @@ RUN if [ "${TOOLCHAIN}" != "" ] && ! which ${TOOLCHAIN}-gcc; then \
     ;fi
 
 RUN if [ "${TOOLCHAIN}" != "" ]; then \
+        apt-get update && \
         cd /usr/local/src && \
         for i in libselinux libsepol pcre3 util-linux; do \
             apt-get build-dep -y $i && \
@@ -75,3 +76,6 @@ RUN if [ "${TOOLCHAIN}" != "" ]; then \
         make -j$(nproc) && \
         make install \
     ;fi
+
+RUN apt-get update && \
+    apt-get -y install dosfstools

@@ -294,6 +294,16 @@ func DirLs(dir string) ([]interface{}, error) {
 	return result, nil
 }
 
+func retryHttp(f func() (*http.Response, error), times int) (resp *http.Response, err error) {
+	for i := 0; i < times; i++ {
+		if resp, err = f(); err == nil {
+			return
+		}
+		log.Warnf("Error making HTTP request: %s. Retrying", err)
+	}
+	return
+}
+
 func LoadResource(location string, network bool, urls []string) ([]byte, error) {
 	var bytes []byte
 	err := ErrNotFound
@@ -302,7 +312,7 @@ func LoadResource(location string, network bool, urls []string) ([]byte, error) 
 		if !network {
 			return nil, ErrNoNetwork
 		}
-		resp, err := http.Get(location)
+		resp, err := retryHttp(func() (*http.Response, error) { return http.Get(location) }, 8)
 		if err != nil {
 			return nil, err
 		}

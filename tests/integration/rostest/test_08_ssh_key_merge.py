@@ -11,7 +11,7 @@ def qemu(request):
 
 
 def test_ssh_key_merging(qemu):
-    SSH(qemu).check_call('bash', '-c', '''cat > test-merge << "SCRIPT"
+    SSH(qemu).check_call('''cat > test-merge << "SCRIPT"
 set -x -e
 rm /var/lib/rancher/conf/cloud-config.yml
 

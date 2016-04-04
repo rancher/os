@@ -1,12 +1,18 @@
 from __future__ import print_function
 
 import itertools as it
+import os
 import subprocess
 import time
 
 import pytest
 
 ros_test = 'ros-test'
+arch = os.environ['ARCH']
+
+suffix = ''
+if arch != 'amd64':
+    suffix = '_' + arch
 
 
 def iter_lines(s):
@@ -84,8 +90,8 @@ def wait_for_ssh(qemu, ssh_command=['./scripts/ssh', '--qemu'], command=['docker
         i += 1
         print('\nWaiting for ssh and docker... ' + str(i))
         time.sleep(1)
-        if i > 60:
-            raise 'Failed to connect to SSH'
+        if i > 150:
+            raise AssertionError('Failed to connect to SSH')
         assert qemu.returncode is None
 
 
@@ -95,11 +101,19 @@ class SSH:
         self._ssh_command = ssh_command
         self._waited = False
 
-    def check_call(self, *args, **kw):
+    def wait(self):
         if not self._waited:
             wait_for_ssh(self._qemu, ssh_command=self._ssh_command)
             self._waited = True
 
+    def check_call(self, *args, **kw):
+        self.wait()
         kw['stderr'] = subprocess.STDOUT
         kw['universal_newlines'] = True
         return subprocess.check_call(self._ssh_command + list(args), **kw)
+
+    def check_output(self, *args, **kw):
+        self.wait()
+        kw['stderr'] = subprocess.STDOUT
+        kw['universal_newlines'] = True
+        return subprocess.check_output(self._ssh_command + list(args), **kw)

@@ -12,12 +12,13 @@ def qemu(request):
 
 
 def test_oem(qemu):
-    SSH(qemu).check_call('sudo', 'bash', '-c', '''
+    try:
+        SSH(qemu).check_call('''
 set -x
 set -e
 sudo mkfs.ext4 -L RANCHER_OEM /dev/vda
 sudo mount /dev/vda /mnt
-cat > /tmp/oem-config.yml << "EOF"
+cat > /tmp/oem-config.yml << EOF
 #cloud-config
 rancher:
   upgrade:
@@ -25,11 +26,14 @@ rancher:
 EOF
 sudo cp /tmp/oem-config.yml /mnt
 sudo umount /mnt
-sudo reboot >/dev/null 2>&1 &'''.strip())
+sudo reboot
+        '''.strip())
+    except:
+        pass
 
-    time.sleep(1)
+    time.sleep(3)
 
-    SSH(qemu).check_call('bash', '-c', '''
+    SSH(qemu).check_call('''
 set -x
 if [ ! -e /usr/share/ros/oem/oem-config.yml ]; then
     echo Failed to find /usr/share/ros/oem/oem-config.yml

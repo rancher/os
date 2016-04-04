@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 cd $(dirname $0)/..
 
@@ -23,9 +22,17 @@ hd_amd64() {
     echo "-drive if=virtio,file=$1"
 }
 hd_arm() {
-    echo "-drive if=none,file=$1,id=hd0 -device virtio-blk-device,drive=hd0"
+    echo "-drive if=none,id=hd0,file=$1 -device virtio-blk-device,drive=hd0"
 }
 declare -A hd=( ["amd64"]="hd_amd64" ["arm"]="hd_arm" ["arm64"]="hd_arm" )
+
+cd_amd64() {
+    echo "-hdc $1"
+}
+cd_arm() {
+    echo "-drive if=none,id=cd0,file=$1 -device virtio-blk-device,drive=cd0"
+}
+declare -A cd=( ["amd64"]="cd_amd64" ["arm"]="cd_arm" ["arm64"]="cd_arm" )
 
 BASE=$(pwd)
 UNAME=$(uname)
@@ -54,12 +61,6 @@ while [ "$#" -gt 0 ]; do
             if [ ! -f ${CLOUD_CONFIG} ]; then
                 echo No such file: "'"${CLOUD_CONFIG}"'" 1>&2
                 exit 1
-            fi
-            ;;
-        --xhyve)
-            if [ -x $(which xhyve) ]; then
-                XHYVE=1
-                QEMU=0
             fi
             ;;
         --arch)
@@ -152,18 +153,28 @@ if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; th
     KVM=1
 fi
 
-if [ "$XHYVE" == "1" ] || [ "$QEMU" == "1" ]; then
+if [ "$QEMU" == "1" ]; then
 
     HD=${BASE}/state/hd.img
     [ "$FRESH" == "1" ] && rm -f ${HD} >/dev/null 2>&1 || :
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
-        if [ "$XHYVE" == "1" ]; then qemu-img create -f raw -o size=10G ${HD}
-        else qemu-img create -f qcow2 -o size=10G ${HD}
-        fi
+        qemu-img create -f qcow2 -o size=10G ${HD}
     fi
 
-    USER_DATA=${BUILD}/cloud-config/openstack/latest/user_data
+
+    CCIMG=${BUILD}/cc.img
+    CCDEV=$(losetup -f)
+    CCROOT=${BUILD}/cloud-config
+    dd if=/dev/zero of=${CCIMG} bs=1024 count=512
+    losetup ${CCDEV} ${CCIMG}
+    mkfs.vfat -n "config-2" ${CCDEV}
+
+    rm -rf ${CCROOT}
+    mkdir -p ${CCROOT}
+    mount ${CCDEV} ${CCROOT}
+
+    USER_DATA=${CCROOT}/openstack/latest/user_data
     mkdir -p $(dirname ${USER_DATA})
     rm -f ${USER_DATA} || :
     if [ -n "$CLOUD_CONFIG" ]; then
@@ -174,50 +185,33 @@ if [ "$XHYVE" == "1" ] || [ "$QEMU" == "1" ]; then
         echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
     fi
 
-    CLOUD_CONFIG_ISO="${BUILD}/cloud-config.iso"
-    rm -rf ${CLOUD_CONFIG_ISO}
-    mkisofs -R -V config-2 -o "${CLOUD_CONFIG_ISO}" "$BUILD/cloud-config"
+    umount ${CCROOT}
+    losetup -d ${CCDEV}
 
-    if [ "$XHYVE" == "1" ]; then
 
-        exec sudo -n xhyve -A -H -P -u \
-            -m 4G \
-            -s 0:0,hostbridge -s 31,lpc \
-            -l com1,stdio \
-            -s 2:0,virtio-net \
-            -s 3,ahci-cd,${CLOUD_CONFIG_ISO} \
-            -s 4,virtio-blk,${HD} \
-            -U a01fb25c-3a19-4759-a47a-2e353e51807d \
-            -f kexec,${KERNEL},${INITRD},"earlyprintk=serial elevator=noop ${KERNEL_ARGS}" \
-            "${@}"
-
-    elif [ "$QEMU" == "1" ]; then
-
-        CPU=${cpu["$ARCH"]}
-        if [ "$KVM" == "1" ] && [ "$ARCH" == "$HOST_ARCH" ]; then
-            KVM_ENABLE="-enable-kvm"
-            CPU="-cpu host"
-        fi
-        exec qemu-system-${QEMUARCH} -serial stdio \
-            ${KVM_ENABLE} \
-            ${CPU} \
-            ${machine["$ARCH"]} \
-            -kernel ${KERNEL} \
-            -initrd ${INITRD} \
-            -m 1024 \
-            ${network["$ARCH"]} \
-            $(eval "${hd["$ARCH"]} ${HD}") \
-            -smp 1 \
-            -cdrom ${CLOUD_CONFIG_ISO} \
-            -append "${KERNEL_ARGS}" \
-            -nographic \
-            -display none \
-            ${QEMU_ARGS} \
-            "${@}"
-
-    else
-        exit 42
+    CPU=${cpu["$ARCH"]}
+    if [ "$KVM" == "1" ] && [ "$ARCH" == "$HOST_ARCH" ]; then
+        KVM_ENABLE="-enable-kvm"
+        CPU="-cpu host"
     fi
+    set -x
+    exec qemu-system-${QEMUARCH} -serial stdio \
+        -rtc base=utc,clock=host \
+        ${KVM_ENABLE} \
+        ${CPU} \
+        ${machine["$ARCH"]} \
+        -kernel ${KERNEL} \
+        -initrd ${INITRD} \
+        -m 2048 \
+        ${network["$ARCH"]} \
+        $(eval "${cd["$ARCH"]} ${CCIMG}") \
+        $(eval "${hd["$ARCH"]} ${HD}") \
+        -smp 1 \
+        -append "${KERNEL_ARGS}" \
+        -nographic \
+        -display none \
+        ${QEMU_ARGS} \
+        "${@}"
 
 elif [ "$QIND" == "1" ]; then
 
@@ -246,6 +240,7 @@ elif [ "$QIND" == "1" ]; then
             SSH_PUB_ENABLE="--ssh-pub /stuff/rancher.key.pub"
         fi
 
+        set -x
         docker create --name=${NAME} -it ${KVM_ENABLE} \
                     rancher/qind \
                     --hostname "rancher-dev" \

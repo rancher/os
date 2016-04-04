@@ -9,7 +9,7 @@ rancher:
     interfaces:
       eth*:
         dhcp: true
-      eth1:
+      "mac=52:54:00:12:34:59":
         address: 10.10.2.17/24
         gateway: 10.10.2.2
         mtu: 1500
