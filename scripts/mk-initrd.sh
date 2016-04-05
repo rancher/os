@@ -4,6 +4,7 @@ set -ex
 TARGET=$(pwd)/${1}
 
 SUFFIX=${SUFFIX:-""}
+HOST_SUFFIX=${HOST_SUFFIX:-""}
 DFS_IMAGE=${DFS_IMAGE:?"DFS_IMAGE not set"}
 IS_ROOTFS=${IS_ROOTFS:-0}
 
@@ -53,7 +54,7 @@ docker export ${DFS_ARCH} | tar xvf - -C ${INITRD_DIR} --exclude=usr/bin/dockerl
                                                        usr
 
 if [ "$IS_ROOTFS" == "1" ]; then
-  DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${SUFFIX})
+  DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${HOST_SUFFIX})
   trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
   docker exec -i ${DFS} docker load < ${BUILD}/images.tar
   docker stop ${DFS}
