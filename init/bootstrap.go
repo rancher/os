@@ -38,7 +38,9 @@ func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.BootstrapDocker)
 	launchConfig.Fork = true
 	launchConfig.LogFile = ""
-	launchConfig.NoLog = true
+	if !cfg.Rancher.Debug {
+		launchConfig.NoLog = true
+	}
 
 	cmd, err := dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
 	if err != nil {
