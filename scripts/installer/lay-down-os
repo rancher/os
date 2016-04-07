@@ -6,7 +6,7 @@ SCRIPTS_DIR=$(dirname ${0})
 . "${SCRIPTS_DIR}/build.conf"
 VERSION=${VERSION:?"VERSION not set"}
 
-while getopts "i:f:c:d:t:r:o:p:k:a" OPTION
+while getopts "i:f:c:d:t:r:o:p:ka:" OPTION
 do
     case ${OPTION} in
         i) DIST="$OPTARG" ;;
