@@ -179,6 +179,13 @@ func yes(in *bufio.Reader, question string) bool {
 func startUpgradeContainer(image string, stage, force, reboot, kexec bool, kernelArgs string) error {
 	in := bufio.NewReader(os.Stdin)
 
+	imageSplit := strings.Split(image, ":")
+	if len(imageSplit) > 1 && imageSplit[1] == config.VERSION {
+		if !stage && !force && !yes(in, fmt.Sprintf("Already at version %s. Continue anyways", imageSplit[1])) {
+			os.Exit(1)
+		}
+	}
+
 	command := []string{
 		"-t", "rancher-upgrade",
 		"-r", config.VERSION,
@@ -221,17 +228,9 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, kerne
 	}
 
 	if !stage {
-		imageSplit := strings.Split(image, ":")
-		if len(imageSplit) > 1 && imageSplit[1] == config.VERSION {
-			if !force && !yes(in, fmt.Sprintf("Already at version %s. Continue anyways", imageSplit[1])) {
-				os.Exit(1)
-			}
-		} else {
-			fmt.Printf("Upgrading to %s\n", image)
-
-			if !force && !yes(in, "Continue") {
-				os.Exit(1)
-			}
+		fmt.Printf("Upgrading to %s\n", image)
+		if !force && !yes(in, "Continue") {
+			os.Exit(1)
 		}
 
 		// If there is already an upgrade container, delete it
