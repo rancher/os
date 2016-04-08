@@ -95,7 +95,7 @@ func disable(c *cli.Context) {
 
 	for _, service := range c.Args() {
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
-			continue
+			logrus.Fatalf("ERROR: Service %s is not a valid service, use \"sudo ros service list\" to list the services", service)
 		}
 
 		cfg.Rancher.ServicesInclude[service] = false
@@ -118,7 +118,7 @@ func del(c *cli.Context) {
 
 	for _, service := range c.Args() {
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
-			continue
+			logrus.Fatalf("ERROR: Service %s is not a valid service, use \"sudo ros service list\" to list the services", service)
 		}
 		delete(cfg.Rancher.ServicesInclude, service)
 		changed = true
@@ -137,12 +137,21 @@ func enable(c *cli.Context) {
 		logrus.Fatal(err)
 	}
 
+	services, err := util.GetServices(cfg.Rancher.Repositories.ToArray())
+	if err != nil {
+		logrus.Fatalf("Failed to get services: %v", err)
+	}
+
 	var enabledServices []string
 
 	for _, service := range c.Args() {
 		if val, ok := cfg.Rancher.ServicesInclude[service]; !ok || !val {
 			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
 				logrus.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
+			}
+
+			if !util.Contains(services, service) {
+				logrus.Fatalf("ERROR: Service %s is not a valid service, use \"sudo ros service list\" to list the services", service)
 			}
 
 			cfg.Rancher.ServicesInclude[service] = true
