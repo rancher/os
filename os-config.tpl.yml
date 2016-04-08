@@ -105,7 +105,7 @@ rancher:
         io.rancher.os.detach: "false"
         io.rancher.os.reloadconfig: "true"
         io.rancher.os.scope: system
-        io.rancher.os.after: cloud-init-pre, wait-for-network, ntp
+        io.rancher.os.after: ntp
       net: host
       uts: host
       privileged: true
@@ -180,13 +180,39 @@ rancher:
       - /var/lib/docker:/var/lib/docker
       - /var/lib/system-docker:/var/lib/system-docker
       - /var/lib/rkt:/var/lib/rkt
-    network:
+    network-pre:
       image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init-pre
       net: host
       uts: host
+      pid: host
+      privileged: true
+      volumes_from:
+      - command-volumes
+      - system-volumes
+    network:
+      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      labels:
+        io.rancher.os.scope: system
+        io.rancher.os.after: cloud-init
+      environment:
+      - DAEMON=true
+      net: host
+      uts: host
+      pid: host
+      privileged: true
+      volumes_from:
+      - command-volumes
+      - system-volumes
+    wait-for-network-pre:
+      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      command: wait-for-network
+      labels:
+        io.rancher.os.detach: "false"
+        io.rancher.os.scope: system
+        io.rancher.os.after: network-pre
       pid: host
       privileged: true
       volumes_from:
@@ -208,7 +234,7 @@ rancher:
       image: {{.OS_IMAGES_ROOT}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: wait-for-network
+        io.rancher.os.after: wait-for-network-pre
       net: host
       uts: host
       privileged: true

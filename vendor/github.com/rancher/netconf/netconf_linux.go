@@ -273,6 +273,10 @@ func setGateway(gateway string) error {
 
 func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	if netConf.Bond != "" {
+		if err := netlink.LinkSetDown(link); err != nil {
+			return err
+		}
+
 		b, err := Bond(netConf.Bond)
 		if err != nil {
 			return err

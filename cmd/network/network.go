@@ -2,7 +2,7 @@ package network
 
 import (
 	"bufio"
-	"fmt"
+	"flag"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -21,6 +21,16 @@ const (
 	WAIT_FOR_NETWORK = "wait-for-network"
 )
 
+var (
+	daemon bool
+	flags  *flag.FlagSet
+)
+
+func init() {
+	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flags.BoolVar(&daemon, "daemon", false, "run dhcpd as daemon")
+}
+
 func sendTerm(proc string) {
 	cmd := exec.Command("killall", "-TERM", proc)
 	cmd.Stderr = os.Stderr
@@ -29,11 +39,10 @@ func sendTerm(proc string) {
 }
 
 func Main() {
-	args := os.Args
-	if len(args) > 1 {
-		fmt.Println("call " + args[0] + " to load network config from cloud-config.yml")
-		return
-	}
+	flags.Parse(os.Args[1:])
+
+	log.Infof("Running network: daemon=%v", daemon)
+
 	os.Remove(NETWORK_DONE) // ignore error
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -79,5 +88,8 @@ func Main() {
 		f.Close()
 	}
 	sendTerm(WAIT_FOR_NETWORK)
-	select {}
+
+	if daemon {
+		select {}
+	}
 }
