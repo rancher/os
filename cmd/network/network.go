@@ -48,11 +48,18 @@ func Main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	hostname, _ := cloudinit.SetHostname(cfg) // ignore error
 	log.Infof("Network: hostname: '%s'", hostname)
+
+	if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.Dns.Nameservers, cfg.Rancher.Network.Dns.Search, nil); err != nil {
+		log.Error(err)
+	}
+
 	if err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network); err != nil {
 		log.Error(err)
 	}
+
 	hostname, _ = cloudinit.SetHostname(cfg) // ignore error
 	log.Infof("Network: hostname: '%s' (from DHCP, if not set by cloud-config)", hostname)
 	if hostname != "" {
@@ -76,12 +83,7 @@ func Main() {
 			log.Error(err)
 		}
 	}
-	if cfg.Rancher.Network.Dns.Override {
-		log.WithFields(log.Fields{"nameservers": cfg.Rancher.Network.Dns.Nameservers}).Info("Override nameservers")
-		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.Dns.Nameservers, cfg.Rancher.Network.Dns.Search, nil); err != nil {
-			log.Error(err)
-		}
-	}
+
 	if f, err := os.Create(NETWORK_DONE); err != nil {
 		log.Error(err)
 	} else {

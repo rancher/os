@@ -187,7 +187,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 	for iface, args := range dhcpLinks {
 		wg.Add(1)
 		go func(iface, args string) {
-			runDhcp(iface, args)
+			runDhcp(netCfg, iface, args)
 			wg.Done()
 		}(iface, args)
 	}
@@ -197,7 +197,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 	return err
 }
 
-func runDhcp(iface string, argstr string) {
+func runDhcp(netCfg *NetworkConfig, iface string, argstr string) {
 	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
@@ -209,6 +209,10 @@ func runDhcp(iface string, argstr string) {
 	}
 	if len(args) == 0 {
 		args = defaultDhcpArgs
+	}
+
+	if netCfg.Dns.Override {
+		args = append(args, "--nohook", "resolv.conf")
 	}
 
 	args = append(args, iface)
