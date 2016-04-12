@@ -102,7 +102,7 @@ func (c *CloudConfig) Merge(values map[interface{}]interface{}) (*CloudConfig, e
 	return t, nil
 }
 
-func Dump(boot, private, full bool) (string, error) {
+func Dump(private, full bool) (string, error) {
 	var cfg *CloudConfig
 	var err error
 
@@ -112,9 +112,6 @@ func Dump(boot, private, full bool) (string, error) {
 		files := []string{CloudConfigBootFile, CloudConfigPrivateFile, CloudConfigFile}
 		if !private {
 			files = util.FilterStrings(files, func(x string) bool { return x != CloudConfigPrivateFile })
-		}
-		if !boot {
-			files = util.FilterStrings(files, func(x string) bool { return x != CloudConfigBootFile })
 		}
 		cfg, err = ChainCfgFuncs(nil,
 			func(_ *CloudConfig) (*CloudConfig, error) { return ReadConfig(nil, true, files...) },
