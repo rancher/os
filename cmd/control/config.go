@@ -65,10 +65,6 @@ func configSubcommands() []cli.Command {
 					Usage: "File to which to save",
 				},
 				cli.BoolFlag{
-					Name:  "boot, b",
-					Usage: "Include cloud-config provided at boot",
-				},
-				cli.BoolFlag{
 					Name:  "private, p",
 					Usage: "Include the generated private keys",
 				},
@@ -257,7 +253,7 @@ func merge(c *cli.Context) {
 }
 
 func export(c *cli.Context) {
-	content, err := config.Dump(c.Bool("boot"), c.Bool("private"), c.Bool("full"))
+	content, err := config.Dump(c.Bool("private"), c.Bool("full"))
 	if err != nil {
 		log.Fatal(err)
 	}
