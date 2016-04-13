@@ -32,7 +32,7 @@ func CreateService(cfg *config.CloudConfig, name string, serviceConfig *project.
 }
 
 func CreateServiceSet(name string, cfg *config.CloudConfig, configs map[string]*project.ServiceConfig) (*project.Project, error) {
-	p, err := newProject(name, cfg)
+	p, err := newProject(name, cfg, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -55,10 +55,14 @@ func GetProject(cfg *config.CloudConfig, networkingAvailable bool) (*project.Pro
 	return newCoreServiceProject(cfg, networkingAvailable)
 }
 
-func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) {
+func newProject(name string, cfg *config.CloudConfig, environmentLookup project.EnvironmentLookup) (*project.Project, error) {
 	clientFactory, err := rosDocker.NewClientFactory(docker.ClientOpts{})
 	if err != nil {
 		return nil, err
+	}
+
+	if environmentLookup == nil {
+		environmentLookup = rosDocker.NewConfigEnvironment(cfg)
 	}
 
 	serviceFactory := &rosDocker.ServiceFactory{
@@ -69,7 +73,7 @@ func newProject(name string, cfg *config.CloudConfig) (*project.Project, error) 
 		Context: project.Context{
 			ProjectName:       name,
 			NoRecreate:        true, // for libcompose to not recreate on project reload, looping up the boot :)
-			EnvironmentLookup: rosDocker.NewConfigEnvironment(cfg),
+			EnvironmentLookup: environmentLookup,
 			ServiceFactory:    serviceFactory,
 			Log:               cfg.Rancher.Log,
 			LoggerFactory:     logger.NewColorLoggerFactory(),
@@ -121,7 +125,9 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 	projectEvents := make(chan project.Event)
 	enabled := map[interface{}]interface{}{}
 
-	p, err := newProject("os", cfg)
+	environmentLookup := rosDocker.NewConfigEnvironment(cfg)
+
+	p, err := newProject("os", cfg, environmentLookup)
 	if err != nil {
 		return nil, err
 	}
@@ -135,6 +141,8 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 		if err != nil {
 			return err
 		}
+
+		environmentLookup.SetConfig(cfg)
 
 		enabled = addServices(p, enabled, cfg.Rancher.Services)
 
@@ -193,7 +201,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 }
 
 func StageServices(cfg *config.CloudConfig, services ...string) error {
-	p, err := newProject("stage-services", cfg)
+	p, err := newProject("stage-services", cfg, nil)
 	if err != nil {
 		return err
 	}
