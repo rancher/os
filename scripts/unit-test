@@ -1,0 +1,8 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+PACKAGES="$(find -name '*.go' | xargs -I{} dirname {} |  cut -f2 -d/ | sort -u | grep -Ev '(^\.$|.git|.trash-cache|vendor)' | sed -e 's!^!./!' -e 's!$!/...!')"
+
+go test -race -cover -tags=test $PACKAGES

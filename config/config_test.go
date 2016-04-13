@@ -161,7 +161,7 @@ func TestParseCmdline(t *testing.T) {
 			"rescue":   true,
 			"key1":     "value1",
 			"key2":     "value2",
-			"keyArray": []string{"1", "2"},
+			"keyArray": []interface{}{"1", "2"},
 			"obj1": map[interface{}]interface{}{
 				"key3": "3value",
 				"obj2": map[interface{}]interface{}{
