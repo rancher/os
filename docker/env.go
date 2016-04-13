@@ -49,6 +49,10 @@ func lookupKeys(cfg *config.CloudConfig, keys ...string) []string {
 	return []string{}
 }
 
+func (c *ConfigEnvironment) SetConfig(cfg *config.CloudConfig) {
+	c.cfg = cfg
+}
+
 func (c *ConfigEnvironment) Lookup(key, serviceName string, serviceConfig *project.ServiceConfig) []string {
 	fullKey := fmt.Sprintf("%s/%s", serviceName, key)
 	return lookupKeys(c.cfg, fullKey, key)
