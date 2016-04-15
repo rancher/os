@@ -10,6 +10,8 @@ a container that runs the user Docker.  The user Docker is then the instance tha
 used to create containers.  We created this separation because it seemed logical and also
 it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and deleted the entire OS.
 
+![How it works](docs/rancheros.png "How it works")
+
 ## Latest Release
 
 **v0.4.3 - Docker 1.10.1- Linux 4.2.8**
