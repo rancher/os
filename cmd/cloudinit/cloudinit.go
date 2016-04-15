@@ -22,7 +22,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -169,29 +168,9 @@ func fetchUserData() ([]byte, datasource.Metadata, error) {
 	return userDataBytes, metadata, nil
 }
 
-func SetHostname(cc *rancherConfig.CloudConfig) (string, error) {
-	name, _ := os.Hostname()
-	if cc.Hostname != "" {
-		name = cc.Hostname
-	}
-	if name != "" {
-		//set hostname
-		if err := syscall.Sethostname([]byte(name)); err != nil {
-			log.WithFields(log.Fields{"err": err, "hostname": name}).Error("Error setting hostname")
-			return "", err
-		}
-	}
-
-	return name, nil
-}
-
 func executeCloudConfig() error {
 	cc, err := rancherConfig.LoadConfig()
 	if err != nil {
-		return err
-	}
-
-	if _, err := SetHostname(cc); err != nil {
 		return err
 	}
 
