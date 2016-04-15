@@ -46,7 +46,15 @@ func Main() {
 		log.Fatal(err)
 	}
 
-	if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.Dns.Nameservers, cfg.Rancher.Network.Dns.Search, nil); err != nil {
+	nameservers := cfg.Rancher.Network.Dns.Nameservers
+	search := cfg.Rancher.Network.Dns.Search
+	userSetDns := len(nameservers) > 0 || len(search) > 0
+	if !userSetDns {
+		nameservers = cfg.Rancher.DefaultNetwork.Dns.Nameservers
+		search = cfg.Rancher.DefaultNetwork.Dns.Search
+	}
+
+	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
 		log.Error(err)
 	}
 
@@ -58,8 +66,8 @@ func Main() {
 		log.Error(err)
 	}
 
-	dhcpHostname := cfg.Hostname == ""
-	if err := netconf.RunDhcp(&cfg.Rancher.Network, dhcpHostname); err != nil {
+	userSetHostname := cfg.Hostname != ""
+	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDns); err != nil {
 		log.Error(err)
 	}
 

@@ -26,7 +26,6 @@ type InterfaceConfig struct {
 }
 
 type DnsConfig struct {
-	Override    bool     `yaml:"override"`
 	Nameservers []string `yaml:"nameservers,flow,omitempty"`
 	Search      []string `yaml:"search,flow,omitempty"`
 }
