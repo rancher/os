@@ -1,4 +1,4 @@
-hostname: {{.HOSTNAME_DEFAULT}}
+default_hostname: {{.HOSTNAME_DEFAULT}}
 rancher:
   bootstrap:
     state-script:

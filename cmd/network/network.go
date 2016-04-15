@@ -1,19 +1,16 @@
 package network
 
 import (
-	"bufio"
 	"flag"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/netconf"
-	"github.com/rancher/os/cmd/cloudinit"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/hostname"
 )
 
 const (
@@ -49,10 +46,11 @@ func Main() {
 		log.Fatal(err)
 	}
 
-	hostname, _ := cloudinit.SetHostname(cfg) // ignore error
-	log.Infof("Network: hostname: '%s'", hostname)
-
 	if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.Dns.Nameservers, cfg.Rancher.Network.Dns.Search, nil); err != nil {
+		log.Error(err)
+	}
+
+	if err := hostname.SetHostnameFromCloudConfig(cfg); err != nil {
 		log.Error(err)
 	}
 
@@ -60,28 +58,13 @@ func Main() {
 		log.Error(err)
 	}
 
-	hostname, _ = cloudinit.SetHostname(cfg) // ignore error
-	log.Infof("Network: hostname: '%s' (from DHCP, if not set by cloud-config)", hostname)
-	if hostname != "" {
-		hosts, err := os.Open("/etc/hosts")
-		defer hosts.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-		lines := bufio.NewScanner(hosts)
-		hostsContent := ""
-		for lines.Scan() {
-			line := strings.TrimSpace(lines.Text())
-			fields := strings.Fields(line)
-			if len(fields) > 0 && fields[0] == "127.0.1.1" {
-				hostsContent += "127.0.1.1 " + hostname + "\n"
-				continue
-			}
-			hostsContent += line + "\n"
-		}
-		if err := ioutil.WriteFile("/etc/hosts", []byte(hostsContent), 0600); err != nil {
-			log.Error(err)
-		}
+	dhcpHostname := cfg.Hostname == ""
+	if err := netconf.RunDhcp(&cfg.Rancher.Network, dhcpHostname); err != nil {
+		log.Error(err)
+	}
+
+	if err := hostname.SyncHostname(); err != nil {
+		log.Error(err)
 	}
 
 	if f, err := os.Create(NETWORK_DONE); err != nil {

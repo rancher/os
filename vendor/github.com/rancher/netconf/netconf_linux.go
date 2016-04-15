@@ -23,7 +23,7 @@ const (
 )
 
 var (
-	defaultDhcpArgs = []string{"dhcpcd", "-MA4", "-e", "force_hostname=true"}
+	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
 )
 
 func createInterfaces(netCfg *NetworkConfig) {
@@ -168,17 +168,30 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 		return err
 	}
 
-	dhcpLinks := map[string]string{}
-
 	//apply network config
 	for _, link := range links {
 		linkName := link.Attrs().Name
-		if match, ok := findMatch(link, netCfg); ok {
-			if match.DHCP {
-				dhcpLinks[link.Attrs().Name] = match.DHCPArgs
-			} else if err = applyInterfaceConfig(link, match); err != nil {
+		if match, ok := findMatch(link, netCfg); ok && !match.DHCP {
+			if err := applyInterfaceConfig(link, match); err != nil {
 				log.Errorf("Failed to apply settings to %s : %v", linkName, err)
 			}
+		}
+	}
+
+	runCmds(netCfg.PostCmds, "")
+	return err
+}
+
+func RunDhcp(netCfg *NetworkConfig, dhcpHostname bool) error {
+	links, err := netlink.LinkList()
+	if err != nil {
+		return err
+	}
+
+	dhcpLinks := map[string]string{}
+	for _, link := range links {
+		if match, ok := findMatch(link, netCfg); ok && match.DHCP {
+			dhcpLinks[link.Attrs().Name] = match.DHCPArgs
 		}
 	}
 
@@ -187,17 +200,16 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 	for iface, args := range dhcpLinks {
 		wg.Add(1)
 		go func(iface, args string) {
-			runDhcp(netCfg, iface, args)
+			runDhcp(netCfg, iface, args, dhcpHostname)
 			wg.Done()
 		}(iface, args)
 	}
 	wg.Wait()
 
-	runCmds(netCfg.PostCmds, "")
 	return err
 }
 
-func runDhcp(netCfg *NetworkConfig, iface string, argstr string) {
+func runDhcp(netCfg *NetworkConfig, iface string, argstr string, dhcpHostname bool) {
 	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
@@ -213,6 +225,10 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string) {
 
 	if netCfg.Dns.Override {
 		args = append(args, "--nohook", "resolv.conf")
+	}
+
+	if dhcpHostname {
+		args = append(args, "-e", "force_hostname=true")
 	}
 
 	args = append(args, iface)

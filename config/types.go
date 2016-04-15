@@ -71,6 +71,7 @@ type CloudConfig struct {
 	SSHAuthorizedKeys []string      `yaml:"ssh_authorized_keys"`
 	WriteFiles        []config.File `yaml:"write_files"`
 	Hostname          string        `yaml:"hostname"`
+	DefaultHostname   string        `yaml:"default_hostname"`
 
 	Rancher RancherConfig `yaml:"rancher,omitempty"`
 }
