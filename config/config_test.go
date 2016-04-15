@@ -153,6 +153,52 @@ func TestFilterDottedKeys(t *testing.T) {
 	assert.Equal(expectedRest, rest)
 }
 
+func TestUnmarshalOrReturnString(t *testing.T) {
+	assert := require.New(t)
+
+	assert.Equal("ab", unmarshalOrReturnString("ab"))
+	assert.Equal("a\nb", unmarshalOrReturnString("a\nb"))
+	assert.Equal("a\n", unmarshalOrReturnString("a\n"))
+	assert.Equal("\nb", unmarshalOrReturnString("\nb"))
+	assert.Equal("a,b", unmarshalOrReturnString("a,b"))
+	assert.Equal("a,", unmarshalOrReturnString("a,"))
+	assert.Equal(",b", unmarshalOrReturnString(",b"))
+
+	assert.Equal(int64(10), unmarshalOrReturnString("10"))
+	assert.Equal(true, unmarshalOrReturnString("true"))
+	assert.Equal(false, unmarshalOrReturnString("false"))
+
+	assert.Equal([]interface{}{"a"}, unmarshalOrReturnString("[a]"))
+	assert.Equal([]interface{}{"a"}, unmarshalOrReturnString("[\"a\"]"))
+
+	assert.Equal([]interface{}{"a,"}, unmarshalOrReturnString("[\"a,\"]"))
+	assert.Equal([]interface{}{" a, "}, unmarshalOrReturnString("[\" a, \"]"))
+	assert.Equal([]interface{}{",a"}, unmarshalOrReturnString("[\",a\"]"))
+	assert.Equal([]interface{}{" ,a "}, unmarshalOrReturnString("[\" ,a \"]"))
+
+	assert.Equal([]interface{}{"a\n"}, unmarshalOrReturnString("[\"a\n\"]"))
+	assert.Equal([]interface{}{" a\n "}, unmarshalOrReturnString("[\" a\n \"]"))
+	assert.Equal([]interface{}{"\na"}, unmarshalOrReturnString("[\"\na\"]"))
+	assert.Equal([]interface{}{" \na "}, unmarshalOrReturnString("[\" \na \"]"))
+
+	assert.Equal([]interface{}{"a", "b"}, unmarshalOrReturnString("[a,b]"))
+	assert.Equal([]interface{}{"a", "b"}, unmarshalOrReturnString("[\"a\",\"b\"]"))
+
+	assert.Equal([]interface{}{"a,", "b"}, unmarshalOrReturnString("[\"a,\",b]"))
+	assert.Equal([]interface{}{"a", ",b"}, unmarshalOrReturnString("[a,\",b\"]"))
+	assert.Equal([]interface{}{" a, ", " ,b "}, unmarshalOrReturnString("[\" a, \",\" ,b \"]"))
+
+	assert.Equal([]interface{}{"a\n", "b"}, unmarshalOrReturnString("[\"a\n\",b]"))
+	assert.Equal([]interface{}{"a", "\nb"}, unmarshalOrReturnString("[a,\"\nb\"]"))
+	assert.Equal([]interface{}{" a\n ", " \nb "}, unmarshalOrReturnString("[\" a\n \",\" \nb \"]"))
+
+	assert.Equal([]interface{}{"a", int64(10)}, unmarshalOrReturnString("[a,10]"))
+	assert.Equal([]interface{}{int64(10), "a"}, unmarshalOrReturnString("[10,a]"))
+
+	assert.Equal([]interface{}{"a", true}, unmarshalOrReturnString("[a,true]"))
+	assert.Equal([]interface{}{false, "a"}, unmarshalOrReturnString("[false,a]"))
+}
+
 func TestParseCmdline(t *testing.T) {
 	assert := require.New(t)
 
@@ -161,18 +207,20 @@ func TestParseCmdline(t *testing.T) {
 			"rescue":   true,
 			"key1":     "value1",
 			"key2":     "value2",
-			"keyArray": []interface{}{"1", "2"},
+			"keyArray": []interface{}{int64(1), int64(2)},
 			"obj1": map[interface{}]interface{}{
 				"key3": "3value",
 				"obj2": map[interface{}]interface{}{
 					"key4": true,
 				},
 			},
-			"key5": 5,
+			"key5": int64(5),
+			"key6": "a,b",
+			"key7": "a\nb",
 		},
 	}
 
-	actual := parseCmdline("a b rancher.rescue rancher.keyArray=[1,2] rancher.key1=value1 c rancher.key2=value2 rancher.obj1.key3=3value rancher.obj1.obj2.key4 rancher.key5=5")
+	actual := parseCmdline("a b rancher.rescue rancher.keyArray=[1,2] rancher.key1=value1 c rancher.key2=value2 rancher.obj1.key3=3value rancher.obj1.obj2.key4 rancher.key5=5 rancher.key6=a,b rancher.key7=a\nb")
 
 	assert.Equal(expected, actual)
 }
