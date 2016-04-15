@@ -2,10 +2,9 @@ package config
 
 import (
 	log "github.com/Sirupsen/logrus"
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	"github.com/rancher/os/util"
-	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -87,7 +86,7 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 		// Reached end, set the value
 		if last && value != nil {
 			if s, ok := value.(string); ok {
-				value = DummyMarshall(s)
+				value = unmarshalOrReturnString(s)
 			}
 
 			t[part] = value
@@ -121,28 +120,36 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 	return "", tData
 }
 
-func DummyMarshall(value string) interface{} {
-	if strings.HasPrefix(value, "[") && strings.HasSuffix(value, "]") {
-		result := []interface{}{}
-		for _, i := range strings.Split(value[1:len(value)-1], ",") {
-			result = append(result, strings.TrimSpace(i))
+// YAML parsers will remove newlines, but we'd like to keep those
+// replace newlines with magicString, and then undo after unmarshaling
+var magicString = "9XsJcx6dR5EERYCC"
+
+func reverseReplacement(result interface{}) interface{} {
+	switch val := result.(type) {
+	case map[interface{}]interface{}:
+		for k, v := range val {
+			val[k] = reverseReplacement(v)
 		}
-		return result
+		return val
+	case []interface{}:
+		for i, item := range val {
+			val[i] = reverseReplacement(item)
+		}
+		return val
+	case string:
+		return strings.Replace(val, magicString, "\n", -1)
 	}
 
-	if value == "true" {
-		return true
-	} else if value == "false" {
-		return false
-	} else if ok, _ := regexp.MatchString("^[0-9]+$", value); ok {
-		i, err := strconv.Atoi(value)
-		if err != nil {
-			panic(err)
-		}
-		return i
-	}
+	return result
+}
 
-	return value
+func unmarshalOrReturnString(value string) (result interface{}) {
+	value = strings.Replace(value, "\n", magicString, -1)
+	if err := yaml.Unmarshal([]byte(value), &result); err != nil {
+		result = value
+	}
+	result = reverseReplacement(result)
+	return
 }
 
 func parseCmdline(cmdLine string) map[interface{}]interface{} {
@@ -167,7 +174,7 @@ outer:
 		keys := strings.Split(kv[0], ".")
 		for i, key := range keys {
 			if i == len(keys)-1 {
-				current[key] = DummyMarshall(value)
+				current[key] = unmarshalOrReturnString(value)
 			} else {
 				if obj, ok := current[key]; ok {
 					if newCurrent, ok := obj.(map[interface{}]interface{}); ok {
