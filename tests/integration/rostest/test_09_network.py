@@ -21,7 +21,7 @@ def qemu(request):
     return q
 
 
-def test_network_conf(qemu):
+def test_network_interfaces_conf(qemu):
     SSH(qemu).check_call('''cat > test-merge << "SCRIPT"
 set -x -e
 
@@ -31,6 +31,19 @@ ip link show dev eth1.100 | grep 'master br0'
 ip link show dev eth6 | grep 'master bond0'
 ip link show dev eth7 | grep 'master bond0'
 [ "$(</sys/class/net/bond0/bonding/mode)" = "active-backup 1" ]
+
+SCRIPT
+sudo bash test-merge
+    '''.strip())
+
+
+def test_network_dns_conf(qemu):
+    SSH(qemu).check_call('''cat > test-merge << "SCRIPT"
+set -x -e
+
+cat /etc/resolv.conf | grep "search mydomain.com example.com"
+cat /etc/resolv.conf | grep "nameserver 208.67.222.123"
+cat /etc/resolv.conf | grep "nameserver 208.67.220.123"
 
 SCRIPT
 sudo bash test-merge
