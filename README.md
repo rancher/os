@@ -14,12 +14,12 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.4.3 - Docker 1.10.1- Linux 4.2.8**
+**v0.4.4 - Docker 1.10.3- Linux 4.2.8**
 
 ### ISO
 
 https://releases.rancher.com/os/latest/rancheros.iso  
-https://releases.rancher.com/os/v0.4.3/rancheros.iso  
+https://releases.rancher.com/os/v0.4.4/rancheros.iso  
 
 **Note**: you must login using `rancher` for username and password.
 
@@ -27,55 +27,42 @@ https://releases.rancher.com/os/v0.4.3/rancheros.iso
 
 * https://releases.rancher.com/os/latest/initrd
 * https://releases.rancher.com/os/latest/iso-checksums.txt
-* https://releases.rancher.com/os/latest/rancheros-v0.4.3.tar.gz
+* https://releases.rancher.com/os/latest/rancheros-v0.4.4.tar.gz
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/vmlinuz
 
-* https://releases.rancher.com/os/v0.4.3/initrd
-* https://releases.rancher.com/os/v0.4.3/iso-checksums.txt
-* https://releases.rancher.com/os/v0.4.3/rancheros-v0.4.3.tar.gz
-* https://releases.rancher.com/os/v0.4.3/rancheros.iso
-* https://releases.rancher.com/os/v0.4.3/vmlinuz
+* https://releases.rancher.com/os/v0.4.4/initrd
+* https://releases.rancher.com/os/v0.4.4/iso-checksums.txt
+* https://releases.rancher.com/os/v0.4.4/rancheros-v0.4.4.tar.gz
+* https://releases.rancher.com/os/v0.4.4/rancheros.iso
+* https://releases.rancher.com/os/v0.4.4/vmlinuz
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
 ### Amazon
 
-We have 2 different [virtualization types of AMIs](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/virtualization_types.html). SSH keys are added to the **`rancher`** user, so you must log in using the **rancher** user.
+SSH keys are added to the **`rancher`** user, so you must log in using the **rancher** user.
 
 **HVM**
 
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | HVM |  [ami-58dbdd36](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-58dbdd36)
-ap-southeast-1 | HVM |  [ami-217eb042](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-217eb042)
-ap-southeast-2 | HVM |  [ami-8da483ee](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-8da483ee)
-eu-central-1 | HVM |  [ami-62b0ab0e](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-62b0ab0e)
-eu-west-1 | HVM |  [ami-7de95b0e](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-7de95b0e)
-sa-east-1 | HVM |  [ami-70bc3f1c](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-70bc3f1c)
-us-east-1 | HVM |  [ami-6f023505](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-6f023505)
-us-west-1 | HVM |  [ami-17780977](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-17780977)
-us-west-2 | HVM |  [ami-e45fbf84](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-e45fbf84)
-
-**Paravirtual**
-
-Region | Type | AMI
----|--- | ---
-ap-northeast-1 | PV |  [ami-c9d8dea7](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-c9d8dea7)
-ap-southeast-1 | PV |  [ami-727cb211](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-727cb211)
-ap-southeast-2 | PV |  [ami-faa18699](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-faa18699)
-eu-central-1 | PV |  [ami-11b5ae7d](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-11b5ae7d)
-eu-west-1 | PV |  [ami-8fe755fc](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-8fe755fc)
-sa-east-1 | PV |  [ami-9b4ac9f7](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-9b4ac9f7)
-us-east-1 | PV |  [ami-b70136dd](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-b70136dd)
-us-west-1 | PV |  [ami-4a7a0b2a](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-4a7a0b2a)
-us-west-2 | PV |  [ami-d0a340b0](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-d0a340b0)
+ap-northeast-1 | HVM |  [ami-f98a9797](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-f98a9797)
+ap-northeast-2 | HVM |  [ami-4c08c022](https://console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-4c08c022)
+ap-southeast-1 | HVM |  [ami-20914543](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-20914543)
+ap-southeast-2 | HVM |  [ami-27a08244](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-27a08244)
+eu-central-1 | HVM |  [ami-7205e51d](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-7205e51d)
+eu-west-1 | HVM |  [ami-aec548dd](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-aec548dd)
+sa-east-1 | HVM |  [ami-5a860836](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-5a860836)
+us-east-1 | HVM |  [ami-880f12e2](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-880f12e2)
+us-west-1 | HVM |  [ami-ea7a058a](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-ea7a058a)
+us-west-2 | HVM |  [ami-4f50a72f](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-4f50a72f)
 
 ### Google Compute Engine (Experimental)
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS v0.3.0 or later.
 
-[Download Image](https://github.com/rancher/os/releases/download/v0.4.3/rancheros-v0.4.3.tar.gz)
+[Download Image](https://github.com/rancher/os/releases/download/v0.4.4/rancheros-v0.4.4.tar.gz)
 
 Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/). 
 
