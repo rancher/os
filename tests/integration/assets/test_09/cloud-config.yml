@@ -22,7 +22,6 @@ rancher:
           mode: 1
         address: 123.123.123.124/32
     dns:
-      override: true
       search:
         - mydomain.com
         - example.com

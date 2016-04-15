@@ -61,7 +61,7 @@ rancher:
   cloud_init:
     datasources:
     - configdrive:/media/config-2
-  network:
+  default_network:
     dns:
       nameservers: [8.8.8.8, 8.8.4.4]
   repositories:

@@ -182,7 +182,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 	return err
 }
 
-func RunDhcp(netCfg *NetworkConfig, dhcpHostname bool) error {
+func RunDhcp(netCfg *NetworkConfig, setHostname, setDns bool) error {
 	links, err := netlink.LinkList()
 	if err != nil {
 		return err
@@ -200,7 +200,7 @@ func RunDhcp(netCfg *NetworkConfig, dhcpHostname bool) error {
 	for iface, args := range dhcpLinks {
 		wg.Add(1)
 		go func(iface, args string) {
-			runDhcp(netCfg, iface, args, dhcpHostname)
+			runDhcp(netCfg, iface, args, setHostname, setDns)
 			wg.Done()
 		}(iface, args)
 	}
@@ -209,7 +209,7 @@ func RunDhcp(netCfg *NetworkConfig, dhcpHostname bool) error {
 	return err
 }
 
-func runDhcp(netCfg *NetworkConfig, iface string, argstr string, dhcpHostname bool) {
+func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDns bool) {
 	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
@@ -223,12 +223,12 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, dhcpHostname bo
 		args = defaultDhcpArgs
 	}
 
-	if netCfg.Dns.Override {
-		args = append(args, "--nohook", "resolv.conf")
+	if setHostname {
+		args = append(args, "-e", "force_hostname=true")
 	}
 
-	if dhcpHostname {
-		args = append(args, "-e", "force_hostname=true")
+	if !setDns {
+		args = append(args, "--nohook", "resolv.conf")
 	}
 
 	args = append(args, iface)
