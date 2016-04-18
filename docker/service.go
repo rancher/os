@@ -76,6 +76,10 @@ func (s *Service) shouldRebuild() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	cfg, err := config.LoadConfig()
+	if err != nil {
+		return false, err
+	}
 	for _, c := range containers {
 		outOfSync, err := c.(*docker.Container).OutOfSync(s.Service.Config().Image)
 		if err != nil {
@@ -97,11 +101,24 @@ func (s *Service) shouldRebuild() (bool, error) {
 			"rebuildLabelChanged": rebuildLabelChanged,
 			"outOfSync":           outOfSync}).Debug("Rebuild values")
 
-		if origRebuildLabel == "always" || rebuildLabelChanged || origRebuildLabel != "false" && outOfSync {
+		rebuilding := false
+		if outOfSync {
+			if cfg.Rancher.ForceConsoleRebuild && s.Name() == "console" {
+				cfg.Rancher.ForceConsoleRebuild = false
+				if err := cfg.Save(); err != nil {
+					return false, err
+				}
+				rebuilding = true
+			} else if origRebuildLabel == "always" || rebuildLabelChanged || origRebuildLabel != "false" {
+				rebuilding = true
+			} else {
+				logrus.Warnf("%s needs rebuilding", name)
+			}
+		}
+
+		if rebuilding {
 			logrus.Infof("Rebuilding %s", name)
-			return true, err
-		} else if outOfSync {
-			logrus.Warnf("%s needs rebuilding", name)
+			return true, nil
 		}
 	}
 	return false, nil

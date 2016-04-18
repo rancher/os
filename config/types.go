@@ -86,6 +86,7 @@ type RancherConfig struct {
 	Debug               bool                              `yaml:"debug,omitempty"`
 	RmUsr               bool                              `yaml:"rm_usr,omitempty"`
 	Log                 bool                              `yaml:"log,omitempty"`
+	ForceConsoleRebuild bool                              `yaml:"force_console_rebuild,omitempty"`
 	Disable             []string                          `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`
 	Modules             []string                          `yaml:"modules,omitempty"`
