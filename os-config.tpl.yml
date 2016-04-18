@@ -155,7 +155,7 @@ rancher:
       image: {{.OS_IMAGES_ROOT}}/os-console:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: cloud-init
+        io.rancher.os.after: wait-for-network
         io.docker.compose.rebuild: always
       net: host
       uts: host
