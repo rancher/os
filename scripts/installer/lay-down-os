@@ -26,7 +26,7 @@ done
 
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-"${SCRIPTS_DIR}/conf/empty.yml"}
-CONSOLE=tty0
+CONSOLE=tty1
 BASE_DIR="/mnt/new_img"
 # TODO: Change this to a number so that users can specify.
 # Will need to make it so that our builds and packer APIs remain consistent.
