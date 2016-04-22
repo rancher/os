@@ -186,12 +186,12 @@ func configSet(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	cfg, err = cfg.Set(key, value)
+	cfgDiff, err := cfg.Set(key, value)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := cfg.Save(); err != nil {
+	if err := cfg.Save(cfgDiff); err != nil {
 		log.Fatal(err)
 	}
 }

@@ -48,18 +48,3 @@ cat /etc/resolv.conf | grep "nameserver 208.67.220.123"
 SCRIPT
 sudo bash test-merge
     '''.strip())
-
-
-def test_network_dns_ros_set(qemu):
-    SSH(qemu).check_call('''
-set -x -e
-
-sudo ros config set rancher.network.dns.search '[a,b]'
-if [ "$(sudo ros config get rancher.network.dns.search)" == "- a
- - b
-
- " ]; then
-    sudo ros config get rancher.network.dns.search
-    exit 1
- fi
-    '''.strip())
