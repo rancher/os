@@ -61,6 +61,13 @@ func LoadConfig() (*CloudConfig, error) {
 		if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
 			cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")
 		}
+	} else {
+		if util.Contains(cfg.Rancher.Docker.Args, "-D") {
+			cfg.Rancher.Docker.Args = util.FilterStrings(cfg.Rancher.Docker.Args, func(x string) bool { return x != "-D" })
+		}
+		if util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
+			cfg.Rancher.SystemDocker.Args = util.FilterStrings(cfg.Rancher.SystemDocker.Args, func(x string) bool { return x != "-D" })
+		}
 	}
 
 	return cfg, nil
