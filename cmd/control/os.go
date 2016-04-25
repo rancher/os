@@ -58,6 +58,10 @@ func osSubcommands() []cli.Command {
 					Name:  "append",
 					Usage: "kernel args to append by kexec",
 				},
+				cli.BoolFlag{
+					Name:  "upgrade-console",
+					Usage: "upgrade console even if persistent",
+				},
 			},
 		},
 		{
@@ -157,7 +161,7 @@ func osUpgrade(c *cli.Context) {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
-	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"), c.Bool("kexec"), c.String("append")); err != nil {
+	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"), c.Bool("kexec"), c.Bool("upgrade-console"), c.String("append")); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -176,7 +180,7 @@ func yes(in *bufio.Reader, question string) bool {
 	return strings.ToLower(line[0:1]) == "y"
 }
 
-func startUpgradeContainer(image string, stage, force, reboot, kexec bool, kernelArgs string) error {
+func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgradeConsole bool, kernelArgs string) error {
 	in := bufio.NewReader(os.Stdin)
 
 	command := []string{
@@ -190,6 +194,18 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, kerne
 		kernelArgs = strings.TrimSpace(kernelArgs)
 		if kernelArgs != "" {
 			command = append(command, "-a", kernelArgs)
+		}
+	}
+
+	if upgradeConsole {
+		cfg, err := config.LoadConfig()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		cfg.Rancher.ForceConsoleRebuild = true
+		if err := cfg.Save(); err != nil {
+			log.Fatal(err)
 		}
 	}
 
