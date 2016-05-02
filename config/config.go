@@ -147,18 +147,14 @@ func (c *CloudConfig) GetIgnoreOmitEmpty(key string) (interface{}, error) {
 	return v, nil
 }
 
-func (c *CloudConfig) Set(key string, value interface{}) (*CloudConfig, error) {
+func (c *CloudConfig) Set(key string, value interface{}) (map[interface{}]interface{}, error) {
 	data := map[interface{}]interface{}{}
-	if err := util.Convert(c, &data); err != nil {
-		return c, err
-	}
-
 	_, data = getOrSetVal(key, data, value)
 
-	return c.Merge(data)
+	return data, nil
 }
 
-func (c *CloudConfig) Save() error {
+func (c *CloudConfig) Save(cfgDiffs ...map[interface{}]interface{}) error {
 	files := append([]string{OsConfigFile, OemConfigFile}, CloudConfigDirFiles()...)
 	files = util.FilterStrings(files, func(x string) bool { return x != CloudConfigPrivateFile })
 	exCfg, err := ChainCfgFuncs(nil,
@@ -184,6 +180,12 @@ func (c *CloudConfig) Save() error {
 	}
 
 	data = util.MapsDifference(data, exData)
+
+	// Apply any additional config diffs
+	for _, diff := range cfgDiffs {
+		data = util.MapsUnion(data, diff)
+	}
+
 	log.WithFields(log.Fields{"diff": data}).Debug("The diff we're about to save")
 	if err := saveToDisk(data); err != nil {
 		return err
