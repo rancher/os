@@ -13,8 +13,6 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	log "github.com/Sirupsen/logrus"
-
-	"reflect"
 )
 
 var (
@@ -99,56 +97,7 @@ func Copy(d interface{}) interface{} {
 	}
 }
 
-func Replace(l, r interface{}) interface{} {
-	return r
-}
-
-func Equal(l, r interface{}) interface{} {
-	if reflect.DeepEqual(l, r) {
-		return l
-	}
-	return nil
-}
-
-func Filter(xs []interface{}, p func(x interface{}) bool) []interface{} {
-	return FlatMap(xs, func(x interface{}) []interface{} {
-		if p(x) {
-			return []interface{}{x}
-		}
-		return []interface{}{}
-	})
-}
-
-func FilterStrings(xs []string, p func(x string) bool) []string {
-	return FlatMapStrings(xs, func(x string) []string {
-		if p(x) {
-			return []string{x}
-		}
-		return []string{}
-	})
-}
-
-func Map(xs []interface{}, f func(x interface{}) interface{}) []interface{} {
-	return FlatMap(xs, func(x interface{}) []interface{} { return []interface{}{f(x)} })
-}
-
-func FlatMap(xs []interface{}, f func(x interface{}) []interface{}) []interface{} {
-	result := []interface{}{}
-	for _, x := range xs {
-		result = append(result, f(x)...)
-	}
-	return result
-}
-
-func FlatMapStrings(xs []string, f func(x string) []string) []string {
-	result := []string{}
-	for _, x := range xs {
-		result = append(result, f(x)...)
-	}
-	return result
-}
-
-func MapsUnion(left, right map[interface{}]interface{}) map[interface{}]interface{} {
+func Merge(left, right map[interface{}]interface{}) map[interface{}]interface{} {
 	result := MapCopy(left)
 
 	for k, r := range right {
@@ -157,75 +106,15 @@ func MapsUnion(left, right map[interface{}]interface{}) map[interface{}]interfac
 			case map[interface{}]interface{}:
 				switch r := r.(type) {
 				case map[interface{}]interface{}:
-					result[k] = MapsUnion(l, r)
+					result[k] = Merge(l, r)
 				default:
-					result[k] = Replace(l, r)
+					result[k] = r
 				}
 			default:
-				result[k] = Replace(l, r)
+				result[k] = r
 			}
 		} else {
 			result[k] = Copy(r)
-		}
-	}
-
-	return result
-}
-
-func MapsDifference(left, right map[interface{}]interface{}) map[interface{}]interface{} {
-	result := map[interface{}]interface{}{}
-
-	for k, l := range left {
-		if r, ok := right[k]; ok {
-			switch l := l.(type) {
-			case map[interface{}]interface{}:
-				switch r := r.(type) {
-				case map[interface{}]interface{}:
-					if len(l) == 0 && len(r) == 0 {
-						continue
-					} else if len(l) == 0 {
-						result[k] = l
-					} else if v := MapsDifference(l, r); len(v) > 0 {
-						result[k] = v
-					}
-				default:
-					if v := Equal(l, r); v == nil {
-						result[k] = l
-					}
-				}
-			default:
-				if v := Equal(l, r); v == nil {
-					result[k] = l
-				}
-			}
-		} else {
-			result[k] = l
-		}
-	}
-
-	return result
-}
-
-func MapsIntersection(left, right map[interface{}]interface{}) map[interface{}]interface{} {
-	result := map[interface{}]interface{}{}
-
-	for k, l := range left {
-		if r, ok := right[k]; ok {
-			switch l := l.(type) {
-			case map[interface{}]interface{}:
-				switch r := r.(type) {
-				case map[interface{}]interface{}:
-					result[k] = MapsIntersection(l, r)
-				default:
-					if v := Equal(l, r); v != nil {
-						result[k] = v
-					}
-				}
-			default:
-				if v := Equal(l, r); v != nil {
-					result[k] = v
-				}
-			}
 		}
 	}
 
@@ -244,6 +133,16 @@ func SliceCopy(data []interface{}) []interface{} {
 	result := make([]interface{}, len(data), len(data))
 	for k, v := range data {
 		result[k] = Copy(v)
+	}
+	return result
+}
+
+func RemoveString(slice []string, s string) []string {
+	result := []string{}
+	for _, elem := range slice {
+		if elem != s {
+			result = append(result, elem)
+		}
 	}
 	return result
 }
@@ -279,18 +178,6 @@ func GetServices(urls []string) ([]string, error) {
 		}
 	}
 
-	return result, nil
-}
-
-func DirLs(dir string) ([]interface{}, error) {
-	result := []interface{}{}
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return result, err
-	}
-	for _, f := range files {
-		result = append(result, f)
-	}
 	return result, nil
 }
 
