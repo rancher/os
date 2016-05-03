@@ -1,5 +1,9 @@
-default_hostname: {{.HOSTNAME_DEFAULT}}
 rancher:
+  defaults:
+    hostname: {{.HOSTNAME_DEFAULT}}
+    network:
+      dns:
+        nameservers: [8.8.8.8, 8.8.4.4]
   bootstrap:
     state-script:
       image: {{.OS_REPO}}/os-statescript:{{.VERSION}}{{.SUFFIX}}
@@ -61,9 +65,6 @@ rancher:
   cloud_init:
     datasources:
     - configdrive:/media/config-2
-  default_network:
-    dns:
-      nameservers: [8.8.8.8, 8.8.4.4]
   repositories:
     core:
       url: {{.OS_SERVICES_REPO}}/{{.REPO_VERSION}}{{.SUFFIX}}

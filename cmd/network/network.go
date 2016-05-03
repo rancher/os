@@ -56,8 +56,8 @@ func Main() {
 	search := cfg.Rancher.Network.Dns.Search
 	userSetDns := len(nameservers) > 0 || len(search) > 0
 	if !userSetDns {
-		nameservers = cfg.Rancher.DefaultNetwork.Dns.Nameservers
-		search = cfg.Rancher.DefaultNetwork.Dns.Search
+		nameservers = cfg.Rancher.Defaults.Network.Dns.Nameservers
+		search = cfg.Rancher.Defaults.Network.Dns.Search
 	}
 
 	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
