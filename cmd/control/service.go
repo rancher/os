@@ -11,7 +11,7 @@ import (
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/util/network"
 )
 
 type projectFactory struct {
@@ -172,7 +172,7 @@ func list(c *cli.Context) {
 		clone[service] = enabled
 	}
 
-	services, err := util.GetServices(cfg.Rancher.Repositories.ToArray())
+	services, err := network.GetServices(cfg.Rancher.Repositories.ToArray())
 	if err != nil {
 		logrus.Fatalf("Failed to get services: %v", err)
 	}
