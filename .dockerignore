@@ -1,15 +1,10 @@
 .DS_Store
-.git
 .idea
-.vendor
-.dockerignore
 bin
-gopath
-tmp
 state
 build
+images/*/build
 dist
-Godeps/_workspace/pkg
 tests/integration/.venv*
 tests/integration/.tox
 */*/*/*.pyc

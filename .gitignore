@@ -5,11 +5,13 @@
 /build
 /dist
 /gopath
+/images/*/build
 .dockerfile
 *.swp
 /tests/integration/MANIFEST
 /tests/integration/.venv*
 /tests/integration/.tox
+/tests/integration/.idea
 *.pyc
-__pychache__
-.docker-env.*
+__pycache__
+.dapper

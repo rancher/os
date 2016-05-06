@@ -1,17 +1,10 @@
 #!/bin/bash
 set -e
 
-if [[ ! -x "$(which go)" && -x /usr/local/go/bin/go ]]; then
-    PATH=/usr/local/go/bin:${PATH}
-fi
-
 cd $(dirname $0)/..
 
-result=$(find . -name "*.go" | grep -v ./Godeps | xargs gofmt -l)
-for i in $result; do
-    echo $i
-done
+echo Running tests
 
-[ -n "$result" ] && exit 1
+PACKAGES=". $(find -name '*.go' | xargs -I{} dirname {} |  cut -f2 -d/ | sort -u | grep -Ev '(^\.$|.git|.trash-cache|vendor|bin)' | sed -e 's!^!./!' -e 's!$!/...!')"
 
-echo OK
+go test -race -cover -tags=test ${PACKAGES}

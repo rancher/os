@@ -1,0 +1,16 @@
+#!/bin/bash
+
+if [ -e /var/lib/rancher/conf/docker ]; then
+    source /var/lib/rancher/conf/docker
+fi
+
+while [ ! -e /run/console-done ]; do
+    sleep 1
+done
+
+DOCKER_BIN=$(which docker) || DOCKER_BIN=/usr/bin/docker
+if [ "$DOCKER_BIN" == "/usr/bin/docker" ] && [ -e /usr/local/bin/docker ]; then
+    DOCKER_BIN=/usr/local/bin/docker
+fi
+
+exec /usr/bin/dockerlaunch $DOCKER_BIN "$@" $DOCKER_OPTS >/var/log/docker.log 2>&1

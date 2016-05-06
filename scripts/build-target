@@ -1,0 +1,17 @@
+#!/bin/bash
+set -e
+
+ros="$1"
+
+source $(dirname $0)/version
+
+cd $(dirname $0)/..
+
+if [ "${!TOOLCHAIN}" != "" ]; then
+  export CC=/usr/bin/${!TOOLCHAIN}-gcc
+  export CGO_ENABLED=1
+fi
+
+OUTPUT=${OUTPUT:-bin/ros}
+echo Building $OUTPUT
+go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION=${VERSION} -linkmode external -extldflags -static" -o ${OUTPUT}

@@ -1,0 +1,41 @@
+#!/bin/bash
+set -e
+
+rootfs() {
+  DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${SUFFIX})
+  trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
+  docker exec -i ${DFS} docker load < ${INITRD_DIR}/usr/share/ros/images.tar
+  docker stop ${DFS}
+  docker run --rm --volumes-from=${DFS} rancher/os-dapper-base tar -c -C /var/lib/docker ./image | tar -x -C ${PREPOP_DIR}
+  docker run --rm --volumes-from=${DFS} rancher/os-dapper-base tar -c -C /var/lib/docker ./overlay | tar -x -C ${PREPOP_DIR}
+
+  tar -cf ${ARTIFACTS}/rootfs.tar  --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
+  tar -rf ${ARTIFACTS}/rootfs.tar  --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
+  rm -f ${ARTIFACTS}/rootfs.tar.gz
+  gzip ${ARTIFACTS}/rootfs.tar
+}
+
+initrd() {
+  COMPRESS=lzma
+  [ "$DEV_BUILD" == "1" ] && COMPRESS="gzip -1"
+
+  pushd ${INITRD_DIR} >/dev/null
+
+  find | cpio -H newc -o | ${COMPRESS} > ${INITRD}
+
+  popd >/dev/null
+}
+
+cd $(dirname $0)/..
+
+BUILD=$(pwd)/build
+IMAGE_CACHE=${BUILD}/image-cache
+PREPOP_DIR=${IMAGE_CACHE}/var/lib/system-docker
+INITRD_DIR=${BUILD}/initrd
+ARTIFACTS=$(pwd)/dist/artifacts
+INITRD=${ARTIFACTS}/initrd
+
+mkdir -p ${ARTIFACTS} ${PREPOP_DIR}
+
+rootfs
+initrd

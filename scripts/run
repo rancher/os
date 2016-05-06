@@ -3,8 +3,6 @@ set -e
 
 cd $(dirname $0)/..
 
-source scripts/build-common
-
 HOST_ARCH=${HOST_ARCH:-amd64}
 ARCH=${ARCH:-amd64}
 
@@ -34,11 +32,13 @@ cd_arm() {
 }
 declare -A cd=( ["amd64"]="cd_amd64" ["arm"]="cd_arm" ["arm64"]="cd_arm" )
 
+BUILD=build
 BASE=$(pwd)
 UNAME=$(uname)
 
 KERNEL=${BASE}/dist/artifacts/vmlinuz
-INITRD=${BASE}/dist/artifacts/initrd
+INITRD_SRC=${BASE}/build/initrd
+INITRD=${BASE}/build/initrd.tmp
 
 QEMU=1
 FORMAT=1
@@ -103,42 +103,17 @@ if [ "$QEMU" == "1" ] && ! which qemu-system-${QEMUARCH}; then
     QEMU=0
 fi
 
-if [[ ! -e ${KERNEL} || ! -e ${INITRD} ]]; then
-    echo "Failed to find ${KERNEL} or ${INITRD}" 1>&2
+if [[ ! -e ${KERNEL} || ! -e ${INITRD_SRC} ]]; then
+    echo "Failed to find ${KERNEL} or ${INITRD_SRC}" 1>&2
     exit 1
 fi
 
-# Linux and Darwin SHA1 sum binary are different, pick which to use
-if [ "$UNAME" == "Darwin" ]; then sha1sum=$(which shasum)
-elif [ "$UNAME" == "Linux" ]; then sha1sum=$(which sha1sum);
-fi
-
 if [ "$REBUILD" == "1" ]; then
-    INITRD_TMP=${BUILD}/$(${sha1sum} ${INITRD} | awk '{print $1}')
-    INITRD_CURRENT=${BUILD}/initrd-current
-    INITRD_TEST=${BUILD}/initrd.test
-
-    if [ ! -d ${INITRD_TMP} ]; then
-        mkdir -p ${INITRD_TMP}
-        pushd ${INITRD_TMP}
-        xz -dfc ${INITRD} | gunzip -f | cpio -idm
-        popd
-    fi
-
-    if [ -e ${INITRD_CURRENT} ]; then
-        rm -f ${INITRD_CURRENT}
-    fi
-
-    ln -s ${INITRD_TMP} ${INITRD_CURRENT}
-
-    mkdir -p ${INITRD_TMP}/usr/{bin,share/ros}
-    cp bin/ros ${INITRD_TMP}/usr/bin/
-    cp -f build/os-config.yml ${INITRD_TMP}/usr/share/ros/
-
-    pushd ${INITRD_TMP}
-    find . | cpio -H newc -o | gzip > ${INITRD_TEST}
-    popd
-    INITRD=${INITRD_TEST}
+    cp bin/ros ${INITRD_SRC}/usr/bin/ros
+    cp build/os-config.yml ${INITRD_SRC}/usr/share/ros
+    pushd ${INITRD_SRC} >/dev/null
+    find . | cpio -H newc -o | gzip -1 > ${INITRD}
+    popd >/dev/null
 fi
 
 KERNEL_ARGS="quiet rancher.password=rancher console=${TTYCONS} ${QEMU_APPEND}"
@@ -162,17 +137,9 @@ if [ "$QEMU" == "1" ]; then
         qemu-img create -f qcow2 -o size=10G ${HD}
     fi
 
-
-    CCIMG=${BUILD}/cc.img
-    CCDEV=$(losetup -f)
     CCROOT=${BUILD}/cloud-config
-    dd if=/dev/zero of=${CCIMG} bs=1024 count=512
-    losetup ${CCDEV} ${CCIMG}
-    mkfs.vfat -n "config-2" ${CCDEV}
-
     rm -rf ${CCROOT}
     mkdir -p ${CCROOT}
-    mount ${CCDEV} ${CCROOT}
 
     USER_DATA=${CCROOT}/openstack/latest/user_data
     mkdir -p $(dirname ${USER_DATA})
@@ -184,10 +151,6 @@ if [ "$QEMU" == "1" ]; then
         echo "ssh_authorized_keys:" >> ${USER_DATA}
         echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
     fi
-
-    umount ${CCROOT}
-    losetup -d ${CCDEV}
-
 
     CPU=${cpu["$ARCH"]}
     if [ "$KVM" == "1" ] && [ "$ARCH" == "$HOST_ARCH" ]; then
@@ -204,12 +167,15 @@ if [ "$QEMU" == "1" ]; then
         -initrd ${INITRD} \
         -m 2048 \
         ${network["$ARCH"]} \
-        $(eval "${cd["$ARCH"]} ${CCIMG}") \
         $(eval "${hd["$ARCH"]} ${HD}") \
         -smp 1 \
         -append "${KERNEL_ARGS}" \
         -nographic \
         -display none \
+        -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
+        -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
+        -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
+        -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
         ${QEMU_ARGS} \
         "${@}"
 

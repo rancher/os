@@ -2,7 +2,7 @@ default_hostname: {{.HOSTNAME_DEFAULT}}
 rancher:
   bootstrap:
     state-script:
-      image: {{.OS_IMAGES_ROOT}}/os-statescript:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-statescript:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -18,7 +18,7 @@ rancher:
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/share/ros:/usr/share/ros:ro
     udev-bootstrap:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       environment:
       - BOOTSTRAP=true
       labels:
@@ -34,7 +34,7 @@ rancher:
       - /lib/firmware:/lib/firmware
   autoformat:
     autoformat:
-      image: {{.OS_IMAGES_ROOT}}/os-autoformat:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-autoformat:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -42,7 +42,7 @@ rancher:
       net: none
       privileged: true
     udev-autoformat:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -75,7 +75,7 @@ rancher:
   services:
     {{if eq "amd64" .ARCH -}}
     acpid:
-      image: {{.OS_IMAGES_ROOT}}/os-acpid:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-acpid:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
       net: host
@@ -86,7 +86,7 @@ rancher:
       - system-volumes
     {{end -}}
     all-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -100,7 +100,7 @@ rancher:
       - user-volumes
       - system-volumes
     cloud-init:
-      image: {{.OS_IMAGES_ROOT}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.reloadconfig: "true"
@@ -113,7 +113,7 @@ rancher:
       - command-volumes
       - system-volumes
     cloud-init-pre:
-      image: {{.OS_IMAGES_ROOT}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
       environment:
       - CLOUD_INIT_NETWORK=false
       labels:
@@ -128,7 +128,7 @@ rancher:
       - command-volumes
       - system-volumes
     command-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -152,7 +152,7 @@ rancher:
       - /usr/bin/ros:/usr/sbin/wait-for-network:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
     console:
-      image: {{.OS_IMAGES_ROOT}}/os-console:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: wait-for-network
@@ -168,7 +168,7 @@ rancher:
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
     container-data-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -181,7 +181,7 @@ rancher:
       - /var/lib/system-docker:/var/lib/system-docker
       - /var/lib/rkt:/var/lib/rkt
     network-pre:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init-pre
@@ -193,7 +193,7 @@ rancher:
       - command-volumes
       - system-volumes
     network:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init
@@ -207,7 +207,7 @@ rancher:
       - command-volumes
       - system-volumes
     wait-for-network-pre:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
       command: wait-for-network
       labels:
         io.rancher.os.detach: "false"
@@ -219,7 +219,7 @@ rancher:
       - command-volumes
       - system-volumes
     wait-for-network:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
       command: wait-for-network
       labels:
         io.rancher.os.detach: "false"
@@ -231,7 +231,7 @@ rancher:
       - command-volumes
       - system-volumes
     ntp:
-      image: {{.OS_IMAGES_ROOT}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: wait-for-network-pre
@@ -240,7 +240,7 @@ rancher:
       privileged: true
       restart: always
     preload-system-images:
-      image: {{.OS_IMAGES_ROOT}}/os-preload:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -252,7 +252,7 @@ rancher:
       - command-volumes
       - system-volumes
     preload-user-images:
-      image: {{.OS_IMAGES_ROOT}}/os-preload:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -265,7 +265,7 @@ rancher:
       - command-volumes
       - system-volumes
     syslog:
-      image: {{.OS_IMAGES_ROOT}}/os-syslog:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-syslog:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
       log_driver: json-file
@@ -276,7 +276,7 @@ rancher:
       volumes_from:
       - system-volumes
     system-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -301,7 +301,7 @@ rancher:
       - /var/log:/var/log
       - /var/run:/var/run
     udev-cold:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.before: udev
@@ -311,7 +311,7 @@ rancher:
       volumes_from:
       - system-volumes
     udev:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       environment:
       - DAEMON=true
       labels:
@@ -324,7 +324,7 @@ rancher:
       volumes_from:
       - system-volumes
     user-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -336,7 +336,7 @@ rancher:
       - /home:/home
       - /opt:/opt
     docker:
-      image: {{.OS_IMAGES_ROOT}}/os-docker:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: console
@@ -356,7 +356,7 @@ rancher:
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:
     url: {{.OS_RELEASES_YML}}
-    image: {{.OS_IMAGES_ROOT}}/os
+    image: {{.OS_REPO}}/os
   docker:
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']
