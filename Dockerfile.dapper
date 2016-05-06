@@ -169,5 +169,8 @@ ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml ./build/initrd
 RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
 
+RUN mkdir -p src/docker/00-rootfs/build && \
+    curl -pfL ${!OS_BASE_URL} | tar xvJf - -C src/docker/00-rootfs/build
+
 ENTRYPOINT ["./scripts/entry"]
 CMD ["ci"]
