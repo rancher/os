@@ -198,13 +198,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 	}
 
 	if upgradeConsole {
-		cfg, err := config.LoadConfig()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		cfg.Rancher.ForceConsoleRebuild = true
-		if err := cfg.Save(); err != nil {
+		if err := config.Set("rancher.force_console_rebuild", true); err != nil {
 			log.Fatal(err)
 		}
 	}

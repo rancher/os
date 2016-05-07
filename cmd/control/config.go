@@ -29,17 +29,6 @@ func configSubcommands() []cli.Command {
 			Action: configSet,
 		},
 		{
-			Name:   "import",
-			Usage:  "import configuration from standard in or a file",
-			Action: runImport,
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "input, i",
-					Usage: "File from which to read",
-				},
-			},
-		},
-		{
 			Name:   "images",
 			Usage:  "List Docker images for a configuration from a file",
 			Action: runImages,
@@ -140,40 +129,6 @@ func env2map(env []string) map[string]string {
 	return m
 }
 
-func runImport(c *cli.Context) {
-	var input io.ReadCloser
-	var err error
-	input = os.Stdin
-	cfg, err := config.LoadConfig()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	inputFile := c.String("input")
-	if inputFile != "" {
-		input, err = os.Open(inputFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer input.Close()
-	}
-
-	bytes, err := ioutil.ReadAll(input)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cfg, err = cfg.Import(bytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cfg.Save(); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func configSet(c *cli.Context) {
 	key := c.Args().Get(0)
 	value := c.Args().Get(1)
@@ -181,17 +136,8 @@ func configSet(c *cli.Context) {
 		return
 	}
 
-	cfg, err := config.LoadConfig()
+	err := config.Set(key, value)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	cfgDiff, err := cfg.Set(key, value)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cfg.Save(cfgDiff); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -202,14 +148,9 @@ func configGet(c *cli.Context) {
 		return
 	}
 
-	cfg, err := config.LoadConfig()
+	val, err := config.Get(arg)
 	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Fatal("config get: failed to load config")
-	}
-
-	val, err := cfg.GetIgnoreOmitEmpty(arg)
-	if err != nil {
-		log.WithFields(log.Fields{"cfg": cfg, "key": arg, "val": val, "err": err}).Fatal("config get: failed to retrieve value")
+		log.WithFields(log.Fields{"key": arg, "val": val, "err": err}).Fatal("config get: failed to retrieve value")
 	}
 
 	printYaml := false
@@ -237,23 +178,14 @@ func merge(c *cli.Context) {
 		log.Fatal(err)
 	}
 
-	cfg, err := config.LoadConfig()
+	err = config.Merge(bytes)
 	if err != nil {
-		log.Fatal(err)
-	}
-
-	cfg, err = cfg.MergeBytes(bytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cfg.Save(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func export(c *cli.Context) {
-	content, err := config.Dump(c.Bool("private"), c.Bool("full"))
+	content, err := config.Export(c.Bool("private"), c.Bool("full"))
 	if err != nil {
 		log.Fatal(err)
 	}

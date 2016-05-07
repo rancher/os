@@ -86,6 +86,10 @@ func serviceSubCommands() []cli.Command {
 	}
 }
 
+func updateIncludedServices(cfg *config.CloudConfig) error {
+	return config.Set("rancher.services_include", cfg.Rancher.ServicesInclude)
+}
+
 func disable(c *cli.Context) {
 	changed := false
 	cfg, err := config.LoadConfig()
@@ -103,7 +107,7 @@ func disable(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err = updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
@@ -125,7 +129,7 @@ func del(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err = updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
@@ -155,7 +159,7 @@ func enable(c *cli.Context) {
 			logrus.Fatal(err)
 		}
 
-		if err := cfg.Save(); err != nil {
+		if err = updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
