@@ -15,11 +15,6 @@ if arch != 'amd64':
     suffix = '_' + arch
 
 
-busybox_image = {'amd64': 'busybox',
-                 'arm': 'armhf/busybox',
-                 'arm64': 'aarch64/busybox'}[arch]
-
-
 def iter_lines(s):
     return it.imap(str.rstrip, iter(s.readline, ''))
 

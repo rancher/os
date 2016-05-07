@@ -229,9 +229,6 @@ func RunInit() error {
 			return c, nil
 		},
 		initializeSelinux,
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			return c, syscall.Mount("", "/", "", syscall.MS_SHARED|syscall.MS_REC, "")
-		},
 		sysInit,
 	}
 
