@@ -1,9 +1,9 @@
 package util
 
 import (
-	"github.com/stretchr/testify/require"
-	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type testCloudConfig struct {
@@ -179,19 +179,4 @@ func TestMapsUnion(t *testing.T) {
 		"f": []interface{}{2, 3, 4},
 	}
 	assert.Equal(expected, MapsUnion(m0, m1))
-}
-
-func NoTestLoadResourceSimple(t *testing.T) {
-	assert := require.New(t)
-
-	expected := `services:
-- debian-console
-- ubuntu-console
-`
-	expected = strings.TrimSpace(expected)
-
-	b, e := LoadResource("https://raw.githubusercontent.com/rancher/os-services/v0.3.4/index.yml", true, []string{})
-
-	assert.Nil(e)
-	assert.Equal(expected, strings.TrimSpace(string(b)))
 }

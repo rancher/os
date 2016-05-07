@@ -339,6 +339,10 @@ rancher:
       - /opt:/opt
     docker:
       image: {{.OS_IMAGES_ROOT}}/os-docker:{{.VERSION}}{{.SUFFIX}}
+      environment:
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: console

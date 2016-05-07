@@ -2,6 +2,7 @@ package compose
 
 import (
 	"fmt"
+
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/libcompose/cli/logger"
@@ -10,6 +11,7 @@ import (
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
 	"github.com/rancher/os/util"
+	"github.com/rancher/os/util/network"
 )
 
 func CreateService(cfg *config.CloudConfig, name string, serviceConfig *project.ServiceConfig) (project.Service, error) {
@@ -121,7 +123,7 @@ func adjustContainerNames(m map[interface{}]interface{}) map[interface{}]interfa
 	return m
 }
 
-func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Project, error) {
+func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.Project, error) {
 	projectEvents := make(chan project.Event)
 	enabled := map[interface{}]interface{}{}
 
@@ -151,9 +153,9 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 				continue
 			}
 
-			bytes, err := LoadServiceResource(service, network, cfg)
+			bytes, err := LoadServiceResource(service, useNetwork, cfg)
 			if err != nil {
-				if err == util.ErrNoNetwork {
+				if err == network.ErrNoNetwork {
 					log.Debugf("Can not load %s, networking not enabled", service)
 				} else {
 					log.Errorf("Failed to load %s : %v", service, err)
@@ -186,7 +188,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, network bool) (*project.Proj
 	go func() {
 		for event := range projectEvents {
 			if event.EventType == project.EventContainerStarted && event.ServiceName == "ntp" {
-				network = true
+				useNetwork = true
 			}
 		}
 	}()
@@ -240,6 +242,6 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 	return p.Pull()
 }
 
-func LoadServiceResource(name string, network bool, cfg *config.CloudConfig) ([]byte, error) {
-	return util.LoadResource(name, network, cfg.Rancher.Repositories.ToArray())
+func LoadServiceResource(name string, useNetwork bool, cfg *config.CloudConfig) ([]byte, error) {
+	return network.LoadResource(name, useNetwork, cfg.Rancher.Repositories.ToArray())
 }
