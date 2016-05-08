@@ -9,6 +9,10 @@ cd $(dirname $0)/..
 
 DO_PUSH="$1"
 
+if [ -n "$CORE" ]; then
+    PREFIX=0
+fi
+
 if [ "${DO_PUSH}" == "--push" ]; then
     for i in $BASE/[0-9]*; do
         name="os-$(echo ${i} | cut -f2 -d-)"
@@ -17,7 +21,7 @@ if [ "${DO_PUSH}" == "--push" ]; then
         docker push ${tag} || :
     done
 else
-    for i in $BASE/[0-9]*; do
+    for i in $BASE/$PREFIX[0-9]*; do
         name="os-$(echo ${i} | cut -f2 -d-)"
         tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
         echo Building ${tag}

@@ -12,9 +12,10 @@ echo Create initrd layout in $INITRD_DIR
 rm -rf ${INITRD_DIR}
 mkdir -p ${INITRD_DIR}/usr/{etc,bin,share/ros}
 
+./scripts/template
+
 cp -rf assets/selinux      ${INITRD_DIR}/usr/etc
 cp build/images.tar        ${INITRD_DIR}/usr/share/ros/
-cp build/os-config.yml     ${INITRD_DIR}/usr/share/ros/
 cp bin/ros                 ${INITRD_DIR}/usr/bin/
 cp ${DOWNLOADS}/docker     ${INITRD_DIR}/usr/bin/docker
 ln -s usr/bin/ros          ${INITRD_DIR}/init

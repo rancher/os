@@ -30,15 +30,15 @@ RUN apt-get update && \
 
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
-ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml
+ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd
 ENV DAPPER_RUN_ARGS --privileged
 ENV SHELL /bin/bash
 WORKDIR ${DAPPER_SOURCE}
 
 ########## General Configuration #####################
-ARG ARCH=amd64
 ARG DAPPER_HOST_ARCH=amd64
 ARG HOST_ARCH=${DAPPER_HOST_ARCH}
+ARG ARCH=${HOST_ARCH}
 
 ARG OS_REPO=rancher
 ARG HOSTNAME_DEFAULT=rancher
@@ -163,8 +163,6 @@ RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
     ;fi
 
 ENV GOARCH $ARCH
-
-ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml ./build/initrd
 
 RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
