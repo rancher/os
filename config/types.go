@@ -1,10 +1,11 @@
 package config
 
 import (
+	"runtime"
+
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/netconf"
-	"runtime"
 )
 
 const (
@@ -90,6 +91,7 @@ type RancherConfig struct {
 	Disable             []string                          `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`
 	Modules             []string                          `yaml:"modules,omitempty"`
+	Mounts              [][]string                        `yaml:"mounts,omitempty"`
 	Network             netconf.NetworkConfig             `yaml:"network,omitempty"`
 	DefaultNetwork      netconf.NetworkConfig             `yaml:"default_network,omitempty"`
 	Repositories        Repositories                      `yaml:"repositories,omitempty"`
