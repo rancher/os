@@ -7,7 +7,7 @@ RUN apt-get update && \
 ARG HOST_ARCH
 ENV HOST_ARCH ${HOST_ARCH}
 RUN ln -sf go-6 /usr/bin/go && mkdir -p /usr/local && cd /usr/local && \
-    wget -O - https://storage.googleapis.com/golang/go1.6.src.tar.gz | tar -xz && \
+    wget -O - https://storage.googleapis.com/golang/go1.6.2.src.tar.gz | tar -xz && \
     cd go/src && GOROOT_BOOTSTRAP=/usr GOARCH=${HOST_ARCH} GOHOSTARCH=${HOST_ARCH} ./make.bash
 
 ENV PATH /usr/local/go/bin:$PATH
