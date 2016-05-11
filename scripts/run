@@ -162,17 +162,9 @@ if [ "$QEMU" == "1" ]; then
         qemu-img create -f qcow2 -o size=10G ${HD}
     fi
 
-
-    CCIMG=${BUILD}/cc.img
-    CCDEV=$(losetup -f)
     CCROOT=${BUILD}/cloud-config
-    dd if=/dev/zero of=${CCIMG} bs=1024 count=512
-    losetup ${CCDEV} ${CCIMG}
-    mkfs.vfat -n "config-2" ${CCDEV}
-
     rm -rf ${CCROOT}
     mkdir -p ${CCROOT}
-    mount ${CCDEV} ${CCROOT}
 
     USER_DATA=${CCROOT}/openstack/latest/user_data
     mkdir -p $(dirname ${USER_DATA})
@@ -185,8 +177,19 @@ if [ "$QEMU" == "1" ]; then
         echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
     fi
 
-    umount ${CCROOT}
+    CCIMG=${BUILD}/cc.img
+    CCDEV=/dev/loop$(uuid)
+    mknod $CCDEV b 7 0
+    dd if=/dev/zero of=${CCIMG} bs=1024 count=512
+    losetup ${CCDEV} ${CCIMG}
+    mkfs.vfat -n "config-2" ${CCDEV}
+
+    CCROOT_TMP=$(mktemp -d)
+    mount ${CCDEV} ${CCROOT_TMP}
+    cp -a ${CCROOT}/* ${CCROOT_TMP}/
+    umount ${CCROOT_TMP} && rmdir ${CCROOT_TMP}
     losetup -d ${CCDEV}
+    rm ${CCDEV}
 
 
     CPU=${cpu["$ARCH"]}
