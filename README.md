@@ -31,6 +31,7 @@ https://releases.rancher.com/os/v0.4.5/rancheros.iso
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/vmlinuz
 
+
 * https://releases.rancher.com/os/v0.4.5/initrd
 * https://releases.rancher.com/os/v0.4.5/iso-checksums.txt
 * https://releases.rancher.com/os/v0.4.5/rancheros-v0.4.5.tar.gz
