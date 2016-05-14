@@ -24,6 +24,7 @@ RUN apt-get update && \
         rsync \
         sudo \
         tox \
+        unzip \
         vim \
         wget \
         xorriso
@@ -163,6 +164,12 @@ RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
     ;fi
 
 ENV GOARCH $ARCH
+
+# Install rEFInd for EFI boot
+ENV REFIND_VERSION=0.10.3
+RUN curl -fL  http://downloads.sourceforge.net/project/refind/${REFIND_VERSION}/refind-bin-${REFIND_VERSION}.zip > ${DOWNLOADS}/refind.zip && \
+    unzip -j -p ${DOWNLOADS}/refind.zip refind-bin-${REFIND_VERSION}/refind/refind_x64.efi > ${DOWNLOADS}/refind_x64.efi && rm -f ${DOWNLOADS}/refind.zip
+
 
 ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml ./build/initrd
 
