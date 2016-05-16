@@ -1,32 +1,29 @@
 package userdocker
 
 import (
-	"bufio"
-	"encoding/json"
-	"fmt"
+	"io/ioutil"
 	"os"
-	"os/exec"
 	"os/signal"
-	"strings"
+	"strconv"
 	"syscall"
 	"time"
 
 	"golang.org/x/net/context"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/docker/engine-api/types"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-
-	"github.com/opencontainers/runc/libcontainer/cgroups"
-	_ "github.com/opencontainers/runc/libcontainer/nsenter"
-	"github.com/opencontainers/runc/libcontainer/system"
+	rosDocker "github.com/rancher/os/docker"
 )
 
 const (
 	DEFAULT_STORAGE_CONTEXT = "console"
+	DOCKER_PID_FILE         = "/var/run/docker.pid"
+	DOCKER_COMMAND          = "docker-init"
 	userDocker              = "user-docker"
 )
 
@@ -36,109 +33,102 @@ func Main() {
 		log.Fatal(err)
 	}
 
-	if len(os.Args) == 1 {
-		if err := enter(cfg); err != nil {
-			log.Fatal(err)
-		}
-	} else {
-		if err := main(cfg); err != nil {
-			log.Fatal(err)
-		}
+	if err := startDocker(cfg); err != nil {
+		log.Fatal(err)
 	}
+
+	if err := setupTermHandler(); err != nil {
+		log.Fatal(err)
+	}
+
+	select {}
 }
 
-func enter(cfg *config.CloudConfig) error {
-	context := cfg.Rancher.Docker.StorageContext
-	if context == "" {
-		context = DEFAULT_STORAGE_CONTEXT
+func startDocker(cfg *config.CloudConfig) error {
+	storageContext := cfg.Rancher.Docker.StorageContext
+	if storageContext == "" {
+		storageContext = DEFAULT_STORAGE_CONTEXT
 	}
 
-	log.Infof("Starting Docker in context: %s", context)
+	log.Infof("Starting Docker in context: %s", storageContext)
 
 	p, err := compose.GetProject(cfg, true)
 	if err != nil {
 		return err
 	}
 
-	pid, err := waitForPid(context, p)
+	pid, err := waitForPid(storageContext, p)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("%s PID %d", context, pid)
+	log.Infof("%s PID %d", storageContext, pid)
 
-	return runNsenter(pid)
-}
+	client, err := rosDocker.NewSystemClient()
+	if err != nil {
+		return err
+	}
 
-type result struct {
-	Pid int `json:"Pid"`
-}
+	if err := os.Remove(DOCKER_PID_FILE); err != nil && !os.IsNotExist(err) {
+		return err
+	}
 
-func findProgram(searchPaths ...string) string {
-	prog := ""
+	dockerCfg := cfg.Rancher.Docker
 
-	for _, i := range searchPaths {
-		var err error
-		prog, err = exec.LookPath(i)
-		if err == nil {
-			break
+	args := dockerCfg.FullArgs()
+
+	log.Debugf("User Docker args: %v", args)
+
+	if dockerCfg.TLS {
+		log.Debug("Generating TLS certs if needed")
+		if err := control.Generate(true, "/etc/docker/tls", []string{"127.0.0.1", "*", "*.*", "*.*.*", "*.*.*.*"}); err != nil {
+			return err
 		}
-		prog = i
 	}
 
-	return prog
+	cmd := []string{"env"}
+	log.Info(dockerCfg.AppendEnv())
+	cmd = append(cmd, dockerCfg.AppendEnv()...)
+	cmd = append(cmd, DOCKER_COMMAND)
+	cmd = append(cmd, args...)
+	log.Infof("Running %v", cmd)
+
+	resp, err := client.ContainerExecCreate(context.Background(), storageContext, types.ExecConfig{
+		Privileged:   true,
+		AttachStdin:  true,
+		AttachStderr: true,
+		AttachStdout: true,
+		Detach:       false,
+		Cmd:          cmd,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := client.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
+		Detach: false,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func runNsenter(pid int) error {
-	args := []string{findProgram(userDocker), "main"}
-
-	r, w, err := os.Pipe()
+func setupTermHandler() error {
+	pidBytes, err := waitForFile(DOCKER_PID_FILE)
 	if err != nil {
 		return err
 	}
-
-	cmd := &exec.Cmd{
-		Path:       args[0],
-		Args:       args,
-		Stdin:      os.Stdin,
-		Stdout:     os.Stdout,
-		Stderr:     os.Stderr,
-		ExtraFiles: []*os.File{w},
-		Env: append(os.Environ(),
-			"_LIBCONTAINER_INITPIPE=3",
-			fmt.Sprintf("_LIBCONTAINER_INITPID=%d", pid),
-		),
-	}
-
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	w.Close()
-
-	var result result
-	if err := json.NewDecoder(r).Decode(&result); err != nil {
-		return err
-	}
-
-	if err := cmd.Wait(); err != nil {
-		return err
-	}
-
-	log.Infof("Docker PID %d", result.Pid)
-
-	p, err := os.FindProcess(result.Pid)
+	dockerPid, err := strconv.Atoi(string(pidBytes))
 	if err != nil {
 		return err
 	}
-
-	handleTerm(p)
-
-	if err := switchCgroup(result.Pid, pid); err != nil {
+	process, err := os.FindProcess(dockerPid)
+	if err != nil {
 		return err
 	}
-
-	_, err = p.Wait()
-	return err
+	handleTerm(process)
+	return nil
 }
 
 func handleTerm(p *os.Process) {
@@ -147,7 +137,22 @@ func handleTerm(p *os.Process) {
 	go func() {
 		<-term
 		p.Signal(syscall.SIGTERM)
+		os.Exit(0)
 	}()
+}
+
+func waitForFile(file string) ([]byte, error) {
+	for {
+		contents, err := ioutil.ReadFile(file)
+		if os.IsNotExist(err) {
+			log.Infof("Waiting for %s", file)
+			time.Sleep(1 * time.Second)
+		} else if err != nil {
+			return nil, err
+		} else {
+			return contents, nil
+		}
+	}
 }
 
 func waitForPid(service string, project *project.Project) (int, error) {
@@ -199,72 +204,4 @@ func getPid(service string, project *project.Project) (int, error) {
 	}
 
 	return 0, nil
-}
-
-func main(cfg *config.CloudConfig) error {
-	os.Unsetenv("_LIBCONTAINER_INITPIPE")
-	os.Unsetenv("_LIBCONTAINER_INITPID")
-
-	if err := system.ParentDeathSignal(syscall.SIGKILL).Set(); err != nil {
-		return err
-	}
-
-	if err := os.Remove("/var/run/docker.pid"); err != nil && !os.IsNotExist(err) {
-		return err
-	}
-
-	dockerCfg := cfg.Rancher.Docker
-
-	args := dockerCfg.FullArgs()
-
-	log.Debugf("User Docker args: %v", args)
-
-	if dockerCfg.TLS {
-		log.Debug("Generating TLS certs if needed")
-		if err := control.Generate(true, "/etc/docker/tls", []string{"127.0.0.1", "*", "*.*", "*.*.*", "*.*.*.*"}); err != nil {
-			return err
-		}
-	}
-
-	prog := findProgram("docker-init", "dockerlaunch", "docker")
-	if strings.Contains(prog, "dockerlaunch") {
-		args = append([]string{prog, "docker"}, args...)
-	} else {
-		args = append([]string{prog}, args...)
-	}
-
-	log.Infof("Running %v", args)
-	return syscall.Exec(args[0], args, dockerCfg.AppendEnv())
-}
-
-func switchCgroup(src, target int) error {
-	cgroupFile := fmt.Sprintf("/proc/%d/cgroup", target)
-	f, err := os.Open(cgroupFile)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	targetCgroups := map[string]string{}
-
-	s := bufio.NewScanner(f)
-	for s.Scan() {
-		text := s.Text()
-		parts := strings.Split(text, ":")
-		subparts := strings.Split(parts[1], "=")
-		subsystem := subparts[0]
-		if len(subparts) > 1 {
-			subsystem = subparts[1]
-		}
-
-		targetPath := fmt.Sprintf("/host/sys/fs/cgroup/%s%s", subsystem, parts[2])
-		log.Infof("Moving Docker to cgroup %s", targetPath)
-		targetCgroups[subsystem] = targetPath
-	}
-
-	if err := s.Err(); err != nil {
-		return err
-	}
-
-	return cgroups.EnterPid(targetCgroups, src)
 }

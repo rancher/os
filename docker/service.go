@@ -107,9 +107,6 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 
 		rebuilding := false
 		if outOfSync {
-			if s.Name() != "console" {
-				continue
-			}
 			if cfg.Rancher.ForceConsoleRebuild && s.Name() == "console" {
 				cfg.Rancher.ForceConsoleRebuild = false
 				if err := cfg.Save(); err != nil {
