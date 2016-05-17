@@ -22,6 +22,7 @@ B: Add to the installation process in scripts/package-iso
 5. Add the following xorriso options
 
     -eltorito-alt-boot -e EFI/BOOT/BOOTX64.EFI -no-emul-boot \
+    -isohybrid-gpt-basdat \
 
 This installation includes *no* additional icons or drivers. It is just meant to get RancherOS booted on an EFI system.
 If you want to add support for graphical installations, additional filesystems, and everything else.... you will need a lot more 

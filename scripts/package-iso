@@ -29,4 +29,5 @@ cd ${CD} && xorriso \
     -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
     -eltorito-alt-boot -e EFI/BOOT/BOOTX64.EFI -no-emul-boot \
     -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+    -isohybrid-gpt-basdat \
     -o ${ARTIFACTS}/$(echo ${DISTRIB_ID} | tr '[:upper:]' '[:lower:]').iso ${CD}
