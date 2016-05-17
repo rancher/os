@@ -35,6 +35,7 @@ ARG TOOLCHAIN
 ENV TOOLCHAIN ${TOOLCHAIN}
 
 RUN if [ "${TOOLCHAIN}" != "" ] && ! which ${TOOLCHAIN}-gcc; then \
+        apt-get update && \
         apt-get install -y gcc-${TOOLCHAIN} g++-${TOOLCHAIN} \
     ;fi
 
