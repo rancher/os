@@ -48,7 +48,7 @@ func setupSigterm() {
 	}()
 }
 
-func run(c *cli.Context) {
+func run(c *cli.Context) error {
 	setupSigterm()
 
 	var stream io.Reader = os.Stdin
@@ -79,6 +79,7 @@ func run(c *cli.Context) {
 	}
 
 	wg.Wait()
+	return nil
 }
 
 func addProcess(process *os.Process) {

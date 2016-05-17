@@ -134,11 +134,13 @@ func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) (*confi
 	return cfg, nil
 }
 
-func tlsConfCreate(c *cli.Context) {
+func tlsConfCreate(c *cli.Context) error {
 	err := generate(c)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
 func generate(c *cli.Context) error {

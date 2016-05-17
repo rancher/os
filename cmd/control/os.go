@@ -117,7 +117,7 @@ func getImages() (*Images, error) {
 	return parseBody(body)
 }
 
-func osMetaDataGet(c *cli.Context) {
+func osMetaDataGet(c *cli.Context) error {
 	images, err := getImages()
 	if err != nil {
 		log.Fatal(err)
@@ -136,6 +136,8 @@ func osMetaDataGet(c *cli.Context) {
 			fmt.Println(image, "local")
 		}
 	}
+
+	return nil
 }
 
 func getLatestImage() (string, error) {
@@ -147,7 +149,7 @@ func getLatestImage() (string, error) {
 	return images.Current, nil
 }
 
-func osUpgrade(c *cli.Context) {
+func osUpgrade(c *cli.Context) error {
 	image := c.String("image")
 
 	if image == "" {
@@ -166,10 +168,13 @@ func osUpgrade(c *cli.Context) {
 	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"), c.Bool("kexec"), c.Bool("upgrade-console"), c.String("append")); err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
-func osVersion(c *cli.Context) {
+func osVersion(c *cli.Context) error {
 	fmt.Println(config.VERSION)
+	return nil
 }
 
 func yes(in *bufio.Reader, question string) bool {
