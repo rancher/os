@@ -8,3 +8,4 @@ cd $(dirname $0)
 #./validate
 ./prepare
 ./package
+./integration-test
