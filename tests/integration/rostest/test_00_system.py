@@ -13,9 +13,7 @@ def qemu(request):
 
 @pytest.mark.timeout(30)
 def test_system_boot(qemu):
-    version = u.rancheros_version('./build.conf')
-    print('parsed version: ' + version)
-    u.flush_out(qemu.stdout, 'RancherOS {v} started'.format(v=version))
+    u.flush_out(qemu.stdout)
 
 
 busybox = {'amd64': 'busybox', 'arm': 'armhf/busybox', 'arm64': 'aarch64/busybox'}
