@@ -1,0 +1,16 @@
+#!/bin/bash
+
+cd $(dirname $0)
+
+echo Targets:
+
+for i in *; do
+    if [ ! -x $i ] || [ ! -f $i ]; then
+        continue
+    fi
+
+    MSG=$(grep '^# help:' $i)
+    if [ -n "$MSG" ]; then
+        echo "   " ${i}: $(echo $MSG | sed 's/# help://')
+    fi
+done

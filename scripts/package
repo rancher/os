@@ -3,6 +3,8 @@ set -e
 
 cd $(dirname $0)
 
-./package-rootfs
+if [ "$ROOTFS" != "0" ]; then
+    ./package-rootfs
+fi
 ./package-initrd
 ./package-iso

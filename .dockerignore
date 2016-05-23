@@ -4,6 +4,7 @@ bin
 state
 build
 images/*/build
+scripts/images/*/dist/
 dist
 tests/integration/.venv*
 tests/integration/.tox

@@ -8,7 +8,7 @@ import time
 import pytest
 
 ros_test = 'ros-test'
-arch = os.environ['ARCH']
+arch = os.environ.get('ARCH', 'amd64')
 
 suffix = ''
 if arch != 'amd64':

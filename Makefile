@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help')
 
 .dapper:
 	@echo Downloading dapper
@@ -28,6 +28,9 @@ run: build/initrd/.id
 clean:
 	@./scripts/clean
 
-.DEFAULT_GOAL := ci
+help:
+	@./scripts/help
+
+.DEFAULT_GOAL := default
 
 .PHONY: $(TARGETS)

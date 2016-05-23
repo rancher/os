@@ -1,4 +1,5 @@
 #!/bin/bash
+# help: Run go unit tests
 set -e
 
 cd $(dirname $0)/..

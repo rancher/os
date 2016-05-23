@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+# help: build and run RancherOS, requires KVM local
 
 cd $(dirname $0)/..
 
@@ -108,7 +109,7 @@ if [[ ! -e ${KERNEL} || ! -e ${INITRD_SRC} ]]; then
     exit 1
 fi
 
-if [ "$REBUILD" == "1" ]; then
+if [ "$REBUILD" == "1" ] || [ ! -e ${INITRD} ]; then
     cp bin/ros ${INITRD_SRC}/usr/bin/ros
     pushd ${INITRD_SRC} >/dev/null
     find . | cpio -H newc -o | gzip -1 > ${INITRD}
@@ -157,6 +158,7 @@ if [ "$QEMU" == "1" ]; then
         CPU="-cpu host"
     fi
     set -x
+    HOME=${HOME:-/}
     exec qemu-system-${QEMUARCH} -serial stdio \
         -rtc base=utc,clock=host \
         ${KVM_ENABLE} \
