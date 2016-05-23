@@ -4,4 +4,10 @@ set -ex
 cd $(dirname $0)/..
 . ./scripts/dapper-common
 
+# Test build process for all architectures
+dapper -d -O make HOST_ARCH=${HOST_ARCH} ARCH=amd64 DEV_BUILD=1
+dapper -d -O make HOST_ARCH=${HOST_ARCH} ARCH=arm   DEV_BUILD=1 rootfs
+dapper -d -O make HOST_ARCH=${HOST_ARCH} ARCH=arm64 DEV_BUILD=1 rootfs
+
+# Run test suite
 dapper -d -O make HOST_ARCH=${HOST_ARCH} ARCH=${ARCH} DEV_BUILD=1 test
