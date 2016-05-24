@@ -216,6 +216,16 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 		}
 	}
 
+	fmt.Printf("Upgrading to %s\n", image)
+	confirmation := "Continue"
+	imageSplit := strings.Split(image, ":")
+	if len(imageSplit) > 1 && imageSplit[1] == config.VERSION+config.SUFFIX {
+		confirmation = fmt.Sprintf("Already at version %s. Continue anyway", imageSplit[1])
+	}
+	if !force && !yes(in, confirmation) {
+		os.Exit(1)
+	}
+
 	container, err := compose.CreateService(nil, "os-upgrade", &composeConfig.ServiceConfigV1{
 		LogDriver:  "json-file",
 		Privileged: true,
@@ -244,19 +254,6 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 	}
 
 	if !stage {
-		imageSplit := strings.Split(image, ":")
-		if len(imageSplit) > 1 && imageSplit[1] == config.VERSION {
-			if !force && !yes(in, fmt.Sprintf("Already at version %s. Continue anyways", imageSplit[1])) {
-				os.Exit(1)
-			}
-		} else {
-			fmt.Printf("Upgrading to %s\n", image)
-
-			if !force && !yes(in, "Continue") {
-				os.Exit(1)
-			}
-		}
-
 		// If there is already an upgrade container, delete it
 		// Up() should to this, but currently does not due to a bug
 		if err := container.Delete(context.Background(), options.Delete{}); err != nil {
