@@ -60,7 +60,7 @@ are required to be mounted within the rootfs that the runtime will setup.
 After a container's filesystems are mounted within the newly created 
 mount namespace `/dev` will need to be populated with a set of device nodes.
 It is expected that a rootfs does not need to have any device nodes specified
-for `/dev` witin the rootfs as the container will setup the correct devices
+for `/dev` within the rootfs as the container will setup the correct devices
 that are required for executing a container's process.
 
 |      Path    | Mode |   Access   |
@@ -97,12 +97,12 @@ that is local to the container's rootfs.
 After the container has `/proc` mounted a few standard symlinks are setup 
 within `/dev/` for the io.
 
-|    Source    | Destination |
-| ------------ | ----------- |
-| /proc/1/fd   | /dev/fd     |
-| /proc/1/fd/0 | /dev/stdin  |
-| /proc/1/fd/1 | /dev/stdout |
-| /proc/1/fd/2 | /dev/stderr |
+|    Source       | Destination |
+| --------------- | ----------- |
+| /proc/self/fd   | /dev/fd     |
+| /proc/self/fd/0 | /dev/stdin  |
+| /proc/self/fd/1 | /dev/stdout |
+| /proc/self/fd/2 | /dev/stderr |
 
 A `pivot_root` is used to change the root for the process, effectively 
 jailing the process inside the rootfs.
@@ -142,6 +142,7 @@ system resources like cpu, memory, and device access.
 | perf_event | 1       |
 | freezer    | 1       |
 | hugetlb    | 1       |
+| pids       | 1       |
 
 
 All cgroup subsystem are joined so that statistics can be collected from
@@ -199,7 +200,7 @@ provide a good default for security and flexibility for the applications.
 | CAP_SYS_BOOT         | 0       |
 | CAP_LEASE            | 0       |
 | CAP_WAKE_ALARM       | 0       |
-| CAP_BLOCK_SUSPE      | 0       |
+| CAP_BLOCK_SUSPEND    | 0       |
 
 
 Additional security layers like [apparmor](https://wiki.ubuntu.com/AppArmor)
