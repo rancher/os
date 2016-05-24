@@ -17,7 +17,7 @@ import (
 type projectFactory struct {
 }
 
-func (p *projectFactory) Create(c *cli.Context) (*project.Project, error) {
+func (p *projectFactory) Create(c *cli.Context) (project.APIProject, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, err
@@ -86,7 +86,7 @@ func serviceSubCommands() []cli.Command {
 	}
 }
 
-func disable(c *cli.Context) {
+func disable(c *cli.Context) error {
 	changed := false
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -107,9 +107,11 @@ func disable(c *cli.Context) {
 			logrus.Fatal(err)
 		}
 	}
+
+	return nil
 }
 
-func del(c *cli.Context) {
+func del(c *cli.Context) error {
 	changed := false
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -129,9 +131,11 @@ func del(c *cli.Context) {
 			logrus.Fatal(err)
 		}
 	}
+
+	return nil
 }
 
-func enable(c *cli.Context) {
+func enable(c *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		logrus.Fatal(err)
@@ -159,9 +163,11 @@ func enable(c *cli.Context) {
 			logrus.Fatal(err)
 		}
 	}
+
+	return nil
 }
 
-func list(c *cli.Context) {
+func list(c *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		logrus.Fatal(err)
@@ -197,4 +203,6 @@ func list(c *cli.Context) {
 			fmt.Printf("disabled %s\n", service)
 		}
 	}
+
+	return nil
 }

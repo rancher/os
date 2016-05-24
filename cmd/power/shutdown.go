@@ -31,7 +31,7 @@ func Main() {
 	app.Run(os.Args)
 }
 
-func shutdown(c *cli.Context) {
+func shutdown(c *cli.Context) error {
 	common("")
 	reboot := c.String("r")
 	poweroff := c.String("h")
@@ -41,4 +41,6 @@ func shutdown(c *cli.Context) {
 	} else if poweroff == "now" {
 		PowerOff()
 	}
+
+	return nil
 }

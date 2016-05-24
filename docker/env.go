@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/libcompose/project"
+	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config"
 )
 
@@ -53,7 +53,7 @@ func (c *ConfigEnvironment) SetConfig(cfg *config.CloudConfig) {
 	c.cfg = cfg
 }
 
-func (c *ConfigEnvironment) Lookup(key, serviceName string, serviceConfig *project.ServiceConfig) []string {
+func (c *ConfigEnvironment) Lookup(key, serviceName string, serviceConfig *composeConfig.ServiceConfig) []string {
 	fullKey := fmt.Sprintf("%s/%s", serviceName, key)
 	return lookupKeys(c.cfg, fullKey, key)
 }

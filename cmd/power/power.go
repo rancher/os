@@ -9,8 +9,12 @@ import (
 	"strings"
 	"syscall"
 
+	"golang.org/x/net/context"
+
 	log "github.com/Sirupsen/logrus"
-	dockerClient "github.com/fsouza/go-dockerclient"
+	"github.com/docker/engine-api/types"
+	"github.com/docker/engine-api/types/container"
+	"github.com/docker/engine-api/types/filters"
 
 	"github.com/rancher/os/docker"
 )
@@ -36,12 +40,9 @@ func runDocker(name string) error {
 		cmd = os.Args
 	}
 
-	exiting, err := client.InspectContainer(name)
-	if exiting != nil {
-		err := client.RemoveContainer(dockerClient.RemoveContainerOptions{
-			ID:    exiting.ID,
-			Force: true,
-		})
+	existing, err := client.ContainerInspect(context.Background(), name)
+	if err == nil && existing.ID != "" {
+		err := client.ContainerRemove(context.Background(), existing.ID, types.ContainerRemoveOptions{})
 
 		if err != nil {
 			return err
@@ -53,48 +54,44 @@ func runDocker(name string) error {
 		return err
 	}
 
-	currentContainer, err := client.InspectContainer(currentContainerId)
+	currentContainer, err := client.ContainerInspect(context.Background(), currentContainerId)
 	if err != nil {
 		return err
 	}
 
-	powerContainer, err := client.CreateContainer(dockerClient.CreateContainerOptions{
-		Name: name,
-		Config: &dockerClient.Config{
+	powerContainer, err := client.ContainerCreate(context.Background(),
+		&container.Config{
 			Image: currentContainer.Config.Image,
 			Cmd:   cmd,
 			Env: []string{
 				"IN_DOCKER=true",
 			},
 		},
-		HostConfig: &dockerClient.HostConfig{
+		&container.HostConfig{
 			PidMode: "host",
 			VolumesFrom: []string{
 				currentContainer.ID,
 			},
 			Privileged: true,
-		},
-	})
+		}, nil, name)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		client.AttachToContainer(dockerClient.AttachToContainerOptions{
-			Container:    powerContainer.ID,
-			OutputStream: os.Stdout,
-			ErrorStream:  os.Stderr,
-			Stderr:       true,
-			Stdout:       true,
+		client.ContainerAttach(context.Background(), powerContainer.ID, types.ContainerAttachOptions{
+			Stream: true,
+			Stderr: true,
+			Stdout: true,
 		})
 	}()
 
-	err = client.StartContainer(powerContainer.ID, powerContainer.HostConfig)
+	err = client.ContainerStart(context.Background(), powerContainer.ID)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.WaitContainer(powerContainer.ID)
+	_, err = client.ContainerWait(context.Background(), powerContainer.ID)
 
 	if err != nil {
 		log.Fatal(err)
@@ -172,14 +169,15 @@ func shutDownContainers() error {
 		return err
 	}
 
-	opts := dockerClient.ListContainersOptions{
-		All: true,
-		Filters: map[string][]string{
-			"status": {"running"},
-		},
+	filter := filters.NewArgs()
+	filter.Add("status", "running")
+
+	opts := types.ContainerListOptions{
+		All:    true,
+		Filter: filter,
 	}
 
-	containers, err := client.ListContainers(opts)
+	containers, err := client.ContainerList(context.Background(), opts)
 	if err != nil {
 		return err
 	}
@@ -197,7 +195,7 @@ func shutDownContainers() error {
 		}
 
 		log.Infof("Stopping %s : %v", container.ID[:12], container.Names)
-		stopErr := client.StopContainer(container.ID, uint(timeout))
+		stopErr := client.ContainerStop(context.Background(), container.ID, timeout)
 		if stopErr != nil {
 			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
 		}
@@ -209,7 +207,7 @@ func shutDownContainers() error {
 		if container.ID == currentContainerId {
 			continue
 		}
-		_, waitErr := client.WaitContainer(container.ID)
+		_, waitErr := client.ContainerWait(context.Background(), container.ID)
 		if waitErr != nil {
 			waitErrorStrings = append(waitErrorStrings, " ["+container.ID+"] "+waitErr.Error())
 		}

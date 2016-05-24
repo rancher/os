@@ -9,13 +9,15 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/net/context"
+
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	dockerClient "github.com/fsouza/go-dockerclient"
-
 	"github.com/codegangsta/cli"
-	"github.com/docker/libcompose/project"
+	dockerClient "github.com/docker/engine-api/client"
+	composeConfig "github.com/docker/libcompose/config"
+	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
@@ -115,7 +117,7 @@ func getImages() (*Images, error) {
 	return parseBody(body)
 }
 
-func osMetaDataGet(c *cli.Context) {
+func osMetaDataGet(c *cli.Context) error {
 	images, err := getImages()
 	if err != nil {
 		log.Fatal(err)
@@ -127,13 +129,15 @@ func osMetaDataGet(c *cli.Context) {
 	}
 
 	for _, image := range images.Available {
-		_, err := client.InspectImage(image)
-		if err == dockerClient.ErrNoSuchImage {
+		_, _, err := client.ImageInspectWithRaw(context.Background(), image, false)
+		if dockerClient.IsErrImageNotFound(err) {
 			fmt.Println(image, "remote")
 		} else {
 			fmt.Println(image, "local")
 		}
 	}
+
+	return nil
 }
 
 func getLatestImage() (string, error) {
@@ -145,7 +149,7 @@ func getLatestImage() (string, error) {
 	return images.Current, nil
 }
 
-func osUpgrade(c *cli.Context) {
+func osUpgrade(c *cli.Context) error {
 	image := c.String("image")
 
 	if image == "" {
@@ -164,10 +168,13 @@ func osUpgrade(c *cli.Context) {
 	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"), c.Bool("kexec"), c.Bool("upgrade-console"), c.String("append")); err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
-func osVersion(c *cli.Context) {
+func osVersion(c *cli.Context) error {
 	fmt.Println(config.VERSION)
+	return nil
 }
 
 func yes(in *bufio.Reader, question string) bool {
@@ -209,16 +216,16 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 		}
 	}
 
-	container, err := compose.CreateService(nil, "os-upgrade", &project.ServiceConfig{
+	container, err := compose.CreateService(nil, "os-upgrade", &composeConfig.ServiceConfigV1{
 		LogDriver:  "json-file",
 		Privileged: true,
 		Net:        "host",
 		Pid:        "host",
 		Image:      image,
-		Labels: project.NewSliceorMap(map[string]string{
+		Labels: map[string]string{
 			config.SCOPE: config.SYSTEM,
-		}),
-		Command: project.NewCommand(command...),
+		},
+		Command: command,
 	})
 	if err != nil {
 		return err
@@ -230,8 +237,8 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 	}
 
 	// Only pull image if not found locally
-	if _, err := client.InspectImage(image); err != nil {
-		if err := container.Pull(); err != nil {
+	if _, _, err := client.ImageInspectWithRaw(context.Background(), image, false); err != nil {
+		if err := container.Pull(context.Background()); err != nil {
 			return err
 		}
 	}
@@ -252,19 +259,19 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 
 		// If there is already an upgrade container, delete it
 		// Up() should to this, but currently does not due to a bug
-		if err := container.Delete(); err != nil {
+		if err := container.Delete(context.Background(), options.Delete{}); err != nil {
 			return err
 		}
 
-		if err := container.Up(); err != nil {
+		if err := container.Up(context.Background(), options.Up{}); err != nil {
 			return err
 		}
 
-		if err := container.Log(); err != nil {
+		if err := container.Log(context.Background(), true); err != nil {
 			return err
 		}
 
-		if err := container.Delete(); err != nil {
+		if err := container.Delete(context.Background(), options.Delete{}); err != nil {
 			return err
 		}
 

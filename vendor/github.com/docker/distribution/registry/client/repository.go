@@ -27,16 +27,50 @@ type Registry interface {
 	Repositories(ctx context.Context, repos []string, last string) (n int, err error)
 }
 
+// checkHTTPRedirect is a callback that can manipulate redirected HTTP
+// requests. It is used to preserve Accept and Range headers.
+func checkHTTPRedirect(req *http.Request, via []*http.Request) error {
+	if len(via) >= 10 {
+		return errors.New("stopped after 10 redirects")
+	}
+
+	if len(via) > 0 {
+		for headerName, headerVals := range via[0].Header {
+			if headerName != "Accept" && headerName != "Range" {
+				continue
+			}
+			for _, val := range headerVals {
+				// Don't add to redirected request if redirected
+				// request already has a header with the same
+				// name and value.
+				hasValue := false
+				for _, existingVal := range req.Header[headerName] {
+					if existingVal == val {
+						hasValue = true
+						break
+					}
+				}
+				if !hasValue {
+					req.Header.Add(headerName, val)
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
 // NewRegistry creates a registry namespace which can be used to get a listing of repositories
 func NewRegistry(ctx context.Context, baseURL string, transport http.RoundTripper) (Registry, error) {
-	ub, err := v2.NewURLBuilderFromString(baseURL)
+	ub, err := v2.NewURLBuilderFromString(baseURL, false)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &http.Client{
-		Transport: transport,
-		Timeout:   1 * time.Minute,
+		Transport:     transport,
+		Timeout:       1 * time.Minute,
+		CheckRedirect: checkHTTPRedirect,
 	}
 
 	return &registry{
@@ -99,13 +133,14 @@ func (r *registry) Repositories(ctx context.Context, entries []string, last stri
 
 // NewRepository creates a new Repository for the given repository name and base URL.
 func NewRepository(ctx context.Context, name reference.Named, baseURL string, transport http.RoundTripper) (distribution.Repository, error) {
-	ub, err := v2.NewURLBuilderFromString(baseURL)
+	ub, err := v2.NewURLBuilderFromString(baseURL, false)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &http.Client{
-		Transport: transport,
+		Transport:     transport,
+		CheckRedirect: checkHTTPRedirect,
 		// TODO(dmcgowan): create cookie jar
 	}
 
@@ -124,7 +159,7 @@ type repository struct {
 	name    reference.Named
 }
 
-func (r *repository) Name() reference.Named {
+func (r *repository) Named() reference.Named {
 	return r.name
 }
 
@@ -157,7 +192,7 @@ func (r *repository) Tags(ctx context.Context) distribution.TagService {
 		client:  r.client,
 		ub:      r.ub,
 		context: r.context,
-		name:    r.Name(),
+		name:    r.Named(),
 	}
 }
 
@@ -257,19 +292,38 @@ func (t *tags) Get(ctx context.Context, tag string) (distribution.Descriptor, er
 	if err != nil {
 		return distribution.Descriptor{}, err
 	}
-	var attempts int
-	resp, err := t.client.Head(u)
 
+	req, err := http.NewRequest("HEAD", u, nil)
+	if err != nil {
+		return distribution.Descriptor{}, err
+	}
+
+	for _, t := range distribution.ManifestMediaTypes() {
+		req.Header.Add("Accept", t)
+	}
+
+	var attempts int
+	resp, err := t.client.Do(req)
 check:
 	if err != nil {
 		return distribution.Descriptor{}, err
 	}
+	defer resp.Body.Close()
 
 	switch {
 	case resp.StatusCode >= 200 && resp.StatusCode < 400:
 		return descriptorFromResponse(resp)
 	case resp.StatusCode == http.StatusMethodNotAllowed:
-		resp, err = t.client.Get(u)
+		req, err = http.NewRequest("GET", u, nil)
+		if err != nil {
+			return distribution.Descriptor{}, err
+		}
+
+		for _, t := range distribution.ManifestMediaTypes() {
+			req.Header.Add("Accept", t)
+		}
+
+		resp, err = t.client.Do(req)
 		attempts++
 		if attempts > 1 {
 			return distribution.Descriptor{}, err
@@ -348,9 +402,9 @@ func (ms *manifests) Get(ctx context.Context, dgst digest.Digest, options ...dis
 	)
 
 	for _, option := range options {
-		if opt, ok := option.(withTagOption); ok {
-			digestOrTag = opt.tag
-			ref, err = reference.WithTag(ms.name, opt.tag)
+		if opt, ok := option.(distribution.WithTagOption); ok {
+			digestOrTag = opt.Tag
+			ref, err = reference.WithTag(ms.name, opt.Tag)
 			if err != nil {
 				return nil, err
 			}
@@ -411,33 +465,20 @@ func (ms *manifests) Get(ctx context.Context, dgst digest.Digest, options ...dis
 	return nil, HandleErrorResponse(resp)
 }
 
-// WithTag allows a tag to be passed into Put which enables the client
-// to build a correct URL.
-func WithTag(tag string) distribution.ManifestServiceOption {
-	return withTagOption{tag}
-}
-
-type withTagOption struct{ tag string }
-
-func (o withTagOption) Apply(m distribution.ManifestService) error {
-	if _, ok := m.(*manifests); ok {
-		return nil
-	}
-	return fmt.Errorf("withTagOption is a client-only option")
-}
-
 // Put puts a manifest.  A tag can be specified using an options parameter which uses some shared state to hold the
-// tag name in order to build the correct upload URL.  This state is written and read under a lock.
+// tag name in order to build the correct upload URL.
 func (ms *manifests) Put(ctx context.Context, m distribution.Manifest, options ...distribution.ManifestServiceOption) (digest.Digest, error) {
 	ref := ms.name
+	var tagged bool
 
 	for _, option := range options {
-		if opt, ok := option.(withTagOption); ok {
+		if opt, ok := option.(distribution.WithTagOption); ok {
 			var err error
-			ref, err = reference.WithTag(ref, opt.tag)
+			ref, err = reference.WithTag(ref, opt.Tag)
 			if err != nil {
 				return "", err
 			}
+			tagged = true
 		} else {
 			err := option.Apply(ms)
 			if err != nil {
@@ -445,13 +486,24 @@ func (ms *manifests) Put(ctx context.Context, m distribution.Manifest, options .
 			}
 		}
 	}
-
-	manifestURL, err := ms.ub.BuildManifestURL(ref)
+	mediaType, p, err := m.Payload()
 	if err != nil {
 		return "", err
 	}
 
-	mediaType, p, err := m.Payload()
+	if !tagged {
+		// generate a canonical digest and Put by digest
+		_, d, err := distribution.UnmarshalManifest(mediaType, p)
+		if err != nil {
+			return "", err
+		}
+		ref, err = reference.WithDigest(ref, d.Digest)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	manifestURL, err := ms.ub.BuildManifestURL(ref)
 	if err != nil {
 		return "", err
 	}

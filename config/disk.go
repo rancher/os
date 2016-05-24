@@ -11,7 +11,7 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
-	"github.com/docker/libcompose/project"
+	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/util"
 )
 
@@ -191,13 +191,13 @@ func amendNils(c *CloudConfig) (*CloudConfig, error) {
 		t.Rancher.Environment = map[string]string{}
 	}
 	if t.Rancher.Autoformat == nil {
-		t.Rancher.Autoformat = map[string]*project.ServiceConfig{}
+		t.Rancher.Autoformat = map[string]*composeConfig.ServiceConfigV1{}
 	}
 	if t.Rancher.BootstrapContainers == nil {
-		t.Rancher.BootstrapContainers = map[string]*project.ServiceConfig{}
+		t.Rancher.BootstrapContainers = map[string]*composeConfig.ServiceConfigV1{}
 	}
 	if t.Rancher.Services == nil {
-		t.Rancher.Services = map[string]*project.ServiceConfig{}
+		t.Rancher.Services = map[string]*composeConfig.ServiceConfigV1{}
 	}
 	if t.Rancher.ServicesInclude == nil {
 		t.Rancher.ServicesInclude = map[string]bool{}
@@ -206,7 +206,7 @@ func amendNils(c *CloudConfig) (*CloudConfig, error) {
 }
 
 func amendContainerNames(c *CloudConfig) (*CloudConfig, error) {
-	for _, scm := range []map[string]*project.ServiceConfig{
+	for _, scm := range []map[string]*composeConfig.ServiceConfigV1{
 		c.Rancher.Autoformat,
 		c.Rancher.BootstrapContainers,
 		c.Rancher.Services,

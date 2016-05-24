@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/docker/libcompose/project"
 	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
@@ -21,7 +20,7 @@ func autoformat(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	AUTOFORMAT := "AUTOFORMAT=" + strings.Join(cfg.Rancher.State.Autoformat, " ")
 	FORMATZERO := "FORMATZERO=" + fmt.Sprint(cfg.Rancher.State.FormatZero)
 	t := *cfg
-	t.Rancher.Autoformat["autoformat"].Environment = project.NewMaporEqualSlice([]string{AUTOFORMAT, FORMATZERO})
+	t.Rancher.Autoformat["autoformat"].Environment = []string{AUTOFORMAT, FORMATZERO}
 	log.Info("Running Autoformat services")
 	_, err := compose.RunServiceSet("autoformat", &t, t.Rancher.Autoformat)
 	return &t, err

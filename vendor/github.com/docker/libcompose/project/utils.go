@@ -3,7 +3,7 @@ package project
 import (
 	"strings"
 
-	"github.com/docker/docker/runconfig"
+	"github.com/docker/engine-api/types/container"
 )
 
 // DefaultDependentServices return the dependent services (as an array of ServiceRelationship)
@@ -15,7 +15,7 @@ func DefaultDependentServices(p *Project, s Service) []ServiceRelationship {
 	}
 
 	result := []ServiceRelationship{}
-	for _, link := range config.Links.Slice() {
+	for _, link := range config.Links {
 		result = append(result, NewServiceRelationship(link, RelTypeLink))
 	}
 
@@ -23,7 +23,11 @@ func DefaultDependentServices(p *Project, s Service) []ServiceRelationship {
 		result = append(result, NewServiceRelationship(volumesFrom, RelTypeVolumesFrom))
 	}
 
-	result = appendNs(p, result, s.Config().Net, RelTypeNetNamespace)
+	for _, dependsOn := range config.DependsOn {
+		result = append(result, NewServiceRelationship(dependsOn, RelTypeDependsOn))
+	}
+
+	result = appendNs(p, result, s.Config().NetworkMode, RelTypeNetNamespace)
 	result = appendNs(p, result, s.Config().Ipc, RelTypeIpcNamespace)
 
 	return result
@@ -51,7 +55,7 @@ func NameAlias(name string) (string, string) {
 // GetContainerFromIpcLikeConfig returns name of the service that shares the IPC
 // namespace with the specified service.
 func GetContainerFromIpcLikeConfig(p *Project, conf string) string {
-	ipc := runconfig.IpcMode(conf)
+	ipc := container.IpcMode(conf)
 	if !ipc.IsContainer() {
 		return ""
 	}
@@ -61,7 +65,7 @@ func GetContainerFromIpcLikeConfig(p *Project, conf string) string {
 		return ""
 	}
 
-	if _, ok := p.Configs[name]; ok {
+	if p.ServiceConfigs.Has(name) {
 		return name
 	}
 	return ""

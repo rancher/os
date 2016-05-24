@@ -106,7 +106,7 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 	return images
 }
 
-func runImages(c *cli.Context) {
+func runImages(c *cli.Context) error {
 	configFile := c.String("input")
 	cfg, err := config.ReadConfig(nil, false, configFile)
 	if err != nil {
@@ -114,12 +114,14 @@ func runImages(c *cli.Context) {
 	}
 	images := imagesFromConfig(cfg)
 	fmt.Println(strings.Join(images, " "))
+	return nil
 }
 
-func runGenerate(c *cli.Context) {
+func runGenerate(c *cli.Context) error {
 	if err := genTpl(os.Stdin, os.Stdout); err != nil {
 		log.Fatalf("Failed to generate config, err: '%s'", err)
 	}
+	return nil
 }
 
 func genTpl(in io.Reader, out io.Writer) error {
@@ -140,7 +142,7 @@ func env2map(env []string) map[string]string {
 	return m
 }
 
-func runImport(c *cli.Context) {
+func runImport(c *cli.Context) error {
 	var input io.ReadCloser
 	var err error
 	input = os.Stdin
@@ -172,13 +174,15 @@ func runImport(c *cli.Context) {
 	if err := cfg.Save(); err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
-func configSet(c *cli.Context) {
+func configSet(c *cli.Context) error {
 	key := c.Args().Get(0)
 	value := c.Args().Get(1)
 	if key == "" {
-		return
+		return nil
 	}
 
 	cfg, err := config.LoadConfig()
@@ -194,12 +198,14 @@ func configSet(c *cli.Context) {
 	if err := cfg.Save(cfgDiff); err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
-func configGet(c *cli.Context) {
+func configGet(c *cli.Context) error {
 	arg := c.Args().Get(0)
 	if arg == "" {
-		return
+		return nil
 	}
 
 	cfg, err := config.LoadConfig()
@@ -229,9 +235,11 @@ func configGet(c *cli.Context) {
 	} else {
 		fmt.Println(val)
 	}
+
+	return nil
 }
 
-func merge(c *cli.Context) {
+func merge(c *cli.Context) error {
 	bytes, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		log.Fatal(err)
@@ -250,9 +258,11 @@ func merge(c *cli.Context) {
 	if err := cfg.Save(); err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
-func export(c *cli.Context) {
+func export(c *cli.Context) error {
 	content, err := config.Dump(c.Bool("private"), c.Bool("full"))
 	if err != nil {
 		log.Fatal(err)
@@ -267,4 +277,6 @@ func export(c *cli.Context) {
 			log.Fatal(err)
 		}
 	}
+
+	return nil
 }

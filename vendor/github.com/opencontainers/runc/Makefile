@@ -1,11 +1,24 @@
+RUNC_IMAGE=runc_dev
 RUNC_TEST_IMAGE=runc_test
 PROJECT=github.com/opencontainers/runc
 TEST_DOCKERFILE=script/test_Dockerfile
 BUILDTAGS=seccomp
+RUNC_BUILD_PATH=/go/src/github.com/opencontainers/runc/runc
+RUNC_INSTANCE=runc_dev
+COMMIT=$(shell git rev-parse HEAD 2> /dev/null || true)
+RUNC_LINK=$(CURDIR)/Godeps/_workspace/src/github.com/opencontainers/runc
 export GOPATH:=$(CURDIR)/Godeps/_workspace:$(GOPATH)
 
+.PHONY=dbuild
+
 all:
-	go build -tags "$(BUILDTAGS)" -o runc .
+ifneq ($(RUNC_LINK), $(wildcard $(RUNC_LINK)))
+	ln -sfn $(CURDIR) $(RUNC_LINK)
+endif
+	go build -ldflags "-X main.gitCommit=${COMMIT}" -tags "$(BUILDTAGS)" -o runc .
+
+static:
+	CGO_ENABLED=1 go build -tags "$(BUILDTAGS) cgo static_build" -ldflags "-w -extldflags -static -X main.gitCommit=${COMMIT}" -o runc .
 
 vet:
 	go get golang.org/x/tools/cmd/vet
@@ -18,17 +31,27 @@ runctestimage:
 	docker build -t $(RUNC_TEST_IMAGE) -f $(TEST_DOCKERFILE) .
 
 test: runctestimage
-	docker run -e TESTFLAGS --privileged --rm -v $(CURDIR):/go/src/$(PROJECT) $(RUNC_TEST_IMAGE) make localtest
+	docker run -e TESTFLAGS -ti --privileged --rm -v $(CURDIR):/go/src/$(PROJECT) $(RUNC_TEST_IMAGE) make localtest
+	tests/sniffTest
 
-localtest:
+localtest: all
 	go test -tags "$(BUILDTAGS)" ${TESTFLAGS} -v ./...
 
+dbuild: runctestimage 
+	docker build -t $(RUNC_IMAGE) .
+	docker create --name=$(RUNC_INSTANCE) $(RUNC_IMAGE)
+	docker cp $(RUNC_INSTANCE):$(RUNC_BUILD_PATH) .
+	docker rm $(RUNC_INSTANCE)
 
 install:
 	cp runc /usr/local/bin/runc
 
+uninstall:
+	rm -f /usr/local/bin/runc
+
 clean:
-	rm runc
+	rm -f runc
+	rm -f $(RUNC_LINK)
 
 validate: vet
 	script/validate-gofmt

@@ -2,7 +2,7 @@
 
 Want to hack on Docker? Awesome!  We have a contributor's guide that explains
 [setting up a Docker development environment and the contribution
-process](https://docs.docker.com/project/who-written-for/). 
+process](https://docs.docker.com/opensource/project/who-written-for/). 
 
 ![Contributors guide](docs/static_files/contributors.png)
 
@@ -41,21 +41,22 @@ and will thank you for it!
 
 Check that [our issue database](https://github.com/docker/docker/issues)
 doesn't already include that problem or suggestion before submitting an issue.
-If you find a match, add a quick "+1" or "I have this problem too." Doing this
-helps prioritize the most common problems and requests. **DO NOT DO THAT** to
-subscribe to the issue unless you have something meaningful to add to the
-conversation. The best way to subscribe the issue is by clicking Subscribe
-button in top right of the page.
+If you find a match, you can use the "subscribe" button to get notified on
+updates. Do *not* leave random "+1" or "I have this too" comments, as they
+only clutter the discussion, and don't help resolving it. However, if you
+have ways to reproduce the issue or have additional information that may help
+resolving the issue, please leave a comment.
 
-When reporting issues, please include your host OS (Ubuntu 12.04, Fedora 19,
-etc). Please include:
+When reporting issues, always include:
 
-* The output of `uname -a`.
 * The output of `docker version`.
 * The output of `docker info`.
 
-Please also include the steps required to reproduce the problem if possible and
+Also include the steps required to reproduce the problem if possible and
 applicable. This information will help us review and fix your issue faster.
+When sending lengthy log-files, consider posting them as a gist (https://gist.github.com).
+Don't forget to remove sensitive data from your logfiles before posting (you can
+replace those parts with "REDACTED").
 
 **Issue Report Template**:
 
@@ -111,7 +112,7 @@ anybody starts working on it.
 We are always thrilled to receive pull requests. We do our best to process them
 quickly. If your pull request is not accepted on the first try,
 don't get discouraged! Our contributor's guide explains [the review process we
-use for simple changes](https://docs.docker.com/project/make-a-contribution/).
+use for simple changes](https://docs.docker.com/opensource/workflow/make-a-contribution/).
 
 ### Design and cleanup proposals
 
@@ -119,8 +120,8 @@ You can propose new designs for existing Docker features. You can also design
 entirely new features. We really appreciate contributors who want to refactor or
 otherwise cleanup our project. For information on making these types of
 contributions, see [the advanced contribution
-section](https://docs.docker.com/project/advanced-contributing/) in the
-contributors guide.
+section](https://docs.docker.com/opensource/workflow/advanced-contributing/) in
+the contributors guide.
 
 We try hard to keep Docker lean and focused. Docker can't do everything for
 everybody. This means that we might decide against incorporating a new feature.
@@ -141,7 +142,7 @@ However, there might be a way to implement that feature *on top of* Docker.
         IRC is a rich chat protocol but it can overwhelm new users. You can search
         <a href="https://botbot.me/freenode/docker/#" target="_blank">our chat archives</a>.
       </p>
-      Read our <a href="https://docs.docker.com/project/get-help/#irc-quickstart" target="_blank">IRC quickstart guide</a> for an easy way to get started.
+      Read our <a href="https://docs.docker.com/opensource/get-help/#irc-quickstart" target="_blank">IRC quickstart guide</a> for an easy way to get started.
     </td>
   </tr>
   <tr>
@@ -153,6 +154,8 @@ However, there might be a way to implement that feature *on top of* Docker.
       The <a href="https://groups.google.com/forum/#!forum/docker-dev" target="_blank">docker-dev</a>
       group is for contributors and other people contributing to the Docker
       project.
+      You can join them without an google account by sending an email to e.g. "docker-user+subscribe@googlegroups.com".
+      After receiving the join-request message, you can simply reply to that to confirm the subscribtion.
     </td>
   </tr>
   <tr>
@@ -186,14 +189,14 @@ Fork the repository and make changes on your fork in a feature branch:
 
 Submit unit tests for your changes. Go has a great test framework built in; use
 it! Take a look at existing tests for inspiration. [Run the full test
-suite](https://docs.docker.com/project/test-and-docs/) on your branch before
+suite](https://docs.docker.com/opensource/project/test-and-docs/) on your branch before
 submitting a pull request.
 
 Update the documentation when creating or modifying features. Test your
 documentation changes for clarity, concision, and correctness, as well as a
 clean documentation build. See our contributors guide for [our style
-guide](https://docs.docker.com/project/doc-style) and instructions on [building
-the documentation](https://docs.docker.com/project/test-and-docs/#build-and-test-the-documentation).
+guide](https://docs.docker.com/opensource/doc-style) and instructions on [building
+the documentation](https://docs.docker.com/opensource/project/test-and-docs/#build-and-test-the-documentation).
 
 Write clean code. Universally formatted code promotes ease of writing, reading,
 and maintenance. Always run `gofmt -s -w file.go` on each changed file before
@@ -227,7 +230,7 @@ high majority of submissions should have a single commit, so if in doubt: squash
 down to one.
 
 After every commit, [make sure the test suite passes]
-(https://docs.docker.com/project/test-and-docs/). Include documentation
+(https://docs.docker.com/opensource/project/test-and-docs/). Include documentation
 changes in the same pull request so that a revert would remove all traces of
 the feature or fix.
 
@@ -311,25 +314,14 @@ format right away, but please do adjust your processes for future contributions.
 
 ### How can I become a maintainer?
 
-* Step 1: Learn the component inside out
-* Step 2: Make yourself useful by contributing code, bug fixes, support etc.
-* Step 3: Volunteer on the IRC channel (#docker at Freenode)
-* Step 4: Propose yourself at a scheduled docker meeting in #docker-dev
+The procedures for adding new maintainers are explained in the 
+global [MAINTAINERS](https://github.com/docker/opensource/blob/master/MAINTAINERS)
+file in the [https://github.com/docker/opensource/](https://github.com/docker/opensource/)
+repository.
 
 Don't forget: being a maintainer is a time investment. Make sure you
 will have time to make yourself available. You don't have to be a
 maintainer to make a difference on the project!
-
-### IRC meetings
-
-There are two monthly meetings taking place on #docker-dev IRC to accommodate all
-timezones. Anybody can propose a topic for discussion prior to the meeting.
-
-If you feel the conversation is going off-topic, feel free to point it out.
-
-For the exact dates and times, have a look at [the irc-minutes
-repo](https://github.com/docker/irc-minutes). The minutes also contain all the
-notes from previous meetings.
 
 ## Docker community guidelines
 
@@ -354,6 +346,12 @@ guidelines for the community as a whole:
   avoid off-topic discussions. Remember when you update an issue or respond
   to an email you are potentially sending to a large number of people. Please
   consider this before you update. Also remember that nobody likes spam.
+
+* Don't send email to the maintainers: There's no need to send email to the
+  maintainers to ask them to investigate an issue or to take a look at a
+  pull request. Instead of sending an email, GitHub mentions should be
+  used to ping maintainers to review a pull request, a proposal or an
+  issue.
 
 ### Guideline violations — 3 strikes method
 

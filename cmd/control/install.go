@@ -48,7 +48,7 @@ var installCommand = cli.Command{
 	},
 }
 
-func installAction(c *cli.Context) {
+func installAction(c *cli.Context) error {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
@@ -89,6 +89,8 @@ func installAction(c *cli.Context) {
 	if err := runInstall(image, installType, cloudConfig, device, force, reboot); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 	}
+
+	return nil
 }
 
 func runInstall(image, installType, cloudConfig, device string, force, reboot bool) error {

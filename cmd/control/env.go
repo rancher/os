@@ -11,7 +11,7 @@ import (
 	"github.com/rancher/os/util"
 )
 
-func envAction(c *cli.Context) {
+func envAction(c *cli.Context) error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		log.Fatal(err)
@@ -19,7 +19,7 @@ func envAction(c *cli.Context) {
 
 	args := c.Args()
 	if len(args) == 0 {
-		return
+		return nil
 	}
 	osEnv := os.Environ()
 
@@ -39,4 +39,6 @@ func envAction(c *cli.Context) {
 	if err := syscall.Exec(args[0], args, util.Map2KVPairs(envMap)); err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
