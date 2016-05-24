@@ -336,6 +336,7 @@ rancher:
       volumes:
       - /home:/home
       - /opt:/opt
+      - /usr/local:/usr/local
     docker:
       image: {{.OS_REPO}}/os-docker:{{.VERSION}}{{.SUFFIX}}
       labels:
