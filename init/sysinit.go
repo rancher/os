@@ -5,8 +5,10 @@ import (
 	"path"
 	"syscall"
 
+	"golang.org/x/net/context"
+
 	log "github.com/Sirupsen/logrus"
-	dockerClient "github.com/fsouza/go-dockerclient"
+	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
@@ -76,10 +78,7 @@ func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		defer input.Close()
 
 		log.Infof("Loading images from %s", inputFileName)
-		err = client.LoadImage(dockerClient.LoadImageOptions{
-			InputStream: input,
-		})
-		if err != nil {
+		if _, err = client.ImageLoad(context.Background(), input, true); err != nil {
 			return cfg, err
 		}
 
@@ -102,7 +101,11 @@ func SysInit() error {
 			if err != nil {
 				return cfg, err
 			}
-			return cfg, p.Up()
+			return cfg, p.Up(context.Background(), options.Up{
+				Create: options.Create{
+					NoRecreate: true,
+				},
+			})
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			syscall.Sync()

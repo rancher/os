@@ -17,7 +17,7 @@ import (
 type projectFactory struct {
 }
 
-func (p *projectFactory) Create(c *cli.Context) (*project.Project, error) {
+func (p *projectFactory) Create(c *cli.Context) (project.APIProject, error) {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return nil, err

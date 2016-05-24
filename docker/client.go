@@ -1,26 +1,27 @@
 package docker
 
 import (
-	dockerClient "github.com/fsouza/go-dockerclient"
+	dockerClient "github.com/docker/engine-api/client"
 	"github.com/rancher/os/config"
+	"golang.org/x/net/context"
 )
 
-func NewSystemClient() (*dockerClient.Client, error) {
+func NewSystemClient() (dockerClient.APIClient, error) {
 	return NewClient(config.DOCKER_SYSTEM_HOST)
 }
 
-func NewDefaultClient() (*dockerClient.Client, error) {
+func NewDefaultClient() (dockerClient.APIClient, error) {
 	return NewClient(config.DOCKER_HOST)
 }
 
-func NewClient(endpoint string) (*dockerClient.Client, error) {
-	client, err := dockerClient.NewClient(endpoint)
+func NewClient(endpoint string) (dockerClient.APIClient, error) {
+	client, err := dockerClient.NewClient(endpoint, "", nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	err = ClientOK(endpoint, func() bool {
-		_, err := client.Info()
+		_, err := client.Info(context.Background())
 		return err == nil
 	})
 

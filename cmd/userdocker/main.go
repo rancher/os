@@ -11,8 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/net/context"
+
 	log "github.com/Sirupsen/logrus"
-	"github.com/docker/libcompose/docker"
+	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
@@ -166,7 +168,7 @@ func getPid(service string, project *project.Project) (int, error) {
 		return 0, err
 	}
 
-	containers, err := s.Containers()
+	containers, err := s.Containers(context.Background())
 	if err != nil {
 		return 0, err
 	}
@@ -175,7 +177,7 @@ func getPid(service string, project *project.Project) (int, error) {
 		return 0, nil
 	}
 
-	client, err := docker.CreateClient(docker.ClientOpts{
+	client, err := composeClient.Create(composeClient.Options{
 		Host: config.DOCKER_SYSTEM_HOST,
 	})
 	if err != nil {
@@ -187,8 +189,8 @@ func getPid(service string, project *project.Project) (int, error) {
 		return 0, err
 	}
 
-	info, err := client.InspectContainer(id)
-	if err != nil || info == nil {
+	info, err := client.ContainerInspect(context.Background(), id)
+	if err != nil || info.ID == "" {
 		return 0, err
 	}
 

@@ -1,10 +1,11 @@
 package config
 
 import (
-	"github.com/coreos/coreos-cloudinit/config"
-	"github.com/docker/libcompose/project"
-	"github.com/rancher/netconf"
 	"runtime"
+
+	"github.com/coreos/coreos-cloudinit/config"
+	composeConfig "github.com/docker/libcompose/config"
+	"github.com/rancher/netconf"
 )
 
 const (
@@ -77,27 +78,27 @@ type CloudConfig struct {
 }
 
 type RancherConfig struct {
-	Environment         map[string]string                 `yaml:"environment,omitempty"`
-	Services            map[string]*project.ServiceConfig `yaml:"services,omitempty"`
-	BootstrapContainers map[string]*project.ServiceConfig `yaml:"bootstrap,omitempty"`
-	Autoformat          map[string]*project.ServiceConfig `yaml:"autoformat,omitempty"`
-	BootstrapDocker     DockerConfig                      `yaml:"bootstrap_docker,omitempty"`
-	CloudInit           CloudInit                         `yaml:"cloud_init,omitempty"`
-	Debug               bool                              `yaml:"debug,omitempty"`
-	RmUsr               bool                              `yaml:"rm_usr,omitempty"`
-	Log                 bool                              `yaml:"log,omitempty"`
-	ForceConsoleRebuild bool                              `yaml:"force_console_rebuild,omitempty"`
-	Disable             []string                          `yaml:"disable,omitempty"`
-	ServicesInclude     map[string]bool                   `yaml:"services_include,omitempty"`
-	Modules             []string                          `yaml:"modules,omitempty"`
-	Network             netconf.NetworkConfig             `yaml:"network,omitempty"`
-	DefaultNetwork      netconf.NetworkConfig             `yaml:"default_network,omitempty"`
-	Repositories        Repositories                      `yaml:"repositories,omitempty"`
-	Ssh                 SshConfig                         `yaml:"ssh,omitempty"`
-	State               StateConfig                       `yaml:"state,omitempty"`
-	SystemDocker        DockerConfig                      `yaml:"system_docker,omitempty"`
-	Upgrade             UpgradeConfig                     `yaml:"upgrade,omitempty"`
-	Docker              DockerConfig                      `yaml:"docker,omitempty"`
+	Environment         map[string]string                         `yaml:"environment,omitempty"`
+	Services            map[string]*composeConfig.ServiceConfigV1 `yaml:"services,omitempty"`
+	BootstrapContainers map[string]*composeConfig.ServiceConfigV1 `yaml:"bootstrap,omitempty"`
+	Autoformat          map[string]*composeConfig.ServiceConfigV1 `yaml:"autoformat,omitempty"`
+	BootstrapDocker     DockerConfig                              `yaml:"bootstrap_docker,omitempty"`
+	CloudInit           CloudInit                                 `yaml:"cloud_init,omitempty"`
+	Debug               bool                                      `yaml:"debug,omitempty"`
+	RmUsr               bool                                      `yaml:"rm_usr,omitempty"`
+	Log                 bool                                      `yaml:"log,omitempty"`
+	ForceConsoleRebuild bool                                      `yaml:"force_console_rebuild,omitempty"`
+	Disable             []string                                  `yaml:"disable,omitempty"`
+	ServicesInclude     map[string]bool                           `yaml:"services_include,omitempty"`
+	Modules             []string                                  `yaml:"modules,omitempty"`
+	Network             netconf.NetworkConfig                     `yaml:"network,omitempty"`
+	DefaultNetwork      netconf.NetworkConfig                     `yaml:"default_network,omitempty"`
+	Repositories        Repositories                              `yaml:"repositories,omitempty"`
+	Ssh                 SshConfig                                 `yaml:"ssh,omitempty"`
+	State               StateConfig                               `yaml:"state,omitempty"`
+	SystemDocker        DockerConfig                              `yaml:"system_docker,omitempty"`
+	Upgrade             UpgradeConfig                             `yaml:"upgrade,omitempty"`
+	Docker              DockerConfig                              `yaml:"docker,omitempty"`
 }
 
 type UpgradeConfig struct {

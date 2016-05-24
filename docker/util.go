@@ -1,11 +1,11 @@
 package docker
 
 import (
-	"github.com/docker/libcompose/project"
+	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config"
 )
 
-func IsSystemContainer(serviceConfig *project.ServiceConfig) bool {
-	return serviceConfig.Labels.MapParts()[config.SCOPE] == config.SYSTEM
+func IsSystemContainer(serviceConfig *composeConfig.ServiceConfig) bool {
+	return serviceConfig.Labels[config.SCOPE] == config.SYSTEM
 
 }
