@@ -17,6 +17,7 @@ import (
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
 	"github.com/rancher/os/util"
+	"github.com/rancher/os/util/network"
 )
 
 func CreateService(cfg *config.CloudConfig, name string, serviceConfig *composeConfig.ServiceConfigV1) (project.Service, error) {
@@ -209,9 +210,9 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 				continue
 			}
 
-			bytes, err := LoadServiceResource(service, useNetwork, cfg)
+			bytes, err := network.LoadServiceResource(service, useNetwork, cfg)
 			if err != nil {
-				if err == util.ErrNoNetwork {
+				if err == network.ErrNoNetwork {
 					log.Debugf("Can not load %s, networking not enabled", service)
 				} else {
 					log.Errorf("Failed to load %s : %v", service, err)
@@ -265,7 +266,7 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 	}
 
 	for _, service := range services {
-		bytes, err := LoadServiceResource(service, true, cfg)
+		bytes, err := network.LoadServiceResource(service, true, cfg)
 		if err != nil {
 			return fmt.Errorf("Failed to load %s : %v", service, err)
 		}
@@ -277,12 +278,12 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 
 		bytes, err = yaml.Marshal(config.StringifyValues(m))
 		if err != nil {
-			fmt.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
+			return fmt.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
 		}
 
 		err = p.Load(bytes)
 		if err != nil {
-			fmt.Errorf("Failed to load %s : %v", service, err)
+			return fmt.Errorf("Failed to load %s : %v", service, err)
 		}
 	}
 
@@ -296,8 +297,4 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 	}
 
 	return p.Pull(context.Background())
-}
-
-func LoadServiceResource(name string, network bool, cfg *config.CloudConfig) ([]byte, error) {
-	return util.LoadResource(name, network, cfg.Rancher.Repositories.ToArray())
 }
