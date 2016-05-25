@@ -7,10 +7,8 @@ cd $(dirname $0)/..
 ARTIFACTS=$(pwd)/dist/artifacts
 CD=${BUILD}/cd
 
-# for traditional boot
+## TRADITIONAL MBR BOOT
 mkdir -p ${CD}/boot/isolinux
-# for EFI boot
-mkdir -p ${CD}/EFI/BOOT
 
 cp ${ARTIFACTS}/initrd                        ${CD}/boot
 cp ${ARTIFACTS}/vmlinuz                       ${CD}/boot
@@ -18,16 +16,39 @@ cp scripts/isolinux.cfg                       ${CD}/boot/isolinux
 cp /usr/lib/ISOLINUX/isolinux.bin             ${CD}/boot/isolinux
 cp /usr/lib/syslinux/modules/bios/ldlinux.c32 ${CD}/boot/isolinux
 
-# for rEFInd EFI boot
-cp scripts/refind.conf                        ${CD}/EFI/BOOT
-cp ${DOWNLOADS}/refind_x64.efi                ${CD}/EFI/BOOT/BOOTX64.EFI
+
+## EFI BOOT
+mkdir -p ${CD}/EFI/BOOT
+mkdir -p ${CD}/boot/grub
+cp scripts/grub.cfg ${CD}/boot/grub
+cp -r /usr/lib/grub/x86_64-efi/ ${CD}/boot/grub
+
+(cd ${CD} && grub-mkimage  -O x86_64-efi -o EFI/BOOT/BOOTX64.EFI --config=boot/grub/grub.cfg --compression=auto --prefix='()/boot/grub' disk part_msdos fat iso9660 )
+
+# make the EFI FAT filesystem to boot
+EFIIMG=boot/efiboot.img
+CDEFI=${CD}/${EFIIMG}
+rm -f ${CDEFI}
+dd if=/dev/zero of=${CDEFI} bs=4k count=1000
+mkfs.vfat ${CDEFI}
+mkdir -p tmp/
+mount -o loop ${CDEFI} tmp/
+cp -r ${CD}/EFI tmp/
+umount tmp/
+rmdir tmp/
+
+rm -rf ${CD}/EFI
+
+
+## BUILD THE ISO IMAGE
 
 cd ${CD} && xorriso \
     -as mkisofs \
     -l -J -R -V "${DISTRIB_ID}" \
     -no-emul-boot -boot-load-size 4 -boot-info-table \
     -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
-    -eltorito-alt-boot -e EFI/BOOT/BOOTX64.EFI -no-emul-boot \
     -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+    -eltorito-alt-boot \
+    -e ${EFIIMG} -no-emul-boot \
     -isohybrid-gpt-basdat \
     -o ${ARTIFACTS}/$(echo ${DISTRIB_ID} | tr '[:upper:]' '[:lower:]').iso ${CD}

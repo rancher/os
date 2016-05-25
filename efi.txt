@@ -1,24 +1,20 @@
 To install with EFI:
 
-A: get the refind binaries
+A: install grub-efi
 
-# If you want to do it directly
-mkdir -p refind
-REFIND_VERSION=0.10.3
-wget http://downloads.sourceforge.net/project/refind/${REFIND_VERSION}/refind-bin-${REFIND_VERSION}.zip refind/refind.zip
-unzip -j refind/refind.zip refind-bin-${REFIND_VERSION}/refind/refind_x64.efi -d refind
-
-# if you want to install directly via apt:
-apt-add-repository ppa:rodsmith/refind
-apt-get update
-apt-get install refind
-
+apt install grub-efi
 
 B: Add to the installation process in scripts/package-iso
 
-2. Make the default boot directory: mkdir -p ${CD}/EFI/BOOT
-3. Copy the refind file over: cp refind/refind_x64.efi ${CD}/EFI/BOOT/BOOTX64.EFI
-4. Copy the base refind.conf: cp scripts/refind.conf ${CD}/EFI/BOOT/refind.conf
+1. Make directories ${CD}/boot/grub and ${CD}/EFI/BOOT
+2. Install the various grub modules from /usr/lib/grub/x86_64-efi/ to ${CD}/boot/grub/x86_64-efi/
+3. Copy scripts/grub.cfg to ${CD}/boot/grub/grub.cfg
+4. Run grub-mkimage to create the grub image: 
+
+(cd ${CD} && grub-mkimage  -O x86_64-efi -o EFI/BOOT/BOOTX64.EFI --config=boot/grub/grub.cfg --compression=auto --prefix='()/boot/grub' disk part_msdos fat iso9660 )
+
+NOTE: do *NOT* try to install the linux module directly in the grub image; it causes command-line options not to be passed and is a known bug.
+
 5. Add the following xorriso options
 
     -eltorito-alt-boot -e EFI/BOOT/BOOTX64.EFI -no-emul-boot \
@@ -26,3 +22,7 @@ B: Add to the installation process in scripts/package-iso
 
 This installation includes *no* additional icons or drivers. It is just meant to get RancherOS booted on an EFI system.
 If you want to add support for graphical installations, additional filesystems, and everything else.... you will need a lot more 
+
+
+
+
