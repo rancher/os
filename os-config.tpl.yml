@@ -149,13 +149,13 @@ rancher:
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/bin/ros:/usr/bin/cloud-init:ro
       - /usr/bin/ros:/usr/sbin/netconf:ro
-      - /usr/bin/ros:/usr/sbin/wait-for-network:ro
+      - /usr/bin/ros:/usr/sbin/dhcp:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
     console:
       image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: wait-for-network
+        io.rancher.os.after: dhcp
         io.docker.compose.rebuild: always
       net: host
       uts: host
@@ -198,8 +198,6 @@ rancher:
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init
-      environment:
-      - DAEMON=true
       net: host
       uts: host
       pid: host
@@ -207,25 +205,28 @@ rancher:
       volumes_from:
       - command-volumes
       - system-volumes
-    wait-for-network-pre:
-      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
-      command: wait-for-network
+    dhcp-pre:
+      image: {{.OS_REPO}}/os-dhcp:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: network-pre
+      net: host
+      uts: host
       pid: host
       privileged: true
       volumes_from:
       - command-volumes
       - system-volumes
-    wait-for-network:
-      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
-      command: wait-for-network
+    dhcp:
+      image: {{.OS_REPO}}/os-dhcp:{{.VERSION}}{{.SUFFIX}}
+      environment:
+      - DAEMON=true
       labels:
-        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: network
+      net: host
+      uts: host
       pid: host
       privileged: true
       volumes_from:
@@ -235,7 +236,7 @@ rancher:
       image: {{.OS_REPO}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: wait-for-network-pre
+        io.rancher.os.after: dhcp-pre
       net: host
       uts: host
       privileged: true
