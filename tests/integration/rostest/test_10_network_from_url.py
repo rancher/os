@@ -28,9 +28,6 @@ set -x -e
 ip link show dev br0
 ip link show dev br0.100 | grep br0.100@br0
 ip link show dev eth1.100 | grep 'master br0'
-ip link show dev eth6 | grep 'master bond0'
-ip link show dev eth7 | grep 'master bond0'
-[ "$(</sys/class/net/bond0/bonding/mode)" = "active-backup 1" ]
 
 SCRIPT
 sudo bash test-merge

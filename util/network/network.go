@@ -4,8 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"strings"
+	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
@@ -44,41 +46,32 @@ func GetServices(urls []string) ([]string, error) {
 	return result, nil
 }
 
-func retryHttp(f func() (*http.Response, error), times int) (resp *http.Response, err error) {
-	for i := 0; i < times; i++ {
-		if resp, err = f(); err == nil {
-			return
+func loadFromNetwork(location string) ([]byte, error) {
+	var err error
+	for i := 0; i < 300; i++ {
+		net.UpdateDnsConf()
+
+		var resp *http.Response
+		resp, err = http.Get(location)
+		if err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
+			}
+
+			bytes, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+
+			cacheAdd(location, bytes)
+			return bytes, nil
 		}
-		log.Warnf("Error making HTTP request: %s. Retrying", err)
-	}
-	return
-}
 
-func loadFromNetwork(location string, network bool) ([]byte, error) {
-	bytes := cacheLookup(location)
-	if bytes != nil {
-		return bytes, nil
+		time.Sleep(100 * time.Millisecond)
 	}
 
-	resp, err := retryHttp(func() (*http.Response, error) {
-		return http.Get(location)
-	}, 8)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
-	}
-	defer resp.Body.Close()
-
-	bytes, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	cacheAdd(location, bytes)
-
-	return bytes, nil
+	return nil, err
 }
 
 func LoadResource(location string, network bool) ([]byte, error) {
@@ -86,7 +79,7 @@ func LoadResource(location string, network bool) ([]byte, error) {
 		if !network {
 			return nil, ErrNoNetwork
 		}
-		return loadFromNetwork(location, network)
+		return loadFromNetwork(location)
 	} else if strings.HasPrefix(location, "/") {
 		return ioutil.ReadFile(location)
 	}
@@ -111,12 +104,12 @@ func LoadServiceResource(name string, useNetwork bool, cfg *config.CloudConfig) 
 	urls := cfg.Rancher.Repositories.ToArray()
 	for _, url := range urls {
 		serviceUrl := serviceUrl(url, name)
-		bytes, err := LoadResource(serviceUrl, useNetwork)
+		bytes, err = LoadResource(serviceUrl, useNetwork)
 		if err == nil {
 			log.Debugf("Loaded %s from %s", name, serviceUrl)
 			return bytes, nil
 		}
 	}
 
-	return nil, ErrNotFound
+	return nil, err
 }

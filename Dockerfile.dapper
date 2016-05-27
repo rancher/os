@@ -101,9 +101,11 @@ RUN if [ -n "${!VBOX_MODULES_URL}" ]; then \
     ;fi
 
 # Install Go
+COPY assets/go-dnsclient.patch ${DAPPER_SOURCE}
 ENV GO_VERSION 1.6.2
 RUN ln -sf go-6 /usr/bin/go && \
     curl -sfL https://storage.googleapis.com/golang/go${GO_VERSION}.src.tar.gz | tar -xzf - -C /usr/local && \
+    patch /usr/local/go/src/net/dnsclient_unix.go ${DAPPER_SOURCE}/go-dnsclient.patch && \
     cd /usr/local/go/src && \
     GOROOT_BOOTSTRAP=/usr GOARCH=${HOST_ARCH} GOHOSTARCH=${HOST_ARCH} ./make.bash && \
     rm /usr/bin/go

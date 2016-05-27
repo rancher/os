@@ -16,7 +16,6 @@ import (
 	"github.com/rancher/os/cmd/systemdocker"
 	"github.com/rancher/os/cmd/userdocker"
 	"github.com/rancher/os/cmd/wait"
-	"github.com/rancher/os/cmd/waitfornetwork"
 	"github.com/rancher/os/config"
 	osInit "github.com/rancher/os/init"
 )
@@ -53,7 +52,6 @@ func main() {
 	registerCmd("/usr/bin/ros", control.Main)
 	registerCmd("/usr/bin/cloud-init", cloudinit.Main)
 	registerCmd("/usr/sbin/netconf", network.Main)
-	registerCmd("/usr/sbin/wait-for-network", waitfornetwork.Main)
 	registerCmd("/usr/sbin/wait-for-docker", wait.Main)
 
 	if !reexec.Init() {
