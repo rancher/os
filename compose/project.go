@@ -36,7 +36,7 @@ func CreateService(cfg *config.CloudConfig, name string, serviceConfig *composeC
 }
 
 func CreateServiceSet(name string, cfg *config.CloudConfig, configs map[string]*composeConfig.ServiceConfigV1) (*project.Project, error) {
-	p, err := newProject(name, cfg, nil)
+	p, err := newProject(name, cfg, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +58,7 @@ func GetProject(cfg *config.CloudConfig, networkingAvailable bool) (*project.Pro
 	return newCoreServiceProject(cfg, networkingAvailable)
 }
 
-func newProject(name string, cfg *config.CloudConfig, environmentLookup composeConfig.EnvironmentLookup) (*project.Project, error) {
+func newProject(name string, cfg *config.CloudConfig, environmentLookup composeConfig.EnvironmentLookup, authLookup *rosDocker.ConfigAuthLookup) (*project.Project, error) {
 	clientFactory, err := rosDocker.NewClientFactory(composeClient.Options{})
 	if err != nil {
 		return nil, err
@@ -67,12 +67,16 @@ func newProject(name string, cfg *config.CloudConfig, environmentLookup composeC
 	if environmentLookup == nil {
 		environmentLookup = rosDocker.NewConfigEnvironment(cfg)
 	}
+	if authLookup == nil {
+		authLookup = rosDocker.NewConfigAuthLookup(cfg)
+	}
 
 	serviceFactory := &rosDocker.ServiceFactory{
 		Deps: map[string][]string{},
 	}
 	context := &docker.Context{
 		ClientFactory: clientFactory,
+		AuthLookup:    authLookup,
 		Context: project.Context{
 			ProjectName:       name,
 			EnvironmentLookup: environmentLookup,
@@ -81,6 +85,8 @@ func newProject(name string, cfg *config.CloudConfig, environmentLookup composeC
 		},
 	}
 	serviceFactory.Context = context
+
+	authLookup.SetContext(context)
 
 	return docker.NewProject(context, &composeConfig.ParseOptions{
 		Interpolate: true,
@@ -181,8 +187,9 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 	enabled := map[interface{}]interface{}{}
 
 	environmentLookup := rosDocker.NewConfigEnvironment(cfg)
+	authLookup := rosDocker.NewConfigAuthLookup(cfg)
 
-	p, err := newProject("os", cfg, environmentLookup)
+	p, err := newProject("os", cfg, environmentLookup, authLookup)
 	if err != nil {
 		return nil, err
 	}
@@ -194,6 +201,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 		cfg = config.LoadConfig()
 
 		environmentLookup.SetConfig(cfg)
+		authLookup.SetConfig(cfg)
 
 		enabled = addServices(p, enabled, cfg.Rancher.Services)
 
@@ -252,7 +260,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 }
 
 func StageServices(cfg *config.CloudConfig, services ...string) error {
-	p, err := newProject("stage-services", cfg, nil)
+	p, err := newProject("stage-services", cfg, nil, nil)
 	if err != nil {
 		return err
 	}
