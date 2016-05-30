@@ -2,11 +2,12 @@ package hostname
 
 import (
 	"bufio"
-	"github.com/rancher/os/config"
-	"io/ioutil"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 func SetHostnameFromCloudConfig(cc *config.CloudConfig) error {
@@ -54,7 +55,7 @@ func SyncHostname() error {
 		}
 		hostsContent += line + "\n"
 	}
-	if err := ioutil.WriteFile("/etc/hosts", []byte(hostsContent), 0600); err != nil {
+	if err := util.WriteFile("/etc/hosts", []byte(hostsContent), 0600); err != nil {
 		return err
 	}
 

@@ -14,6 +14,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 func configSubcommands() []cli.Command {
@@ -262,7 +263,7 @@ func export(c *cli.Context) {
 	if output == "" {
 		fmt.Println(content)
 	} else {
-		err := ioutil.WriteFile(output, []byte(content), 0400)
+		err := util.WriteFile(output, []byte(content), 0400)
 		if err != nil {
 			log.Fatal(err)
 		}
