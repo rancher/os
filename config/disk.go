@@ -224,7 +224,7 @@ func WriteToFile(data interface{}, filename string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, content, 400)
+	return util.WriteFile(filename, content, 400)
 }
 
 func saveToDisk(data map[interface{}]interface{}) error {

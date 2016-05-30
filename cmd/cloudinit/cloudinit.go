@@ -18,7 +18,6 @@ package cloudinit
 import (
 	"errors"
 	"flag"
-	"io/ioutil"
 	"os"
 	"strings"
 	"sync"
@@ -40,6 +39,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/rancher/netconf"
 	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 const (
@@ -71,13 +71,13 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 
 	if len(scriptBytes) > 0 {
 		log.Infof("Writing to %s", rancherConfig.CloudConfigScriptFile)
-		if err := ioutil.WriteFile(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
+		if err := util.WriteFile(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
 			log.Errorf("Error while writing file %s: %v", rancherConfig.CloudConfigScriptFile, err)
 			return err
 		}
 	}
 
-	if err := ioutil.WriteFile(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
+	if err := util.WriteFile(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
 		return err
 	}
 	log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
@@ -87,7 +87,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		return err
 	}
 
-	if err = ioutil.WriteFile(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
+	if err = util.WriteFile(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
 		return err
 	}
 	log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
