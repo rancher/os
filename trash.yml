@@ -46,9 +46,6 @@ import:
 - package: github.com/docker/libnetwork
   version: v0.5.6
 
-- package: github.com/docker/libtrust
-  version: 9cbd2a1374f46905c68a4eb3694a130610adc62a
-
 - package: github.com/docker/machine
   version: 4a8e93ac9bc2ced1c3bc4a43c03fdaa1c2749205
 
