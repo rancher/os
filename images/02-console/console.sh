@@ -5,15 +5,19 @@ setup_ssh()
 {
     for i in rsa dsa ecdsa ed25519; do
         local output=/etc/ssh/ssh_host_${i}_key
-        if [ ! -e $output ]; then
+        if [ ! -s $output ]; then
             local saved="$(ros config get rancher.ssh.keys.${i})"
             local pub="$(ros config get rancher.ssh.keys.${i}-pub)"
 
             if [[ -n "$saved" && -n "$pub" ]]; then
                 (
-                    umask 477
-                    echo "$saved" > ${output}
-                    echo "$pub" > ${output}.pub
+                    umask 077
+                    temp_file=$(mktemp)
+                    echo "$saved" > ${temp_file}
+                    mv ${temp_file} ${output}
+                    temp_file=$(mktemp)
+                    echo "$pub" > ${temp_file}
+                    mv ${temp_file} ${output}.pub
                 )
             else
                 ssh-keygen -f $output -N '' -t $i
@@ -76,7 +80,7 @@ cat > /etc/respawn.conf << EOF
 /usr/sbin/sshd -D
 EOF
 
-for i in ttyS{0..4} tty0 ttyAMA0; do
+for i in ttyS{0..4} ttyAMA0; do
     if grep -q 'console='$i /proc/cmdline; then
         echo '/sbin/getty 115200' $i >> /etc/respawn.conf
     fi
