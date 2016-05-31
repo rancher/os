@@ -2,4 +2,4 @@
 rancher:
   cloud_init:
     datasources:
-    - url:https://s3-us-west-2.amazonaws.com/rancher-os-test/cloud-config.yml
+    - url:https://gist.githubusercontent.com/joshwget/0bdc616cd26162ad87c535644c8b1ef6/raw/8cce947c08cf006e932b71d92ddbb96bae8e3325/gistfile1.txt

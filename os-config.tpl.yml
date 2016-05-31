@@ -149,13 +149,12 @@ rancher:
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/bin/ros:/usr/bin/cloud-init:ro
       - /usr/bin/ros:/usr/sbin/netconf:ro
-      - /usr/bin/ros:/usr/sbin/wait-for-network:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
     console:
       image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: wait-for-network
+        io.rancher.os.after: network
         io.docker.compose.rebuild: always
       net: host
       uts: host
@@ -181,9 +180,9 @@ rancher:
       - /var/lib/system-docker:/var/lib/system-docker
       - /var/lib/rkt:/var/lib/rkt
     network-pre:
-      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: netconf
       labels:
-        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init-pre
       net: host
@@ -194,38 +193,13 @@ rancher:
       - command-volumes
       - system-volumes
     network:
-      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: netconf --stop-network-pre
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init
-      environment:
-      - DAEMON=true
       net: host
       uts: host
-      pid: host
-      privileged: true
-      volumes_from:
-      - command-volumes
-      - system-volumes
-    wait-for-network-pre:
-      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
-      command: wait-for-network
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-        io.rancher.os.after: network-pre
-      pid: host
-      privileged: true
-      volumes_from:
-      - command-volumes
-      - system-volumes
-    wait-for-network:
-      image: {{.OS_REPO}}/os-network:{{.VERSION}}{{.SUFFIX}}
-      command: wait-for-network
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-        io.rancher.os.after: network
       pid: host
       privileged: true
       volumes_from:
@@ -235,7 +209,7 @@ rancher:
       image: {{.OS_REPO}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: wait-for-network-pre
+        io.rancher.os.after: network-pre
       net: host
       uts: host
       privileged: true
