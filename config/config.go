@@ -3,27 +3,9 @@ package config
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/util"
 )
-
-func (c *CloudConfig) Import(bytes []byte) (*CloudConfig, error) {
-	data, err := readConfig(bytes, false, CloudConfigPrivateFile)
-	if err != nil {
-		return c, err
-	}
-
-	return NewConfig().Merge(data)
-}
-
-func (c *CloudConfig) MergeBytes(bytes []byte) (*CloudConfig, error) {
-	data, err := readConfig(bytes, false)
-	if err != nil {
-		return c, err
-	}
-	return c.Merge(data)
-}
 
 var keysToStringify = []string{
 	"command",
@@ -89,47 +71,36 @@ func StringifyValues(data map[interface{}]interface{}) map[interface{}]interface
 	return stringifyValue(data, nil).(map[interface{}]interface{})
 }
 
-func (c *CloudConfig) Merge(values map[interface{}]interface{}) (*CloudConfig, error) {
-	d := map[interface{}]interface{}{}
-	if err := util.Convert(c, &d); err != nil {
-		return c, err
+func Merge(bytes []byte) error {
+	data, err := readConfig(bytes, false)
+	if err != nil {
+		return err
 	}
-	r := util.MapsUnion(d, StringifyValues(values))
-	t := &CloudConfig{}
-	if err := util.Convert(r, t); err != nil {
-		return c, err
+	existing, err := readConfig(nil, false, CloudConfigFile)
+	if err != nil {
+		return err
 	}
-	return t, nil
+	return WriteToFile(util.Merge(existing, data), CloudConfigFile)
 }
 
-func Dump(private, full bool) (string, error) {
-	var cfg *CloudConfig
-	var err error
-
-	if full {
-		cfg, err = LoadConfig()
-	} else {
-		files := []string{CloudConfigBootFile, CloudConfigPrivateFile, CloudConfigFile}
-		if !private {
-			files = util.FilterStrings(files, func(x string) bool { return x != CloudConfigPrivateFile })
-		}
-		cfg, err = ChainCfgFuncs(nil,
-			func(_ *CloudConfig) (*CloudConfig, error) { return ReadConfig(nil, true, files...) },
-			amendNils,
-		)
+func Export(private, full bool) (string, error) {
+	rawCfg, err := LoadRawConfig(full)
+	if private {
+		rawCfg = filterPrivateKeys(rawCfg)
 	}
 
-	if err != nil {
-		return "", err
-	}
-
-	bytes, err := yaml.Marshal(*cfg)
+	bytes, err := yaml.Marshal(rawCfg)
 	return string(bytes), err
 }
 
-func (c *CloudConfig) Get(key string) (interface{}, error) {
+func Get(key string) (interface{}, error) {
+	cfg, err := LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	data := map[interface{}]interface{}{}
-	if err := util.Convert(c, &data); err != nil {
+	if err := util.ConvertIgnoreOmitEmpty(cfg, &data); err != nil {
 		return nil, err
 	}
 
@@ -137,58 +108,14 @@ func (c *CloudConfig) Get(key string) (interface{}, error) {
 	return v, nil
 }
 
-func (c *CloudConfig) GetIgnoreOmitEmpty(key string) (interface{}, error) {
-	data := map[interface{}]interface{}{}
-	if err := util.ConvertIgnoreOmitEmpty(c, &data); err != nil {
-		return nil, err
-	}
-
-	v, _ := getOrSetVal(key, data, nil)
-	return v, nil
-}
-
-func (c *CloudConfig) Set(key string, value interface{}) (map[interface{}]interface{}, error) {
+func Set(key string, value interface{}) error {
 	data := map[interface{}]interface{}{}
 	_, data = getOrSetVal(key, data, value)
 
-	return data, nil
-}
-
-func (c *CloudConfig) Save(cfgDiffs ...map[interface{}]interface{}) error {
-	files := append([]string{OsConfigFile, OemConfigFile}, CloudConfigDirFiles()...)
-	files = util.FilterStrings(files, func(x string) bool { return x != CloudConfigPrivateFile })
-	exCfg, err := ChainCfgFuncs(nil,
-		func(_ *CloudConfig) (*CloudConfig, error) {
-			return ReadConfig(nil, true, files...)
-		},
-		readCmdline,
-		amendNils)
+	existing, err := readConfig(nil, false, CloudConfigFile)
 	if err != nil {
 		return err
 	}
 
-	exCfg = mergeMetadata(exCfg, readMetadata())
-
-	exData := map[interface{}]interface{}{}
-	if err := util.Convert(exCfg, &exData); err != nil {
-		return err
-	}
-
-	data := map[interface{}]interface{}{}
-	if err := util.Convert(c, &data); err != nil {
-		return err
-	}
-
-	data = util.MapsDifference(data, exData)
-
-	// Apply any additional config diffs
-	for _, diff := range cfgDiffs {
-		data = util.MapsUnion(data, diff)
-	}
-
-	log.WithFields(log.Fields{"diff": data}).Debug("The diff we're about to save")
-	if err := saveToDisk(data); err != nil {
-		return err
-	}
-	return nil
+	return WriteToFile(util.Merge(existing, data), CloudConfigFile)
 }
