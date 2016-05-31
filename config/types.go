@@ -36,7 +36,6 @@ const (
 	OsConfigFile           = "/usr/share/ros/os-config.yml"
 	CloudConfigDir         = "/var/lib/rancher/conf/cloud-config.d"
 	CloudConfigBootFile    = "/var/lib/rancher/conf/cloud-config.d/boot.yml"
-	CloudConfigPrivateFile = "/var/lib/rancher/conf/cloud-config.d/private.yml"
 	CloudConfigNetworkFile = "/var/lib/rancher/conf/cloud-config.d/network.yml"
 	CloudConfigScriptFile  = "/var/lib/rancher/conf/cloud-config-script"
 	MetaDataFile           = "/var/lib/rancher/conf/metadata"
@@ -48,6 +47,13 @@ var (
 	VERSION       string
 	ARCH          string
 	SUFFIX        string
+	PrivateKeys   = []string{
+		"rancher.ssh",
+		"rancher.docker.ca_key",
+		"rancher.docker.ca_cert",
+		"rancher.docker.server_key",
+		"rancher.docker.server_cert",
+	}
 )
 
 func init() {

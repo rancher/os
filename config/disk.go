@@ -15,14 +15,9 @@ import (
 	"github.com/rancher/os/util"
 )
 
-var osConfig *CloudConfig
-
-func NewConfig() *CloudConfig {
-	if osConfig == nil {
-		osConfig, _ = ReadConfig(nil, true, OsConfigFile, OemConfigFile)
-	}
-	newCfg := *osConfig
-	return &newCfg
+func NewConfig() map[interface{}]interface{} {
+	osConfig, _ := readConfig(nil, true, OsConfigFile, OemConfigFile)
+	return osConfig
 }
 
 func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*CloudConfig, error) {
@@ -39,42 +34,50 @@ func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*Cl
 	}
 }
 
-func LoadConfig() (*CloudConfig, error) {
-	cfg, err := ChainCfgFuncs(NewConfig(),
-		readFilesAndMetadata,
-		readCmdline,
-		amendNils,
-		amendContainerNames)
+func LoadRawConfig(full bool) (map[interface{}]interface{}, error) {
+	var base map[interface{}]interface{}
+	if full {
+		base = NewConfig()
+	}
+	user, err := readConfigs()
 	if err != nil {
-		log.WithFields(log.Fields{"cfg": cfg, "err": err}).Error("Failed to load config")
+		return nil, err
+	}
+	cmdline, err := readCmdline()
+	if err != nil {
+		return nil, err
+	}
+	merged := util.Merge(base, util.Merge(user, cmdline))
+	merged, err = applyDebugFlags(merged)
+	if err != nil {
+		return nil, err
+	}
+	return mergeMetadata(merged, readMetadata()), nil
+}
+
+func LoadConfig() (*CloudConfig, error) {
+	rawCfg, err := LoadRawConfig(true)
+	if err != nil {
 		return nil, err
 	}
 
-	log.Debug("Merging cloud-config from meta-data and user-data")
-	cfg = mergeMetadata(cfg, readMetadata())
-
-	if cfg.Rancher.Debug {
-		log.SetLevel(log.DebugLevel)
-		if !util.Contains(cfg.Rancher.Docker.Args, "-D") {
-			cfg.Rancher.Docker.Args = append(cfg.Rancher.Docker.Args, "-D")
-		}
-		if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
-			cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")
-		}
-	} else {
-		if util.Contains(cfg.Rancher.Docker.Args, "-D") {
-			cfg.Rancher.Docker.Args = util.FilterStrings(cfg.Rancher.Docker.Args, func(x string) bool { return x != "-D" })
-		}
-		if util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
-			cfg.Rancher.SystemDocker.Args = util.FilterStrings(cfg.Rancher.SystemDocker.Args, func(x string) bool { return x != "-D" })
-		}
+	cfg := &CloudConfig{}
+	if err := util.Convert(rawCfg, cfg); err != nil {
+		return nil, err
 	}
-
+	cfg, err = amendNils(cfg)
+	if err != nil {
+		return nil, err
+	}
+	cfg, err = amendContainerNames(cfg)
+	if err != nil {
+		return nil, err
+	}
 	return cfg, nil
 }
 
 func CloudConfigDirFiles() []string {
-	files, err := util.DirLs(CloudConfigDir)
+	files, err := ioutil.ReadDir(CloudConfigDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// do nothing
@@ -85,36 +88,56 @@ func CloudConfigDirFiles() []string {
 		return []string{}
 	}
 
-	files = util.Filter(files, func(x interface{}) bool {
-		f := x.(os.FileInfo)
-		if f.IsDir() || strings.HasPrefix(f.Name(), ".") {
-			return false
+	var finalFiles []string
+	for _, file := range files {
+		if !file.IsDir() && !strings.HasPrefix(file.Name(), ".") {
+			finalFiles = append(finalFiles, path.Join(CloudConfigDir, file.Name()))
 		}
-		return true
-	})
+	}
 
-	return util.ToStrings(util.Map(files, func(x interface{}) interface{} {
-		return path.Join(CloudConfigDir, x.(os.FileInfo).Name())
-	}))
+	return finalFiles
+}
+
+func applyDebugFlags(rawCfg map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+	cfg := &CloudConfig{}
+	if err := util.Convert(rawCfg, cfg); err != nil {
+		return nil, err
+	}
+
+	if cfg.Rancher.Debug {
+		log.SetLevel(log.DebugLevel)
+		if !util.Contains(cfg.Rancher.Docker.Args, "-D") {
+			cfg.Rancher.Docker.Args = append(cfg.Rancher.Docker.Args, "-D")
+		}
+		if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
+			cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")
+		}
+	}
+
+	_, rawCfg = getOrSetVal("rancher.docker.args", rawCfg, cfg.Rancher.Docker.Args)
+	_, rawCfg = getOrSetVal("rancher.system_docker.args", rawCfg, cfg.Rancher.SystemDocker.Args)
+	return rawCfg, nil
 }
 
 // mergeMetadata merges certain options from md (meta-data from the datasource)
 // onto cc (a CloudConfig derived from user-data), if they are not already set
 // on cc (i.e. user-data always takes precedence)
-func mergeMetadata(cc *CloudConfig, md datasource.Metadata) *CloudConfig {
-	if cc == nil {
-		return cc
+func mergeMetadata(rawCfg map[interface{}]interface{}, md datasource.Metadata) map[interface{}]interface{} {
+	if rawCfg == nil {
+		return nil
 	}
-	out := cc
-	dirty := false
+	out := util.MapCopy(rawCfg)
+
+	outHostname, ok := out["hostname"]
+	if !ok {
+		outHostname = ""
+	}
 
 	if md.Hostname != "" {
-		if out.Hostname != "" {
-			log.Debugf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", out.Hostname, md.Hostname)
+		if outHostname != "" {
+			log.Debugf("Warning: user-data hostname (%s) overrides metadata hostname (%s)\n", outHostname, md.Hostname)
 		} else {
-			out = &(*cc)
-			dirty = true
-			out.Hostname = md.Hostname
+			out["hostname"] = md.Hostname
 		}
 	}
 
@@ -126,13 +149,17 @@ func mergeMetadata(cc *CloudConfig, md datasource.Metadata) *CloudConfig {
 
 	sort.Sort(sort.StringSlice(keys))
 
-	for _, k := range keys {
-		if !dirty {
-			out = &(*cc)
-			dirty = true
-		}
-		out.SSHAuthorizedKeys = append(out.SSHAuthorizedKeys, md.SSHPublicKeys[k])
+	currentKeys, ok := out["ssh_authorized_keys"]
+	if !ok {
+		return out
 	}
+
+	finalKeys := currentKeys.([]interface{})
+	for _, k := range keys {
+		finalKeys = append(finalKeys, md.SSHPublicKeys[k])
+	}
+
+	out["ssh_authorized_keys"] = finalKeys
 
 	return out
 }
@@ -145,44 +172,32 @@ func readMetadata() datasource.Metadata {
 	return metadata
 }
 
-func readFilesAndMetadata(c *CloudConfig) (*CloudConfig, error) {
+func readConfigs() (map[interface{}]interface{}, error) {
 	files := append(CloudConfigDirFiles(), CloudConfigFile)
 	data, err := readConfig(nil, true, files...)
 	if err != nil {
-		log.WithFields(log.Fields{"err": err, "files": files}).Error("Error reading config files")
-		return c, err
+		return nil, err
 	}
-
-	t, err := c.Merge(data)
-	if err != nil {
-		log.WithFields(log.Fields{"cfg": c, "data": data, "err": err}).Error("Error merging config data")
-		return c, err
-	}
-
-	return t, nil
+	return data, nil
 }
 
-func readCmdline(c *CloudConfig) (*CloudConfig, error) {
+func readCmdline() (map[interface{}]interface{}, error) {
 	log.Debug("Reading config cmdline")
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
-		return c, err
+		return nil, err
 	}
 
 	if len(cmdLine) == 0 {
-		return c, nil
+		return nil, nil
 	}
 
 	log.Debugf("Config cmdline %s", cmdLine)
 
 	cmdLineObj := parseCmdline(strings.TrimSpace(string(cmdLine)))
 
-	t, err := c.Merge(cmdLineObj)
-	if err != nil {
-		log.WithFields(log.Fields{"cfg": c, "cmdLine": cmdLine, "data": cmdLineObj, "err": err}).Warn("Error adding kernel params to config")
-	}
-	return t, nil
+	return cmdLineObj, nil
 }
 
 func amendNils(c *CloudConfig) (*CloudConfig, error) {
@@ -227,23 +242,6 @@ func WriteToFile(data interface{}, filename string) error {
 	return ioutil.WriteFile(filename, content, 400)
 }
 
-func saveToDisk(data map[interface{}]interface{}) error {
-	private, config := filterDottedKeys(data, []string{
-		"rancher.ssh",
-		"rancher.docker.ca_key",
-		"rancher.docker.ca_cert",
-		"rancher.docker.server_key",
-		"rancher.docker.server_cert",
-	})
-
-	err := WriteToFile(config, CloudConfigFile)
-	if err != nil {
-		return err
-	}
-
-	return WriteToFile(private, CloudConfigPrivateFile)
-}
-
 func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map[interface{}]interface{}, error) {
 	// You can't just overlay yaml bytes on to maps, it won't merge, but instead
 	// just override the keys and not merge the map values.
@@ -267,7 +265,7 @@ func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map
 			return nil, err
 		}
 
-		left = util.MapsUnion(left, right)
+		left = util.Merge(left, right)
 	}
 
 	if bytes != nil && len(bytes) > 0 {
@@ -279,7 +277,7 @@ func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map
 			return nil, err
 		}
 
-		left = util.MapsUnion(left, right)
+		left = util.Merge(left, right)
 	}
 
 	return left, nil
