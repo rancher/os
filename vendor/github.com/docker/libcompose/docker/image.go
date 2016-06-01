@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -56,28 +58,43 @@ func pullImage(ctx context.Context, client client.APIClient, service *Service, i
 		options.Tag = tagged.Tag()
 	}
 
-	responseBody, err := client.ImagePull(ctx, options, nil)
-	if err != nil {
-		logrus.Errorf("Failed to pull image %s: %v", image, err)
-		return err
-	}
-	defer responseBody.Close()
+	timeoutsRemaining := 3
+	for i := 0; i < 100; i++ {
+		responseBody, err := client.ImagePull(ctx, options, nil)
+		if err != nil {
+			logrus.Errorf("Failed to pull image %s: %v", image, err)
+			return err
+		}
 
-	var writeBuff io.Writer = os.Stderr
+		var writeBuff io.Writer = os.Stderr
 
-	outFd, isTerminalOut := term.GetFdInfo(os.Stderr)
+		outFd, isTerminalOut := term.GetFdInfo(os.Stderr)
 
-	err = jsonmessage.DisplayJSONMessagesStream(responseBody, writeBuff, outFd, isTerminalOut, nil)
-	if err != nil {
-		if jerr, ok := err.(*jsonmessage.JSONError); ok {
-			// If no error code is set, default to 1
-			if jerr.Code == 0 {
-				jerr.Code = 1
+		err = jsonmessage.DisplayJSONMessagesStream(responseBody, writeBuff, outFd, isTerminalOut, nil)
+		responseBody.Close()
+		if err == nil {
+			return nil
+		} else if strings.Contains(err.Error(), "timed out") {
+			timeoutsRemaining -= 1
+			if timeoutsRemaining == 0 {
+				return err
 			}
-			fmt.Fprintf(os.Stderr, "%s", writeBuff)
-			return fmt.Errorf("Status: %s, Code: %d", jerr.Message, jerr.Code)
+			continue
+		} else if strings.Contains(err.Error(), "connection") || strings.Contains(err.Error(), "unreachable") {
+			time.Sleep(300 * time.Millisecond)
+			continue
+		} else {
+			if jerr, ok := err.(*jsonmessage.JSONError); ok {
+				// If no error code is set, default to 1
+				if jerr.Code == 0 {
+					jerr.Code = 1
+				}
+				fmt.Fprintf(os.Stderr, "%s", writeBuff)
+				return fmt.Errorf("Status: %s, Code: %d", jerr.Message, jerr.Code)
+			}
 		}
 	}
+
 	return err
 }
 
