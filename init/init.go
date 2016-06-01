@@ -230,7 +230,7 @@ func RunInit() error {
 	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
 
 	log.Info("Launching System Docker")
-	_, err = dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
+	_, err = dockerlaunch.LaunchDocker(launchConfig, config.SYSTEM_DOCKER_BIN, args...)
 	if err != nil {
 		return err
 	}

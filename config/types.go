@@ -23,6 +23,7 @@ const (
 	MODULES_ARCHIVE    = "/modules.tar"
 	DEBUG              = false
 	SYSTEM_DOCKER_LOG  = "/var/log/system-docker.log"
+	SYSTEM_DOCKER_BIN  = "/usr/bin/system-docker"
 
 	LABEL         = "label"
 	HASH          = "io.rancher.os.hash"

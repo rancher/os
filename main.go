@@ -1,10 +1,7 @@
 package main
 
 import (
-	"os"
-	"strings"
-
-	log "github.com/Sirupsen/logrus"
+	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/cmd/cloudinit"
@@ -16,48 +13,32 @@ import (
 	"github.com/rancher/os/cmd/systemdocker"
 	"github.com/rancher/os/cmd/userdocker"
 	"github.com/rancher/os/cmd/wait"
-	"github.com/rancher/os/config"
 	osInit "github.com/rancher/os/init"
 )
 
-func registerCmd(cmd string, mainFunc func()) {
-	log.Debugf("Registering main %s", cmd)
-	reexec.Register(cmd, mainFunc)
-
-	parts := strings.Split(cmd, "/")
-	if len(parts) == 0 {
-		return
-	}
-
-	last := parts[len(parts)-1]
-
-	log.Debugf("Registering main %s", last)
-	reexec.Register(last, mainFunc)
-
-	log.Debugf("Registering main %s", "./"+last)
-	reexec.Register("./"+last, mainFunc)
+var entrypoints = map[string]func(){
+	"cloud-init":      cloudinit.Main,
+	"docker":          docker.Main,
+	"dockerlaunch":    dockerlaunch.Main,
+	"halt":            power.Halt,
+	"init":            osInit.MainInit,
+	"netconf":         network.Main,
+	"poweroff":        power.PowerOff,
+	"reboot":          power.Reboot,
+	"respawn":         respawn.Main,
+	"ros-sysinit":     sysinit.Main,
+	"shutdown":        power.Main,
+	"system-docker":   systemdocker.Main,
+	"user-docker":     userdocker.Main,
+	"wait-for-docker": wait.Main,
 }
 
 func main() {
-	registerCmd("/init", osInit.MainInit)
-	registerCmd(config.SYSINIT_BIN, sysinit.Main)
-	registerCmd("/usr/bin/dockerlaunch", dockerlaunch.Main)
-	registerCmd("/usr/bin/user-docker", userdocker.Main)
-	registerCmd("/usr/bin/system-docker", systemdocker.Main)
-	registerCmd("/sbin/poweroff", power.PowerOff)
-	registerCmd("/sbin/reboot", power.Reboot)
-	registerCmd("/sbin/halt", power.Halt)
-	registerCmd("/sbin/shutdown", power.Main)
-	registerCmd("/usr/bin/respawn", respawn.Main)
-	registerCmd("/usr/bin/ros", control.Main)
-	registerCmd("/usr/bin/cloud-init", cloudinit.Main)
-	registerCmd("/usr/sbin/netconf", network.Main)
-	registerCmd("/usr/sbin/wait-for-docker", wait.Main)
+	for name, f := range entrypoints {
+		reexec.Register(name, f)
+	}
 
 	if !reexec.Init() {
-		reexec.Register(os.Args[0], control.Main)
-		if !reexec.Init() {
-			log.Fatalf("Failed to find an entry point for %s", os.Args[0])
-		}
+		control.Main()
 	}
 }

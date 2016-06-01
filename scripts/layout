@@ -17,11 +17,12 @@ mkdir -p ${INITRD_DIR}/usr/{etc,bin,share/ros}
 cp -rf assets/selinux      ${INITRD_DIR}/usr/etc
 cp build/images.tar        ${INITRD_DIR}/usr/share/ros/
 cp bin/ros                 ${INITRD_DIR}/usr/bin/
-cp ${DOWNLOADS}/docker     ${INITRD_DIR}/usr/bin/docker
 ln -s usr/bin/ros          ${INITRD_DIR}/init
 ln -s bin                  ${INITRD_DIR}/usr/sbin
 ln -s usr/sbin             ${INITRD_DIR}/sbin
+ln -s ros                  ${INITRD_DIR}/usr/bin/system-docker
 
+tar xvzf ${DOWNLOADS}/docker.tgz -C ${INITRD_DIR}/usr/bin --strip-components=1
 
 if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     mkdir -p ${BUILD}/kernel

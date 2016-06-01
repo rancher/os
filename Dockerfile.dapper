@@ -47,16 +47,16 @@ ARG OS_REPO=rancher
 ARG HOSTNAME_DEFAULT=rancher
 ARG DISTRIB_ID=RancherOS
 
-ARG DOCKER_VERSION=1.10.3
-ARG DOCKER_PATCH_VERSION=v${DOCKER_VERSION}-ros1
+ARG DOCKER_VERSION=1.11.1
+ARG DOCKER_PATCH_VERSION=v${DOCKER_VERSION}-ros2
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.2/policy.29
 
-ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.2.0-34.39-rancher/linux-4.2.8-ckt4-rancher-x86.tar.gz
+ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.4.0-23.41-rancher/linux-4.4.10-rancher-x86.tar.gz
 ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.1.18-arm64-3/linux-4.1.18-arm64.tar.gz
 
-ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}
-ARG DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm
-ARG DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64
+ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
+ARG DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm.tgz
+ARG DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64.tgz
 
 ARG TOOLCHAIN_arm64=aarch64-linux-gnu
 ARG TOOLCHAIN_arm=arm-linux-gnueabihf
@@ -115,14 +115,14 @@ RUN ln -sf go-6 /usr/bin/go && \
 ENV GOPATH /go
 ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
 
-# Install Docker
+# Install Host Docker
 RUN URL=DOCKER_URL_${HOST_ARCH} && \
-    curl -fL ${!URL} > /usr/bin/docker && \
+    curl -fL ${!URL} | tar xzf - --strip-components=1 -C /usr/bin docker/docker && \
     chmod +x /usr/bin/docker
 
-# Install Docker
-RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker && \
-    chmod +x ${DOWNLOADS}/docker
+# Install Target Docker
+RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker.tgz
+
 # Install Trash
 RUN go get github.com/rancher/trash
 
