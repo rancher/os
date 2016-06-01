@@ -10,3 +10,6 @@ tests/integration/.venv*
 tests/integration/.tox
 */*/*/*.pyc
 */*/*/__pycache__
+.trash-cache
+.dapper
+vendor/*/*/*/.git

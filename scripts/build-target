@@ -14,4 +14,5 @@ fi
 
 OUTPUT=${OUTPUT:-bin/ros}
 echo Building $OUTPUT
-go build -tags netgo -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION=${VERSION} -linkmode external -extldflags -static" -o ${OUTPUT}
+go build -tags "selinux cgo daemon netgo" -installsuffix netgo -ldflags "-X github.com/rancher/os/config.VERSION=${VERSION} -linkmode external -extldflags -static" -o ${OUTPUT}
+strip --strip-all ${OUTPUT}

@@ -1,0 +1,5 @@
+#!/bin/bash
+
+cd $(dirname $0)/../build/initrd
+
+md5sum $(find -type f | sort -u ) | md5sum - | awk '{print $1}' > .id
