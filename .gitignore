@@ -14,4 +14,5 @@
 /tests/integration/.idea
 *.pyc
 __pycache__
-.dapper
+/.dapper
+/.trash-cache

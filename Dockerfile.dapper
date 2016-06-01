@@ -1,4 +1,5 @@
 FROM ubuntu:16.04
+# FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
 RUN apt-get update && \
     apt-get install -y \
@@ -33,6 +34,7 @@ ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
 ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd
 ENV DAPPER_RUN_ARGS --privileged
+ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
 ENV SHELL /bin/bash
 WORKDIR ${DAPPER_SOURCE}
 
@@ -73,6 +75,7 @@ ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.0
 ######################################################
 
 # Set up environment
+ENV GOARCH $ARCH
 ENV DOCKER_URL DOCKER_URL_${ARCH}
 ENV KERNEL_URL KERNEL_URL_${ARCH}
 ENV OS_BASE_URL OS_BASE_URL_${ARCH}
@@ -120,6 +123,12 @@ RUN URL=DOCKER_URL_${HOST_ARCH} && \
 # Install Docker
 RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker && \
     chmod +x ${DOWNLOADS}/docker
+# Install Trash
+RUN go get github.com/rancher/trash
+
+# Install dapper
+RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > /usr/bin/dapper && \
+    chmod +x /usr/bin/dapper
 
 # Install toolchain
 RUN TOOLCHAIN=TOOLCHAIN_${ARCH} && \
@@ -168,10 +177,6 @@ RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
         make install \
     ;fi
 
-ENV GOARCH $ARCH
-
-RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > /usr/bin/dapper && \
-    chmod +x /usr/bin/dapper
 
 RUN mkdir -p images/00-rootfs/build && \
     curl -pfL ${!OS_BASE_URL} | tar xvJf - -C images/00-rootfs/build

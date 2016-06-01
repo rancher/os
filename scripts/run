@@ -111,6 +111,7 @@ fi
 
 if [ "$REBUILD" == "1" ] || [ ! -e ${INITRD} ]; then
     cp bin/ros ${INITRD_SRC}/usr/bin/ros
+    ./scripts/hash-initrd
     pushd ${INITRD_SRC} >/dev/null
     find . | cpio -H newc -o | gzip -1 > ${INITRD}
     popd >/dev/null

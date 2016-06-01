@@ -24,7 +24,19 @@ ln -s usr/sbin             ${INITRD_DIR}/sbin
 
 
 if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
-    tar xf ${DOWNLOADS}/kernel.tar.gz -C ${INITRD_DIR}/usr/ lib/
+    mkdir -p ${BUILD}/kernel
+    tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
+
+    if [ -e ${BUILD}/kernel/boot/vmlinuz-* ]; then
+        mkdir -p dist/artifacts
+        cp ${BUILD}/kernel/boot/vmlinuz-* dist/artifacts/vmlinuz
+    fi
+
+    if [ -d ${BUILD}/kernel/lib ]; then
+        rm -rf ${INITRD_DIR}/usr/lib
+        cp -rf ${BUILD}/kernel/lib ${INITRD_DIR}/usr/
+        depmod -b ${INITRD_DIR}/usr $(basename ${INITRD_DIR}/usr/lib/modules/*)
+    fi
 fi
 
 if [ -e ${DOWNLOADS}/policy.29 ]; then
@@ -43,11 +55,4 @@ docker export ${DFS_ARCH} | tar xf - -C ${INITRD_DIR} --exclude=usr/bin/dockerla
                                                       --exclude=usr/libexec/git-core \
                                                       usr
 
-tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD} boot/
-
-if [ -e ${BUILD}/boot/vmlinuz-* ]; then
-    mkdir -p dist/artifacts
-    cp ${BUILD}/boot/vmlinuz-* dist/artifacts/vmlinuz
-fi
-
-cat /proc/sys/kernel/random/uuid > ${INITRD_DIR}/.id
+./scripts/hash-initrd
