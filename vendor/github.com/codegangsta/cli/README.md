@@ -1,9 +1,17 @@
-[![Coverage](http://gocover.io/_badge/github.com/codegangsta/cli?0)](http://gocover.io/github.com/codegangsta/cli)
-[![Build Status](https://travis-ci.org/codegangsta/cli.svg?branch=master)](https://travis-ci.org/codegangsta/cli)
-[![GoDoc](https://godoc.org/github.com/codegangsta/cli?status.svg)](https://godoc.org/github.com/codegangsta/cli)
-[![codebeat](https://codebeat.co/badges/0a8f30aa-f975-404b-b878-5fab3ae1cc5f)](https://codebeat.co/projects/github-com-codegangsta-cli)
+[![Build Status](https://travis-ci.org/urfave/cli.svg?branch=master)](https://travis-ci.org/urfave/cli)
+[![Windows Build Status](https://ci.appveyor.com/api/projects/status/rtgk5xufi932pb2v?svg=true)](https://ci.appveyor.com/project/meatballhat/cli)
+[![GoDoc](https://godoc.org/github.com/urfave/cli?status.svg)](https://godoc.org/github.com/urfave/cli)
+[![codebeat](https://codebeat.co/badges/0a8f30aa-f975-404b-b878-5fab3ae1cc5f)](https://codebeat.co/projects/github-com-urfave-cli)
+[![Go Report Card](https://goreportcard.com/badge/urfave/cli)](https://goreportcard.com/report/urfave/cli)
+[![top level coverage](https://gocover.io/_badge/github.com/urfave/cli?0 "top level coverage")](http://gocover.io/github.com/urfave/cli) /
+[![altsrc coverage](https://gocover.io/_badge/github.com/urfave/cli/altsrc?0 "altsrc coverage")](http://gocover.io/github.com/urfave/cli/altsrc)
+
 
 # cli
+
+**Notice:** This is the library formerly known as
+`github.com/codegangsta/cli` -- Github will automatically redirect requests
+to this repository, but we recommend updating your references for clarity.
 
 cli is a simple, fast, and fun package for building command line apps in Go. The goal is to enable developers to write fast and distributable command line applications in an expressive way.
 
@@ -15,16 +23,65 @@ Command line apps are usually so tiny that there is absolutely no reason why you
 
 ## Installation
 
-Make sure you have a working Go environment (go 1.1+ is *required*). [See the install instructions](http://golang.org/doc/install.html).
+Make sure you have a working Go environment.  Go version 1.1+ is required for
+core cli, whereas use of the [`./altsrc`](./altsrc) input extensions requires Go
+version 1.2+. [See the install
+instructions](http://golang.org/doc/install.html).
 
 To install cli, simply run:
 ```
-$ go get github.com/codegangsta/cli
+$ go get github.com/urfave/cli
 ```
 
 Make sure your `PATH` includes to the `$GOPATH/bin` directory so your commands can be easily used:
 ```
 export PATH=$PATH:$GOPATH/bin
+```
+
+### Supported platforms
+
+cli is tested against multiple versions of Go on Linux, and against the latest
+released version of Go on OS X and Windows.  For full details, see
+[`./.travis.yml`](./.travis.yml) and [`./appveyor.yml`](./appveyor.yml).
+
+### Using the `v2` branch
+
+There is currently a long-lived branch named `v2` that is intended to land as
+the new `master` branch once development there has settled down.  The current
+`master` branch (mirrored as `v1`) is being manually merged into `v2` on
+an irregular human-based schedule, but generally if one wants to "upgrade" to
+`v2` *now* and accept the volatility (read: "awesomeness") that comes along with
+that, please use whatever version pinning of your preference, such as via
+`gopkg.in`:
+
+```
+$ go get gopkg.in/urfave/cli.v2
+```
+
+``` go
+...
+import (
+  "gopkg.in/urfave/cli.v2" // imports as package "cli"
+)
+...
+```
+
+### Pinning to the `v1` branch
+
+Similarly to the section above describing use of the `v2` branch, if one wants
+to avoid any unexpected compatibility pains once `v2` becomes `master`, then
+pinning to the `v1` branch is an acceptable option, e.g.:
+
+```
+$ go get gopkg.in/urfave/cli.v1
+```
+
+``` go
+...
+import (
+  "gopkg.in/urfave/cli.v1" // imports as package "cli"
+)
+...
 ```
 
 ## Getting Started
@@ -36,7 +93,7 @@ package main
 
 import (
   "os"
-  "github.com/codegangsta/cli"
+  "github.com/urfave/cli"
 )
 
 func main() {
@@ -46,6 +103,9 @@ func main() {
 
 This app will run and show help text, but is not very useful. Let's give an action to execute and some help documentation:
 
+<!-- {
+  "output": "boom! I say!"
+} -->
 ``` go
 package main
 
@@ -53,7 +113,7 @@ import (
   "fmt"
   "os"
 
-  "github.com/codegangsta/cli"
+  "github.com/urfave/cli"
 )
 
 func main() {
@@ -77,6 +137,9 @@ Being a programmer can be a lonely job. Thankfully by the power of automation th
 
 Start by creating a directory named `greet`, and within it, add a file, `greet.go` with the following code in it:
 
+<!-- {
+  "output": "Hello friend!"
+} -->
 ``` go
 package main
 
@@ -84,7 +147,7 @@ import (
   "fmt"
   "os"
 
-  "github.com/codegangsta/cli"
+  "github.com/urfave/cli"
 )
 
 func main() {
@@ -202,7 +265,7 @@ app.Action = func(c *cli.Context) error {
 ...
 ```
 
-See full list of flags at http://godoc.org/github.com/codegangsta/cli
+See full list of flags at http://godoc.org/github.com/urfave/cli
 
 #### Placeholder Values
 
@@ -210,6 +273,7 @@ Sometimes it's useful to specify a flag's value within the usage string itself. 
 indicated with back quotes.
 
 For example this:
+
 ```go
 cli.StringFlag{
   Name:  "config, c",
@@ -416,7 +480,7 @@ package main
 import (
   "os"
 
-  "github.com/codegangsta/cli"
+  "github.com/urfave/cli"
 )
 
 func main() {
@@ -504,6 +568,9 @@ templates are exposed as variables `AppHelpTemplate`, `CommandHelpTemplate`, and
 is possible by assigning a compatible func to the `cli.HelpPrinter` variable,
 e.g.:
 
+<!-- {
+  "output": "Ha HA.  I pwnd the help!!1"
+} -->
 ``` go
 package main
 
@@ -512,7 +579,7 @@ import (
   "io"
   "os"
 
-  "github.com/codegangsta/cli"
+  "github.com/urfave/cli"
 )
 
 func main() {
@@ -561,8 +628,16 @@ VERSION:
 
 ## Contribution Guidelines
 
-Feel free to put up a pull request to fix a bug or maybe add a feature. I will give it a code review and make sure that it does not break backwards compatibility. If I or any other collaborators agree that it is in line with the vision of the project, we will work with you to get the code into a mergeable state and merge it into the master branch.
+Feel free to put up a pull request to fix a bug or maybe add a feature. I will
+give it a code review and make sure that it does not break backwards
+compatibility. If I or any other collaborators agree that it is in line with
+the vision of the project, we will work with you to get the code into
+a mergeable state and merge it into the master branch.
 
-If you have contributed something significant to the project, I will most likely add you as a collaborator. As a collaborator you are given the ability to merge others pull requests. It is very important that new code does not break existing code, so be careful about what code you do choose to merge. If you have any questions feel free to link @codegangsta to the issue in question and we can review it together.
+If you have contributed something significant to the project, we will most
+likely add you as a collaborator. As a collaborator you are given the ability
+to merge others pull requests. It is very important that new code does not
+break existing code, so be careful about what code you do choose to merge.
 
-If you feel like you have contributed to the project but have not yet been added as a collaborator, I probably forgot to add you. Hit @codegangsta up over email and we will get it figured out.
+If you feel like you have contributed to the project but have not yet been
+added as a collaborator, we probably forgot to add you, please open an issue.

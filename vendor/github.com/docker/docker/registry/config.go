@@ -206,7 +206,7 @@ func ValidateIndexName(val string) (string, error) {
 	return val, nil
 }
 
-func validateNoScheme(reposName string) error {
+func validateNoSchema(reposName string) error {
 	if strings.Contains(reposName, "://") {
 		// It cannot contain a scheme!
 		return ErrInvalidRepositoryName

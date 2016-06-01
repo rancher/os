@@ -6,29 +6,20 @@ import (
 	"net/url"
 
 	"github.com/docker/engine-api/types"
-	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/engine-api/types/registry"
 	"golang.org/x/net/context"
 )
 
 // ImageSearch makes the docker host to search by a term in a remote registry.
 // The list of results is not sorted in any fashion.
-func (cli *Client) ImageSearch(ctx context.Context, term string, options types.ImageSearchOptions) ([]registry.SearchResult, error) {
+func (cli *Client) ImageSearch(ctx context.Context, options types.ImageSearchOptions, privilegeFunc RequestPrivilegeFunc) ([]registry.SearchResult, error) {
 	var results []registry.SearchResult
 	query := url.Values{}
-	query.Set("term", term)
-
-	if options.Filters.Len() > 0 {
-		filterJSON, err := filters.ToParam(options.Filters)
-		if err != nil {
-			return results, err
-		}
-		query.Set("filters", filterJSON)
-	}
+	query.Set("term", options.Term)
 
 	resp, err := cli.tryImageSearch(ctx, query, options.RegistryAuth)
 	if resp.statusCode == http.StatusUnauthorized {
-		newAuthHeader, privilegeErr := options.PrivilegeFunc()
+		newAuthHeader, privilegeErr := privilegeFunc()
 		if privilegeErr != nil {
 			return results, privilegeErr
 		}

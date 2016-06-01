@@ -20,10 +20,7 @@ endif
 static:
 	CGO_ENABLED=1 go build -tags "$(BUILDTAGS) cgo static_build" -ldflags "-w -extldflags -static -X main.gitCommit=${COMMIT}" -o runc .
 
-vet:
-	go get golang.org/x/tools/cmd/vet
-
-lint: vet
+lint:
 	go vet ./...
 	go fmt ./...
 
@@ -37,23 +34,23 @@ test: runctestimage
 localtest: all
 	go test -tags "$(BUILDTAGS)" ${TESTFLAGS} -v ./...
 
-dbuild: runctestimage 
+dbuild: runctestimage
 	docker build -t $(RUNC_IMAGE) .
 	docker create --name=$(RUNC_INSTANCE) $(RUNC_IMAGE)
 	docker cp $(RUNC_INSTANCE):$(RUNC_BUILD_PATH) .
 	docker rm $(RUNC_INSTANCE)
 
 install:
-	cp runc /usr/local/bin/runc
+	install -D -m0755 runc /usr/local/sbin/runc
 
 uninstall:
-	rm -f /usr/local/bin/runc
+	rm -f /usr/local/sbin/runc
 
 clean:
 	rm -f runc
 	rm -f $(RUNC_LINK)
 
-validate: vet
+validate:
 	script/validate-gofmt
 	go vet ./...
 

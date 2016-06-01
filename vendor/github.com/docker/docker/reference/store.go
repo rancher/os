@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/docker/distribution/digest"
 	"github.com/docker/docker/image"
-	"github.com/docker/docker/pkg/ioutils"
 )
 
 var (
@@ -256,7 +256,18 @@ func (store *store) save() error {
 	if err != nil {
 		return err
 	}
-	return ioutils.AtomicWriteFile(store.jsonPath, jsonData, 0600)
+
+	tempFilePath := store.jsonPath + ".tmp"
+
+	if err := ioutil.WriteFile(tempFilePath, jsonData, 0600); err != nil {
+		return err
+	}
+
+	if err := os.Rename(tempFilePath, store.jsonPath); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (store *store) reload() error {

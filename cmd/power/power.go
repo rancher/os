@@ -42,7 +42,9 @@ func runDocker(name string) error {
 
 	existing, err := client.ContainerInspect(context.Background(), name)
 	if err == nil && existing.ID != "" {
-		err := client.ContainerRemove(context.Background(), existing.ID, types.ContainerRemoveOptions{})
+		err := client.ContainerRemove(context.Background(), types.ContainerRemoveOptions{
+			ContainerID: existing.ID,
+		})
 
 		if err != nil {
 			return err
@@ -79,10 +81,11 @@ func runDocker(name string) error {
 	}
 
 	go func() {
-		client.ContainerAttach(context.Background(), powerContainer.ID, types.ContainerAttachOptions{
-			Stream: true,
-			Stderr: true,
-			Stdout: true,
+		client.ContainerAttach(context.Background(), types.ContainerAttachOptions{
+			ContainerID: powerContainer.ID,
+			Stream:      true,
+			Stderr:      true,
+			Stdout:      true,
 		})
 	}()
 

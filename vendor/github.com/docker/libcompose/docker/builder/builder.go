@@ -64,7 +64,8 @@ func (d *DaemonBuilder) Build(ctx context.Context, imageName string) error {
 
 	outFd, isTerminalOut := term.GetFdInfo(os.Stdout)
 
-	response, err := d.Client.ImageBuild(ctx, body, types.ImageBuildOptions{
+	response, err := d.Client.ImageBuild(ctx, types.ImageBuildOptions{
+		Context:     body,
 		Tags:        []string{imageName},
 		NoCache:     d.NoCache,
 		Remove:      true,

@@ -152,7 +152,8 @@ func (c *Container) Recreate(ctx context.Context, imageName string) (*types.Cont
 	}
 	logrus.Debugf("Created replacement container %s", newContainer.ID)
 
-	if err := c.client.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{
+	if err := c.client.ContainerRemove(ctx, types.ContainerRemoveOptions{
+		ContainerID:   container.ID,
 		Force:         true,
 		RemoveVolumes: false,
 	}); err != nil {
@@ -241,7 +242,8 @@ func (c *Container) Delete(ctx context.Context, removeVolume bool) error {
 	}
 
 	if !info.State.Running {
-		return c.client.ContainerRemove(ctx, container.ID, types.ContainerRemoveOptions{
+		return c.client.ContainerRemove(ctx, types.ContainerRemoveOptions{
+			ContainerID:   container.ID,
 			Force:         true,
 			RemoveVolumes: removeVolume,
 		})
@@ -291,13 +293,14 @@ func (c *Container) Run(ctx context.Context, imageName string, configOverride *c
 	}
 
 	options := types.ContainerAttachOptions{
-		Stream: true,
-		Stdin:  configOverride.StdinOpen,
-		Stdout: configOverride.Tty,
-		Stderr: configOverride.Tty,
+		ContainerID: container.ID,
+		Stream:      true,
+		Stdin:       configOverride.StdinOpen,
+		Stdout:      configOverride.Tty,
+		Stderr:      configOverride.Tty,
 	}
 
-	resp, err := c.client.ContainerAttach(ctx, container.ID, options)
+	resp, err := c.client.ContainerAttach(ctx, options)
 	if err != nil {
 		return -1, err
 	}
@@ -632,12 +635,13 @@ func (c *Container) Log(ctx context.Context, follow bool) error {
 	l := c.loggerFactory.Create(name)
 
 	options := types.ContainerLogsOptions{
-		ShowStdout: true,
-		ShowStderr: true,
-		Follow:     follow,
-		Tail:       "all",
+		ContainerID: c.name,
+		ShowStdout:  true,
+		ShowStderr:  true,
+		Follow:      follow,
+		Tail:        "all",
 	}
-	responseBody, err := c.client.ContainerLogs(ctx, c.name, options)
+	responseBody, err := c.client.ContainerLogs(ctx, options)
 	if err != nil {
 		return err
 	}
