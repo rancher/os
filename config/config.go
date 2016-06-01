@@ -85,7 +85,7 @@ func Merge(bytes []byte) error {
 
 func Export(private, full bool) (string, error) {
 	rawCfg, err := LoadRawConfig(full)
-	if private {
+	if !private {
 		rawCfg = filterPrivateKeys(rawCfg)
 	}
 

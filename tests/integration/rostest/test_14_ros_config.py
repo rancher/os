@@ -83,3 +83,21 @@ if [ "$(sudo ros config get rancher.network.dns.search)" == "[]
     exit 1
  fi
     '''.strip())
+
+
+def test_ros_export(qemu):
+    SSH(qemu).check_call('''
+set -x -e
+
+if sudo ros config export | grep "PRIVATE KEY"; then
+    exit 1
+fi
+
+sudo ros config export --private | grep "PRIVATE KEY"
+
+sudo ros config export --full | grep "udev"
+sudo ros config export --private --full | grep "ntp"
+sudo ros config export --full | grep "labels"
+
+sudo ros config export --private --full | grep "PRIVATE KEY"
+    '''.strip())
