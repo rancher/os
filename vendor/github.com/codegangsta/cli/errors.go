@@ -2,20 +2,29 @@ package cli
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 )
 
+// OsExiter is the function used when the app exits. If not set defaults to os.Exit.
 var OsExiter = os.Exit
 
+// ErrWriter is used to write errors to the user. This can be anything
+// implementing the io.Writer interface and defaults to os.Stderr.
+var ErrWriter io.Writer = os.Stderr
+
+// MultiError is an error that wraps multiple errors.
 type MultiError struct {
 	Errors []error
 }
 
+// NewMultiError creates a new MultiError. Pass in one or more errors.
 func NewMultiError(err ...error) MultiError {
 	return MultiError{Errors: err}
 }
 
+// Error implents the error interface.
 func (m MultiError) Error() string {
 	errs := make([]string, len(m.Errors))
 	for i, err := range m.Errors {
@@ -69,7 +78,7 @@ func HandleExitCoder(err error) {
 
 	if exitErr, ok := err.(ExitCoder); ok {
 		if err.Error() != "" {
-			fmt.Fprintln(os.Stderr, err)
+			fmt.Fprintln(ErrWriter, err)
 		}
 		OsExiter(exitErr.ExitCode())
 		return

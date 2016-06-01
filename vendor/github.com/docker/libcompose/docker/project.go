@@ -36,7 +36,7 @@ func NewProject(context *Context, parseOptions *config.ParseOptions) (*project.P
 	}
 
 	if context.AuthLookup == nil {
-		context.AuthLookup = &ConfigAuthLookup{context}
+		context.AuthLookup = NewConfigAuthLookup(context)
 	}
 
 	if context.ServiceFactory == nil {

@@ -1,0 +1,49 @@
+FROM ubuntu:16.04
+
+# Packaged dependencies
+RUN apt-get update && apt-get install -y \
+	apparmor \
+	curl \
+    ca-certificates \
+    libc-dev \
+    gcc \
+	git \
+	iptables \
+	jq \
+	libapparmor-dev \
+	libcap-dev \
+	libltdl-dev \
+    libseccomp-dev \
+	net-tools \
+    iproute2 \
+	pkg-config \
+	tar \
+    vim \
+	--no-install-recommends
+
+# Install go
+RUN curl -sLf https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz | tar xzf - -C /usr/local
+ENV GOPATH=/go
+ENV PATH=/go/bin:/usr/local/go/bin:$PATH
+
+# Setup runc
+RUN ln -s /go/src/github.com/docker/docker/bin/docker /usr/local/bin/docker-runc
+
+# Add an unprivileged user to be used for tests which need it
+RUN groupadd -r docker
+RUN useradd --create-home --gid docker unprivilegeduser
+
+# Trash
+RUN go get github.com/rancher/trash
+
+ENV DOCKER_BUILDTAGS apparmor seccomp selinux cgo daemon netgo
+ENV DAPPER_SOURCE /go/src/github.com/docker/docker
+ENV DAPPER_RUN_ARGS --privileged
+ENV DAPPER_OUTPUT bin
+ENV DAPPER_ENV TAG REPO
+ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
+ENV PATH=${DAPPER_SOURCE}/bin:$PATH
+
+VOLUME /var/lib/docker
+WORKDIR /go/src/github.com/docker/docker
+ENTRYPOINT ["./scripts/entry"]

@@ -16,6 +16,13 @@ type ConfigAuthLookup struct {
 	context *Context
 }
 
+// NewConfigAuthLookup creates a new ConfigAuthLookup for a given context
+func NewConfigAuthLookup(context *Context) *ConfigAuthLookup {
+	return &ConfigAuthLookup{
+		context: context,
+	}
+}
+
 // Lookup uses a Docker config file to lookup authentication information
 func (c *ConfigAuthLookup) Lookup(repoInfo *registry.RepositoryInfo) types.AuthConfig {
 	if c.context.ConfigFile == nil || repoInfo == nil || repoInfo.Index == nil {

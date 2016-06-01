@@ -93,7 +93,8 @@ func startDocker(cfg *config.CloudConfig) error {
 	cmd = append(cmd, args...)
 	log.Infof("Running %v", cmd)
 
-	resp, err := client.ContainerExecCreate(context.Background(), storageContext, types.ExecConfig{
+	resp, err := client.ContainerExecCreate(context.Background(), types.ExecConfig{
+		Container:    storageContext,
 		Privileged:   true,
 		AttachStdin:  true,
 		AttachStderr: true,

@@ -2,18 +2,6 @@
 
 Items starting with DEPRECATE are important deprecation notices. For more information on the list of deprecated APIs please have a look at https://docs.docker.com/misc/deprecated/ where target removal dates can also be found.
 
-## 0.3.2 (2016-03-30)
-
-## Client
-
-- Revert setting the ServerName in the TLS configuration at client init. See https://github.com/docker/swarm/issues/2027.
-
-## 0.3.1 (2016-03-23)
-
-### Client
-
-- Ensure that API paths are properly escaped.
-
 ## 0.3.0 (2016-03-22)
 
 ### Client

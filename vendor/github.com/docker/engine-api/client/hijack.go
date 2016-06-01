@@ -68,11 +68,11 @@ func (cli *Client) postHijacked(ctx context.Context, path string, query url.Valu
 	defer clientconn.Close()
 
 	// Server hijacks the connection, error 'connection closed' expected
-	_, err = clientconn.Do(req)
+	clientconn.Do(req)
 
 	rwc, br := clientconn.Hijack()
 
-	return types.HijackedResponse{Conn: rwc, Reader: br}, err
+	return types.HijackedResponse{Conn: rwc, Reader: br}, nil
 }
 
 func tlsDial(network, addr string, config *tls.Config) (net.Conn, error) {

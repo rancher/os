@@ -251,7 +251,6 @@ type Info struct {
 	ServerVersion      string
 	ClusterStore       string
 	ClusterAdvertise   string
-	SecurityOptions    []string
 }
 
 // PluginsInfo is a temp struct holding Plugins name
@@ -290,18 +289,6 @@ type ContainerState struct {
 	FinishedAt string
 }
 
-// ContainerNode stores information about the node that a container
-// is running on.  It's only available in Docker Swarm
-type ContainerNode struct {
-	ID        string
-	IPAddress string `json:"IP"`
-	Addr      string
-	Name      string
-	Cpus      int
-	Memory    int
-	Labels    map[string]string
-}
-
 // ContainerJSONBase contains response of Remote API:
 // GET "/containers/{name:.*}/json"
 type ContainerJSONBase struct {
@@ -315,7 +302,6 @@ type ContainerJSONBase struct {
 	HostnamePath    string
 	HostsPath       string
 	LogPath         string
-	Node            *ContainerNode `json:",omitempty"`
 	Name            string
 	RestartCount    int
 	Driver          string
@@ -395,7 +381,6 @@ type Volume struct {
 	Mountpoint string                 // Mountpoint is the location on disk of the volume
 	Status     map[string]interface{} `json:",omitempty"` // Status provides low-level status information about the volume
 	Labels     map[string]string      // Labels is metadata specific to the volume
-	Scope      string                 // Scope describes the level at which the volume exists (e.g. `global` for cluster-wide or `local` for machine level)
 }
 
 // VolumesListResponse contains the response for the remote API:
@@ -439,6 +424,7 @@ type EndpointResource struct {
 
 // NetworkCreate is the expected body of the "create network" http request message
 type NetworkCreate struct {
+	Name           string
 	CheckDuplicate bool
 	Driver         string
 	EnableIPv6     bool
@@ -446,12 +432,6 @@ type NetworkCreate struct {
 	Internal       bool
 	Options        map[string]string
 	Labels         map[string]string
-}
-
-// NetworkCreateRequest is the request message sent to the server for network create call.
-type NetworkCreateRequest struct {
-	NetworkCreate
-	Name string
 }
 
 // NetworkCreateResponse is the response message sent by the server for network create call

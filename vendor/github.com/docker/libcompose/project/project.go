@@ -278,8 +278,9 @@ func (p *Project) removeOrphanContainers() error {
 			if err := client.ContainerKill(context.Background(), container.ID, "SIGKILL"); err != nil {
 				return err
 			}
-			if err := client.ContainerRemove(context.Background(), container.ID, types.ContainerRemoveOptions{
-				Force: true,
+			if err := client.ContainerRemove(context.Background(), types.ContainerRemoveOptions{
+				ContainerID: container.ID,
+				Force:       true,
 			}); err != nil {
 				return err
 			}

@@ -19,7 +19,9 @@ import (
 )
 
 func removeImage(ctx context.Context, client client.APIClient, image string) error {
-	_, err := client.ImageRemove(ctx, image, types.ImageRemoveOptions{})
+	_, err := client.ImageRemove(ctx, types.ImageRemoveOptions{
+		ImageID: image,
+	})
 	return err
 }
 
@@ -43,9 +45,18 @@ func pullImage(ctx context.Context, client client.APIClient, service *Service, i
 	}
 
 	options := types.ImagePullOptions{
+		ImageID:      distributionRef.String(),
+		Tag:          "latest",
 		RegistryAuth: encodedAuth,
 	}
-	responseBody, err := client.ImagePull(ctx, distributionRef.String(), options)
+	if named, ok := distributionRef.(reference.Named); ok {
+		options.ImageID = named.FullName()
+	}
+	if tagged, ok := distributionRef.(reference.NamedTagged); ok {
+		options.Tag = tagged.Tag()
+	}
+
+	responseBody, err := client.ImagePull(ctx, options, nil)
 	if err != nil {
 		logrus.Errorf("Failed to pull image %s: %v", image, err)
 		return err

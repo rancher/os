@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	changeLogURL                    = "https://github.com/codegangsta/cli/blob/master/CHANGELOG.md"
+	changeLogURL                    = "https://github.com/urfave/cli/blob/master/CHANGELOG.md"
 	appActionDeprecationURL         = fmt.Sprintf("%s#deprecated-cli-app-action-signature", changeLogURL)
 	runAndExitOnErrorDeprecationURL = fmt.Sprintf("%s#deprecated-cli-app-runandexitonerror", changeLogURL)
 
@@ -51,7 +51,7 @@ type App struct {
 	HideHelp bool
 	// Boolean to hide built-in version flag and the VERSION section of help
 	HideVersion bool
-	// Populate on app startup, only gettable throught method Categories()
+	// Populate on app startup, only gettable through method Categories()
 	categories CommandCategories
 	// An action to execute when the bash-completion flag is set
 	BashComplete BashCompleteFunc
@@ -82,8 +82,12 @@ type App struct {
 	Email string
 	// Writer writer to write output to
 	Writer io.Writer
+	// ErrWriter writes error output
+	ErrWriter io.Writer
 	// Other custom info
 	Metadata map[string]interface{}
+
+	didSetup bool
 }
 
 // Tries to find out when this binary was compiled.
@@ -96,7 +100,8 @@ func compileTime() time.Time {
 	return info.ModTime()
 }
 
-// Creates a new cli Application with some reasonable defaults for Name, Usage, Version and Action.
+// NewApp creates a new cli Application with some reasonable defaults for Name,
+// Usage, Version and Action.
 func NewApp() *App {
 	return &App{
 		Name:         filepath.Base(os.Args[0]),
@@ -111,8 +116,16 @@ func NewApp() *App {
 	}
 }
 
-// Entry point to the cli app. Parses the arguments slice and routes to the proper flag/args combination
-func (a *App) Run(arguments []string) (err error) {
+// Setup runs initialization code to ensure all data structures are ready for
+// `Run` or inspection prior to `Run`.  It is internally called by `Run`, but
+// will return early if setup has already happened.
+func (a *App) Setup() {
+	if a.didSetup {
+		return
+	}
+
+	a.didSetup = true
+
 	if a.Author != "" || a.Email != "" {
 		a.Authors = append(a.Authors, Author{Name: a.Author, Email: a.Email})
 	}
@@ -148,6 +161,12 @@ func (a *App) Run(arguments []string) (err error) {
 	if !a.HideVersion {
 		a.appendFlag(VersionFlag)
 	}
+}
+
+// Run is the entry point to the cli app. Parses the arguments slice and routes
+// to the proper flag/args combination
+func (a *App) Run(arguments []string) (err error) {
+	a.Setup()
 
 	// parse flags
 	set := flagSet(a.Name, a.Flags)
@@ -170,11 +189,10 @@ func (a *App) Run(arguments []string) (err error) {
 			err := a.OnUsageError(context, err, false)
 			HandleExitCoder(err)
 			return err
-		} else {
-			fmt.Fprintf(a.Writer, "%s\n\n", "Incorrect Usage.")
-			ShowAppHelp(context)
-			return err
 		}
+		fmt.Fprintf(a.Writer, "%s\n\n", "Incorrect Usage.")
+		ShowAppHelp(context)
+		return err
 	}
 
 	if !a.HideHelp && checkHelp(context) {
@@ -228,16 +246,14 @@ func (a *App) Run(arguments []string) (err error) {
 
 // DEPRECATED: Another entry point to the cli app, takes care of passing arguments and error handling
 func (a *App) RunAndExitOnError() {
-	fmt.Fprintf(os.Stderr,
-		"DEPRECATED cli.App.RunAndExitOnError.  %s  See %s\n",
-		contactSysadmin, runAndExitOnErrorDeprecationURL)
 	if err := a.Run(os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintln(a.errWriter(), err)
 		OsExiter(1)
 	}
 }
 
-// Invokes the subcommand given the context, parses ctx.Args() to generate command-specific flags
+// RunAsSubcommand invokes the subcommand given the context, parses ctx.Args() to
+// generate command-specific flags
 func (a *App) RunAsSubcommand(ctx *Context) (err error) {
 	// append help to commands
 	if len(a.Commands) > 0 {
@@ -290,11 +306,10 @@ func (a *App) RunAsSubcommand(ctx *Context) (err error) {
 			err = a.OnUsageError(context, err, true)
 			HandleExitCoder(err)
 			return err
-		} else {
-			fmt.Fprintf(a.Writer, "%s\n\n", "Incorrect Usage.")
-			ShowSubcommandHelp(context)
-			return err
 		}
+		fmt.Fprintf(a.Writer, "%s\n\n", "Incorrect Usage.")
+		ShowSubcommandHelp(context)
+		return err
 	}
 
 	if len(a.Commands) > 0 {
@@ -346,7 +361,7 @@ func (a *App) RunAsSubcommand(ctx *Context) (err error) {
 	return err
 }
 
-// Returns the named command on App. Returns nil if the command does not exist
+// Command returns the named command on App. Returns nil if the command does not exist
 func (a *App) Command(name string) *Command {
 	for _, c := range a.Commands {
 		if c.HasName(name) {
@@ -357,9 +372,39 @@ func (a *App) Command(name string) *Command {
 	return nil
 }
 
-// Returnes the array containing all the categories with the commands they contain
+// Categories returns a slice containing all the categories with the commands they contain
 func (a *App) Categories() CommandCategories {
 	return a.categories
+}
+
+// VisibleCategories returns a slice of categories and commands that are
+// Hidden=false
+func (a *App) VisibleCategories() []*CommandCategory {
+	ret := []*CommandCategory{}
+	for _, category := range a.categories {
+		if visible := func() *CommandCategory {
+			for _, command := range category.Commands {
+				if !command.Hidden {
+					return category
+				}
+			}
+			return nil
+		}(); visible != nil {
+			ret = append(ret, visible)
+		}
+	}
+	return ret
+}
+
+// VisibleCommands returns a slice of the Commands with Hidden=false
+func (a *App) VisibleCommands() []Command {
+	ret := []Command{}
+	for _, command := range a.Commands {
+		if !command.Hidden {
+			ret = append(ret, command)
+		}
+	}
+	return ret
 }
 
 // VisibleFlags returns a slice of the Flags with Hidden=false
@@ -375,6 +420,16 @@ func (a *App) hasFlag(flag Flag) bool {
 	}
 
 	return false
+}
+
+func (a *App) errWriter() io.Writer {
+
+	// When the app ErrWriter is nil use the package level one.
+	if a.ErrWriter == nil {
+		return ErrWriter
+	}
+
+	return a.ErrWriter
 }
 
 func (a *App) appendFlag(flag Flag) {
@@ -422,9 +477,6 @@ func HandleAction(action interface{}, context *Context) (err error) {
 	vals := reflect.ValueOf(action).Call([]reflect.Value{reflect.ValueOf(context)})
 
 	if len(vals) == 0 {
-		fmt.Fprintf(os.Stderr,
-			"DEPRECATED Action signature.  Must be `cli.ActionFunc`.  %s  See %s\n",
-			contactSysadmin, appActionDeprecationURL)
 		return nil
 	}
 
