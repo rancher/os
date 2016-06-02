@@ -27,8 +27,9 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     addgroup -g 1103 sudo && \
     adduser -u 1100 -G rancher -D -h /home/rancher -s /bin/bash rancher && \
     adduser -u 1101 -G docker -D -h /home/docker -s /bin/bash docker && \
-    sed -i 's/\(^docker.*\)/\1rancher/g' /etc/group && \
-    sed -i 's/\(^sudo.*\)/\1rancher,docker/g' /etc/group && \
+    adduser rancher docker && \
+    adduser rancher sudo && \
+    adduser docker sudo && \
     echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
 COPY inputrc /etc/inputrc
 COPY entry.sh /usr/sbin/entry.sh

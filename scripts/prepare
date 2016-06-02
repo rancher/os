@@ -10,8 +10,6 @@ if [ ! -e ../bin/host_ros ]; then
 fi
 
 ./template
-if [ "$HOST_ARCH" = "$ARCH" ]; then
-    CORE=true ./build-images
-fi
+./build-images
 ./tar-images
 ./layout
