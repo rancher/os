@@ -239,7 +239,7 @@ func WriteToFile(data interface{}, filename string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(filename, content, 400)
+	return util.WriteFileAtomic(filename, content, 400)
 }
 
 func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map[interface{}]interface{}, error) {
