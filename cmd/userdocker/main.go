@@ -18,6 +18,8 @@ import (
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
+	"github.com/rancher/os/util"
+	"path/filepath"
 )
 
 const (
@@ -39,6 +41,36 @@ func Main() {
 	}
 
 	select {}
+}
+
+func writeCerts(cfg *config.CloudConfig) error {
+	outDir := control.ServerTlsPath
+	if err := os.MkdirAll(outDir, 0700); err != nil {
+		return err
+	}
+	caCertPath := filepath.Join(outDir, control.CaCert)
+	caKeyPath := filepath.Join(outDir, control.CaKey)
+	serverCertPath := filepath.Join(outDir, control.ServerCert)
+	serverKeyPath := filepath.Join(outDir, control.ServerKey)
+	if cfg.Rancher.Docker.CACert != "" {
+		if err := util.WriteFileAtomic(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
+			return err
+		}
+
+		if err := util.WriteFileAtomic(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
+			return err
+		}
+	}
+	if cfg.Rancher.Docker.ServerCert != "" {
+		if err := util.WriteFileAtomic(serverCertPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
+			return err
+		}
+
+		if err := util.WriteFileAtomic(serverKeyPath, []byte(cfg.Rancher.Docker.ServerKey), 0400); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func startDocker(cfg *config.CloudConfig) error {
@@ -77,8 +109,7 @@ func startDocker(cfg *config.CloudConfig) error {
 	log.Debugf("User Docker args: %v", args)
 
 	if dockerCfg.TLS {
-		log.Debug("Generating TLS certs if needed")
-		if err := control.Generate(true, "/etc/docker/tls", []string{"127.0.0.1", "*", "*.*", "*.*.*", "*.*.*.*"}); err != nil {
+		if err := writeCerts(cfg); err != nil {
 			return err
 		}
 	}

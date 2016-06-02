@@ -14,8 +14,16 @@ import (
 )
 
 const (
-	NAME string = "rancher"
-	BITS int    = 2048
+	NAME          string = "rancher"
+	BITS          int    = 2048
+	ServerTlsPath string = "/etc/docker/tls"
+	ClientTlsPath string = "/home/rancher/.docker"
+	Cert          string = "cert.pem"
+	Key           string = "key.pem"
+	ServerCert    string = "server-cert.pem"
+	ServerKey     string = "server-key.pem"
+	CaCert        string = "ca.pem"
+	CaKey         string = "ca-key.pem"
 )
 
 func tlsConfCommands() []cli.Command {
@@ -45,44 +53,34 @@ func tlsConfCommands() []cli.Command {
 	}
 }
 
-func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig, certPath, keyPath, caCertPath, caKeyPath string) error {
+func writeCerts(generateServer bool, hostname []string, certPath, keyPath, caCertPath, caKeyPath string) error {
 	if !generateServer {
 		return machineUtil.GenerateCert([]string{""}, certPath, keyPath, caCertPath, caKeyPath, NAME, BITS)
 	}
 
-	if cfg.Rancher.Docker.ServerKey == "" || cfg.Rancher.Docker.ServerCert == "" {
-		err := machineUtil.GenerateCert(hostname, certPath, keyPath, caCertPath, caKeyPath, NAME, BITS)
-		if err != nil {
-			return err
-		}
-
-		cert, err := ioutil.ReadFile(certPath)
-		if err != nil {
-			return err
-		}
-
-		key, err := ioutil.ReadFile(keyPath)
-		if err != nil {
-			return err
-		}
-
-		// certPath, keyPath are already written to by machineUtil.GenerateCert()
-		if err := config.Set("rancher.docker.server_cert", string(cert)); err != nil {
-			return err
-		}
-		if err := config.Set("rancher.docker.server_key", string(key)); err != nil {
-			return err
-		}
-	}
-
-	cfg = config.LoadConfig()
-
-	if err := util.WriteFileAtomic(certPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
+	if err := machineUtil.GenerateCert(hostname, certPath, keyPath, caCertPath, caKeyPath, NAME, BITS); err != nil {
 		return err
 	}
 
-	return util.WriteFileAtomic(keyPath, []byte(cfg.Rancher.Docker.ServerKey), 0400)
+	cert, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return err
+	}
 
+	key, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return err
+	}
+
+	// certPath, keyPath are already written to by machineUtil.GenerateCert()
+	if err := config.Set("rancher.docker.server_cert", string(cert)); err != nil {
+		return err
+	}
+	if err := config.Set("rancher.docker.server_key", string(key)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
@@ -108,16 +106,16 @@ func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
 		if err := config.Set("rancher.docker.ca_key", string(caKey)); err != nil {
 			return err
 		}
-	}
+	} else {
+		cfg = config.LoadConfig()
 
-	cfg = config.LoadConfig()
+		if err := util.WriteFileAtomic(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
+			return err
+		}
 
-	if err := util.WriteFileAtomic(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
-		return err
-	}
-
-	if err := util.WriteFileAtomic(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
-		return err
+		if err := util.WriteFileAtomic(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -143,20 +141,20 @@ func generate(c *cli.Context) error {
 func Generate(generateServer bool, outDir string, hostnames []string) error {
 	if outDir == "" {
 		if generateServer {
-			outDir = "/etc/docker/tls"
+			outDir = ServerTlsPath
 		} else {
-			outDir = "/home/rancher/.docker"
+			outDir = ClientTlsPath
 		}
 		log.Infof("Out directory (-d, --dir) not specified, using default: %s", outDir)
 	}
-	caCertPath := filepath.Join(outDir, "ca.pem")
-	caKeyPath := filepath.Join(outDir, "ca-key.pem")
-	certPath := filepath.Join(outDir, "cert.pem")
-	keyPath := filepath.Join(outDir, "key.pem")
+	caCertPath := filepath.Join(outDir, CaCert)
+	caKeyPath := filepath.Join(outDir, CaKey)
+	certPath := filepath.Join(outDir, Cert)
+	keyPath := filepath.Join(outDir, Key)
 
 	if generateServer {
-		certPath = filepath.Join(outDir, "server-cert.pem")
-		keyPath = filepath.Join(outDir, "server-key.pem")
+		certPath = filepath.Join(outDir, ServerCert)
+		keyPath = filepath.Join(outDir, ServerKey)
 	}
 
 	if _, err := os.Stat(outDir); os.IsNotExist(err) {
@@ -166,12 +164,10 @@ func Generate(generateServer bool, outDir string, hostnames []string) error {
 	}
 
 	cfg := config.LoadConfig()
-
-	err := writeCaCerts(cfg, caCertPath, caKeyPath)
-	if err != nil {
+	if err := writeCaCerts(cfg, caCertPath, caKeyPath); err != nil {
 		return err
 	}
-	if err := writeCerts(generateServer, hostnames, cfg, certPath, keyPath, caCertPath, caKeyPath); err != nil {
+	if err := writeCerts(generateServer, hostnames, certPath, keyPath, caCertPath, caKeyPath); err != nil {
 		return err
 	}
 

@@ -72,7 +72,10 @@ def test_services_include(qemu, cloud_config):
 def test_docker_tls_args(qemu, cloud_config):
     SSH(qemu, ssh_command).check_call('''
 set -e -x
+sudo ros tls gen --server -H localhost
 sudo ros tls gen
+sudo ros c set rancher.docker.tls true
+sudo system-docker restart docker
 sleep 5
 docker --tlsverify version
     '''.strip())
