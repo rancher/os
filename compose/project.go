@@ -225,7 +225,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 				log.Errorf("Failed to parse YAML configuration: %s : %v", service, err)
 				continue
 			}
-			bytes, err = yaml.Marshal(adjustContainerNames(config.StringifyValues(m)))
+			bytes, err = yaml.Marshal(adjustContainerNames(m))
 			if err != nil {
 				log.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
 				continue
@@ -276,7 +276,7 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 			return fmt.Errorf("Failed to parse YAML configuration: %s : %v", service, err)
 		}
 
-		bytes, err = yaml.Marshal(config.StringifyValues(m))
+		bytes, err = yaml.Marshal(m)
 		if err != nil {
 			return fmt.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
 		}
