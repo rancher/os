@@ -80,10 +80,7 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return false, err
-	}
+	cfg := config.LoadConfig()
 	for _, c := range containers {
 		outOfSync, err := c.(*docker.Container).OutOfSync(ctx, s.Service.Config().Image)
 		if err != nil {

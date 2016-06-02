@@ -15,65 +15,51 @@ import (
 	"github.com/rancher/os/util"
 )
 
-func NewConfig() map[interface{}]interface{} {
-	osConfig, _ := readConfig(nil, true, OsConfigFile, OemConfigFile)
-	return osConfig
-}
-
 func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*CloudConfig, error) {
-	if data, err := readConfig(bytes, substituteMetadataVars, files...); err == nil {
-		c := &CloudConfig{}
-		if err := util.Convert(data, c); err != nil {
-			return nil, err
-		}
-		c, _ = amendNils(c)
-		c, _ = amendContainerNames(c)
-		return c, nil
-	} else {
+	data, err := readConfigs(bytes, substituteMetadataVars, true, files...)
+	if err != nil {
 		return nil, err
 	}
+
+	c := &CloudConfig{}
+	if err := util.Convert(data, c); err != nil {
+		return nil, err
+	}
+	c = amendNils(c)
+	c = amendContainerNames(c)
+	return c, nil
 }
 
-func LoadRawConfig(full bool) (map[interface{}]interface{}, error) {
-	var base map[interface{}]interface{}
+func loadRawDiskConfig(full bool) map[interface{}]interface{} {
+	var rawCfg map[interface{}]interface{}
 	if full {
-		base = NewConfig()
+		rawCfg, _ = readConfigs(nil, true, false, OsConfigFile, OemConfigFile)
 	}
-	user, err := readConfigs()
-	if err != nil {
-		return nil, err
-	}
-	cmdline, err := readCmdline()
-	if err != nil {
-		return nil, err
-	}
-	merged := util.Merge(base, util.Merge(user, cmdline))
-	merged, err = applyDebugFlags(merged)
-	if err != nil {
-		return nil, err
-	}
-	return mergeMetadata(merged, readMetadata()), nil
+
+	files := append(CloudConfigDirFiles(), CloudConfigFile)
+	additionalCfgs, _ := readConfigs(nil, true, false, files...)
+
+	return util.Merge(rawCfg, additionalCfgs)
 }
 
-func LoadConfig() (*CloudConfig, error) {
-	rawCfg, err := LoadRawConfig(true)
-	if err != nil {
-		return nil, err
-	}
+func loadRawConfig() map[interface{}]interface{} {
+	rawCfg := loadRawDiskConfig(true)
+	rawCfg = util.Merge(rawCfg, readCmdline())
+	rawCfg = applyDebugFlags(rawCfg)
+	return mergeMetadata(rawCfg, readMetadata())
+}
+
+func LoadConfig() *CloudConfig {
+	rawCfg := loadRawConfig()
 
 	cfg := &CloudConfig{}
 	if err := util.Convert(rawCfg, cfg); err != nil {
-		return nil, err
+		log.Errorf("Failed to parse configuration: %s", err)
+		return &CloudConfig{}
 	}
-	cfg, err = amendNils(cfg)
-	if err != nil {
-		return nil, err
-	}
-	cfg, err = amendContainerNames(cfg)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
+	cfg = amendNils(cfg)
+	cfg = amendContainerNames(cfg)
+	return cfg
 }
 
 func CloudConfigDirFiles() []string {
@@ -98,10 +84,10 @@ func CloudConfigDirFiles() []string {
 	return finalFiles
 }
 
-func applyDebugFlags(rawCfg map[interface{}]interface{}) (map[interface{}]interface{}, error) {
+func applyDebugFlags(rawCfg map[interface{}]interface{}) map[interface{}]interface{} {
 	cfg := &CloudConfig{}
 	if err := util.Convert(rawCfg, cfg); err != nil {
-		return nil, err
+		return rawCfg
 	}
 
 	if cfg.Rancher.Debug {
@@ -116,7 +102,7 @@ func applyDebugFlags(rawCfg map[interface{}]interface{}) (map[interface{}]interf
 
 	_, rawCfg = getOrSetVal("rancher.docker.args", rawCfg, cfg.Rancher.Docker.Args)
 	_, rawCfg = getOrSetVal("rancher.system_docker.args", rawCfg, cfg.Rancher.SystemDocker.Args)
-	return rawCfg, nil
+	return rawCfg
 }
 
 // mergeMetadata merges certain options from md (meta-data from the datasource)
@@ -172,35 +158,26 @@ func readMetadata() datasource.Metadata {
 	return metadata
 }
 
-func readConfigs() (map[interface{}]interface{}, error) {
-	files := append(CloudConfigDirFiles(), CloudConfigFile)
-	data, err := readConfig(nil, true, files...)
-	if err != nil {
-		return nil, err
-	}
-	return data, nil
-}
-
-func readCmdline() (map[interface{}]interface{}, error) {
+func readCmdline() map[interface{}]interface{} {
 	log.Debug("Reading config cmdline")
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
-		return nil, err
+		return nil
 	}
 
 	if len(cmdLine) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	log.Debugf("Config cmdline %s", cmdLine)
 
 	cmdLineObj := parseCmdline(strings.TrimSpace(string(cmdLine)))
 
-	return cmdLineObj, nil
+	return cmdLineObj
 }
 
-func amendNils(c *CloudConfig) (*CloudConfig, error) {
+func amendNils(c *CloudConfig) *CloudConfig {
 	t := *c
 	if t.Rancher.Environment == nil {
 		t.Rancher.Environment = map[string]string{}
@@ -217,10 +194,10 @@ func amendNils(c *CloudConfig) (*CloudConfig, error) {
 	if t.Rancher.ServicesInclude == nil {
 		t.Rancher.ServicesInclude = map[string]bool{}
 	}
-	return &t, nil
+	return &t
 }
 
-func amendContainerNames(c *CloudConfig) (*CloudConfig, error) {
+func amendContainerNames(c *CloudConfig) *CloudConfig {
 	for _, scm := range []map[string]*composeConfig.ServiceConfigV1{
 		c.Rancher.Autoformat,
 		c.Rancher.BootstrapContainers,
@@ -230,7 +207,7 @@ func amendContainerNames(c *CloudConfig) (*CloudConfig, error) {
 			v.ContainerName = k
 		}
 	}
-	return c, nil
+	return c
 }
 
 func WriteToFile(data interface{}, filename string) error {
@@ -242,7 +219,7 @@ func WriteToFile(data interface{}, filename string) error {
 	return ioutil.WriteFile(filename, content, 400)
 }
 
-func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map[interface{}]interface{}, error) {
+func readConfigs(bytes []byte, substituteMetadataVars, returnErr bool, files ...string) (map[interface{}]interface{}, error) {
 	// You can't just overlay yaml bytes on to maps, it won't merge, but instead
 	// just override the keys and not merge the map values.
 	left := make(map[interface{}]interface{})
@@ -250,7 +227,11 @@ func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map
 	for _, file := range files {
 		content, err := readConfigFile(file)
 		if err != nil {
-			return nil, err
+			if returnErr {
+				return nil, err
+			}
+			log.Errorf("Failed to read config file %s: %s", file, err)
+			continue
 		}
 		if len(content) == 0 {
 			continue
@@ -262,24 +243,53 @@ func readConfig(bytes []byte, substituteMetadataVars bool, files ...string) (map
 		right := make(map[interface{}]interface{})
 		err = yaml.Unmarshal(content, &right)
 		if err != nil {
-			return nil, err
+			if returnErr {
+				return nil, err
+			}
+			log.Errorf("Failed to parse config file %s: %s", file, err)
+			continue
+		}
+
+		// Verify there are no issues converting to CloudConfig
+		c := &CloudConfig{}
+		if err := util.Convert(right, c); err != nil {
+			if returnErr {
+				return nil, err
+			}
+			log.Errorf("Failed to parse config file %s: %s", file, err)
+			continue
 		}
 
 		left = util.Merge(left, right)
 	}
 
-	if bytes != nil && len(bytes) > 0 {
-		right := make(map[interface{}]interface{})
-		if substituteMetadataVars {
-			bytes = substituteVars(bytes, metadata)
-		}
-		if err := yaml.Unmarshal(bytes, &right); err != nil {
-			return nil, err
-		}
-
-		left = util.Merge(left, right)
+	if bytes == nil || len(bytes) == 0 {
+		return left, nil
 	}
 
+	right := make(map[interface{}]interface{})
+	if substituteMetadataVars {
+		bytes = substituteVars(bytes, metadata)
+	}
+
+	if err := yaml.Unmarshal(bytes, &right); err != nil {
+		if returnErr {
+			return nil, err
+		}
+		log.Errorf("Failed to parse bytes: %s", err)
+		return left, nil
+	}
+
+	c := &CloudConfig{}
+	if err := util.Convert(right, c); err != nil {
+		if returnErr {
+			return nil, err
+		}
+		log.Errorf("Failed to parse bytes: %s", err)
+		return left, nil
+	}
+
+	left = util.Merge(left, right)
 	return left, nil
 }
 

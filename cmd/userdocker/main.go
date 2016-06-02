@@ -28,10 +28,7 @@ const (
 )
 
 func Main() {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	if err := startDocker(cfg); err != nil {
 		log.Fatal(err)

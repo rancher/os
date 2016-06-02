@@ -22,11 +22,7 @@ import (
 
 func CreateService(cfg *config.CloudConfig, name string, serviceConfig *composeConfig.ServiceConfigV1) (project.Service, error) {
 	if cfg == nil {
-		var err error
-		cfg, err = config.LoadConfig()
-		if err != nil {
-			return nil, err
-		}
+		cfg = config.LoadConfig()
 	}
 
 	p, err := CreateServiceSet("once", cfg, map[string]*composeConfig.ServiceConfigV1{
@@ -195,11 +191,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 	p.AddListener(projectEvents)
 
 	p.ReloadCallback = func() error {
-		var err error
-		cfg, err = config.LoadConfig()
-		if err != nil {
-			return err
-		}
+		cfg = config.LoadConfig()
 
 		environmentLookup.SetConfig(cfg)
 
