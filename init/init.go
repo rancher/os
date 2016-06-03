@@ -117,10 +117,7 @@ func mountState(cfg *config.CloudConfig) error {
 
 func mountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if cfg == nil {
-		var err error
-		if cfg, err = config.LoadConfig(); err != nil {
-			return cfg, err
-		}
+		cfg = config.LoadConfig()
 	}
 	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OEM); err != nil {
 		log.Debugf("Not mounting OEM: %v", err)
@@ -198,10 +195,7 @@ func RunInit() error {
 		},
 		mountOem,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
-			cfg, err := config.LoadConfig()
-			if err != nil {
-				return cfg, err
-			}
+			cfg := config.LoadConfig()
 
 			if cfg.Rancher.Debug {
 				cfgString, err := config.Export(false, true)
@@ -217,7 +211,7 @@ func RunInit() error {
 		loadModules,
 		tryMountAndBootstrap,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
-			return config.LoadConfig()
+			return config.LoadConfig(), nil
 		},
 		loadModules,
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {

@@ -289,10 +289,6 @@ func parseBody(body []byte) (*Images, error) {
 }
 
 func getUpgradeUrl() (string, error) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return "", err
-	}
-
+	cfg := config.LoadConfig()
 	return cfg.Rancher.Upgrade.Url, nil
 }

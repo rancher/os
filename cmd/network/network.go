@@ -47,10 +47,7 @@ func Main() {
 		}
 	}
 
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	nameservers := cfg.Rancher.Network.Dns.Nameservers
 	search := cfg.Rancher.Network.Dns.Search

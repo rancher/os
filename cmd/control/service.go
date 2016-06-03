@@ -18,11 +18,7 @@ type projectFactory struct {
 }
 
 func (p *projectFactory) Create(c *cli.Context) (project.APIProject, error) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return nil, err
-	}
-
+	cfg := config.LoadConfig()
 	return compose.GetProject(cfg, true)
 }
 
@@ -92,10 +88,7 @@ func updateIncludedServices(cfg *config.CloudConfig) error {
 
 func disable(c *cli.Context) error {
 	changed := false
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	for _, service := range c.Args() {
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
@@ -107,7 +100,7 @@ func disable(c *cli.Context) error {
 	}
 
 	if changed {
-		if err = updateIncludedServices(cfg); err != nil {
+		if err := updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
@@ -117,10 +110,7 @@ func disable(c *cli.Context) error {
 
 func del(c *cli.Context) error {
 	changed := false
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	for _, service := range c.Args() {
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
@@ -131,7 +121,7 @@ func del(c *cli.Context) error {
 	}
 
 	if changed {
-		if err = updateIncludedServices(cfg); err != nil {
+		if err := updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
@@ -140,10 +130,7 @@ func del(c *cli.Context) error {
 }
 
 func enable(c *cli.Context) error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	var enabledServices []string
 
@@ -163,7 +150,7 @@ func enable(c *cli.Context) error {
 			logrus.Fatal(err)
 		}
 
-		if err = updateIncludedServices(cfg); err != nil {
+		if err := updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
@@ -172,10 +159,7 @@ func enable(c *cli.Context) error {
 }
 
 func list(c *cli.Context) error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	clone := make(map[string]bool)
 	for service, enabled := range cfg.Rancher.ServicesInclude {

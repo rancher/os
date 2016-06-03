@@ -72,11 +72,11 @@ func StringifyValues(data map[interface{}]interface{}) map[interface{}]interface
 }
 
 func Merge(bytes []byte) error {
-	data, err := readConfig(bytes, false)
+	data, err := readConfigs(bytes, false, true)
 	if err != nil {
 		return err
 	}
-	existing, err := readConfig(nil, false, CloudConfigFile)
+	existing, err := readConfigs(nil, false, true, CloudConfigFile)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func Merge(bytes []byte) error {
 }
 
 func Export(private, full bool) (string, error) {
-	rawCfg, err := LoadRawConfig(full)
+	rawCfg := loadRawDiskConfig(full)
 	if !private {
 		rawCfg = filterPrivateKeys(rawCfg)
 	}
@@ -94,10 +94,7 @@ func Export(private, full bool) (string, error) {
 }
 
 func Get(key string) (interface{}, error) {
-	cfg, err := LoadConfig()
-	if err != nil {
-		return nil, err
-	}
+	cfg := LoadConfig()
 
 	data := map[interface{}]interface{}{}
 	if err := util.ConvertIgnoreOmitEmpty(cfg, &data); err != nil {
@@ -109,13 +106,11 @@ func Get(key string) (interface{}, error) {
 }
 
 func Set(key string, value interface{}) error {
-	data := map[interface{}]interface{}{}
-	_, data = getOrSetVal(key, data, value)
-
-	existing, err := readConfig(nil, false, CloudConfigFile)
+	existing, err := readConfigs(nil, false, true, CloudConfigFile)
 	if err != nil {
 		return err
 	}
 
-	return WriteToFile(util.Merge(existing, data), CloudConfigFile)
+	_, modified := getOrSetVal(key, existing, value)
+	return WriteToFile(modified, CloudConfigFile)
 }

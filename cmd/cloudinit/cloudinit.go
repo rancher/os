@@ -96,11 +96,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 }
 
 func currentDatasource() (datasource.Datasource, error) {
-	cfg, err := rancherConfig.LoadConfig()
-	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("Failed to read rancher config")
-		return nil, err
-	}
+	cfg := rancherConfig.LoadConfig()
 
 	dss := getDatasources(cfg)
 	if len(dss) == 0 {
@@ -169,10 +165,7 @@ func fetchUserData() ([]byte, datasource.Metadata, error) {
 }
 
 func executeCloudConfig() error {
-	cc, err := rancherConfig.LoadConfig()
-	if err != nil {
-		return err
-	}
+	cc := rancherConfig.LoadConfig()
 
 	if len(cc.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)

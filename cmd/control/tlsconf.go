@@ -75,10 +75,7 @@ func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig,
 		}
 	}
 
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
+	cfg = config.LoadConfig()
 
 	if err := util.WriteFileAtomic(certPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
 		return err
@@ -113,10 +110,7 @@ func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
 		}
 	}
 
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
+	cfg = config.LoadConfig()
 
 	if err := util.WriteFileAtomic(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
 		return err
@@ -171,11 +165,9 @@ func Generate(generateServer bool, outDir string, hostnames []string) error {
 		}
 	}
 
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
-	err = writeCaCerts(cfg, caCertPath, caKeyPath)
+	cfg := config.LoadConfig()
+
+	err := writeCaCerts(cfg, caCertPath, caKeyPath)
 	if err != nil {
 		return err
 	}

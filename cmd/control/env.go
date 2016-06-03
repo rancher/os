@@ -12,10 +12,7 @@ import (
 )
 
 func envAction(c *cli.Context) error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	args := c.Args()
 	if len(args) == 0 {
