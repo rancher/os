@@ -1,5 +1,5 @@
 FROM rancher/os-ubuntuconsole-base
-# FROM amd64=ubuntu:14.04.4 arm64=aarch64/ubuntu:14.04 arm=armhf/ubuntu:14.04
+# FROM amd64=ubuntu:16.04 arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 RUN apt-get update && \
     apt-get upgrade --no-install-recommends -y && \
     apt-get install -y --no-install-recommends iptables openssh-server rsync vim curl ca-certificates psmisc htop
