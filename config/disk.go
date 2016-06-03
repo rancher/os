@@ -11,6 +11,7 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
+	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/util"
 )
@@ -193,6 +194,9 @@ func amendNils(c *CloudConfig) *CloudConfig {
 	}
 	if t.Rancher.ServicesInclude == nil {
 		t.Rancher.ServicesInclude = map[string]bool{}
+	}
+	if t.Rancher.RegistryAuths == nil {
+		t.Rancher.RegistryAuths = map[string]types.AuthConfig{}
 	}
 	return &t
 }

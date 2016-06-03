@@ -4,6 +4,7 @@ import (
 	"runtime"
 
 	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/netconf"
 )
@@ -104,6 +105,7 @@ type RancherConfig struct {
 	SystemDocker        DockerConfig                              `yaml:"system_docker,omitempty"`
 	Upgrade             UpgradeConfig                             `yaml:"upgrade,omitempty"`
 	Docker              DockerConfig                              `yaml:"docker,omitempty"`
+	RegistryAuths       map[string]types.AuthConfig               `yaml:"registry_auths,omitempty"`
 	Defaults            Defaults                                  `yaml:"defaults,omitempty"`
 }
 
