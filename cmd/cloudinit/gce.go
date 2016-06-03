@@ -1,11 +1,11 @@
 package cloudinit
 
 import (
-	"io/ioutil"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/rancher/os/util"
 	"google.golang.org/cloud/compute/metadata"
 )
 
@@ -111,7 +111,7 @@ func (cc *GceCloudConfig) getMergedUserData() ([]byte, error) {
 }
 
 func writeFile(filename string, data []byte) error {
-	if err := ioutil.WriteFile(filename, data, 400); err != nil {
+	if err := util.WriteFileAtomic(filename, data, 400); err != nil {
 		log.Errorf("Could not write file %v", err)
 		return err
 	}

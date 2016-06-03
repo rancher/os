@@ -10,6 +10,7 @@ import (
 	"github.com/codegangsta/cli"
 	machineUtil "github.com/docker/machine/utils"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 const (
@@ -79,11 +80,11 @@ func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig,
 		return err
 	}
 
-	if err := ioutil.WriteFile(certPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
+	if err := util.WriteFileAtomic(certPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(keyPath, []byte(cfg.Rancher.Docker.ServerKey), 0400)
+	return util.WriteFileAtomic(keyPath, []byte(cfg.Rancher.Docker.ServerKey), 0400)
 
 }
 
@@ -117,11 +118,11 @@ func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
+	if err := util.WriteFileAtomic(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
 		return err
 	}
 
-	if err := ioutil.WriteFile(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
+	if err := util.WriteFileAtomic(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
 		return err
 	}
 
