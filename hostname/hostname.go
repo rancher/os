@@ -2,17 +2,18 @@ package hostname
 
 import (
 	"bufio"
-	"github.com/rancher/os/config"
 	"io/ioutil"
 	"os"
 	"strings"
 	"syscall"
+
+	"github.com/rancher/os/config"
 )
 
 func SetHostnameFromCloudConfig(cc *config.CloudConfig) error {
 	var hostname string
 	if cc.Hostname == "" {
-		hostname = cc.DefaultHostname
+		hostname = cc.Rancher.Defaults.Hostname
 	} else {
 		hostname = cc.Hostname
 	}
