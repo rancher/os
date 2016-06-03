@@ -45,16 +45,15 @@ func (f *File) Permissions() (os.FileMode, error) {
 	return os.FileMode(perm), nil
 }
 
+// WriteFile writes given endecoded file to the filesystem
 func WriteFile(f *File, root string) (string, error) {
+	if f.Encoding != "" {
+		return "", fmt.Errorf("Unable to write file with encoding %s", f.Encoding)
+	}
+
 	fullpath := path.Join(root, f.Path)
 	dir := path.Dir(fullpath)
 	log.Printf("Writing file to %q", fullpath)
-
-	content, err := config.DecodeContent(f.Content, f.Encoding)
-
-	if err != nil {
-		return "", fmt.Errorf("Unable to decode %s (%v)", f.Path, err)
-	}
 
 	if err := EnsureDirectoryExists(dir); err != nil {
 		return "", err
@@ -71,7 +70,7 @@ func WriteFile(f *File, root string) (string, error) {
 		return "", err
 	}
 
-	if err := ioutil.WriteFile(tmp.Name(), content, perm); err != nil {
+	if err := ioutil.WriteFile(tmp.Name(), []byte(f.Content), perm); err != nil {
 		return "", err
 	}
 

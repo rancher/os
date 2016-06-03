@@ -1,0 +1,11 @@
+# If you manipulate the contents of vendor/, amend this accordingly.
+# pkg                                      version
+github.com/cloudsigma/cepgo                1bfc4895bf5c4d3b599f3f6ee142299488c8739b
+github.com/coreos/go-systemd/dbus          4fbc5060a317b142e6c7bfbedb65596d5f0ab99b
+github.com/coreos/yaml                     6b16a5714269b2f70720a45406b1babd947a17ef
+github.com/dotcloud/docker/pkg/netlink     55d41c3e21e1593b944c06196ffb2ac57ab7f653
+github.com/guelfey/go.dbus                 f6a3a2366cc39b8479cadc499d3c735fb10fbdda
+github.com/tarm/goserial                   cdabc8d44e8e84f58f18074ae44337e1f2f375b9
+github.com/sigma/vmw-guestinfo             95dd4126d6e8b4ef1970b3f3fe2e8cdd470d2903
+github.com/sigma/vmw-ovflib                56b4f44581cac03d17d8270158bdfd0942ffe790
+github.com/sigma/bdoor                     babf2a4017b020d4ce04e8167076186e82645dd1
