@@ -68,6 +68,22 @@ func NewCloudConfig(contents string) (*CloudConfig, error) {
 	return &cfg, err
 }
 
+// Decode decodes the content of cloud config. Currently only WriteFiles section
+// supports several types of encoding and all of them are supported. After
+// decode operation, Encoding type is unset.
+func (cc *CloudConfig) Decode() error {
+	for i, file := range cc.WriteFiles {
+		content, err := DecodeContent(file.Content, file.Encoding)
+		if err != nil {
+			return err
+		}
+
+		cc.WriteFiles[i].Content = string(content)
+		cc.WriteFiles[i].Encoding = ""
+	}
+
+	return nil
+}
 func (cc CloudConfig) String() string {
 	bytes, err := yaml.Marshal(cc)
 	if err != nil {

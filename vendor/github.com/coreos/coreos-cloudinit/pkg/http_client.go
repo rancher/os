@@ -62,8 +62,8 @@ type HttpClient struct {
 	// Maximum number of connection retries. Defaults to 15
 	MaxRetries int
 
-	// Whether or not to skip TLS verification. Defaults to false
-	SkipTLS bool
+	// Headers to add to the request.
+	Header http.Header
 
 	client *http.Client
 }
@@ -74,11 +74,15 @@ type Getter interface {
 }
 
 func NewHttpClient() *HttpClient {
+	return NewHttpClientHeader(nil)
+}
+
+func NewHttpClientHeader(header http.Header) *HttpClient {
 	hc := &HttpClient{
 		InitialBackoff: 50 * time.Millisecond,
 		MaxBackoff:     time.Second * 5,
 		MaxRetries:     15,
-		SkipTLS:        false,
+		Header:         header,
 		client: &http.Client{
 			Timeout: 10 * time.Second,
 		},
@@ -139,7 +143,13 @@ func (h *HttpClient) GetRetry(rawurl string) ([]byte, error) {
 }
 
 func (h *HttpClient) Get(dataURL string) ([]byte, error) {
-	if resp, err := h.client.Get(dataURL); err == nil {
+	request, err := http.NewRequest("GET", dataURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	request.Header = h.Header
+	if resp, err := h.client.Do(request); err == nil {
 		defer resp.Body.Close()
 		switch resp.StatusCode / 100 {
 		case HTTP_2xx:

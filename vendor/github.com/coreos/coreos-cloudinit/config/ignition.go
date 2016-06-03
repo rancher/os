@@ -20,7 +20,10 @@ import (
 
 func IsIgnitionConfig(userdata string) bool {
 	var cfg struct {
-		Version *int `json:"ignitionVersion" yaml:"ignition_version"`
+		Version  *int `json:"ignitionVersion"`
+		Ignition struct {
+			Version *string `json:"version"`
+		} `json:"ignition"`
 	}
-	return (json.Unmarshal([]byte(userdata), &cfg) == nil && cfg.Version != nil)
+	return (json.Unmarshal([]byte(userdata), &cfg) == nil && (cfg.Version != nil || cfg.Ignition.Version != nil))
 }
