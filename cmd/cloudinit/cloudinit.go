@@ -32,6 +32,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/file"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata/gce"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/packet"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
@@ -254,12 +255,7 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 			}
 		case "gce":
 			if network {
-				gceCloudConfigFile, err := GetAndCreateGceDataSourceFilename()
-				if err != nil {
-					log.Errorf("Could not retrieve GCE CloudConfig %s", err)
-					continue
-				}
-				dss = append(dss, file.NewDatasource(gceCloudConfigFile))
+				dss = append(dss, gce.NewDatasource("http://metadata.google.internal/"))
 			}
 		case "packet":
 			if !network {
