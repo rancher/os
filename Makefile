@@ -39,6 +39,12 @@ else
 	touch $@
 endif
 
+assets/extra.tar.gz:
+ifdef EXTRA_MODULES_URL
+	mkdir -p $(dir $@)
+	curl -L "$(EXTRA_MODULES_URL)" > $@
+endif
+
 ifdef COMPILED_KERNEL_URL
 
 installer: minimal
@@ -54,7 +60,7 @@ build/kernel/:
 	wget -O - "$(COMPILED_KERNEL_URL)" | tar -xzf - -C $@
 
 
-dist/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 build/kernel/ build/images.tar assets/modules.tar.gz
+dist/artifacts/initrd: bin/ros assets/docker assets/selinux/policy.29 build/kernel/ build/images.tar assets/modules.tar.gz assets/extra.tar.gz
 	mkdir -p $(dir $@)
 	HOST_SUFFIX=$(HOST_SUFFIX) SUFFIX=$(SUFFIX) DFS_IMAGE=$(DFS_IMAGE) DEV_BUILD=$(DEV_BUILD) \
 	       KERNEL_RELEASE=$(KERNEL_RELEASE) ARCH=$(ARCH) ./scripts/mk-initrd.sh $@

@@ -42,6 +42,12 @@ if [ "$ARCH" == "amd64" ]; then
   depmod -a -b ${INITRD_DIR}/usr $KERNEL_RELEASE
 fi
 
+if [ -e assets/extra.tar.gz ]; then
+  KERNEL_RELEASE=$(tar xvf assets/extra.tar.gz -C ${INITRD_DIR}/usr | cut -f4 -d/ | cut -f1 -d ' ')
+  rm -rf ${INITRD_DIR}/usr/lib/firmware/.git
+  depmod -a -b ${INITRD_DIR}/usr $KERNEL_RELEASE
+fi
+
 DFS_ARCH=$(docker create ${DFS_IMAGE}${SUFFIX})
 trap "docker rm -fv ${DFS_ARCH}" EXIT
 
