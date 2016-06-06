@@ -177,16 +177,6 @@ func osVersion(c *cli.Context) error {
 	return nil
 }
 
-func yes(in *bufio.Reader, question string) bool {
-	fmt.Printf("%s [y/N]: ", question)
-	line, err := in.ReadString('\n')
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	return strings.ToLower(line[0:1]) == "y"
-}
-
 func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgradeConsole bool, kernelArgs string) error {
 	in := bufio.NewReader(os.Stdin)
 

@@ -1,7 +1,9 @@
 package util
 
 import (
+	"bufio"
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -11,6 +13,10 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	log "github.com/Sirupsen/logrus"
+)
+
+const (
+	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
 )
 
 type AnyMap map[interface{}]interface{}
@@ -186,4 +192,36 @@ func TrimSplitN(str, sep string, count int) []string {
 
 func TrimSplit(str, sep string) []string {
 	return TrimSplitN(str, sep, -1)
+}
+
+func GetCurrentContainerId() (string, error) {
+	file, err := os.Open(DOCKER_CGROUPS_FILE)
+
+	if err != nil {
+		return "", err
+	}
+
+	fileReader := bufio.NewScanner(file)
+	if !fileReader.Scan() {
+		return "", errors.New("Empty file /proc/self/cgroup")
+	}
+	line := fileReader.Text()
+	parts := strings.Split(line, "/")
+
+	for len(parts) != 3 {
+		if !fileReader.Scan() {
+			return "", errors.New("Found no docker cgroups")
+		}
+		line = fileReader.Text()
+		parts = strings.Split(line, "/")
+		if len(parts) == 3 {
+			if strings.HasSuffix(parts[1], "docker") {
+				break
+			} else {
+				parts = nil
+			}
+		}
+	}
+
+	return parts[len(parts)-1:][0], nil
 }

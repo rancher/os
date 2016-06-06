@@ -154,6 +154,7 @@ rancher:
       - /usr/bin/ros:/usr/bin/cloud-init:ro
       - /usr/bin/ros:/usr/sbin/netconf:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
+      - /usr/bin/ros:/usr/bin/switch-console:ro
     console:
       image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
       labels:

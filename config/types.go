@@ -85,6 +85,7 @@ type CloudConfig struct {
 }
 
 type RancherConfig struct {
+	Console             string                                    `yaml:"console,omitempty"`
 	Environment         map[string]string                         `yaml:"environment,omitempty"`
 	Services            map[string]*composeConfig.ServiceConfigV1 `yaml:"services,omitempty"`
 	BootstrapContainers map[string]*composeConfig.ServiceConfigV1 `yaml:"bootstrap,omitempty"`

@@ -183,9 +183,6 @@ func adjustContainerNames(m map[interface{}]interface{}) map[interface{}]interfa
 }
 
 func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.Project, error) {
-	projectEvents := make(chan events.Event)
-	enabled := map[interface{}]interface{}{}
-
 	environmentLookup := rosDocker.NewConfigEnvironment(cfg)
 	authLookup := rosDocker.NewConfigAuthLookup(cfg)
 
@@ -194,53 +191,11 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 		return nil, err
 	}
 
+	projectEvents := make(chan events.Event)
 	p.AddListener(project.NewDefaultListener(p))
 	p.AddListener(projectEvents)
 
-	p.ReloadCallback = func() error {
-		cfg = config.LoadConfig()
-
-		environmentLookup.SetConfig(cfg)
-		authLookup.SetConfig(cfg)
-
-		enabled = addServices(p, enabled, cfg.Rancher.Services)
-
-		for service, serviceEnabled := range cfg.Rancher.ServicesInclude {
-			if _, ok := enabled[service]; ok || !serviceEnabled {
-				continue
-			}
-
-			bytes, err := network.LoadServiceResource(service, useNetwork, cfg)
-			if err != nil {
-				if err == network.ErrNoNetwork {
-					log.Debugf("Can not load %s, networking not enabled", service)
-				} else {
-					log.Errorf("Failed to load %s : %v", service, err)
-				}
-				continue
-			}
-
-			m := map[interface{}]interface{}{}
-			if err := yaml.Unmarshal(bytes, &m); err != nil {
-				log.Errorf("Failed to parse YAML configuration: %s : %v", service, err)
-				continue
-			}
-			bytes, err = yaml.Marshal(adjustContainerNames(m))
-			if err != nil {
-				log.Errorf("Failed to marshal YAML configuration: %s : %v", service, err)
-				continue
-			}
-			err = p.Load(bytes)
-			if err != nil {
-				log.Errorf("Failed to load %s : %v", service, err)
-				continue
-			}
-
-			enabled[service] = service
-		}
-
-		return nil
-	}
+	p.ReloadCallback = projectReload(p, &useNetwork, environmentLookup, authLookup)
 
 	go func() {
 		for event := range projectEvents {
