@@ -21,6 +21,14 @@ var (
 )
 
 func GetServices(urls []string) ([]string, error) {
+	return getServices(urls, "services")
+}
+
+func GetConsoles(urls []string) ([]string, error) {
+	return getServices(urls, "consoles")
+}
+
+func getServices(urls []string, key string) ([]string, error) {
 	result := []string{}
 
 	for _, url := range urls {
@@ -38,7 +46,7 @@ func GetServices(urls []string) ([]string, error) {
 			continue
 		}
 
-		if list, ok := services["services"]; ok {
+		if list, ok := services[key]; ok {
 			result = append(result, list...)
 		}
 	}

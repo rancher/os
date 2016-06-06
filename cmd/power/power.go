@@ -1,7 +1,6 @@
 package power
 
 import (
-	"bufio"
 	"errors"
 	"os"
 	"path/filepath"
@@ -17,10 +16,7 @@ import (
 	"github.com/docker/engine-api/types/filters"
 
 	"github.com/rancher/os/docker"
-)
-
-const (
-	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
+	"github.com/rancher/os/util"
 )
 
 func runDocker(name string) error {
@@ -51,7 +47,7 @@ func runDocker(name string) error {
 		}
 	}
 
-	currentContainerId, err := getCurrentContainerId()
+	currentContainerId, err := util.GetCurrentContainerId()
 	if err != nil {
 		return err
 	}
@@ -185,7 +181,7 @@ func shutDownContainers() error {
 		return err
 	}
 
-	currentContainerId, err := getCurrentContainerId()
+	currentContainerId, err := util.GetCurrentContainerId()
 	if err != nil {
 		return err
 	}
@@ -221,36 +217,4 @@ func shutDownContainers() error {
 	}
 
 	return nil
-}
-
-func getCurrentContainerId() (string, error) {
-	file, err := os.Open(DOCKER_CGROUPS_FILE)
-
-	if err != nil {
-		return "", err
-	}
-
-	fileReader := bufio.NewScanner(file)
-	if !fileReader.Scan() {
-		return "", errors.New("Empty file /proc/self/cgroup")
-	}
-	line := fileReader.Text()
-	parts := strings.Split(line, "/")
-
-	for len(parts) != 3 {
-		if !fileReader.Scan() {
-			return "", errors.New("Found no docker cgroups")
-		}
-		line = fileReader.Text()
-		parts = strings.Split(line, "/")
-		if len(parts) == 3 {
-			if strings.HasSuffix(parts[1], "docker") {
-				break
-			} else {
-				parts = nil
-			}
-		}
-	}
-
-	return parts[len(parts)-1:][0], nil
 }

@@ -32,6 +32,12 @@ func Main() {
 			Subcommands: configSubcommands(),
 		},
 		{
+			Name:        "console",
+			Usage:       "console container commands",
+			HideHelp:    true,
+			Subcommands: consoleSubcommands(),
+		},
+		{
 			Name:            "dev",
 			ShortName:       "d",
 			Usage:           "dev spec",

@@ -9,6 +9,7 @@ import (
 	"github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/cmd/respawn"
+	"github.com/rancher/os/cmd/switchconsole"
 	"github.com/rancher/os/cmd/sysinit"
 	"github.com/rancher/os/cmd/systemdocker"
 	"github.com/rancher/os/cmd/userdocker"
@@ -28,6 +29,7 @@ var entrypoints = map[string]func(){
 	"respawn":         respawn.Main,
 	"ros-sysinit":     sysinit.Main,
 	"shutdown":        power.Main,
+	"switch-console":  switchconsole.Main,
 	"system-docker":   systemdocker.Main,
 	"user-docker":     userdocker.Main,
 	"wait-for-docker": wait.Main,
