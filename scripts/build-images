@@ -7,36 +7,19 @@ BASE=images
 source $(dirname $0)/version
 cd $(dirname $0)/..
 
-DO_PUSH="$1"
+for i in $BASE/[0-9]*; do
+    name="os-$(echo ${i} | cut -f2 -d-)"
+    tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
+    echo Building ${tag}
+    if [ -x ${i}/prebuild.sh ]; then
+        ${i}/prebuild.sh
+    fi
 
-if [ -n "$CORE" ]; then
-    PREFIX=0
-fi
-
-if [ "${DO_PUSH}" == "--push" ]; then
-    for i in $BASE/[0-9]*; do
-        name="os-$(echo ${i} | cut -f2 -d-)"
-        tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
-        echo Pushing ${tag}
-        docker push ${tag} || :
-    done
-else
-    for i in $BASE/$PREFIX[0-9]*; do
-        name="os-$(echo ${i} | cut -f2 -d-)"
-        tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
-        echo Building ${tag}
-        if [ -x ${i}/prebuild.sh ]; then
-            if ${i}/prebuild.sh; then
-                dapper -d --build -f ${i}/Dockerfile -- -t rancher/${name} ${i}
-                docker tag rancher/${name} ${tag}
-            elif [ "$?" != "42" ]; then
-                exit 1
-            else
-                echo "WARN: Skipping ${tag}"
-            fi
-        else
-            dapper -d --build -f ${i}/Dockerfile -- -t rancher/${name} ${i}
-            docker tag rancher/${name} ${tag}
-        fi
-    done
-fi
+    if dapper -d --build -f ${i}/Dockerfile -- -t rancher/${name} ${i}; then
+        docker tag rancher/${name} ${tag}
+    elif [ "$?" != "42" ]; then
+        exit 1
+    else
+        echo "WARN: Skipping ${tag}"
+    fi
+done

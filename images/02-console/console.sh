@@ -143,4 +143,5 @@ if [ -x /etc/rc.local ]; then
     /etc/rc.local || true
 fi
 
+export TERM=linux
 exec respawn -f /etc/respawn.conf

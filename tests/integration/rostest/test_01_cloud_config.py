@@ -88,10 +88,13 @@ ip route get to 10.10.2.120
         cloud_config['rancher']['network']['interfaces']['mac=52:54:00:12:34:59']['address']
 
 
-def test_docker_not_pid_one(qemu):
+def test_docker_pid_one(qemu):
     SSH(qemu, ssh_command).check_call('''
 set -e -x
 for i in $(pidof docker); do
-    [ $i != 1 ]
+    if [ $i = 1 ]; then
+        found=true
+    fi
 done
+[ "$found" = "true" ]
     '''.strip())

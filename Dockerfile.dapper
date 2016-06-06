@@ -47,16 +47,22 @@ ARG OS_REPO=rancher
 ARG HOSTNAME_DEFAULT=rancher
 ARG DISTRIB_ID=RancherOS
 
-ARG DOCKER_VERSION=1.10.3
+ARG DOCKER_VERSION=1.11.2
 ARG DOCKER_PATCH_VERSION=v${DOCKER_VERSION}-ros1
+ARG DOCKER_BUILD_VERSION=1.10.3
+ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.2/policy.29
 
-ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.2.0-34.39-rancher/linux-4.2.8-ckt4-rancher-x86.tar.gz
+ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.4.0-23.41-rancher/linux-4.4.10-rancher-x86.tar.gz
 ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.1.18-arm64-3/linux-4.1.18-arm64.tar.gz
 
-ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}
-ARG DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm
-ARG DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64
+ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
+ARG DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm.tgz
+ARG DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64.tgz
+
+ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_BUILD_VERSION}
+ARG BUILD_DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm
+ARG BUILD_DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm64
 
 ARG TOOLCHAIN_arm64=aarch64-linux-gnu
 ARG TOOLCHAIN_arm=arm-linux-gnueabihf
@@ -68,25 +74,51 @@ ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
 ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}
 
-ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2016.02/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2016.02/os-base_arm64.tar.xz
-ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.02/os-base_arm.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2016.05-1/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2016.05-1/os-base_arm64.tar.xz
+ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.05-1/os-base_arm.tar.xz
 
 ######################################################
 
-# Set up environment
-ENV GOARCH $ARCH
+# Set up environment and export all ARGS as ENV
+ENV ARCH ${ARCH}
+ENV BUILD_DOCKER_URL BUILD_DOCKER_URL_${ARCH}
+ENV BUILD_DOCKER_URL_amd64 ${BUILD_DOCKER_URL_amd64}
+ENV BUILD_DOCKER_URL_arm ${BUILD_DOCKER_URL_arm}
+ENV BUILD_DOCKER_URL_arm64 ${BUILD_DOCKER_URL_arm64}
+ENV DAPPER_HOST_ARCH ${DAPPER_HOST_ARCH}
+ENV DFS_IMAGE ${DFS_IMAGE}
+ENV DISTRIB_ID ${DISTRIB_ID}
+ENV DOCKER_PATCH_VERSION ${DOCKER_PATCH_VERSION}
 ENV DOCKER_URL DOCKER_URL_${ARCH}
-ENV KERNEL_URL KERNEL_URL_${ARCH}
-ENV OS_BASE_URL OS_BASE_URL_${ARCH}
-ENV OS_BASE_SHA1 OS_BASE_SHA1_${ARCH}
-ENV VBOX_MODULES_URL VBOX_MODULES_URL_${ARCH}
-ENV REPO_VERSION master
-
-# Export all ARGS as ENV
-ENV ARCH=${ARCH} DAPPER_HOST_ARCH=${DAPPER_HOST_ARCH} HOST_ARCH=${HOST_ARCH} OS_REPO=${OS_REPO} HOSTNAME_DEFAULT=${HOSTNAME_DEFAULT} DISTRIB_ID=${DISTRIB_ID} DOCKER_VERSION=${DOCKER_VERSION} DOCKER_PATCH_VERSION=${DOCKER_PATCH_VERSION} SELINUX_POLICY_URL=${SELINUX_POLICY_URL} KERNEL_URL_amd64=${KERNEL_URL_amd64} KERNEL_URL_arm64=${KERNEL_URL_arm64} DOCKER_URL_amd64=${DOCKER_URL_amd64} DOCKER_URL_arm=${DOCKER_URL_arm} DOCKER_URL_arm64=${DOCKER_URL_arm64} TOOLCHAIN_arm64=${TOOLCHAIN_arm64} TOOLCHAIN_arm=${TOOLCHAIN_arm} OS_RELEASES_YML=${OS_RELEASES_YML} VBOX_MODULES_URL=${VBOX_MODULES_URL} VBOX_MODULES_URL_amd64=${VBOX_MODULES_URL_amd64} OS_SERVICES_REPO=${OS_SERVICES_REPO} IMAGE_NAME=${IMAGE_NAME} DFS_IMAGE=${DFS_IMAGE} OS_BASE_URL=${OS_BASE_URL} OS_BASE_SHA1=${OS_BASE_SHA1} OS_BASE_URL_amd64=${OS_BASE_URL_amd64} OS_BASE_URL_arm=${OS_BASE_URL_arm} OS_BASE_URL_arm64=${OS_BASE_URL_arm64}
-
+ENV DOCKER_URL_amd64 ${DOCKER_URL_amd64}
+ENV DOCKER_URL_arm ${DOCKER_URL_arm}
+ENV DOCKER_URL_arm64 ${DOCKER_URL_arm64}
+ENV DOCKER_VERSION ${DOCKER_VERSION}
 ENV DOWNLOADS /usr/src/downloads
+ENV GOARCH $ARCH
+ENV HOSTNAME_DEFAULT ${HOSTNAME_DEFAULT}
+ENV HOST_ARCH ${HOST_ARCH}
+ENV IMAGE_NAME ${IMAGE_NAME}
+ENV KERNEL_URL KERNEL_URL_${ARCH}
+ENV KERNEL_URL_amd64 ${KERNEL_URL_amd64}
+ENV KERNEL_URL_arm64 ${KERNEL_URL_arm64}
+ENV OS_BASE_SHA1 OS_BASE_SHA1_${ARCH}
+ENV OS_BASE_URL OS_BASE_URL_${ARCH}
+ENV OS_BASE_URL_amd64 ${OS_BASE_URL_amd64}
+ENV OS_BASE_URL_arm ${OS_BASE_URL_arm}
+ENV OS_BASE_URL_arm64 ${OS_BASE_URL_arm64}
+ENV OS_RELEASES_YML ${OS_RELEASES_YML}
+ENV OS_REPO ${OS_REPO}
+ENV OS_SERVICES_REPO ${OS_SERVICES_REPO}
+ENV REPO_VERSION master
+ENV SELINUX_POLICY_URL ${SELINUX_POLICY_URL}
+ENV TOOLCHAIN_arm ${TOOLCHAIN_arm}
+ENV TOOLCHAIN_arm64 ${TOOLCHAIN_arm64}
+ENV VBOX_MODULES_URL ${VBOX_MODULES_URL}
+ENV VBOX_MODULES_URL VBOX_MODULES_URL_${ARCH}
+ENV VBOX_MODULES_URL_amd64 ${VBOX_MODULES_URL_amd64}
+
 RUN mkdir -p ${DOWNLOADS}
 
 # Download kernel
@@ -115,19 +147,18 @@ RUN ln -sf go-6 /usr/bin/go && \
 ENV GOPATH /go
 ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
 
-# Install Docker
-RUN URL=DOCKER_URL_${HOST_ARCH} && \
-    curl -fL ${!URL} > /usr/bin/docker && \
+# Install Host Docker
+RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
     chmod +x /usr/bin/docker
 
-# Install Docker
-RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker && \
-    chmod +x ${DOWNLOADS}/docker
+# Install Target Docker
+RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker.tgz
+
 # Install Trash
 RUN go get github.com/rancher/trash
 
 # Install dapper
-RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m` > /usr/bin/dapper && \
+RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
 
 # Install toolchain
@@ -176,7 +207,6 @@ RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
         make -j$(nproc) && \
         make install \
     ;fi
-
 
 RUN mkdir -p images/00-rootfs/build && \
     curl -pfL ${!OS_BASE_URL} | tar xvJf - -C images/00-rootfs/build

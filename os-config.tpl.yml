@@ -138,6 +138,9 @@ rancher:
       privileged: true
       read_only: true
       volumes:
+      - /usr/bin/docker-containerd:/usr/bin/docker-containerd.dist:ro
+      - /usr/bin/docker-containerd-shim:/usr/bin/docker-containerd-shim.dist:ro
+      - /usr/bin/docker-runc:/usr/bin/docker-runc.dist:ro
       - /usr/bin/docker:/usr/bin/docker.dist:ro
       - /usr/bin/ros:/usr/bin/dockerlaunch:ro
       - /usr/bin/ros:/usr/bin/user-docker:ro
@@ -328,6 +331,7 @@ rancher:
       volumes:
       - /sys/fs/cgroup:/host/sys/fs/cgroup
   system_docker:
+    exec: true
     args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -b, docker-sys,
       --fixed-cidr, 172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
