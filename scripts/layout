@@ -28,9 +28,9 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     mkdir -p ${BUILD}/kernel
     tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
 
-    if [ -e ${BUILD}/kernel/boot/vmlinuz-* ]; then
+    if [ -e ${BUILD}/kernel/boot/vmlinu* ]; then
         mkdir -p dist/artifacts
-        cp ${BUILD}/kernel/boot/vmlinuz-* dist/artifacts/vmlinuz
+        cp ${BUILD}/kernel/boot/vmlinu* dist/artifacts/vmlinuz
     fi
 
     if [ -d ${BUILD}/kernel/lib ]; then
