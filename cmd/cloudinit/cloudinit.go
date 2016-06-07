@@ -18,7 +18,9 @@ package cloudinit
 import (
 	"errors"
 	"flag"
+	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -48,6 +50,7 @@ const (
 	datasourceMaxInterval = 30 * time.Second
 	datasourceTimeout     = 5 * time.Minute
 	sshKeyName            = "rancheros-cloud-config"
+	resizeStamp           = "/var/lib/rancher/resizefs.done"
 )
 
 var (
@@ -165,6 +168,28 @@ func fetchUserData() ([]byte, datasource.Metadata, error) {
 	return userDataBytes, metadata, nil
 }
 
+func resizeDevice(cfg *rancherConfig.CloudConfig) error {
+	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, "1")
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	cmd = exec.Command("partprobe")
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	cmd = exec.Command("resize2fs", fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice))
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func executeCloudConfig() error {
 	cc := rancherConfig.LoadConfig()
 
@@ -181,6 +206,14 @@ func executeCloudConfig() error {
 			continue
 		}
 		log.Printf("Wrote file %s to filesystem", fullPath)
+	}
+
+	if _, err := os.Stat(resizeStamp); os.IsNotExist(err) && cc.Rancher.ResizeDevice != "" {
+		if err := resizeDevice(cc); err == nil {
+			os.Create(resizeStamp)
+		} else {
+			log.Errorf("Failed to resize %s: %s", cc.Rancher.ResizeDevice, err)
+		}
 	}
 
 	return nil
