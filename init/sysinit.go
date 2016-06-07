@@ -102,6 +102,7 @@ func SysInit() error {
 				Create: options.Create{
 					NoRecreate: true,
 				},
+				Log: cfg.Rancher.Log,
 			})
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {

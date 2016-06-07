@@ -31,6 +31,7 @@ type Create struct {
 // Up holds options of compose up.
 type Up struct {
 	Create
+	Log bool
 }
 
 // ImageType defines the type of image (local, all)

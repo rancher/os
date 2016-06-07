@@ -292,6 +292,10 @@ func (s *Service) up(ctx context.Context, imageName string, create bool, options
 			}
 		}
 
+		if options.Log {
+			go c.Log(ctx, true)
+		}
+
 		return c.Up(ctx, imageName)
 	})
 }
