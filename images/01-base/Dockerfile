@@ -33,5 +33,6 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
 COPY inputrc /etc/inputrc
 COPY entry.sh /usr/sbin/entry.sh
+COPY growpart /usr/bin/growpart
 
 ENTRYPOINT ["/usr/sbin/entry.sh"]

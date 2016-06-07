@@ -109,6 +109,7 @@ type RancherConfig struct {
 	Docker              DockerConfig                              `yaml:"docker,omitempty"`
 	RegistryAuths       map[string]types.AuthConfig               `yaml:"registry_auths,omitempty"`
 	Defaults            Defaults                                  `yaml:"defaults,omitempty"`
+	ResizeDevice        string                                    `yaml:"resize_device,omitempty"`
 }
 
 type UpgradeConfig struct {
