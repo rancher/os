@@ -183,6 +183,8 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 }
 
 func RunDhcp(netCfg *NetworkConfig, setHostname, setDns bool) error {
+	populateDefault(netCfg)
+
 	links, err := netlink.LinkList()
 	if err != nil {
 		return err
@@ -315,7 +317,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		if err := b.AddLink(link); err != nil {
 			return err
 		}
-		return nil
+		return linkUp(link, netConf)
 	}
 
 	if netConf.IPV4LL {
@@ -360,7 +362,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	}
 
 	if err := setGateway(netConf.GatewayIpv6); err != nil {
-		log.Errorf("Fail to set gateway %s", netConf.Gateway)
+		log.Errorf("Fail to set gateway %s", netConf.GatewayIpv6)
 	}
 
 	runCmds(netConf.PostUp, link.Attrs().Name)

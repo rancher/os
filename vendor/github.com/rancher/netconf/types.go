@@ -5,6 +5,9 @@ type NetworkConfig struct {
 	Dns        DnsConfig                  `yaml:"dns,omitempty"`
 	Interfaces map[string]InterfaceConfig `yaml:"interfaces,omitempty"`
 	PostCmds   []string                   `yaml:"post_cmds,omitempty"`
+	HttpProxy  string                     `yaml:"http_proxy,omitempty"`
+	HttpsProxy string                     `yaml:"https_proxy,omitempty"`
+	NoProxy    string                     `yaml:"no_proxy,omitempty"`
 }
 
 type InterfaceConfig struct {
