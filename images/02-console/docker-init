@@ -19,4 +19,4 @@ for i in /opt/bin /usr/local/bin; do
     fi
 done
 
-exec /usr/bin/dockerlaunch $DOCKER_BIN "$@" $DOCKER_OPTS >/var/log/docker.log 2>&1
+exec /usr/bin/dockerlaunch $DOCKER_BIN "$@" $DOCKER_OPTS >>/var/log/docker.log 2>&1
