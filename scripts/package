@@ -8,3 +8,6 @@ if [ "$ROOTFS" != "0" ]; then
 fi
 ./package-initrd
 ./package-iso
+if [ "$INSTALLER" != "0" ]; then
+    ./package-installer
+fi

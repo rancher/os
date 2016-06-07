@@ -1,0 +1,17 @@
+FROM aarch64/debian:jessie
+ENV DEBIAN_FRONTEND noninteractive
+ENV ARCH arm
+
+RUN apt-get update && apt-get install -y parted git gcc make autoconf
+
+RUN mkdir -p /usr/local/src && \
+    cd /usr/local/src && \
+    git clone https://git.linaro.org/people/takahiro.akashi/kexec-tools.git && \
+    cd kexec-tools && git checkout kdump/for-14 && ./bootstrap && ./configure && make && make install
+
+COPY conf lay-down-os seed-data set-disk-partitions /scripts/installer/
+COPY ./build/build.conf /scripts/
+COPY ./build/vmlinuz /dist/vmlinuz
+COPY ./build/initrd  /dist/initrd
+
+ENTRYPOINT ["/scripts/lay-down-os"]

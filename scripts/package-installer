@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+source ./scripts/version
+
+DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}
+
+if [ ! -e $DOCKERFILE ] || [ ! -e dist/artifacts/vmlinuz ]; then
+    exit 0
+fi
+
+mkdir -p ./scripts/installer/build
+cp ./dist/artifacts/{initrd,vmlinuz} ./scripts/installer/build
+echo VERSION=$VERSION > ./scripts/installer/build/build.conf
+trap "rm -rf ./scripts/installer/build" EXIT
+
+docker build -t ${OS_REPO}/os:${VERSION}${SUFFIX} -f $DOCKERFILE ./scripts/installer
+echo ${OS_REPO}/os:${VERSION}${SUFFIX} > dist/images
+echo Built ${OS_REPO}/os:${VERSION}${SUFFIX}

@@ -1,34 +1,6 @@
 FROM ubuntu:16.04
 # FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
-RUN apt-get update && \
-    apt-get install -y \
-        build-essential \
-        ca-certificates \
-        cpio \
-        curl \
-        dosfstools \
-        gccgo \
-        genisoimage \
-        git \
-        isolinux \
-        less \
-        libblkid-dev \
-        libmount-dev \
-        libselinux1-dev \
-        locales \
-        module-init-tools \
-        pkg-config \
-        python-pip \
-        qemu \
-        qemu-kvm \
-        rsync \
-        sudo \
-        tox \
-        vim \
-        wget \
-        xorriso
-
 ENV DAPPER_ENV VERSION DEV_BUILD
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
@@ -96,6 +68,8 @@ ENV DOCKER_URL_arm ${DOCKER_URL_arm}
 ENV DOCKER_URL_arm64 ${DOCKER_URL_arm64}
 ENV DOCKER_VERSION ${DOCKER_VERSION}
 ENV DOWNLOADS /usr/src/downloads
+ENV GOPATH /go
+ENV GO_VERSION 1.6.2
 ENV GOARCH $ARCH
 ENV HOSTNAME_DEFAULT ${HOSTNAME_DEFAULT}
 ENV HOST_ARCH ${HOST_ARCH}
@@ -111,6 +85,7 @@ ENV OS_BASE_URL_arm64 ${OS_BASE_URL_arm64}
 ENV OS_RELEASES_YML ${OS_RELEASES_YML}
 ENV OS_REPO ${OS_REPO}
 ENV OS_SERVICES_REPO ${OS_SERVICES_REPO}
+ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
 ENV REPO_VERSION master
 ENV SELINUX_POLICY_URL ${SELINUX_POLICY_URL}
 ENV TOOLCHAIN_arm ${TOOLCHAIN_arm}
@@ -120,6 +95,35 @@ ENV VBOX_MODULES_URL VBOX_MODULES_URL_${ARCH}
 ENV VBOX_MODULES_URL_amd64 ${VBOX_MODULES_URL_amd64}
 
 RUN mkdir -p ${DOWNLOADS}
+
+RUN apt-get update && \
+    apt-get install -y \
+        build-essential \
+        ca-certificates \
+        cpio \
+        curl \
+        dosfstools \
+        gccgo \
+        genisoimage \
+        git \
+        isolinux \
+        less \
+        libblkid-dev \
+        libmount-dev \
+        libselinux1-dev \
+        locales \
+        module-init-tools \
+        pkg-config \
+        python-pip \
+        qemu \
+        qemu-kvm \
+        rsync \
+        sudo \
+        tox \
+        vim \
+        wget \
+        xorriso
+
 
 # Download kernel
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
@@ -137,15 +141,12 @@ RUN if [ -n "${!VBOX_MODULES_URL}" ]; then \
 
 # Install Go
 COPY assets/go-dnsclient.patch ${DAPPER_SOURCE}
-ENV GO_VERSION 1.6.2
 RUN ln -sf go-6 /usr/bin/go && \
     curl -sfL https://storage.googleapis.com/golang/go${GO_VERSION}.src.tar.gz | tar -xzf - -C /usr/local && \
     patch /usr/local/go/src/net/dnsclient_unix.go ${DAPPER_SOURCE}/go-dnsclient.patch && \
     cd /usr/local/go/src && \
     GOROOT_BOOTSTRAP=/usr GOARCH=${HOST_ARCH} GOHOSTARCH=${HOST_ARCH} ./make.bash && \
     rm /usr/bin/go
-ENV GOPATH /go
-ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
 
 # Install Host Docker
 RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \

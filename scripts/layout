@@ -28,10 +28,13 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     mkdir -p ${BUILD}/kernel
     tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
 
-    if [ -e ${BUILD}/kernel/boot/vmlinuz-* ]; then
-        mkdir -p dist/artifacts
-        cp ${BUILD}/kernel/boot/vmlinuz-* dist/artifacts/vmlinuz
-    fi
+    for i in vmlinuz vmlinux; do
+        if [ -e ${BUILD}/kernel/boot/${i}-* ]; then
+            mkdir -p dist/artifacts
+            cp ${BUILD}/kernel/boot/${i}-* dist/artifacts/vmlinuz
+            break
+        fi
+    done
 
     if [ -d ${BUILD}/kernel/lib ]; then
         rm -rf ${INITRD_DIR}/usr/lib

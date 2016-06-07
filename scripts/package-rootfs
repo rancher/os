@@ -1,7 +1,10 @@
 #!/bin/bash
 set -e
+set -o pipefail
 
 cd $(dirname $0)/..
+
+source scripts/version
 
 BUILD=$(pwd)/build
 IMAGE_CACHE=${BUILD}/image-cache
@@ -12,7 +15,12 @@ INITRD=${ARTIFACTS}/initrd
 
 mkdir -p ${ARTIFACTS} ${PREPOP_DIR}
 
-DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${SUFFIX})
+if [ "$(docker info | grep 'Storage Driver: ' | sed 's/Storage Driver: //')" != "overlay" ]; then
+    echo Overlay storage driver is require do create rootfs.tar 1>&2
+    exit 0
+fi
+
+DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${SUFFIX} ${DFS_ARGS})
 trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
 docker exec -i ${DFS} docker load < ${INITRD_DIR}/usr/share/ros/images.tar
 docker stop ${DFS}

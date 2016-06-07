@@ -10,6 +10,10 @@ CD=${BUILD}/cd
 mkdir -p ${CD}/boot/isolinux
 mkdir -p ${CD}/boot/isolinux
 
+if [ ! -x ${ARTIFACTS}/vmlinuz ]; then
+    exit 0
+fi
+
 cp ${ARTIFACTS}/initrd                        ${CD}/boot
 cp ${ARTIFACTS}/vmlinuz                       ${CD}/boot
 cp scripts/isolinux.cfg                       ${CD}/boot/isolinux
