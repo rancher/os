@@ -5,4 +5,4 @@ cd $(dirname $0)
 
 ./build
 ./prepare
-COMPRESS="gzip -1" ROOTFS=0 ./package
+INSTALLER=0 COMPRESS="gzip -1" ROOTFS=0 ./package
