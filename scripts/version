@@ -1,5 +1,3 @@
-#!/bin/bash
-
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
     DIRTY="-dirty"
 fi
