@@ -1,6 +1,7 @@
 package userdocker
 
 import (
+	"io"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -9,6 +10,8 @@ import (
 	"time"
 
 	"golang.org/x/net/context"
+
+	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/types"
@@ -19,7 +22,6 @@ import (
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
 	"github.com/rancher/os/util"
-	"path/filepath"
 )
 
 const (
@@ -32,15 +34,34 @@ const (
 func Main() {
 	cfg := config.LoadConfig()
 
-	if err := startDocker(cfg); err != nil {
+	execID, resp, err := startDocker(cfg)
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err := setupTermHandler(); err != nil {
+	process, err := getDockerProcess()
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	select {}
+	handleTerm(process)
+
+	// Wait for Docker daemon to exit
+	io.Copy(ioutil.Discard, resp.Reader)
+	resp.Close()
+
+	client, err := rosDocker.NewSystemClient()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	state, err := client.ContainerExecInspect(context.Background(), execID)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Proxy exit code
+	os.Exit(state.ExitCode)
 }
 
 func writeCerts(cfg *config.CloudConfig) error {
@@ -73,7 +94,7 @@ func writeCerts(cfg *config.CloudConfig) error {
 	return nil
 }
 
-func startDocker(cfg *config.CloudConfig) error {
+func startDocker(cfg *config.CloudConfig) (string, types.HijackedResponse, error) {
 	storageContext := cfg.Rancher.Docker.StorageContext
 	if storageContext == "" {
 		storageContext = DEFAULT_STORAGE_CONTEXT
@@ -83,23 +104,23 @@ func startDocker(cfg *config.CloudConfig) error {
 
 	p, err := compose.GetProject(cfg, true)
 	if err != nil {
-		return err
+		return "", types.HijackedResponse{}, err
 	}
 
 	pid, err := waitForPid(storageContext, p)
 	if err != nil {
-		return err
+		return "", types.HijackedResponse{}, err
 	}
 
 	log.Infof("%s PID %d", storageContext, pid)
 
 	client, err := rosDocker.NewSystemClient()
 	if err != nil {
-		return err
+		return "", types.HijackedResponse{}, err
 	}
 
 	if err := os.Remove(DOCKER_PID_FILE); err != nil && !os.IsNotExist(err) {
-		return err
+		return "", types.HijackedResponse{}, err
 	}
 
 	dockerCfg := cfg.Rancher.Docker
@@ -110,7 +131,7 @@ func startDocker(cfg *config.CloudConfig) error {
 
 	if dockerCfg.TLS {
 		if err := writeCerts(cfg); err != nil {
-			return err
+			return "", types.HijackedResponse{}, err
 		}
 	}
 
@@ -124,49 +145,50 @@ func startDocker(cfg *config.CloudConfig) error {
 	resp, err := client.ContainerExecCreate(context.Background(), types.ExecConfig{
 		Container:    storageContext,
 		Privileged:   true,
-		AttachStdin:  true,
 		AttachStderr: true,
 		AttachStdout: true,
-		Detach:       false,
 		Cmd:          cmd,
 	})
 	if err != nil {
-		return err
+		return "", types.HijackedResponse{}, err
+	}
+
+	attachResp, err := client.ContainerExecAttach(context.Background(), resp.ID, types.ExecConfig{
+		Detach:       false,
+		AttachStderr: true,
+		AttachStdout: true,
+	})
+	if err != nil {
+		return "", types.HijackedResponse{}, err
 	}
 
 	if err := client.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
 		Detach: false,
 	}); err != nil {
-		return err
+		return "", types.HijackedResponse{}, err
 	}
 
-	return nil
+	return resp.ID, attachResp, nil
 }
 
-func setupTermHandler() error {
+func getDockerProcess() (*os.Process, error) {
 	pidBytes, err := waitForFile(DOCKER_PID_FILE)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	dockerPid, err := strconv.Atoi(string(pidBytes))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	process, err := os.FindProcess(dockerPid)
-	if err != nil {
-		return err
-	}
-	handleTerm(process)
-	return nil
+	return os.FindProcess(dockerPid)
 }
 
-func handleTerm(p *os.Process) {
+func handleTerm(process *os.Process) {
 	term := make(chan os.Signal)
 	signal.Notify(term, syscall.SIGTERM)
 	go func() {
 		<-term
-		p.Signal(syscall.SIGTERM)
-		os.Exit(0)
+		process.Signal(syscall.SIGTERM)
 	}()
 }
 
