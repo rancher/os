@@ -47,8 +47,9 @@ func consoleSwitch(c *cli.Context) error {
 
 	if !c.Bool("force") {
 		in := bufio.NewReader(os.Stdin)
-		question := fmt.Sprintf("Switching consoles will destroy the current console container and restart Docker. Continue")
-		if !yes(in, question) {
+		fmt.Println("Switching consoles will destroy the current console container and restart Docker.")
+		fmt.Println("Note: You will also be logged out.")
+		if !yes(in, "Continue") {
 			return nil
 		}
 	}
