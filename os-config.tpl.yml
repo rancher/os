@@ -363,4 +363,4 @@ rancher:
   docker:
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']
-    args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock']
+    args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -G, docker, -H, 'unix:///var/run/docker.sock']
