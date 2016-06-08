@@ -24,6 +24,12 @@ func consoleSubcommands() []cli.Command {
 			Name:   "switch",
 			Usage:  "switch currently running console",
 			Action: consoleSwitch,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "force, f",
+					Usage: "do not prompt for input",
+				},
+			},
 		},
 		{
 			Name:   "list",
@@ -39,10 +45,12 @@ func consoleSwitch(c *cli.Context) error {
 	}
 	newConsole := c.Args()[0]
 
-	in := bufio.NewReader(os.Stdin)
-	question := fmt.Sprintf("Switching consoles will destroy the current console container and restart Docker. Continue")
-	if !yes(in, question) {
-		return nil
+	if !c.Bool("force") {
+		in := bufio.NewReader(os.Stdin)
+		question := fmt.Sprintf("Switching consoles will destroy the current console container and restart Docker. Continue")
+		if !yes(in, question) {
+			return nil
+		}
 	}
 
 	cfg := config.LoadConfig()
