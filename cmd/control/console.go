@@ -85,7 +85,9 @@ func consoleSwitch(c *cli.Context) error {
 	if err = service.Delete(context.Background(), options.Delete{}); err != nil {
 		return err
 	}
-	return service.Up(context.Background(), options.Up{})
+	return service.Up(context.Background(), options.Up{
+		Log: true,
+	})
 }
 
 func consoleList(c *cli.Context) error {

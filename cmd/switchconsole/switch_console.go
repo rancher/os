@@ -27,7 +27,9 @@ func Main() {
 		log.Fatal(err)
 	}
 
-	if err = project.Up(context.Background(), options.Up{}, "console"); err != nil {
+	if err = project.Up(context.Background(), options.Up{
+		Log: true,
+	}, "console"); err != nil {
 		log.Fatal(err)
 	}
 
