@@ -5,4 +5,4 @@ COMPILED_KERNEL_URL=https://github.com/tetatetit/os-kernel/releases/download/Ubu
 DOCKER_BINARY_URL=https://get.docker.com/builds/Linux/x86_64/docker-1.10.3
 OS_RELEASES_YML=https://releases.rancher.com/os/releases.yml
 VBOX_MODULES_URL=https://github.com/tetatetit/os-vbox/releases/download/Ubuntu-4.4.0-23.41-rancher/vbox-modules.tar.gz
-#EXTRA_MODULES_URL=https://github.com/tetatetit/os-kernel/releases/download/Ubuntu-4.4.0-23.41-rancher-kvm/extra.tar.gz
+EXTRA_MODULES_URL=https://github.com/tetatetit/os-kernel/releases/download/Ubuntu-4.4.0-23.41-rancher-kvm/extra.tar.gz

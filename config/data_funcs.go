@@ -3,7 +3,7 @@ package config
 import (
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-
+	shellwords "github.com/mattn/go-shellwords"
 	"github.com/rancher/os/util"
 	"strings"
 )
@@ -154,10 +154,19 @@ func unmarshalOrReturnString(value string) (result interface{}) {
 
 func parseCmdline(cmdLine string) map[interface{}]interface{} {
 	result := make(map[interface{}]interface{})
+	params, err := shellwords.Parse(cmdLine)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err, "cmdline": cmdLine}).Error("Failed to parse kernel params")
+		return result
+	}
 
 outer:
-	for _, part := range strings.Split(cmdLine, " ") {
-		if !strings.HasPrefix(part, "rancher.") {
+	for _, part := range params {
+		if true &&
+			!strings.HasPrefix(part, "rancher.") &&
+			!strings.HasPrefix(part, "ssh_authorized_keys=") &&
+			!strings.HasPrefix(part, "hostname=") &&
+			!strings.HasPrefix(part, "default_hostname=") {
 			continue
 		}
 
