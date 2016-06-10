@@ -102,23 +102,27 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 			"rebuildLabelChanged": rebuildLabelChanged,
 			"outOfSync":           outOfSync}).Debug("Rebuild values")
 
-		rebuilding := false
+		if newRebuildLabel == "always" {
+			return true, nil
+		}
 		if outOfSync {
-			if cfg.Rancher.ForceConsoleRebuild && s.Name() == "console" {
-				if err := config.Set("rancher.force_console_rebuild", false); err != nil {
-					return false, err
+			if s.Name() == "console" {
+				if cfg.Rancher.ForceConsoleRebuild {
+					if err := config.Set("rancher.force_console_rebuild", false); err != nil {
+						return false, err
+					}
+					return true, nil
 				}
-				rebuilding = true
-			} else if origRebuildLabel == "always" || rebuildLabelChanged || origRebuildLabel != "false" {
-				rebuilding = true
+				origConsoleLabel := containerInfo.Config.Labels[config.CONSOLE]
+				newConsoleLabel := s.Config().Labels[config.CONSOLE]
+				if newConsoleLabel != origConsoleLabel {
+					return true, nil
+				}
+			} else if rebuildLabelChanged || origRebuildLabel != "false" {
+				return true, nil
 			} else {
 				logrus.Warnf("%s needs rebuilding", name)
 			}
-		}
-
-		if rebuilding {
-			logrus.Infof("Rebuilding %s", name)
-			return true, nil
 		}
 	}
 	return false, nil
@@ -136,6 +140,7 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 		return err
 	}
 	if shouldRebuild {
+		logrus.Infof("Rebuilding %s", s.Name())
 		cs, err := s.Service.Containers(ctx)
 		if err != nil {
 			return err

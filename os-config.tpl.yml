@@ -161,6 +161,7 @@ rancher:
         io.rancher.os.scope: system
         io.rancher.os.after: network
         io.docker.compose.rebuild: always
+        io.rancher.os.console: default
       net: host
       uts: host
       pid: host
