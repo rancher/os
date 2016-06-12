@@ -18,13 +18,15 @@ func Main() {
 
 	cfg := config.LoadConfig()
 
-	project, err := compose.GetProject(cfg, true)
+	project, err := compose.GetProject(cfg, true, false)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err = compose.LoadService(project, cfg, true, newConsole); err != nil {
-		log.Fatal(err)
+	if newConsole != "default" {
+		if err = compose.LoadService(project, cfg, true, newConsole); err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	if err = project.Up(context.Background(), options.Up{

@@ -13,8 +13,6 @@ import (
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
 
@@ -56,23 +54,10 @@ func consoleSwitch(c *cli.Context) error {
 
 	cfg := config.LoadConfig()
 
-	if err := compose.StageServices(cfg, newConsole); err != nil {
-		return err
-	}
-
-	client, err := docker.NewSystemClient()
-	if err != nil {
-		return err
-	}
-
-	currentContainerId, err := util.GetCurrentContainerId()
-	if err != nil {
-		return err
-	}
-
-	currentContainer, err := client.ContainerInspect(context.Background(), currentContainerId)
-	if err != nil {
-		return err
+	if newConsole != "default" {
+		if err := compose.StageServices(cfg, newConsole); err != nil {
+			return err
+		}
 	}
 
 	service, err := compose.CreateService(nil, "switch-console", &composeConfig.ServiceConfigV1{
@@ -80,7 +65,7 @@ func consoleSwitch(c *cli.Context) error {
 		Privileged: true,
 		Net:        "host",
 		Pid:        "host",
-		Image:      currentContainer.Config.Image,
+		Image:      fmt.Sprintf("rancher/os-base:%s", config.VERSION),
 		Labels: map[string]string{
 			config.SCOPE: config.SYSTEM,
 		},
@@ -94,9 +79,10 @@ func consoleSwitch(c *cli.Context) error {
 	if err = service.Delete(context.Background(), options.Delete{}); err != nil {
 		return err
 	}
-	return service.Up(context.Background(), options.Up{
-		Log: true,
-	})
+	if err = service.Up(context.Background(), options.Up{}); err != nil {
+		return err
+	}
+	return service.Log(context.Background(), true)
 }
 
 func consoleList(c *cli.Context) error {
@@ -107,6 +93,7 @@ func consoleList(c *cli.Context) error {
 		return err
 	}
 
+	fmt.Println("default")
 	for _, console := range consoles {
 		fmt.Println(console)
 	}

@@ -36,7 +36,7 @@ func LoadService(p *project.Project, cfg *config.CloudConfig, useNetwork bool, s
 	return nil
 }
 
-func projectReload(p *project.Project, useNetwork *bool, environmentLookup *docker.ConfigEnvironment, authLookup *docker.ConfigAuthLookup) func() error {
+func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, environmentLookup *docker.ConfigEnvironment, authLookup *docker.ConfigAuthLookup) func() error {
 	enabled := map[interface{}]interface{}{}
 	return func() error {
 		cfg := config.LoadConfig()
@@ -61,11 +61,12 @@ func projectReload(p *project.Project, useNetwork *bool, environmentLookup *dock
 			enabled[service] = service
 		}
 
-		if cfg.Rancher.Console != "" {
-			err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Console)
-			if err != nil && err != network.ErrNoNetwork {
-				log.Error(err)
-			}
+		if !loadConsole || cfg.Rancher.Console == "" || cfg.Rancher.Console == "default" {
+			return nil
+		}
+
+		if err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Console); err != nil && err != network.ErrNoNetwork {
+			log.Error(err)
 		}
 
 		return nil

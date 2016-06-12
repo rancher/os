@@ -19,7 +19,7 @@ type projectFactory struct {
 
 func (p *projectFactory) Create(c *cli.Context) (project.APIProject, error) {
 	cfg := config.LoadConfig()
-	return compose.GetProject(cfg, true)
+	return compose.GetProject(cfg, true, false)
 }
 
 func beforeApp(c *cli.Context) error {
