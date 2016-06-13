@@ -11,7 +11,6 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
@@ -180,28 +179,6 @@ func isInitrd() bool {
 	return int64(stat.Type) == TMPFS_MAGIC || int64(stat.Type) == RAMFS_MAGIC
 }
 
-func setupSharedRoot(c *config.CloudConfig) (*config.CloudConfig, error) {
-	if !c.NoSharedRoot {
-		return c, nil
-	}
-
-	if isInitrd() {
-		for _, i := range []string{"/mnt", "/media"} {
-			if err := os.Mkdir(i, 0755); err != nil {
-				return c, err
-			}
-			if err := mount.Mount("tmpfs", i, "tmpfs", "rw"); err != nil {
-				return c, err
-			}
-			if err := mount.MakeRShared(i); err != nil {
-				return c, err
-			}
-		}
-		return c, nil
-	}
-	return c, mount.MakeShared("/")
-}
-
 func RunInit() error {
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 	if isInitrd() {
@@ -241,7 +218,6 @@ func RunInit() error {
 			return c, dockerlaunch.PrepareFs(&mountConfig)
 		},
 		initializeSelinux,
-		setupSharedRoot,
 		sysInit,
 	}
 

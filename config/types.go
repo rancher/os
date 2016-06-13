@@ -94,7 +94,6 @@ type RancherConfig struct {
 	CloudInit           CloudInit                                 `yaml:"cloud_init,omitempty"`
 	Debug               bool                                      `yaml:"debug,omitempty"`
 	RmUsr               bool                                      `yaml:"rm_usr,omitempty"`
-	NoSharedRoot        bool                                      `yaml:"no_sharedroot,omitempty"`
 	Log                 bool                                      `yaml:"log,omitempty"`
 	ForceConsoleRebuild bool                                      `yaml:"force_console_rebuild,omitempty"`
 	Disable             []string                                  `yaml:"disable,omitempty"`

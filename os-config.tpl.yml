@@ -171,8 +171,6 @@ rancher:
       - all-volumes
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
-      - /media:/media:shared
-      - /mnt:/mnt:shared
     container-data-volumes:
       image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
