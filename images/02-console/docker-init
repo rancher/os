@@ -19,10 +19,4 @@ for i in /opt/bin /usr/local/bin; do
     fi
 done
 
-mount --make-shared /
-
-if [ "$(grep '/var/lib/docker /var/lib/docker ' /proc/self/mountinfo | awk '{print $9}')" = "rootfs" ]; then
-    export DOCKER_RAMDISK=1
-fi
-
 exec /usr/bin/dockerlaunch $DOCKER_BIN "$@" $DOCKER_OPTS >>/var/log/docker.log 2>&1

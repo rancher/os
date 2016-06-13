@@ -1,6 +1,5 @@
 #!/bin/bash
 # help: For development, creates iso, kernel, initrd gzip compressed
-set -e
 
 cd $(dirname $0)
 
