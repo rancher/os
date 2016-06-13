@@ -20,7 +20,7 @@ func consoleSubcommands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "switch",
-			Usage:  "switch currently running console",
+			Usage:  "switch console without a reboot",
 			Action: consoleSwitch,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
@@ -28,6 +28,11 @@ func consoleSubcommands() []cli.Command {
 					Usage: "do not prompt for input",
 				},
 			},
+		},
+		{
+			Name:   "enable",
+			Usage:  "set console to be switched on next reboot",
+			Action: consoleEnable,
 		},
 		{
 			Name:   "list",
@@ -39,7 +44,7 @@ func consoleSubcommands() []cli.Command {
 
 func consoleSwitch(c *cli.Context) error {
 	if len(c.Args()) != 1 {
-		log.Fatal("Must specify exactly one existing container")
+		log.Fatal("Must specify exactly one console to switch to")
 	}
 	newConsole := c.Args()[0]
 
@@ -83,6 +88,27 @@ func consoleSwitch(c *cli.Context) error {
 		return err
 	}
 	return service.Log(context.Background(), true)
+}
+
+func consoleEnable(c *cli.Context) error {
+	if len(c.Args()) != 1 {
+		log.Fatal("Must specify exactly one console to enable")
+	}
+	newConsole := c.Args()[0]
+
+	cfg := config.LoadConfig()
+
+	if newConsole != "default" {
+		if err := compose.StageServices(cfg, newConsole); err != nil {
+			return err
+		}
+	}
+
+	if err := config.Set("rancher.console", newConsole); err != nil {
+		log.Errorf("Failed to update 'rancher.console': %v", err)
+	}
+
+	return nil
 }
 
 func consoleList(c *cli.Context) error {
