@@ -13,3 +13,4 @@ tests/integration/.tox
 .trash-cache
 .dapper
 vendor/*/*/*/.git
+tmp
