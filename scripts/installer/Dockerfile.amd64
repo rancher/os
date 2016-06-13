@@ -2,9 +2,11 @@ FROM debian:jessie
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y grub2 parted kexec-tools
 
-COPY conf lay-down-os seed-data set-disk-partitions /scripts/installer/
-COPY ./build/build.conf /scripts/
+COPY conf lay-down-os seed-data set-disk-partitions /scripts/
 COPY ./build/vmlinuz /dist/vmlinuz
 COPY ./build/initrd  /dist/initrd
+
+ARG VERSION
+ENV VERSION=${VERSION}
 
 ENTRYPOINT ["/scripts/lay-down-os"]
