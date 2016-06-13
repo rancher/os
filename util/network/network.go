@@ -55,6 +55,11 @@ func getServices(urls []string, key string) ([]string, error) {
 }
 
 func loadFromNetwork(location string) ([]byte, error) {
+	bytes := cacheLookup(location)
+	if bytes != nil {
+		return bytes, nil
+	}
+
 	var err error
 	for i := 0; i < 300; i++ {
 		net.UpdateDnsConf()
