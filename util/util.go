@@ -1,17 +1,22 @@
 package util
 
 import (
+	"bufio"
 	"bytes"
-	"io"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	log "github.com/Sirupsen/logrus"
+)
 
-	"reflect"
+const (
+	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
 )
 
 type AnyMap map[interface{}]interface{}
@@ -32,23 +37,33 @@ func Contains(values []string, value string) bool {
 
 type ReturnsErr func() error
 
-func FileCopy(src, dest string) (err error) {
-	in, err := os.Open(src)
+func FileCopy(src, dest string) error {
+	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	defer func() { err = in.Close() }()
+	return WriteFileAtomic(dest, data, 0666)
+}
 
-	out, err := os.Create(dest)
+func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
+	dir, file := path.Split(filename)
+	tempFile, err := ioutil.TempFile(dir, fmt.Sprintf(".%s", file))
 	if err != nil {
 		return err
 	}
-	defer func() { err = out.Close() }()
+	defer os.Remove(tempFile.Name())
 
-	if _, err := io.Copy(out, in); err != nil {
+	if _, err := tempFile.Write(data); err != nil {
 		return err
 	}
-	return
+	if err := tempFile.Close(); err != nil {
+		return err
+	}
+	if err := os.Chmod(tempFile.Name(), perm); err != nil {
+		return err
+	}
+
+	return os.Rename(tempFile.Name(), filename)
 }
 
 func Convert(from, to interface{}) error {
@@ -91,56 +106,7 @@ func Copy(d interface{}) interface{} {
 	}
 }
 
-func Replace(l, r interface{}) interface{} {
-	return r
-}
-
-func Equal(l, r interface{}) interface{} {
-	if reflect.DeepEqual(l, r) {
-		return l
-	}
-	return nil
-}
-
-func Filter(xs []interface{}, p func(x interface{}) bool) []interface{} {
-	return FlatMap(xs, func(x interface{}) []interface{} {
-		if p(x) {
-			return []interface{}{x}
-		}
-		return []interface{}{}
-	})
-}
-
-func FilterStrings(xs []string, p func(x string) bool) []string {
-	return FlatMapStrings(xs, func(x string) []string {
-		if p(x) {
-			return []string{x}
-		}
-		return []string{}
-	})
-}
-
-func Map(xs []interface{}, f func(x interface{}) interface{}) []interface{} {
-	return FlatMap(xs, func(x interface{}) []interface{} { return []interface{}{f(x)} })
-}
-
-func FlatMap(xs []interface{}, f func(x interface{}) []interface{}) []interface{} {
-	result := []interface{}{}
-	for _, x := range xs {
-		result = append(result, f(x)...)
-	}
-	return result
-}
-
-func FlatMapStrings(xs []string, f func(x string) []string) []string {
-	result := []string{}
-	for _, x := range xs {
-		result = append(result, f(x)...)
-	}
-	return result
-}
-
-func MapsUnion(left, right map[interface{}]interface{}) map[interface{}]interface{} {
+func Merge(left, right map[interface{}]interface{}) map[interface{}]interface{} {
 	result := MapCopy(left)
 
 	for k, r := range right {
@@ -149,75 +115,15 @@ func MapsUnion(left, right map[interface{}]interface{}) map[interface{}]interfac
 			case map[interface{}]interface{}:
 				switch r := r.(type) {
 				case map[interface{}]interface{}:
-					result[k] = MapsUnion(l, r)
+					result[k] = Merge(l, r)
 				default:
-					result[k] = Replace(l, r)
+					result[k] = r
 				}
 			default:
-				result[k] = Replace(l, r)
+				result[k] = r
 			}
 		} else {
 			result[k] = Copy(r)
-		}
-	}
-
-	return result
-}
-
-func MapsDifference(left, right map[interface{}]interface{}) map[interface{}]interface{} {
-	result := map[interface{}]interface{}{}
-
-	for k, l := range left {
-		if r, ok := right[k]; ok {
-			switch l := l.(type) {
-			case map[interface{}]interface{}:
-				switch r := r.(type) {
-				case map[interface{}]interface{}:
-					if len(l) == 0 && len(r) == 0 {
-						continue
-					} else if len(l) == 0 {
-						result[k] = l
-					} else if v := MapsDifference(l, r); len(v) > 0 {
-						result[k] = v
-					}
-				default:
-					if v := Equal(l, r); v == nil {
-						result[k] = l
-					}
-				}
-			default:
-				if v := Equal(l, r); v == nil {
-					result[k] = l
-				}
-			}
-		} else {
-			result[k] = l
-		}
-	}
-
-	return result
-}
-
-func MapsIntersection(left, right map[interface{}]interface{}) map[interface{}]interface{} {
-	result := map[interface{}]interface{}{}
-
-	for k, l := range left {
-		if r, ok := right[k]; ok {
-			switch l := l.(type) {
-			case map[interface{}]interface{}:
-				switch r := r.(type) {
-				case map[interface{}]interface{}:
-					result[k] = MapsIntersection(l, r)
-				default:
-					if v := Equal(l, r); v != nil {
-						result[k] = v
-					}
-				}
-			default:
-				if v := Equal(l, r); v != nil {
-					result[k] = v
-				}
-			}
 		}
 	}
 
@@ -240,24 +146,22 @@ func SliceCopy(data []interface{}) []interface{} {
 	return result
 }
 
+func RemoveString(slice []string, s string) []string {
+	result := []string{}
+	for _, elem := range slice {
+		if elem != s {
+			result = append(result, elem)
+		}
+	}
+	return result
+}
+
 func ToStrings(data []interface{}) []string {
 	result := make([]string, len(data), len(data))
 	for k, v := range data {
 		result[k] = v.(string)
 	}
 	return result
-}
-
-func DirLs(dir string) ([]interface{}, error) {
-	result := []interface{}{}
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return result, err
-	}
-	for _, f := range files {
-		result = append(result, f)
-	}
-	return result, nil
 }
 
 func Map2KVPairs(m map[string]string) []string {
@@ -288,4 +192,36 @@ func TrimSplitN(str, sep string, count int) []string {
 
 func TrimSplit(str, sep string) []string {
 	return TrimSplitN(str, sep, -1)
+}
+
+func GetCurrentContainerId() (string, error) {
+	file, err := os.Open(DOCKER_CGROUPS_FILE)
+
+	if err != nil {
+		return "", err
+	}
+
+	fileReader := bufio.NewScanner(file)
+	if !fileReader.Scan() {
+		return "", errors.New("Empty file /proc/self/cgroup")
+	}
+	line := fileReader.Text()
+	parts := strings.Split(line, "/")
+
+	for len(parts) != 3 {
+		if !fileReader.Scan() {
+			return "", errors.New("Found no docker cgroups")
+		}
+		line = fileReader.Text()
+		parts = strings.Split(line, "/")
+		if len(parts) == 3 {
+			if strings.HasSuffix(parts[1], "docker") {
+				break
+			} else {
+				parts = nil
+			}
+		}
+	}
+
+	return parts[len(parts)-1:][0], nil
 }

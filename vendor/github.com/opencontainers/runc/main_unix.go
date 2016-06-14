@@ -1,5 +1,5 @@
 // +build linux
 
-package main
+package runc
 
 import _ "github.com/opencontainers/runc/libcontainer/nsenter"

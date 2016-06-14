@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+BUILD=$(pwd)/build
+INITRD_DIR=${BUILD}/initrd
+ARTIFACTS=$(pwd)/dist/artifacts
+INITRD=${ARTIFACTS}/initrd
+
+mkdir -p ${ARTIFACTS}
+
+if [ "$COMPRESS" == "" ]; then
+    COMPRESS=lzma
+fi
+
+cd ${INITRD_DIR}
+
+echo Creating ${INITRD}
+find | cpio -H newc -o | ${COMPRESS} > ${INITRD}
+echo Done creating ${INITRD}

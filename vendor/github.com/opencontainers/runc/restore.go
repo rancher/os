@@ -1,22 +1,28 @@
 // +build linux
 
-package main
+package runc
 
 import (
-	"fmt"
 	"os"
-	"path/filepath"
+	"syscall"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/opencontainers/runc/libcontainer"
 	"github.com/opencontainers/runc/libcontainer/configs"
-	"github.com/opencontainers/specs"
+	"github.com/opencontainers/runc/libcontainer/specconv"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
 
 var restoreCommand = cli.Command{
 	Name:  "restore",
 	Usage: "restore a container from a previous checkpoint",
+	ArgsUsage: `<container-id>
+
+Where "<container-id>" is the name for the instance of the container to be
+restored.`,
+	Description: `Restores the saved state of the container instance that was previously saved
+using the runc checkpoint command.`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "image-path",
@@ -50,26 +56,53 @@ var restoreCommand = cli.Command{
 			Usage: "cgroups mode: 'soft' (default), 'full' and 'strict'.",
 		},
 		cli.StringFlag{
-			Name:  "config-file, c",
-			Value: "config.json",
-			Usage: "path to spec file for writing",
+			Name:  "bundle, b",
+			Value: "",
+			Usage: "path to the root of the bundle directory",
+		},
+		cli.BoolFlag{
+			Name:  "detach,d",
+			Usage: "detach from the container's process",
 		},
 		cli.StringFlag{
-			Name:  "runtime-file, r",
-			Value: "runtime.json",
-			Usage: "path for runtime file for writing",
+			Name:  "pid-file",
+			Value: "",
+			Usage: "specify the file to write the process id to",
+		},
+		cli.BoolFlag{
+			Name:  "no-subreaper",
+			Usage: "disable the use of the subreaper used to reap reparented processes",
+		},
+		cli.BoolFlag{
+			Name:  "no-pivot",
+			Usage: "do not use pivot root to jail process inside rootfs.  This should be used whenever the rootfs is on top of a ramdisk",
 		},
 	},
 	Action: func(context *cli.Context) {
 		imagePath := context.String("image-path")
+		id := context.Args().First()
+		if id == "" {
+			fatal(errEmptyID)
+		}
 		if imagePath == "" {
 			imagePath = getDefaultImagePath(context)
 		}
-		spec, rspec, err := loadSpec(context.String("config-file"), context.String("runtime-file"))
+		bundle := context.String("bundle")
+		if bundle != "" {
+			if err := os.Chdir(bundle); err != nil {
+				fatal(err)
+			}
+		}
+		spec, err := loadSpec(specConfig)
 		if err != nil {
 			fatal(err)
 		}
-		config, err := createLibcontainerConfig(context.GlobalString("id"), spec, rspec)
+		config, err := specconv.CreateLibcontainerConfig(&specconv.CreateOpts{
+			CgroupName:       id,
+			UseSystemdCgroup: context.GlobalBool("systemd-cgroup"),
+			NoPivotRoot:      context.Bool("no-pivot"),
+			Spec:             spec,
+		})
 		if err != nil {
 			fatal(err)
 		}
@@ -81,15 +114,18 @@ var restoreCommand = cli.Command{
 	},
 }
 
-func restoreContainer(context *cli.Context, spec *specs.LinuxSpec, config *configs.Config, imagePath string) (code int, err error) {
-	rootuid := 0
+func restoreContainer(context *cli.Context, spec *specs.Spec, config *configs.Config, imagePath string) (code int, err error) {
+	var (
+		rootuid = 0
+		id      = context.Args().First()
+	)
 	factory, err := loadFactory(context)
 	if err != nil {
 		return -1, err
 	}
-	container, err := factory.Load(context.GlobalString("id"))
+	container, err := factory.Load(id)
 	if err != nil {
-		container, err = factory.Create(context.GlobalString("id"), config)
+		container, err = factory.Create(id, config)
 		if err != nil {
 			return -1, err
 		}
@@ -101,53 +137,39 @@ func restoreContainer(context *cli.Context, spec *specs.LinuxSpec, config *confi
 		logrus.Error(err)
 	}
 	if status == libcontainer.Running {
-		fatal(fmt.Errorf("Container with id %s already running", context.GlobalString("id")))
+		fatalf("Container with id %s already running", id)
 	}
 
 	setManageCgroupsMode(context, options)
 
 	// ensure that the container is always removed if we were the process
 	// that created it.
-	defer func() {
-		if err != nil {
-			return
-		}
-		status, err := container.Status()
-		if err != nil {
-			logrus.Error(err)
-		}
-		if status != libcontainer.Checkpointed {
-			if err := container.Destroy(); err != nil {
-				logrus.Error(err)
-			}
-			if err := os.RemoveAll(options.ImagesDirectory); err != nil {
-				logrus.Error(err)
-			}
-		}
-	}()
-	process := &libcontainer.Process{
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
+	detach := context.Bool("detach")
+	if !detach {
+		defer destroy(container)
 	}
-	tty, err := newTty(spec.Process.Terminal, process, rootuid)
+	process := &libcontainer.Process{}
+	tty, err := setupIO(process, rootuid, "", false, detach)
 	if err != nil {
 		return -1, err
 	}
-	handler := newSignalHandler(tty)
-	defer handler.Close()
+	defer tty.Close()
+	handler := newSignalHandler(tty, !context.Bool("no-subreaper"))
 	if err := container.Restore(process, options); err != nil {
-		cstatus, cerr := container.Status()
-		if cerr != nil {
-			logrus.Error(cerr)
-		}
-		if cstatus == libcontainer.Destroyed {
-			dest := filepath.Join(context.GlobalString("root"), context.GlobalString("id"))
-			if errVal := os.RemoveAll(dest); errVal != nil {
-				logrus.Error(errVal)
-			}
-		}
 		return -1, err
+	}
+	if err := tty.ClosePostStart(); err != nil {
+		return -1, err
+	}
+	if pidFile := context.String("pid-file"); pidFile != "" {
+		if err := createPidFile(pidFile, process); err != nil {
+			process.Signal(syscall.SIGKILL)
+			process.Wait()
+			return -1, err
+		}
+	}
+	if detach {
+		return 0, nil
 	}
 	return handler.forward(process)
 }

@@ -17,13 +17,9 @@ import (
 type projectFactory struct {
 }
 
-func (p *projectFactory) Create(c *cli.Context) (*project.Project, error) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	return compose.GetProject(cfg, true)
+func (p *projectFactory) Create(c *cli.Context) (project.APIProject, error) {
+	cfg := config.LoadConfig()
+	return compose.GetProject(cfg, true, false)
 }
 
 func beforeApp(c *cli.Context) error {
@@ -86,12 +82,13 @@ func serviceSubCommands() []cli.Command {
 	}
 }
 
-func disable(c *cli.Context) {
+func updateIncludedServices(cfg *config.CloudConfig) error {
+	return config.Set("rancher.services_include", cfg.Rancher.ServicesInclude)
+}
+
+func disable(c *cli.Context) error {
 	changed := false
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	for _, service := range c.Args() {
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
@@ -103,18 +100,17 @@ func disable(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err := updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
+
+	return nil
 }
 
-func del(c *cli.Context) {
+func del(c *cli.Context) error {
 	changed := false
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+	cfg := config.LoadConfig()
 
 	for _, service := range c.Args() {
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
@@ -125,17 +121,16 @@ func del(c *cli.Context) {
 	}
 
 	if changed {
-		if err = cfg.Save(); err != nil {
+		if err := updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
+
+	return nil
 }
 
-func enable(c *cli.Context) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+func enable(c *cli.Context) error {
+	cfg := config.LoadConfig()
 
 	var enabledServices []string
 
@@ -155,17 +150,16 @@ func enable(c *cli.Context) {
 			logrus.Fatal(err)
 		}
 
-		if err := cfg.Save(); err != nil {
+		if err := updateIncludedServices(cfg); err != nil {
 			logrus.Fatal(err)
 		}
 	}
+
+	return nil
 }
 
-func list(c *cli.Context) {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		logrus.Fatal(err)
-	}
+func list(c *cli.Context) error {
+	cfg := config.LoadConfig()
 
 	clone := make(map[string]bool)
 	for service, enabled := range cfg.Rancher.ServicesInclude {
@@ -197,4 +191,6 @@ func list(c *cli.Context) {
 			fmt.Printf("disabled %s\n", service)
 		}
 	}
+
+	return nil
 }

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+mkdir -p bin dist build/initrd
+if [ -e ./scripts/$1 ]; then
+    ./scripts/"$@"
+else
+    "$@"
+fi
+
+EXIT=$?
+
+chown -R $DAPPER_UID:$DAPPER_GID .
+
+exit $EXIT

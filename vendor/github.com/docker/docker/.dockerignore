@@ -1,2 +1,4 @@
-bundles
-.gopath
+./bin
+./.dapper
+./dist
+./.trash-cache

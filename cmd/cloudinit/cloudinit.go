@@ -18,8 +18,9 @@ package cloudinit
 import (
 	"errors"
 	"flag"
-	"io/ioutil"
+	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -33,6 +34,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/file"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/ec2"
+	"github.com/coreos/coreos-cloudinit/datasource/metadata/gce"
 	"github.com/coreos/coreos-cloudinit/datasource/metadata/packet"
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
@@ -40,6 +42,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/rancher/netconf"
 	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 const (
@@ -47,6 +50,7 @@ const (
 	datasourceMaxInterval = 30 * time.Second
 	datasourceTimeout     = 5 * time.Minute
 	sshKeyName            = "rancheros-cloud-config"
+	resizeStamp           = "/var/lib/rancher/resizefs.done"
 )
 
 var (
@@ -71,13 +75,13 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 
 	if len(scriptBytes) > 0 {
 		log.Infof("Writing to %s", rancherConfig.CloudConfigScriptFile)
-		if err := ioutil.WriteFile(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
+		if err := util.WriteFileAtomic(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
 			log.Errorf("Error while writing file %s: %v", rancherConfig.CloudConfigScriptFile, err)
 			return err
 		}
 	}
 
-	if err := ioutil.WriteFile(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
+	if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
 		return err
 	}
 	log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
@@ -87,7 +91,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		return err
 	}
 
-	if err = ioutil.WriteFile(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
+	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
 		return err
 	}
 	log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
@@ -96,11 +100,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 }
 
 func currentDatasource() (datasource.Datasource, error) {
-	cfg, err := rancherConfig.LoadConfig()
-	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("Failed to read rancher config")
-		return nil, err
-	}
+	cfg := rancherConfig.LoadConfig()
 
 	dss := getDatasources(cfg)
 	if len(dss) == 0 {
@@ -168,11 +168,30 @@ func fetchUserData() ([]byte, datasource.Metadata, error) {
 	return userDataBytes, metadata, nil
 }
 
-func executeCloudConfig() error {
-	cc, err := rancherConfig.LoadConfig()
+func resizeDevice(cfg *rancherConfig.CloudConfig) error {
+	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, "1")
+	err := cmd.Run()
 	if err != nil {
 		return err
 	}
+
+	cmd = exec.Command("partprobe")
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	cmd = exec.Command("resize2fs", fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice))
+	err = cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func executeCloudConfig() error {
+	cc := rancherConfig.LoadConfig()
 
 	if len(cc.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)
@@ -187,6 +206,14 @@ func executeCloudConfig() error {
 			continue
 		}
 		log.Printf("Wrote file %s to filesystem", fullPath)
+	}
+
+	if _, err := os.Stat(resizeStamp); os.IsNotExist(err) && cc.Rancher.ResizeDevice != "" {
+		if err := resizeDevice(cc); err == nil {
+			os.Create(resizeStamp)
+		} else {
+			log.Errorf("Failed to resize %s: %s", cc.Rancher.ResizeDevice, err)
+		}
 	}
 
 	return nil
@@ -261,12 +288,7 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 			}
 		case "gce":
 			if network {
-				gceCloudConfigFile, err := GetAndCreateGceDataSourceFilename()
-				if err != nil {
-					log.Errorf("Could not retrieve GCE CloudConfig %s", err)
-					continue
-				}
-				dss = append(dss, file.NewDatasource(gceCloudConfigFile))
+				dss = append(dss, gce.NewDatasource("http://metadata.google.internal/"))
 			}
 		case "packet":
 			if !network {

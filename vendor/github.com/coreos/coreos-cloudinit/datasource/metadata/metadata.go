@@ -15,6 +15,7 @@
 package metadata
 
 import (
+	"net/http"
 	"strings"
 
 	"github.com/coreos/coreos-cloudinit/pkg"
@@ -28,11 +29,11 @@ type MetadataService struct {
 	MetadataPath string
 }
 
-func NewDatasource(root, apiVersion, userdataPath, metadataPath string) MetadataService {
+func NewDatasource(root, apiVersion, userdataPath, metadataPath string, header http.Header) MetadataService {
 	if !strings.HasSuffix(root, "/") {
 		root += "/"
 	}
-	return MetadataService{root, pkg.NewHttpClient(), apiVersion, userdataPath, metadataPath}
+	return MetadataService{root, pkg.NewHttpClientHeader(header), apiVersion, userdataPath, metadataPath}
 }
 
 func (ms MetadataService) IsAvailable() bool {

@@ -1,61 +1,87 @@
 // +build linux
 
-package main
+package runc
 
 import (
-	"fmt"
 	"os"
 	"runtime"
-	"strconv"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/coreos/go-systemd/activation"
 	"github.com/opencontainers/runc/libcontainer"
-	"github.com/opencontainers/specs"
+	"github.com/opencontainers/runtime-spec/specs-go"
 )
-
-const SD_LISTEN_FDS_START = 3
 
 // default action is to start a container
 var startCommand = cli.Command{
 	Name:  "start",
 	Usage: "create and run a container",
+	ArgsUsage: `<container-id>
+
+Where "<container-id>" is your name for the instance of the container that you
+are starting. The name you provide for the container instance must be unique on
+your host.`,
+	Description: `The start command creates an instance of a container for a bundle. The bundle
+is a directory with a specification file named "` + specConfig + `" and a root
+filesystem.
+
+The specification file includes an args parameter. The args parameter is used
+to specify command(s) that get run when the container is started. To change the
+command(s) that get executed on start, edit the args parameter of the spec. See
+"runc spec --help" for more explanation.`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
-			Name:  "config-file, c",
-			Value: "config.json",
-			Usage: "path to spec config file",
+			Name:  "bundle, b",
+			Value: "",
+			Usage: `path to the root of the bundle directory, defaults to the current directory`,
 		},
 		cli.StringFlag{
-			Name:  "runtime-file, r",
-			Value: "runtime.json",
-			Usage: "path to runtime config file",
+			Name:  "console",
+			Value: "",
+			Usage: "specify the pty slave path for use with the container",
+		},
+		cli.BoolFlag{
+			Name:  "detach,d",
+			Usage: "detach from the container's process",
+		},
+		cli.StringFlag{
+			Name:  "pid-file",
+			Value: "",
+			Usage: "specify the file to write the process id to",
+		},
+		cli.BoolFlag{
+			Name:  "no-subreaper",
+			Usage: "disable the use of the subreaper used to reap reparented processes",
+		},
+		cli.BoolFlag{
+			Name:  "no-pivot",
+			Usage: "do not use pivot root to jail process inside rootfs.  This should be used whenever the rootfs is on top of a ramdisk",
 		},
 	},
 	Action: func(context *cli.Context) {
-		spec, rspec, err := loadSpec(context.String("config-file"), context.String("runtime-file"))
+		bundle := context.String("bundle")
+		if bundle != "" {
+			if err := os.Chdir(bundle); err != nil {
+				fatal(err)
+			}
+		}
+		spec, err := loadSpec(specConfig)
 		if err != nil {
 			fatal(err)
 		}
 
 		notifySocket := os.Getenv("NOTIFY_SOCKET")
 		if notifySocket != "" {
-			setupSdNotify(spec, rspec, notifySocket)
-		}
-
-		listenFds := os.Getenv("LISTEN_FDS")
-		listenPid := os.Getenv("LISTEN_PID")
-
-		if listenFds != "" && listenPid == strconv.Itoa(os.Getpid()) {
-			setupSocketActivation(spec, listenFds)
+			setupSdNotify(spec, notifySocket)
 		}
 
 		if os.Geteuid() != 0 {
-			logrus.Fatal("runc should be run as root")
+			fatalf("runc should be run as root")
 		}
-		status, err := startContainer(context, spec, rspec)
+
+		status, err := startContainer(context, spec)
 		if err != nil {
-			logrus.Fatalf("Container start failed: %v", err)
+			fatal(err)
 		}
 		// exit with the container's exit status so any external supervisor is
 		// notified of the exit with the correct exit status.
@@ -67,89 +93,46 @@ func init() {
 	if len(os.Args) > 1 && os.Args[1] == "init" {
 		runtime.GOMAXPROCS(1)
 		runtime.LockOSThread()
+	}
+}
+
+var initCommand = cli.Command{
+	Name:  "init",
+	Usage: `initialize the namespaces and launch the process (do not call it outside of runc)`,
+	Action: func(context *cli.Context) {
 		factory, _ := libcontainer.New("")
 		if err := factory.StartInitialization(); err != nil {
-			fatal(err)
+			// as the error is sent back to the parent there is no need to log
+			// or write it to stderr because the parent process will handle this
+			os.Exit(1)
 		}
-		panic("--this line should have never been executed, congratulations--")
-	}
+		panic("libcontainer: container init failed to exec")
+	},
 }
 
-func startContainer(context *cli.Context, spec *specs.LinuxSpec, rspec *specs.LinuxRuntimeSpec) (int, error) {
-	config, err := createLibcontainerConfig(context.GlobalString("id"), spec, rspec)
+func startContainer(context *cli.Context, spec *specs.Spec) (int, error) {
+	id := context.Args().First()
+	if id == "" {
+		return -1, errEmptyID
+	}
+	container, err := createContainer(context, id, spec)
 	if err != nil {
 		return -1, err
 	}
-	if _, err := os.Stat(config.Rootfs); err != nil {
-		if os.IsNotExist(err) {
-			return -1, fmt.Errorf("Rootfs (%q) does not exist", config.Rootfs)
-		}
-		return -1, err
-	}
-	rootuid, err := config.HostUID()
-	if err != nil {
-		return -1, err
-	}
-	factory, err := loadFactory(context)
-	if err != nil {
-		return -1, err
-	}
-	container, err := factory.Create(context.GlobalString("id"), config)
-	if err != nil {
-		return -1, err
-	}
-	// ensure that the container is always removed if we were the process
-	// that created it.
-	defer destroy(container)
-	process := newProcess(spec.Process)
-
+	detach := context.Bool("detach")
 	// Support on-demand socket activation by passing file descriptors into the container init process.
+	listenFDs := []*os.File{}
 	if os.Getenv("LISTEN_FDS") != "" {
-		listenFdsInt, err := strconv.Atoi(os.Getenv("LISTEN_FDS"))
-		if err != nil {
-			return -1, err
-		}
-
-		for i := SD_LISTEN_FDS_START; i < (listenFdsInt + SD_LISTEN_FDS_START); i++ {
-			process.ExtraFiles = append(process.ExtraFiles, os.NewFile(uintptr(i), ""))
-		}
+		listenFDs = activation.Files(false)
 	}
-
-	tty, err := newTty(spec.Process.Terminal, process, rootuid)
-	if err != nil {
-		return -1, err
+	r := &runner{
+		enableSubreaper: !context.Bool("no-subreaper"),
+		shouldDestroy:   true,
+		container:       container,
+		listenFDs:       listenFDs,
+		console:         context.String("console"),
+		detach:          detach,
+		pidFile:         context.String("pid-file"),
 	}
-	handler := newSignalHandler(tty)
-	defer handler.Close()
-	if err := container.Start(process); err != nil {
-		return -1, err
-	}
-	return handler.forward(process)
-}
-
-// If systemd is supporting sd_notify protocol, this function will add support
-// for sd_notify protocol from within the container.
-func setupSdNotify(spec *specs.LinuxSpec, rspec *specs.LinuxRuntimeSpec, notifySocket string) {
-	mountName := "sdNotify"
-	spec.Mounts = append(spec.Mounts, specs.MountPoint{Name: mountName, Path: notifySocket})
-	spec.Process.Env = append(spec.Process.Env, fmt.Sprintf("NOTIFY_SOCKET=%s", notifySocket))
-	rspec.Mounts[mountName] = specs.Mount{Type: "bind", Source: notifySocket, Options: []string{"bind"}}
-}
-
-// If systemd is supporting on-demand socket activation, this function will add support
-// for on-demand socket activation for the containerized service.
-func setupSocketActivation(spec *specs.LinuxSpec, listenFds string) {
-	spec.Process.Env = append(spec.Process.Env, fmt.Sprintf("LISTEN_FDS=%s", listenFds), "LISTEN_PID=1")
-}
-
-func destroy(container libcontainer.Container) {
-	status, err := container.Status()
-	if err != nil {
-		logrus.Error(err)
-	}
-	if status != libcontainer.Checkpointed {
-		if err := container.Destroy(); err != nil {
-			logrus.Error(err)
-		}
-	}
+	return r.run(&spec.Process)
 }

@@ -10,11 +10,20 @@ import (
 	"github.com/codegangsta/cli"
 	machineUtil "github.com/docker/machine/utils"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 const (
-	NAME string = "rancher"
-	BITS int    = 2048
+	NAME          string = "rancher"
+	BITS          int    = 2048
+	ServerTlsPath string = "/etc/docker/tls"
+	ClientTlsPath string = "/home/rancher/.docker"
+	Cert          string = "cert.pem"
+	Key           string = "key.pem"
+	ServerCert    string = "server-cert.pem"
+	ServerKey     string = "server-key.pem"
+	CaCert        string = "ca.pem"
+	CaKey         string = "ca-key.pem"
 )
 
 func tlsConfCommands() []cli.Command {
@@ -44,101 +53,81 @@ func tlsConfCommands() []cli.Command {
 	}
 }
 
-func writeCerts(generateServer bool, hostname []string, cfg *config.CloudConfig, certPath, keyPath, caCertPath, caKeyPath string) error {
+func writeCerts(generateServer bool, hostname []string, certPath, keyPath, caCertPath, caKeyPath string) error {
 	if !generateServer {
 		return machineUtil.GenerateCert([]string{""}, certPath, keyPath, caCertPath, caKeyPath, NAME, BITS)
 	}
 
-	if cfg.Rancher.Docker.ServerKey == "" || cfg.Rancher.Docker.ServerCert == "" {
-		err := machineUtil.GenerateCert(hostname, certPath, keyPath, caCertPath, caKeyPath, NAME, BITS)
-		if err != nil {
-			return err
-		}
-
-		cert, err := ioutil.ReadFile(certPath)
-		if err != nil {
-			return err
-		}
-
-		key, err := ioutil.ReadFile(keyPath)
-		if err != nil {
-			return err
-		}
-
-		cfg, err = cfg.Merge(map[interface{}]interface{}{
-			"rancher": map[interface{}]interface{}{
-				"docker": map[interface{}]interface{}{
-					"server_cert": string(cert),
-					"server_key":  string(key),
-				},
-			},
-		})
-		if err != nil {
-			return err
-		}
-
-		return cfg.Save() // certPath, keyPath are already written to by machineUtil.GenerateCert()
-	}
-
-	if err := ioutil.WriteFile(certPath, []byte(cfg.Rancher.Docker.ServerCert), 0400); err != nil {
+	if err := machineUtil.GenerateCert(hostname, certPath, keyPath, caCertPath, caKeyPath, NAME, BITS); err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(keyPath, []byte(cfg.Rancher.Docker.ServerKey), 0400)
+	cert, err := ioutil.ReadFile(certPath)
+	if err != nil {
+		return err
+	}
 
+	key, err := ioutil.ReadFile(keyPath)
+	if err != nil {
+		return err
+	}
+
+	// certPath, keyPath are already written to by machineUtil.GenerateCert()
+	if err := config.Set("rancher.docker.server_cert", string(cert)); err != nil {
+		return err
+	}
+	if err := config.Set("rancher.docker.server_key", string(key)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) (*config.CloudConfig, error) {
+func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {
 	if cfg.Rancher.Docker.CACert == "" {
 		if err := machineUtil.GenerateCACertificate(caCertPath, caKeyPath, NAME, BITS); err != nil {
-			return nil, err
+			return err
 		}
 
 		caCert, err := ioutil.ReadFile(caCertPath)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		caKey, err := ioutil.ReadFile(caKeyPath)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		cfg, err = cfg.Merge(map[interface{}]interface{}{
-			"rancher": map[interface{}]interface{}{
-				"docker": map[interface{}]interface{}{
-					"ca_key":  string(caKey),
-					"ca_cert": string(caCert),
-				},
-			},
-		})
-		if err != nil {
-			return nil, err
+		// caCertPath, caKeyPath are already written to by machineUtil.GenerateCACertificate()
+		if err := config.Set("rancher.docker.ca_cert", string(caCert)); err != nil {
+			return err
+		}
+		if err := config.Set("rancher.docker.ca_key", string(caKey)); err != nil {
+			return err
+		}
+	} else {
+		cfg = config.LoadConfig()
+
+		if err := util.WriteFileAtomic(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
+			return err
 		}
 
-		if err = cfg.Save(); err != nil {
-			return nil, err
+		if err := util.WriteFileAtomic(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
+			return err
 		}
-
-		return cfg, nil // caCertPath, caKeyPath are already written to by machineUtil.GenerateCACertificate()
 	}
 
-	if err := ioutil.WriteFile(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
-		return nil, err
-	}
-
-	if err := ioutil.WriteFile(caKeyPath, []byte(cfg.Rancher.Docker.CAKey), 0400); err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
+	return nil
 }
 
-func tlsConfCreate(c *cli.Context) {
+func tlsConfCreate(c *cli.Context) error {
 	err := generate(c)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	return nil
 }
 
 func generate(c *cli.Context) error {
@@ -150,27 +139,22 @@ func generate(c *cli.Context) error {
 }
 
 func Generate(generateServer bool, outDir string, hostnames []string) error {
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return err
-	}
-
 	if outDir == "" {
 		if generateServer {
-			outDir = "/etc/docker/tls"
+			outDir = ServerTlsPath
 		} else {
-			outDir = "/home/rancher/.docker"
+			outDir = ClientTlsPath
 		}
 		log.Infof("Out directory (-d, --dir) not specified, using default: %s", outDir)
 	}
-	caCertPath := filepath.Join(outDir, "ca.pem")
-	caKeyPath := filepath.Join(outDir, "ca-key.pem")
-	certPath := filepath.Join(outDir, "cert.pem")
-	keyPath := filepath.Join(outDir, "key.pem")
+	caCertPath := filepath.Join(outDir, CaCert)
+	caKeyPath := filepath.Join(outDir, CaKey)
+	certPath := filepath.Join(outDir, Cert)
+	keyPath := filepath.Join(outDir, Key)
 
 	if generateServer {
-		certPath = filepath.Join(outDir, "server-cert.pem")
-		keyPath = filepath.Join(outDir, "server-key.pem")
+		certPath = filepath.Join(outDir, ServerCert)
+		keyPath = filepath.Join(outDir, ServerKey)
 	}
 
 	if _, err := os.Stat(outDir); os.IsNotExist(err) {
@@ -179,11 +163,11 @@ func Generate(generateServer bool, outDir string, hostnames []string) error {
 		}
 	}
 
-	cfg, err = writeCaCerts(cfg, caCertPath, caKeyPath)
-	if err != nil {
+	cfg := config.LoadConfig()
+	if err := writeCaCerts(cfg, caCertPath, caKeyPath); err != nil {
 		return err
 	}
-	if err := writeCerts(generateServer, hostnames, cfg, certPath, keyPath, caCertPath, caKeyPath); err != nil {
+	if err := writeCerts(generateServer, hostnames, certPath, keyPath, caCertPath, caKeyPath); err != nil {
 		return err
 	}
 

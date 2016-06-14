@@ -3,7 +3,7 @@
 package reexec
 
 import (
-	"os/exec"
+	"github.com/docker/containerd/subreaper/exec"
 )
 
 // Command is unsupported on operating systems apart from Linux and Windows.

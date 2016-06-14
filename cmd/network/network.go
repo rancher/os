@@ -3,55 +3,58 @@ package network
 import (
 	"flag"
 	"os"
-	"os/exec"
+
+	"golang.org/x/net/context"
 
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/netconf"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/docker"
 	"github.com/rancher/os/hostname"
 )
 
-const (
-	NETWORK_DONE     = "/var/run/network.done"
-	WAIT_FOR_NETWORK = "wait-for-network"
-)
-
 var (
-	daemon bool
-	flags  *flag.FlagSet
+	stopNetworkPre bool
+	flags          *flag.FlagSet
 )
 
 func init() {
 	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	flags.BoolVar(&daemon, "daemon", false, "run dhcpd as daemon")
-}
-
-func sendTerm(proc string) {
-	cmd := exec.Command("killall", "-TERM", proc)
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Run()
+	flags.BoolVar(&stopNetworkPre, "stop-network-pre", false, "")
 }
 
 func Main() {
 	flags.Parse(os.Args[1:])
 
-	log.Infof("Running network: daemon=%v", daemon)
+	log.Infof("Running network: stop-network-pre=%v", stopNetworkPre)
 
-	os.Remove(NETWORK_DONE) // ignore error
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		log.Fatal(err)
+	if stopNetworkPre {
+		client, err := docker.NewSystemClient()
+		if err != nil {
+			log.Error(err)
+		}
+
+		err = client.ContainerStop(context.Background(), "network-pre", 10)
+		if err != nil {
+			log.Error(err)
+		}
+
+		_, err = client.ContainerWait(context.Background(), "network-pre")
+		if err != nil {
+			log.Error(err)
+		}
 	}
+
+	cfg := config.LoadConfig()
 
 	nameservers := cfg.Rancher.Network.Dns.Nameservers
 	search := cfg.Rancher.Network.Dns.Search
 	userSetDns := len(nameservers) > 0 || len(search) > 0
 	if !userSetDns {
-		nameservers = cfg.Rancher.DefaultNetwork.Dns.Nameservers
-		search = cfg.Rancher.DefaultNetwork.Dns.Search
+		nameservers = cfg.Rancher.Defaults.Network.Dns.Nameservers
+		search = cfg.Rancher.Defaults.Network.Dns.Search
 	}
 
 	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
@@ -75,14 +78,5 @@ func Main() {
 		log.Error(err)
 	}
 
-	if f, err := os.Create(NETWORK_DONE); err != nil {
-		log.Error(err)
-	} else {
-		f.Close()
-	}
-	sendTerm(WAIT_FOR_NETWORK)
-
-	if daemon {
-		select {}
-	}
+	select {}
 }

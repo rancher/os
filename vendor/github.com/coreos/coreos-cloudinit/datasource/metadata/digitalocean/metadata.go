@@ -66,7 +66,7 @@ type metadataService struct {
 }
 
 func NewDatasource(root string) *metadataService {
-	return &metadataService{MetadataService: metadata.NewDatasource(root, apiVersion, userdataUrl, metadataPath)}
+	return &metadataService{MetadataService: metadata.NewDatasource(root, apiVersion, userdataUrl, metadataPath, nil)}
 }
 
 func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err error) {

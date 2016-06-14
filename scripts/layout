@@ -1,0 +1,62 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+cd $(dirname $0)/..
+
+BUILD=build
+INITRD_DIR=${BUILD}/initrd
+
+echo Create initrd layout in $INITRD_DIR
+
+rm -rf ${INITRD_DIR}
+mkdir -p ${INITRD_DIR}/usr/{etc,bin,share/ros}
+
+./scripts/template
+
+cp -rf assets/selinux      ${INITRD_DIR}/usr/etc
+cp build/images.tar        ${INITRD_DIR}/usr/share/ros/
+cp bin/ros                 ${INITRD_DIR}/usr/bin/
+ln -s usr/bin/ros          ${INITRD_DIR}/init
+ln -s bin                  ${INITRD_DIR}/usr/sbin
+ln -s usr/sbin             ${INITRD_DIR}/sbin
+ln -s ros                  ${INITRD_DIR}/usr/bin/system-docker
+
+tar xvzf ${DOWNLOADS}/docker.tgz -C ${INITRD_DIR}/usr/bin --strip-components=1
+
+if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
+    mkdir -p ${BUILD}/kernel
+    tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
+
+    for i in vmlinuz vmlinux; do
+        if [ -e ${BUILD}/kernel/boot/${i}-* ]; then
+            mkdir -p dist/artifacts
+            cp ${BUILD}/kernel/boot/${i}-* dist/artifacts/vmlinuz
+            break
+        fi
+    done
+
+    if [ -d ${BUILD}/kernel/lib ]; then
+        rm -rf ${INITRD_DIR}/usr/lib
+        cp -rf ${BUILD}/kernel/lib ${INITRD_DIR}/usr/
+        depmod -b ${INITRD_DIR}/usr $(basename ${INITRD_DIR}/usr/lib/modules/*)
+    fi
+fi
+
+if [ -e ${DOWNLOADS}/policy.29 ]; then
+    mkdir -p ${INITRD_DIR}/usr/etc/selinux/ros/policy/
+    cp ${DOWNLOADS}/policy.29 ${INITRD_DIR}/usr/etc/selinux/ros/policy/
+fi
+
+DFS_ARCH=$(docker create ${DFS_IMAGE}${SUFFIX})
+trap "docker rm -fv ${DFS_ARCH} >/dev/null" EXIT
+
+docker export ${DFS_ARCH} | tar xf - -C ${INITRD_DIR} --exclude=usr/bin/dockerlaunch \
+                                                      --exclude=usr/bin/docker       \
+                                                      --exclude=usr/share/git-core   \
+                                                      --exclude=usr/bin/git          \
+                                                      --exclude=usr/bin/ssh          \
+                                                      --exclude=usr/libexec/git-core \
+                                                      usr
+
+./scripts/hash-initrd

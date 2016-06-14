@@ -1,7 +1,0 @@
-DAPPER_BASE=ubuntu:16.04
-TOOLCHAIN= #empty
-
-COMPILED_KERNEL_URL=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.2.0-34.39-rancher/linux-4.2.8-ckt4-rancher-x86.tar.gz
-DOCKER_BINARY_URL=https://get.docker.com/builds/Linux/x86_64/docker-1.10.3
-OS_RELEASES_YML=https://releases.rancher.com/os/releases.yml
-VBOX_MODULES_URL=https://github.com/rancher/os-vbox/releases/download/v0.0.2/vbox-modules.tar.gz

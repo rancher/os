@@ -1,15 +1,8 @@
 // +build !linux
 
-package main
+package runc
 
-import (
-	"github.com/Sirupsen/logrus"
-	"github.com/codegangsta/cli"
-)
-
-func getDefaultID() string {
-	return ""
-}
+import "github.com/codegangsta/cli"
 
 var (
 	checkpointCommand cli.Command
@@ -18,7 +11,3 @@ var (
 	specCommand       cli.Command
 	killCommand       cli.Command
 )
-
-func runAction(*cli.Context) {
-	logrus.Fatal("Current OS is not supported yet")
-}

@@ -7,8 +7,9 @@ import (
 	"github.com/rancher/os/util"
 )
 
-func devAction(c *cli.Context) {
+func devAction(c *cli.Context) error {
 	if len(c.Args()) > 0 {
 		fmt.Println(util.ResolveDevice(c.Args()[0]))
 	}
+	return nil
 }

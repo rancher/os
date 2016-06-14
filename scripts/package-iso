@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+cd $(dirname $0)/..
+
+ARTIFACTS=$(pwd)/dist/artifacts
+CD=${BUILD}/cd
+
+mkdir -p ${CD}/boot/isolinux
+mkdir -p ${CD}/boot/isolinux
+
+if [ ! -f ${ARTIFACTS}/vmlinuz ] || [ ! -f ${ARTIFACTS}/initrd ]; then
+    echo "Error: vmlinuz or initrd is missing in ${ARTIFACTS}/"
+    exit 1
+fi
+
+cp ${ARTIFACTS}/initrd                        ${CD}/boot
+cp ${ARTIFACTS}/vmlinuz                       ${CD}/boot
+cp scripts/isolinux.cfg                       ${CD}/boot/isolinux
+cp /usr/lib/ISOLINUX/isolinux.bin             ${CD}/boot/isolinux
+cp /usr/lib/syslinux/modules/bios/ldlinux.c32 ${CD}/boot/isolinux
+cd ${CD} && xorriso \
+    -as mkisofs \
+    -l -J -R -V "${DISTRIB_ID}" \
+    -no-emul-boot -boot-load-size 4 -boot-info-table \
+    -b boot/isolinux/isolinux.bin -c boot/isolinux/boot.cat \
+    -isohybrid-mbr /usr/lib/ISOLINUX/isohdpfx.bin \
+    -o ${ARTIFACTS}/$(echo ${DISTRIB_ID} | tr '[:upper:]' '[:lower:]').iso ${CD}

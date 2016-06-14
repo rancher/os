@@ -9,10 +9,10 @@ import (
 // client information (like configuration file, builder to use, …)
 type Context struct {
 	project.Context
-	Builder       Builder
-	ClientFactory ClientFactory
+	ClientFactory project.ClientFactory
 	ConfigDir     string
 	ConfigFile    *cliconfig.ConfigFile
+	AuthLookup    AuthLookup
 }
 
 func (c *Context) open() error {

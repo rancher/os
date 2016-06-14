@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
@@ -20,11 +22,19 @@ var (
 )
 
 func GetServices(urls []string) ([]string, error) {
+	return getServices(urls, "services")
+}
+
+func GetConsoles(urls []string) ([]string, error) {
+	return getServices(urls, "consoles")
+}
+
+func getServices(urls []string, key string) ([]string, error) {
 	result := []string{}
 
 	for _, url := range urls {
 		indexUrl := fmt.Sprintf("%s/index.yml", url)
-		content, err := LoadResource(indexUrl, true, []string{})
+		content, err := LoadResource(indexUrl, true)
 		if err != nil {
 			log.Errorf("Failed to load %s: %v", indexUrl, err)
 			continue
@@ -37,7 +47,7 @@ func GetServices(urls []string) ([]string, error) {
 			continue
 		}
 
-		if list, ok := services["services"]; ok {
+		if list, ok := services[key]; ok {
 			result = append(result, list...)
 		}
 	}
@@ -66,53 +76,76 @@ func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
 	}
 }
 
-func retryHttp(f func() (*http.Response, error), times int) (resp *http.Response, err error) {
-	for i := 0; i < times; i++ {
-		if resp, err = f(); err == nil {
-			return
-		}
-		log.Warnf("Error making HTTP request: %s. Retrying", err)
+func loadFromNetwork(location string) ([]byte, error) {
+	bytes := cacheLookup(location)
+	if bytes != nil {
+		return bytes, nil
 	}
-	return
+
+	cfg := config.LoadConfig()
+	SetProxyEnvironmentVariables(cfg)
+
+	var err error
+	for i := 0; i < 300; i++ {
+		net.UpdateDnsConf()
+
+		var resp *http.Response
+		resp, err = http.Get(location)
+		if err == nil {
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusOK {
+				return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
+			}
+
+			bytes, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+
+			cacheAdd(location, bytes)
+			return bytes, nil
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	return nil, err
 }
 
-func LoadResource(location string, network bool, urls []string) ([]byte, error) {
-	var bytes []byte
-	err := ErrNotFound
-
+func LoadResource(location string, network bool) ([]byte, error) {
 	if strings.HasPrefix(location, "http:/") || strings.HasPrefix(location, "https:/") {
 		if !network {
 			return nil, ErrNoNetwork
 		}
-
-		cfg, err := config.LoadConfig()
-		if err != nil {
-			return nil, err
-		}
-
-		SetProxyEnvironmentVariables(cfg)
-
-		resp, err := retryHttp(func() (*http.Response, error) {
-			return http.Get(location)
-		}, 8)
-		if err != nil {
-			return nil, err
-		}
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
-		}
-		defer resp.Body.Close()
-		return ioutil.ReadAll(resp.Body)
+		return loadFromNetwork(location)
 	} else if strings.HasPrefix(location, "/") {
 		return ioutil.ReadFile(location)
-	} else if len(location) > 0 {
-		for _, url := range urls {
-			ymlUrl := fmt.Sprintf("%s/%s/%s.yml", url, location[0:1], location)
-			bytes, err = LoadResource(ymlUrl, network, []string{})
-			if err == nil {
-				log.Debugf("Loaded %s from %s", location, ymlUrl)
-				return bytes, nil
-			}
+	}
+
+	return nil, ErrNotFound
+}
+
+func serviceUrl(url, name string) string {
+	return fmt.Sprintf("%s/%s/%s.yml", url, name[0:1], name)
+}
+
+func LoadServiceResource(name string, useNetwork bool, cfg *config.CloudConfig) ([]byte, error) {
+	bytes, err := LoadResource(name, useNetwork)
+	if err == nil {
+		log.Debugf("Loaded %s from %s", name, name)
+		return bytes, nil
+	}
+	if err == ErrNoNetwork || !useNetwork {
+		return nil, ErrNoNetwork
+	}
+
+	urls := cfg.Rancher.Repositories.ToArray()
+	for _, url := range urls {
+		serviceUrl := serviceUrl(url, name)
+		bytes, err = LoadResource(serviceUrl, useNetwork)
+		if err == nil {
+			log.Debugf("Loaded %s from %s", name, serviceUrl)
+			return bytes, nil
 		}
 	}
 

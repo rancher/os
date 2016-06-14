@@ -1,11 +1,17 @@
 package docker
 
 import (
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
+	dockerclient "github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
+	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	dockerclient "github.com/fsouza/go-dockerclient"
+	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/config"
+	"golang.org/x/net/context"
 )
 
 type Service struct {
@@ -15,7 +21,7 @@ type Service struct {
 	project *project.Project
 }
 
-func NewService(factory *ServiceFactory, name string, serviceConfig *project.ServiceConfig, context *docker.Context, project *project.Project) *Service {
+func NewService(factory *ServiceFactory, name string, serviceConfig *composeConfig.ServiceConfig, context *docker.Context, project *project.Project) *Service {
 	return &Service{
 		Service: docker.NewService(name, serviceConfig, context),
 		deps:    factory.Deps,
@@ -50,20 +56,20 @@ func (s *Service) missingImage() bool {
 		return false
 	}
 	client := s.context.ClientFactory.Create(s)
-	i, err := client.InspectImage(s.Config().Image)
-	return err != nil || i == nil
+	_, _, err := client.ImageInspectWithRaw(context.Background(), s.Config().Image, false)
+	return err != nil
 }
 
 func (s *Service) requiresSyslog() bool {
-	return s.Config().LogDriver == "syslog"
+	return s.Config().Logging.Driver == "syslog"
 }
 
 func (s *Service) requiresUserDocker() bool {
-	return s.Config().Labels.MapParts()[config.SCOPE] != config.SYSTEM
+	return s.Config().Labels[config.SCOPE] != config.SYSTEM
 }
 
 func appendLink(deps []project.ServiceRelationship, name string, optional bool, p *project.Project) []project.ServiceRelationship {
-	if _, ok := p.Configs[name]; !ok {
+	if _, ok := p.ServiceConfigs.Get(name); !ok {
 		return deps
 	}
 	rel := project.NewServiceRelationship(name, project.RelTypeLink)
@@ -71,29 +77,26 @@ func appendLink(deps []project.ServiceRelationship, name string, optional bool, 
 	return append(deps, rel)
 }
 
-func (s *Service) shouldRebuild() (bool, error) {
-	containers, err := s.Containers()
+func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
+	containers, err := s.Containers(ctx)
 	if err != nil {
 		return false, err
 	}
-	cfg, err := config.LoadConfig()
-	if err != nil {
-		return false, err
-	}
+	cfg := config.LoadConfig()
 	for _, c := range containers {
-		outOfSync, err := c.(*docker.Container).OutOfSync(s.Service.Config().Image)
+		outOfSync, err := c.(*docker.Container).OutOfSync(ctx, s.Service.Config().Image)
 		if err != nil {
 			return false, err
 		}
 
-		_, containerInfo, err := s.getContainer()
-		if containerInfo == nil || err != nil {
+		_, containerInfo, err := s.getContainer(ctx)
+		if err != nil {
 			return false, err
 		}
 		name := containerInfo.Name[1:]
 
 		origRebuildLabel := containerInfo.Config.Labels[config.REBUILD]
-		newRebuildLabel := s.Config().Labels.MapParts()[config.REBUILD]
+		newRebuildLabel := s.Config().Labels[config.REBUILD]
 		rebuildLabelChanged := newRebuildLabel != origRebuildLabel
 		logrus.WithFields(logrus.Fields{
 			"origRebuildLabel":    origRebuildLabel,
@@ -101,59 +104,66 @@ func (s *Service) shouldRebuild() (bool, error) {
 			"rebuildLabelChanged": rebuildLabelChanged,
 			"outOfSync":           outOfSync}).Debug("Rebuild values")
 
-		rebuilding := false
+		if newRebuildLabel == "always" {
+			return true, nil
+		}
 		if outOfSync {
-			if cfg.Rancher.ForceConsoleRebuild && s.Name() == "console" {
-				cfg.Rancher.ForceConsoleRebuild = false
-				if err := cfg.Save(); err != nil {
-					return false, err
+			if s.Name() == "console" {
+				if cfg.Rancher.ForceConsoleRebuild {
+					if err := config.Set("rancher.force_console_rebuild", false); err != nil {
+						return false, err
+					}
+					return true, nil
 				}
-				rebuilding = true
-			} else if origRebuildLabel == "always" || rebuildLabelChanged || origRebuildLabel != "false" {
-				rebuilding = true
+				origConsoleLabel := containerInfo.Config.Labels[config.CONSOLE]
+				newConsoleLabel := s.Config().Labels[config.CONSOLE]
+				if newConsoleLabel != origConsoleLabel {
+					return true, nil
+				}
+			} else if rebuildLabelChanged || origRebuildLabel != "false" {
+				return true, nil
 			} else {
 				logrus.Warnf("%s needs rebuilding", name)
 			}
-		}
-
-		if rebuilding {
-			logrus.Infof("Rebuilding %s", name)
-			return true, nil
 		}
 	}
 	return false, nil
 }
 
-func (s *Service) Up() error {
-	labels := s.Config().Labels.MapParts()
+func (s *Service) Up(ctx context.Context, options options.Up) error {
+	labels := s.Config().Labels
 
-	if err := s.Service.Create(); err != nil {
+	if err := s.Service.Create(ctx, options.Create); err != nil {
 		return err
 	}
-	shouldRebuild, err := s.shouldRebuild()
+
+	shouldRebuild, err := s.shouldRebuild(ctx)
 	if err != nil {
 		return err
 	}
 	if shouldRebuild {
-		cs, err := s.Service.Containers()
+		logrus.Infof("Rebuilding %s", s.Name())
+		cs, err := s.Service.Containers(ctx)
 		if err != nil {
 			return err
 		}
 		for _, c := range cs {
-			if _, err := c.(*docker.Container).Recreate(s.Config().Image); err != nil {
+			if _, err := c.(*docker.Container).Recreate(ctx, s.Config().Image); err != nil {
 				return err
 			}
 		}
-		s.rename()
+		if err = s.rename(ctx); err != nil {
+			return err
+		}
 	}
 	if labels[config.CREATE_ONLY] == "true" {
 		return s.checkReload(labels)
 	}
-	if err := s.Service.Up(); err != nil {
+	if err := s.Service.Up(ctx, options); err != nil {
 		return err
 	}
 	if labels[config.DETACH] == "false" {
-		if err := s.wait(); err != nil {
+		if err := s.wait(ctx); err != nil {
 			return err
 		}
 	}
@@ -168,52 +178,53 @@ func (s *Service) checkReload(labels map[string]string) error {
 	return nil
 }
 
-func (s *Service) Create() error {
-	return s.Service.Create()
+func (s *Service) Create(ctx context.Context, options options.Create) error {
+	return s.Service.Create(ctx, options)
 }
 
-func (s *Service) getContainer() (*dockerclient.Client, *dockerclient.Container, error) {
-	containers, err := s.Service.Containers()
+func (s *Service) getContainer(ctx context.Context) (dockerclient.APIClient, types.ContainerJSON, error) {
+	containers, err := s.Service.Containers(ctx)
+
 	if err != nil {
-		return nil, nil, err
+		return nil, types.ContainerJSON{}, err
 	}
 
 	if len(containers) == 0 {
-		return nil, nil, nil
+		return nil, types.ContainerJSON{}, fmt.Errorf("No containers found for %s", s.Name())
 	}
 
 	id, err := containers[0].ID()
 	if err != nil {
-		return nil, nil, err
+		return nil, types.ContainerJSON{}, err
 	}
 
 	client := s.context.ClientFactory.Create(s)
-	info, err := client.InspectContainer(id)
+	info, err := client.ContainerInspect(context.Background(), id)
 	return client, info, err
 }
 
-func (s *Service) wait() error {
-	client, info, err := s.getContainer()
-	if err != nil || info == nil {
+func (s *Service) wait(ctx context.Context) error {
+	client, info, err := s.getContainer(ctx)
+	if err != nil {
 		return err
 	}
 
-	if _, err := client.WaitContainer(info.ID); err != nil {
+	if _, err := client.ContainerWait(context.Background(), info.ID); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Service) rename() error {
-	client, info, err := s.getContainer()
-	if err != nil || info == nil {
+func (s *Service) rename(ctx context.Context) error {
+	client, info, err := s.getContainer(ctx)
+	if err != nil {
 		return err
 	}
 
 	if len(info.Name) > 0 && info.Name[1:] != s.Name() {
 		logrus.Debugf("Renaming container %s => %s", info.Name[1:], s.Name())
-		return client.RenameContainer(dockerclient.RenameContainerOptions{ID: info.ID, Name: s.Name()})
+		return client.ContainerRename(context.Background(), info.ID, s.Name())
 	} else {
 		return nil
 	}

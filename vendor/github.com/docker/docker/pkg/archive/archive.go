@@ -11,7 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
+	"github.com/docker/containerd/subreaper/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -31,7 +31,7 @@ type (
 	Archive io.ReadCloser
 	// Reader is a type of io.Reader.
 	Reader io.Reader
-	// Compression is the state represtents if compressed or not.
+	// Compression is the state represents if compressed or not.
 	Compression int
 	// TarChownOptions wraps the chown options UID and GID.
 	TarChownOptions struct {
@@ -78,6 +78,11 @@ var (
 )
 
 const (
+	// HeaderSize is the size in bytes of a tar header
+	HeaderSize = 512
+)
+
+const (
 	// Uncompressed represents the uncompressed.
 	Uncompressed Compression = iota
 	// Bzip2 is bzip2 compression algorithm.
@@ -88,7 +93,8 @@ const (
 	Xz
 )
 
-// IsArchive checks if it is a archive by the header.
+// IsArchive checks for the magic bytes of a tar or any supported compression
+// algorithm.
 func IsArchive(header []byte) bool {
 	compression := DetectCompression(header)
 	if compression != Uncompressed {
@@ -96,6 +102,23 @@ func IsArchive(header []byte) bool {
 	}
 	r := tar.NewReader(bytes.NewBuffer(header))
 	_, err := r.Next()
+	return err == nil
+}
+
+// IsArchivePath checks if the (possibly compressed) file at the given path
+// starts with a tar file header.
+func IsArchivePath(path string) bool {
+	file, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer file.Close()
+	rdr, err := DecompressStream(file)
+	if err != nil {
+		return false
+	}
+	r := tar.NewReader(rdr)
+	_, err = r.Next()
 	return err == nil
 }
 
@@ -128,7 +151,13 @@ func DecompressStream(archive io.Reader) (io.ReadCloser, error) {
 	p := pools.BufioReader32KPool
 	buf := p.Get(archive)
 	bs, err := buf.Peek(10)
-	if err != nil {
+	if err != nil && err != io.EOF {
+		// Note: we'll ignore any io.EOF error because there are some odd
+		// cases where the layer.tar file will be empty (zero bytes) and
+		// that results in an io.EOF from the Peek() call. So, in those
+		// cases we'll just treat it as a non-compressed stream and
+		// that means just create an empty layer.
+		// See Issue 18170
 		return nil, err
 	}
 
@@ -275,8 +304,9 @@ func (ta *tarAppender) addTarFile(path, name string) error {
 	}
 
 	//handle re-mapping container ID mappings back to host ID mappings before
-	//writing tar headers/files
-	if ta.UIDMaps != nil || ta.GIDMaps != nil {
+	//writing tar headers/files. We skip whiteout files because they were written
+	//by the kernel and already have proper ownership relative to the host
+	if !strings.HasPrefix(filepath.Base(hdr.Name), WhiteoutPrefix) && (ta.UIDMaps != nil || ta.GIDMaps != nil) {
 		uid, gid, err := getFileUIDGID(fi.Sys())
 		if err != nil {
 			return err
@@ -407,19 +437,25 @@ func createTarFile(path, extractDir string, hdr *tar.Header, reader io.Reader, L
 		return err
 	}
 
+	aTime := hdr.AccessTime
+	if aTime.Before(hdr.ModTime) {
+		// Last access time should never be before last modified time.
+		aTime = hdr.ModTime
+	}
+
 	// system.Chtimes doesn't support a NOFOLLOW flag atm
 	if hdr.Typeflag == tar.TypeLink {
 		if fi, err := os.Lstat(hdr.Linkname); err == nil && (fi.Mode()&os.ModeSymlink == 0) {
-			if err := system.Chtimes(path, hdr.AccessTime, hdr.ModTime); err != nil {
+			if err := system.Chtimes(path, aTime, hdr.ModTime); err != nil {
 				return err
 			}
 		}
 	} else if hdr.Typeflag != tar.TypeSymlink {
-		if err := system.Chtimes(path, hdr.AccessTime, hdr.ModTime); err != nil {
+		if err := system.Chtimes(path, aTime, hdr.ModTime); err != nil {
 			return err
 		}
 	} else {
-		ts := []syscall.Timespec{timeToTimespec(hdr.AccessTime), timeToTimespec(hdr.ModTime)}
+		ts := []syscall.Timespec{timeToTimespec(aTime), timeToTimespec(hdr.ModTime)}
 		if err := system.LUtimesNano(path, ts); err != nil && err != system.ErrNotSupportedPlatform {
 			return err
 		}
@@ -466,13 +502,13 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 		defer func() {
 			// Make sure to check the error on Close.
 			if err := ta.TarWriter.Close(); err != nil {
-				logrus.Debugf("Can't close tar writer: %s", err)
+				logrus.Errorf("Can't close tar writer: %s", err)
 			}
 			if err := compressWriter.Close(); err != nil {
-				logrus.Debugf("Can't close compress writer: %s", err)
+				logrus.Errorf("Can't close compress writer: %s", err)
 			}
 			if err := pipeWriter.Close(); err != nil {
-				logrus.Debugf("Can't close pipe writer: %s", err)
+				logrus.Errorf("Can't close pipe writer: %s", err)
 			}
 		}()
 
@@ -515,7 +551,7 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 			walkRoot := getWalkRoot(srcPath, include)
 			filepath.Walk(walkRoot, func(filePath string, f os.FileInfo, err error) error {
 				if err != nil {
-					logrus.Debugf("Tar: Can't stat file %s to tar: %s", srcPath, err)
+					logrus.Errorf("Tar: Can't stat file %s to tar: %s", srcPath, err)
 					return nil
 				}
 
@@ -540,16 +576,42 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 				if include != relFilePath {
 					skip, err = fileutils.OptimizedMatches(relFilePath, patterns, patDirs)
 					if err != nil {
-						logrus.Debugf("Error matching %s: %v", relFilePath, err)
+						logrus.Errorf("Error matching %s: %v", relFilePath, err)
 						return err
 					}
 				}
 
 				if skip {
-					if !exceptions && f.IsDir() {
+					// If we want to skip this file and its a directory
+					// then we should first check to see if there's an
+					// excludes pattern (eg !dir/file) that starts with this
+					// dir. If so then we can't skip this dir.
+
+					// Its not a dir then so we can just return/skip.
+					if !f.IsDir() {
+						return nil
+					}
+
+					// No exceptions (!...) in patterns so just skip dir
+					if !exceptions {
 						return filepath.SkipDir
 					}
-					return nil
+
+					dirSlash := relFilePath + string(filepath.Separator)
+
+					for _, pat := range patterns {
+						if pat[0] != '!' {
+							continue
+						}
+						pat = pat[1:] + string(filepath.Separator)
+						if strings.HasPrefix(pat, dirSlash) {
+							// found a match - so can't skip this dir
+							return nil
+						}
+					}
+
+					// No matching exclusion dir so just skip dir
+					return filepath.SkipDir
 				}
 
 				if seen[relFilePath] {
@@ -571,7 +633,11 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 				}
 
 				if err := ta.addTarFile(filePath, relFilePath); err != nil {
-					logrus.Debugf("Can't add file %s to tar: %s", filePath, err)
+					logrus.Errorf("Can't add file %s to tar: %s", filePath, err)
+					// if pipe is broken, stop writting tar stream to it
+					if err == io.ErrClosedPipe {
+						return err
+					}
 				}
 				return nil
 			})
@@ -624,7 +690,7 @@ loop:
 			parent := filepath.Dir(hdr.Name)
 			parentPath := filepath.Join(dest, parent)
 			if _, err := os.Lstat(parentPath); err != nil && os.IsNotExist(err) {
-				err = system.MkdirAll(parentPath, 0777)
+				err = idtools.MkdirAllNewAs(parentPath, 0777, remappedRootUID, remappedRootGID)
 				if err != nil {
 					return err
 				}
@@ -794,10 +860,7 @@ func (archiver *Archiver) UntarPath(src, dst string) error {
 			GIDMaps: archiver.GIDMaps,
 		}
 	}
-	if err := archiver.Untar(archive, dst, options); err != nil {
-		return err
-	}
-	return nil
+	return archiver.Untar(archive, dst, options)
 }
 
 // UntarPath is a convenience function which looks for an archive
@@ -818,9 +881,17 @@ func (archiver *Archiver) CopyWithTar(src, dst string) error {
 	if !srcSt.IsDir() {
 		return archiver.CopyFileWithTar(src, dst)
 	}
+
+	// if this archiver is set up with ID mapping we need to create
+	// the new destination directory with the remapped root UID/GID pair
+	// as owner
+	rootUID, rootGID, err := idtools.GetRootUIDGID(archiver.UIDMaps, archiver.GIDMaps)
+	if err != nil {
+		return err
+	}
 	// Create dst, copy src's content into it
 	logrus.Debugf("Creating dest directory: %s", dst)
-	if err := system.MkdirAll(dst, 0755); err != nil {
+	if err := idtools.MkdirAllNewAs(dst, 0755, rootUID, rootGID); err != nil {
 		return err
 	}
 	logrus.Debugf("Calling TarUntar(%s, %s)", src, dst)

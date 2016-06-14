@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+
+$(dirname $0)/build-target
+$(dirname $0)/build-host

@@ -1,8 +1,8 @@
 language: go
-go: 1.2
+go: 1.4
 
 install:
- - echo "Skip install"
+ - go get github.com/godbus/dbus
 
 script:
  - ./test

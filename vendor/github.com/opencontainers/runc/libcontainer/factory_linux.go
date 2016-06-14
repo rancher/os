@@ -5,11 +5,11 @@ package libcontainer
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"runtime/debug"
 	"strconv"
 	"syscall"
 
@@ -19,6 +19,7 @@ import (
 	"github.com/opencontainers/runc/libcontainer/cgroups/systemd"
 	"github.com/opencontainers/runc/libcontainer/configs"
 	"github.com/opencontainers/runc/libcontainer/configs/validate"
+	"github.com/opencontainers/runc/libcontainer/utils"
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 )
 
 var (
-	idRegex  = regexp.MustCompile(`^[\w_-]+$`)
+	idRegex  = regexp.MustCompile(`^[\w-\.]+$`)
 	maxIdLen = 1024
 )
 
@@ -159,14 +160,14 @@ func (l *LinuxFactory) Create(id string, config *configs.Config) (Container, err
 	}
 	containerRoot := filepath.Join(l.Root, id)
 	if _, err := os.Stat(containerRoot); err == nil {
-		return nil, newGenericError(fmt.Errorf("Container with id exists: %v", id), IdInUse)
+		return nil, newGenericError(fmt.Errorf("container with id exists: %v", id), IdInUse)
 	} else if !os.IsNotExist(err) {
 		return nil, newGenericError(err, SystemError)
 	}
 	if err := os.MkdirAll(containerRoot, 0700); err != nil {
 		return nil, newGenericError(err, SystemError)
 	}
-	return &linuxContainer{
+	c := &linuxContainer{
 		id:            id,
 		root:          containerRoot,
 		config:        config,
@@ -174,7 +175,9 @@ func (l *LinuxFactory) Create(id string, config *configs.Config) (Container, err
 		initArgs:      l.InitArgs,
 		criuPath:      l.CriuPath,
 		cgroupManager: l.NewCgroupsManager(config.Cgroups, nil),
-	}, nil
+	}
+	c.state = &stoppedState{c: c}
+	return c, nil
 }
 
 func (l *LinuxFactory) Load(id string) (Container, error) {
@@ -191,7 +194,7 @@ func (l *LinuxFactory) Load(id string) (Container, error) {
 		processStartTime: state.InitProcessStartTime,
 		fds:              state.ExternalDescriptors,
 	}
-	return &linuxContainer{
+	c := &linuxContainer{
 		initProcess:   r,
 		id:            id,
 		config:        &state.Config,
@@ -200,7 +203,13 @@ func (l *LinuxFactory) Load(id string) (Container, error) {
 		criuPath:      l.CriuPath,
 		cgroupManager: l.NewCgroupsManager(state.Config.Cgroups, state.CgroupPaths),
 		root:          containerRoot,
-	}, nil
+		created:       state.Created,
+	}
+	c.state = &createdState{c: c, s: Created}
+	if err := c.refreshState(); err != nil {
+		return nil, err
+	}
+	return c, nil
 }
 
 func (l *LinuxFactory) Type() string {
@@ -210,9 +219,10 @@ func (l *LinuxFactory) Type() string {
 // StartInitialization loads a container by opening the pipe fd from the parent to read the configuration and state
 // This is a low level implementation detail of the reexec and should not be consumed externally
 func (l *LinuxFactory) StartInitialization() (err error) {
-	pipefd, err := strconv.Atoi(os.Getenv("_LIBCONTAINER_INITPIPE"))
+	fdStr := os.Getenv("_LIBCONTAINER_INITPIPE")
+	pipefd, err := strconv.Atoi(fdStr)
 	if err != nil {
-		return err
+		return fmt.Errorf("error converting env var _LIBCONTAINER_INITPIPE(%q) to an int: %s", fdStr, err)
 	}
 	var (
 		pipe = os.NewFile(uintptr(pipefd), "pipe")
@@ -221,21 +231,32 @@ func (l *LinuxFactory) StartInitialization() (err error) {
 	// clear the current process's environment to clean any libcontainer
 	// specific env vars.
 	os.Clearenv()
+	var i initer
 	defer func() {
-		// if we have an error during the initialization of the container's init then send it back to the
-		// parent process in the form of an initError.
-		if err != nil {
-			// ensure that any data sent from the parent is consumed so it doesn't
-			// receive ECONNRESET when the child writes to the pipe.
-			ioutil.ReadAll(pipe)
-			if err := json.NewEncoder(pipe).Encode(newSystemError(err)); err != nil {
+		// We have an error during the initialization of the container's init,
+		// send it back to the parent process in the form of an initError.
+		// If container's init successed, syscall.Exec will not return, hence
+		// this defer function will never be called.
+		if _, ok := i.(*linuxStandardInit); ok {
+			//  Synchronisation only necessary for standard init.
+			if err := utils.WriteJSON(pipe, syncT{procError}); err != nil {
 				panic(err)
 			}
+		}
+		if err := utils.WriteJSON(pipe, newSystemError(err)); err != nil {
+			panic(err)
 		}
 		// ensure that this pipe is always closed
 		pipe.Close()
 	}()
-	i, err := newContainerInit(it, pipe)
+
+	defer func() {
+		if e := recover(); e != nil {
+			err = fmt.Errorf("panic from initialization: %v, %v", e, string(debug.Stack()))
+		}
+	}()
+
+	i, err = newContainerInit(it, pipe)
 	if err != nil {
 		return err
 	}
@@ -260,10 +281,10 @@ func (l *LinuxFactory) loadState(root string) (*State, error) {
 
 func (l *LinuxFactory) validateID(id string) error {
 	if !idRegex.MatchString(id) {
-		return newGenericError(fmt.Errorf("Invalid id format: %v", id), InvalidIdFormat)
+		return newGenericError(fmt.Errorf("invalid id format: %v", id), InvalidIdFormat)
 	}
 	if len(id) > maxIdLen {
-		return newGenericError(fmt.Errorf("Invalid id format: %v", id), InvalidIdFormat)
+		return newGenericError(fmt.Errorf("invalid id format: %v", id), InvalidIdFormat)
 	}
 	return nil
 }

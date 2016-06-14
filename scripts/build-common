@@ -1,2 +1,0 @@
-BUILD=$(pwd)/build
-DIST=$(pwd)/dist

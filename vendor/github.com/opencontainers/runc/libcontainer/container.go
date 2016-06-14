@@ -6,6 +6,7 @@ package libcontainer
 
 import (
 	"os"
+	"time"
 
 	"github.com/opencontainers/runc/libcontainer/configs"
 )
@@ -14,8 +15,11 @@ import (
 type Status int
 
 const (
+	// The container exists but has not been run yet
+	Created Status = iota
+
 	// The container exists and is running.
-	Running Status = iota + 1
+	Running
 
 	// The container exists, it is in the process of being paused.
 	Pausing
@@ -23,45 +27,52 @@ const (
 	// The container exists, but all its processes are paused.
 	Paused
 
-	// The container exists, but its state is saved on disk
-	Checkpointed
-
 	// The container does not exist.
 	Destroyed
 )
 
-// State represents a running container's state
-type State struct {
+func (s Status) String() string {
+	switch s {
+	case Created:
+		return "created"
+	case Running:
+		return "running"
+	case Pausing:
+		return "pausing"
+	case Paused:
+		return "paused"
+	case Destroyed:
+		return "destroyed"
+	default:
+		return "unknown"
+	}
+}
+
+// BaseState represents the platform agnostic pieces relating to a
+// running container's state
+type BaseState struct {
 	// ID is the container ID.
 	ID string `json:"id"`
 
 	// InitProcessPid is the init process id in the parent namespace.
 	InitProcessPid int `json:"init_process_pid"`
 
-	// InitProcessStartTime is the init process start time.
+	// InitProcessStartTime is the init process start time in clock cycles since boot time.
 	InitProcessStartTime string `json:"init_process_start"`
 
-	// Path to all the cgroups setup for a container. Key is cgroup subsystem name
-	// with the value as the path.
-	CgroupPaths map[string]string `json:"cgroup_paths"`
-
-	// NamespacePaths are filepaths to the container's namespaces. Key is the namespace type
-	// with the value as the path.
-	NamespacePaths map[configs.NamespaceType]string `json:"namespace_paths"`
+	// Created is the unix timestamp for the creation time of the container in UTC
+	Created time.Time `json:"created"`
 
 	// Config is the container's configuration.
 	Config configs.Config `json:"config"`
-
-	// Container's standard descriptors (std{in,out,err}), needed for checkpoint and restore
-	ExternalDescriptors []string `json:"external_descriptors,omitempty"`
 }
 
 // A libcontainer container object.
 //
 // Each container is thread-safe within the same process. Since a container can
 // be destroyed by a separate process, any function may return that the container
-// was not found.
-type Container interface {
+// was not found. BaseContainer includes methods that are platform agnostic.
+type BaseContainer interface {
 	// Returns the ID of the container
 	ID() string
 
@@ -98,7 +109,7 @@ type Container interface {
 	// Systemerror - System error.
 	Stats() (*Stats, error)
 
-	// Set cgroup resources of container as configured
+	// Set resources of container as configured
 	//
 	// We can use this to change resources when containers are running.
 	//
@@ -116,18 +127,6 @@ type Container interface {
 	// Systemerror - System error.
 	Start(process *Process) (err error)
 
-	// Checkpoint checkpoints the running container's state to disk using the criu(8) utility.
-	//
-	// errors:
-	// Systemerror - System error.
-	Checkpoint(criuOpts *CriuOpts) error
-
-	// Restore restores the checkpointed container to a running state using the criu(8) utiity.
-	//
-	// errors:
-	// Systemerror - System error.
-	Restore(process *Process, criuOpts *CriuOpts) error
-
 	// Destroys the container after killing all running processes.
 	//
 	// Any event registrations are removed before the container is destroyed.
@@ -136,31 +135,6 @@ type Container interface {
 	// errors:
 	// Systemerror - System error.
 	Destroy() error
-
-	// If the Container state is RUNNING or PAUSING, sets the Container state to PAUSING and pauses
-	// the execution of any user processes. Asynchronously, when the container finished being paused the
-	// state is changed to PAUSED.
-	// If the Container state is PAUSED, do nothing.
-	//
-	// errors:
-	// ContainerDestroyed - Container no longer exists,
-	// Systemerror - System error.
-	Pause() error
-
-	// If the Container state is PAUSED, resumes the execution of any user processes in the
-	// Container before setting the Container state to RUNNING.
-	// If the Container state is RUNNING, do nothing.
-	//
-	// errors:
-	// ContainerDestroyed - Container no longer exists,
-	// Systemerror - System error.
-	Resume() error
-
-	// NotifyOOM returns a read-only channel signaling when the container receives an OOM notification.
-	//
-	// errors:
-	// Systemerror - System error.
-	NotifyOOM() (<-chan struct{}, error)
 
 	// Signal sends the provided signal code to the container's initial process.
 	//

@@ -6,3 +6,4 @@
 *.swp
 bundles
 .gopath
+.idea

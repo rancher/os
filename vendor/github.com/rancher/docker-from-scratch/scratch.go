@@ -595,7 +595,7 @@ func setupLogging(config *Config) error {
 		return err
 	}
 
-	output, err := os.Create(config.LogFile)
+	output, err := os.OpenFile(config.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		return err
 	}

@@ -2,16 +2,17 @@ package control
 
 import (
 	"fmt"
+	"syscall"
+
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
-	"syscall"
 )
 
 func selinuxCommand() cli.Command {
 	app := cli.Command{}
 	app.Name = "selinux"
 	app.Usage = "Launch SELinux tools container."
-	app.Action = func(c *cli.Context) {
+	app.Action = func(c *cli.Context) error {
 		argv := []string{"system-docker", "run", "-it", "--privileged", "--rm",
 			"--net", "host", "--pid", "host", "--ipc", "host",
 			"-v", "/usr/bin/docker:/usr/bin/docker.dist:ro",
@@ -49,8 +50,9 @@ func selinuxCommand() cli.Command {
 			"-v", "/etc/selinux:/etc/selinux",
 			"-v", "/var/lib/selinux:/var/lib/selinux",
 			"-v", "/usr/share/selinux:/usr/share/selinux",
-			fmt.Sprintf("rancher/os-selinuxtools:%s", config.VERSION + config.SUFFIX), "bash"}
+			fmt.Sprintf("rancher/os-selinuxtools:%s", config.VERSION+config.SUFFIX), "bash"}
 		syscall.Exec("/bin/system-docker", argv, []string{})
+		return nil
 	}
 
 	return app

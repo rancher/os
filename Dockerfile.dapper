@@ -1,45 +1,176 @@
-FROM rancher/os-dapper-base
+FROM ubuntu:16.04
+# FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
-RUN apt-get update && \
-    apt-get -y install locales sudo vim less curl wget git rsync build-essential isolinux xorriso gccgo uuid \
-        libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm qemu python-pip ca-certificates pkg-config tox module-init-tools
-
-ARG HOST_ARCH
-ENV HOST_ARCH ${HOST_ARCH}
-RUN ln -sf go-6 /usr/bin/go && mkdir -p /usr/local && cd /usr/local && \
-    wget -O - https://storage.googleapis.com/golang/go1.6.2.src.tar.gz | tar -xz && \
-    cd go/src && GOROOT_BOOTSTRAP=/usr GOARCH=${HOST_ARCH} GOHOSTARCH=${HOST_ARCH} ./make.bash
-
-ENV PATH /usr/local/go/bin:$PATH
-RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
-ENV GOPATH /go
-ENV PATH /go/bin:$PATH
-
-ARG HOST_DOCKER_BINARY_URL
-ENV HOST_DOCKER_BINARY_URL ${HOST_DOCKER_BINARY_URL}
-RUN wget -O - ${HOST_DOCKER_BINARY_URL} > /usr/local/bin/docker
-RUN chmod +x /usr/local/bin/docker
-
+ENV DAPPER_ENV VERSION DEV_BUILD
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
-ENV DAPPER_OUTPUT ./bin ./dist ./build/os-config.yml
+ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd
 ENV DAPPER_RUN_ARGS --privileged
+ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
 ENV SHELL /bin/bash
 WORKDIR ${DAPPER_SOURCE}
 
-COPY .dockerignore.dapper .dockerignore
+########## General Configuration #####################
+ARG DAPPER_HOST_ARCH=amd64
+ARG HOST_ARCH=${DAPPER_HOST_ARCH}
+ARG ARCH=${HOST_ARCH}
 
-CMD make
+ARG OS_REPO=rancher
+ARG HOSTNAME_DEFAULT=rancher
+ARG DISTRIB_ID=RancherOS
 
-ARG TOOLCHAIN
-ENV TOOLCHAIN ${TOOLCHAIN}
+ARG DOCKER_VERSION=1.11.2
+ARG DOCKER_PATCH_VERSION=v${DOCKER_VERSION}-ros1
+ARG DOCKER_BUILD_VERSION=1.10.3
+ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
+ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.2/policy.29
 
-RUN if [ "${TOOLCHAIN}" != "" ] && ! which ${TOOLCHAIN}-gcc; then \
-        apt-get update && \
+ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.4.0-23.41-rancher2/linux-4.4.10-rancher-x86.tar.gz
+ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.4.0-arm64.8/linux-4.4.0-rancher-arm64.tar.gz
+
+ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
+ARG DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm.tgz
+ARG DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64.tgz
+
+ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_BUILD_VERSION}
+ARG BUILD_DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm
+ARG BUILD_DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm64
+
+ARG TOOLCHAIN_arm64=aarch64-linux-gnu
+ARG TOOLCHAIN_arm=arm-linux-gnueabihf
+
+ARG OS_RELEASES_YML=https://releases.rancher.com/os/releases.yml
+ARG VBOX_MODULES_URL_amd64=https://github.com/rancher/os-vbox/releases/download/v0.0.2/vbox-modules.tar.gz
+
+ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
+ARG IMAGE_NAME=${OS_REPO}/os
+ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}
+
+ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2016.05-3/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2016.05-3/os-base_arm64.tar.xz
+ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.05-3/os-base_arm.tar.xz
+
+######################################################
+
+# Set up environment and export all ARGS as ENV
+ENV ARCH ${ARCH}
+ENV BUILD_DOCKER_URL BUILD_DOCKER_URL_${ARCH}
+ENV BUILD_DOCKER_URL_amd64 ${BUILD_DOCKER_URL_amd64}
+ENV BUILD_DOCKER_URL_arm ${BUILD_DOCKER_URL_arm}
+ENV BUILD_DOCKER_URL_arm64 ${BUILD_DOCKER_URL_arm64}
+ENV DAPPER_HOST_ARCH ${DAPPER_HOST_ARCH}
+ENV DFS_IMAGE ${DFS_IMAGE}
+ENV DISTRIB_ID ${DISTRIB_ID}
+ENV DOCKER_PATCH_VERSION ${DOCKER_PATCH_VERSION}
+ENV DOCKER_URL DOCKER_URL_${ARCH}
+ENV DOCKER_URL_amd64 ${DOCKER_URL_amd64}
+ENV DOCKER_URL_arm ${DOCKER_URL_arm}
+ENV DOCKER_URL_arm64 ${DOCKER_URL_arm64}
+ENV DOCKER_VERSION ${DOCKER_VERSION}
+ENV DOWNLOADS /usr/src/downloads
+ENV GOPATH /go
+ENV GO_VERSION 1.6.2
+ENV GOARCH $ARCH
+ENV HOSTNAME_DEFAULT ${HOSTNAME_DEFAULT}
+ENV HOST_ARCH ${HOST_ARCH}
+ENV IMAGE_NAME ${IMAGE_NAME}
+ENV KERNEL_URL KERNEL_URL_${ARCH}
+ENV KERNEL_URL_amd64 ${KERNEL_URL_amd64}
+ENV KERNEL_URL_arm64 ${KERNEL_URL_arm64}
+ENV OS_BASE_SHA1 OS_BASE_SHA1_${ARCH}
+ENV OS_BASE_URL OS_BASE_URL_${ARCH}
+ENV OS_BASE_URL_amd64 ${OS_BASE_URL_amd64}
+ENV OS_BASE_URL_arm ${OS_BASE_URL_arm}
+ENV OS_BASE_URL_arm64 ${OS_BASE_URL_arm64}
+ENV OS_RELEASES_YML ${OS_RELEASES_YML}
+ENV OS_REPO ${OS_REPO}
+ENV OS_SERVICES_REPO ${OS_SERVICES_REPO}
+ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
+ENV REPO_VERSION master
+ENV SELINUX_POLICY_URL ${SELINUX_POLICY_URL}
+ENV TOOLCHAIN_arm ${TOOLCHAIN_arm}
+ENV TOOLCHAIN_arm64 ${TOOLCHAIN_arm64}
+ENV VBOX_MODULES_URL ${VBOX_MODULES_URL}
+ENV VBOX_MODULES_URL VBOX_MODULES_URL_${ARCH}
+ENV VBOX_MODULES_URL_amd64 ${VBOX_MODULES_URL_amd64}
+
+RUN mkdir -p ${DOWNLOADS}
+
+RUN apt-get update && \
+    apt-get install -y \
+        build-essential \
+        ca-certificates \
+        cpio \
+        curl \
+        dosfstools \
+        gccgo \
+        genisoimage \
+        git \
+        isolinux \
+        less \
+        libblkid-dev \
+        libmount-dev \
+        libselinux1-dev \
+        locales \
+        module-init-tools \
+        pkg-config \
+        python-pip \
+        qemu \
+        qemu-kvm \
+        rsync \
+        sudo \
+        tox \
+        vim \
+        wget \
+        xorriso
+
+
+# Download kernel
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+RUN if [ -n "${!KERNEL_URL}" ]; then \
+        curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.gz \
+    ;fi
+
+# Download SELinux Policy
+RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
+
+# VBox URL
+RUN if [ -n "${!VBOX_MODULES_URL}" ]; then \
+        curl -pfL ${!VBOX_MODULES_URL} > ${DOWNLOADS}/vbox-modules.tar.gz \
+    ;fi
+
+# Install Go
+COPY assets/go-dnsclient.patch ${DAPPER_SOURCE}
+RUN ln -sf go-6 /usr/bin/go && \
+    curl -sfL https://storage.googleapis.com/golang/go${GO_VERSION}.src.tar.gz | tar -xzf - -C /usr/local && \
+    patch /usr/local/go/src/net/dnsclient_unix.go ${DAPPER_SOURCE}/go-dnsclient.patch && \
+    cd /usr/local/go/src && \
+    GOROOT_BOOTSTRAP=/usr GOARCH=${HOST_ARCH} GOHOSTARCH=${HOST_ARCH} ./make.bash && \
+    rm /usr/bin/go
+
+# Install Host Docker
+RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
+    chmod +x /usr/bin/docker
+
+# Install Target Docker
+RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker.tgz
+
+# Install Trash
+RUN go get github.com/rancher/trash
+
+# Install dapper
+RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
+    chmod +x /usr/bin/dapper
+
+# Install toolchain
+RUN TOOLCHAIN=TOOLCHAIN_${ARCH} && \
+    echo export TOOLCHAIN=${!TOOLCHAIN} > /usr/src/toolchain-env
+RUN source /usr/src/toolchain-env && \
+    if [ "${TOOLCHAIN}" != "" ] && ! which ${TOOLCHAIN}-gcc; then \
         apt-get install -y gcc-${TOOLCHAIN} g++-${TOOLCHAIN} \
     ;fi
 
-RUN if [ "${TOOLCHAIN}" != "" ]; then \
+RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
         apt-get update && \
         cd /usr/local/src && \
         for i in libselinux libsepol pcre3 util-linux; do \
@@ -48,7 +179,7 @@ RUN if [ "${TOOLCHAIN}" != "" ]; then \
         ;done \
      ;fi
 
-RUN if [ "${TOOLCHAIN}" != "" ]; then \
+RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
         cd /usr/local/src/pcre3-* && \
         autoreconf && \
         CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ ./configure --host=${TOOLCHAIN} --prefix=/usr/${TOOLCHAIN} && \
@@ -56,7 +187,7 @@ RUN if [ "${TOOLCHAIN}" != "" ]; then \
         make install \
     ;fi
 
-RUN if [ "${TOOLCHAIN}" != "" ]; then \
+RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
         cd /usr/local/src/libselinux-* && \
         CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ make CFLAGS=-Wall && \
         make PREFIX=/usr/${TOOLCHAIN} DESTDIR=/usr/${TOOLCHAIN} install && \
@@ -65,7 +196,7 @@ RUN if [ "${TOOLCHAIN}" != "" ]; then \
         make PREFIX=/usr/${TOOLCHAIN} DESTDIR=/usr/${TOOLCHAIN} install \
     ;fi
 
-RUN if [ "${TOOLCHAIN}" != "" ]; then \
+RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
         cd /usr/local/src/util-linux-* && \
         autoreconf && \
         CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ ./configure --host=${TOOLCHAIN} --prefix=/usr/${TOOLCHAIN} \
@@ -78,5 +209,8 @@ RUN if [ "${TOOLCHAIN}" != "" ]; then \
         make install \
     ;fi
 
-RUN apt-get update && \
-    apt-get -y install dosfstools
+RUN mkdir -p images/00-rootfs/build && \
+    curl -pfL ${!OS_BASE_URL} | tar xvJf - -C images/00-rootfs/build
+
+ENTRYPOINT ["./scripts/entry"]
+CMD ["ci"]

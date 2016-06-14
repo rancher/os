@@ -27,6 +27,7 @@ type Etcd2 struct {
 	DiscoverySRV             string `yaml:"discovery_srv"                 env:"ETCD_DISCOVERY_SRV"`
 	DiscoveryProxy           string `yaml:"discovery_proxy"               env:"ETCD_DISCOVERY_PROXY"`
 	ElectionTimeout          int    `yaml:"election_timeout"              env:"ETCD_ELECTION_TIMEOUT"`
+	EnablePprof              bool   `yaml:"enable_pprof"                  env:"ETCD_ENABLE_PPROF"`
 	ForceNewCluster          bool   `yaml:"force_new_cluster"             env:"ETCD_FORCE_NEW_CLUSTER"`
 	HeartbeatInterval        int    `yaml:"heartbeat_interval"            env:"ETCD_HEARTBEAT_INTERVAL"`
 	InitialAdvertisePeerURLs string `yaml:"initial_advertise_peer_urls"   env:"ETCD_INITIAL_ADVERTISE_PEER_URLS"`
@@ -52,6 +53,7 @@ type Etcd2 struct {
 	ProxyRefreshInterval     int    `yaml:"proxy_refresh_interval"        env:"ETCD_PROXY_REFRESH_INTERVAL"`
 	ProxyWriteTimeout        int    `yaml:"proxy_write_timeout"           env:"ETCD_PROXY_WRITE_TIMEOUT"`
 	SnapshotCount            int    `yaml:"snapshot_count"                env:"ETCD_SNAPSHOT_COUNT"`
+	StrictReconfigCheck      bool   `yaml:"strict_reconfig_check"         env:"ETCD_STRICT_RECONFIG_CHECK"`
 	TrustedCAFile            string `yaml:"trusted_ca_file"               env:"ETCD_TRUSTED_CA_FILE"`
 	WalDir                   string `yaml:"wal_dir"                       env:"ETCD_WAL_DIR"`
 }

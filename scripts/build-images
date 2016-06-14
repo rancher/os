@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+
+export ARCH=${ARCH:-"amd64"}
+BASE=images
+
+source $(dirname $0)/version
+cd $(dirname $0)/..
+
+for i in $BASE/[0-9]*; do
+    name="os-$(echo ${i} | cut -f2 -d-)"
+    tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
+    echo Building ${tag}
+    if [ -x ${i}/prebuild.sh ]; then
+        ${i}/prebuild.sh
+    fi
+
+    if dapper -d --build -f ${i}/Dockerfile -- -t rancher/${name} ${i}; then
+        docker tag rancher/${name} ${tag}
+    elif [ "$?" != "42" ]; then
+        exit 1
+    else
+        echo "WARN: Skipping ${tag}"
+    fi
+done

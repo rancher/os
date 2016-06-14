@@ -1,13 +1,11 @@
 package config
 
 import (
-	"fmt"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"testing"
 
 	"github.com/rancher/os/util"
 	"github.com/stretchr/testify/require"
-	"strings"
 )
 
 func TestFilterKey(t *testing.T) {
@@ -51,104 +49,6 @@ func TestFilterKey(t *testing.T) {
 		},
 	}
 	filtered, rest := filterKey(data, []string{"rancher", "ssh"})
-	assert.Equal(expectedFiltered, filtered)
-	assert.Equal(expectedRest, rest)
-}
-
-func TestStringifyValues(t *testing.T) {
-	assert := require.New(t)
-	data := map[interface{}]interface{}{
-		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
-		"hostname":            "ros-test",
-		"rancher": map[interface{}]interface{}{
-			"services": map[interface{}]interface{}{
-				"my-service": map[interface{}]interface{}{
-					"command": []interface{}{"echo", 1, false, "nothing"},
-					"labels": map[interface{}]interface{}{
-						"some-bool": true,
-						"some-num":  42,
-					},
-					"dsa-pub": "dsa-test2",
-				},
-			},
-			"docker": map[interface{}]interface{}{
-				"ca_key":  "ca_key-test3",
-				"ca_cert": "ca_cert-test4",
-				"args":    []string{"args_test5"},
-			},
-		},
-	}
-	expected := map[interface{}]interface{}{
-		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
-		"hostname":            "ros-test",
-		"rancher": map[interface{}]interface{}{
-			"services": map[interface{}]interface{}{
-				"my-service": map[interface{}]interface{}{
-					"command": []interface{}{"echo", "1", "false", "nothing"},
-					"labels": map[interface{}]interface{}{
-						"some-bool": "true",
-						"some-num":  "42",
-					},
-					"dsa-pub": "dsa-test2",
-				},
-			},
-			"docker": map[interface{}]interface{}{
-				"ca_key":  "ca_key-test3",
-				"ca_cert": "ca_cert-test4",
-				"args":    []string{"args_test5"},
-			},
-		},
-	}
-	assert.Equal(expected, StringifyValues(data))
-}
-
-func TestFilterDottedKeys(t *testing.T) {
-	assert := require.New(t)
-
-	data := map[interface{}]interface{}{
-		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
-		"hostname":            "ros-test",
-		"rancher": map[interface{}]interface{}{
-			"ssh": map[interface{}]interface{}{
-				"keys": map[interface{}]interface{}{
-					"dsa":     "dsa-test1",
-					"dsa-pub": "dsa-test2",
-				},
-			},
-			"docker": map[interface{}]interface{}{
-				"ca_key":  "ca_key-test3",
-				"ca_cert": "ca_cert-test4",
-				"args":    []string{"args_test5"},
-			},
-		},
-	}
-	expectedFiltered := map[interface{}]interface{}{
-		"ssh_authorized_keys": []string{"pubk1", "pubk2"},
-		"rancher": map[interface{}]interface{}{
-			"ssh": map[interface{}]interface{}{
-				"keys": map[interface{}]interface{}{
-					"dsa":     "dsa-test1",
-					"dsa-pub": "dsa-test2",
-				},
-			},
-		},
-	}
-	expectedRest := map[interface{}]interface{}{
-		"hostname": "ros-test",
-		"rancher": map[interface{}]interface{}{
-			"docker": map[interface{}]interface{}{
-				"ca_key":  "ca_key-test3",
-				"ca_cert": "ca_cert-test4",
-				"args":    []string{"args_test5"},
-			},
-		},
-	}
-
-	assert.Equal([]string{"rancher", "ssh"}, strings.Split("rancher.ssh", "."))
-	assert.Equal([]string{"ssh_authorized_keys"}, strings.Split("ssh_authorized_keys", "."))
-
-	filtered, rest := filterDottedKeys(data, []string{"ssh_authorized_keys", "rancher.ssh"})
-
 	assert.Equal(expectedFiltered, filtered)
 	assert.Equal(expectedRest, rest)
 }
@@ -357,8 +257,6 @@ func TestUserDocker(t *testing.T) {
 	data := map[interface{}]interface{}{}
 	err = util.Convert(config, &data)
 	assert.Nil(err)
-
-	fmt.Println(data)
 
 	val, ok := data["rancher"].(map[interface{}]interface{})["docker"]
 	assert.True(ok)

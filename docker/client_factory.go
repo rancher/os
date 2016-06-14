@@ -4,34 +4,36 @@ import (
 	"fmt"
 	"sync"
 
+	"golang.org/x/net/context"
+
 	log "github.com/Sirupsen/logrus"
-	"github.com/docker/libcompose/docker"
+	dockerclient "github.com/docker/engine-api/client"
+	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
-	dockerclient "github.com/fsouza/go-dockerclient"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
 )
 
 type ClientFactory struct {
-	userClient   *dockerclient.Client
-	systemClient *dockerclient.Client
+	userClient   dockerclient.APIClient
+	systemClient dockerclient.APIClient
 	userOnce     sync.Once
 	systemOnce   sync.Once
 }
 
-func NewClientFactory(opts docker.ClientOpts) (docker.ClientFactory, error) {
+func NewClientFactory(opts composeClient.Options) (project.ClientFactory, error) {
 	userOpts := opts
 	systemOpts := opts
 
 	userOpts.Host = config.DOCKER_HOST
 	systemOpts.Host = config.DOCKER_SYSTEM_HOST
 
-	userClient, err := docker.CreateClient(userOpts)
+	userClient, err := composeClient.Create(userOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	systemClient, err := docker.CreateClient(systemOpts)
+	systemClient, err := composeClient.Create(systemOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +44,7 @@ func NewClientFactory(opts docker.ClientOpts) (docker.ClientFactory, error) {
 	}, nil
 }
 
-func (c *ClientFactory) Create(service project.Service) *dockerclient.Client {
+func (c *ClientFactory) Create(service project.Service) dockerclient.APIClient {
 	if IsSystemContainer(service.Config()) {
 		waitFor(&c.systemOnce, c.systemClient, config.DOCKER_SYSTEM_HOST)
 		return c.systemClient
@@ -52,10 +54,10 @@ func (c *ClientFactory) Create(service project.Service) *dockerclient.Client {
 	return c.userClient
 }
 
-func waitFor(once *sync.Once, client *dockerclient.Client, endpoint string) {
+func waitFor(once *sync.Once, client dockerclient.APIClient, endpoint string) {
 	once.Do(func() {
 		err := ClientOK(endpoint, func() bool {
-			_, err := client.Info()
+			_, err := client.Info(context.Background())
 			return err == nil
 		})
 		if err != nil {

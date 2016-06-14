@@ -317,7 +317,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		if err := b.AddLink(link); err != nil {
 			return err
 		}
-		return nil
+		return linkUp(link, netConf)
 	}
 
 	if netConf.IPV4LL {
