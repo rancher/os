@@ -18,6 +18,10 @@ const (
 	SERVICE = Label("com.docker.compose.service")
 	HASH    = Label("com.docker.compose.config-hash")
 	VERSION = Label("com.docker.compose.version")
+
+	PROJECT_LEGACY = Label("io.docker.compose.project")
+	SERVICE_LEGACY = Label("io.docker.compose.service")
+	HASH_LEGACY    = Label("io.docker.compose.config-hash")
 )
 
 // EqString returns a label json string representation with the specified value.
