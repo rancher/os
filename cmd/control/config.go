@@ -69,6 +69,12 @@ func configSubcommands() []cli.Command {
 			Name:   "merge",
 			Usage:  "merge configuration from stdin",
 			Action: merge,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input, i",
+					Usage: "File from which to read",
+				},
+			},
 		},
 	}
 }
@@ -180,13 +186,23 @@ func configGet(c *cli.Context) error {
 }
 
 func merge(c *cli.Context) error {
-	bytes, err := ioutil.ReadAll(os.Stdin)
+	input := os.Stdin
+	inputFile := c.String("input")
+	if inputFile != "" {
+		var err error
+		input, err = os.Open(inputFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer input.Close()
+	}
+
+	bytes, err := ioutil.ReadAll(input)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = config.Merge(bytes)
-	if err != nil {
+	if err = config.Merge(bytes); err != nil {
 		log.Fatal(err)
 	}
 
