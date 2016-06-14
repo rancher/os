@@ -17,7 +17,7 @@ mkdir -p ${ARTIFACTS} ${PREPOP_DIR}
 
 if [ "$(docker info | grep 'Storage Driver: ' | sed 's/Storage Driver: //')" != "overlay" ]; then
     echo Overlay storage driver is require do create rootfs.tar 1>&2
-    exit 0
+    exit 1
 fi
 
 DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${SUFFIX} ${DFS_ARGS})
