@@ -26,6 +26,7 @@ import (
 	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/docker/docker/pkg/mount"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/config"
@@ -213,6 +214,15 @@ func executeCloudConfig() error {
 			os.Create(resizeStamp)
 		} else {
 			log.Errorf("Failed to resize %s: %s", cc.Rancher.ResizeDevice, err)
+		}
+	}
+
+	for _, configMount := range cc.Mounts {
+		if len(configMount) != 4 {
+			log.Errorf("Unable to mount %s: must specify exactly four arguments", configMount[1])
+		}
+		if err := mount.Mount(configMount[0], configMount[1], configMount[2], configMount[3]); err != nil {
+			log.Errorf("Unable to mount %s: %s", configMount[1], err)
 		}
 	}
 
