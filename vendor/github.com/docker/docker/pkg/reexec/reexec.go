@@ -3,8 +3,10 @@ package reexec
 import (
 	"fmt"
 	"os"
-	"os/exec"
+	"path"
 	"path/filepath"
+
+	"github.com/docker/containerd/subreaper/exec"
 )
 
 var registeredInitializers = make(map[string]func())
@@ -22,6 +24,9 @@ func Register(name string, initializer func()) {
 // initialization function was called.
 func Init() bool {
 	initializer, exists := registeredInitializers[os.Args[0]]
+	if !exists {
+		initializer, exists = registeredInitializers[path.Base(os.Args[0])]
+	}
 	if exists {
 		initializer()
 
@@ -41,7 +46,7 @@ func naiveSelf() string {
 	if absName, err := filepath.Abs(name); err == nil {
 		return absName
 	}
-	// if we coudn't get absolute name, return original
+	// if we couldn't get absolute name, return original
 	// (NOTE: Go only errors on Abs() if os.Getwd fails)
 	return name
 }

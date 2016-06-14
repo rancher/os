@@ -14,6 +14,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 )
 
 func configSubcommands() []cli.Command {
@@ -27,17 +28,6 @@ func configSubcommands() []cli.Command {
 			Name:   "set",
 			Usage:  "set a value",
 			Action: configSet,
-		},
-		{
-			Name:   "import",
-			Usage:  "import configuration from standard in or a file",
-			Action: runImport,
-			Flags: []cli.Flag{
-				cli.StringFlag{
-					Name:  "input, i",
-					Usage: "File from which to read",
-				},
-			},
 		},
 		{
 			Name:   "images",
@@ -106,7 +96,7 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 	return images
 }
 
-func runImages(c *cli.Context) {
+func runImages(c *cli.Context) error {
 	configFile := c.String("input")
 	cfg, err := config.ReadConfig(nil, false, configFile)
 	if err != nil {
@@ -114,12 +104,14 @@ func runImages(c *cli.Context) {
 	}
 	images := imagesFromConfig(cfg)
 	fmt.Println(strings.Join(images, " "))
+	return nil
 }
 
-func runGenerate(c *cli.Context) {
+func runGenerate(c *cli.Context) error {
 	if err := genTpl(os.Stdin, os.Stdout); err != nil {
 		log.Fatalf("Failed to generate config, err: '%s'", err)
 	}
+	return nil
 }
 
 func genTpl(in io.Reader, out io.Writer) error {
@@ -140,76 +132,30 @@ func env2map(env []string) map[string]string {
 	return m
 }
 
-func runImport(c *cli.Context) {
-	var input io.ReadCloser
-	var err error
-	input = os.Stdin
-	cfg, err := config.LoadConfig()
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	inputFile := c.String("input")
-	if inputFile != "" {
-		input, err = os.Open(inputFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer input.Close()
-	}
-
-	bytes, err := ioutil.ReadAll(input)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cfg, err = cfg.Import(bytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cfg.Save(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func configSet(c *cli.Context) {
+func configSet(c *cli.Context) error {
 	key := c.Args().Get(0)
 	value := c.Args().Get(1)
 	if key == "" {
-		return
+		return nil
 	}
 
-	cfg, err := config.LoadConfig()
+	err := config.Set(key, value)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cfgDiff, err := cfg.Set(key, value)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cfg.Save(cfgDiff); err != nil {
-		log.Fatal(err)
-	}
+	return nil
 }
 
-func configGet(c *cli.Context) {
+func configGet(c *cli.Context) error {
 	arg := c.Args().Get(0)
 	if arg == "" {
-		return
+		return nil
 	}
 
-	cfg, err := config.LoadConfig()
+	val, err := config.Get(arg)
 	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Fatal("config get: failed to load config")
-	}
-
-	val, err := cfg.GetIgnoreOmitEmpty(arg)
-	if err != nil {
-		log.WithFields(log.Fields{"cfg": cfg, "key": arg, "val": val, "err": err}).Fatal("config get: failed to retrieve value")
+		log.WithFields(log.Fields{"key": arg, "val": val, "err": err}).Fatal("config get: failed to retrieve value")
 	}
 
 	printYaml := false
@@ -229,31 +175,26 @@ func configGet(c *cli.Context) {
 	} else {
 		fmt.Println(val)
 	}
+
+	return nil
 }
 
-func merge(c *cli.Context) {
+func merge(c *cli.Context) error {
 	bytes, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cfg, err := config.LoadConfig()
+	err = config.Merge(bytes)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cfg, err = cfg.MergeBytes(bytes)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cfg.Save(); err != nil {
-		log.Fatal(err)
-	}
+	return nil
 }
 
-func export(c *cli.Context) {
-	content, err := config.Dump(c.Bool("private"), c.Bool("full"))
+func export(c *cli.Context) error {
+	content, err := config.Export(c.Bool("private"), c.Bool("full"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -262,9 +203,11 @@ func export(c *cli.Context) {
 	if output == "" {
 		fmt.Println(content)
 	} else {
-		err := ioutil.WriteFile(output, []byte(content), 0400)
+		err := util.WriteFileAtomic(output, []byte(content), 0400)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
+
+	return nil
 }

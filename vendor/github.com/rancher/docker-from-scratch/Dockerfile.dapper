@@ -4,7 +4,7 @@ RUN apt-get update && \
     apt-get -y install locales sudo vim less curl wget git rsync build-essential isolinux xorriso gccgo \
         libblkid-dev libmount-dev libselinux1-dev cpio genisoimage qemu-kvm python-pip ca-certificates pkg-config tox
 
-RUN wget -O - https://storage.googleapis.com/golang/go1.6.linux-amd64.tar.gz | tar -xz -C /usr/local
+RUN wget -O - https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz | tar -xz -C /usr/local
 RUN wget -O /usr/local/bin/docker -L https://get.docker.com/builds/Linux/x86_64/docker-1.10.3 && \
     chmod +x /usr/local/bin/docker
 
@@ -18,23 +18,18 @@ ENV DAPPER_OUTPUT ""
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_ENV NO_TEST ARCH
 
-RUN mkdir -p ${DAPPER_SOURCE} && ln -s ${DAPPER_SOURCE} /source
-
-WORKDIR ${DAPPER_SOURCE}
-
-RUN mkdir -p assets
+RUN mkdir -p ${DAPPER_SOURCE}/assets && ln -s ${DAPPER_SOURCE} /source
 
 WORKDIR ${DAPPER_SOURCE}/assets
-RUN wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_amd64.tar.gz
-RUN wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_arm.tar.gz
-RUN wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_arm64.tar.gz
 
-RUN wget -O ./docker_amd64 -L https://get.docker.com/builds/Linux/x86_64/docker-1.10.3 && \
-    chmod +x ./docker_amd64
-RUN wget -O ./docker_arm -L https://github.com/rancher/docker/releases/download/v1.10.3-arm/docker-1.10.3_arm && \
-    chmod +x ./docker_arm
-RUN wget -O ./docker_arm64 -L https://github.com/rancher/docker/releases/download/v1.10.3-arm/docker-1.10.3_arm64 && \
-    chmod +x ./docker_arm64
+RUN wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_amd64.tar.gz && \
+    wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_arm.tar.gz && \
+    wget https://github.com/rancher/docker-from-scratch/releases/download/bin-v0.4.0/base-files_arm64.tar.gz
+
+ENV DOCKER_VERSION=1.11.1 DOCKER_PATCH_VERSION=v1.11.1-ros4
+RUN wget -O docker-${DOCKER_VERSION}_amd64.tgz -L https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz && \
+    wget -L https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm.tgz && \
+    wget -L https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64.tgz
 
 WORKDIR ${DAPPER_SOURCE}
 

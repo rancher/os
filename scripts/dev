@@ -1,0 +1,8 @@
+#!/bin/bash
+# help: For development, creates iso, kernel, initrd gzip compressed
+
+cd $(dirname $0)
+
+./build
+./prepare
+INSTALLER=0 COMPRESS="gzip -1" ROOTFS=0 ./package

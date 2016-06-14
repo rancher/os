@@ -36,7 +36,16 @@ func ParseUserData(contents string) (interface{}, error) {
 		return config.NewScript(contents)
 	case config.IsCloudConfig(contents):
 		log.Printf("Parsing user-data as cloud-config")
-		return config.NewCloudConfig(contents)
+		cc, err := config.NewCloudConfig(contents)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := cc.Decode(); err != nil {
+			return nil, err
+		}
+
+		return cc, nil
 	case config.IsIgnitionConfig(contents):
 		return nil, ErrIgnitionConfig
 	default:

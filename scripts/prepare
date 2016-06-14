@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+
+cd $(dirname $0)
+
+if [ ! -e ../bin/host_ros ]; then
+    ./build
+fi
+
+./template
+./build-images
+./tar-images
+./layout

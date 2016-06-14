@@ -1,7 +1,11 @@
-#!/bin/sh
-set -ex
+#!/bin/bash
+set -e
 
-cd $(dirname $0)/..
-. ./scripts/dapper-common
+cd $(dirname $0)
 
-dapper -d -O make HOST_ARCH=${HOST_ARCH} ARCH=${ARCH} DEV_BUILD=1 test
+./build
+./test
+#./validate
+./prepare
+./package
+./integration-test

@@ -1,6 +1,6 @@
 // +build linux
 
-package main
+package runc
 
 import (
 	"fmt"
@@ -14,6 +14,11 @@ import (
 var checkpointCommand = cli.Command{
 	Name:  "checkpoint",
 	Usage: "checkpoint a running container",
+	ArgsUsage: `<container-id>
+
+Where "<container-id>" is the name for the instance of the container to be
+checkpointed.`,
+	Description: `The checkpoint command saves the state of the container instance.`,
 	Flags: []cli.Flag{
 		cli.StringFlag{Name: "image-path", Value: "", Usage: "path for saving criu image files"},
 		cli.StringFlag{Name: "work-path", Value: "", Usage: "path for saving work files and logs"},
@@ -30,14 +35,8 @@ var checkpointCommand = cli.Command{
 		if err != nil {
 			fatal(err)
 		}
+		defer destroy(container)
 		options := criuOptions(context)
-		status, err := container.Status()
-		if err != nil {
-			fatal(err)
-		}
-		if status == libcontainer.Checkpointed {
-			fatal(fmt.Errorf("Container with id %s already checkpointed", context.GlobalString("id")))
-		}
 		// these are the mandatory criu options for a container
 		setPageServer(context, options)
 		setManageCgroupsMode(context, options)

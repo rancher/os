@@ -2,42 +2,26 @@
 
 source ./build
 
-SRC="
-	config
-	config/validate
-	datasource
-	datasource/configdrive
-	datasource/file
-	datasource/metadata
-	datasource/metadata/cloudsigma
-	datasource/metadata/digitalocean
-	datasource/metadata/ec2
-	datasource/proc_cmdline
-	datasource/test
-	datasource/url
-	datasource/vmware
-	datasource/waagent
-	initialize
-	network
-	pkg
-	system
-	.
-"
+SRC=$(find . -name '*.go' \
+	-not -path "./vendor/*")
+
+PKG=$(cd gopath/src/${REPO_PATH}; go list ./... | \
+	grep --invert-match vendor)
 
 echo "Checking gofix..."
 go tool fix -diff $SRC
 
 echo "Checking gofmt..."
-gofmt -d -e $SRC
-
-# split SRC into an array and prepend REPO_PATH to each local package for go vet
-split_vet=(${SRC// / })
-VET_TEST="${REPO_PATH} ${split_vet[@]/#/${REPO_PATH}/}"
+res=$(gofmt -d -e -s $SRC)
+echo "${res}"
+if [ -n "${res}" ]; then
+	exit 1
+fi
 
 echo "Checking govet..."
-go vet $VET_TEST
+go vet $PKG
 
 echo "Running tests..."
-go test -timeout 60s -cover $@ ${VET_TEST} --race
+go test -timeout 60s -cover $@ ${PKG} --race
 
 echo "Success"

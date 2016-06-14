@@ -1,96 +1,110 @@
 // +build linux
 
-package main
+package runc
 
 import (
 	"fmt"
 	"io"
 	"os"
-	"syscall"
+	"sync"
 
 	"github.com/docker/docker/pkg/term"
 	"github.com/opencontainers/runc/libcontainer"
 )
 
-// newTty creates a new tty for use with the container.  If a tty is not to be
-// created for the process, pipes are created so that the TTY of the parent
-// process are not inherited by the container.
-func newTty(create bool, p *libcontainer.Process, rootuid int) (*tty, error) {
-	if create {
-		return createTty(p, rootuid)
-	}
-	return createStdioPipes(p, rootuid)
-}
-
 // setup standard pipes so that the TTY of the calling runc process
 // is not inherited by the container.
 func createStdioPipes(p *libcontainer.Process, rootuid int) (*tty, error) {
-	var (
-		t   = &tty{}
-		fds []int
-	)
-	r, w, err := os.Pipe()
+	i, err := p.InitializeIO(rootuid)
 	if err != nil {
 		return nil, err
 	}
-	fds = append(fds, int(r.Fd()), int(w.Fd()))
-	go io.Copy(w, os.Stdin)
-	t.closers = append(t.closers, w)
-	p.Stdin = r
-	if r, w, err = os.Pipe(); err != nil {
-		return nil, err
+	t := &tty{
+		closers: []io.Closer{
+			i.Stdin,
+			i.Stdout,
+			i.Stderr,
+		},
 	}
-	fds = append(fds, int(r.Fd()), int(w.Fd()))
-	go io.Copy(os.Stdout, r)
-	p.Stdout = w
-	t.closers = append(t.closers, r)
-	if r, w, err = os.Pipe(); err != nil {
-		return nil, err
-	}
-	fds = append(fds, int(r.Fd()), int(w.Fd()))
-	go io.Copy(os.Stderr, r)
-	p.Stderr = w
-	t.closers = append(t.closers, r)
-	// change the ownership of the pipe fds incase we are in a user namespace.
-	for _, fd := range fds {
-		if err := syscall.Fchown(fd, rootuid, rootuid); err != nil {
-			return nil, err
+	// add the process's io to the post start closers if they support close
+	for _, cc := range []interface{}{
+		p.Stdin,
+		p.Stdout,
+		p.Stderr,
+	} {
+		if c, ok := cc.(io.Closer); ok {
+			t.postStart = append(t.postStart, c)
 		}
 	}
+	go func() {
+		io.Copy(i.Stdin, os.Stdin)
+		i.Stdin.Close()
+	}()
+	t.wg.Add(2)
+	go t.copyIO(os.Stdout, i.Stdout)
+	go t.copyIO(os.Stderr, i.Stderr)
 	return t, nil
 }
 
-func createTty(p *libcontainer.Process, rootuid int) (*tty, error) {
+func (t *tty) copyIO(w io.Writer, r io.ReadCloser) {
+	defer t.wg.Done()
+	io.Copy(w, r)
+	r.Close()
+}
+
+func createTty(p *libcontainer.Process, rootuid int, consolePath string) (*tty, error) {
+	if consolePath != "" {
+		if err := p.ConsoleFromPath(consolePath); err != nil {
+			return nil, err
+		}
+		return &tty{}, nil
+	}
 	console, err := p.NewConsole(rootuid)
 	if err != nil {
 		return nil, err
 	}
 	go io.Copy(console, os.Stdin)
 	go io.Copy(os.Stdout, console)
+
 	state, err := term.SetRawTerminal(os.Stdin.Fd())
 	if err != nil {
 		return nil, fmt.Errorf("failed to set the terminal from the stdin: %v", err)
 	}
-	t := &tty{
+	return &tty{
 		console: console,
 		state:   state,
 		closers: []io.Closer{
 			console,
 		},
-	}
-	p.Stderr = nil
-	p.Stdout = nil
-	p.Stdin = nil
-	return t, nil
+	}, nil
 }
 
 type tty struct {
-	console libcontainer.Console
-	state   *term.State
-	closers []io.Closer
+	console   libcontainer.Console
+	state     *term.State
+	closers   []io.Closer
+	postStart []io.Closer
+	wg        sync.WaitGroup
 }
 
+// ClosePostStart closes any fds that are provided to the container and dup2'd
+// so that we no longer have copy in our process.
+func (t *tty) ClosePostStart() error {
+	for _, c := range t.postStart {
+		c.Close()
+	}
+	return nil
+}
+
+// Close closes all open fds for the tty and/or restores the orignal
+// stdin state to what it was prior to the container execution
 func (t *tty) Close() error {
+	// ensure that our side of the fds are always closed
+	for _, c := range t.postStart {
+		c.Close()
+	}
+	// wait for the copy routines to finish before closing the fds
+	t.wg.Wait()
 	for _, c := range t.closers {
 		c.Close()
 	}

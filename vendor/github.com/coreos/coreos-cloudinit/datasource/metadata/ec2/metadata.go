@@ -39,7 +39,7 @@ type metadataService struct {
 }
 
 func NewDatasource(root string) *metadataService {
-	return &metadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath)}
+	return &metadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath, nil)}
 }
 
 func (ms metadataService) FetchMetadata() (datasource.Metadata, error) {

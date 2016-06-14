@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)
+for i in $IMAGES; do
+    if [ "${FORCE_PULL}" = "1" ] || ! docker inspect $i >/dev/null 2>&1; then
+        docker pull $i
+    fi
+done
+
+docker save ${IMAGES} > build/images.tar

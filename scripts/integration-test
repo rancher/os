@@ -1,0 +1,11 @@
+#!/bin/bash
+# help: Run Python based integration tests
+set -e
+
+cd $(dirname $0)/../tests/integration
+
+if [ ! -e ../../dist/artifacts/initrd ]; then
+    ../../scripts/dev
+fi
+
+tox "$@"

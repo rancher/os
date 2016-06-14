@@ -3,7 +3,8 @@
 package reexec
 
 import (
-	"os/exec"
+	osExec "os/exec"
+	"github.com/docker/containerd/subreaper/exec"
 	"syscall"
 )
 
@@ -19,10 +20,12 @@ func Self() string {
 // it is thus safe to delete or replace the on-disk binary (os.Args[0]).
 func Command(args ...string) *exec.Cmd {
 	return &exec.Cmd{
-		Path: Self(),
-		Args: args,
-		SysProcAttr: &syscall.SysProcAttr{
-			Pdeathsig: syscall.SIGTERM,
+		Cmd: osExec.Cmd{
+			Path: Self(),
+			Args: args,
+			SysProcAttr: &syscall.SysProcAttr{
+				Pdeathsig: syscall.SIGTERM,
+			},
 		},
 	}
 }

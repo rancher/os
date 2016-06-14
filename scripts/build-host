@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd $(dirname $0)/..
+
+export OUTPUT=bin/host_ros
+
+if [[ -e bin/ros && "$HOST_ARCH" = "$ARCH" ]]; then
+    echo Creating $OUTPUT
+    cp bin/ros $OUTPUT
+else
+    GOARCH=${HOST_ARCH} TOOLCHAIN= ./scripts/build-target
+fi

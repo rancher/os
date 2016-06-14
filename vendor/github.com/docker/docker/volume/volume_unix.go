@@ -1,4 +1,4 @@
-// +build linux freebsd darwin
+// +build linux freebsd darwin solaris
 
 package volume
 
@@ -6,28 +6,18 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
-
-	derr "github.com/docker/docker/errors"
 )
 
 // read-write modes
 var rwModes = map[string]bool{
-	"rw":   true,
-	"rw,Z": true,
-	"rw,z": true,
-	"z,rw": true,
-	"Z,rw": true,
-	"Z":    true,
-	"z":    true,
+	"rw": true,
+	"ro": true,
 }
 
-// read-only modes
-var roModes = map[string]bool{
-	"ro":   true,
-	"ro,Z": true,
-	"ro,z": true,
-	"z,ro": true,
-	"Z,ro": true,
+// label modes
+var labelModes = map[string]bool{
+	"Z": true,
+	"z": true,
 }
 
 // BackwardsCompatible decides whether this mount point can be
@@ -51,15 +41,16 @@ func ParseMountSpec(spec, volumeDriver string) (*MountPoint, error) {
 	spec = filepath.ToSlash(spec)
 
 	mp := &MountPoint{
-		RW: true,
+		RW:          true,
+		Propagation: DefaultPropagationMode,
 	}
 	if strings.Count(spec, ":") > 2 {
-		return nil, derr.ErrorCodeVolumeInvalid.WithArgs(spec)
+		return nil, errInvalidSpec(spec)
 	}
 
 	arr := strings.SplitN(spec, ":", 3)
 	if arr[0] == "" {
-		return nil, derr.ErrorCodeVolumeInvalid.WithArgs(spec)
+		return nil, errInvalidSpec(spec)
 	}
 
 	switch len(arr) {
@@ -70,7 +61,7 @@ func ParseMountSpec(spec, volumeDriver string) (*MountPoint, error) {
 		if isValid := ValidMountMode(arr[1]); isValid {
 			// Destination + Mode is not a valid volume - volumes
 			// cannot include a mode. eg /foo:rw
-			return nil, derr.ErrorCodeVolumeInvalid.WithArgs(spec)
+			return nil, errInvalidSpec(spec)
 		}
 		// Host Source Path or Name + Destination
 		mp.Source = arr[0]
@@ -81,35 +72,51 @@ func ParseMountSpec(spec, volumeDriver string) (*MountPoint, error) {
 		mp.Destination = arr[1]
 		mp.Mode = arr[2] // Mode field is used by SELinux to decide whether to apply label
 		if !ValidMountMode(mp.Mode) {
-			return nil, derr.ErrorCodeVolumeInvalidMode.WithArgs(mp.Mode)
+			return nil, errInvalidMode(mp.Mode)
 		}
 		mp.RW = ReadWrite(mp.Mode)
+		mp.Propagation = GetPropagation(mp.Mode)
 	default:
-		return nil, derr.ErrorCodeVolumeInvalid.WithArgs(spec)
+		return nil, errInvalidSpec(spec)
 	}
 
 	//validate the volumes destination path
 	mp.Destination = filepath.Clean(mp.Destination)
 	if !filepath.IsAbs(mp.Destination) {
-		return nil, derr.ErrorCodeVolumeAbs.WithArgs(mp.Destination)
+		return nil, fmt.Errorf("Invalid volume destination path: '%s' mount path must be absolute.", mp.Destination)
 	}
 
 	// Destination cannot be "/"
 	if mp.Destination == "/" {
-		return nil, derr.ErrorCodeVolumeSlash.WithArgs(spec)
+		return nil, fmt.Errorf("Invalid specification: destination can't be '/' in '%s'", spec)
 	}
 
 	name, source := ParseVolumeSource(mp.Source)
 	if len(source) == 0 {
 		mp.Source = "" // Clear it out as we previously assumed it was not a name
 		mp.Driver = volumeDriver
-		if len(mp.Driver) == 0 {
-			mp.Driver = DefaultDriverName
+		// Named volumes can't have propagation properties specified.
+		// Their defaults will be decided by docker. This is just a
+		// safeguard. Don't want to get into situations where named
+		// volumes were mounted as '[r]shared' inside container and
+		// container does further mounts under that volume and these
+		// mounts become visible on  host and later original volume
+		// cleanup becomes an issue if container does not unmount
+		// submounts explicitly.
+		if HasPropagation(mp.Mode) {
+			return nil, errInvalidSpec(spec)
 		}
 	} else {
 		mp.Source = filepath.Clean(source)
 	}
 
+	copyData, isSet := getCopyMode(mp.Mode)
+	// do not allow copy modes on binds
+	if len(name) == 0 && isSet {
+		return nil, errInvalidMode(mp.Mode)
+	}
+
+	mp.CopyData = copyData
 	mp.Name = name
 
 	return mp, nil
@@ -129,4 +136,51 @@ func ParseVolumeSource(spec string) (string, string) {
 // IsVolumeNameValid checks a volume name in a platform specific manner.
 func IsVolumeNameValid(name string) (bool, error) {
 	return true, nil
+}
+
+// ValidMountMode will make sure the mount mode is valid.
+// returns if it's a valid mount mode or not.
+func ValidMountMode(mode string) bool {
+	rwModeCount := 0
+	labelModeCount := 0
+	propagationModeCount := 0
+	copyModeCount := 0
+
+	for _, o := range strings.Split(mode, ",") {
+		switch {
+		case rwModes[o]:
+			rwModeCount++
+		case labelModes[o]:
+			labelModeCount++
+		case propagationModes[o]:
+			propagationModeCount++
+		case copyModeExists(o):
+			copyModeCount++
+		default:
+			return false
+		}
+	}
+
+	// Only one string for each mode is allowed.
+	if rwModeCount > 1 || labelModeCount > 1 || propagationModeCount > 1 || copyModeCount > 1 {
+		return false
+	}
+	return true
+}
+
+// ReadWrite tells you if a mode string is a valid read-write mode or not.
+// If there are no specifications w.r.t read write mode, then by default
+// it returns true.
+func ReadWrite(mode string) bool {
+	if !ValidMountMode(mode) {
+		return false
+	}
+
+	for _, o := range strings.Split(mode, ",") {
+		if o == "ro" {
+			return false
+		}
+	}
+
+	return true
 }

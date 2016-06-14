@@ -1,7 +1,6 @@
 package power
 
 import (
-	"bufio"
 	"errors"
 	"os"
 	"path/filepath"
@@ -9,14 +8,15 @@ import (
 	"strings"
 	"syscall"
 
+	"golang.org/x/net/context"
+
 	log "github.com/Sirupsen/logrus"
-	dockerClient "github.com/fsouza/go-dockerclient"
+	"github.com/docker/engine-api/types"
+	"github.com/docker/engine-api/types/container"
+	"github.com/docker/engine-api/types/filters"
 
 	"github.com/rancher/os/docker"
-)
-
-const (
-	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
+	"github.com/rancher/os/util"
 )
 
 func runDocker(name string) error {
@@ -36,11 +36,10 @@ func runDocker(name string) error {
 		cmd = os.Args
 	}
 
-	exiting, err := client.InspectContainer(name)
-	if exiting != nil {
-		err := client.RemoveContainer(dockerClient.RemoveContainerOptions{
-			ID:    exiting.ID,
-			Force: true,
+	existing, err := client.ContainerInspect(context.Background(), name)
+	if err == nil && existing.ID != "" {
+		err := client.ContainerRemove(context.Background(), types.ContainerRemoveOptions{
+			ContainerID: existing.ID,
 		})
 
 		if err != nil {
@@ -48,53 +47,50 @@ func runDocker(name string) error {
 		}
 	}
 
-	currentContainerId, err := getCurrentContainerId()
+	currentContainerId, err := util.GetCurrentContainerId()
 	if err != nil {
 		return err
 	}
 
-	currentContainer, err := client.InspectContainer(currentContainerId)
+	currentContainer, err := client.ContainerInspect(context.Background(), currentContainerId)
 	if err != nil {
 		return err
 	}
 
-	powerContainer, err := client.CreateContainer(dockerClient.CreateContainerOptions{
-		Name: name,
-		Config: &dockerClient.Config{
+	powerContainer, err := client.ContainerCreate(context.Background(),
+		&container.Config{
 			Image: currentContainer.Config.Image,
 			Cmd:   cmd,
 			Env: []string{
 				"IN_DOCKER=true",
 			},
 		},
-		HostConfig: &dockerClient.HostConfig{
+		&container.HostConfig{
 			PidMode: "host",
 			VolumesFrom: []string{
 				currentContainer.ID,
 			},
 			Privileged: true,
-		},
-	})
+		}, nil, name)
 	if err != nil {
 		return err
 	}
 
 	go func() {
-		client.AttachToContainer(dockerClient.AttachToContainerOptions{
-			Container:    powerContainer.ID,
-			OutputStream: os.Stdout,
-			ErrorStream:  os.Stderr,
-			Stderr:       true,
-			Stdout:       true,
+		client.ContainerAttach(context.Background(), types.ContainerAttachOptions{
+			ContainerID: powerContainer.ID,
+			Stream:      true,
+			Stderr:      true,
+			Stdout:      true,
 		})
 	}()
 
-	err = client.StartContainer(powerContainer.ID, powerContainer.HostConfig)
+	err = client.ContainerStart(context.Background(), powerContainer.ID)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.WaitContainer(powerContainer.ID)
+	_, err = client.ContainerWait(context.Background(), powerContainer.ID)
 
 	if err != nil {
 		log.Fatal(err)
@@ -172,19 +168,20 @@ func shutDownContainers() error {
 		return err
 	}
 
-	opts := dockerClient.ListContainersOptions{
-		All: true,
-		Filters: map[string][]string{
-			"status": {"running"},
-		},
+	filter := filters.NewArgs()
+	filter.Add("status", "running")
+
+	opts := types.ContainerListOptions{
+		All:    true,
+		Filter: filter,
 	}
 
-	containers, err := client.ListContainers(opts)
+	containers, err := client.ContainerList(context.Background(), opts)
 	if err != nil {
 		return err
 	}
 
-	currentContainerId, err := getCurrentContainerId()
+	currentContainerId, err := util.GetCurrentContainerId()
 	if err != nil {
 		return err
 	}
@@ -197,7 +194,7 @@ func shutDownContainers() error {
 		}
 
 		log.Infof("Stopping %s : %v", container.ID[:12], container.Names)
-		stopErr := client.StopContainer(container.ID, uint(timeout))
+		stopErr := client.ContainerStop(context.Background(), container.ID, timeout)
 		if stopErr != nil {
 			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
 		}
@@ -209,7 +206,7 @@ func shutDownContainers() error {
 		if container.ID == currentContainerId {
 			continue
 		}
-		_, waitErr := client.WaitContainer(container.ID)
+		_, waitErr := client.ContainerWait(context.Background(), container.ID)
 		if waitErr != nil {
 			waitErrorStrings = append(waitErrorStrings, " ["+container.ID+"] "+waitErr.Error())
 		}
@@ -220,36 +217,4 @@ func shutDownContainers() error {
 	}
 
 	return nil
-}
-
-func getCurrentContainerId() (string, error) {
-	file, err := os.Open(DOCKER_CGROUPS_FILE)
-
-	if err != nil {
-		return "", err
-	}
-
-	fileReader := bufio.NewScanner(file)
-	if !fileReader.Scan() {
-		return "", errors.New("Empty file /proc/self/cgroup")
-	}
-	line := fileReader.Text()
-	parts := strings.Split(line, "/")
-
-	for len(parts) != 3 {
-		if !fileReader.Scan() {
-			return "", errors.New("Found no docker cgroups")
-		}
-		line = fileReader.Text()
-		parts = strings.Split(line, "/")
-		if len(parts) == 3 {
-			if strings.HasSuffix(parts[1], "docker") {
-				break
-			} else {
-				parts = nil
-			}
-		}
-	}
-
-	return parts[len(parts)-1:][0], nil
 }

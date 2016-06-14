@@ -4,8 +4,9 @@ import (
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	"github.com/rancher/os/util"
 	"strings"
+
+	"github.com/rancher/os/util"
 )
 
 type CfgFunc func(*CloudConfig) (*CloudConfig, error)
@@ -58,17 +59,12 @@ func filterKey(data map[interface{}]interface{}, key []string) (filtered, rest m
 	return
 }
 
-func filterDottedKeys(data map[interface{}]interface{}, keys []string) (filtered, rest map[interface{}]interface{}) {
-	filtered = map[interface{}]interface{}{}
-	rest = util.MapCopy(data)
-
-	for _, key := range keys {
-		f, r := filterKey(data, strings.Split(key, "."))
-		filtered = util.MapsUnion(filtered, f)
-		rest = util.MapsIntersection(rest, r)
+func filterPrivateKeys(data map[interface{}]interface{}) map[interface{}]interface{} {
+	for _, privateKey := range PrivateKeys {
+		_, data = filterKey(data, strings.Split(privateKey, "."))
 	}
 
-	return
+	return data
 }
 
 func getOrSetVal(args string, data map[interface{}]interface{}, value interface{}) (interface{}, map[interface{}]interface{}) {

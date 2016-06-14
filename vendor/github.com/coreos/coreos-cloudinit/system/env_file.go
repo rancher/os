@@ -106,7 +106,7 @@ func WriteEnvFile(ef *EnvFile, root string) error {
 
 // keys returns the keys of a map in sorted order
 func keys(m map[string]string) (s []string) {
-	for k, _ := range m {
+	for k := range m {
 		s = append(s, k)
 	}
 	sort.Strings(s)

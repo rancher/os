@@ -1,13 +1,26 @@
 package libcontainer
 
 import (
-	"fmt"
 	"io"
 	"text/template"
 	"time"
 
 	"github.com/opencontainers/runc/libcontainer/stacktrace"
 )
+
+type syncType uint8
+
+const (
+	procReady syncType = iota
+	procError
+	procRun
+	procHooks
+	procResume
+)
+
+type syncT struct {
+	Type syncType `json:"type"`
+}
 
 var errorTemplate = template.Must(template.New("error").Parse(`Timestamp: {{.Timestamp}}
 Code: {{.ECode}}
@@ -62,7 +75,7 @@ type genericError struct {
 }
 
 func (e *genericError) Error() string {
-	return fmt.Sprintf("[%d] %s: %s", e.ECode, e.ECode, e.Message)
+	return e.Message
 }
 
 func (e *genericError) Code() ErrorCode {

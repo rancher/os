@@ -40,6 +40,17 @@ type Namespace interface {
 	// which were filled.  'last' contains an offset in the catalog, and 'err' will be
 	// set to io.EOF if there are no more entries to obtain.
 	Repositories(ctx context.Context, repos []string, last string) (n int, err error)
+
+	// Blobs returns a blob enumerator to access all blobs
+	Blobs() BlobEnumerator
+
+	// BlobStatter returns a BlobStatter to control
+	BlobStatter() BlobStatter
+}
+
+// RepositoryEnumerator describes an operation to enumerate repositories
+type RepositoryEnumerator interface {
+	Enumerate(ctx context.Context, ingester func(string) error) error
 }
 
 // ManifestServiceOption is a function argument for Manifest Service methods
@@ -47,10 +58,24 @@ type ManifestServiceOption interface {
 	Apply(ManifestService) error
 }
 
+// WithTag allows a tag to be passed into Put
+func WithTag(tag string) ManifestServiceOption {
+	return WithTagOption{tag}
+}
+
+// WithTagOption holds a tag
+type WithTagOption struct{ Tag string }
+
+// Apply conforms to the ManifestServiceOption interface
+func (o WithTagOption) Apply(m ManifestService) error {
+	// no implementation
+	return nil
+}
+
 // Repository is a named collection of manifests and layers.
 type Repository interface {
-	// Name returns the name of the repository.
-	Name() reference.Named
+	// Named returns the name of the repository.
+	Named() reference.Named
 
 	// Manifests returns a reference to this repository's manifest service.
 	// with the supplied options applied.

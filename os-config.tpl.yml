@@ -1,8 +1,12 @@
-default_hostname: {{.HOSTNAME_DEFAULT}}
 rancher:
+  defaults:
+    hostname: {{.HOSTNAME_DEFAULT}}
+    network:
+      dns:
+        nameservers: [8.8.8.8, 8.8.4.4]
   bootstrap:
     state-script:
-      image: {{.OS_IMAGES_ROOT}}/os-statescript:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-statescript:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -18,7 +22,7 @@ rancher:
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/share/ros:/usr/share/ros:ro
     udev-bootstrap:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       environment:
       - BOOTSTRAP=true
       labels:
@@ -34,7 +38,7 @@ rancher:
       - /lib/firmware:/lib/firmware
   autoformat:
     autoformat:
-      image: {{.OS_IMAGES_ROOT}}/os-autoformat:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-autoformat:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -42,7 +46,7 @@ rancher:
       net: none
       privileged: true
     udev-autoformat:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -58,15 +62,13 @@ rancher:
   bootstrap_docker:
     args: [daemon, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
         -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
+  console: default
   cloud_init:
     datasources:
     - configdrive:/media/config-2
-  default_network:
-    dns:
-      nameservers: [8.8.8.8, 8.8.4.4]
   repositories:
     core:
-      url: {{.OS_SERVICES_REPO}}/{{.VERSION}}{{.SUFFIX}}
+      url: {{.OS_SERVICES_REPO}}/{{.REPO_VERSION}}{{.SUFFIX}}
   state:
     fstype: auto
     dev: LABEL=RANCHER_STATE
@@ -75,7 +77,7 @@ rancher:
   services:
     {{if eq "amd64" .ARCH -}}
     acpid:
-      image: {{.OS_IMAGES_ROOT}}/os-acpid:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-acpid:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
       net: host
@@ -86,7 +88,7 @@ rancher:
       - system-volumes
     {{end -}}
     all-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -100,7 +102,7 @@ rancher:
       - user-volumes
       - system-volumes
     cloud-init:
-      image: {{.OS_IMAGES_ROOT}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.reloadconfig: "true"
@@ -113,7 +115,7 @@ rancher:
       - command-volumes
       - system-volumes
     cloud-init-pre:
-      image: {{.OS_IMAGES_ROOT}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
       environment:
       - CLOUD_INIT_NETWORK=false
       labels:
@@ -128,7 +130,7 @@ rancher:
       - command-volumes
       - system-volumes
     command-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -137,6 +139,9 @@ rancher:
       privileged: true
       read_only: true
       volumes:
+      - /usr/bin/docker-containerd:/usr/bin/docker-containerd.dist:ro
+      - /usr/bin/docker-containerd-shim:/usr/bin/docker-containerd-shim.dist:ro
+      - /usr/bin/docker-runc:/usr/bin/docker-runc.dist:ro
       - /usr/bin/docker:/usr/bin/docker.dist:ro
       - /usr/bin/ros:/usr/bin/dockerlaunch:ro
       - /usr/bin/ros:/usr/bin/user-docker:ro
@@ -149,14 +154,15 @@ rancher:
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/bin/ros:/usr/bin/cloud-init:ro
       - /usr/bin/ros:/usr/sbin/netconf:ro
-      - /usr/bin/ros:/usr/sbin/wait-for-network:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
+      - /usr/bin/ros:/usr/bin/switch-console:ro
     console:
-      image: {{.OS_IMAGES_ROOT}}/os-console:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: wait-for-network
+        io.rancher.os.after: network
         io.docker.compose.rebuild: always
+        io.rancher.os.console: default
       net: host
       uts: host
       pid: host
@@ -168,7 +174,7 @@ rancher:
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
     container-data-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -180,7 +186,8 @@ rancher:
       - /var/lib/docker:/var/lib/docker
       - /var/lib/rkt:/var/lib/rkt
     network-pre:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: netconf
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init-pre
@@ -192,54 +199,29 @@ rancher:
       - command-volumes
       - system-volumes
     network:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: netconf --stop-network-pre
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: cloud-init
-      environment:
-      - DAEMON=true
       net: host
       uts: host
-      pid: host
-      privileged: true
-      volumes_from:
-      - command-volumes
-      - system-volumes
-    wait-for-network-pre:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
-      command: wait-for-network
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-        io.rancher.os.after: network-pre
-      pid: host
-      privileged: true
-      volumes_from:
-      - command-volumes
-      - system-volumes
-    wait-for-network:
-      image: {{.OS_IMAGES_ROOT}}/os-network:{{.VERSION}}{{.SUFFIX}}
-      command: wait-for-network
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-        io.rancher.os.after: network
       pid: host
       privileged: true
       volumes_from:
       - command-volumes
       - system-volumes
     ntp:
-      image: {{.OS_IMAGES_ROOT}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: wait-for-network-pre
+        io.rancher.os.after: network-pre
       net: host
       uts: host
       privileged: true
       restart: always
     preload-system-images:
-      image: {{.OS_IMAGES_ROOT}}/os-preload:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -251,7 +233,7 @@ rancher:
       - command-volumes
       - system-volumes
     preload-user-images:
-      image: {{.OS_IMAGES_ROOT}}/os-preload:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -264,7 +246,7 @@ rancher:
       - command-volumes
       - system-volumes
     syslog:
-      image: {{.OS_IMAGES_ROOT}}/os-syslog:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-syslog:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
       log_driver: json-file
@@ -275,7 +257,7 @@ rancher:
       volumes_from:
       - system-volumes
     system-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -295,12 +277,13 @@ rancher:
       - /lib/modules:/lib/modules
       - /run:/run
       - /usr/share/ros:/usr/share/ros
+      - /var/lib/rancher/cache:/var/lib/rancher/cache
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/lib/rancher:/var/lib/rancher
       - /var/log:/var/log
       - /var/run:/var/run
     udev-cold:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.scope: system
         io.rancher.os.before: udev
@@ -310,7 +293,7 @@ rancher:
       volumes_from:
       - system-volumes
     udev:
-      image: {{.OS_IMAGES_ROOT}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       environment:
       - DAEMON=true
       labels:
@@ -323,7 +306,7 @@ rancher:
       volumes_from:
       - system-volumes
     user-volumes:
-      image: {{.OS_IMAGES_ROOT}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -335,7 +318,7 @@ rancher:
       - /home:/home
       - /opt:/opt
     docker:
-      image: {{.OS_IMAGES_ROOT}}/os-docker:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:{{.VERSION}}{{.SUFFIX}}
       environment:
       - HTTP_PROXY
       - HTTPS_PROXY
@@ -354,12 +337,13 @@ rancher:
       volumes:
       - /sys/fs/cgroup:/host/sys/fs/cgroup
   system_docker:
+    exec: true
     args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -b, docker-sys,
       --fixed-cidr, 172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:
     url: {{.OS_RELEASES_YML}}
-    image: {{.OS_IMAGES_ROOT}}/os
+    image: {{.OS_REPO}}/os
   docker:
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']

@@ -118,10 +118,7 @@ func mountState(cfg *config.CloudConfig) error {
 
 func mountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if cfg == nil {
-		var err error
-		if cfg, err = config.LoadConfig(); err != nil {
-			return cfg, err
-		}
+		cfg = config.LoadConfig()
 	}
 	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OEM); err != nil {
 		log.Debugf("Not mounting OEM: %v", err)
@@ -165,8 +162,8 @@ func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 
 	args := dockerlaunch.ParseConfig(&launchConfig, append(dockerCfg.Args, dockerCfg.ExtraArgs...)...)
 
-	launchConfig.DnsConfig.Nameservers = cfg.Rancher.DefaultNetwork.Dns.Nameservers
-	launchConfig.DnsConfig.Search = cfg.Rancher.DefaultNetwork.Dns.Search
+	launchConfig.DnsConfig.Nameservers = cfg.Rancher.Defaults.Network.Dns.Nameservers
+	launchConfig.DnsConfig.Search = cfg.Rancher.Defaults.Network.Dns.Search
 	launchConfig.Environment = dockerCfg.Environment
 	launchConfig.EmulateSystemd = true
 
@@ -199,13 +196,10 @@ func RunInit() error {
 		},
 		mountOem,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
-			cfg, err := config.LoadConfig()
-			if err != nil {
-				return cfg, err
-			}
+			cfg := config.LoadConfig()
 
 			if cfg.Rancher.Debug {
-				cfgString, err := config.Dump(false, true)
+				cfgString, err := config.Export(false, true)
 				if err != nil {
 					log.WithFields(log.Fields{"err": err}).Error("Error serializing config")
 				} else {
@@ -218,7 +212,7 @@ func RunInit() error {
 		loadModules,
 		tryMountAndBootstrap,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
-			return config.LoadConfig()
+			return config.LoadConfig(), nil
 		},
 		loadModules,
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
@@ -241,7 +235,7 @@ func RunInit() error {
 	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
 
 	log.Info("Launching System Docker")
-	_, err = dockerlaunch.LaunchDocker(launchConfig, config.DOCKER_BIN, args...)
+	_, err = dockerlaunch.LaunchDocker(launchConfig, config.SYSTEM_DOCKER_BIN, args...)
 	if err != nil {
 		return err
 	}
