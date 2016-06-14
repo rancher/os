@@ -9,10 +9,12 @@ import pytest
 
 ros_test = 'ros-test'
 arch = os.environ.get('ARCH', 'amd64')
+version = os.environ.get('VERSION')
+suffix = os.environ.get('SUFFIX')
 
-suffix = ''
-if arch != 'amd64':
-    suffix = '_' + arch
+
+if version is None or version == '' or suffix is None:
+    raise RuntimeError("Could not get VERSION or SUFFIX from environment")
 
 
 def iter_lines(s):
@@ -44,16 +46,6 @@ def with_effect(p):
         return s
 
     return effect
-
-
-def rancheros_version(build_conf):
-    with open(build_conf) as f:
-        for v in it.ifilter(non_empty,
-                            it.imap(parse_value('VERSION'),
-                                    it.ifilter(non_empty,
-                                               it.imap(strip_comment('#'), iter_lines(f))))):
-            return v
-    raise RuntimeError("Could not parse RancherOS version")
 
 
 def run_qemu(request, run_args=[]):

@@ -2,6 +2,8 @@
 # help: Run Python based integration tests
 set -e
 
+source $(dirname $0)/version
+
 cd $(dirname $0)/../tests/integration
 
 if [ ! -e ../../dist/artifacts/initrd ]; then

@@ -3,7 +3,6 @@ set -e -x
 
 SCRIPTS_DIR=$(dirname ${0})
 
-. "${SCRIPTS_DIR}/build.conf"
 VERSION=${VERSION:?"VERSION not set"}
 
 while getopts "i:f:c:d:t:r:o:p:ka:" OPTION
