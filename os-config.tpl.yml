@@ -62,6 +62,7 @@ rancher:
   bootstrap_docker:
     args: [daemon, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
         -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
+  console: default
   cloud_init:
     datasources:
     - configdrive:/media/config-2
@@ -161,6 +162,7 @@ rancher:
         io.rancher.os.scope: system
         io.rancher.os.after: network
         io.docker.compose.rebuild: always
+        io.rancher.os.console: default
       net: host
       uts: host
       pid: host

@@ -31,6 +31,7 @@ const (
 	DETACH        = "io.rancher.os.detach"
 	CREATE_ONLY   = "io.rancher.os.createonly"
 	RELOAD_CONFIG = "io.rancher.os.reloadconfig"
+	CONSOLE       = "io.rancher.os.console"
 	SCOPE         = "io.rancher.os.scope"
 	REBUILD       = "io.docker.compose.rebuild"
 	SYSTEM        = "system"

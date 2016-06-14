@@ -56,8 +56,8 @@ func RunServiceSet(name string, cfg *config.CloudConfig, configs map[string]*com
 	})
 }
 
-func GetProject(cfg *config.CloudConfig, networkingAvailable bool) (*project.Project, error) {
-	return newCoreServiceProject(cfg, networkingAvailable)
+func GetProject(cfg *config.CloudConfig, networkingAvailable, loadConsole bool) (*project.Project, error) {
+	return newCoreServiceProject(cfg, networkingAvailable, loadConsole)
 }
 
 func newProject(name string, cfg *config.CloudConfig, environmentLookup composeConfig.EnvironmentLookup, authLookup *rosDocker.ConfigAuthLookup) (*project.Project, error) {
@@ -184,7 +184,7 @@ func adjustContainerNames(m map[interface{}]interface{}) map[interface{}]interfa
 	return m
 }
 
-func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.Project, error) {
+func newCoreServiceProject(cfg *config.CloudConfig, useNetwork, loadConsole bool) (*project.Project, error) {
 	environmentLookup := rosDocker.NewConfigEnvironment(cfg)
 	authLookup := rosDocker.NewConfigAuthLookup(cfg)
 
@@ -197,7 +197,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork bool) (*project.P
 	p.AddListener(project.NewDefaultListener(p))
 	p.AddListener(projectEvents)
 
-	p.ReloadCallback = projectReload(p, &useNetwork, environmentLookup, authLookup)
+	p.ReloadCallback = projectReload(p, &useNetwork, loadConsole, environmentLookup, authLookup)
 
 	go func() {
 		for event := range projectEvents {

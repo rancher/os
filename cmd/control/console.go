@@ -13,8 +13,6 @@ import (
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
 
@@ -22,8 +20,19 @@ func consoleSubcommands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "switch",
-			Usage:  "switch currently running console",
+			Usage:  "switch console without a reboot",
 			Action: consoleSwitch,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "force, f",
+					Usage: "do not prompt for input",
+				},
+			},
+		},
+		{
+			Name:   "enable",
+			Usage:  "set console to be switched on next reboot",
+			Action: consoleEnable,
 		},
 		{
 			Name:   "list",
@@ -35,35 +44,25 @@ func consoleSubcommands() []cli.Command {
 
 func consoleSwitch(c *cli.Context) error {
 	if len(c.Args()) != 1 {
-		log.Fatal("Must specify exactly one existing container")
+		log.Fatal("Must specify exactly one console to switch to")
 	}
 	newConsole := c.Args()[0]
 
-	in := bufio.NewReader(os.Stdin)
-	question := fmt.Sprintf("Switching consoles will destroy the current console container and restart Docker. Continue")
-	if !yes(in, question) {
-		return nil
+	if !c.Bool("force") {
+		in := bufio.NewReader(os.Stdin)
+		fmt.Println("Switching consoles will destroy the current console container and restart Docker.")
+		fmt.Println("Note: You will also be logged out.")
+		if !yes(in, "Continue") {
+			return nil
+		}
 	}
 
 	cfg := config.LoadConfig()
 
-	if err := compose.StageServices(cfg, newConsole); err != nil {
-		return err
-	}
-
-	client, err := docker.NewSystemClient()
-	if err != nil {
-		return err
-	}
-
-	currentContainerId, err := util.GetCurrentContainerId()
-	if err != nil {
-		return err
-	}
-
-	currentContainer, err := client.ContainerInspect(context.Background(), currentContainerId)
-	if err != nil {
-		return err
+	if newConsole != "default" {
+		if err := compose.StageServices(cfg, newConsole); err != nil {
+			return err
+		}
 	}
 
 	service, err := compose.CreateService(nil, "switch-console", &composeConfig.ServiceConfigV1{
@@ -71,7 +70,7 @@ func consoleSwitch(c *cli.Context) error {
 		Privileged: true,
 		Net:        "host",
 		Pid:        "host",
-		Image:      currentContainer.Config.Image,
+		Image:      fmt.Sprintf("rancher/os-base:%s", config.VERSION),
 		Labels: map[string]string{
 			config.SCOPE: config.SYSTEM,
 		},
@@ -85,9 +84,31 @@ func consoleSwitch(c *cli.Context) error {
 	if err = service.Delete(context.Background(), options.Delete{}); err != nil {
 		return err
 	}
-	return service.Up(context.Background(), options.Up{
-		Log: true,
-	})
+	if err = service.Up(context.Background(), options.Up{}); err != nil {
+		return err
+	}
+	return service.Log(context.Background(), true)
+}
+
+func consoleEnable(c *cli.Context) error {
+	if len(c.Args()) != 1 {
+		log.Fatal("Must specify exactly one console to enable")
+	}
+	newConsole := c.Args()[0]
+
+	cfg := config.LoadConfig()
+
+	if newConsole != "default" {
+		if err := compose.StageServices(cfg, newConsole); err != nil {
+			return err
+		}
+	}
+
+	if err := config.Set("rancher.console", newConsole); err != nil {
+		log.Errorf("Failed to update 'rancher.console': %v", err)
+	}
+
+	return nil
 }
 
 func consoleList(c *cli.Context) error {
@@ -98,6 +119,7 @@ func consoleList(c *cli.Context) error {
 		return err
 	}
 
+	fmt.Println("default")
 	for _, console := range consoles {
 		fmt.Println(console)
 	}
