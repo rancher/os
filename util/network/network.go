@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -54,11 +55,35 @@ func getServices(urls []string, key string) ([]string, error) {
 	return result, nil
 }
 
+func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
+	if cfg.Rancher.Network.HttpProxy != "" {
+		err := os.Setenv("HTTP_PROXY", cfg.Rancher.Network.HttpProxy)
+		if err != nil {
+			log.Errorf("Unable to set HTTP_PROXY: %s", err)
+		}
+	}
+	if cfg.Rancher.Network.HttpsProxy != "" {
+		err := os.Setenv("HTTPS_PROXY", cfg.Rancher.Network.HttpsProxy)
+		if err != nil {
+			log.Errorf("Unable to set HTTPS_PROXY: %s", err)
+		}
+	}
+	if cfg.Rancher.Network.NoProxy != "" {
+		err := os.Setenv("NO_PROXY", cfg.Rancher.Network.NoProxy)
+		if err != nil {
+			log.Errorf("Unable to set NO_PROXY: %s", err)
+		}
+	}
+}
+
 func loadFromNetwork(location string) ([]byte, error) {
 	bytes := cacheLookup(location)
 	if bytes != nil {
 		return bytes, nil
 	}
+
+	cfg := config.LoadConfig()
+	SetProxyEnvironmentVariables(cfg)
 
 	var err error
 	for i := 0; i < 300; i++ {

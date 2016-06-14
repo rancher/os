@@ -14,6 +14,7 @@ import (
 	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
+	"github.com/rancher/os/util/network"
 )
 
 const (
@@ -216,6 +217,10 @@ func RunInit() error {
 		loadModules,
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dockerlaunch.PrepareFs(&mountConfig)
+		},
+		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			network.SetProxyEnvironmentVariables(c)
+			return c, nil
 		},
 		initializeSelinux,
 		sysInit,

@@ -184,7 +184,6 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
-      - /var/lib/system-docker:/var/lib/system-docker
       - /var/lib/rkt:/var/lib/rkt
     network-pre:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
@@ -320,6 +319,10 @@ rancher:
       - /opt:/opt
     docker:
       image: {{.OS_REPO}}/os-docker:{{.VERSION}}{{.SUFFIX}}
+      environment:
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: console
