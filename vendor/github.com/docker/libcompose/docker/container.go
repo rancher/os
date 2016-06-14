@@ -134,6 +134,11 @@ func (c *Container) Recreate(ctx context.Context, imageName string) (*types.Cont
 	}
 
 	hash := container.Config.Labels[labels.HASH.Str()]
+	legacyHash := container.Config.Labels[labels.HASH_LEGACY.Str()]
+
+	if hash == "" && legacyHash != "" {
+		hash = legacyHash
+	}
 	if hash == "" {
 		return nil, fmt.Errorf("Failed to find hash on old container: %s", container.Name)
 	}

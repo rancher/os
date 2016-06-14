@@ -79,15 +79,29 @@ func (s *Service) collectContainers(ctx context.Context) ([]*Container, error) {
 		return nil, err
 	}
 
+	legacyContainers, err := GetContainersByFilter(ctx, client, labels.SERVICE_LEGACY.Eq(s.name), labels.PROJECT_LEGACY.Eq(s.context.Project.Name))
+	if err != nil {
+		return nil, err
+	}
+
+	if len(containers) == 0 && len(legacyContainers) > 0 {
+		containers = legacyContainers
+	}
+
 	result := []*Container{}
 
 	for _, container := range containers {
-		containerNumber, err := strconv.Atoi(container.Labels[labels.NUMBER.Str()])
+		numberLabel := container.Labels[labels.NUMBER.Str()]
+		name := strings.SplitAfter(container.Names[0], "/")
+		if numberLabel == "" {
+			result = append(result, NewContainer(client, name[1], 1, s))
+			return result, nil
+		}
+		containerNumber, err := strconv.Atoi(numberLabel)
 		if err != nil {
 			return nil, err
 		}
 		// Compose add "/" before name, so Name[1] will store actaul name.
-		name := strings.SplitAfter(container.Names[0], "/")
 		result = append(result, NewContainer(client, name[1], containerNumber, s))
 	}
 

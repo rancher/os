@@ -1,6 +1,8 @@
 package docker
 
 import (
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
 	dockerclient "github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
@@ -150,7 +152,9 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 				return err
 			}
 		}
-		s.rename(ctx)
+		if err = s.rename(ctx); err != nil {
+			return err
+		}
 	}
 	if labels[config.CREATE_ONLY] == "true" {
 		return s.checkReload(labels)
@@ -186,7 +190,7 @@ func (s *Service) getContainer(ctx context.Context) (dockerclient.APIClient, typ
 	}
 
 	if len(containers) == 0 {
-		return nil, types.ContainerJSON{}, nil
+		return nil, types.ContainerJSON{}, fmt.Errorf("No containers found for %s", s.Name())
 	}
 
 	id, err := containers[0].ID()

@@ -63,7 +63,12 @@ func NewNamer(ctx context.Context, client client.APIClient, project, service str
 
 	maxNumber := 0
 	for _, container := range containers {
-		number, err := strconv.Atoi(container.Labels[labels.NUMBER.Str()])
+		numberLabel := container.Labels[labels.NUMBER.Str()]
+		if numberLabel == "" {
+			namer.currentNumber = 1
+			return namer, nil
+		}
+		number, err := strconv.Atoi(numberLabel)
 		if err != nil {
 			return nil, err
 		}
