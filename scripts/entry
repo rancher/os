@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 mkdir -p bin dist build/initrd
 if [ -e ./scripts/$1 ]; then
