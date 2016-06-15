@@ -340,6 +340,7 @@ rancher:
     exec: true
     args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -b, docker-sys,
       --fixed-cidr, 172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
+      -p, /var/run/system-docker.pid, --exec-root=/var/run/system-docker, --config-file=/etc/docker/system-daemon.json,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:
     url: {{.OS_RELEASES_YML}}

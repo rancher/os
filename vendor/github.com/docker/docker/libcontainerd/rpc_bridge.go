@@ -1,6 +1,7 @@
 package libcontainerd
 
 import (
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -9,10 +10,6 @@ import (
 	"github.com/docker/containerd/api/grpc/types"
 	"github.com/docker/containerd/subreaper"
 	"github.com/docker/containerd/supervisor"
-)
-
-var (
-	stateDir = "/run/containerd"
 )
 
 type bridge struct {
@@ -31,7 +28,7 @@ func daemon(stateDir string, concurrency int, runtimeName string, runtimeArgs []
 	if err := subreaper.Start(); err != nil {
 		logrus.WithField("error", err).Error("containerd: start subreaper")
 	}
-	sv, err := supervisor.New(stateDir, runtimeName, "", runtimeArgs, 15*time.Second, 500)
+	sv, err := supervisor.New(filepath.Join(stateDir, "containerd"), runtimeName, "", runtimeArgs, 15*time.Second, 500)
 	if err != nil {
 		return nil, err
 	}
