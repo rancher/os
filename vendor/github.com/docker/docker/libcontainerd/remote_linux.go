@@ -225,7 +225,7 @@ func (r *remote) handleEventStream(events containerd.API_EventsClient) {
 
 func (r *remote) runContainerdDaemon() error {
 	var err error
-	r.apiClient, err = newBridge(stateDir, 10, "docker-runc", r.runtimeArgs)
+	r.apiClient, err = newBridge(r.stateDir, 10, "docker-runc", r.runtimeArgs)
 	return err
 }
 

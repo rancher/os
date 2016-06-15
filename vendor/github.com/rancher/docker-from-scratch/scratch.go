@@ -61,6 +61,7 @@ type Config struct {
 	NoFiles         uint64
 	Environment     []string
 	GraphDirectory  string
+	DaemonConfig    string
 }
 
 func createMounts(mounts ...[]string) error {
@@ -338,7 +339,7 @@ ff02::2    ip6-allrouters
 		}
 	}
 
-	if config.BridgeName != "" {
+	if config.BridgeName != "" && config.BridgeName != "none" {
 		log.Debugf("Creating bridge %s (%s)", config.BridgeName, config.BridgeAddress)
 		if err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
 			Interfaces: map[string]netconf.InterfaceConfig{
@@ -364,6 +365,8 @@ func ParseConfig(config *Config, args ...string) []string {
 			config.BridgeAddress = util.GetValue(i, args)
 		} else if strings.HasPrefix(arg, "-b") || strings.HasPrefix(arg, "--bridge") {
 			config.BridgeName = util.GetValue(i, args)
+		} else if strings.HasPrefix(arg, "--config-file") {
+			config.DaemonConfig = util.GetValue(i, args)
 		} else if strings.HasPrefix(arg, "--mtu") {
 			mtu, err := strconv.Atoi(util.GetValue(i, args))
 			if err != nil {
@@ -452,6 +455,38 @@ func touchSockets(args ...string) error {
 	return nil
 }
 
+func createDaemonConfig(config *Config) error {
+	if config.DaemonConfig == "" {
+		return nil
+	}
+
+	if _, err := os.Stat(config.DaemonConfig); os.IsNotExist(err) {
+		if err := os.MkdirAll(path.Dir(config.DaemonConfig), 0755); err != nil {
+			return err
+		}
+
+		return ioutil.WriteFile(config.DaemonConfig, []byte("{}"), 0600)
+	}
+
+	return nil
+}
+
+func cleanupFiles(graphDirectory string) {
+	zeroFiles := []string{
+		"/etc/docker/key.json",
+		path.Join(graphDirectory, "image/overlay/repositories.json"),
+	}
+
+	for _, file := range zeroFiles {
+		if stat, err := os.Stat(file); err == nil {
+			if stat.Size() < 2 {
+				log.Warnf("Deleting invalid json file: %s", file)
+				os.Remove(file)
+			}
+		}
+	}
+}
+
 func createLayout(config *Config) error {
 	if err := createDirs("/tmp", "/root/.ssh", "/var", "/usr/lib"); err != nil {
 		return err
@@ -466,6 +501,12 @@ func createLayout(config *Config) error {
 	if err := createDirs(graphDirectory); err != nil {
 		return err
 	}
+
+	if err := createDaemonConfig(config); err != nil {
+		return err
+	}
+
+	cleanupFiles(graphDirectory)
 
 	selinux.SetFileContext(graphDirectory, "system_u:object_r:var_lib_t:s0")
 
