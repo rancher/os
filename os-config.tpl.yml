@@ -77,7 +77,8 @@ rancher:
   services:
     {{if eq "amd64" .ARCH -}}
     acpid:
-      image: {{.OS_REPO}}/os-acpid:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: /usr/sbin/acpid -f
       labels:
         io.rancher.os.scope: system
       net: host
@@ -88,7 +89,8 @@ rancher:
       - system-volumes
     {{end -}}
     all-volumes:
-      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: echo
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -130,7 +132,8 @@ rancher:
       - command-volumes
       - system-volumes
     command-volumes:
-      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: echo
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -176,7 +179,8 @@ rancher:
       - /media:/media:shared
       - /mnt:/mnt:shared
     container-data-volumes:
-      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: echo
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -214,7 +218,8 @@ rancher:
       - command-volumes
       - system-volumes
     ntp:
-      image: {{.OS_REPO}}/os-ntp:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: ntpd --nofork -g
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: network-pre
@@ -259,7 +264,8 @@ rancher:
       volumes_from:
       - system-volumes
     system-volumes:
-      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: echo
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -308,7 +314,8 @@ rancher:
       volumes_from:
       - system-volumes
     user-volumes:
-      image: {{.OS_REPO}}/os-state:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: echo
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
@@ -320,7 +327,8 @@ rancher:
       - /home:/home
       - /opt:/opt
     docker:
-      image: {{.OS_REPO}}/os-docker:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: /usr/bin/user-docker
       environment:
       - HTTP_PROXY
       - HTTPS_PROXY
