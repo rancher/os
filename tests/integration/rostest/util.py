@@ -17,6 +17,11 @@ if version is None or version == '' or suffix is None:
     raise RuntimeError("Could not get VERSION or SUFFIX from environment")
 
 
+busybox_image = {'amd64': 'busybox',
+                 'arm': 'armhf/busybox',
+                 'arm64': 'aarch64/busybox'}[arch]
+
+
 def iter_lines(s):
     return it.imap(str.rstrip, iter(s.readline, ''))
 
