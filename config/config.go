@@ -46,5 +46,11 @@ func Set(key string, value interface{}) error {
 	}
 
 	_, modified := getOrSetVal(key, existing, value)
+
+	c := &CloudConfig{}
+	if err = util.Convert(modified, c); err != nil {
+		return err
+	}
+
 	return WriteToFile(modified, CloudConfigFile)
 }
