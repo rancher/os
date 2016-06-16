@@ -48,6 +48,11 @@ func consoleSwitch(c *cli.Context) error {
 	}
 	newConsole := c.Args()[0]
 
+	cfg := config.LoadConfig()
+	if newConsole == cfg.Rancher.Console {
+		log.Warnf("Console is already set to %s", newConsole)
+	}
+
 	if !c.Bool("force") {
 		in := bufio.NewReader(os.Stdin)
 		fmt.Println("Switching consoles will destroy the current console container and restart Docker.")
@@ -56,8 +61,6 @@ func consoleSwitch(c *cli.Context) error {
 			return nil
 		}
 	}
-
-	cfg := config.LoadConfig()
 
 	if newConsole != "default" {
 		if err := compose.StageServices(cfg, newConsole); err != nil {
