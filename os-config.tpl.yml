@@ -235,7 +235,8 @@ rancher:
       privileged: true
       volumes:
       - /var/run/system-docker.sock:/var/run/docker.sock
-      - /var/lib/system-docker/preload:/mnt/preload
+      - /var/lib/rancher/preload/system-docker:/mnt/preload
+      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       volumes_from:
       - command-volumes
       - system-volumes
@@ -247,8 +248,9 @@ rancher:
         io.rancher.os.after: console
       privileged: true
       volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/preload:/mnt/preload
+      - /var/run/:/var/run/
+      - /var/lib/rancher/preload/docker:/mnt/preload
+      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       volumes_from:
       - command-volumes
       - system-volumes
