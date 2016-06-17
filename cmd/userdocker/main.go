@@ -162,12 +162,6 @@ func startDocker(cfg *config.CloudConfig) (string, types.HijackedResponse, error
 		return "", types.HijackedResponse{}, err
 	}
 
-	if err := client.ContainerExecStart(context.Background(), resp.ID, types.ExecStartCheck{
-		Detach: false,
-	}); err != nil {
-		return "", types.HijackedResponse{}, err
-	}
-
 	return resp.ID, attachResp, nil
 }
 
