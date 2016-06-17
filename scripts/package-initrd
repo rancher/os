@@ -11,7 +11,7 @@ INITRD=${ARTIFACTS}/initrd
 mkdir -p ${ARTIFACTS}
 
 if [ "$COMPRESS" == "" ]; then
-    COMPRESS=lzma
+    COMPRESS="gzip -1"
 fi
 
 cd ${INITRD_DIR}
