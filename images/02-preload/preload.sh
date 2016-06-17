@@ -25,6 +25,7 @@ if [ -d ${BASE} ]; then
             CAT="cat ${path}"
             if [[ ${file} =~ \.t?gz$ ]]; then CAT="${CAT} | gunzip"; fi
             if [[ ${file} =~ \.t?xz$ ]]; then CAT="${CAT} | unxz"; fi
+            wait-for-docker
             CAT="${CAT} | docker load"
             echo loading from ${path}
             eval ${CAT} || :
