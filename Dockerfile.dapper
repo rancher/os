@@ -209,8 +209,8 @@ RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
         make install \
     ;fi
 
-RUN mkdir -p images/00-rootfs/build && \
-    curl -pfL ${!OS_BASE_URL} | tar xvJf - -C images/00-rootfs/build
+RUN cd ${DOWNLOADS} && \
+    curl -pfL ${!OS_BASE_URL} | tar xvJf -
 
 ENTRYPOINT ["./scripts/entry"]
 CMD ["ci"]
