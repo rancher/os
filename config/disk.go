@@ -99,6 +99,10 @@ func applyDebugFlags(rawCfg map[interface{}]interface{}) map[interface{}]interfa
 		if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
 			cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")
 		}
+		if !util.Contains(cfg.Rancher.BootstrapDocker.Args, "-D") {
+			cfg.Rancher.BootstrapDocker.Args = append(cfg.Rancher.BootstrapDocker.Args, "-D")
+		}
+		cfg.Rancher.Log = true
 	}
 
 	_, rawCfg = getOrSetVal("rancher.docker.args", rawCfg, cfg.Rancher.Docker.Args)
