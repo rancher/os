@@ -194,7 +194,7 @@ func setupSharedRoot(c *config.CloudConfig) (*config.CloudConfig, error) {
 			if err := mount.Mount("tmpfs", i, "tmpfs", "rw"); err != nil {
 				return c, err
 			}
-			if err := mount.MakeRShared(i); err != nil {
+			if err := mount.MakeShared(i); err != nil {
 				return c, err
 			}
 		}
