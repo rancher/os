@@ -576,6 +576,8 @@ func secondPrepare(config *Config, docker string, args ...string) error {
 		return err
 	}
 
+	ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1"), 0655)
+
 	return nil
 }
 
