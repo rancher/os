@@ -20,6 +20,7 @@ for i in /opt/bin /usr/local/bin; do
 done
 
 mount --make-shared /
+mount --make-shared /run
 
 if [ "$(grep '/var/lib/docker /var/lib/docker ' /proc/self/mountinfo | awk '{print $9}')" = "rootfs" ]; then
     export DOCKER_RAMDISK=1
