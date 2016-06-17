@@ -25,7 +25,7 @@ ARG DOCKER_BUILD_VERSION=1.10.3
 ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.2/policy.29
 
-ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.4.0-23.41-rancher2/linux-4.4.10-rancher-x86.tar.gz
+ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.4.0-23.41-rancher2-2/linux-4.4.10-rancher-x86.tar.gz
 ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.4.0-arm64.8/linux-4.4.0-rancher-arm64.tar.gz
 
 ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
