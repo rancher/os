@@ -91,18 +91,26 @@ func applyDebugFlags(rawCfg map[interface{}]interface{}) map[interface{}]interfa
 		return rawCfg
 	}
 
-	if cfg.Rancher.Debug {
-		log.SetLevel(log.DebugLevel)
-		if !util.Contains(cfg.Rancher.Docker.Args, "-D") {
-			cfg.Rancher.Docker.Args = append(cfg.Rancher.Docker.Args, "-D")
-		}
-		if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
-			cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")
-		}
+	if !cfg.Rancher.Debug {
+		return rawCfg
+	}
+
+	log.SetLevel(log.DebugLevel)
+	if !util.Contains(cfg.Rancher.Docker.Args, "-D") {
+		cfg.Rancher.Docker.Args = append(cfg.Rancher.Docker.Args, "-D")
+	}
+	if !util.Contains(cfg.Rancher.SystemDocker.Args, "-D") {
+		cfg.Rancher.SystemDocker.Args = append(cfg.Rancher.SystemDocker.Args, "-D")
+	}
+	if !util.Contains(cfg.Rancher.BootstrapDocker.Args, "-D") {
+		cfg.Rancher.BootstrapDocker.Args = append(cfg.Rancher.BootstrapDocker.Args, "-D")
 	}
 
 	_, rawCfg = getOrSetVal("rancher.docker.args", rawCfg, cfg.Rancher.Docker.Args)
 	_, rawCfg = getOrSetVal("rancher.system_docker.args", rawCfg, cfg.Rancher.SystemDocker.Args)
+	_, rawCfg = getOrSetVal("rancher.bootstrap_docker.args", rawCfg, cfg.Rancher.BootstrapDocker.Args)
+	_, rawCfg = getOrSetVal("rancher.log", rawCfg, true)
+
 	return rawCfg
 }
 
