@@ -194,6 +194,15 @@ grub2_config "${KERNEL_ARGS}"
 pvgrub_config "${KERNEL_ARGS}"
 install_rancher
 
+seusers=${BASE_DIR}/etc/selinux/ros/seusers
+failsafe_context=${BASE_DIR}/etc/selinux/ros/contexts/failsafe_context
+if [ -f "${seusers}" ]; then
+    echo "__default__:unconfined_u:s0-s0:c0.c1023" > ${seusers}
+fi
+if [ -f "${failsafe_context}" ]; then
+    echo "unconfined_r:unconfined_t:s0" > ${failsafe_context}
+fi
+
 if [ "$KEXEC" = "y" ]; then
     if [ "$APPEND" = "" ]; then
         APPEND=$(cat /proc/cmdline)
