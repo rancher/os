@@ -206,6 +206,9 @@ func amendNils(c *CloudConfig) *CloudConfig {
 	if t.Rancher.RegistryAuths == nil {
 		t.Rancher.RegistryAuths = map[string]types.AuthConfig{}
 	}
+	if t.Rancher.Sysctl == nil {
+		t.Rancher.Sysctl = map[string]string{}
+	}
 	return &t
 }
 

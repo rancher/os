@@ -19,8 +19,10 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -224,6 +226,15 @@ func executeCloudConfig() error {
 		device := util.ResolveDevice(configMount[0])
 		if err := mount.Mount(device, configMount[1], configMount[2], configMount[3]); err != nil {
 			log.Errorf("Unable to mount %s: %s", configMount[1], err)
+		}
+	}
+
+	for k, v := range cc.Rancher.Sysctl {
+		elems := []string{"/proc", "sys"}
+		elems = append(elems, strings.Split(k, ".")...)
+		path := path.Join(elems...)
+		if err := ioutil.WriteFile(path, []byte(v), 0644); err != nil {
+			log.Errorf("Failed to set sysctl key %s: %s", k, err)
 		}
 	}
 

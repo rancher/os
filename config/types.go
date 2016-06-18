@@ -112,6 +112,7 @@ type RancherConfig struct {
 	RegistryAuths       map[string]types.AuthConfig               `yaml:"registry_auths,omitempty"`
 	Defaults            Defaults                                  `yaml:"defaults,omitempty"`
 	ResizeDevice        string                                    `yaml:"resize_device,omitempty"`
+	Sysctl              map[string]string                         `yaml:"sysctl,omitempty"`
 }
 
 type UpgradeConfig struct {
