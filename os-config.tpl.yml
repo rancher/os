@@ -190,7 +190,6 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
-      - /var/lib/rkt:/var/lib/rkt
     network-pre:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: netconf
@@ -280,7 +279,6 @@ rancher:
       - /etc/docker:/etc/docker
       - /etc/hosts:/etc/hosts
       - /etc/resolv.conf:/etc/resolv.conf
-      - /etc/rkt:/etc/rkt
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /etc/selinux:/etc/selinux
       - /lib/firmware:/lib/firmware

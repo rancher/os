@@ -2,7 +2,6 @@ package dockerlaunch
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -23,7 +22,6 @@ const (
 	defaultPrefix = "/usr"
 	iptables      = "/sbin/iptables"
 	modprobe      = "/sbin/modprobe"
-	systemdRoot   = "/sys/fs/cgroup/systemd/user.slice"
 	distSuffix    = ".dist"
 )
 
@@ -41,9 +39,6 @@ var (
 	optionalMounts = [][]string{
 		{"none", "/sys/fs/selinux", "selinuxfs", ""},
 	}
-	systemdMounts = [][]string{
-		{"systemd", "/sys/fs/cgroup/systemd", "cgroup", "none,name=systemd"},
-	}
 )
 
 type Config struct {
@@ -57,7 +52,6 @@ type Config struct {
 	CgroupHierarchy map[string]string
 	LogFile         string
 	NoLog           bool
-	EmulateSystemd  bool
 	NoFiles         uint64
 	Environment     []string
 	GraphDirectory  string
@@ -572,38 +566,9 @@ func secondPrepare(config *Config, docker string, args ...string) error {
 		return err
 	}
 
-	if err := setupSystemd(config); err != nil {
-		return err
-	}
-
 	ioutil.WriteFile("/proc/sys/net/ipv4/ip_forward", []byte("1"), 0655)
 
 	return nil
-}
-
-func setupSystemd(config *Config) error {
-	if !config.EmulateSystemd {
-		return nil
-	}
-
-	cgroups, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/cgroup", os.Getpid()))
-	if err != nil {
-		return err
-	}
-
-	if strings.Contains(string(cgroups), "name=systemd") {
-		return nil
-	}
-
-	if err := createMounts(systemdMounts...); err != nil {
-		return err
-	}
-
-	if err := os.Mkdir(systemdRoot, 0755); err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(path.Join(systemdRoot, "cgroup.procs"), []byte(strconv.Itoa(os.Getpid())+"\n"), 0644)
 }
 
 func expand(bin string) string {
