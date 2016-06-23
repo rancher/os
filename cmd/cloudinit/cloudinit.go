@@ -224,8 +224,16 @@ func executeCloudConfig() error {
 			log.Errorf("Unable to mount %s: must specify exactly four arguments", configMount[1])
 		}
 		device := util.ResolveDevice(configMount[0])
+		if configMount[2] == "swap" {
+			cmd := exec.Command("swapon", device)
+			err := cmd.Run()
+			if err != nil {
+				log.Errorf("Unable to swapon %s: %v", device, err)
+			}
+			continue
+		}
 		if err := mount.Mount(device, configMount[1], configMount[2], configMount[3]); err != nil {
-			log.Errorf("Unable to mount %s: %s", configMount[1], err)
+			log.Errorf("Unable to mount %s: %v", configMount[1], err)
 		}
 	}
 
