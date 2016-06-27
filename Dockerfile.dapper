@@ -39,7 +39,7 @@ ARG BUILD_DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/$
 ARG TOOLCHAIN_arm64=aarch64-linux-gnu
 ARG TOOLCHAIN_arm=arm-linux-gnueabihf
 
-ARG OS_RELEASES_YML=https://releases.rancher.com/os/releases.yml
+ARG OS_RELEASES_YML=https://releases.rancher.com/os
 ARG VBOX_MODULES_URL_amd64=https://github.com/rancher/os-vbox/releases/download/v0.0.2/vbox-modules.tar.gz
 
 ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services

@@ -353,7 +353,7 @@ rancher:
       -p, /var/run/system-docker.pid, --exec-root=/var/run/system-docker, --config-file=/etc/docker/system-daemon.json,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:
-    url: {{.OS_RELEASES_YML}}
+    url: {{.OS_RELEASES_YML}}/releases{{.SUFFIX}}.yml
     image: {{.OS_REPO}}/os
   docker:
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
