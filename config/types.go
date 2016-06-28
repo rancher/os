@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"runtime"
 
 	"github.com/coreos/coreos-cloudinit/config"
@@ -50,6 +51,8 @@ var (
 	VERSION       string
 	ARCH          string
 	SUFFIX        string
+	OS_REPO       string
+	OS_BASE       string
 	PrivateKeys   = []string{
 		"rancher.ssh",
 		"rancher.docker.ca_key",
@@ -68,6 +71,9 @@ func init() {
 	}
 	if SUFFIX == "" && ARCH != "amd64" {
 		SUFFIX = "_" + ARCH
+	}
+	if OS_BASE == "" {
+		OS_BASE = fmt.Sprintf("%s/os-base:%s%s", OS_REPO, VERSION, SUFFIX)
 	}
 }
 
