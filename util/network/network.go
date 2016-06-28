@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -87,7 +86,7 @@ func loadFromNetwork(location string) ([]byte, error) {
 
 	var err error
 	for i := 0; i < 300; i++ {
-		net.UpdateDnsConf()
+		updateDNSCache()
 
 		var resp *http.Response
 		resp, err = http.Get(location)
