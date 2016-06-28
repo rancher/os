@@ -643,22 +643,6 @@ func (daemon *Daemon) createSpec(c *container.Container) (*libcontainerd.Spec, e
 		return nil, fmt.Errorf("linux mounts: %v", err)
 	}
 
-	//for _, ns := range s.Linux.Namespaces {
-	//	if ns.Type == "network" && ns.Path == "" && !c.Config.NetworkDisabled {
-	//		target, err := os.Readlink(filepath.Join("/proc", strconv.Itoa(os.Getpid()), "exe"))
-	//		if err != nil {
-	//			return nil, err
-	//		}
-
-	//		s.Hooks = specs.Hooks{
-	//			Prestart: []specs.Hook{{
-	//				Path: target, // FIXME: cross-platform
-	//				Args: []string{"libnetwork-setkey", c.ID},
-	//			}},
-	//		}
-	//	}
-	//}
-
 	if apparmor.IsEnabled() {
 		appArmorProfile := "docker-default"
 		if len(c.AppArmorProfile) > 0 {
@@ -671,6 +655,10 @@ func (daemon *Daemon) createSpec(c *container.Container) (*libcontainerd.Spec, e
 	s.Process.SelinuxLabel = c.GetProcessLabel()
 	s.Process.NoNewPrivileges = c.NoNewPrivileges
 	s.Linux.MountLabel = c.MountLabel
+
+	if err := addHooks(c, &s); err != nil {
+		return nil, fmt.Errorf("failed to add hooks: %v", err)
+	}
 
 	return (*libcontainerd.Spec)(&s), nil
 }

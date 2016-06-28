@@ -110,7 +110,7 @@ func mountCgroups(hierarchyConfig map[string]string) error {
 		log.Debugf("/proc/cgroups: %s", text)
 		fields := strings.SplitN(text, "\t", 3)
 		cgroup := fields[0]
-		if cgroup == "" || cgroup[0] == '#' || len(fields) < 3 {
+		if cgroup == "" || cgroup[0] == '#' || len(fields) < 3 || cgroup[2] == '0' {
 			continue
 		}
 
@@ -224,14 +224,17 @@ func copyDefault(folder, name string) error {
 }
 
 func copyDefaultFolder(folder string) error {
+	log.Debugf("Copying folder %s", folder)
 	defaultFolder := path.Join(defaultPrefix, folder)
 	files, _ := ioutil.ReadDir(defaultFolder)
 	for _, file := range files {
+		var err error
 		if file.IsDir() {
-			continue
+			err = copyDefaultFolder(path.Join(folder, file.Name()))
+		} else {
+			err = copyDefault(folder, file.Name())
 		}
-
-		if err := copyDefault(folder, file.Name()); err != nil {
+		if err != nil {
 			return err
 		}
 	}
@@ -253,24 +256,44 @@ func defaultFiles(files ...string) error {
 
 func defaultFolders(folders ...string) error {
 	for _, folder := range folders {
-		copyDefaultFolder(folder)
+		if err := copyDefaultFolder(folder); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func CopyFile(src, folder, name string) error {
-	if _, err := os.Stat(src); os.IsNotExist(err) {
+	if _, err := os.Lstat(src); os.IsNotExist(err) {
+		log.Debugf("Not copying %s, does not exists", src)
 		return nil
 	}
 
 	dst := path.Join(folder, name)
-	if _, err := os.Stat(dst); err == nil {
+	if _, err := os.Lstat(dst); err == nil {
+		log.Debugf("Not copying %s => %s already exists", src, dst)
 		return nil
 	}
 
 	if err := createDirs(folder); err != nil {
 		return err
+	}
+
+	stat, err := os.Lstat(src)
+	if err != nil {
+		return err
+	}
+
+	if stat.Mode()&os.ModeSymlink != 0 {
+		symDst, err := os.Readlink(src)
+		if err != nil {
+			log.Errorf("Failed to readlink: %v", err)
+			return err
+		}
+		// file is a symlink
+		log.Debugf("Symlinking %s => %s", dst, symDst)
+		return os.Symlink(symDst, dst)
 	}
 
 	srcFile, err := os.Open(src)
@@ -285,6 +308,7 @@ func CopyFile(src, folder, name string) error {
 	}
 	defer dstFile.Close()
 
+	log.Debugf("Copying %s => %s", src, dst)
 	_, err = io.Copy(dstFile, srcFile)
 	return err
 }
@@ -468,6 +492,8 @@ func createDaemonConfig(config *Config) error {
 func cleanupFiles(graphDirectory string) {
 	zeroFiles := []string{
 		"/etc/docker/key.json",
+		"/etc/docker/daemon.json",
+		"/etc/docker/system-daemon.json",
 		path.Join(graphDirectory, "image/overlay/repositories.json"),
 	}
 
@@ -523,10 +549,12 @@ func firstPrepare() error {
 	}
 
 	if err := defaultFolders(
+		"/etc/docker",
 		"/etc/selinux",
 		"/etc/selinux/ros",
 		"/etc/selinux/ros/policy",
 		"/etc/selinux/ros/contexts",
+		"/var/lib/cni",
 	); err != nil {
 		return err
 	}

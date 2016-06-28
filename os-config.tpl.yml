@@ -231,6 +231,7 @@ rancher:
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
+      net: host
       privileged: true
       volumes:
       - /var/run/system-docker.sock:/var/run/docker.sock
@@ -245,6 +246,7 @@ rancher:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: console
+      net: host
       privileged: true
       volumes:
       - /var/run/:/var/run/
@@ -348,8 +350,8 @@ rancher:
       - /sys/fs/cgroup:/host/sys/fs/cgroup
   system_docker:
     exec: true
-    args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -b, docker-sys,
-      --fixed-cidr, 172.18.42.1/16, --restart=false, -g, /var/lib/system-docker, -G, root,
+    args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay,
+      --restart=false, -g, /var/lib/system-docker, -G, root,
       -p, /var/run/system-docker.pid, --exec-root=/var/run/system-docker, --config-file=/etc/docker/system-daemon.json,
       -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
   upgrade:

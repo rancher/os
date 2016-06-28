@@ -10,17 +10,20 @@ INITRD_DIR=${BUILD}/initrd
 echo Create initrd layout in $INITRD_DIR
 
 rm -rf ${INITRD_DIR}
-mkdir -p ${INITRD_DIR}/usr/{etc,bin,share/ros}
+mkdir -p ${INITRD_DIR}/usr/{etc,bin,share/ros,var/lib/cni/bin}
 
 ./scripts/template
 
-cp -rf assets/selinux      ${INITRD_DIR}/usr/etc
-cp build/images.tar        ${INITRD_DIR}/usr/share/ros/
-cp bin/ros                 ${INITRD_DIR}/usr/bin/
-ln -s usr/bin/ros          ${INITRD_DIR}/init
-ln -s bin                  ${INITRD_DIR}/usr/sbin
-ln -s usr/sbin             ${INITRD_DIR}/sbin
-ln -s ros                  ${INITRD_DIR}/usr/bin/system-docker
+cp -rf assets/selinux          ${INITRD_DIR}/usr/etc
+cp -rf assets/docker           ${INITRD_DIR}/usr/etc
+cp build/images.tar            ${INITRD_DIR}/usr/share/ros/
+cp bin/ros                     ${INITRD_DIR}/usr/bin/
+ln -s usr/bin/ros              ${INITRD_DIR}/init
+ln -s bin                      ${INITRD_DIR}/usr/sbin
+ln -s usr/sbin                 ${INITRD_DIR}/sbin
+ln -s ros                      ${INITRD_DIR}/usr/bin/system-docker
+ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge
+ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/host-local
 
 tar xvzf ${DOWNLOADS}/docker.tgz -C ${INITRD_DIR}/usr/bin --strip-components=1
 

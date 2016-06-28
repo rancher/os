@@ -1,0 +1,6 @@
+{
+  "path": "/usr/bin/ros",
+  "args": [
+    "cni-glue"
+  ]
+}
