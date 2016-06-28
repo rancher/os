@@ -76,7 +76,7 @@ func consoleSwitch(c *cli.Context) error {
 		Privileged: true,
 		Net:        "host",
 		Pid:        "host",
-		Image:      fmt.Sprintf("rancher/os-base:%s", config.VERSION),
+		Image:      config.OS_BASE,
 		Labels: map[string]string{
 			config.SCOPE: config.SYSTEM,
 		},

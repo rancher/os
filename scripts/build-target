@@ -15,6 +15,6 @@ fi
 OUTPUT=${OUTPUT:-bin/ros}
 echo Building $OUTPUT
 
-CONST="-X github.com/docker/docker/dockerversion.GitCommit=${COMMIT} -X github.com/docker/docker/dockerversion.Version=${DOCKER_PATCH_VERSION} -X github.com/docker/docker/dockerversion.BuildTime=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X github.com/docker/docker/dockerversion.IAmStatic=true -X github.com/rancher/os/config.VERSION=${VERSION}"
+CONST="-X github.com/docker/docker/dockerversion.GitCommit=${COMMIT} -X github.com/docker/docker/dockerversion.Version=${DOCKER_PATCH_VERSION} -X github.com/docker/docker/dockerversion.BuildTime=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X github.com/docker/docker/dockerversion.IAmStatic=true -X github.com/rancher/os/config.VERSION=${VERSION} -X github.com/rancher/os/config.OS_REPO=${OS_REPO}"
 go build -tags "selinux cgo daemon netgo dnspatch" -installsuffix netgo -ldflags "$CONST -linkmode external -extldflags -static" -o ${OUTPUT}
 strip --strip-all ${OUTPUT}
