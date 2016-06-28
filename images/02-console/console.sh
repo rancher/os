@@ -126,7 +126,7 @@ if [ -x /opt/rancher/bin/start.sh ]; then
     /opt/rancher/bin/start.sh || true
 fi
 
-touch /run/console-done
+echo `ros config get rancher.console` > /run/console-done
 
 if [ -x /etc/rc.local ]; then
     echo Executing rc.local

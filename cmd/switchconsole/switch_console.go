@@ -29,6 +29,10 @@ func Main() {
 		}
 	}
 
+	if err = config.Set("rancher.console", newConsole); err != nil {
+		log.Errorf("Failed to update 'rancher.console': %v", err)
+	}
+
 	if err = project.Up(context.Background(), options.Up{
 		Log: true,
 	}, "console"); err != nil {
@@ -37,9 +41,5 @@ func Main() {
 
 	if err = project.Restart(context.Background(), 10, "docker"); err != nil {
 		log.Errorf("Failed to restart Docker: %v", err)
-	}
-
-	if err = config.Set("rancher.console", newConsole); err != nil {
-		log.Errorf("Failed to update 'rancher.console': %v", err)
 	}
 }
