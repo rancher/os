@@ -3,7 +3,10 @@ package control
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"sort"
+	"strings"
 
 	"golang.org/x/net/context"
 
@@ -121,10 +124,25 @@ func consoleList(c *cli.Context) error {
 	if err != nil {
 		return err
 	}
+	consoles = append(consoles, "default")
+	sort.Strings(consoles)
 
-	fmt.Println("default")
+	var currentConsole string
+	currentConsoleBytes, err := ioutil.ReadFile("/run/console-done")
+	if err == nil {
+		currentConsole = strings.TrimSpace(string(currentConsoleBytes))
+	} else {
+		log.Warnf("Failed to detect current console: %v", err)
+	}
+
 	for _, console := range consoles {
-		fmt.Println(console)
+		if console == currentConsole {
+			fmt.Printf("current  %s\n", console)
+		} else if console == cfg.Rancher.Console {
+			fmt.Printf("enabled  %s\n", console)
+		} else {
+			fmt.Printf("disabled %s\n", console)
+		}
 	}
 
 	return nil
