@@ -19,7 +19,8 @@ import (
 )
 
 const (
-	STATE string = "/state"
+	STATE             string = "/state"
+	BOOT2DOCKER_MAGIC string = "boot2docker, please format-me"
 
 	TMPFS_MAGIC int64 = 0x01021994
 	RAMFS_MAGIC int64 = 0x858458f6
@@ -158,6 +159,28 @@ func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) 
 	return mountOem(cfg)
 }
 
+func checkBoot2DockerEnvironment(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+	devices := []string{"/dev/sda", "/dev/vda"}
+	data := make([]byte, len(BOOT2DOCKER_MAGIC))
+
+	for _, device := range devices {
+		f, err := os.Open(device)
+		if err == nil {
+			defer f.Close()
+
+			_, err = f.Read(data)
+			if err == nil && string(data) == BOOT2DOCKER_MAGIC {
+				log.Info("boot2docker environment detected")
+				cfg.Rancher.State.Dev = "LABEL=RANCHER_STATE"
+				cfg.Rancher.State.Autoformat = []string{device}
+				break
+			}
+		}
+	}
+
+	return cfg, nil
+}
+
 func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
 	var launchConfig dockerlaunch.Config
 
@@ -233,8 +256,16 @@ func RunInit() error {
 			return cfg, nil
 		},
 		loadModules,
+		checkBoot2DockerEnvironment,
 		tryMountAndBootstrap,
-		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
+				log.Errorf("Failed to update rancher.state.dev: %v", err)
+			}
+			if err := config.Set("rancher.state.autoformat", cfg.Rancher.State.Autoformat); err != nil {
+				log.Errorf("Failed to update rancher.state.autoformat: %v", err)
+			}
+
 			return config.LoadConfig(), nil
 		},
 		loadModules,
