@@ -1,8 +1,11 @@
 package main
 
 import (
+	"github.com/containernetworking/cni/plugins/ipam/host-local"
+	"github.com/containernetworking/cni/plugins/main/bridge"
 	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
+	"github.com/rancher/cniglue"
 	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/cmd/cloudinit"
 	"github.com/rancher/os/cmd/control"
@@ -33,6 +36,9 @@ var entrypoints = map[string]func(){
 	"system-docker":   systemdocker.Main,
 	"user-docker":     userdocker.Main,
 	"wait-for-docker": wait.Main,
+	"cni-glue":        glue.Main,
+	"bridge":          bridge.Main,
+	"host-local":      hostlocal.Main,
 }
 
 func main() {

@@ -1,0 +1,15 @@
+import:
+- package: github.com/pkg/errors
+  version: d62207b3dc916c342cd6a7180fa861d898cf42ee
+- package: github.com/Sirupsen/logrus
+  version: 446d1c146faa8ed3f4218f056fcd165f6bcfda81
+- package: github.com/docker/go-connections
+  version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
+- package: github.com/docker/engine-api
+  version: f90ecdb1e989f834dabbd91807e891094aa069fe
+- package: github.com/docker/go-units
+  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+- package: github.com/opencontainers/specs
+  version: b45aa77484bb771fc50498020063abcbc9b5f4c2
+- package: github.com/containernetworking/cni
+  version: b8e92ed030588120f9fda47dd359e17a3234142d
