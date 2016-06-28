@@ -1,10 +1,11 @@
-FROM debian:jessie
+FROM ubuntu:16.04
 ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && apt-get install -y grub2 parted kexec-tools
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y grub2 parted kexec-tools && \
+    rm -rf /var/lib/apt/*
 
+COPY ./build/vmlinuz ./build/initrd /dist/
 COPY conf lay-down-os seed-data set-disk-partitions /scripts/
-COPY ./build/vmlinuz /dist/vmlinuz
-COPY ./build/initrd  /dist/initrd
 
 ARG VERSION
 ENV VERSION=${VERSION}
