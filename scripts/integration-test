@@ -2,6 +2,10 @@
 # help: Run Python based integration tests
 set -e
 
+if [ "$INTEGRATION_TESTS" = 0 ]; then
+    exit 0
+fi
+
 source $(dirname $0)/version
 
 cd $(dirname $0)/../tests/integration
