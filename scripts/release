@@ -4,5 +4,6 @@ set -e
 source $(dirname $0)/version
 export REPO_VERSION=$VERSION
 export COMPRESS=lzma
+export INTEGRATION_TESTS=0
 
 exec $(dirname $0)/ci
