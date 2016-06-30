@@ -60,7 +60,9 @@ func pullImage(ctx context.Context, client client.APIClient, service *Service, i
 
 	timeoutsRemaining := 3
 	for i := 0; i < 100; i++ {
-		responseBody, err := client.ImagePull(ctx, options, nil)
+		responseBody, err := client.ImagePull(ctx, options, func() (string, error) {
+			return encodedAuth, nil
+		})
 		if err != nil {
 			logrus.Errorf("Failed to pull image %s: %v", image, err)
 			return err
