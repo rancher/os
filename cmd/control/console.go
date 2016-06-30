@@ -16,6 +16,7 @@ import (
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
 
@@ -52,6 +53,16 @@ func consoleSwitch(c *cli.Context) error {
 	newConsole := c.Args()[0]
 
 	cfg := config.LoadConfig()
+	consoles, err := network.GetConsoles(cfg.Rancher.Repositories.ToArray())
+	if err != nil {
+		return err
+	}
+
+	consoles = append(consoles, "default")
+	if !util.Contains(consoles, newConsole) {
+		log.Fatalf("Console %s is not a valid console, user\"sudo ros console list\" to list consoles", newConsole)
+	}
+
 	if newConsole == currentConsole() {
 		log.Warnf("Console is already set to %s", newConsole)
 	}
@@ -103,6 +114,15 @@ func consoleEnable(c *cli.Context) error {
 	newConsole := c.Args()[0]
 
 	cfg := config.LoadConfig()
+	consoles, err := network.GetConsoles(cfg.Rancher.Repositories.ToArray())
+	if err != nil {
+		return err
+	}
+
+	consoles = append(consoles, "default")
+	if !util.Contains(consoles, newConsole) {
+		log.Fatalf("Console %s is not a valid console, user\"sudo ros console list\" to list consoles", newConsole)
+	}
 
 	if newConsole != "default" {
 		if err := compose.StageServices(cfg, newConsole); err != nil {
