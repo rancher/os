@@ -1,4 +1,7 @@
 rancher:
+  environment:
+    VERSION: {{.VERSION}}
+    SUFFIX: {{.SUFFIX}}
   defaults:
     hostname: {{.HOSTNAME_DEFAULT}}
     network:
