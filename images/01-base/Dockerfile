@@ -34,5 +34,6 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
 COPY inputrc /etc/inputrc
 COPY entry.sh /usr/sbin/entry.sh
 COPY growpart /usr/bin/growpart
+RUN sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf
 
 ENTRYPOINT ["/usr/sbin/entry.sh"]
