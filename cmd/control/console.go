@@ -52,7 +52,7 @@ func consoleSwitch(c *cli.Context) error {
 	newConsole := c.Args()[0]
 
 	cfg := config.LoadConfig()
-	if newConsole == cfg.Rancher.Console {
+	if newConsole == currentConsole() {
 		log.Warnf("Console is already set to %s", newConsole)
 	}
 
@@ -127,13 +127,7 @@ func consoleList(c *cli.Context) error {
 	consoles = append(consoles, "default")
 	sort.Strings(consoles)
 
-	var currentConsole string
-	currentConsoleBytes, err := ioutil.ReadFile("/run/console-done")
-	if err == nil {
-		currentConsole = strings.TrimSpace(string(currentConsoleBytes))
-	} else {
-		log.Warnf("Failed to detect current console: %v", err)
-	}
+	currentConsole := currentConsole()
 
 	for _, console := range consoles {
 		if console == currentConsole {
@@ -146,4 +140,14 @@ func consoleList(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func currentConsole() (console string) {
+	consoleBytes, err := ioutil.ReadFile("/run/console-done")
+	if err == nil {
+		console = strings.TrimSpace(string(consoleBytes))
+	} else {
+		log.Warnf("Failed to detect current console: %v", err)
+	}
+	return
 }
