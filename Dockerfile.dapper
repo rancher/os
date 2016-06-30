@@ -10,6 +10,36 @@ ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
 ENV SHELL /bin/bash
 WORKDIR ${DAPPER_SOURCE}
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cpio \
+        curl \
+        dosfstools \
+        gccgo \
+        genisoimage \
+        git \
+        isolinux \
+        less \
+        libblkid-dev \
+        libmount-dev \
+        libselinux1-dev \
+        locales \
+        module-init-tools \
+        openssh-client \
+        pkg-config \
+        python-pip \
+        qemu \
+        qemu-kvm \
+        rsync \
+        sudo \
+        syslinux-common \
+        tox \
+        vim \
+        wget \
+        xorriso
+
 ########## General Configuration #####################
 ARG DAPPER_HOST_ARCH=amd64
 ARG HOST_ARCH=${DAPPER_HOST_ARCH}
@@ -36,11 +66,7 @@ ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${D
 ARG BUILD_DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm
 ARG BUILD_DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm64
 
-ARG TOOLCHAIN_arm64=aarch64-linux-gnu
-ARG TOOLCHAIN_arm=arm-linux-gnueabihf
-
 ARG OS_RELEASES_YML=https://releases.rancher.com/os
-ARG VBOX_MODULES_URL_amd64=https://github.com/rancher/os-vbox/releases/download/v0.0.2/vbox-modules.tar.gz
 
 ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
@@ -49,81 +75,47 @@ ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-1
 ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2016.05-3/os-base_amd64.tar.xz
 ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2016.05-3/os-base_arm64.tar.xz
 ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.05-3/os-base_arm.tar.xz
-
 ######################################################
 
 # Set up environment and export all ARGS as ENV
-ENV ARCH ${ARCH}
-ENV BUILD_DOCKER_URL BUILD_DOCKER_URL_${ARCH}
-ENV BUILD_DOCKER_URL_amd64 ${BUILD_DOCKER_URL_amd64}
-ENV BUILD_DOCKER_URL_arm ${BUILD_DOCKER_URL_arm}
-ENV BUILD_DOCKER_URL_arm64 ${BUILD_DOCKER_URL_arm64}
-ENV DAPPER_HOST_ARCH ${DAPPER_HOST_ARCH}
-ENV DFS_IMAGE ${DFS_IMAGE}
-ENV DISTRIB_ID ${DISTRIB_ID}
-ENV DOCKER_PATCH_VERSION ${DOCKER_PATCH_VERSION}
-ENV DOCKER_URL DOCKER_URL_${ARCH}
-ENV DOCKER_URL_amd64 ${DOCKER_URL_amd64}
-ENV DOCKER_URL_arm ${DOCKER_URL_arm}
-ENV DOCKER_URL_arm64 ${DOCKER_URL_arm64}
-ENV DOCKER_VERSION ${DOCKER_VERSION}
-ENV DOWNLOADS /usr/src/downloads
-ENV GOPATH /go
-ENV GO_VERSION 1.6.2
-ENV GOARCH $ARCH
-ENV HOSTNAME_DEFAULT ${HOSTNAME_DEFAULT}
-ENV HOST_ARCH ${HOST_ARCH}
-ENV IMAGE_NAME ${IMAGE_NAME}
-ENV KERNEL_URL KERNEL_URL_${ARCH}
-ENV KERNEL_URL_amd64 ${KERNEL_URL_amd64}
-ENV KERNEL_URL_arm64 ${KERNEL_URL_arm64}
-ENV OS_BASE_SHA1 OS_BASE_SHA1_${ARCH}
-ENV OS_BASE_URL OS_BASE_URL_${ARCH}
-ENV OS_BASE_URL_amd64 ${OS_BASE_URL_amd64}
-ENV OS_BASE_URL_arm ${OS_BASE_URL_arm}
-ENV OS_BASE_URL_arm64 ${OS_BASE_URL_arm64}
-ENV OS_RELEASES_YML ${OS_RELEASES_YML}
-ENV OS_REPO ${OS_REPO}
-ENV OS_SERVICES_REPO ${OS_SERVICES_REPO}
-ENV PATH ${GOPATH}/bin:/usr/local/go/bin:$PATH
-ENV REPO_VERSION master
-ENV SELINUX_POLICY_URL ${SELINUX_POLICY_URL}
-ENV TOOLCHAIN_arm ${TOOLCHAIN_arm}
-ENV TOOLCHAIN_arm64 ${TOOLCHAIN_arm64}
-ENV VBOX_MODULES_URL ${VBOX_MODULES_URL}
-ENV VBOX_MODULES_URL VBOX_MODULES_URL_${ARCH}
-ENV VBOX_MODULES_URL_amd64 ${VBOX_MODULES_URL_amd64}
+ENV ARCH=${ARCH} \
+    HOST_ARCH=${HOST_ARCH}
+
+ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
+    BUILD_DOCKER_URL_amd64=${BUILD_DOCKER_URL_amd64} \
+    BUILD_DOCKER_URL_arm=${BUILD_DOCKER_URL_arm} \
+    BUILD_DOCKER_URL_arm64=${BUILD_DOCKER_URL_arm64} \
+    DAPPER_HOST_ARCH=${DAPPER_HOST_ARCH} \
+    DFS_IMAGE=${DFS_IMAGE} \
+    DISTRIB_ID=${DISTRIB_ID} \
+    DOCKER_PATCH_VERSION=${DOCKER_PATCH_VERSION} \
+    DOCKER_URL=DOCKER_URL_${ARCH} \
+    DOCKER_URL_amd64=${DOCKER_URL_amd64} \
+    DOCKER_URL_arm=${DOCKER_URL_arm} \
+    DOCKER_URL_arm64=${DOCKER_URL_arm64} \
+    DOCKER_VERSION=${DOCKER_VERSION} \
+    DOWNLOADS=/usr/src/downloads \
+    GOPATH=/go \
+    GO_VERSION=1.6.2 \
+    GOARCH=$ARCH \
+    HOSTNAME_DEFAULT=${HOSTNAME_DEFAULT} \
+    IMAGE_NAME=${IMAGE_NAME} \
+    KERNEL_URL=KERNEL_URL_${ARCH} \
+    KERNEL_URL_amd64=${KERNEL_URL_amd64} \
+    KERNEL_URL_arm64=${KERNEL_URL_arm64} \
+    OS_BASE_SHA1=OS_BASE_SHA1_${ARCH} \
+    OS_BASE_URL=OS_BASE_URL_${ARCH} \
+    OS_BASE_URL_amd64=${OS_BASE_URL_amd64} \
+    OS_BASE_URL_arm=${OS_BASE_URL_arm} \
+    OS_BASE_URL_arm64=${OS_BASE_URL_arm64} \
+    OS_RELEASES_YML=${OS_RELEASES_YML} \
+    OS_REPO=${OS_REPO} \
+    OS_SERVICES_REPO=${OS_SERVICES_REPO} \
+    PATH=${GOPATH}/bin:/usr/local/go/bin:$PATH \
+    REPO_VERSION=master \
+    SELINUX_POLICY_URL=${SELINUX_POLICY_URL}
 
 RUN mkdir -p ${DOWNLOADS}
-
-RUN apt-get update && \
-    apt-get install -y \
-        build-essential \
-        ca-certificates \
-        cpio \
-        curl \
-        dosfstools \
-        gccgo \
-        genisoimage \
-        git \
-        isolinux \
-        less \
-        libblkid-dev \
-        libmount-dev \
-        libselinux1-dev \
-        locales \
-        module-init-tools \
-        pkg-config \
-        python-pip \
-        qemu \
-        qemu-kvm \
-        rsync \
-        sudo \
-        tox \
-        vim \
-        wget \
-        xorriso
-
 
 # Download kernel
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
@@ -133,11 +125,6 @@ RUN if [ -n "${!KERNEL_URL}" ]; then \
 
 # Download SELinux Policy
 RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
-
-# VBox URL
-RUN if [ -n "${!VBOX_MODULES_URL}" ]; then \
-        curl -pfL ${!VBOX_MODULES_URL} > ${DOWNLOADS}/vbox-modules.tar.gz \
-    ;fi
 
 # Install Go
 COPY assets/go-dnsclient.patch ${DAPPER_SOURCE}
@@ -161,53 +148,6 @@ RUN go get github.com/rancher/trash
 # Install dapper
 RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
-
-# Install toolchain
-RUN TOOLCHAIN=TOOLCHAIN_${ARCH} && \
-    echo export TOOLCHAIN=${!TOOLCHAIN} > /usr/src/toolchain-env
-RUN source /usr/src/toolchain-env && \
-    if [ "${TOOLCHAIN}" != "" ] && ! which ${TOOLCHAIN}-gcc; then \
-        apt-get install -y gcc-${TOOLCHAIN} g++-${TOOLCHAIN} \
-    ;fi
-
-RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
-        apt-get update && \
-        cd /usr/local/src && \
-        for i in libselinux libsepol pcre3 util-linux; do \
-            apt-get build-dep -y $i && \
-            apt-get source -y $i \
-        ;done \
-     ;fi
-
-RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
-        cd /usr/local/src/pcre3-* && \
-        autoreconf && \
-        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ ./configure --host=${TOOLCHAIN} --prefix=/usr/${TOOLCHAIN} && \
-        make -j$(nproc) && \
-        make install \
-    ;fi
-
-RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
-        cd /usr/local/src/libselinux-* && \
-        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ make CFLAGS=-Wall && \
-        make PREFIX=/usr/${TOOLCHAIN} DESTDIR=/usr/${TOOLCHAIN} install && \
-        cd /usr/local/src/libsepol-* && \
-        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ make CFLAGS=-Wall && \
-        make PREFIX=/usr/${TOOLCHAIN} DESTDIR=/usr/${TOOLCHAIN} install \
-    ;fi
-
-RUN source /usr/src/toolchain-env; if [ "${TOOLCHAIN}" != "" ]; then \
-        cd /usr/local/src/util-linux-* && \
-        autoreconf && \
-        CC=${TOOLCHAIN}-gcc CXX=${TOOLCHAIN}-g++ ./configure --host=${TOOLCHAIN} --prefix=/usr/${TOOLCHAIN} \
-            --disable-all-programs \
-            --enable-libmount \
-            --enable-libblkid \
-            --enable-libuuid \
-            --enable-mount && \
-        make -j$(nproc) && \
-        make install \
-    ;fi
 
 RUN cd ${DOWNLOADS} && \
     curl -pfL ${!OS_BASE_URL} | tar xvJf -

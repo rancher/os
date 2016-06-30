@@ -56,6 +56,7 @@ done
 
 if [ -n "$PASSWORD" ]; then
     echo "rancher:$PASSWORD" | chpasswd
+    sed -E -i 's/(rancher:.*:).*(:.*:.*:.*:.*:.*:.*)$/\1\2/' /etc/shadow
 fi
 
 setup_ssh

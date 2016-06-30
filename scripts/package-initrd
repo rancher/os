@@ -10,6 +10,10 @@ INITRD=${ARTIFACTS}/initrd
 
 mkdir -p ${ARTIFACTS}
 
+if [ ! -f ${ARTIFACTS}/vmlinuz ]; then
+    exit 0
+fi
+
 if [ "$COMPRESS" == "" ]; then
     COMPRESS="gzip -1"
 fi

@@ -8,8 +8,7 @@ source ./scripts/version
 DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}
 
 if [ ! -f $DOCKERFILE ] || [ ! -f dist/artifacts/vmlinuz ] || [ ! -f dist/artifacts/initrd ]; then
-    echo "Error: ${DOCKERFILE}, dist/artifacts/vmlinuz or dist/artifacts/initrd is missing"
-    exit 1
+    exit 0
 fi
 
 mkdir -p ./scripts/installer/build
