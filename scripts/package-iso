@@ -11,8 +11,7 @@ mkdir -p ${CD}/boot/isolinux
 mkdir -p ${CD}/boot/isolinux
 
 if [ ! -f ${ARTIFACTS}/vmlinuz ] || [ ! -f ${ARTIFACTS}/initrd ]; then
-    echo "Error: vmlinuz or initrd is missing in ${ARTIFACTS}/"
-    exit 1
+    exit 0
 fi
 
 cp ${ARTIFACTS}/initrd                        ${CD}/boot
