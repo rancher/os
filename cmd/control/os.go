@@ -244,9 +244,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 			return err
 		}
 
-		if err := container.Up(context.Background(), options.Up{
-			Log: true,
-		}); err != nil {
+		if err := container.Up(context.Background(), options.Up{}); err != nil {
 			return err
 		}
 
