@@ -71,7 +71,7 @@ rancher:
     - configdrive:/media/config-2
   repositories:
     core:
-      url: {{.OS_SERVICES_REPO}}/{{.REPO_VERSION}}{{.SUFFIX}}
+      url: {{.OS_SERVICES_REPO}}/{{.REPO_VERSION}}
   state:
     fstype: auto
     dev: LABEL=RANCHER_STATE
