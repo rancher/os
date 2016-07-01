@@ -144,12 +144,7 @@ func mergeMetadata(rawCfg map[interface{}]interface{}, md datasource.Metadata) m
 
 	sort.Sort(sort.StringSlice(keys))
 
-	currentKeys, ok := out["ssh_authorized_keys"]
-	if !ok {
-		return out
-	}
-
-	finalKeys := currentKeys.([]interface{})
+	finalKeys, _ := out["ssh_authorized_keys"].([]interface{})
 	for _, k := range keys {
 		finalKeys = append(finalKeys, md.SSHPublicKeys[k])
 	}
