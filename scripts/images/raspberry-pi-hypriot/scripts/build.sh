@@ -71,8 +71,8 @@ umount build/root/boot
 umount build/root
 
 # package, compress and export image file
-mv build/run.img build/rancheros-rpi2.img
-zip dist/rancheros-rpi2.zip build/rancheros-rpi2.img
+mv build/run.img build/rancheros-raspberry-pi.img
+zip dist/rancheros-raspberry-pi.zip build/rancheros-raspberry-pi.img
 ls -alh dist
 
 # cleanup build environment
