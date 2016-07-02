@@ -293,6 +293,7 @@ rancher:
       - /var/lib/rancher/cache:/var/lib/rancher/cache
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/lib/rancher:/var/lib/rancher
+      - /var/lib/waagent:/var/lib/waagent
       - /var/log:/var/log
       - /var/run:/var/run
     udev-cold:

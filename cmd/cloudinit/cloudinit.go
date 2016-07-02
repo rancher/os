@@ -44,6 +44,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/rancher/netconf"
 	"github.com/rancher/os/cmd/cloudinit/gce"
+	"github.com/rancher/os/cmd/cloudinit/waagent"
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/util"
 )
@@ -315,6 +316,12 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 				}
 			} else {
 				enableDoLinkLocal()
+			}
+		case "waagent":
+			if network {
+				if len(parts) == 1 {
+					dss = append(dss, waagent.NewDatasource("/var/lib/waagent"))
+				}
 			}
 		case "gce":
 			if network {
