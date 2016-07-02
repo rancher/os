@@ -25,6 +25,8 @@ https://releases.rancher.com/os/v0.5.0/rancheros.iso
 
 ### Additional Downloads
 
+#### Latest 
+
 * https://releases.rancher.com/os/latest/initrd
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
@@ -34,6 +36,7 @@ https://releases.rancher.com/os/v0.5.0/rancheros.iso
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
 
+#### v0.5.0 
 
 * https://releases.rancher.com/os/v0.5.0/initrd
 * https://releases.rancher.com/os/v0.5.0/iso-checksums.txt
