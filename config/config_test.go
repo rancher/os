@@ -108,6 +108,7 @@ func TestParseCmdline(t *testing.T) {
 			"key1":     "value1",
 			"key2":     "value2",
 			"keyArray": []interface{}{int64(1), int64(2)},
+			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config"},
 			"obj1": map[interface{}]interface{}{
 				"key3": "3value",
 				"obj2": map[interface{}]interface{}{
@@ -120,7 +121,7 @@ func TestParseCmdline(t *testing.T) {
 		},
 	}
 
-	actual := parseCmdline("a b rancher.rescue rancher.keyArray=[1,2] rancher.key1=value1 c rancher.key2=value2 rancher.obj1.key3=3value rancher.obj1.obj2.key4 rancher.key5=5 rancher.key6=a,b rancher.key7=a\nb")
+	actual := parseCmdline("a b rancher.rescue rancher.keyArray=[1,2] rancher.strArray=[\"url:http://192.168.1.100/cloud-config\"] rancher.key1=value1 c rancher.key2=value2 rancher.obj1.key3=3value rancher.obj1.obj2.key4 rancher.key5=5 rancher.key6=a,b rancher.key7=a\nb")
 
 	assert.Equal(expected, actual)
 }

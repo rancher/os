@@ -225,3 +225,9 @@ func GetCurrentContainerId() (string, error) {
 
 	return parts[len(parts)-1:][0], nil
 }
+
+func UnescapeKernelParams(s string) string {
+	s = strings.Replace(s, `\"`, `"`, -1)
+	s = strings.Replace(s, `\'`, `'`, -1)
+	return s
+}

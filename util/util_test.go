@@ -90,3 +90,13 @@ func TestMerge(t *testing.T) {
 	}
 	assert.Equal(expected, Merge(m0, m1))
 }
+
+func TestCmdLineStr(t *testing.T) {
+	assert := require.New(t)
+
+	cmdLine := `rancher.cloud_init.datasources=[\'url:http://192.168.1.100/cloud-config\']`
+	assert.Equal("rancher.cloud_init.datasources=['url:http://192.168.1.100/cloud-config']", UnescapeKernelParams(cmdLine))
+
+	cmdLine = `rancher.cloud_init.datasources=[\"url:http://192.168.1.100/cloud-config\"]`
+	assert.Equal(`rancher.cloud_init.datasources=["url:http://192.168.1.100/cloud-config"]`, UnescapeKernelParams(cmdLine))
+}

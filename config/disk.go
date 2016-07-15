@@ -176,7 +176,7 @@ func readCmdline() map[interface{}]interface{} {
 
 	log.Debugf("Config cmdline %s", cmdLine)
 
-	cmdLineObj := parseCmdline(strings.TrimSpace(string(cmdLine)))
+	cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(cmdLine))))
 
 	return cmdLineObj
 }
