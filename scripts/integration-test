@@ -1,13 +1,13 @@
 #!/bin/bash
-# help: Run Python based integration tests
+# help: Run integration tests
 set -e
 
 source $(dirname $0)/version
 
-cd $(dirname $0)/../tests/integration
+cd $(dirname $0)/../tests
 
-if [ ! -e ../../dist/artifacts/initrd ]; then
-    ../../scripts/dev
+if [ ! -e ../dist/artifacts/initrd ]; then
+    ../scripts/dev
 fi
 
-tox "$@"
+go test -timeout 20m
