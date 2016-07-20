@@ -61,7 +61,12 @@ func NewCNIExec(state *DockerPluginState) (*CNIExec, error) {
 		},
 	}
 
-	dir := fmt.Sprintf(cniDir, state.HostConfig.NetworkMode.NetworkName())
+	network := state.HostConfig.NetworkMode.NetworkName()
+	if network == "" {
+		network = "default"
+	}
+
+	dir := fmt.Sprintf(cniDir, network)
 	files, err := libcni.ConfFiles(dir)
 	if err != nil {
 		return nil, err
