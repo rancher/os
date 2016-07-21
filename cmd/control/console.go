@@ -30,6 +30,10 @@ func consoleSubcommands() []cli.Command {
 					Name:  "force, f",
 					Usage: "do not prompt for input",
 				},
+				cli.BoolFlag{
+					Name:  "no-pull",
+					Usage: "don't pull console image",
+				},
 			},
 		},
 		{
@@ -67,7 +71,7 @@ func consoleSwitch(c *cli.Context) error {
 		}
 	}
 
-	if newConsole != "default" {
+	if !c.Bool("no-pull") && newConsole != "default" {
 		if err := compose.StageServices(cfg, newConsole); err != nil {
 			return err
 		}
