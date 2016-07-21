@@ -1,0 +1,19 @@
+#cloud-config
+rancher:
+  environment:
+    ETCD_DISCOVERY: https://discovery.etcd.io/c2c219023108cda9529364d6d983fe13
+    FLANNEL_NETWORK: 10.244.0.0/16
+  services_include:
+    kernel-headers: true
+  network:
+    interfaces:
+      eth*:
+        dhcp: true
+      "mac=52:54:00:12:34:59":
+        address: 10.10.2.17/24
+        gateway: 10.10.2.2
+        mtu: 1500
+  docker:
+    args: [daemon, --log-opt, max-file=2, --log-opt, max-size=25m, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock', --userland-proxy=false]
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC85w9stZyiLQp/DkVO6fqwiShYcj1ClKdtCqgHtf+PLpJkFReSFu8y21y+ev09gsSMRRrjF7yt0pUHV6zncQhVeqsZtgc5WbELY2DOYUGmRn/CCvPbXovoBrQjSorqlBmpuPwsStYLr92Xn+VVsMNSUIegHY22DphGbDKG85vrKB8HxUxGIDxFBds/uE8FhSy+xsoyT/jUZDK6pgq2HnGl6D81ViIlKecpOpWlW3B+fea99ADNyZNVvDzbHE5pcI3VRw8u59WmpWOUgT6qacNVACl8GqpBvQk8sw7O/X9DSZHCKafeD9G5k+GYbAUz92fKWrx/lOXfUXPS3+c8dRIF

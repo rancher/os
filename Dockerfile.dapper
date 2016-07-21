@@ -145,6 +145,8 @@ RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker.tgz
 # Install Trash
 RUN go get github.com/rancher/trash
 
+RUN go get gopkg.in/check.v1
+
 # Install dapper
 RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
