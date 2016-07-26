@@ -66,27 +66,6 @@ func (s *QemuSuite) RunQemu(additionalArgs ...string) error {
 	return s.WaitForSSH()
 }
 
-func (s *QemuSuite) RestartQemu(additionalArgs ...string) error {
-	s.qemuCmd.Process.Kill()
-	time.Sleep(time.Millisecond * 1000)
-
-	runArgs := []string{
-		"--qemu",
-		"--no-rebuild",
-		"--no-rm-usr",
-	}
-	runArgs = append(runArgs, additionalArgs...)
-
-	s.qemuCmd = exec.Command(s.runCommand, runArgs...)
-	s.qemuCmd.Stdout = os.Stdout
-	s.qemuCmd.Stderr = os.Stderr
-	if err := s.qemuCmd.Start(); err != nil {
-		return err
-	}
-
-	return s.WaitForSSH()
-}
-
 func (s *QemuSuite) WaitForSSH() error {
 	sshArgs := []string{
 		"--qemu",
@@ -124,9 +103,10 @@ func (s *QemuSuite) CheckCall(c *C, additionalArgs ...string) {
 	c.Assert(s.MakeCall(additionalArgs...), IsNil)
 }
 
-func (s *QemuSuite) Reboot() {
+func (s *QemuSuite) Reboot(c *C) {
 	s.MakeCall("sudo reboot")
 	time.Sleep(3000 * time.Millisecond)
+	c.Assert(s.WaitForSSH(), IsNil)
 }
 
 func (s *QemuSuite) LoadInstallerImage(c *C) {

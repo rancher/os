@@ -19,7 +19,7 @@ else
     exit 0
 fi`)
 
-	s.RestartQemu("--cloud-config", "./tests/assets/test_17/cloud-config.yml")
+	s.Reboot(c)
 
 	s.CheckCall(c, `
 set -x -e

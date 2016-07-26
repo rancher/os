@@ -14,7 +14,7 @@ func (s *QemuSuite) TestRebootWithContainerRunning(c *C) {
 set -e -x
 docker run -d --restart=always %s`, NginxImage))
 
-	s.Reboot()
+	s.Reboot(c)
 
 	s.CheckCall(c, "docker ps -f status=running | grep nginx")
 }
