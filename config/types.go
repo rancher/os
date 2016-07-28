@@ -149,6 +149,7 @@ type StateConfig struct {
 	Directory  string   `yaml:"directory,omitempty"`
 	FsType     string   `yaml:"fstype,omitempty"`
 	Dev        string   `yaml:"dev,omitempty"`
+	Wait       bool     `yaml:"wait,omitempty"`
 	Required   bool     `yaml:"required,omitempty"`
 	Autoformat []string `yaml:"autoformat,omitempty"`
 	FormatZero bool     `yaml:"formatzero,omitempty"`

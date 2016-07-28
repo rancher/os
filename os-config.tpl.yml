@@ -39,6 +39,7 @@ rancher:
       - /dev:/host/dev
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
+      - /usr/bin/ros:/usr/bin/ros:ro
   autoformat:
     autoformat:
       image: {{.OS_REPO}}/os-autoformat:{{.VERSION}}{{.SUFFIX}}
@@ -74,7 +75,6 @@ rancher:
       url: {{.OS_SERVICES_REPO}}/{{.REPO_VERSION}}
   state:
     fstype: auto
-    dev: LABEL=RANCHER_STATE
     oem_fstype: auto
     oem_dev: LABEL=RANCHER_OEM
   services:
