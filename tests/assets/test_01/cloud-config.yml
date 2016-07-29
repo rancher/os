@@ -3,8 +3,6 @@ rancher:
   environment:
     ETCD_DISCOVERY: https://discovery.etcd.io/c2c219023108cda9529364d6d983fe13
     FLANNEL_NETWORK: 10.244.0.0/16
-  services_include:
-    kernel-headers: true
   network:
     interfaces:
       eth*:

@@ -12,7 +12,7 @@ for dev in ${DEVS[@]}; do
 
         # Test for our magic string (it means that the disk was made by ./boot2docker init)
         HEADER=`dd if=${dev} bs=1 count=${#MAGIC} 2>/dev/null`
-    
+
         if [ "$HEADER" = "$MAGIC" ]; then
             # save the preload userdata.tar file
             dd if=${dev} of=/userdata.tar bs=1 count=8192
@@ -23,10 +23,10 @@ for dev in ${DEVS[@]}; do
             # do not auto-format if the disk does not begin with 1MB filled with 00
             continue
         fi
-    
-        mkfs.ext4 -L RANCHER_STATE ${dev}
-    
+
+
         if [ -e "/userdata.tar" ]; then
+            mkfs.ext4 -L B2D_STATE ${dev}
             mkdir -p /mnt/new-root
             mount -t ext4 ${dev} /mnt/new-root
             pushd /mnt/new-root
@@ -49,7 +49,7 @@ rancher:
 
 ssh_authorized_keys:
  - ${AUTHORIZED_KEY1}
- - ${AUTHORIZED_KEY2} 
+ - ${AUTHORIZED_KEY2}
 
 users:
  - name: docker
@@ -59,6 +59,8 @@ users:
 EOF
             popd
             umount /mnt/new-root
+        else
+            mkfs.ext4 -L RANCHER_STATE ${dev}
         fi
 
         # do not check another device

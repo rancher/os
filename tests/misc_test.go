@@ -28,8 +28,4 @@ for i in $(pidof docker); do
     fi
 done
 [ "$found" = "true" ]`)
-
-	s.CheckCall(c, `
-sleep 5
-docker inspect kernel-headers`)
 }
