@@ -63,6 +63,7 @@ rancher:
       - /dev:/host/dev
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
+      - /usr/bin/ros:/usr/bin/ros:ro
   bootstrap_docker:
     args: [daemon, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
         -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
@@ -305,6 +306,8 @@ rancher:
       privileged: true
       volumes_from:
       - system-volumes
+      volumes:
+      - /usr/bin/ros:/usr/bin/ros:ro
     udev:
       image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       environment:
