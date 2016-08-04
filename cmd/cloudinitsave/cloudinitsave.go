@@ -13,22 +13,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package cloudinit
+package cloudinitsave
 
 import (
 	"errors"
 	"flag"
-	"fmt"
-	"io/ioutil"
 	"os"
-	"os/exec"
-	"path"
 	"strings"
 	"sync"
 	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/docker/docker/pkg/mount"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/config"
@@ -41,9 +36,8 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/pkg"
-	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/rancher/netconf"
-	"github.com/rancher/os/cmd/cloudinit/gce"
+	"github.com/rancher/os/cmd/cloudinitsave/gce"
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/util"
 )
@@ -52,13 +46,9 @@ const (
 	datasourceInterval    = 100 * time.Millisecond
 	datasourceMaxInterval = 30 * time.Second
 	datasourceTimeout     = 5 * time.Minute
-	sshKeyName            = "rancheros-cloud-config"
-	resizeStamp           = "/var/lib/rancher/resizefs.done"
 )
 
 var (
-	save    bool
-	execute bool
 	network bool
 	flags   *flag.FlagSet
 )
@@ -66,8 +56,16 @@ var (
 func init() {
 	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	flags.BoolVar(&network, "network", true, "use network based datasources")
-	flags.BoolVar(&save, "save", false, "save cloud config and exit")
-	flags.BoolVar(&execute, "execute", false, "execute saved cloud config")
+}
+
+func Main() {
+	flags.Parse(os.Args[1:])
+
+	log.Infof("Running cloud-init-save: network=%v", network)
+
+	if err := saveCloudConfig(); err != nil {
+		log.Errorf("Failed to save cloud-config: %v", err)
+	}
 }
 
 func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
@@ -169,104 +167,6 @@ func fetchUserData() ([]byte, datasource.Metadata, error) {
 		return nil, metadata, err
 	}
 	return userDataBytes, metadata, nil
-}
-
-func resizeDevice(cfg *rancherConfig.CloudConfig) error {
-	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, "1")
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("partprobe")
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	cmd = exec.Command("resize2fs", fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice))
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func executeCloudConfig() error {
-	cc := rancherConfig.LoadConfig()
-
-	if len(cc.SSHAuthorizedKeys) > 0 {
-		authorizeSSHKeys("rancher", cc.SSHAuthorizedKeys, sshKeyName)
-		authorizeSSHKeys("docker", cc.SSHAuthorizedKeys, sshKeyName)
-	}
-
-	for _, file := range cc.WriteFiles {
-		f := system.File{File: file}
-		fullPath, err := system.WriteFile(&f, "/")
-		if err != nil {
-			log.WithFields(log.Fields{"err": err, "path": fullPath}).Error("Error writing file")
-			continue
-		}
-		log.Printf("Wrote file %s to filesystem", fullPath)
-	}
-
-	if _, err := os.Stat(resizeStamp); os.IsNotExist(err) && cc.Rancher.ResizeDevice != "" {
-		if err := resizeDevice(cc); err == nil {
-			os.Create(resizeStamp)
-		} else {
-			log.Errorf("Failed to resize %s: %s", cc.Rancher.ResizeDevice, err)
-		}
-	}
-
-	for _, configMount := range cc.Mounts {
-		if len(configMount) != 4 {
-			log.Errorf("Unable to mount %s: must specify exactly four arguments", configMount[1])
-		}
-		device := util.ResolveDevice(configMount[0])
-		if configMount[2] == "swap" {
-			cmd := exec.Command("swapon", device)
-			err := cmd.Run()
-			if err != nil {
-				log.Errorf("Unable to swapon %s: %v", device, err)
-			}
-			continue
-		}
-		if err := mount.Mount(device, configMount[1], configMount[2], configMount[3]); err != nil {
-			log.Errorf("Unable to mount %s: %v", configMount[1], err)
-		}
-	}
-
-	for k, v := range cc.Rancher.Sysctl {
-		elems := []string{"/proc", "sys"}
-		elems = append(elems, strings.Split(k, ".")...)
-		path := path.Join(elems...)
-		if err := ioutil.WriteFile(path, []byte(v), 0644); err != nil {
-			log.Errorf("Failed to set sysctl key %s: %s", k, err)
-		}
-	}
-
-	return nil
-}
-
-func Main() {
-	flags.Parse(os.Args[1:])
-
-	log.Infof("Running cloud-init: save=%v, execute=%v", save, execute)
-
-	if save {
-		err := saveCloudConfig()
-		if err != nil {
-			log.WithFields(log.Fields{"err": err}).Error("Failed to save cloud-config")
-		}
-	}
-
-	if execute {
-		err := executeCloudConfig()
-		if err != nil {
-			log.WithFields(log.Fields{"err": err}).Error("Failed to execute cloud-config")
-		}
-	}
 }
 
 // getDatasources creates a slice of possible Datasources for cloudinit based

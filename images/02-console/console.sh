@@ -115,7 +115,7 @@ EOF
 echo 'RancherOS \n \l' > /etc/issue
 echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue
 
-cloud-init -execute
+cloud-init-execute -console
 
 if [ -x /var/lib/rancher/conf/cloud-config-script ]; then
     echo "Running /var/lib/rancher/conf/cloud-config-script"
