@@ -44,8 +44,6 @@ if [ ! -d ${DOCKER_HOME} ]; then
     chmod 2755 ${DOCKER_HOME}
 fi
 
-echo 1000000000 > /proc/sys/fs/file-max
-
 for i in $(</proc/cmdline); do
     case $i in
         rancher.password=*)

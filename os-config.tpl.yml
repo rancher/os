@@ -78,11 +78,13 @@ rancher:
     fstype: auto
     oem_fstype: auto
     oem_dev: LABEL=RANCHER_OEM
+  sysctl:
+    fs.file-max: 100000000
   services:
     {{if eq "amd64" .ARCH -}}
     acpid:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
-      command: /usr/sbin/acpid -f
+      command: /sbin/acpid -f
       labels:
         io.rancher.os.scope: system
       net: host
@@ -222,7 +224,7 @@ rancher:
       - system-volumes
     ntp:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
-      command: ntpd --nofork -g
+      command: ntpd
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: network-pre
