@@ -9,7 +9,9 @@ import (
 	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/cmd/cloudinitsave"
+	"github.com/rancher/os/cmd/console"
 	"github.com/rancher/os/cmd/control"
+	"github.com/rancher/os/cmd/dockerinit"
 	"github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/cmd/respawn"
@@ -24,7 +26,10 @@ import (
 var entrypoints = map[string]func(){
 	"cloud-init-execute": cloudinitexecute.Main,
 	"cloud-init-save":    cloudinitsave.Main,
+	"console":            console.Main,
+	"console.sh":         console.Main,
 	"docker":             docker.Main,
+	"docker-init":        dockerinit.Main,
 	"dockerlaunch":       dockerlaunch.Main,
 	"halt":               power.Halt,
 	"init":               osInit.MainInit,

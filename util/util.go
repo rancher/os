@@ -231,3 +231,13 @@ func UnescapeKernelParams(s string) string {
 	s = strings.Replace(s, `\'`, `'`, -1)
 	return s
 }
+
+func ExistsAndExecutable(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+
+	mode := info.Mode().Perm()
+	return mode&os.ModePerm != 0
+}

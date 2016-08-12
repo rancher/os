@@ -9,10 +9,9 @@ import (
 	"path"
 	"strings"
 
-	"github.com/docker/docker/pkg/mount"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/system"
+	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
 )
@@ -47,14 +46,14 @@ func Main() {
 	}
 
 	if console {
-		applyConsole(cfg)
+		ApplyConsole(cfg)
 	}
 	if preConsole {
 		applyPreConsole(cfg)
 	}
 }
 
-func applyConsole(cfg *config.CloudConfig) {
+func ApplyConsole(cfg *config.CloudConfig) {
 	if len(cfg.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cfg.SSHAuthorizedKeys, sshKeyName)
 		authorizeSSHKeys("docker", cfg.SSHAuthorizedKeys, sshKeyName)
