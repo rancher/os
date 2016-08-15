@@ -250,6 +250,9 @@ rancher:
       uts: host
       privileged: true
       restart: always
+      volumes_from:
+      - command-volumes
+      - system-volumes
     preload-system-images:
       image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
       labels:
@@ -289,6 +292,7 @@ rancher:
       privileged: true
       restart: always
       volumes_from:
+      - command-volumes
       - system-volumes
     system-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
@@ -325,9 +329,8 @@ rancher:
       uts: host
       privileged: true
       volumes_from:
+      - command-volumes
       - system-volumes
-      volumes:
-      - /usr/bin/ros:/usr/bin/ros:ro
     udev:
       image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       environment:
@@ -340,6 +343,7 @@ rancher:
       privileged: true
       restart: always
       volumes_from:
+      - command-volumes
       - system-volumes
     user-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}

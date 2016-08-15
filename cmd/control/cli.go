@@ -46,6 +46,12 @@ func Main() {
 			Action:          devAction,
 		},
 		{
+			Name:            "entrypoint",
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          entrypointAction,
+		},
+		{
 			Name:            "env",
 			ShortName:       "e",
 			Usage:           "env command",

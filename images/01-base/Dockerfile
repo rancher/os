@@ -32,8 +32,7 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     adduser docker sudo && \
     echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
 COPY inputrc /etc/inputrc
-COPY entry.sh /usr/sbin/entry.sh
 COPY growpart /usr/bin/growpart
 RUN sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf
 
-ENTRYPOINT ["/usr/sbin/entry.sh"]
+ENTRYPOINT ["/usr/bin/ros", "entrypoint"]

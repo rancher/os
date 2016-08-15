@@ -15,19 +15,19 @@ INITRD=${ARTIFACTS}/initrd
 
 mkdir -p ${ARTIFACTS} ${PREPOP_DIR}
 
-if [ "$(docker info | grep 'Storage Driver: ' | sed 's/Storage Driver: //')" != "overlay" ]; then
-    echo Overlay storage driver is require to prepackage exploded images
-    echo packaging images.tar instead
-    tar czf ${ARTIFACTS}/rootfs.tar.gz --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
-    exit 0
-fi
+#if [ "$(docker info | grep 'Storage Driver: ' | sed 's/Storage Driver: //')" != "overlay" ]; then
+echo Overlay storage driver is require to prepackage exploded images
+echo packaging images.tar instead
+tar czf ${ARTIFACTS}/rootfs.tar.gz --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
+exit 0
+#fi
 
 DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${SUFFIX} ${DFS_ARGS})
 trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
 docker exec -i ${DFS} docker load < ${INITRD_DIR}/usr/share/ros/images.tar
 docker stop ${DFS}
-docker run --rm --volumes-from=${DFS} rancher/os-base tar -c -C /var/lib/docker ./image | tar -x -C ${PREPOP_DIR}
-docker run --rm --volumes-from=${DFS} rancher/os-base tar -c -C /var/lib/docker ./overlay | tar -x -C ${PREPOP_DIR}
+docker run --rm --volumes-from=${DFS} busybox tar -c -C /var/lib/docker ./image | tar -x -C ${PREPOP_DIR}
+docker run --rm --volumes-from=${DFS} busybox tar -c -C /var/lib/docker ./overlay | tar -x -C ${PREPOP_DIR}
 
 tar -cf ${ARTIFACTS}/rootfs.tar --exclude usr/share/ros/images.tar  --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
 tar -rf ${ARTIFACTS}/rootfs.tar -C ${IMAGE_CACHE} .
