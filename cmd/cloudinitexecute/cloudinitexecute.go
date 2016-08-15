@@ -11,7 +11,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/system"
-	"github.com/docker/docker/pkg/mount"
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/util"
@@ -63,12 +62,13 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 
 	WriteFiles(cfg, "console")
 
-	for _, configMount := range cfg.Mounts {
-		if len(configMount) != 4 {
-			log.Errorf("Unable to mount %s: must specify exactly four arguments", configMount[1])
+	for _, mount := range cfg.Mounts {
+		if len(mount) != 4 {
+			log.Errorf("Unable to mount %s: must specify exactly four arguments", mount[1])
 		}
-		device := util.ResolveDevice(configMount[0])
-		if configMount[2] == "swap" {
+		device := util.ResolveDevice(mount[0])
+
+		if mount[2] == "swap" {
 			cmd := exec.Command("swapon", device)
 			err := cmd.Run()
 			if err != nil {
@@ -76,8 +76,17 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 			}
 			continue
 		}
-		if err := mount.Mount(device, configMount[1], configMount[2], configMount[3]); err != nil {
-			log.Errorf("Unable to mount %s: %v", configMount[1], err)
+
+		cmdArgs := []string{device, mount[1]}
+		if mount[2] != "" {
+			cmdArgs = append(cmdArgs, "-t", mount[2])
+		}
+		if mount[3] != "" {
+			cmdArgs = append(cmdArgs, "-o", mount[3])
+		}
+		cmd := exec.Command("mount", cmdArgs...)
+		if err := cmd.Run(); err != nil {
+			log.Errorf("Failed to mount %s: %v", mount[1], err)
 		}
 	}
 }
