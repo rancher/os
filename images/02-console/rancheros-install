@@ -1,9 +1,0 @@
-#!/bin/bash
-set -e
-
-cat <<EOF
-As of RancherOS v0.4.0 'rancheros-install' is obsolete.
-Please use 'ros install' instead.
-EOF
-
-exit 1
