@@ -85,10 +85,15 @@ type Repositories map[string]Repository
 
 type CloudConfig struct {
 	SSHAuthorizedKeys []string      `yaml:"ssh_authorized_keys"`
-	WriteFiles        []config.File `yaml:"write_files"`
+	WriteFiles        []File        `yaml:"write_files"`
 	Hostname          string        `yaml:"hostname"`
 	Mounts            [][]string    `yaml:"mounts,omitempty"`
 	Rancher           RancherConfig `yaml:"rancher,omitempty"`
+}
+
+type File struct {
+	config.File
+	Container string `yaml:"container,omitempty"`
 }
 
 type RancherConfig struct {
@@ -119,6 +124,7 @@ type RancherConfig struct {
 	Defaults            Defaults                                  `yaml:"defaults,omitempty"`
 	ResizeDevice        string                                    `yaml:"resize_device,omitempty"`
 	Sysctl              map[string]string                         `yaml:"sysctl,omitempty"`
+	RestartServices     []string                                  `yaml:"restart_services,omitempty"`
 }
 
 type UpgradeConfig struct {

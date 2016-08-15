@@ -7,6 +7,6 @@ func (s *QemuSuite) TestKernelHeaders(c *C) {
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `
-sleep 10
+sleep 15
 docker inspect kernel-headers`)
 }

@@ -12,8 +12,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/system"
 	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/os/config"
+	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/docker"
 	"github.com/rancher/os/util"
+	"golang.org/x/net/context"
 )
 
 const (
@@ -38,7 +40,7 @@ func Main() {
 
 	log.Infof("Running cloud-init-execute: pre-console=%v, console=%v", preConsole, console)
 
-	cfg := config.LoadConfig()
+	cfg := rancherConfig.LoadConfig()
 
 	if !console && !preConsole {
 		console = true
@@ -53,21 +55,13 @@ func Main() {
 	}
 }
 
-func ApplyConsole(cfg *config.CloudConfig) {
+func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 	if len(cfg.SSHAuthorizedKeys) > 0 {
 		authorizeSSHKeys("rancher", cfg.SSHAuthorizedKeys, sshKeyName)
 		authorizeSSHKeys("docker", cfg.SSHAuthorizedKeys, sshKeyName)
 	}
 
-	for _, file := range cfg.WriteFiles {
-		f := system.File{File: file}
-		fullPath, err := system.WriteFile(&f, "/")
-		if err != nil {
-			log.WithFields(log.Fields{"err": err, "path": fullPath}).Error("Error writing file")
-			continue
-		}
-		log.Printf("Wrote file %s to filesystem", fullPath)
-	}
+	WriteFiles(cfg, "console")
 
 	for _, configMount := range cfg.Mounts {
 		if len(configMount) != 4 {
@@ -88,7 +82,29 @@ func ApplyConsole(cfg *config.CloudConfig) {
 	}
 }
 
-func applyPreConsole(cfg *config.CloudConfig) {
+func WriteFiles(cfg *rancherConfig.CloudConfig, container string) {
+	for _, file := range cfg.WriteFiles {
+		fileContainer := file.Container
+		if fileContainer == "" {
+			fileContainer = "console"
+		}
+		if fileContainer != container {
+			continue
+		}
+
+		f := system.File{
+			File: file.File,
+		}
+		fullPath, err := system.WriteFile(&f, "/")
+		if err != nil {
+			log.WithFields(log.Fields{"err": err, "path": fullPath}).Error("Error writing file")
+			continue
+		}
+		log.Printf("Wrote file %s to filesystem", fullPath)
+	}
+}
+
+func applyPreConsole(cfg *rancherConfig.CloudConfig) {
 	if _, err := os.Stat(resizeStamp); os.IsNotExist(err) && cfg.Rancher.ResizeDevice != "" {
 		if err := resizeDevice(cfg); err == nil {
 			os.Create(resizeStamp)
@@ -105,9 +121,20 @@ func applyPreConsole(cfg *config.CloudConfig) {
 			log.Errorf("Failed to set sysctl key %s: %s", k, err)
 		}
 	}
+
+	client, err := docker.NewSystemClient()
+	if err != nil {
+		log.Error(err)
+	}
+
+	for _, restart := range cfg.Rancher.RestartServices {
+		if err = client.ContainerRestart(context.Background(), restart, 10); err != nil {
+			log.Error(err)
+		}
+	}
 }
 
-func resizeDevice(cfg *config.CloudConfig) error {
+func resizeDevice(cfg *rancherConfig.CloudConfig) error {
 	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, "1")
 	err := cmd.Run()
 	if err != nil {

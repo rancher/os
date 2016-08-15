@@ -70,9 +70,6 @@ func Main() {
 
 func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
 	os.MkdirAll(rancherConfig.CloudConfigDir, os.ModeDir|0600)
-	os.Remove(rancherConfig.CloudConfigScriptFile)
-	os.Remove(rancherConfig.CloudConfigBootFile)
-	os.Remove(rancherConfig.MetaDataFile)
 
 	if len(scriptBytes) > 0 {
 		log.Infof("Writing to %s", rancherConfig.CloudConfigScriptFile)
@@ -82,10 +79,12 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		}
 	}
 
-	if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
-		return err
+	if len(cloudConfigBytes) > 0 {
+		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
+			return err
+		}
+		log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
 	}
-	log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
 
 	metaDataBytes, err := yaml.Marshal(metadata)
 	if err != nil {
