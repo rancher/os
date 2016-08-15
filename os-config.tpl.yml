@@ -78,6 +78,8 @@ rancher:
     fstype: auto
     oem_fstype: auto
     oem_dev: LABEL=RANCHER_OEM
+  sysctl:
+    fs.file-max: 1000000000
   services:
     {{if eq "amd64" .ARCH -}}
     acpid:
@@ -114,6 +116,19 @@ rancher:
         io.rancher.os.reloadconfig: "true"
         io.rancher.os.scope: system
         io.rancher.os.after: ntp
+      net: host
+      uts: host
+      privileged: true
+      volumes_from:
+      - command-volumes
+      - system-volumes
+    cloud-init-execute:
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: cloud-init-execute -pre-console
+      labels:
+        io.rancher.os.detach: "false"
+        io.rancher.os.scope: system
+        io.rancher.os.after: cloud-init
       net: host
       uts: host
       privileged: true
@@ -159,12 +174,17 @@ rancher:
       - /usr/bin/ros:/sbin/shutdown:ro
       - /usr/bin/ros:/usr/bin/respawn:ro
       - /usr/bin/ros:/usr/bin/ros:ro
-      - /usr/bin/ros:/usr/bin/cloud-init:ro
+      - /usr/bin/ros:/usr/bin/cloud-init-execute:ro
+      - /usr/bin/ros:/usr/bin/cloud-init-save:ro
       - /usr/bin/ros:/usr/sbin/netconf:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       - /usr/bin/ros:/usr/bin/switch-console:ro
+      - /usr/bin/ros:/usr/bin/console:ro
+      - /usr/bin/ros:/usr/sbin/console.sh:ro
+      - /usr/bin/ros:/usr/sbin/docker-init:ro
     console:
       image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
+      command: console
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: network
@@ -212,7 +232,7 @@ rancher:
       command: netconf --stop-network-pre
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: cloud-init
+        io.rancher.os.after: cloud-init-execute
       net: host
       uts: host
       pid: host

@@ -7,6 +7,6 @@ func (s *QemuSuite) TestSwap(c *C) {
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, "sudo mkswap /dev/vdb")
-	s.CheckCall(c, "sudo cloud-init -execute")
+	s.CheckCall(c, "sudo cloud-init-execute")
 	s.CheckCall(c, "cat /proc/swaps | grep /dev/vdb")
 }

@@ -39,6 +39,12 @@ func Get(key string) (interface{}, error) {
 	return v, nil
 }
 
+func GetCmdline(key string) interface{} {
+	cmdline := readCmdline()
+	v, _ := getOrSetVal(key, cmdline, nil)
+	return v
+}
+
 func Set(key string, value interface{}) error {
 	existing, err := readConfigs(nil, false, true, CloudConfigFile)
 	if err != nil {

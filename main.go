@@ -7,8 +7,11 @@ import (
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancher/cniglue"
 	"github.com/rancher/docker-from-scratch"
-	"github.com/rancher/os/cmd/cloudinit"
+	"github.com/rancher/os/cmd/cloudinitexecute"
+	"github.com/rancher/os/cmd/cloudinitsave"
+	"github.com/rancher/os/cmd/console"
 	"github.com/rancher/os/cmd/control"
+	"github.com/rancher/os/cmd/dockerinit"
 	"github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/cmd/respawn"
@@ -21,24 +24,28 @@ import (
 )
 
 var entrypoints = map[string]func(){
-	"cloud-init":      cloudinit.Main,
-	"docker":          docker.Main,
-	"dockerlaunch":    dockerlaunch.Main,
-	"halt":            power.Halt,
-	"init":            osInit.MainInit,
-	"netconf":         network.Main,
-	"poweroff":        power.PowerOff,
-	"reboot":          power.Reboot,
-	"respawn":         respawn.Main,
-	"ros-sysinit":     sysinit.Main,
-	"shutdown":        power.Main,
-	"switch-console":  switchconsole.Main,
-	"system-docker":   systemdocker.Main,
-	"user-docker":     userdocker.Main,
-	"wait-for-docker": wait.Main,
-	"cni-glue":        glue.Main,
-	"bridge":          bridge.Main,
-	"host-local":      hostlocal.Main,
+	"cloud-init-execute": cloudinitexecute.Main,
+	"cloud-init-save":    cloudinitsave.Main,
+	"console":            console.Main,
+	"console.sh":         console.Main,
+	"docker":             docker.Main,
+	"docker-init":        dockerinit.Main,
+	"dockerlaunch":       dockerlaunch.Main,
+	"halt":               power.Halt,
+	"init":               osInit.MainInit,
+	"netconf":            network.Main,
+	"poweroff":           power.PowerOff,
+	"reboot":             power.Reboot,
+	"respawn":            respawn.Main,
+	"ros-sysinit":        sysinit.Main,
+	"shutdown":           power.Main,
+	"switch-console":     switchconsole.Main,
+	"system-docker":      systemdocker.Main,
+	"user-docker":        userdocker.Main,
+	"wait-for-docker":    wait.Main,
+	"cni-glue":           glue.Main,
+	"bridge":             bridge.Main,
+	"host-local":         hostlocal.Main,
 }
 
 func main() {
