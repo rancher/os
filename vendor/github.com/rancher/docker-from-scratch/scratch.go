@@ -108,9 +108,9 @@ func mountCgroups(hierarchyConfig map[string]string) error {
 	for scanner.Scan() {
 		text := scanner.Text()
 		log.Debugf("/proc/cgroups: %s", text)
-		fields := strings.SplitN(text, "\t", 3)
+		fields := strings.Split(text, "\t")
 		cgroup := fields[0]
-		if cgroup == "" || cgroup[0] == '#' || len(fields) < 3 || cgroup[2] == '0' {
+		if cgroup == "" || cgroup[0] == '#' || (len(fields) > 3 && fields[3] == "0") {
 			continue
 		}
 
@@ -661,9 +661,13 @@ func runOrExec(config *Config, docker string, args ...string) (*exec.Cmd, error)
 		return nil, err
 	}
 
-	cmd := "docker"
+	cmd := path.Base(docker)
 	if config != nil && config.CommandName != "" {
 		cmd = config.CommandName
+	}
+
+	if cmd == "dockerd" && len(args) > 1 && args[0] == "daemon" {
+		args = args[1:]
 	}
 
 	return execDocker(config, docker, cmd, args)

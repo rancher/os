@@ -5,6 +5,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
@@ -61,12 +62,17 @@ func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, envir
 			enabled[service] = service
 		}
 
-		if !loadConsole || cfg.Rancher.Console == "" || cfg.Rancher.Console == "default" {
-			return nil
+		if loadConsole && cfg.Rancher.Console != "" && cfg.Rancher.Console != "default" {
+			if err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Console); err != nil && err != network.ErrNoNetwork {
+				log.Error(err)
+			}
 		}
 
-		if err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Console); err != nil && err != network.ErrNoNetwork {
-			log.Error(err)
+		if cfg.Rancher.Docker.Engine != "" {
+			p.ServiceConfigs.Add("docker", &composeConfig.ServiceConfig{})
+			if err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Docker.Engine); err != nil && err != network.ErrNoNetwork {
+				log.Error(err)
+			}
 		}
 
 		return nil

@@ -25,8 +25,6 @@ ln -s ros                      ${INITRD_DIR}/usr/bin/system-docker
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/host-local
 
-tar xvzf ${DOWNLOADS}/docker.tgz -C ${INITRD_DIR}/usr/bin --strip-components=1
-
 if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     mkdir -p ${BUILD}/kernel
     tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel

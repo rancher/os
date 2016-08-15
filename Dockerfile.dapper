@@ -139,9 +139,6 @@ RUN ln -sf go-6 /usr/bin/go && \
 RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
     chmod +x /usr/bin/docker
 
-# Install Target Docker
-RUN curl -fL ${!DOCKER_URL} > ${DOWNLOADS}/docker.tgz
-
 # Install Trash
 RUN go get github.com/rancher/trash
 
