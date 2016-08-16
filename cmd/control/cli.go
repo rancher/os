@@ -33,7 +33,7 @@ func Main() {
 		},
 		{
 			Name:        "console",
-			Usage:       "console container commands",
+			Usage:       "manage which console container is used",
 			HideHelp:    true,
 			Subcommands: consoleSubcommands(),
 		},
@@ -44,6 +44,12 @@ func Main() {
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          devAction,
+		},
+		{
+			Name:        "engine",
+			Usage:       "manage which Docker engine is used",
+			HideHelp:    true,
+			Subcommands: engineSubcommands(),
 		},
 		{
 			Name:            "entrypoint",

@@ -28,6 +28,10 @@ func GetConsoles(urls []string) ([]string, error) {
 	return getServices(urls, "consoles")
 }
 
+func GetEngines(urls []string) ([]string, error) {
+	return getServices(urls, "engines")
+}
+
 func getServices(urls []string, key string) ([]string, error) {
 	result := []string{}
 

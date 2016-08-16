@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/signal"
+	"path"
 	"strconv"
 	"syscall"
 	"time"
@@ -29,9 +30,15 @@ const (
 	DOCKER_PID_FILE         = "/var/run/docker.pid"
 	DOCKER_COMMAND          = "docker-init"
 	userDocker              = "user-docker"
+	sourceDirectory         = "/engine"
+	destDirectory           = "/var/lib/rancher/engine"
 )
 
 func Main() {
+	if err := copyBinaries(sourceDirectory, destDirectory); err != nil {
+		log.Fatal(err)
+	}
+
 	cfg := config.LoadConfig()
 
 	execID, resp, err := startDocker(cfg)
@@ -62,6 +69,43 @@ func Main() {
 
 	// Proxy exit code
 	os.Exit(state.ExitCode)
+}
+
+func copyBinaries(source, dest string) error {
+	if err := os.MkdirAll(dest, 0755); err != nil {
+		return err
+	}
+
+	files, err := ioutil.ReadDir(dest)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if err = os.RemoveAll(path.Join(dest, file.Name())); err != nil {
+			return err
+		}
+	}
+
+	files, err = ioutil.ReadDir(source)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		sourceFile := path.Join(source, file.Name())
+		destFile := path.Join(dest, file.Name())
+
+		data, err := ioutil.ReadFile(sourceFile)
+		if err != nil {
+			return err
+		}
+		if err := ioutil.WriteFile(destFile, data, 0751); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func writeCerts(cfg *config.CloudConfig) error {

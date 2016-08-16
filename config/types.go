@@ -134,6 +134,7 @@ type UpgradeConfig struct {
 }
 
 type DockerConfig struct {
+	Engine         string   `yaml:"engine,omitempty"`
 	TLS            bool     `yaml:"tls,omitempty"`
 	TLSArgs        []string `yaml:"tls_args,flow,omitempty"`
 	Args           []string `yaml:"args,flow,omitempty"`

@@ -22,7 +22,7 @@ docker --tlsverify version`)
 
 	s.CheckCall(c, `
 set -e -x
-for i in $(pidof docker); do
+for i in $(pidof system-docker); do
     if [ $i = 1 ]; then
         found=true
     fi

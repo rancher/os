@@ -22,6 +22,10 @@ const (
 	startScript = "/opt/rancher/bin/start.sh"
 )
 
+type symlink struct {
+	oldname, newname string
+}
+
 func Main() {
 	cfg := config.LoadConfig()
 
@@ -86,6 +90,20 @@ func Main() {
 
 	if err = writeOsRelease(); err != nil {
 		log.Error(err)
+	}
+
+	for _, link := range []symlink{
+		{"/var/lib/rancher/engine/docker", "/usr/bin/docker"},
+		{"/var/lib/rancher/engine/docker-containerd", "/usr/bin/docker-containerd"},
+		{"/var/lib/rancher/engine/docker-containerd-ctr", "/usr/bin/docker-containerd-ctr"},
+		{"/var/lib/rancher/engine/docker-containerd-shim", "/usr/bin/docker-containerd-shim"},
+		{"/var/lib/rancher/engine/dockerd", "/usr/bin/dockerd"},
+		{"/var/lib/rancher/engine/docker-runc", "/usr/bin/docker-runc"},
+	} {
+		syscall.Unlink(link.newname)
+		if err = os.Symlink(link.oldname, link.newname); err != nil {
+			log.Error(err)
+		}
 	}
 
 	cmd = exec.Command("bash", "-c", `echo 'RancherOS \n \l' > /etc/issue`)
