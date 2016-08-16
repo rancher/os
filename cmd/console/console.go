@@ -29,18 +29,22 @@ type symlink struct {
 func Main() {
 	cfg := config.LoadConfig()
 
-	if err := os.MkdirAll(rancherHome, 2755); err != nil {
-		log.Error(err)
-	}
-	if err := os.Chown(rancherHome, 1100, 1100); err != nil {
-		log.Error(err)
+	if _, err := os.Stat(rancherHome); os.IsNotExist(err) {
+		if err := os.MkdirAll(rancherHome, 0755); err != nil {
+			log.Error(err)
+		}
+		if err := os.Chown(rancherHome, 1100, 1100); err != nil {
+			log.Error(err)
+		}
 	}
 
-	if err := os.MkdirAll(dockerHome, 2755); err != nil {
-		log.Error(err)
-	}
-	if err := os.Chown(dockerHome, 1101, 1101); err != nil {
-		log.Error(err)
+	if _, err := os.Stat(dockerHome); os.IsNotExist(err) {
+		if err := os.MkdirAll(dockerHome, 0755); err != nil {
+			log.Error(err)
+		}
+		if err := os.Chown(dockerHome, 1101, 1101); err != nil {
+			log.Error(err)
+		}
 	}
 
 	password := config.GetCmdline("rancher.password")
