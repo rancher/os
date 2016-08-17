@@ -2,7 +2,9 @@ package control
 
 import (
 	"fmt"
+	"io/ioutil"
 	"sort"
+	"strings"
 
 	"golang.org/x/net/context"
 
@@ -13,6 +15,10 @@ import (
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util/network"
+)
+
+const (
+	dockerDone = "/run/docker-done"
 )
 
 func engineSubcommands() []cli.Command {
@@ -107,9 +113,27 @@ func engineList(c *cli.Context) error {
 	}
 	sort.Strings(engines)
 
+	currentEngine := currentEngine()
+
 	for _, engine := range engines {
-		fmt.Println(engine)
+		if engine == currentEngine {
+			fmt.Printf("current  %s\n", engine)
+		} else if engine == cfg.Rancher.Docker.Engine {
+			fmt.Printf("enabled  %s\n", engine)
+		} else {
+			fmt.Printf("disabled %s\n", engine)
+		}
 	}
 
 	return nil
+}
+
+func currentEngine() (engine string) {
+	engineBytes, err := ioutil.ReadFile(dockerDone)
+	if err == nil {
+		engine = strings.TrimSpace(string(engineBytes))
+	} else {
+		log.Warnf("Failed to detect current Docker engine: %v", err)
+	}
+	return
 }

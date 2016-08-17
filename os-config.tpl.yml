@@ -4,6 +4,8 @@ rancher:
     SUFFIX: {{.SUFFIX}}
   defaults:
     hostname: {{.HOSTNAME_DEFAULT}}
+    docker:
+      engine: docker-1.11.2
     network:
       dns:
         nameservers: [8.8.8.8, 8.8.4.4]
@@ -382,6 +384,7 @@ rancher:
     url: {{.OS_RELEASES_YML}}/releases{{.SUFFIX}}.yml
     image: {{.OS_REPO}}/os
   docker:
+    engine: docker-1.11.2
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']
     args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock']

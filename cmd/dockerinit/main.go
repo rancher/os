@@ -10,12 +10,14 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
 )
 
 const (
 	consoleDone = "/run/console-done"
 	dockerConf  = "/var/lib/rancher/conf/docker"
+	dockerDone  = "/run/docker-done"
 	dockerLog   = "/var/log/docker.log"
 )
 
@@ -78,6 +80,12 @@ func Main() {
 
 	if os.Getenv("DOCKER_OPTS") != "" {
 		args = append(args, os.Getenv("DOCKER_OPTS"))
+	}
+
+	cfg := config.LoadConfig()
+
+	if err := ioutil.WriteFile(dockerDone, []byte(cfg.Rancher.Docker.Engine), 0644); err != nil {
+		log.Error(err)
 	}
 
 	log.Fatal(syscall.Exec("/usr/bin/dockerlaunch", args, os.Environ()))
