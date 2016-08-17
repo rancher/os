@@ -179,7 +179,7 @@ func modifySshdConfig() error {
 		}
 	}
 
-	return ioutil.WriteFile("/etc/ssh/ssh_config", []byte(sshdConfigString), 0644)
+	return ioutil.WriteFile("/etc/ssh/sshd_config", []byte(sshdConfigString), 0644)
 }
 
 func writeOsRelease() error {
