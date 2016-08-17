@@ -83,7 +83,7 @@ rancher:
   services:
     {{if eq "amd64" .ARCH -}}
     acpid:
-      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-acpid:{{.VERSION}}{{.SUFFIX}}
       command: /usr/sbin/acpid -f
       labels:
         io.rancher.os.scope: system
