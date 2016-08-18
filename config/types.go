@@ -172,6 +172,7 @@ type CloudInit struct {
 
 type Defaults struct {
 	Hostname string                `yaml:"hostname,omitempty"`
+	Docker   DockerConfig          `yaml:"docker,omitempty"`
 	Network  netconf.NetworkConfig `yaml:"network,omitempty"`
 }
 

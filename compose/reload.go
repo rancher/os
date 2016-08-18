@@ -68,7 +68,7 @@ func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, envir
 			}
 		}
 
-		if cfg.Rancher.Docker.Engine != "" {
+		if cfg.Rancher.Docker.Engine != "" && cfg.Rancher.Docker.Engine != cfg.Rancher.Defaults.Docker.Engine {
 			p.ServiceConfigs.Add("docker", &composeConfig.ServiceConfig{})
 			if err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Docker.Engine); err != nil && err != network.ErrNoNetwork {
 				log.Error(err)

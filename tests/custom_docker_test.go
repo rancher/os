@@ -10,6 +10,8 @@ func (s *QemuSuite) TestCustomDocker(c *C) {
 set -ex
 
 docker version | grep 1.10.3
+
+sudo ros engine list | grep 1.10.3 | grep current
 docker run -d --restart=always nginx
 docker ps | grep nginx`)
 
@@ -19,6 +21,7 @@ set -ex
 sudo ros engine switch docker-1.11.2
 /usr/sbin/wait-for-docker
 docker version | grep 1.11.2
+sudo ros engine list | grep 1.11.2 | grep current
 docker ps | grep nginx`)
 
 	s.Reboot(c)
@@ -27,6 +30,7 @@ docker ps | grep nginx`)
 set -ex
 
 docker version | grep 1.11.2
+sudo ros engine list | grep 1.11.2 | grep current
 docker ps | grep nginx`)
 }
 
@@ -39,6 +43,7 @@ set -ex
 
 apt-get --version
 docker version | grep 1.10.3
+sudo ros engine list | grep 1.10.3 | grep current
 docker run -d --restart=always nginx
 docker ps | grep nginx`)
 
@@ -48,6 +53,7 @@ set -ex
 sudo ros engine switch docker-1.11.2
 /usr/sbin/wait-for-docker
 docker version | grep 1.11.2
+sudo ros engine list | grep 1.11.2 | grep current
 docker ps | grep nginx`)
 
 	s.Reboot(c)
@@ -56,5 +62,6 @@ docker ps | grep nginx`)
 set -ex
 
 docker version | grep 1.11.2
+sudo ros engine list | grep 1.11.2 | grep current
 docker ps | grep nginx`)
 }
