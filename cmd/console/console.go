@@ -1,6 +1,7 @@
 package console
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -18,6 +19,7 @@ import (
 const (
 	consoleDone = "/run/console-done"
 	dockerHome  = "/home/docker"
+	gettyCmd    = "/sbin/agetty"
 	rancherHome = "/home/rancher"
 	startScript = "/opt/rancher/bin/start.sh"
 )
@@ -63,28 +65,14 @@ func Main() {
 		log.Error(err)
 	}
 
-	respawn := `
-/sbin/getty 115200 tty6
-/sbin/getty 115200 tty5
-/sbin/getty 115200 tty4
-/sbin/getty 115200 tty3
-/sbin/getty 115200 tty2
-/sbin/getty 115200 tty1
-/usr/sbin/sshd -D`
-
 	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		log.Error(err)
 	}
-	cmdlineString := string(cmdline)
 
-	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
-		if strings.Contains(cmdlineString, "console="+tty) {
-			respawn += "\n/sbin/getty 115200 " + tty
-		}
-	}
+	respawnConf := generateRespawnConf(string(cmdline))
 
-	if err = ioutil.WriteFile("/etc/respawn.conf", []byte(respawn), 0644); err != nil {
+	if err = ioutil.WriteFile("/etc/respawn.conf", respawnConf, 0644); err != nil {
 		log.Error(err)
 	}
 
@@ -155,6 +143,36 @@ func Main() {
 	}
 
 	log.Fatal(syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ()))
+}
+
+func generateRespawnConf(cmdline string) []byte {
+	autologin := strings.Contains(cmdline, "rancher.autologin")
+
+	var respawnConf bytes.Buffer
+
+	for i := 1; i < 7; i++ {
+		respawnConf.WriteString(gettyCmd)
+		if autologin {
+			respawnConf.WriteString(" --autologin rancher")
+		}
+		respawnConf.WriteString(fmt.Sprintf(" 115200 tty%d\n", i))
+	}
+
+	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
+		if !strings.Contains(cmdline, fmt.Sprintf("console=%s", tty)) {
+			continue
+		}
+
+		respawnConf.WriteString(gettyCmd)
+		if autologin {
+			respawnConf.WriteString(" --autologin rancher")
+		}
+		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+	}
+
+	respawnConf.WriteString("/usr/sbin/sshd -D")
+
+	return respawnConf.Bytes()
 }
 
 func modifySshdConfig() error {
