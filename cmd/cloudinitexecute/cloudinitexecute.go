@@ -150,12 +150,6 @@ func resizeDevice(cfg *rancherConfig.CloudConfig) error {
 		return err
 	}
 
-	cmd = exec.Command("partprobe")
-	err = cmd.Run()
-	if err != nil {
-		return err
-	}
-
 	cmd = exec.Command("resize2fs", fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice))
 	err = cmd.Run()
 	if err != nil {
