@@ -3,7 +3,7 @@ set -e
 
 source $(dirname $0)/version
 export REPO_VERSION=$VERSION
-export COMPRESS=lzma
+export COMPRESS="xz --format=lzma -9 --memlimit-compress=80% -e"
 export INTEGRATION_TESTS=0
 
 exec $(dirname $0)/ci
