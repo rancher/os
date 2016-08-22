@@ -146,16 +146,16 @@ func Main() {
 }
 
 func generateRespawnConf(cmdline string) []byte {
-	autologin := strings.Contains(cmdline, "rancher.autologin")
-
 	var respawnConf bytes.Buffer
 
 	for i := 1; i < 7; i++ {
+		tty := fmt.Sprintf("tty%d", i)
+
 		respawnConf.WriteString(gettyCmd)
-		if autologin {
+		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(" --autologin rancher")
 		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 tty%d\n", i))
+		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
 	}
 
 	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
@@ -164,7 +164,7 @@ func generateRespawnConf(cmdline string) []byte {
 		}
 
 		respawnConf.WriteString(gettyCmd)
-		if autologin {
+		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(" --autologin rancher")
 		}
 		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
