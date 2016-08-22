@@ -65,22 +65,15 @@ func Main() {
 		log.Error(err)
 	}
 
-	cmdline, err := ioutil.ReadFile("/proc/cmdline")
-	if err != nil {
+	if err := writeRespawn(); err != nil {
 		log.Error(err)
 	}
 
-	respawnConf := generateRespawnConf(string(cmdline))
-
-	if err = ioutil.WriteFile("/etc/respawn.conf", respawnConf, 0644); err != nil {
+	if err := modifySshdConfig(); err != nil {
 		log.Error(err)
 	}
 
-	if err = modifySshdConfig(); err != nil {
-		log.Error(err)
-	}
-
-	if err = writeOsRelease(); err != nil {
+	if err := writeOsRelease(); err != nil {
 		log.Error(err)
 	}
 
@@ -93,18 +86,18 @@ func Main() {
 		{"/var/lib/rancher/engine/docker-runc", "/usr/bin/docker-runc"},
 	} {
 		syscall.Unlink(link.newname)
-		if err = os.Symlink(link.oldname, link.newname); err != nil {
+		if err := os.Symlink(link.oldname, link.newname); err != nil {
 			log.Error(err)
 		}
 	}
 
 	cmd = exec.Command("bash", "-c", `echo 'RancherOS \n \l' > /etc/issue`)
-	if err = cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
 
 	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
-	if err = cmd.Run(); err != nil {
+	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
 
@@ -112,21 +105,21 @@ func Main() {
 
 	if util.ExistsAndExecutable(config.CloudConfigScriptFile) {
 		cmd := exec.Command(config.CloudConfigScriptFile)
-		if err = cmd.Run(); err != nil {
+		if err := cmd.Run(); err != nil {
 			log.Error(err)
 		}
 	}
 
 	if util.ExistsAndExecutable(startScript) {
 		cmd := exec.Command(startScript)
-		if err = cmd.Run(); err != nil {
+		if err := cmd.Run(); err != nil {
 			log.Error(err)
 		}
 	}
 
 	if util.ExistsAndExecutable("/etc/rc.local") {
 		cmd := exec.Command("/etc/rc.local")
-		if err = cmd.Run(); err != nil {
+		if err := cmd.Run(); err != nil {
 			log.Error(err)
 		}
 	}
@@ -145,7 +138,7 @@ func Main() {
 	log.Fatal(syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ()))
 }
 
-func generateRespawnConf(cmdline string) []byte {
+func generateRespawnConf(cmdline string) string {
 	var respawnConf bytes.Buffer
 
 	for i := 1; i < 7; i++ {
@@ -172,7 +165,31 @@ func generateRespawnConf(cmdline string) []byte {
 
 	respawnConf.WriteString("/usr/sbin/sshd -D")
 
-	return respawnConf.Bytes()
+	return respawnConf.String()
+}
+
+func writeRespawn() error {
+	cmdline, err := ioutil.ReadFile("/proc/cmdline")
+	if err != nil {
+		return err
+	}
+
+	respawn := generateRespawnConf(string(cmdline))
+
+	files, err := ioutil.ReadDir("/etc/respawn.conf.d")
+	if err == nil {
+		for _, f := range files {
+			content, err := ioutil.ReadFile(f.Name())
+			if err != nil {
+				return err
+			}
+			respawn += fmt.Sprintf("\n%s", string(content))
+		}
+	} else if !os.IsNotExist(err) {
+		log.Error(err)
+	}
+
+	return ioutil.WriteFile("/etc/respawn.conf", []byte(respawn), 0644)
 }
 
 func modifySshdConfig() error {
