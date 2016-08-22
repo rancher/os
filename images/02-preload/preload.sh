@@ -4,6 +4,12 @@ set -e
 BASE=${1:-${PRELOAD_DIR}}
 BASE=${BASE:-/mnt/preload}
 
+if [ "${SYSTEM_IMAGES}" = "true" ]; then
+    docker_bin=system-docker
+else
+    docker_bin=docker
+fi
+
 should_load() {
     file=${1}
     if [[ ${file} =~ \.done$ ]]; then echo false
@@ -26,7 +32,7 @@ if [ -d ${BASE} ]; then
             if [[ ${file} =~ \.t?gz$ ]]; then CAT="${CAT} | gunzip"; fi
             if [[ ${file} =~ \.t?xz$ ]]; then CAT="${CAT} | unxz"; fi
             wait-for-docker
-            CAT="${CAT} | docker load"
+            CAT="${CAT} | ${docker_bin} load"
             echo loading from ${path}
             eval ${CAT} || :
             touch ${path}.done || :
