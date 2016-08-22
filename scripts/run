@@ -120,7 +120,7 @@ if [ "$REBUILD" == "1" ] || [ ! -e ${INITRD} ]; then
     popd >/dev/null
 fi
 
-KERNEL_ARGS="quiet rancher.password=rancher console=${TTYCONS} ${QEMU_APPEND}"
+KERNEL_ARGS="quiet rancher.password=rancher console=${TTYCONS} rancher.autologin=${TTYCONS} ${QEMU_APPEND}"
 if [ "$FORMAT" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
 fi
