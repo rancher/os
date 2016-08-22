@@ -1,5 +1,6 @@
 .DS_Store
 .idea
+.trash-cache
 bin
 state
 build
