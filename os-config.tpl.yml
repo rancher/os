@@ -253,6 +253,8 @@ rancher:
       - system-volumes
     preload-system-images:
       image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
+      environment:
+      - SYSTEM_IMAGES=true
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
