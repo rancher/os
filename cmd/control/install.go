@@ -116,7 +116,7 @@ func runInstall(image, installType, cloudConfig, device string, force, reboot bo
 		return err
 	}
 
-	if reboot && yes(in, "Continue with reboot") {
+	if reboot && (force || yes(in, "Continue with reboot")) {
 		log.Info("Rebooting")
 		power.Reboot()
 	}
