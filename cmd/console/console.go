@@ -83,6 +83,7 @@ func Main() {
 		{"/var/lib/rancher/engine/docker-containerd-ctr", "/usr/bin/docker-containerd-ctr"},
 		{"/var/lib/rancher/engine/docker-containerd-shim", "/usr/bin/docker-containerd-shim"},
 		{"/var/lib/rancher/engine/dockerd", "/usr/bin/dockerd"},
+		{"/var/lib/rancher/engine/docker-proxy", "/usr/bin/docker-proxy"},
 		{"/var/lib/rancher/engine/docker-runc", "/usr/bin/docker-runc"},
 	} {
 		syscall.Unlink(link.newname)
