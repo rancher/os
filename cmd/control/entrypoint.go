@@ -9,7 +9,6 @@ import (
 	"github.com/codegangsta/cli"
 	"golang.org/x/net/context"
 
-	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
@@ -22,8 +21,11 @@ const (
 )
 
 func entrypointAction(c *cli.Context) error {
-	if err := mount.Mount("/host/dev", "/dev", "", "rbind"); err != nil {
-		log.Error(err)
+	if _, err := os.Stat("/host/dev"); err == nil {
+		cmd := exec.Command("mount", "--rbind", "/host/dev", "/dev")
+		if err := cmd.Run(); err != nil {
+			log.Errorf("Failed to mount /dev: %v", err)
+		}
 	}
 
 	if err := util.FileCopy(caBase, ca); err != nil && !os.IsNotExist(err) {
