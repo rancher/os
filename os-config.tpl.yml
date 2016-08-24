@@ -5,7 +5,7 @@ rancher:
   defaults:
     hostname: {{.HOSTNAME_DEFAULT}}
     docker:
-      engine: docker-1.12.0
+      engine: docker-1.12.1
     network:
       dns:
         nameservers: [8.8.8.8, 8.8.4.4]
@@ -359,7 +359,7 @@ rancher:
       - /home:/home
       - /opt:/opt
     docker:
-      image: {{.OS_REPO}}/os-docker:1.12.0{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:1.12.1{{.SUFFIX}}
       command: /usr/bin/user-docker
       environment:
       - HTTP_PROXY
@@ -386,7 +386,7 @@ rancher:
     url: {{.OS_RELEASES_YML}}/releases{{.SUFFIX}}.yml
     image: {{.OS_REPO}}/os
   docker:
-    engine: docker-1.12.0
+    engine: docker-1.12.1
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']
     args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock']
