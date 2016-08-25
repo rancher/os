@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"regexp"
 	"strings"
 	"syscall"
@@ -180,9 +181,11 @@ func writeRespawn() error {
 	files, err := ioutil.ReadDir("/etc/respawn.conf.d")
 	if err == nil {
 		for _, f := range files {
-			content, err := ioutil.ReadFile(f.Name())
+			p := path.Join("/etc/respawn.conf.d", f.Name())
+			content, err := ioutil.ReadFile(p)
 			if err != nil {
-				return err
+				log.Error("Failed to read %s: %v", p, err)
+				continue
 			}
 			respawn += fmt.Sprintf("\n%s", string(content))
 		}
