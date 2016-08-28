@@ -26,8 +26,8 @@ DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(unam
 trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
 docker exec -i ${DFS} docker load < ${INITRD_DIR}/usr/share/ros/images.tar
 docker stop ${DFS}
-docker run --rm --volumes-from=${DFS} busybox tar -c -C /var/lib/docker ./image | tar -x -C ${PREPOP_DIR}
-docker run --rm --volumes-from=${DFS} busybox tar -c -C /var/lib/docker ./overlay | tar -x -C ${PREPOP_DIR}
+docker run --rm --volumes-from=${DFS} --entrypoint /bin/bash rancher/os-base -c "tar -c -C /var/lib/docker ./image" | tar -x -C ${PREPOP_DIR}
+docker run --rm --volumes-from=${DFS} --entrypoint /bin/bash rancher/os-base -c "tar -c -C /var/lib/docker ./overlay" | tar -x -C ${PREPOP_DIR}
 
 tar -cf ${ARTIFACTS}/rootfs.tar --exclude usr/share/ros/images.tar  --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
 tar -rf ${ARTIFACTS}/rootfs.tar -C ${IMAGE_CACHE} .
