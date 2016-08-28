@@ -26,6 +26,11 @@ ln -s ros                      ${INITRD_DIR}/usr/bin/docker-runc
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/host-local
 
+# Support upgrades from old persistent consoles that bind mount these
+touch ${INITRD_DIR}/usr/bin/docker-containerd
+touch ${INITRD_DIR}/usr/bin/docker-containerd-shim
+touch ${INITRD_DIR}/usr/bin/docker
+
 if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     mkdir -p ${BUILD}/kernel
     tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
