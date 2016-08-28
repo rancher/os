@@ -21,8 +21,6 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 https://releases.rancher.com/os/latest/rancheros.iso  
 https://releases.rancher.com/os/v0.5.0/rancheros.iso  
 
-**Note**: you must login using `rancher` for username and password.
-
 ### Additional Downloads
 
 #### Latest 
