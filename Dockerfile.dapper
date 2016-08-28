@@ -29,13 +29,11 @@ RUN apt-get update && \
         module-init-tools \
         openssh-client \
         pkg-config \
-        python-pip \
         qemu \
         qemu-kvm \
         rsync \
         sudo \
         syslinux-common \
-        tox \
         vim \
         wget \
         xorriso
