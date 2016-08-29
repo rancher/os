@@ -150,7 +150,7 @@ rancher:
         io.rancher.os.detach: "false"
         io.rancher.os.reloadconfig: "true"
         io.rancher.os.scope: system
-        io.rancher.os.after: preload-system-images
+        io.rancher.os.after: udev,preload-system-images
       net: host
       uts: host
       privileged: true
@@ -328,8 +328,8 @@ rancher:
     udev-cold:
       image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
       labels:
+        io.rancher.os.detach: "false"
         io.rancher.os.scope: system
-        io.rancher.os.before: udev
       net: host
       uts: host
       privileged: true
@@ -343,6 +343,7 @@ rancher:
       labels:
         io.rancher.os.detach: "true"
         io.rancher.os.scope: system
+        io.rancher.os.after: udev-cold
       net: host
       uts: host
       privileged: true
