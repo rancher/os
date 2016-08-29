@@ -22,12 +22,6 @@ const (
 )
 
 func Main() {
-	if os.Getenv("DOCKER_CONF_SOURCED") == "" {
-		if err := sourceDockerConf(os.Args); err != nil {
-			log.Warnf("Failed to source %s: %v", dockerConf, err)
-		}
-	}
-
 	for {
 		if _, err := os.Stat(consoleDone); err == nil {
 			break
@@ -70,16 +64,9 @@ func Main() {
 	}
 
 	args := []string{
-		"dockerlaunch",
-		dockerBin,
-	}
-
-	if len(os.Args) > 1 {
-		args = append(args, os.Args[1:]...)
-	}
-
-	if os.Getenv("DOCKER_OPTS") != "" {
-		args = append(args, os.Getenv("DOCKER_OPTS"))
+		"bash",
+		"-c",
+		fmt.Sprintf(`[ -e %s ] && source %s; exec /usr/bin/dockerlaunch %s %s $DOCKER_OPTS >> %s 2>&1`, dockerConf, dockerConf, dockerBin, strings.Join(os.Args[1:], " "), dockerLog),
 	}
 
 	cfg := config.LoadConfig()
@@ -88,16 +75,5 @@ func Main() {
 		log.Error(err)
 	}
 
-	log.Fatal(syscall.Exec("/usr/bin/dockerlaunch", args, os.Environ()))
-}
-
-func sourceDockerConf(args []string) error {
-	args = append([]string{
-		"bash",
-		"-c",
-		fmt.Sprintf(`[ -e %s ] && source %s; exec docker-init "$@" >> %s 2>&1`, dockerConf, dockerConf, dockerLog),
-	}, args...)
-	env := os.Environ()
-	env = append(env, "DOCKER_CONF_SOURCED=1")
-	return syscall.Exec("/bin/bash", args, env)
+	log.Fatal(syscall.Exec("/bin/bash", args, os.Environ()))
 }
