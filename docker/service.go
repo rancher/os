@@ -107,14 +107,14 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 		if newRebuildLabel == "always" {
 			return true, nil
 		}
+		if s.Name() == "console" && cfg.Rancher.ForceConsoleRebuild {
+			if err := config.Set("rancher.force_console_rebuild", false); err != nil {
+				return false, err
+			}
+			return true, nil
+		}
 		if outOfSync {
 			if s.Name() == "console" {
-				if cfg.Rancher.ForceConsoleRebuild {
-					if err := config.Set("rancher.force_console_rebuild", false); err != nil {
-						return false, err
-					}
-					return true, nil
-				}
 				origConsoleLabel := containerInfo.Config.Labels[config.CONSOLE]
 				newConsoleLabel := s.Config().Labels[config.CONSOLE]
 				if newConsoleLabel != origConsoleLabel {
