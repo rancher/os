@@ -18,7 +18,7 @@ mkdir -p ${ARTIFACTS} ${PREPOP_DIR}
 if [ "$(docker info | grep 'Storage Driver: ' | sed 's/Storage Driver: //')" != "overlay" ]; then
     echo Overlay storage driver is require to prepackage exploded images
     echo packaging images.tar instead
-    tar czf ${ARTIFACTS}/rootfs.tar.gz --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
+    tar czf ${ARTIFACTS}/rootfs${SUFFIX}.tar.gz --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
     exit 0
 fi
 
@@ -29,7 +29,7 @@ docker stop ${DFS}
 docker run --rm --volumes-from=${DFS} --entrypoint /bin/bash rancher/os-base -c "tar -c -C /var/lib/docker ./image" | tar -x -C ${PREPOP_DIR}
 docker run --rm --volumes-from=${DFS} --entrypoint /bin/bash rancher/os-base -c "tar -c -C /var/lib/docker ./overlay" | tar -x -C ${PREPOP_DIR}
 
-tar -cf ${ARTIFACTS}/rootfs.tar --exclude usr/share/ros/images.tar  --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
-tar -rf ${ARTIFACTS}/rootfs.tar -C ${IMAGE_CACHE} .
-rm -f ${ARTIFACTS}/rootfs.tar.gz
-gzip ${ARTIFACTS}/rootfs.tar
+tar -cf ${ARTIFACTS}/rootfs${SUFFIX}.tar --exclude usr/share/ros/images.tar  --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
+tar -rf ${ARTIFACTS}/rootfs${SUFFIX}.tar -C ${IMAGE_CACHE} .
+rm -f ${ARTIFACTS}/rootfs${SUFFIX}.tar.gz
+gzip ${ARTIFACTS}/rootfs${SUFFIX}.tar
