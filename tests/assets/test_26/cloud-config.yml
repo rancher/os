@@ -5,7 +5,23 @@ write_files:
   owner: root
   content: |
     #!/bin/bash
-    touch /home/rancher/test
+    touch /home/rancher/test1
+- path: /opt/rancher/bin/start.sh
+  permissions: "0755"
+  owner: root
+  content: |
+    touch /home/rancher/test3
+- path: /etc/rc.local
+  permissions: "0755"
+  owner: root
+  content: |
+    touch /home/rancher/test4
+- path: /var/lib/rancher/conf/cloud-config-script
+  permissions: "0755"
+  owner: root
+  content: |
+    #!/bin/bash
+    touch /home/rancher/test5
 runcmd:
 - []
 - [ test ]
