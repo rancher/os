@@ -96,11 +96,27 @@ func copyBinaries(source, dest string) error {
 		sourceFile := path.Join(source, file.Name())
 		destFile := path.Join(dest, file.Name())
 
-		data, err := ioutil.ReadFile(sourceFile)
+		in, err := os.Open(sourceFile)
 		if err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(destFile, data, 0751); err != nil {
+		out, err := os.Create(destFile)
+		if err != nil {
+			return err
+		}
+		if _, err = io.Copy(out, in); err != nil {
+			return err
+		}
+		if err = out.Sync(); err != nil {
+			return err
+		}
+		if err = in.Close(); err != nil {
+			return err
+		}
+		if err = out.Close(); err != nil {
+			return err
+		}
+		if err := os.Chmod(destFile, 0751); err != nil {
 			return err
 		}
 	}
