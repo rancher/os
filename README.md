@@ -14,7 +14,7 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.5.0 - Docker 1.11.2 - Linux 4.4.10**
+**v0.6.0 - Docker 1.12.1 - Linux 4.4.16**
 
 ### ISO
 
@@ -25,27 +25,33 @@ https://releases.rancher.com/os/v0.5.0/rancheros.iso
 
 ### Additional Downloads
 
-#### Latest 
+#### Latest
 
 * https://releases.rancher.com/os/latest/initrd
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
-* https://releases.rancher.com/os/latest/rancheros-v0.5.0.tar.gz
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
+* https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
+* https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
 
-#### v0.5.0 
+* https://releases.rancher.com/os/latest/rancheros-v0.5.0.tar.gz
 
-* https://releases.rancher.com/os/v0.5.0/initrd
-* https://releases.rancher.com/os/v0.5.0/iso-checksums.txt
-* https://releases.rancher.com/os/v0.5.0/rancheros-openstack.img
-* https://releases.rancher.com/os/v0.5.0/rancheros-raspberry-pi.zip
+#### v0.6.0
+
+* https://releases.rancher.com/os/v0.6.0/initrd
+* https://releases.rancher.com/os/v0.6.0/iso-checksums.txt
+* https://releases.rancher.com/os/v0.6.0/rancheros-openstack.img
+* https://releases.rancher.com/os/v0.6.0/rancheros-raspberry-pi.zip
+* https://releases.rancher.com/os/v0.6.0/rancheros.iso
+* https://releases.rancher.com/os/v0.6.0/rootfs_arm.tar.gz
+* https://releases.rancher.com/os/v0.6.0/rootfs_arm64.tar.gz
+* https://releases.rancher.com/os/v0.6.0/rootfs.tar.gz
+* https://releases.rancher.com/os/v0.6.0/vmlinuz
+
 * https://releases.rancher.com/os/v0.5.0/rancheros-v0.5.0.tar.gz
-* https://releases.rancher.com/os/v0.5.0/rancheros.iso
-* https://releases.rancher.com/os/v0.5.0/rootfs_arm.tar.gz
-* https://releases.rancher.com/os/v0.5.0/vmlinuz
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
@@ -57,25 +63,25 @@ SSH keys are added to the **`rancher`** user, so you must log in using the **ran
 
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | HVM |  [ami-a452a2c5](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-a452a2c5)
-ap-northeast-2 | HVM |  [ami-928e44fc](https://console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-928e44fc)
-ap-southeast-1 | HVM |  [ami-529f4231](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-529f4231)
-ap-southeast-2 | HVM |  [ami-fc577c9f](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-fc577c9f)
-eu-central-1 | HVM |  [ami-4a7f9425](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-4a7f9425)
-eu-west-1 | HVM |  [ami-997b1eea](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-997b1eea)
-sa-east-1 | HVM |  [ami-98198cf4](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-98198cf4)
-us-east-1 | HVM |  [ami-1071ca07](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-1071ca07)
-us-west-1 | HVM |  [ami-a57730c5](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-a57730c5)
-us-west-2 | HVM |  [ami-f0f03190](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-f0f03190)
-ap-south-1 | HVM |  [ami-de97fdb1](https://console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-de97fdb1)
+ap-northeast-1 | HVM |  [ami-1e34ff7f](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-1e34ff7f)
+ap-northeast-2 | HVM |  [ami-a7f227c9](https://console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-a7f227c9)
+ap-southeast-1 | HVM |  [ami-c4d308a7](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-c4d308a7)
+ap-southeast-2 | HVM |  [ami-60c5f303](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-60c5f303)
+eu-central-1 | HVM |  [ami-caf704a5](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-caf704a5)
+eu-west-1 | HVM |  [ami-90790be3](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-90790be3)
+sa-east-1 | HVM |  [ami-000d9c6c](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-000d9c6c)
+us-east-1 | HVM |  [ami-827b1395](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-827b1395)
+us-west-1 | HVM |  [ami-1affb27a](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-1affb27a)
+us-west-2 | HVM |  [ami-7adf0e1a](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-7adf0e1a)
+ap-south-1 | HVM |  [ami-4593e62a](https://console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-4593e62a)
 
-### Google Compute Engine 
+### Google Compute Engine
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS.
 
 [Download Image](https://github.com/rancher/os/releases/download/v0.5.0/rancheros-v0.5.0.tar.gz)
 
-Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/). 
+Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/).
 
 ## Documentation for RancherOS
 
@@ -102,4 +108,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
