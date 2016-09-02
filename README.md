@@ -19,7 +19,7 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 ### ISO
 
 https://releases.rancher.com/os/latest/rancheros.iso  
-https://releases.rancher.com/os/v0.5.0/rancheros.iso  
+https://releases.rancher.com/os/v0.6.0/rancheros.iso  
 
 ### Additional Downloads
 
