@@ -283,7 +283,7 @@ func setupSSH(cfg *config.CloudConfig) error {
 }
 
 func runScript(path string) error {
-	if !util.ExistsAndExecutable(config.CloudConfigScriptFile) {
+	if !util.ExistsAndExecutable(path) {
 		return nil
 	}
 
@@ -301,6 +301,9 @@ func runScript(path string) error {
 	if string(magic) == "#!" {
 		cmd = exec.Command(path)
 	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	return cmd.Run()
 }
