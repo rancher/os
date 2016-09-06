@@ -14,6 +14,7 @@ trap "poweroff" EXIT
 mount -t 9p -o trans=virtio,version=9p2000.L config-2 /mnt
 
 touch log
+sleep 5
 openvt -s -- tail -f log &
 ros install -d /dev/vda -f --no-reboot >log 2>&1
 
@@ -25,7 +26,7 @@ qemu-img create -f qcow2 build/hd.img 8G
 kvm -curses \
     -drive if=virtio,file=build/hd.img \
     -cdrom assets/rancheros.iso \
-    -m 1024 \
+    -m 2048 \
     -fsdev local,id=conf,security_model=none,path=$(pwd)/build \
     -device virtio-9p-pci,fsdev=conf,mount_tag=config-2
 
