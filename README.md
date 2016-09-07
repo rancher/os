@@ -29,13 +29,14 @@ https://releases.rancher.com/os/v0.6.0/rancheros.iso
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
+* https://releases.rancher.com/os/latest/rancheros-v0.6.0.tar.gz
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
 * https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
 
-* https://releases.rancher.com/os/latest/rancheros-v0.5.0.tar.gz
+
 
 #### v0.6.0
 
@@ -43,13 +44,14 @@ https://releases.rancher.com/os/v0.6.0/rancheros.iso
 * https://releases.rancher.com/os/v0.6.0/iso-checksums.txt
 * https://releases.rancher.com/os/v0.6.0/rancheros-openstack.img
 * https://releases.rancher.com/os/v0.6.0/rancheros-raspberry-pi.zip
+* https://releases.rancher.com/os/v0.6.0/rancheros-v0.6.0.tar.gz
 * https://releases.rancher.com/os/v0.6.0/rancheros.iso
 * https://releases.rancher.com/os/v0.6.0/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/v0.6.0/rootfs_arm64.tar.gz
 * https://releases.rancher.com/os/v0.6.0/rootfs.tar.gz
 * https://releases.rancher.com/os/v0.6.0/vmlinuz
 
-* https://releases.rancher.com/os/v0.5.0/rancheros-v0.5.0.tar.gz
+
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
@@ -77,7 +79,7 @@ ap-south-1 | HVM |  [ami-4593e62a](https://console.aws.amazon.com/ec2/home?regio
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS.
 
-[Download Image](https://github.com/rancher/os/releases/download/v0.5.0/rancheros-v0.5.0.tar.gz)
+[Download Image](https://github.com/rancher/os/releases/download/v0.6.0/rancheros-v0.6.0.tar.gz)
 
 Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/).
 
