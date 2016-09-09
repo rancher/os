@@ -190,7 +190,7 @@ func setupSharedRoot(c *config.CloudConfig) (*config.CloudConfig, error) {
 	}
 
 	if isInitrd() {
-		for _, i := range []string{"/mnt", "/media"} {
+		for _, i := range []string{"/mnt", "/media", "/var/lib/system-docker"} {
 			if err := os.Mkdir(i, 0755); err != nil {
 				return c, err
 			}

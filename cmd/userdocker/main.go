@@ -4,9 +4,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"path"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -15,7 +13,6 @@ import (
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/docker/engine-api/types"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/cmd/control"
@@ -39,36 +36,13 @@ func Main() {
 		log.Fatal(err)
 	}
 
+	if err := syscall.Mount("/host/sys", "/sys", "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
+		log.Fatal(err)
+	}
+
 	cfg := config.LoadConfig()
 
-	execID, resp, err := startDocker(cfg)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	process, err := getDockerProcess()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	handleTerm(process)
-
-	// Wait for Docker daemon to exit
-	io.Copy(ioutil.Discard, resp.Reader)
-	resp.Close()
-
-	client, err := rosDocker.NewSystemClient()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	state, err := client.ContainerExecInspect(context.Background(), execID)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Proxy exit code
-	os.Exit(state.ExitCode)
+	log.Fatal(startDocker(cfg))
 }
 
 func copyBinaries(source, dest string) error {
@@ -154,7 +128,7 @@ func writeCerts(cfg *config.CloudConfig) error {
 	return nil
 }
 
-func startDocker(cfg *config.CloudConfig) (string, types.HijackedResponse, error) {
+func startDocker(cfg *config.CloudConfig) error {
 	storageContext := cfg.Rancher.Docker.StorageContext
 	if storageContext == "" {
 		storageContext = DEFAULT_STORAGE_CONTEXT
@@ -164,23 +138,19 @@ func startDocker(cfg *config.CloudConfig) (string, types.HijackedResponse, error
 
 	p, err := compose.GetProject(cfg, true, false)
 	if err != nil {
-		return "", types.HijackedResponse{}, err
+		return err
 	}
 
 	pid, err := waitForPid(storageContext, p)
 	if err != nil {
-		return "", types.HijackedResponse{}, err
+		return err
 	}
 
 	log.Infof("%s PID %d", storageContext, pid)
 
 	client, err := rosDocker.NewSystemClient()
 	if err != nil {
-		return "", types.HijackedResponse{}, err
-	}
-
-	if err := os.Remove(DOCKER_PID_FILE); err != nil && !os.IsNotExist(err) {
-		return "", types.HijackedResponse{}, err
+		return err
 	}
 
 	dockerCfg := cfg.Rancher.Docker
@@ -191,73 +161,23 @@ func startDocker(cfg *config.CloudConfig) (string, types.HijackedResponse, error
 
 	if dockerCfg.TLS {
 		if err := writeCerts(cfg); err != nil {
-			return "", types.HijackedResponse{}, err
+			return err
 		}
 	}
 
-	cmd := []string{"env"}
+	info, err := client.ContainerInspect(context.Background(), storageContext)
+	if err != nil {
+		return err
+	}
+
+	cmd := []string{"docker-runc", "exec", "--", info.ID, "env"}
 	log.Info(dockerCfg.AppendEnv())
 	cmd = append(cmd, dockerCfg.AppendEnv()...)
 	cmd = append(cmd, DOCKER_COMMAND)
 	cmd = append(cmd, args...)
 	log.Infof("Running %v", cmd)
 
-	resp, err := client.ContainerExecCreate(context.Background(), types.ExecConfig{
-		Container:    storageContext,
-		Privileged:   true,
-		AttachStderr: true,
-		AttachStdout: true,
-		Cmd:          cmd,
-	})
-	if err != nil {
-		return "", types.HijackedResponse{}, err
-	}
-
-	attachResp, err := client.ContainerExecAttach(context.Background(), resp.ID, types.ExecConfig{
-		Detach:       false,
-		AttachStderr: true,
-		AttachStdout: true,
-	})
-	if err != nil {
-		return "", types.HijackedResponse{}, err
-	}
-
-	return resp.ID, attachResp, nil
-}
-
-func getDockerProcess() (*os.Process, error) {
-	pidBytes, err := waitForFile(DOCKER_PID_FILE)
-	if err != nil {
-		return nil, err
-	}
-	dockerPid, err := strconv.Atoi(string(pidBytes))
-	if err != nil {
-		return nil, err
-	}
-	return os.FindProcess(dockerPid)
-}
-
-func handleTerm(process *os.Process) {
-	term := make(chan os.Signal)
-	signal.Notify(term, syscall.SIGTERM)
-	go func() {
-		<-term
-		process.Signal(syscall.SIGTERM)
-	}()
-}
-
-func waitForFile(file string) ([]byte, error) {
-	for {
-		contents, err := ioutil.ReadFile(file)
-		if os.IsNotExist(err) {
-			log.Infof("Waiting for %s", file)
-			time.Sleep(1 * time.Second)
-		} else if err != nil {
-			return nil, err
-		} else {
-			return contents, nil
-		}
-	}
+	return syscall.Exec("/usr/bin/ros", cmd, os.Environ())
 }
 
 func waitForPid(service string, project *project.Project) (int, error) {
