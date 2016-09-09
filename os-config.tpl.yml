@@ -386,6 +386,9 @@ rancher:
       restart: always
       volumes_from:
       - all-volumes
+      volumes:
+      - /sys:/host/sys
+      - /var/lib/system-docker:/var/lib/system-docker:shared
   system_docker:
     exec: true
     args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay,
