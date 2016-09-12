@@ -29,7 +29,7 @@ https://releases.rancher.com/os/v0.6.1/rancheros.iso
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
-* https://releases.rancher.com/os/latest/rancheros-v0.6.0.tar.gz
+* https://releases.rancher.com/os/latest/rancheros-v0.6.1.tar.gz
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
@@ -42,7 +42,7 @@ https://releases.rancher.com/os/v0.6.1/rancheros.iso
 * https://releases.rancher.com/os/v0.6.1/iso-checksums.txt
 * https://releases.rancher.com/os/v0.6.1/rancheros-openstack.img
 * https://releases.rancher.com/os/v0.6.1/rancheros-raspberry-pi.zip
-* https://releases.rancher.com/os/v0.6.0/rancheros-v0.6.0.tar.gz
+* https://releases.rancher.com/os/v0.6.1/rancheros-v0.6.1.tar.gz
 * https://releases.rancher.com/os/v0.6.1/rancheros.iso
 * https://releases.rancher.com/os/v0.6.1/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/v0.6.1/rootfs_arm64.tar.gz
@@ -75,7 +75,7 @@ us-west-2 | HVM |  [ami-e2d60582](https://console.aws.amazon.com/ec2/home?region
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS.
 
-[Download Image](https://github.com/rancher/os/releases/download/v0.6.0/rancheros-v0.6.0.tar.gz)
+[Download Image](https://github.com/rancher/os/releases/download/v0.6.1/rancheros-v0.6.1.tar.gz)
 
 Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/).
 
