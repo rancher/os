@@ -59,18 +59,17 @@ SSH keys are added to the **`rancher`** user, so you must log in using the **ran
 
 Region | Type | AMI |
 -------|------|------
-ap-northeast-1 | HVM |  [ami-c29740a3](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-c29740a3)
-ap-northeast-2 | HVM |  [ami-f406d39a](https://console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-f406d39a)
-ap-south-1 | HVM |  [ami-0c86f363](https://console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-0c86f363)
-ap-southeast-1 | HVM |  [ami-f2bc6691](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-f2bc6691)
-ap-southeast-2 | HVM |  [ami-e5172686](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-e5172686)
-eu-central-1 | HVM |  [ami-38f00257](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-38f00257)
-eu-west-1 | HVM |  [ami-924837e1](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-924837e1)
-sa-east-1 | HVM |  [ami-6849d904](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-6849d904)
-us-east-1 | HVM |  [ami-af7d0bb8](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-af7d0bb8)
-us-west-1 | HVM |  [ami-baca86da](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-baca86da)
-us-west-2 | HVM |  [ami-e2d60582](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-e2d60582)
-
+ap-northeast-1 | HVM |  [ami-75954214](https://console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-75954214)
+ap-northeast-2 | HVM |  [ami-690dd807](https://console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-690dd807)
+ap-south-1 | HVM |  [ami-ed8cf982](https://console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-ed8cf982)
+ap-southeast-1 | HVM |  [ami-27bc6644](https://console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-27bc6644)
+ap-southeast-2 | HVM |  [ami-67172604](https://console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-67172604)
+eu-central-1 | HVM |  [ami-e88d7f87](https://console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-e88d7f87)
+eu-west-1 | HVM |  [ami-934837e0](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-934837e0)
+sa-east-1 | HVM |  [ami-6949d905](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-6949d905)
+us-east-1 | HVM |  [ami-a8d2a4bf](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-a8d2a4bf)
+us-west-1 | HVM |  [ami-fccb879c](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-fccb879c)
+us-west-2 | HVM |  [ami-1ed3007e](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-1ed3007e)
 ### Google Compute Engine
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS.
