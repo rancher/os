@@ -1,6 +1,8 @@
-build:
-  image: rancher/dapper:1.10.3
-  volumes:
-  - /var/run/docker.sock:/var/run/docker.sock
-  commands:
-  - dapper ci
+---
+pipeline:
+  build:
+    image: rancher/dapper:1.10.3
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    commands:
+    - dapper ci
