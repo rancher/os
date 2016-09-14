@@ -4,47 +4,7 @@ set -e
 
 cd $(dirname $0)/..
 
-HOST_ARCH=${HOST_ARCH:-amd64}
-ARCH=${ARCH:-amd64}
-
-declare -A qemuarch=( ["amd64"]="x86_64" ["arm"]="arm" ["arm64"]="aarch64" )
-declare -A ttycons=( ["amd64"]="ttyS0" ["arm"]="ttyAMA0" ["arm64"]="ttyAMA0" )
-declare -A machine=( ["amd64"]="" ["arm"]="-M virt" ["arm64"]="-M virt" )
-declare -A cpu=( ["amd64"]="" ["arm"]="-cpu cortex-a8" ["arm64"]="-cpu cortex-a57" )
-declare -A network=(
-    ["amd64"]="-net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::2222-:22,hostname=rancher-dev"
-    ["arm"]="-netdev user,id=unet,hostfwd=tcp::2222-:22,hostname=rancher-dev -device virtio-net-device,netdev=unet"
-)
-network["arm64"]=${network["arm"]}
-
-hd_amd64() {
-    echo "-drive if=virtio,file=$1"
-}
-hd_arm() {
-    echo "-drive if=none,id=hd0,file=$1 -device virtio-blk-device,drive=hd0"
-}
-declare -A hd=( ["amd64"]="hd_amd64" ["arm"]="hd_arm" ["arm64"]="hd_arm" )
-
-cd_amd64() {
-    echo "-hdc $1"
-}
-cd_arm() {
-    echo "-drive if=none,id=cd0,file=$1 -device virtio-blk-device,drive=cd0"
-}
-declare -A cd=( ["amd64"]="cd_amd64" ["arm"]="cd_arm" ["arm64"]="cd_arm" )
-
-BUILD=build
-BASE=$(pwd)
-UNAME=$(uname)
-
-KERNEL=${BASE}/dist/artifacts/vmlinuz
-INITRD_SRC=${BASE}/build/initrd
-INITRD=${BASE}/build/initrd.tmp
-
-QEMU=1
-FORMAT=1
-RM_USR=1
-REBUILD=1
+source ./scripts/run-common
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -93,15 +53,16 @@ while [ "$#" -gt 0 ]; do
         --fresh)
             FRESH=1
             ;;
+        --installed)
+            ./scripts/create-installed
+            INSTALLED=1
+            ;;
         *)
             break
             ;;
     esac
     shift 1
 done
-
-QEMUARCH=${qemuarch["${ARCH}"]}
-TTYCONS=${ttycons["${ARCH}"]}
 
 if [ "$QEMU" == "1" ] && ! which qemu-system-${QEMUARCH}; then
     QEMU=0
@@ -120,7 +81,7 @@ if [ "$REBUILD" == "1" ] || [ ! -e ${INITRD} ]; then
     popd >/dev/null
 fi
 
-KERNEL_ARGS="quiet rancher.password=rancher console=${TTYCONS} rancher.autologin=${TTYCONS} ${QEMU_APPEND}"
+KERNEL_ARGS="${DEFAULT_KERNEL_ARGS} ${QEMU_APPEND}"
 if [ "$FORMAT" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
 fi
@@ -168,29 +129,51 @@ if [ "$QEMU" == "1" ]; then
         KVM_ENABLE="-enable-kvm"
         CPU="-cpu host"
     fi
-    set -x
     HOME=${HOME:-/}
-    exec qemu-system-${QEMUARCH} -serial stdio \
-        -rtc base=utc,clock=host \
-        ${KVM_ENABLE} \
-        ${CPU} \
-        ${machine["$ARCH"]} \
-        -kernel ${KERNEL} \
-        -initrd ${INITRD} \
-        -m 2048 \
-        ${network["$ARCH"]} \
-        $(eval "${hd["$ARCH"]} ${HD}") \
-        ${SECOND_DRIVE_ENABLE} \
-        -smp 1 \
-        -append "${KERNEL_ARGS}" \
-        -nographic \
-        -display none \
-        -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
-        -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
-        -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
-        -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
-        ${QEMU_ARGS} \
-        "${@}"
+    if [ "$INSTALLED" == "1" ]; then
+        set -x
+        exec qemu-system-${QEMUARCH} -serial stdio \
+            -rtc base=utc,clock=host \
+            ${KVM_ENABLE} \
+            ${CPU} \
+            ${machine["$ARCH"]} \
+            -m 2048 \
+            ${network["$ARCH"]} \
+            $(eval "${hd["$ARCH"]} ${HD}") \
+            ${SECOND_DRIVE_ENABLE} \
+            -smp 1 \
+            -nographic \
+            -display none \
+            -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
+            -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
+            -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
+            -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
+            ${QEMU_ARGS} \
+            "${@}"
+    else
+        set -x
+        exec qemu-system-${QEMUARCH} -serial stdio \
+            -rtc base=utc,clock=host \
+            ${KVM_ENABLE} \
+            ${CPU} \
+            ${machine["$ARCH"]} \
+            -kernel ${KERNEL} \
+            -initrd ${INITRD} \
+            -m 2048 \
+            ${network["$ARCH"]} \
+            $(eval "${hd["$ARCH"]} ${HD}") \
+            ${SECOND_DRIVE_ENABLE} \
+            -smp 1 \
+            -append "${KERNEL_ARGS}" \
+            -nographic \
+            -display none \
+            -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
+            -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
+            -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
+            -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
+            ${QEMU_ARGS} \
+            "${@}"
+    fi
 
 elif [ "$QIND" == "1" ]; then
 

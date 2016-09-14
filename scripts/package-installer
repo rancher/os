@@ -16,5 +16,6 @@ cp ./dist/artifacts/{initrd,vmlinuz} ./scripts/installer/build
 trap "rm -rf ./scripts/installer/build" EXIT
 
 docker build -t ${OS_REPO}/os:${VERSION}${SUFFIX} --build-arg VERSION=${VERSION} -f $DOCKERFILE ./scripts/installer
+docker save -o dist/artifacts/installer.tar ${OS_REPO}/os:${VERSION}${SUFFIX}
 echo ${OS_REPO}/os:${VERSION}${SUFFIX} > dist/images
 echo Built ${OS_REPO}/os:${VERSION}${SUFFIX}

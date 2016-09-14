@@ -56,7 +56,23 @@ func (s *QemuSuite) RunQemu(additionalArgs ...string) error {
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	s.qemuCmd = exec.Command(s.runCommand, runArgs...)
+	return s.runQemu(runArgs...)
+}
+
+func (s *QemuSuite) RunQemuInstalled(additionalArgs ...string) error {
+	runArgs := []string{
+		"--qemu",
+		"--no-rebuild",
+		"--no-rm-usr",
+		"--installed",
+	}
+	runArgs = append(runArgs, additionalArgs...)
+
+	return s.runQemu(runArgs...)
+}
+
+func (s *QemuSuite) runQemu(args ...string) error {
+	s.qemuCmd = exec.Command(s.runCommand, args...)
 	s.qemuCmd.Stdout = os.Stdout
 	s.qemuCmd.Stderr = os.Stderr
 	if err := s.qemuCmd.Start(); err != nil {
