@@ -4,7 +4,6 @@ import (
 	"os"
 
 	log "github.com/Sirupsen/logrus"
-	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
@@ -25,9 +24,7 @@ func Main() {
 	}
 
 	if newConsole != "default" {
-		project.ServiceConfigs.Add("console", &composeConfig.ServiceConfig{})
-
-		if err = compose.LoadService(project, cfg, true, newConsole); err != nil {
+		if err = compose.LoadSpecialService(project, cfg, "console", newConsole); err != nil {
 			log.Fatal(err)
 		}
 	}

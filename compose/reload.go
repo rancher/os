@@ -37,6 +37,37 @@ func LoadService(p *project.Project, cfg *config.CloudConfig, useNetwork bool, s
 	return nil
 }
 
+func LoadSpecialService(p *project.Project, cfg *config.CloudConfig, serviceName, serviceValue string) error {
+	// Save config in case load fails
+	previousConfig, ok := p.ServiceConfigs.Get(serviceName)
+
+	p.ServiceConfigs.Add(serviceName, &composeConfig.ServiceConfig{})
+
+	if err := LoadService(p, cfg, true, serviceValue); err != nil {
+		// Rollback to previous config
+		if ok {
+			p.ServiceConfigs.Add(serviceName, previousConfig)
+		}
+		return err
+	}
+
+	return nil
+}
+
+func loadConsoleService(cfg *config.CloudConfig, p *project.Project) error {
+	if cfg.Rancher.Console == "" || cfg.Rancher.Console == "default" {
+		return nil
+	}
+	return LoadSpecialService(p, cfg, "console", cfg.Rancher.Console)
+}
+
+func loadEngineService(cfg *config.CloudConfig, p *project.Project) error {
+	if cfg.Rancher.Docker.Engine == "" || cfg.Rancher.Docker.Engine == cfg.Rancher.Defaults.Docker.Engine {
+		return nil
+	}
+	return LoadSpecialService(p, cfg, "docker", cfg.Rancher.Docker.Engine)
+}
+
 func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, environmentLookup *docker.ConfigEnvironment, authLookup *docker.ConfigAuthLookup) func() error {
 	enabled := map[interface{}]interface{}{}
 	return func() error {
@@ -62,17 +93,18 @@ func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, envir
 			enabled[service] = service
 		}
 
-		if loadConsole && cfg.Rancher.Console != "" && cfg.Rancher.Console != "default" {
-			if err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Console); err != nil && err != network.ErrNoNetwork {
-				log.Error(err)
+		if !*useNetwork {
+			return nil
+		}
+
+		if loadConsole {
+			if err := loadConsoleService(cfg, p); err != nil {
+				log.Errorf("Failed to load console: %v", err)
 			}
 		}
 
-		if cfg.Rancher.Docker.Engine != "" && cfg.Rancher.Docker.Engine != cfg.Rancher.Defaults.Docker.Engine {
-			p.ServiceConfigs.Add("docker", &composeConfig.ServiceConfig{})
-			if err := LoadService(p, cfg, *useNetwork, cfg.Rancher.Docker.Engine); err != nil && err != network.ErrNoNetwork {
-				log.Error(err)
-			}
+		if err := loadEngineService(cfg, p); err != nil {
+			log.Errorf("Failed to load engine: %v", err)
 		}
 
 		return nil

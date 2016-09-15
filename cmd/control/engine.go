@@ -10,7 +10,6 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
@@ -68,9 +67,7 @@ func engineSwitch(c *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	project.ServiceConfigs.Add("docker", &composeConfig.ServiceConfig{})
-
-	if err = compose.LoadService(project, cfg, true, newEngine); err != nil {
+	if err = compose.LoadSpecialService(project, cfg, "docker", newEngine); err != nil {
 		log.Fatal(err)
 	}
 
