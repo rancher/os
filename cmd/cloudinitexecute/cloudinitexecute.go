@@ -70,6 +70,8 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 
 		if mount[2] == "swap" {
 			cmd := exec.Command("swapon", device)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
 			err := cmd.Run()
 			if err != nil {
 				log.Errorf("Unable to swapon %s: %v", device, err)
@@ -85,6 +87,8 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 			cmdArgs = append(cmdArgs, "-o", mount[3])
 		}
 		cmd := exec.Command("mount", cmdArgs...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			log.Errorf("Failed to mount %s: %v", mount[1], err)
 		}
@@ -96,7 +100,6 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 		}
 
 		cmd := exec.Command(runcmd[0], runcmd[1:]...)
-		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
@@ -159,12 +162,16 @@ func applyPreConsole(cfg *rancherConfig.CloudConfig) {
 
 func resizeDevice(cfg *rancherConfig.CloudConfig) error {
 	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, "1")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		return err
 	}
 
 	cmd = exec.Command("resize2fs", fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
 		return err
