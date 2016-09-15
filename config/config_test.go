@@ -202,12 +202,12 @@ func TestSet(t *testing.T) {
 }
 
 type OuterData struct {
-	One Data `"yaml:one"`
+	One Data `yaml:"one"`
 }
 
 type Data struct {
-	Two   bool `"yaml:two"`
-	Three bool `"yaml:three"`
+	Two   bool `yaml:"two"`
+	Three bool `yaml:"three"`
 }
 
 func TestMapMerge(t *testing.T) {

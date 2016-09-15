@@ -173,7 +173,7 @@ func writeRespawn() error {
 			p := path.Join("/etc/respawn.conf.d", f.Name())
 			content, err := ioutil.ReadFile(p)
 			if err != nil {
-				log.Error("Failed to read %s: %v", p, err)
+				log.Errorf("Failed to read %s: %v", p, err)
 				continue
 			}
 			respawn += fmt.Sprintf("\n%s", string(content))
