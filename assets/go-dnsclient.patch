@@ -1,24 +1,18 @@
-265,270d264
-< 	// Ensure only one update at a time checks resolv.conf.
-< 	if !conf.tryAcquireSema() {
-< 		return
-< 	}
-< 	defer conf.releaseSema()
-< 
-276a271,280
+296a297,300
 > 	conf.update(name)
 > }
 > 
 > func (conf *resolverConfig) update(name string) {
-> 	// Ensure only one update at a time checks resolv.conf.
-> 	if !conf.tryAcquireSema() {
-> 		return
-> 	}
-> 	defer conf.releaseSema()
-> 
-293a298,302
+300a305,316
 > }
 > 
 > func UpdateDnsConf() {
 > 	resolvConf.initOnce.Do(resolvConf.init)
+> 
+> 	// Ensure only one update at a time checks resolv.conf.
+> 	if !resolvConf.tryAcquireSema() {
+> 		return
+> 	}
+> 	defer resolvConf.releaseSema()
+> 
 > 	resolvConf.update("/etc/resolv.conf")
