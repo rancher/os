@@ -2,10 +2,7 @@
 set -ex
 
 MAGIC=${MAGIC:-"boot2docker, please format-me"}
-
-AUTOFORMAT=${AUTOFORMAT:-"/dev/sda /dev/vda"}
 DEVS=(${AUTOFORMAT})
-FORMATZERO=${FORMATZERO:-false}
 
 for dev in ${DEVS[@]}; do
     if [ -b "${dev}" ]; then
@@ -16,9 +13,6 @@ for dev in ${DEVS[@]}; do
         if [ "$HEADER" = "$MAGIC" ]; then
             # save the preload userdata.tar file
             dd if=${dev} of=/userdata.tar bs=1 count=8192
-        elif [ "${FORMATZERO}" != "true" ]; then
-            # do not try to guess whether to auto-format a disk beginning with 1MB filled with 00
-            continue
         elif ! od -A d -N 1048576 ${dev} | head -n 3 | diff ./od-1m0 - >/dev/null 2>&1; then
             # do not auto-format if the disk does not begin with 1MB filled with 00
             continue
