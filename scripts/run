@@ -83,7 +83,7 @@ fi
 
 KERNEL_ARGS="${DEFAULT_KERNEL_ARGS} ${QEMU_APPEND}"
 if [ "$FORMAT" == "1" ]; then
-    KERNEL_ARGS="${KERNEL_ARGS} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.formatzero=true rancher.state.autoformat=[/dev/sda,/dev/vda]"
+    KERNEL_ARGS="${KERNEL_ARGS} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda]"
 fi
 if [ "$RM_USR" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.rm_usr"

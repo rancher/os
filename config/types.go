@@ -160,7 +160,6 @@ type StateConfig struct {
 	Wait       bool     `yaml:"wait,omitempty"`
 	Required   bool     `yaml:"required,omitempty"`
 	Autoformat []string `yaml:"autoformat,omitempty"`
-	FormatZero bool     `yaml:"formatzero,omitempty"`
 	MdadmScan  bool     `yaml:"mdadm_scan,omitempty"`
 	Script     string   `yaml:"script,omitempty"`
 	OemFsType  string   `yaml:"oem_fstype,omitempty"`
