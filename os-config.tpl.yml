@@ -72,8 +72,13 @@ rancher:
       - /lib/firmware:/lib/firmware
       - /usr/bin/ros:/usr/bin/ros:ro
   bootstrap_docker:
-    args: [daemon, -s, overlay, -b, none, --restart=false, -g, /var/lib/system-docker,
-        -G, root, -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
+    bridge: none
+    storage_driver: overlay
+    restart: false
+    graph: /var/lib/system-docker
+    group: root
+    host: "unix:///var/run/system-docker.sock"
+    userland_proxy: false
   console: default
   cloud_init:
     datasources:
@@ -391,10 +396,18 @@ rancher:
       - /var/lib/system-docker:/var/lib/system-docker:shared
   system_docker:
     exec: true
-    args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay,
-      --restart=false, -g, /var/lib/system-docker, -G, root,
-      -p, /var/run/system-docker.pid, --exec-root=/var/run/system-docker, --config-file=/etc/docker/system-daemon.json,
-      -H, 'unix:///var/run/system-docker.sock', --userland-proxy=false]
+    storage_driver: overlay
+    restart: false
+    graph: /var/lib/system-docker
+    group: root
+    host: "unix:///var/run/system-docker.sock"
+    pid_file: /var/run/system-docker.pid
+    exec_root: /var/run/system-docker
+    config_file: /etc/docker/system-docker.json
+    userland_proxy: false
+    log_opts:
+      max-size: 25m
+      max-file: 2
   upgrade:
     url: {{.OS_RELEASES_YML}}/releases{{.SUFFIX}}.yml
     image: {{.OS_REPO}}/os
@@ -404,6 +417,11 @@ rancher:
     {{else -}}
     engine: docker-1.11.2
     {{end -}}
+    storage_driver: overlay
+    group: docker
+    host: "unix:///var/run/docker.sock"
+    log_opts:
+      max-size: 25m
+      max-file: 2
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']
-    args: [daemon, --log-opt, max-size=25m, --log-opt, max-file=2, -s, overlay, -G, docker, -H, 'unix:///var/run/docker.sock']

@@ -165,7 +165,7 @@ func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) 
 func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
 	var launchConfig dockerlaunch.Config
 
-	args := dockerlaunch.ParseConfig(&launchConfig, append(dockerCfg.Args, dockerCfg.ExtraArgs...)...)
+	args := dockerlaunch.ParseConfig(&launchConfig, dockerCfg.FullArgs()...)
 
 	launchConfig.DnsConfig.Nameservers = cfg.Rancher.Defaults.Network.Dns.Nameservers
 	launchConfig.DnsConfig.Search = cfg.Rancher.Defaults.Network.Dns.Search

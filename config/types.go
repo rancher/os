@@ -134,11 +134,31 @@ type UpgradeConfig struct {
 	Rollback string `yaml:"rollback,omitempty"`
 }
 
+type EngineOpts struct {
+	Bridge         string            `yaml:"bridge" opt:"bridge"`
+	ConfigFile     string            `yaml:"config_file" opt:"config-file"`
+	Containerd     string            `yaml:"containerd" opt:"containerd"`
+	Debug          *bool             `yaml:"debug" opt:"debug"`
+	ExecRoot       string            `yaml:"exec_root" opt:"exec-root"`
+	Group          string            `yaml:"group" opt:"group"`
+	Graph          string            `yaml:"graph" opt:"graph"`
+	Host           string            `yaml:"host" opt:"host"`
+	LiveRestore    *bool             `yaml:"live_restore" opt:"live-restore"`
+	LogDriver      string            `yaml:"log_driver" opt:"log-driver"`
+	LogOpts        map[string]string `yaml:"log_opts" opt:"log-opt"`
+	PidFile        string            `yaml:"pid_file" opt:"pidfile"`
+	RegistryMirror string            `yaml:"registry_mirror" opt:"registry-mirror"`
+	Restart        *bool             `yaml:"restart" opt:"restart"`
+	SelinuxEnabled *bool             `yaml:"selinux_enabled" opt:"selinux-enabled"`
+	StorageDriver  string            `yaml:"storage_driver" opt:"storage-driver"`
+	UserlandProxy  *bool             `yaml:"userland_proxy" opt:"userland-proxy"`
+}
+
 type DockerConfig struct {
+	EngineOpts
 	Engine         string   `yaml:"engine,omitempty"`
 	TLS            bool     `yaml:"tls,omitempty"`
 	TLSArgs        []string `yaml:"tls_args,flow,omitempty"`
-	Args           []string `yaml:"args,flow,omitempty"`
 	ExtraArgs      []string `yaml:"extra_args,flow,omitempty"`
 	ServerCert     string   `yaml:"server_cert,omitempty"`
 	ServerKey      string   `yaml:"server_key,omitempty"`
