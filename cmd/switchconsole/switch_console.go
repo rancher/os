@@ -25,7 +25,7 @@ func Main() {
 	}
 
 	if newConsole != "default" {
-                project.ServiceConfigs.Add("console", &composeConfig.ServiceConfig{})
+		project.ServiceConfigs.Add("console", &composeConfig.ServiceConfig{})
 
 		if err = compose.LoadService(project, cfg, true, newConsole); err != nil {
 			log.Fatal(err)
