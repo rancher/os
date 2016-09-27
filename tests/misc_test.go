@@ -8,7 +8,6 @@ func (s *QemuSuite) TestMisc(c *C) {
 
 	s.CheckCall(c, "sudo ros env printenv FLANNEL_NETWORK | grep '10.244.0.0/16'")
 
-	s.CheckCall(c, "ps -ef | grep 'daemon --log-opt max-file=2 --log-opt max-size=25m -s overlay -G docker -H unix:///var/run/docker.sock --userland-proxy=false'")
 	s.CheckCall(c, "ps -ef | grep 'dhcpcd -M'")
 
 	s.CheckCall(c, `
