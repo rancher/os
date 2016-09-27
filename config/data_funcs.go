@@ -116,9 +116,12 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 	return "", tData
 }
 
-// YAML parsers will remove newlines, but we'd like to keep those
-// replace newlines with magicString, and then undo after unmarshaling
-var magicString = "9XsJcx6dR5EERYCC"
+// Replace newlines and colons with random strings
+// This is done to avoid YAML treating these as special characters
+var (
+	newlineMagicString = "9XsJcx6dR5EERYCC"
+	colonMagicString   = "V0Rc21pIVknMm2rr"
+)
 
 func reverseReplacement(result interface{}) interface{} {
 	switch val := result.(type) {
@@ -133,14 +136,17 @@ func reverseReplacement(result interface{}) interface{} {
 		}
 		return val
 	case string:
-		return strings.Replace(val, magicString, "\n", -1)
+		val = strings.Replace(val, newlineMagicString, "\n", -1)
+		val = strings.Replace(val, colonMagicString, ":", -1)
+		return val
 	}
 
 	return result
 }
 
 func unmarshalOrReturnString(value string) (result interface{}) {
-	value = strings.Replace(value, "\n", magicString, -1)
+	value = strings.Replace(value, "\n", newlineMagicString, -1)
+	value = strings.Replace(value, ":", colonMagicString, -1)
 	if err := yaml.Unmarshal([]byte(value), &result); err != nil {
 		result = value
 	}

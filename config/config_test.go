@@ -1,8 +1,9 @@
 package config
 
 import (
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"testing"
+
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	"github.com/rancher/os/util"
 	"github.com/stretchr/testify/require"
@@ -102,28 +103,60 @@ func TestUnmarshalOrReturnString(t *testing.T) {
 func TestParseCmdline(t *testing.T) {
 	assert := require.New(t)
 
-	expected := map[interface{}]interface{}{
+	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
-			"rescue":   true,
-			"key1":     "value1",
-			"key2":     "value2",
-			"keyArray": []interface{}{int64(1), int64(2)},
-			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config"},
-			"obj1": map[interface{}]interface{}{
-				"key3": "3value",
-				"obj2": map[interface{}]interface{}{
-					"key4": true,
-				},
-			},
-			"key5": int64(5),
-			"key6": "a,b",
-			"key7": "a\nb",
+			"key1": "value1",
+			"key2": "value2",
 		},
-	}
+	}, parseCmdline("a b rancher.key1=value1 c rancher.key2=value2"))
 
-	actual := parseCmdline("a b rancher.rescue rancher.keyArray=[1,2] rancher.strArray=[\"url:http://192.168.1.100/cloud-config\"] rancher.key1=value1 c rancher.key2=value2 rancher.obj1.key3=3value rancher.obj1.obj2.key4 rancher.key5=5 rancher.key6=a,b rancher.key7=a\nb")
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"key": "a,b",
+		},
+	}, parseCmdline("rancher.key=a,b"))
 
-	assert.Equal(expected, actual)
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"key": "a\nb",
+		},
+	}, parseCmdline("rancher.key=a\nb"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"key": "a:b",
+		},
+	}, parseCmdline("rancher.key=a:b"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"key": int64(5),
+		},
+	}, parseCmdline("rancher.key=5"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"rescue": true,
+		},
+	}, parseCmdline("rancher.rescue"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"keyArray": []interface{}{int64(1), int64(2)},
+		},
+	}, parseCmdline("rancher.keyArray=[1,2]"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config"},
+		},
+	}, parseCmdline("rancher.strArray=[\"url:http://192.168.1.100/cloud-config\"]"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config"},
+		},
+	}, parseCmdline("rancher.strArray=[url:http://192.168.1.100/cloud-config]"))
 }
 
 func TestGet(t *testing.T) {
