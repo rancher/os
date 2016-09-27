@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 
@@ -45,6 +46,10 @@ var installCommand = cli.Command{
 			Name:  "no-reboot",
 			Usage: "do not reboot after install",
 		},
+		cli.StringFlag{
+			Name:  "append, a",
+			Usage: "append additional kernel parameters",
+		},
 	},
 }
 
@@ -80,17 +85,18 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
+	append := strings.TrimSpace(c.String("append"))
 	force := c.Bool("force")
 	reboot := !c.Bool("no-reboot")
 
-	if err := runInstall(image, installType, cloudConfig, device, force, reboot); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, append, force, reboot); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 	}
 
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device string, force, reboot bool) error {
+func runInstall(image, installType, cloudConfig, device, append string, force, reboot bool) error {
 	in := bufio.NewReader(os.Stdin)
 
 	fmt.Printf("Installing from %s\n", image)
@@ -110,7 +116,7 @@ func runInstall(image, installType, cloudConfig, device string, force, reboot bo
 		}
 	}
 	cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes", image,
-		"-d", device, "-t", installType, "-c", cloudConfig)
+		"-d", device, "-t", installType, "-c", cloudConfig, "-a", append)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		return err

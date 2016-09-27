@@ -30,6 +30,7 @@ BASE_DIR="/mnt/new_img"
 # TODO: Change this to a number so that users can specify.
 # Will need to make it so that our builds and packer APIs remain consistent.
 PARTITION=${PARTITION:=${DEVICE}1}
+KERNEL_ARGS="rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=${CONSOLE}"
 
 device_defined()
 {
@@ -45,7 +46,7 @@ format_device()
     mkfs.ext4 -F -i 4096 -L RANCHER_STATE ${PARTITION}
 }
 
-mount_device() 
+mount_device()
 {
     local label=RANCHER_STATE
     local raw="${1:-false}"
@@ -55,7 +56,7 @@ mount_device()
     if [ "$(lsblk -o label|grep RANCHER_BOOT | wc -l)" -gt "0" ]; then
         label=RANCHER_BOOT
     fi
-    
+
     local mount_opts="-L ${label}"
     if [ "${raw}" == "true" ]; then
         device_defined ${DEVICE}
@@ -85,7 +86,7 @@ set timeout="1"
 
 menuentry "RancherOS-current" {
   set root=(hd0,msdos1)
-  linux /boot/vmlinuz-${VERSION}-rancheros ${append_line} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=${CONSOLE}
+  linux /boot/vmlinuz-${VERSION}-rancheros ${KERNEL_ARGS} ${append_line}
   initrd /boot/initrd-${VERSION}-rancheros
 }
 
@@ -96,7 +97,7 @@ if [ ! -z ${ROLLBACK_VERSION} ]; then
 cat >>${grub_cfg} <<EOF
 menuentry "RancherOS-rollback" {
   set root=(hd0,msdos1)
-  linux /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=${CONSOLE}
+  linux /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${KERNEL_ARGS} ${append_line}
   initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
 }
 EOF
@@ -123,7 +124,7 @@ hiddenmenu
 
 title RancherOS ${VERSION}-(current)
 root (hd0)
-kernel /boot/vmlinuz-${VERSION}-rancheros ${append_line} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=${CONSOLE}
+kernel /boot/vmlinuz-${VERSION}-rancheros ${KERNEL_ARGS} ${append_line}
 initrd /boot/initrd-${VERSION}-rancheros
 
 EOF
@@ -133,7 +134,7 @@ if [ ! -z ${ROLLBACK_VERSION} ]; then
 cat >> ${grub_file}<<EOF
 title RancherOS ${ROLLBACK_VERSION}-(rollback)
 root (hd0)
-kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${append_line} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=${CONSOLE}
+kernel /boot/vmlinuz-${ROLLBACK_VERSION}-rancheros ${KERNEL_ARGS} ${append_line}
 initrd /boot/initrd-${ROLLBACK_VERSION}-rancheros
 EOF
 fi
@@ -146,7 +147,6 @@ format_and_mount()
     create_boot_dirs
 }
 
-KERNEL_ARGS=${KERNEL_ARGS:-""}
 if [ -n ${ENV} ]; then
     case ${ENV} in
         "generic")
@@ -180,7 +180,7 @@ if [ -n ${ENV} ]; then
             KERNEL_ARGS="${KERNEL_ARGS} rancher.cloud_init.datasources=[ec2,gce]"
             ;;
         "rancher-upgrade")
-            mount_device 
+            mount_device
             create_boot_dirs
             ;;
         *)
@@ -190,8 +190,16 @@ if [ -n ${ENV} ]; then
     esac
 fi
 
-grub2_config "${KERNEL_ARGS}"
-pvgrub_config "${KERNEL_ARGS}"
+if [ -e ${BASE_DIR}/boot/append ]; then
+    PRESERVED_APPEND=$(cat ${BASE_DIR}/boot/append)
+fi
+if [ "${APPEND}" = "" ]; then
+    APPEND="${PRESERVED_APPEND}"
+fi
+echo "${APPEND}" > ${BASE_DIR}/boot/append
+
+grub2_config "${APPEND}"
+pvgrub_config "${APPEND}"
 install_rancher
 
 seusers=${BASE_DIR}/etc/selinux/ros/seusers
@@ -204,8 +212,5 @@ if [ -f "${failsafe_context}" ]; then
 fi
 
 if [ "$KEXEC" = "y" ]; then
-    if [ "$APPEND" = "" ]; then
-        APPEND=$(cat /proc/cmdline)
-    fi
-    kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd --append="$APPEND" -f
+    kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd --append="${KERNEL_ARGS} ${APPEND}" -f
 fi

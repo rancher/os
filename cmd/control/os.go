@@ -58,7 +58,7 @@ func osSubcommands() []cli.Command {
 				},
 				cli.StringFlag{
 					Name:  "append",
-					Usage: "kernel args to append by kexec",
+					Usage: "append additional kernel parameters",
 				},
 				cli.BoolFlag{
 					Name:  "upgrade-console",
@@ -187,11 +187,11 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 
 	if kexec {
 		command = append(command, "-k")
+	}
 
-		kernelArgs = strings.TrimSpace(kernelArgs)
-		if kernelArgs != "" {
-			command = append(command, "-a", kernelArgs)
-		}
+	kernelArgs = strings.TrimSpace(kernelArgs)
+	if kernelArgs != "" {
+		command = append(command, "-a", kernelArgs)
 	}
 
 	if upgradeConsole {
