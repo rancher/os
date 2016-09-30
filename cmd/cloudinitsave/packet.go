@@ -16,6 +16,22 @@ import (
 )
 
 func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
+	bootStrapped := false
+	for _, v := range cfg.Network.Interfaces {
+		if v.Address != "" {
+			if err := netconf.ApplyNetworkConfigs(&cfg.Network); err != nil {
+				logrus.Errorf("Failed to bootstrap network: %v", err)
+				return
+			}
+			bootStrapped = true
+			break
+		}
+	}
+
+	if !bootStrapped {
+		return
+	}
+
 	c := metadata.NewClient(http.DefaultClient)
 	m, err := c.Metadata.Get()
 	if err != nil {
