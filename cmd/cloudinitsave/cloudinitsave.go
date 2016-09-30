@@ -108,11 +108,6 @@ func currentDatasource() (datasource.Datasource, error) {
 	}
 
 	ds := selectDatasource(dss)
-
-	if ds.Type() == "packet-metadata-service" {
-		enablePacketNetwork(&cfg.Rancher)
-	}
-
 	return ds, nil
 }
 
@@ -225,9 +220,10 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 				dss = append(dss, gce.NewDatasource("http://metadata.google.internal/"))
 			}
 		case "packet":
-			if network {
-				dss = append(dss, packet.NewDatasource("https://metadata.packet.net/"))
+			if !network {
+				enablePacketNetwork(&cfg.Rancher)
 			}
+			dss = append(dss, packet.NewDatasource("https://metadata.packet.net/"))
 		}
 	}
 
