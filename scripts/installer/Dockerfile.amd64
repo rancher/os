@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && \
-    apt-get install --no-install-recommends -y udev grub2 parted kexec-tools && \
+    apt-get install --no-install-recommends -y udev grub2 parted kexec-tools extlinux syslinux-common && \
     rm -rf /var/lib/apt/*
 
 COPY ./build/vmlinuz ./build/initrd /dist/
