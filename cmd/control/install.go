@@ -115,8 +115,8 @@ func runInstall(image, installType, cloudConfig, device, append string, force, r
 			return err
 		}
 	}
-	cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes", image,
-		"-d", device, "-t", installType, "-c", cloudConfig, "-a", append)
+	cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes",
+		"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig, "-a", append)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		return err
