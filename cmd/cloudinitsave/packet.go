@@ -1,6 +1,7 @@
 package cloudinitsave
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"os"
@@ -76,13 +77,20 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 	}
 
 	netCfg.Interfaces["bond0"] = bondCfg
-	bytes, _ := yaml.Marshal(netCfg)
-	logrus.Debugf("Generated network config: %s", string(bytes))
+	b, _ := yaml.Marshal(netCfg)
+	logrus.Debugf("Generated network config: %s", string(b))
 
 	cc := rancherConfig.CloudConfig{
 		Rancher: rancherConfig.RancherConfig{
 			Network: netCfg,
 		},
+	}
+
+	// Post to phone home URL on first boot
+	if _, err = os.Stat(rancherConfig.CloudConfigNetworkFile); err != nil {
+		if _, err = http.Post(m.PhoneHomeURL, "application/json", bytes.NewReader([]byte{})); err != nil {
+			logrus.Errorf("Failed to post to Packet phone home URL: %v", err)
+		}
 	}
 
 	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile), 0700); err != nil {

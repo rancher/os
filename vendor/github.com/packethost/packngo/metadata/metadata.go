@@ -9,6 +9,7 @@ const (
 )
 
 type Metadata struct {
+	PhoneHomeURL    string          `json:"phone_home_url"`
 	ApiUrl          string          `json:"api_url"`
 	Id              string          `json:"id"`
 	Hostname        string          `json:"hostname"`
