@@ -164,6 +164,11 @@ func resizeDevice(cfg *rancherConfig.CloudConfig) error {
 	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, "1")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+	cmd.Run()
+
+	cmd = exec.Command("partprobe", cfg.Rancher.ResizeDevice)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
 		return err
