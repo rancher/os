@@ -113,7 +113,7 @@ NETWORK_ARGS="rancher.network.interfaces.bond0.address=$ADDRESS rancher.network.
 
 tinkerbell_post 107
 
-COMMON_ARGS="console=ttyS1,115200n8 rancher.cloud_init.datasources=[packet] ${NETWORK_ARGS}"
+COMMON_ARGS="console=ttyS1,115200n8 rancher.autologin=ttyS1 rancher.cloud_init.datasources=[packet] ${NETWORK_ARGS}"
 if [ "$RAID" = "true" ]; then
     ros install -f -t raid -i ${INSTALLER_IMAGE} -d ${DEV_PREFIX}a -a "rancher.state.mdadm_scan ${COMMON_ARGS}" --no-reboot
 else
