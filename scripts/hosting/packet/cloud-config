@@ -1,4 +1,0 @@
-#cloud-config
-runcmd:
-- wget -O /tmp/cc https://raw.githubusercontent.com/rancher/os/master/scripts/hosting/packet/packet.sh
-- bash -x /tmp/cc
