@@ -6,7 +6,7 @@ INSTALLER_IMAGE=rancher/os:v0.7.0-rc1
 
 tinkerbell_post()
 {
-    docker run rancher/curl -X POST -H "Content-Type: application/json" -d "{'type':'provisioning.$1'}" ${TINKERBELL_URL}
+    system-docker run rancher/curl -X POST -H "Content-Type: application/json" -d "{'type':'provisioning.$1'}" ${TINKERBELL_URL}
 }
 
 tinkerbell_post 104
@@ -106,7 +106,7 @@ umount /mnt/oem
 
 tinkerbell_post 106
 
-METADATA=$(docker run rancher/curl -sL https://metadata.packet.net/metadata)
+METADATA=$(system-docker run rancher/curl -sL https://metadata.packet.net/metadata)
 eval $(echo ${METADATA} | jq -r '.network.addresses[] | select(.address_family == 4 and .public) | "ADDRESS=\(.address)/\(.cidr)\nGATEWAY=\(.gateway)"')
 eval $(echo ${METADATA} | jq -r '.network.interfaces[0] | "MAC=\(.mac)"')
 NETWORK_ARGS="rancher.network.interfaces.bond0.address=$ADDRESS rancher.network.interfaces.bond0.gateway=$GATEWAY rancher.network.interfaces.mac:${MAC}.bond=bond0"
