@@ -79,6 +79,7 @@ func osSubcommands() []cli.Command {
 	}
 }
 
+// TODO: this and the getLatestImage should probably move to utils/network and be suitably cached.
 func getImages() (*Images, error) {
 	upgradeUrl, err := getUpgradeUrl()
 	if err != nil {
@@ -128,13 +129,30 @@ func osMetaDataGet(c *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	for _, image := range images.Available {
+	cfg := config.LoadConfig()
+	runningName := cfg.Rancher.Upgrade.Image + ":" + config.VERSION
+
+	foundRunning := false
+	for i := len(images.Available) - 1; i >= 0; i-- {
+		image := images.Available[i]
 		_, _, err := client.ImageInspectWithRaw(context.Background(), image, false)
+		local := "local"
 		if dockerClient.IsErrImageNotFound(err) {
-			fmt.Println(image, "remote")
-		} else {
-			fmt.Println(image, "local")
+			local = "remote"
 		}
+		available := "available"
+		if image == images.Current {
+			available = "latest"
+		}
+		var running string
+		if image == runningName {
+			foundRunning = true
+			running = "running"
+		}
+		fmt.Println(image, local, available, running)
+	}
+	if !foundRunning {
+		fmt.Println(config.VERSION, "running")
 	}
 
 	return nil
