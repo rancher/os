@@ -6,10 +6,10 @@ INSTALLER_IMAGE=rancher/os:v0.7.0-rc2
 
 tinkerbell_post()
 {
-    system-docker run rancher/curl -X POST -H "Content-Type: application/json" -d "{\"type\":\"provisioning.$1\"}" ${TINKERBELL_URL}
+    system-docker run rancher/curl -X POST -H "Content-Type: application/json" -d "{\"type\":\"provisioning.$1\",\"body\":\"$2\"}" ${TINKERBELL_URL}
 }
 
-tinkerbell_post 104
+tinkerbell_post 104 "Connected to magic install system"
 
 DEV_PREFIX=/dev/sd
 if [ -e /dev/vda ]; then
@@ -93,7 +93,7 @@ system-docker run --privileged --entrypoint /bin/bash ${INSTALLER_IMAGE} -c "mkf
 system-docker run --privileged --entrypoint /bin/bash ${INSTALLER_IMAGE} -c "mkfs.ext4 -L RANCHER_STATE $ROOT"
 system-docker run --privileged --entrypoint /bin/bash ${INSTALLER_IMAGE} -c "mkfs.ext4 -L RANCHER_OEM $OEM"
 
-tinkerbell_post 105
+tinkerbell_post 105 "Server partitions created"
 
 mkdir -p /mnt/oem
 mount $(ros dev LABEL=RANCHER_OEM) /mnt/oem
@@ -104,14 +104,14 @@ mounts:
 EOF
 umount /mnt/oem
 
-tinkerbell_post 106
+tinkerbell_post 106 "OEM drive configured"
 
 METADATA=$(system-docker run rancher/curl -sL https://metadata.packet.net/metadata)
 eval $(echo ${METADATA} | jq -r '.network.addresses[] | select(.address_family == 4 and .public) | "ADDRESS=\(.address)/\(.cidr)\nGATEWAY=\(.gateway)"')
 eval $(echo ${METADATA} | jq -r '.network.interfaces[0] | "MAC=\(.mac)"')
 NETWORK_ARGS="rancher.network.interfaces.bond0.address=$ADDRESS rancher.network.interfaces.bond0.gateway=$GATEWAY rancher.network.interfaces.mac:${MAC}.bond=bond0"
 
-tinkerbell_post 107
+tinkerbell_post 107 "Network interface configuration fetched from metadata"
 
 COMMON_ARGS="console=ttyS1,115200n8 rancher.autologin=ttyS1 rancher.cloud_init.datasources=[packet] ${NETWORK_ARGS}"
 if [ "$RAID" = "true" ]; then
@@ -120,5 +120,5 @@ else
     ros install -f -t noformat -i ${INSTALLER_IMAGE} -d ${DEV_PREFIX}a -a "${COMMON_ARGS}" --no-reboot
 fi
 
-tinkerbell_post 108
+tinkerbell_post 108 "Installation finished, rebooting server"
 reboot
