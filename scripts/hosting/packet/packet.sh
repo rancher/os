@@ -2,7 +2,7 @@
 set -e
 
 TINKERBELL_URL=$(cat /proc/cmdline | sed -e 's/^.*tinkerbell=//' -e 's/ .*$//')/phone-home
-INSTALLER_IMAGE=rancher/os:v0.7.0-rc1
+INSTALLER_IMAGE=rancher/os:v0.7.0-rc2
 
 tinkerbell_post()
 {
