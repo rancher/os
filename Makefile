@@ -25,6 +25,9 @@ run: build/initrd/.id .dapper
 	./.dapper -m bind build-target
 	./scripts/run
 
+integration-test: .dapper
+	./.dapper -m bind integration-test
+
 shell-bind: .dapper
 	./.dapper -m bind -s
 
