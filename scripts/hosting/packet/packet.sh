@@ -6,7 +6,7 @@ INSTALLER_IMAGE=rancher/os:v0.7.0-rc1
 
 tinkerbell_post()
 {
-    system-docker run rancher/curl -X POST -H "Content-Type: application/json" -d "{'type':'provisioning.$1'}" ${TINKERBELL_URL}
+    system-docker run rancher/curl -X POST -H "Content-Type: application/json" -d "{\"type\":\"provisioning.$1\"}" ${TINKERBELL_URL}
 }
 
 tinkerbell_post 104
