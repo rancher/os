@@ -18,15 +18,15 @@ trash-keep: .dapper
 
 deps: trash
 
-build/initrd/.id:
-	dapper prepare
+build/initrd/.id: .dapper
+	./.dapper prepare
 
-run: build/initrd/.id
-	dapper -m bind build-target
+run: build/initrd/.id .dapper
+	./.dapper -m bind build-target
 	./scripts/run
 
-shell-bind:
-	dapper -m bind -s
+shell-bind: .dapper
+	./.dapper -m bind -s
 
 clean:
 	@./scripts/clean
