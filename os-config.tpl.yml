@@ -145,8 +145,10 @@ rancher:
       uts: host
       privileged: true
       volumes_from:
-      - command-volumes
       - system-volumes
+      volumes:
+      - /usr/bin/ros:/usr/bin/ros
+      - /usr/bin/ros:/usr/bin/cloud-init-execute
     cloud-init-pre:
       image: {{.OS_REPO}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
       environment:
