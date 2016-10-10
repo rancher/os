@@ -93,7 +93,7 @@ func Main() {
 		}
 	}
 
-	if err := ioutil.WriteFile("/etc/issue", []byte(`RancherOS \n \l`), 0644); err != nil {
+	if err := ioutil.WriteFile("/etc/issue", []byte("RancherOS \\n \\l\n"), 0644); err != nil {
 		log.Error(err)
 	}
 
@@ -131,29 +131,42 @@ func Main() {
 func generateRespawnConf(cmdline string) string {
 	var respawnConf bytes.Buffer
 
-	for i := 1; i < 7; i++ {
-		tty := fmt.Sprintf("tty%d", i)
-		respawnConf.WriteString(writeAgetty(cmdline, tty))
+	autologins := make(map[string]struct{})
+	for _, v := range config.GetCmdLineValues(cmdline, "rancher.autologin") {
+		autologins[v] = struct{}{}
 	}
-	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
-		if !strings.Contains(cmdline, fmt.Sprintf("console=%s", tty)) {
+
+	ttys := append(config.GetCmdLineValues(cmdline, "console"),
+		[]string{"tty1", "tty2", "tty3", "tty4", "tty5", "tty6", "tty7"}...)
+	unique_ttys := make(map[string]struct{})
+	for _, tty := range ttys {
+		baudrate := "115200"
+		kv := strings.SplitN(tty, ",", 2)
+		if len(kv) == 2 {
+			tty = kv[0]
+			baudrate = kv[1]
+		}
+
+		if _, ok := unique_ttys[tty]; ok {
 			continue
 		}
-		respawnConf.WriteString(writeAgetty(cmdline, tty))
+		_, autologin := autologins[tty]
+		respawnConf.WriteString(writeAgetty(cmdline, tty, baudrate, autologin))
+		unique_ttys[tty] = struct{}{}
 	}
 
 	respawnConf.WriteString("/usr/sbin/sshd -D")
 	return respawnConf.String()
 }
 
-func writeAgetty(cmdline, tty string) string {
+func writeAgetty(cmdline, tty, baudrate string, autologin bool) string {
 	var agettyLine bytes.Buffer
 
 	agettyLine.WriteString(gettyCmd)
-	if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
+	if autologin {
 		agettyLine.WriteString(" --autologin rancher")
 	}
-	agettyLine.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+	agettyLine.WriteString(fmt.Sprintf(" %s %s\n", baudrate, tty))
 	return agettyLine.String()
 }
 

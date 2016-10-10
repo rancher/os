@@ -302,3 +302,22 @@ func TestUserDocker(t *testing.T) {
 	assert.True(v.(bool))
 
 }
+
+func TestGetCmdline(t *testing.T) {
+	assert := require.New(t)
+
+	cmdline := `rancher.password=pass! rancher.console=alpine rancher.console=ubuntu this="is a trick" console=tty0 console=ttyAMA0 console=ttyS1,9600`
+	// just to make sure that yes, this won't get the non-rancher values i want
+	config := parseCmdline(cmdline)
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"password": "pass!",
+			"console":  "ubuntu",
+		},
+	}, config)
+
+	consoles := GetCmdLineValues(cmdline, "console")
+	assert.Equal([]string{"tty0", "ttyAMA0", "ttyS1,9600"}, consoles)
+
+	assert.Equal([]string{`"is a trick"`}, GetCmdLineValues(cmdline, "this"))
+}
