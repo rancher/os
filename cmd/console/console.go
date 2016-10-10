@@ -93,8 +93,7 @@ func Main() {
 		}
 	}
 
-	cmd = exec.Command("bash", "-c", `echo 'RancherOS \n \l' > /etc/issue`)
-	if err := cmd.Run(); err != nil {
+	if err := ioutil.WriteFile("/etc/issue", []byte(`RancherOS \n \l`), 0644); err != nil {
 		log.Error(err)
 	}
 
@@ -134,29 +133,28 @@ func generateRespawnConf(cmdline string) string {
 
 	for i := 1; i < 7; i++ {
 		tty := fmt.Sprintf("tty%d", i)
-
-		respawnConf.WriteString(gettyCmd)
-		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
-		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(writeAgetty(cmdline, tty))
 	}
-
 	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
 		if !strings.Contains(cmdline, fmt.Sprintf("console=%s", tty)) {
 			continue
 		}
-
-		respawnConf.WriteString(gettyCmd)
-		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
-		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(writeAgetty(cmdline, tty))
 	}
 
 	respawnConf.WriteString("/usr/sbin/sshd -D")
-
 	return respawnConf.String()
+}
+
+func writeAgetty(cmdline, tty string) string {
+	var agettyLine bytes.Buffer
+
+	agettyLine.WriteString(gettyCmd)
+	if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
+		agettyLine.WriteString(" --autologin rancher")
+	}
+	agettyLine.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+	return agettyLine.String()
 }
 
 func writeRespawn() error {
