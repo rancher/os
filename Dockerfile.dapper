@@ -20,6 +20,7 @@ RUN apt-get update && \
         gccgo \
         genisoimage \
         git \
+        grub-efi \
         isolinux \
         less \
         libblkid-dev \
