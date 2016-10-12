@@ -1,7 +1,6 @@
 package control
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -178,8 +177,6 @@ func osVersion(c *cli.Context) error {
 }
 
 func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgradeConsole bool, kernelArgs string) error {
-	in := bufio.NewReader(os.Stdin)
-
 	command := []string{
 		"-t", "rancher-upgrade",
 		"-r", config.VERSION,
@@ -206,7 +203,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 	if len(imageSplit) > 1 && imageSplit[1] == config.VERSION+config.SUFFIX {
 		confirmation = fmt.Sprintf("Already at version %s. Continue anyway", imageSplit[1])
 	}
-	if !force && !yes(in, confirmation) {
+	if !force && !yes(confirmation) {
 		os.Exit(1)
 	}
 
@@ -256,7 +253,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 			return err
 		}
 
-		if reboot && (force || yes(in, "Continue with reboot")) {
+		if reboot && (force || yes("Continue with reboot")) {
 			log.Info("Rebooting")
 			power.Reboot()
 		}
