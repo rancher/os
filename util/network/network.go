@@ -37,7 +37,7 @@ func getServices(urls []string, key string) ([]string, error) {
 
 	for _, url := range urls {
 		indexURL := fmt.Sprintf("%s/index.yml", url)
-		content, err := LoadResource(indexURL, true)
+		content, err := LoadResource(indexURL, true, false)
 		if err != nil {
 			log.Errorf("Failed to load %s: %v", indexURL, err)
 			continue
@@ -79,10 +79,12 @@ func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
 	}
 }
 
-func loadFromNetwork(location string) ([]byte, error) {
-	bytes := cacheLookup(location)
-	if bytes != nil {
-		return bytes, nil
+func loadFromNetwork(location string, cache bool) ([]byte, error) {
+	if cache {
+		bytes := cacheLookup(location)
+		if bytes != nil {
+			return bytes, nil
+		}
 	}
 
 	cfg := config.LoadConfig()
@@ -105,7 +107,9 @@ func loadFromNetwork(location string) ([]byte, error) {
 				return nil, err
 			}
 
-			cacheAdd(location, bytes)
+			if cache {
+				cacheAdd(location, bytes)
+			}
 			return bytes, nil
 		}
 
@@ -115,12 +119,12 @@ func loadFromNetwork(location string) ([]byte, error) {
 	return nil, err
 }
 
-func LoadResource(location string, network bool) ([]byte, error) {
+func LoadResource(location string, network, cache bool) ([]byte, error) {
 	if strings.HasPrefix(location, "http:/") || strings.HasPrefix(location, "https:/") {
 		if !network {
 			return nil, ErrNoNetwork
 		}
-		return loadFromNetwork(location)
+		return loadFromNetwork(location, cache)
 	} else if strings.HasPrefix(location, "/") {
 		return ioutil.ReadFile(location)
 	}
@@ -133,7 +137,7 @@ func serviceURL(url, name string) string {
 }
 
 func LoadServiceResource(name string, useNetwork bool, cfg *config.CloudConfig) ([]byte, error) {
-	bytes, err := LoadResource(name, useNetwork)
+	bytes, err := LoadResource(name, useNetwork, true)
 	if err == nil {
 		log.Debugf("Loaded %s from %s", name, name)
 		return bytes, nil
@@ -145,7 +149,7 @@ func LoadServiceResource(name string, useNetwork bool, cfg *config.CloudConfig) 
 	urls := cfg.Rancher.Repositories.ToArray()
 	for _, url := range urls {
 		serviceURL := serviceURL(url, name)
-		bytes, err = LoadResource(serviceURL, useNetwork)
+		bytes, err = LoadResource(serviceURL, useNetwork, true)
 		if err == nil {
 			log.Debugf("Loaded %s from %s", name, serviceURL)
 			return bytes, nil
