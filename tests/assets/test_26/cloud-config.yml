@@ -15,13 +15,14 @@ write_files:
   permissions: "0755"
   owner: root
   content: |
-    touch /home/rancher/test4
+    wait-for-docker
+    docker run -d nginx
 - path: /var/lib/rancher/conf/cloud-config-script
   permissions: "0755"
   owner: root
   content: |
     #!/bin/bash
-    touch /home/rancher/test5
+    touch /home/rancher/test4
 runcmd:
 - []
 - [ test ]
