@@ -111,6 +111,11 @@ func Main() {
 	if err := runScript(startScript); err != nil {
 		log.Error(err)
 	}
+
+	if err := ioutil.WriteFile(consoleDone, []byte(cfg.Rancher.Console), 0644); err != nil {
+		log.Error(err)
+	}
+
 	if err := runScript("/etc/rc.local"); err != nil {
 		log.Error(err)
 	}
@@ -120,10 +125,6 @@ func Main() {
 	respawnBinPath, err := exec.LookPath("respawn")
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	if err := ioutil.WriteFile(consoleDone, []byte(cfg.Rancher.Console), 0644); err != nil {
-		log.Error(err)
 	}
 
 	log.Fatal(syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ()))
