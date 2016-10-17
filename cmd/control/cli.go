@@ -25,6 +25,12 @@ func Main() {
 
 	app.Commands = []cli.Command{
 		{
+			Name:            "bootstrap",
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          bootstrapAction,
+		},
+		{
 			Name:        "config",
 			ShortName:   "c",
 			Usage:       "configure settings",
@@ -73,10 +79,22 @@ func Main() {
 			Subcommands: osSubcommands(),
 		},
 		{
+			Name:            "preload-images",
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          preloadImagesAction,
+		},
+		{
 			Name:        "tls",
 			Usage:       "setup tls configuration",
 			HideHelp:    true,
 			Subcommands: tlsConfCommands(),
+		},
+		{
+			Name:            "udev-settle",
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          udevSettleAction,
 		},
 		installCommand,
 		selinuxCommand(),

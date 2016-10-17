@@ -105,10 +105,10 @@ func Main() {
 
 	cloudinitexecute.ApplyConsole(cfg)
 
-	if err := runScript(config.CloudConfigScriptFile); err != nil {
+	if err := util.RunScript(config.CloudConfigScriptFile); err != nil {
 		log.Error(err)
 	}
-	if err := runScript(startScript); err != nil {
+	if err := util.RunScript(startScript); err != nil {
 		log.Error(err)
 	}
 
@@ -116,7 +116,7 @@ func Main() {
 		log.Error(err)
 	}
 
-	if err := runScript("/etc/rc.local"); err != nil {
+	if err := util.RunScript("/etc/rc.local"); err != nil {
 		log.Error(err)
 	}
 
@@ -281,30 +281,4 @@ func setupSSH(cfg *config.CloudConfig) error {
 	}
 
 	return os.MkdirAll("/var/run/sshd", 0644)
-}
-
-func runScript(path string) error {
-	if !util.ExistsAndExecutable(path) {
-		return nil
-	}
-
-	script, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-
-	magic := make([]byte, 2)
-	if _, err = script.Read(magic); err != nil {
-		return err
-	}
-
-	cmd := exec.Command("/bin/sh", path)
-	if string(magic) == "#!" {
-		cmd = exec.Command(path)
-	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
 }

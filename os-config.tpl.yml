@@ -15,15 +15,14 @@ rancher:
       dns:
         nameservers: [8.8.8.8, 8.8.4.4]
   bootstrap:
-    state-script:
-      image: {{.OS_REPO}}/os-statescript:{{.VERSION}}{{.SUFFIX}}
+    bootstrap:
+      image: {{.OS_REPO}}/os-bootstrap:{{.VERSION}}{{.SUFFIX}}
+      command: ros bootstrap
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
-        io.rancher.os.after: udev-bootstrap
       log_driver: json-file
-      net: host
-      uts: host
+      net: none
       privileged: true
       volumes:
       - /dev:/host/dev
@@ -31,46 +30,6 @@ rancher:
       - /lib/firmware:/lib/firmware
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/share/ros:/usr/share/ros:ro
-    udev-bootstrap:
-      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
-      environment:
-      - BOOTSTRAP=true
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-      log_driver: json-file
-      net: host
-      uts: host
-      privileged: true
-      volumes:
-      - /dev:/host/dev
-      - /lib/modules:/lib/modules
-      - /lib/firmware:/lib/firmware
-      - /usr/bin/ros:/usr/bin/ros:ro
-  autoformat:
-    autoformat:
-      image: {{.OS_REPO}}/os-autoformat:{{.VERSION}}{{.SUFFIX}}
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-      log_driver: json-file
-      net: none
-      privileged: true
-    udev-autoformat:
-      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-        io.rancher.os.after: autoformat
-      log_driver: json-file
-      net: host
-      uts: host
-      privileged: true
-      volumes:
-      - /dev:/host/dev
-      - /lib/modules:/lib/modules
-      - /lib/firmware:/lib/firmware
-      - /usr/bin/ros:/usr/bin/ros:ro
   bootstrap_docker:
     bridge: none
     storage_driver: overlay
@@ -157,7 +116,7 @@ rancher:
         io.rancher.os.detach: "false"
         io.rancher.os.reloadconfig: "true"
         io.rancher.os.scope: system
-        io.rancher.os.after: udev,preload-system-images
+        io.rancher.os.after: udev
       net: host
       uts: host
       privileged: true
@@ -263,34 +222,14 @@ rancher:
       volumes_from:
       - command-volumes
       - system-volumes
-    preload-system-images:
-      image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
-      environment:
-      - SYSTEM_IMAGES=true
-      labels:
-        io.rancher.os.detach: "false"
-        io.rancher.os.scope: system
-      net: host
-      privileged: true
-      volumes:
-      - /var/run/system-docker.sock:/var/run/docker.sock
-      - /var/lib/rancher/preload/system-docker:/mnt/preload
-      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
-      volumes_from:
-      - command-volumes
-      - system-volumes
     preload-user-images:
-      image: {{.OS_REPO}}/os-preload:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: ros preload-images
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
         io.rancher.os.after: console
-      net: host
       privileged: true
-      volumes:
-      - /var/run/:/var/run/
-      - /var/lib/rancher/preload/docker:/mnt/preload
-      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       volumes_from:
       - command-volumes
       - system-volumes
@@ -333,7 +272,8 @@ rancher:
       - /var/log:/var/log
       - /var/run:/var/run
     udev-cold:
-      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: ros udev-settle
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -344,9 +284,8 @@ rancher:
       - command-volumes
       - system-volumes
     udev:
-      image: {{.OS_REPO}}/os-udev:{{.VERSION}}{{.SUFFIX}}
-      environment:
-      - DAEMON=true
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: udevd
       labels:
         io.rancher.os.detach: "true"
         io.rancher.os.scope: system

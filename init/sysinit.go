@@ -9,9 +9,14 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/project/options"
+	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+)
+
+const (
+	systemImagesPreloadDirectory = "/var/lib/rancher/preload/system-docker"
 )
 
 func hasImage(name string) bool {
@@ -90,6 +95,10 @@ func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 
 func SysInit() error {
 	cfg := config.LoadConfig()
+
+	if err := control.PreloadImages(docker.NewSystemClient, systemImagesPreloadDirectory); err != nil {
+		log.Errorf("Failed to preload System Docker images: %v", err)
+	}
 
 	_, err := config.ChainCfgFuncs(cfg,
 		loadImages,
