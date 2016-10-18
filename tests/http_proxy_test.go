@@ -9,9 +9,9 @@ func (s *QemuSuite) TestHttpProxy(c *C) {
 	s.CheckCall(c, `
 set -x -e
 
-sudo system-docker inspect docker env | grep HTTP_PROXY=invalid
-sudo system-docker inspect docker env | grep HTTPS_PROXY=invalid
-sudo system-docker inspect docker env | grep NO_PROXY=invalid
+sudo system-docker inspect docker | grep HTTP_PROXY=invalid
+sudo system-docker inspect docker | grep HTTPS_PROXY=invalid
+sudo system-docker inspect docker | grep NO_PROXY=invalid
 
 if docker pull busybox; then
     exit 1
