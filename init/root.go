@@ -10,8 +10,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/dfs"
 )
 
 func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) {
@@ -21,7 +21,7 @@ func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) 
 		return false, err
 	}
 
-	if err := dockerlaunch.CreateSymlink(usrVer, path.Join(rootfs, "usr")); err != nil {
+	if err := dfs.CreateSymlink(usrVer, path.Join(rootfs, "usr")); err != nil {
 		return false, err
 	}
 

@@ -36,9 +36,9 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/pkg"
-	"github.com/rancher/netconf"
 	"github.com/rancher/os/cmd/cloudinitsave/gce"
 	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/netconf"
 	"github.com/rancher/os/util"
 )
 
@@ -231,8 +231,8 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 }
 
 func enableDoLinkLocal() {
-	err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
-		Interfaces: map[string]netconf.InterfaceConfig{
+	err := netconf.ApplyNetworkConfigs(&rancherConfig.NetworkConfig{
+		Interfaces: map[string]rancherConfig.InterfaceConfig{
 			"eth0": {
 				IPV4LL: true,
 			},

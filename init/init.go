@@ -12,8 +12,8 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
@@ -27,7 +27,7 @@ const (
 )
 
 var (
-	mountConfig = dockerlaunch.Config{
+	mountConfig = dfs.Config{
 		CgroupHierarchy: map[string]string{
 			"cpu":      "cpu",
 			"cpuacct":  "cpu",
@@ -162,10 +162,10 @@ func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) 
 	return mountOem(cfg)
 }
 
-func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dockerlaunch.Config, []string) {
-	var launchConfig dockerlaunch.Config
+func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dfs.Config, []string) {
+	var launchConfig dfs.Config
 
-	args := dockerlaunch.ParseConfig(&launchConfig, dockerCfg.FullArgs()...)
+	args := dfs.ParseConfig(&launchConfig, dockerCfg.FullArgs()...)
 
 	launchConfig.DnsConfig.Nameservers = cfg.Rancher.Defaults.Network.Dns.Nameservers
 	launchConfig.DnsConfig.Search = cfg.Rancher.Defaults.Network.Dns.Search
@@ -220,7 +220,7 @@ func RunInit() error {
 	boot2DockerEnvironment := false
 	initFuncs := []config.CfgFunc{
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			return c, dockerlaunch.PrepareFs(&mountConfig)
+			return c, dfs.PrepareFs(&mountConfig)
 		},
 		mountOem,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
@@ -280,7 +280,7 @@ func RunInit() error {
 		},
 		loadModules,
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			return c, dockerlaunch.PrepareFs(&mountConfig)
+			return c, dfs.PrepareFs(&mountConfig)
 		},
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			network.SetProxyEnvironmentVariables(c)
@@ -300,7 +300,7 @@ func RunInit() error {
 	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
 
 	log.Info("Launching System Docker")
-	_, err = dockerlaunch.LaunchDocker(launchConfig, config.SYSTEM_DOCKER_BIN, args...)
+	_, err = dfs.LaunchDocker(launchConfig, config.SYSTEM_DOCKER_BIN, args...)
 	if err != nil {
 		return err
 	}
