@@ -8,6 +8,7 @@ chmod 0600 ./assets/rancher.key
 QEMU=1
 UNAME=$(uname)
 INTERACTIVE="-it"
+: ${SSH_PORT:=2233}
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -29,6 +30,10 @@ while [ "$#" -gt 0 ]; do
             shift 1
             KEY="$1"
             ;;
+        --port)
+            shift 1
+            SSH_PORT="$1"
+            ;;
         *)
             break
             ;;
@@ -37,7 +42,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$QEMU" == "1" ]; then
-    exec ssh -p 2222 -F ./assets/scripts_ssh_config -i ${KEY:-./assets/rancher.key} rancher@localhost "$@"
+    exec ssh -p ${SSH_PORT} -F ./assets/scripts_ssh_config -i ${KEY:-./assets/rancher.key} rancher@localhost "$@"
 elif [ "$QIND" == "1" ]; then
     NAME=${NAME:-ros-qind}
     if [ -n "$KEY" ]; then
