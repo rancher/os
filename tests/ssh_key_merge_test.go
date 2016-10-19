@@ -1,8 +1,9 @@
 package integration
 
-import . "gopkg.in/check.v1"
+import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestSshKeyMerge(c *C) {
+	c.Parallel()
 	err := s.RunQemu()
 	c.Assert(err, IsNil)
 

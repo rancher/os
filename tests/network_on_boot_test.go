@@ -1,8 +1,9 @@
 package integration
 
-import . "gopkg.in/check.v1"
+import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestNetworkOnBoot(c *C) {
+	c.Parallel()
 	err := s.RunQemu("--cloud-config", "./tests/assets/test_18/cloud-config.yml", "-net", "nic,vlan=1,model=virtio")
 	c.Assert(err, IsNil)
 

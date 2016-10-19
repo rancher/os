@@ -1,8 +1,9 @@
 package integration
 
-import . "gopkg.in/check.v1"
+import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestMounts(c *C) {
+	c.Parallel()
 	err := s.RunQemu("--cloud-config", "./tests/assets/test_23/cloud-config.yml", "--second-drive")
 	c.Assert(err, IsNil)
 

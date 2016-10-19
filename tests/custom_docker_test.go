@@ -1,8 +1,9 @@
 package integration
 
-import . "gopkg.in/check.v1"
+import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestCustomDocker(c *C) {
+	c.Parallel()
 	err := s.RunQemu("--cloud-config", "./tests/assets/test_05/cloud-config.yml")
 	c.Assert(err, IsNil)
 
@@ -35,6 +36,7 @@ docker ps | grep nginx`)
 }
 
 func (s *QemuSuite) TestCustomDockerInPersistentConsole(c *C) {
+	c.Parallel()
 	err := s.RunQemu("--cloud-config", "./tests/assets/test_25/cloud-config.yml")
 	c.Assert(err, IsNil)
 

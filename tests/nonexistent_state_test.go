@@ -1,8 +1,9 @@
 package integration
 
-import . "gopkg.in/check.v1"
+import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestNonexistentState(c *C) {
+	c.Parallel()
 	err := s.RunQemu("--no-format", "--append", "rancher.state.dev=LABEL=NONEXISTENT")
 	c.Assert(err, IsNil)
 

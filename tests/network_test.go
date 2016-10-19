@@ -1,8 +1,9 @@
 package integration
 
-import . "gopkg.in/check.v1"
+import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestNetwork(c *C) {
+	c.Parallel()
 	netArgs := []string{"-net", "nic,vlan=0,model=virtio"}
 	args := []string{"--cloud-config", "./tests/assets/test_09/cloud-config.yml"}
 	for i := 0; i < 7; i++ {

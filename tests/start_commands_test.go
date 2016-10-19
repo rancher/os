@@ -3,10 +3,11 @@ package integration
 import (
 	"fmt"
 
-	. "gopkg.in/check.v1"
+	. "github.com/cpuguy83/check"
 )
 
 func (s *QemuSuite) TestStartCommands(c *C) {
+	c.Parallel()
 	err := s.RunQemu("--cloud-config", "./tests/assets/test_26/cloud-config.yml")
 	c.Assert(err, IsNil)
 

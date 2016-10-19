@@ -3,10 +3,11 @@ package integration
 import (
 	"fmt"
 
-	. "gopkg.in/check.v1"
+	. "github.com/cpuguy83/check"
 )
 
 func (s *QemuSuite) TestUpgrade(c *C) {
+	c.Parallel()
 	err := s.RunQemuInstalled()
 	c.Assert(err, IsNil)
 

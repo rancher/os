@@ -1,10 +1,11 @@
 package integration
 
 import (
-	. "gopkg.in/check.v1"
+	. "github.com/cpuguy83/check"
 )
 
 func (s *QemuSuite) TestPreload(c *C) {
+	c.Parallel()
 	err := s.RunQemu()
 	c.Assert(err, IsNil)
 
