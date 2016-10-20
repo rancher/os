@@ -45,11 +45,25 @@ func Main() {
 			Subcommands: consoleSubcommands(),
 		},
 		{
+			Name:            "console-init",
+			Hidden:          true,
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          consoleInitAction,
+		},
+		{
 			Name:            "dev",
 			Hidden:          true,
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          devAction,
+		},
+		{
+			Name:            "docker-init",
+			Hidden:          true,
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          dockerInitAction,
 		},
 		{
 			Name:        "engine",
@@ -86,6 +100,13 @@ func Main() {
 			Action:          preloadImagesAction,
 		},
 		{
+			Name:            "switch-console",
+			Hidden:          true,
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          switchConsoleAction,
+		},
+		{
 			Name:        "tls",
 			Usage:       "setup tls configuration",
 			HideHelp:    true,
@@ -97,6 +118,13 @@ func Main() {
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          udevSettleAction,
+		},
+		{
+			Name:            "user-docker",
+			Hidden:          true,
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          userDockerAction,
 		},
 		installCommand,
 		selinuxCommand(),

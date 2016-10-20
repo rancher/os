@@ -135,7 +135,6 @@ rancher:
       read_only: true
       volumes:
       - /usr/bin/ros:/usr/bin/dockerlaunch:ro
-      - /usr/bin/ros:/usr/bin/user-docker:ro
       - /usr/bin/ros:/usr/bin/system-docker:ro
       - /usr/bin/ros:/sbin/poweroff:ro
       - /usr/bin/ros:/sbin/reboot:ro
@@ -147,13 +146,9 @@ rancher:
       - /usr/bin/ros:/usr/bin/cloud-init-save:ro
       - /usr/bin/ros:/usr/sbin/netconf:ro
       - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
-      - /usr/bin/ros:/usr/bin/switch-console:ro
-      - /usr/bin/ros:/usr/bin/console:ro
-      - /usr/bin/ros:/usr/sbin/console.sh:ro
-      - /usr/bin/ros:/usr/sbin/docker-init:ro
     console:
       image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
-      command: console
+      command: ros console-init
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: network
@@ -316,7 +311,7 @@ rancher:
       {{else -}}
       image: {{.OS_REPO}}/os-docker:1.11.2{{.SUFFIX}}
       {{end -}}
-      command: /usr/bin/user-docker
+      command: ros user-docker
       environment:
       - HTTP_PROXY
       - HTTPS_PROXY

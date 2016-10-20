@@ -1,4 +1,4 @@
-package console
+package control
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
@@ -29,7 +30,7 @@ type symlink struct {
 	oldname, newname string
 }
 
-func Main() {
+func consoleInitAction(c *cli.Context) error {
 	cfg := config.LoadConfig()
 
 	if _, err := os.Stat(rancherHome); os.IsNotExist(err) {
@@ -124,10 +125,10 @@ func Main() {
 
 	respawnBinPath, err := exec.LookPath("respawn")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	log.Fatal(syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ()))
+	return syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ())
 }
 
 func generateRespawnConf(cmdline string) string {
