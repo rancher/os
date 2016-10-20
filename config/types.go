@@ -7,7 +7,6 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
-	"github.com/rancher/netconf"
 )
 
 const (
@@ -112,8 +111,8 @@ type RancherConfig struct {
 	Disable             []string                                  `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                           `yaml:"services_include,omitempty"`
 	Modules             []string                                  `yaml:"modules,omitempty"`
-	Network             netconf.NetworkConfig                     `yaml:"network,omitempty"`
-	DefaultNetwork      netconf.NetworkConfig                     `yaml:"default_network,omitempty"`
+	Network             NetworkConfig                             `yaml:"network,omitempty"`
+	DefaultNetwork      NetworkConfig                             `yaml:"default_network,omitempty"`
 	Repositories        Repositories                              `yaml:"repositories,omitempty"`
 	Ssh                 SshConfig                                 `yaml:"ssh,omitempty"`
 	State               StateConfig                               `yaml:"state,omitempty"`
@@ -168,6 +167,39 @@ type DockerConfig struct {
 	Exec           bool     `yaml:"exec,omitempty"`
 }
 
+type NetworkConfig struct {
+	PreCmds    []string                   `yaml:"pre_cmds,omitempty"`
+	Dns        DnsConfig                  `yaml:"dns,omitempty"`
+	Interfaces map[string]InterfaceConfig `yaml:"interfaces,omitempty"`
+	PostCmds   []string                   `yaml:"post_cmds,omitempty"`
+	HttpProxy  string                     `yaml:"http_proxy,omitempty"`
+	HttpsProxy string                     `yaml:"https_proxy,omitempty"`
+	NoProxy    string                     `yaml:"no_proxy,omitempty"`
+}
+
+type InterfaceConfig struct {
+	Match       string            `yaml:"match,omitempty"`
+	DHCP        bool              `yaml:"dhcp,omitempty"`
+	DHCPArgs    string            `yaml:"dhcp_args,omitempty"`
+	Address     string            `yaml:"address,omitempty"`
+	Addresses   []string          `yaml:"addresses,omitempty"`
+	IPV4LL      bool              `yaml:"ipv4ll,omitempty"`
+	Gateway     string            `yaml:"gateway,omitempty"`
+	GatewayIpv6 string            `yaml:"gateway_ipv6,omitempty"`
+	MTU         int               `yaml:"mtu,omitempty"`
+	Bridge      string            `yaml:"bridge,omitempty"`
+	Bond        string            `yaml:"bond,omitempty"`
+	BondOpts    map[string]string `yaml:"bond_opts,omitempty"`
+	PostUp      []string          `yaml:"post_up,omitempty"`
+	PreUp       []string          `yaml:"pre_up,omitempty"`
+	Vlans       string            `yaml:"vlans,omitempty"`
+}
+
+type DnsConfig struct {
+	Nameservers []string `yaml:"nameservers,flow,omitempty"`
+	Search      []string `yaml:"search,flow,omitempty"`
+}
+
 type SshConfig struct {
 	Keys map[string]string `yaml:"keys,omitempty"`
 }
@@ -190,9 +222,9 @@ type CloudInit struct {
 }
 
 type Defaults struct {
-	Hostname string                `yaml:"hostname,omitempty"`
-	Docker   DockerConfig          `yaml:"docker,omitempty"`
-	Network  netconf.NetworkConfig `yaml:"network,omitempty"`
+	Hostname string        `yaml:"hostname,omitempty"`
+	Docker   DockerConfig  `yaml:"docker,omitempty"`
+	Network  NetworkConfig `yaml:"network,omitempty"`
 }
 
 func (r Repositories) ToArray() []string {

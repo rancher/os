@@ -1,4 +1,4 @@
-package dockerlaunch
+package dfs
 
 import (
 	"bufio"
@@ -13,9 +13,10 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libnetwork/resolvconf"
-	"github.com/rancher/docker-from-scratch/selinux"
-	"github.com/rancher/docker-from-scratch/util"
-	"github.com/rancher/netconf"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/selinux"
+	"github.com/rancher/os/util"
 )
 
 const (
@@ -45,7 +46,7 @@ type Config struct {
 	Fork            bool
 	PidOne          bool
 	CommandName     string
-	DnsConfig       netconf.DnsConfig
+	DnsConfig       config.DnsConfig
 	BridgeName      string
 	BridgeAddress   string
 	BridgeMtu       int
@@ -333,8 +334,8 @@ func createGroup() error {
 	return tryCreateFile("/etc/group", "root:x:0:\n")
 }
 
-func setupNetworking(config *Config) error {
-	if config == nil {
+func setupNetworking(cfg *Config) error {
+	if cfg == nil {
 		return nil
 	}
 
@@ -351,19 +352,19 @@ ff02::2    ip6-allrouters
 
 127.0.1.1       `+hostname)
 
-	if len(config.DnsConfig.Nameservers) != 0 {
-		if _, err := resolvconf.Build("/etc/resolv.conf", config.DnsConfig.Nameservers, config.DnsConfig.Search, nil); err != nil {
+	if len(cfg.DnsConfig.Nameservers) != 0 {
+		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.DnsConfig.Nameservers, cfg.DnsConfig.Search, nil); err != nil {
 			return err
 		}
 	}
 
-	if config.BridgeName != "" && config.BridgeName != "none" {
-		log.Debugf("Creating bridge %s (%s)", config.BridgeName, config.BridgeAddress)
-		if err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
-			Interfaces: map[string]netconf.InterfaceConfig{
-				config.BridgeName: {
-					Address: config.BridgeAddress,
-					MTU:     config.BridgeMtu,
+	if cfg.BridgeName != "" && cfg.BridgeName != "none" {
+		log.Debugf("Creating bridge %s (%s)", cfg.BridgeName, cfg.BridgeAddress)
+		if err := netconf.ApplyNetworkConfigs(&config.NetworkConfig{
+			Interfaces: map[string]config.InterfaceConfig{
+				cfg.BridgeName: {
+					Address: cfg.BridgeAddress,
+					MTU:     cfg.BridgeMtu,
 					Bridge:  "true",
 				},
 			},
@@ -375,23 +376,37 @@ ff02::2    ip6-allrouters
 	return nil
 }
 
+func GetValue(index int, args []string) string {
+	val := args[index]
+	parts := strings.SplitN(val, "=", 2)
+	if len(parts) == 1 {
+		if len(args) > index+1 {
+			return args[index+1]
+		} else {
+			return ""
+		}
+	} else {
+		return parts[1]
+	}
+}
+
 func ParseConfig(config *Config, args ...string) []string {
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "--bip") {
-			config.BridgeAddress = util.GetValue(i, args)
+			config.BridgeAddress = GetValue(i, args)
 		} else if strings.HasPrefix(arg, "--fixed-cidr") {
-			config.BridgeAddress = util.GetValue(i, args)
+			config.BridgeAddress = GetValue(i, args)
 		} else if strings.HasPrefix(arg, "-b") || strings.HasPrefix(arg, "--bridge") {
-			config.BridgeName = util.GetValue(i, args)
+			config.BridgeName = GetValue(i, args)
 		} else if strings.HasPrefix(arg, "--config-file") {
-			config.DaemonConfig = util.GetValue(i, args)
+			config.DaemonConfig = GetValue(i, args)
 		} else if strings.HasPrefix(arg, "--mtu") {
-			mtu, err := strconv.Atoi(util.GetValue(i, args))
+			mtu, err := strconv.Atoi(GetValue(i, args))
 			if err != nil {
 				config.BridgeMtu = mtu
 			}
 		} else if strings.HasPrefix(arg, "-g") || strings.HasPrefix(arg, "--graph") {
-			config.GraphDirectory = util.GetValue(i, args)
+			config.GraphDirectory = GetValue(i, args)
 		}
 	}
 
@@ -454,7 +469,7 @@ func touchSockets(args ...string) error {
 
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "-H") {
-			val := util.GetValue(i, args)
+			val := GetValue(i, args)
 			if strings.HasPrefix(val, "unix://") {
 				val = val[len("unix://"):]
 				log.Debugf("Creating temp file at %s", val)

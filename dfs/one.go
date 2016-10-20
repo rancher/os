@@ -1,5 +1,6 @@
 // +build linux
-package dockerlaunch
+
+package dfs
 
 import (
 	"os"

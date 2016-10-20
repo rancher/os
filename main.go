@@ -6,7 +6,6 @@ import (
 	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancher/cniglue"
-	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/cmd/console"
@@ -20,6 +19,7 @@ import (
 	"github.com/rancher/os/cmd/systemdocker"
 	"github.com/rancher/os/cmd/userdocker"
 	"github.com/rancher/os/cmd/wait"
+	"github.com/rancher/os/dfs"
 	osInit "github.com/rancher/os/init"
 )
 
@@ -30,7 +30,7 @@ var entrypoints = map[string]func(){
 	"console.sh":         console.Main,
 	"docker":             docker.Main,
 	"docker-init":        dockerinit.Main,
-	"dockerlaunch":       dockerlaunch.Main,
+	"dockerlaunch":       dfs.Main,
 	"halt":               power.Halt,
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,

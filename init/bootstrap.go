@@ -4,9 +4,9 @@ import (
 	"syscall"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/util"
 )
 
@@ -25,7 +25,7 @@ func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
 	launchConfig.LogFile = ""
 	launchConfig.NoLog = true
 
-	cmd, err := dockerlaunch.LaunchDocker(launchConfig, config.SYSTEM_DOCKER_BIN, args...)
+	cmd, err := dfs.LaunchDocker(launchConfig, config.SYSTEM_DOCKER_BIN, args...)
 	if err != nil {
 		return nil, err
 	}

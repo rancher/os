@@ -9,10 +9,10 @@ import (
 	log "github.com/Sirupsen/logrus"
 
 	"github.com/docker/libnetwork/resolvconf"
-	"github.com/rancher/netconf"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/hostname"
+	"github.com/rancher/os/netconf"
 )
 
 var (

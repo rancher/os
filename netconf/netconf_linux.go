@@ -13,6 +13,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"github.com/flynn/go-shlex"
 
+	"github.com/rancher/os/config"
 	"github.com/ryanuber/go-glob"
 	"github.com/vishvananda/netlink"
 )
@@ -26,7 +27,7 @@ var (
 	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
 )
 
-func createInterfaces(netCfg *NetworkConfig) {
+func createInterfaces(netCfg *config.NetworkConfig) {
 	configured := map[string]bool{}
 
 	for name, iface := range netCfg.Interfaces {
@@ -64,7 +65,7 @@ func createInterfaces(netCfg *NetworkConfig) {
 	}
 }
 
-func createSlaveInterfaces(netCfg *NetworkConfig) {
+func createSlaveInterfaces(netCfg *config.NetworkConfig) {
 	links, err := netlink.LinkList()
 	if err != nil {
 		log.Errorf("Failed to list links: %v", err)
@@ -91,9 +92,9 @@ func createSlaveInterfaces(netCfg *NetworkConfig) {
 	}
 }
 
-func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool) {
+func findMatch(link netlink.Link, netCfg *config.NetworkConfig) (config.InterfaceConfig, bool) {
 	linkName := link.Attrs().Name
-	var match InterfaceConfig
+	var match config.InterfaceConfig
 	exactMatch := false
 	found := false
 
@@ -135,25 +136,25 @@ func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool)
 	return match, exactMatch || found
 }
 
-func populateDefault(netCfg *NetworkConfig) {
+func populateDefault(netCfg *config.NetworkConfig) {
 	if netCfg.Interfaces == nil {
-		netCfg.Interfaces = map[string]InterfaceConfig{}
+		netCfg.Interfaces = map[string]config.InterfaceConfig{}
 	}
 
 	if len(netCfg.Interfaces) == 0 {
-		netCfg.Interfaces["eth*"] = InterfaceConfig{
+		netCfg.Interfaces["eth*"] = config.InterfaceConfig{
 			DHCP: true,
 		}
 	}
 
 	if _, ok := netCfg.Interfaces["lo"]; !ok {
-		netCfg.Interfaces["lo"] = InterfaceConfig{
+		netCfg.Interfaces["lo"] = config.InterfaceConfig{
 			Address: "127.0.0.1/8",
 		}
 	}
 }
 
-func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
+func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
 	populateDefault(netCfg)
 
 	log.Debugf("Config: %#v", netCfg)
@@ -182,7 +183,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 	return err
 }
 
-func RunDhcp(netCfg *NetworkConfig, setHostname, setDns bool) error {
+func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDns bool) error {
 	populateDefault(netCfg)
 
 	links, err := netlink.LinkList()
@@ -211,7 +212,7 @@ func RunDhcp(netCfg *NetworkConfig, setHostname, setDns bool) error {
 	return err
 }
 
-func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDns bool) {
+func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostname, setDns bool) {
 	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
@@ -242,7 +243,7 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, se
 	}
 }
 
-func linkUp(link netlink.Link, netConf InterfaceConfig) error {
+func linkUp(link netlink.Link, netConf config.InterfaceConfig) error {
 	if err := netlink.LinkSetUp(link); err != nil {
 		log.Errorf("failed to setup link: %v", err)
 		return err
@@ -251,7 +252,7 @@ func linkUp(link netlink.Link, netConf InterfaceConfig) error {
 	return nil
 }
 
-func applyAddress(address string, link netlink.Link, netConf InterfaceConfig) error {
+func applyAddress(address string, link netlink.Link, netConf config.InterfaceConfig) error {
 	addr, err := netlink.ParseAddr(address)
 	if err != nil {
 		return err
@@ -293,7 +294,7 @@ func setGateway(gateway string) error {
 	return nil
 }
 
-func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
+func applyInterfaceConfig(link netlink.Link, netConf config.InterfaceConfig) error {
 	if netConf.Bond != "" {
 		if err := netlink.LinkSetDown(link); err != nil {
 			return err
@@ -388,7 +389,7 @@ func runCmds(cmds []string, iface string) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			log.Errorf("Failed to run command [%s]: %v", cmd, err)
+			log.Errorf("Failed to run command [%v]: %v", cmd, err)
 			continue
 		}
 	}
