@@ -85,9 +85,6 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 	for _, service := range cfg.Rancher.BootstrapContainers {
 		imagesMap[service.Image] = 1
 	}
-	for _, service := range cfg.Rancher.Autoformat {
-		imagesMap[service.Image] = 1
-	}
 	for _, service := range cfg.Rancher.Services {
 		imagesMap[service.Image] = 1
 	}

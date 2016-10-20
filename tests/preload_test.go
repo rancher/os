@@ -11,6 +11,7 @@ func (s *QemuSuite) TestPreload(c *C) {
 	s.CheckCall(c, `
 docker pull busybox
 sudo docker save -o /var/lib/rancher/preload/system-docker/busybox.tar busybox
+sudo gzip /var/lib/rancher/preload/system-docker/busybox.tar
 sudo system-docker pull alpine
 sudo system-docker save -o /var/lib/rancher/preload/docker/alpine.tar alpine`)
 

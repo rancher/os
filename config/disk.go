@@ -176,9 +176,6 @@ func amendNils(c *CloudConfig) *CloudConfig {
 	if t.Rancher.Environment == nil {
 		t.Rancher.Environment = map[string]string{}
 	}
-	if t.Rancher.Autoformat == nil {
-		t.Rancher.Autoformat = map[string]*composeConfig.ServiceConfigV1{}
-	}
 	if t.Rancher.BootstrapContainers == nil {
 		t.Rancher.BootstrapContainers = map[string]*composeConfig.ServiceConfigV1{}
 	}
@@ -199,7 +196,6 @@ func amendNils(c *CloudConfig) *CloudConfig {
 
 func amendContainerNames(c *CloudConfig) *CloudConfig {
 	for _, scm := range []map[string]*composeConfig.ServiceConfigV1{
-		c.Rancher.Autoformat,
 		c.Rancher.BootstrapContainers,
 		c.Rancher.Services,
 	} {
