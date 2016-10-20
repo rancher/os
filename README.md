@@ -30,12 +30,11 @@ https://releases.rancher.com/os/v0.7.0/rancheros.iso
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
 * https://releases.rancher.com/os/latest/rancheros.iso
+* https://releases.rancher.com/os/latest/rancheros-v0.7.0.tar.gz
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
 * https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
-
-* https://releases.rancher.com/os/latest/rancheros-v0.6.1.tar.gz
 
 #### v0.7.0
 
@@ -44,12 +43,12 @@ https://releases.rancher.com/os/v0.7.0/rancheros.iso
 * https://releases.rancher.com/os/v0.7.0/rancheros-openstack.img
 * https://releases.rancher.com/os/v0.7.0/rancheros-raspberry-pi.zip
 * https://releases.rancher.com/os/v0.7.0/rancheros.iso
+* https://releases.rancher.com/os/v0.7.0/rancheros-v0.7.0.tar.gz
 * https://releases.rancher.com/os/v0.7.0/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/v0.7.0/rootfs_arm64.tar.gz
 * https://releases.rancher.com/os/v0.7.0/rootfs.tar.gz
 * https://releases.rancher.com/os/v0.7.0/vmlinuz
 
-* https://releases.rancher.com/os/v0.6.1/rancheros-v0.6.1.tar.gz
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
@@ -70,6 +69,7 @@ eu-central-1 | HVM |  [ami-7720d918](https://console.aws.amazon.com/ec2/home?reg
 eu-west-1 | HVM |  [ami-c5f1beb6](https://console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-c5f1beb6)
 sa-east-1 | HVM |  [ami-bf168bd3](https://console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-bf168bd3)
 us-east-1 | HVM |  [ami-f3bdede4](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-f3bdede4)
+us-east-2 | HVM |  [ami-a83f65cd](https://console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-a83f65cd)
 us-west-1 | HVM |  [ami-04f3bb64](https://console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-04f3bb64)
 us-west-2 | HVM |  [ami-b506a3d5](https://console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-b506a3d5)
 
