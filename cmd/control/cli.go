@@ -26,6 +26,7 @@ func Main() {
 	app.Commands = []cli.Command{
 		{
 			Name:            "bootstrap",
+			Hidden:          true,
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          bootstrapAction,
@@ -45,8 +46,7 @@ func Main() {
 		},
 		{
 			Name:            "dev",
-			ShortName:       "d",
-			Usage:           "dev spec",
+			Hidden:          true,
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          devAction,
@@ -59,14 +59,14 @@ func Main() {
 		},
 		{
 			Name:            "entrypoint",
+			Hidden:          true,
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          entrypointAction,
 		},
 		{
 			Name:            "env",
-			ShortName:       "e",
-			Usage:           "env command",
+			Hidden:          true,
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          envAction,
@@ -80,6 +80,7 @@ func Main() {
 		},
 		{
 			Name:            "preload-images",
+			Hidden:          true,
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          preloadImagesAction,
@@ -92,6 +93,7 @@ func Main() {
 		},
 		{
 			Name:            "udev-settle",
+			Hidden:          true,
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          udevSettleAction,
