@@ -1,8 +1,23 @@
 #!/bin/bash
-set -e
+set -ex
+
+INSTALLER_IMAGE=rancher/os:v0.7.0
+
+ros config set rancher.network.interfaces.eth1.dhcp false
+if grep eth2 /proc/net/dev; then
+    ros config set rancher.network.interfaces.eth0.dhcp false
+    ros config set rancher.network.interfaces.eth2.dhcp true
+    system-docker restart network
+fi
+
+for ((i=0;i<30;i++)); do
+    if system-docker pull ${INSTALLER_IMAGE}; then
+        break
+    fi
+    sleep 1
+done
 
 TINKERBELL_URL=$(cat /proc/cmdline | sed -e 's/^.*tinkerbell=//' -e 's/ .*$//')/phone-home
-INSTALLER_IMAGE=rancher/os:v0.7.0-rc3
 
 tinkerbell_post()
 {
