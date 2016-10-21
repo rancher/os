@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"reflect"
 	"runtime"
 	"testing"
 	"time"
@@ -44,59 +45,94 @@ type QemuSuite struct {
 	qemuCmd    *exec.Cmd
 }
 
+// Sadly, getName will return "TearDownTest", so this doesn't know what test it was for.
 func (s *QemuSuite) TearDownTest(c *C) {
-	c.Assert(s.qemuCmd.Process.Kill(), IsNil)
+}
+
+func (s *QemuSuite) stopQemu(c *C) {
+	runArgs := []string{
+		"kill",
+		getName(c),
+	}
+	fmt.Printf("Running %s %v\n", "docker", runArgs)
+	s.qemuCmd = exec.Command("docker", runArgs...)
+	s.qemuCmd.Stdout = os.Stdout
+	s.qemuCmd.Stderr = os.Stderr
+	if err := s.qemuCmd.Start(); err != nil {
+		fmt.Printf("Error killing container %v\n", err)
+	}
+
 	time.Sleep(time.Millisecond * 1000)
 }
 
-func (s *QemuSuite) RunQemu(additionalArgs ...string) error {
+func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) error {
 	runArgs := []string{
-		"--qemu",
-		"--no-rebuild",
-		"--no-rm-usr",
 		"--fresh",
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	return s.runQemu(runArgs...)
+	return s.runQemu(c, runArgs...)
 }
 
-func (s *QemuSuite) RunQemuInstalled(additionalArgs ...string) error {
+func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) error {
 	runArgs := []string{
-		"--qemu",
-		"--no-rebuild",
-		"--no-rm-usr",
 		"--installed",
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	return s.runQemu(runArgs...)
+	return s.runQemu(c, runArgs...)
 }
 
-func (s *QemuSuite) runQemu(args ...string) error {
-	s.qemuCmd = exec.Command(s.runCommand, args...)
+func (s *QemuSuite) runQemu(c *C, args ...string) error {
+	runArgs := []string{
+		"--qind",
+		"--name",
+		getName(c),
+		"--no-rebuild",
+		"--no-rm-usr",
+	}
+	runArgs = append(runArgs, args...)
+
+	fmt.Printf("Running %s %v\n", s.runCommand, runArgs)
+	s.qemuCmd = exec.Command(s.runCommand, runArgs...)
 	s.qemuCmd.Stdout = os.Stdout
 	s.qemuCmd.Stderr = os.Stderr
 	if err := s.qemuCmd.Start(); err != nil {
 		return err
 	}
 
-	return s.WaitForSSH()
+	return s.WaitForSSH(c)
 }
 
-func (s *QemuSuite) WaitForSSH() error {
+func getName(c *C) string {
+	v := reflect.ValueOf(*c)
+	method := v.FieldByName("method").Elem()
+	info := method.FieldByName("Info")
+	name := info.FieldByName("Name").String()
+	return name
+}
+
+func (s *QemuSuite) WaitForSSH(c *C) error {
 	sshArgs := []string{
-		"--qemu",
-		"true",
+		"--qind",
+		"--name",
+		getName(c),
+		"ls -la",
 	}
 
 	var err error
 	for i := 0; i < 100; i++ {
+		fmt.Printf("Running %s %v\n", s.sshCommand, sshArgs)
 		cmd := exec.Command(s.sshCommand, sshArgs...)
-		if err = cmd.Run(); err == nil {
+		var out []byte
+		if out, err = cmd.Output(); err == nil {
+			fmt.Printf("\t%v OK: %s\n", time.Now(), out)
 			break
+		} else {
+			fmt.Printf("\t%d %v err: %v\n", i, time.Now(), err)
+			fmt.Printf("\t%v out: %s\n", time.Now(), out)
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 	}
 
 	if err != nil {
@@ -104,7 +140,9 @@ func (s *QemuSuite) WaitForSSH() error {
 	}
 
 	sshArgs = []string{
-		"--qemu",
+		"--qind",
+		"--name",
+		getName(c),
 		"docker",
 		"version",
 		">/dev/null",
@@ -112,19 +150,22 @@ func (s *QemuSuite) WaitForSSH() error {
 	}
 
 	for i := 0; i < 20; i++ {
+		fmt.Printf("Running %s %v\n", s.sshCommand, sshArgs)
 		cmd := exec.Command(s.sshCommand, sshArgs...)
 		if err = cmd.Run(); err == nil {
 			return nil
 		}
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(50 * time.Millisecond)
 	}
 
 	return fmt.Errorf("Failed to check Docker version: %v", err)
 }
 
-func (s *QemuSuite) MakeCall(additionalArgs ...string) error {
+func (s *QemuSuite) MakeCall(c *C, additionalArgs ...string) error {
 	sshArgs := []string{
-		"--qemu",
+		"--qind",
+		"--name",
+		getName(c),
 	}
 	sshArgs = append(sshArgs, additionalArgs...)
 
@@ -135,17 +176,18 @@ func (s *QemuSuite) MakeCall(additionalArgs ...string) error {
 }
 
 func (s *QemuSuite) CheckCall(c *C, additionalArgs ...string) {
-	c.Assert(s.MakeCall(additionalArgs...), IsNil)
+	c.Assert(s.MakeCall(c, additionalArgs...), IsNil)
 }
 
 func (s *QemuSuite) Reboot(c *C) {
-	s.MakeCall("sudo reboot")
+	s.MakeCall(c, "sudo reboot")
 	time.Sleep(3000 * time.Millisecond)
-	c.Assert(s.WaitForSSH(), IsNil)
+	c.Assert(s.WaitForSSH(c), IsNil)
 }
 
 func (s *QemuSuite) LoadInstallerImage(c *C) {
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("docker save rancher/os:%s%s | ../scripts/ssh --qemu sudo system-docker load", Version, Suffix))
+	fmt.Printf("Running %s %v\n", "sh", "-c", fmt.Sprintf("docker save rancher/os:%s%s | ../scripts/ssh --qind sudo system-docker load", Version, Suffix))
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("docker save rancher/os:%s%s | ../scripts/ssh --qind sudo system-docker load", Version, Suffix))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	c.Assert(cmd.Run(), IsNil)

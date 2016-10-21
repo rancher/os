@@ -9,7 +9,7 @@ func (s *QemuSuite) TestNetworkFromUrl(c *C) {
 	for i := 0; i < 7; i++ {
 		args = append(args, netArgs...)
 	}
-	err := s.RunQemu(args...)
+	err := s.RunQemu(c, args...)
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `

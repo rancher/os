@@ -4,7 +4,7 @@ import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestCustomDocker(c *C) {
 	c.Parallel()
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_05/cloud-config.yml")
+	err := s.RunQemu(c, "--cloud-config", "./tests/assets/test_05/cloud-config.yml")
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `
@@ -37,7 +37,7 @@ docker ps | grep nginx`)
 
 func (s *QemuSuite) TestCustomDockerInPersistentConsole(c *C) {
 	c.Parallel()
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_25/cloud-config.yml")
+	err := s.RunQemu(c, "--cloud-config", "./tests/assets/test_25/cloud-config.yml")
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `

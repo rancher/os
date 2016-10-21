@@ -4,7 +4,7 @@ import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestSshKeyMerge(c *C) {
 	c.Parallel()
-	err := s.RunQemu()
+	err := s.RunQemu(c, )
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `

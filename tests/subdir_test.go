@@ -4,7 +4,7 @@ import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestSubdir(c *C) {
 	c.Parallel()
-	err := s.RunQemu("--append", "rancher.state.directory=ros_subdir")
+	err := s.RunQemu(c, "--append", "rancher.state.directory=ros_subdir")
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `

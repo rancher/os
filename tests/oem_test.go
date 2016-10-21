@@ -4,7 +4,7 @@ import . "github.com/cpuguy83/check"
 
 func (s *QemuSuite) TestOem(c *C) {
 	c.Parallel()
-	err := s.RunQemu("--second-drive")
+	err := s.RunQemu(c, "--second-drive")
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `

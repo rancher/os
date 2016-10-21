@@ -8,7 +8,8 @@ import (
 
 func (s *QemuSuite) TestUpgrade(c *C) {
 	c.Parallel()
-	err := s.RunQemuInstalled()
+	//TODO: this will fail if its the first time we've ever run?
+	err := s.RunQemuInstalled(c, )
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `
