@@ -1,16 +1,16 @@
 package control
 
 import (
-	"bufio"
 	"fmt"
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
 )
 
-func yes(in *bufio.Reader, question string) bool {
+func yes(question string) bool {
 	fmt.Printf("%s [y/N]: ", question)
-	line, err := in.ReadString('\n')
+	var line string
+	_, err := fmt.Scan(&line)
 	if err != nil {
 		log.Fatal(err)
 	}
