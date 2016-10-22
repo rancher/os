@@ -3,8 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestHttpProxy(c *C) {
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_17/cloud-config.yml")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--cloud-config", "./tests/assets/test_17/cloud-config.yml")
 
 	s.CheckCall(c, `
 set -x -e

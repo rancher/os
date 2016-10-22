@@ -3,8 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestCloudConfigConsole(c *C) {
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_03/cloud-config.yml")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--cloud-config", "./tests/assets/test_03/cloud-config.yml")
 
 	s.CheckCall(c, "apt-get --version")
 	s.CheckCall(c, `
@@ -13,8 +12,7 @@ sudo ros console list | grep debian | grep current`)
 }
 
 func (s *QemuSuite) TestConsoleCommand(c *C) {
-	err := s.RunQemu()
-	c.Assert(err, IsNil)
+	s.RunQemu(c)
 
 	s.CheckCall(c, `
 sudo ros console list | grep default | grep current

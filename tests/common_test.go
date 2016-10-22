@@ -31,9 +31,8 @@ var (
 		"arm":   "armhfbuild/nginx",
 		"arm64": "armhfbuild/nginx",
 	}[runtime.GOARCH]
-	DockerUrl = "https://experimental.docker.com/builds/Linux/x86_64/docker-1.10.0-dev"
-	Version   = os.Getenv("VERSION")
-	Suffix    = os.Getenv("SUFFIX")
+	Version = os.Getenv("VERSION")
+	Suffix  = os.Getenv("SUFFIX")
 )
 
 type QemuSuite struct {
@@ -47,7 +46,7 @@ func (s *QemuSuite) TearDownTest(c *C) {
 	time.Sleep(time.Millisecond * 1000)
 }
 
-func (s *QemuSuite) RunQemu(additionalArgs ...string) error {
+func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) {
 	runArgs := []string{
 		"--qemu",
 		"--no-rebuild",
@@ -56,10 +55,10 @@ func (s *QemuSuite) RunQemu(additionalArgs ...string) error {
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	return s.runQemu(runArgs...)
+	c.Assert(s.runQemu(runArgs...), IsNil)
 }
 
-func (s *QemuSuite) RunQemuInstalled(additionalArgs ...string) error {
+func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) {
 	runArgs := []string{
 		"--qemu",
 		"--no-rebuild",
@@ -68,7 +67,7 @@ func (s *QemuSuite) RunQemuInstalled(additionalArgs ...string) error {
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	return s.runQemu(runArgs...)
+	c.Assert(s.runQemu(runArgs...), IsNil)
 }
 
 func (s *QemuSuite) runQemu(args ...string) error {

@@ -7,8 +7,7 @@ import (
 )
 
 func (s *QemuSuite) TestStartCommands(c *C) {
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_26/cloud-config.yml")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--cloud-config", "./tests/assets/test_26/cloud-config.yml")
 
 	for i := 1; i < 5; i++ {
 		s.CheckCall(c, fmt.Sprintf("ls /home/rancher | grep test%d", i))
