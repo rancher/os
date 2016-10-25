@@ -135,5 +135,5 @@ else
     ros install -f -t noformat -i ${INSTALLER_IMAGE} -d ${DEV_PREFIX}a -a "${COMMON_ARGS}" --no-reboot
 fi
 
-tinkerbell_post 108 "Installation finished, rebooting server"
+tinkerbell_post 109 "Installation finished, rebooting server"
 reboot
