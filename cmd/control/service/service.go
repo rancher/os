@@ -1,4 +1,4 @@
-package control
+package service
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
-	"github.com/docker/libcompose/cli/command"
 	dockerApp "github.com/docker/libcompose/cli/docker/app"
 	"github.com/docker/libcompose/project"
+	"github.com/rancher/os/cmd/control/service/command"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util/network"
@@ -29,7 +29,7 @@ func beforeApp(c *cli.Context) error {
 	return nil
 }
 
-func serviceCommand() cli.Command {
+func Commands() cli.Command {
 	factory := &projectFactory{}
 
 	app := cli.Command{}
@@ -37,7 +37,9 @@ func serviceCommand() cli.Command {
 	app.ShortName = "s"
 	app.Usage = "Command line interface for services and compose."
 	app.Before = beforeApp
-	app.Flags = append(command.CommonFlags(), dockerApp.DockerClientFlags()...)
+	app.Flags = append(dockerApp.DockerClientFlags(), cli.BoolFlag{
+		Name: "verbose,debug",
+	})
 	app.Subcommands = append(serviceSubCommands(),
 		command.BuildCommand(factory),
 		command.CreateCommand(factory),
@@ -46,11 +48,9 @@ func serviceCommand() cli.Command {
 		command.LogsCommand(factory),
 		command.RestartCommand(factory),
 		command.StopCommand(factory),
-		command.ScaleCommand(factory),
 		command.RmCommand(factory),
 		command.PullCommand(factory),
 		command.KillCommand(factory),
-		command.PortCommand(factory),
 		command.PsCommand(factory),
 	)
 
