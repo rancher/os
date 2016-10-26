@@ -5,8 +5,7 @@ import (
 )
 
 func (s *QemuSuite) TestPreload(c *C) {
-	err := s.RunQemu()
-	c.Assert(err, IsNil)
+	s.RunQemu(c)
 
 	s.CheckCall(c, `
 docker pull busybox
