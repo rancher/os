@@ -36,7 +36,7 @@ rancher:
     restart: false
     graph: /var/lib/system-docker
     group: root
-    host: "unix:///var/run/system-docker.sock"
+    host: ["unix:///var/run/system-docker.sock"]
     userland_proxy: false
   console: default
   cloud_init:
@@ -341,7 +341,7 @@ rancher:
     restart: false
     graph: /var/lib/system-docker
     group: root
-    host: "unix:///var/run/system-docker.sock"
+    host: ["unix:///var/run/system-docker.sock"]
     pid_file: /var/run/system-docker.pid
     exec_root: /var/run/system-docker
     config_file: /etc/docker/system-docker.json
@@ -360,7 +360,7 @@ rancher:
     {{end -}}
     storage_driver: overlay
     group: docker
-    host: "unix:///var/run/docker.sock"
+    host: ["unix:///var/run/docker.sock"]
     log_opts:
       max-size: 25m
       max-file: 2
