@@ -39,6 +39,7 @@ func Get(key string) (interface{}, error) {
 	return v, nil
 }
 
+// Get rancher. boot params
 func GetCmdline(key string) interface{} {
 	cmdline := readCmdline()
 	v, _ := getOrSetVal(key, cmdline, nil)

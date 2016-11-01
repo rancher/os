@@ -5,6 +5,7 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	"strings"
+	"unicode"
 
 	"github.com/rancher/os/util"
 )
@@ -154,6 +155,7 @@ func unmarshalOrReturnString(value string) (result interface{}) {
 	return
 }
 
+// Parse the boot params line for rancher. settings
 func parseCmdline(cmdLine string) map[interface{}]interface{} {
 	result := make(map[interface{}]interface{})
 
@@ -195,4 +197,40 @@ outer:
 
 	log.Debugf("Input obj %v", result)
 	return result
+}
+
+// GetCmdLineValues return a list of all values for a key (used for non rancher. boot cmdline)
+// OK, so the kernel boot cmdline is not unicode
+func GetCmdLineValues(cmdline, key string) []string {
+	lastQuote := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastQuote:
+			lastQuote = rune(0)
+			return false
+		case lastQuote != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastQuote = c
+			return false
+		default:
+			return unicode.IsSpace(c)
+
+		}
+	}
+
+	m := strings.FieldsFunc(cmdline, f)
+
+	var values []string
+	for _, v := range m {
+		kv := strings.SplitN(v, "=", 2)
+		if kv[0] == key {
+			if len(kv) == 1 {
+				values = append(values, "true")
+			} else {
+				values = append(values, kv[1])
+			}
+		}
+	}
+	return values
 }
