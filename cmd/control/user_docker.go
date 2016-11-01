@@ -1,4 +1,4 @@
-package userdocker
+package control
 
 import (
 	"io"
@@ -13,9 +13,9 @@ import (
 	"path/filepath"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
-	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
@@ -25,24 +25,30 @@ import (
 const (
 	DEFAULT_STORAGE_CONTEXT = "console"
 	DOCKER_PID_FILE         = "/var/run/docker.pid"
-	DOCKER_COMMAND          = "docker-init"
 	userDocker              = "user-docker"
 	sourceDirectory         = "/engine"
 	destDirectory           = "/var/lib/rancher/engine"
 )
 
-func Main() {
+var (
+	DOCKER_COMMAND = []string{
+		"ros",
+		"docker-init",
+	}
+)
+
+func userDockerAction(c *cli.Context) error {
 	if err := copyBinaries(sourceDirectory, destDirectory); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	if err := syscall.Mount("/host/sys", "/sys", "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	cfg := config.LoadConfig()
 
-	log.Fatal(startDocker(cfg))
+	return startDocker(cfg)
 }
 
 func copyBinaries(source, dest string) error {
@@ -98,15 +104,15 @@ func copyBinaries(source, dest string) error {
 	return nil
 }
 
-func writeCerts(cfg *config.CloudConfig) error {
-	outDir := control.ServerTlsPath
+func writeConfigCerts(cfg *config.CloudConfig) error {
+	outDir := ServerTlsPath
 	if err := os.MkdirAll(outDir, 0700); err != nil {
 		return err
 	}
-	caCertPath := filepath.Join(outDir, control.CaCert)
-	caKeyPath := filepath.Join(outDir, control.CaKey)
-	serverCertPath := filepath.Join(outDir, control.ServerCert)
-	serverKeyPath := filepath.Join(outDir, control.ServerKey)
+	caCertPath := filepath.Join(outDir, CaCert)
+	caKeyPath := filepath.Join(outDir, CaKey)
+	serverCertPath := filepath.Join(outDir, ServerCert)
+	serverKeyPath := filepath.Join(outDir, ServerKey)
 	if cfg.Rancher.Docker.CACert != "" {
 		if err := util.WriteFileAtomic(caCertPath, []byte(cfg.Rancher.Docker.CACert), 0400); err != nil {
 			return err
@@ -160,7 +166,7 @@ func startDocker(cfg *config.CloudConfig) error {
 	log.Debugf("User Docker args: %v", args)
 
 	if dockerCfg.TLS {
-		if err := writeCerts(cfg); err != nil {
+		if err := writeConfigCerts(cfg); err != nil {
 			return err
 		}
 	}
@@ -173,7 +179,7 @@ func startDocker(cfg *config.CloudConfig) error {
 	cmd := []string{"docker-runc", "exec", "--", info.ID, "env"}
 	log.Info(dockerCfg.AppendEnv())
 	cmd = append(cmd, dockerCfg.AppendEnv()...)
-	cmd = append(cmd, DOCKER_COMMAND)
+	cmd = append(cmd, DOCKER_COMMAND...)
 	cmd = append(cmd, args...)
 	log.Infof("Running %v", cmd)
 

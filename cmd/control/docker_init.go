@@ -1,4 +1,4 @@
-package dockerinit
+package control
 
 import (
 	"fmt"
@@ -10,18 +10,18 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
 )
 
 const (
-	consoleDone = "/run/console-done"
-	dockerConf  = "/var/lib/rancher/conf/docker"
-	dockerDone  = "/run/docker-done"
-	dockerLog   = "/var/log/docker.log"
+	dockerConf = "/var/lib/rancher/conf/docker"
+	dockerDone = "/run/docker-done"
+	dockerLog  = "/var/log/docker.log"
 )
 
-func Main() {
+func dockerInitAction(c *cli.Context) error {
 	for {
 		if _, err := os.Stat(consoleDone); err == nil {
 			break
@@ -54,7 +54,7 @@ func Main() {
 
 	mountInfo, err := ioutil.ReadFile("/proc/self/mountinfo")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for _, mount := range strings.Split(string(mountInfo), "\n") {
@@ -66,7 +66,7 @@ func Main() {
 	args := []string{
 		"bash",
 		"-c",
-		fmt.Sprintf(`[ -e %s ] && source %s; exec /usr/bin/dockerlaunch %s %s $DOCKER_OPTS >> %s 2>&1`, dockerConf, dockerConf, dockerBin, strings.Join(os.Args[1:], " "), dockerLog),
+		fmt.Sprintf(`[ -e %s ] && source %s; exec /usr/bin/dockerlaunch %s %s $DOCKER_OPTS >> %s 2>&1`, dockerConf, dockerConf, dockerBin, strings.Join(c.Args(), " "), dockerLog),
 	}
 
 	cfg := config.LoadConfig()
@@ -75,5 +75,5 @@ func Main() {
 		log.Error(err)
 	}
 
-	log.Fatal(syscall.Exec("/bin/bash", args, os.Environ()))
+	return syscall.Exec("/bin/bash", args, os.Environ())
 }

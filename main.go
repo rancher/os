@@ -8,16 +8,12 @@ import (
 	"github.com/rancher/cniglue"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/cmd/cloudinitsave"
-	"github.com/rancher/os/cmd/console"
 	"github.com/rancher/os/cmd/control"
-	"github.com/rancher/os/cmd/dockerinit"
 	"github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/cmd/respawn"
-	"github.com/rancher/os/cmd/switchconsole"
 	"github.com/rancher/os/cmd/sysinit"
 	"github.com/rancher/os/cmd/systemdocker"
-	"github.com/rancher/os/cmd/userdocker"
 	"github.com/rancher/os/cmd/wait"
 	"github.com/rancher/os/dfs"
 	osInit "github.com/rancher/os/init"
@@ -26,10 +22,7 @@ import (
 var entrypoints = map[string]func(){
 	"cloud-init-execute": cloudinitexecute.Main,
 	"cloud-init-save":    cloudinitsave.Main,
-	"console":            console.Main,
-	"console.sh":         console.Main,
 	"docker":             docker.Main,
-	"docker-init":        dockerinit.Main,
 	"dockerlaunch":       dfs.Main,
 	"halt":               power.Halt,
 	"init":               osInit.MainInit,
@@ -39,9 +32,7 @@ var entrypoints = map[string]func(){
 	"respawn":            respawn.Main,
 	"ros-sysinit":        sysinit.Main,
 	"shutdown":           power.Main,
-	"switch-console":     switchconsole.Main,
 	"system-docker":      systemdocker.Main,
-	"user-docker":        userdocker.Main,
 	"wait-for-docker":    wait.Main,
 	"cni-glue":           glue.Main,
 	"bridge":             bridge.Main,

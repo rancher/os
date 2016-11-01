@@ -83,7 +83,7 @@ func consoleSwitch(c *cli.Context) error {
 		Labels: map[string]string{
 			config.SCOPE: config.SYSTEM,
 		},
-		Command:     []string{"/usr/bin/switch-console", newConsole},
+		Command:     []string{"/usr/bin/ros", "switch-console", newConsole},
 		VolumesFrom: []string{"all-volumes"},
 	})
 	if err != nil {
