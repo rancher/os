@@ -1,10 +1,11 @@
+
 FROM ubuntu:16.04
 # FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
 ENV DAPPER_ENV VERSION DEV_BUILD
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
-ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd
+ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd ./assets/downloads
 ENV DAPPER_RUN_ARGS --privileged
 ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
 ENV SHELL /bin/bash
@@ -92,7 +93,7 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     DOCKER_URL_arm=${DOCKER_URL_arm} \
     DOCKER_URL_arm64=${DOCKER_URL_arm64} \
     DOCKER_VERSION=${DOCKER_VERSION} \
-    DOWNLOADS=/usr/src/downloads \
+    DOWNLOADS=${DAPPER_SOURCE}/assets/downloads \
     GOPATH=/go \
     GO_VERSION=1.7.1 \
     GOARCH=$ARCH \
@@ -117,12 +118,18 @@ RUN mkdir -p ${DOWNLOADS}
 
 # Download kernel
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
-RUN if [ -n "${!KERNEL_URL}" ]; then \
-        curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.gz \
+RUN if [ ! -e "${DOWNLOADS}/kernel.tar.gz" ]; then \
+      if [ -n "${!KERNEL_URL}" ]; then \
+          echo "Downloading kernel from ${!KERNEL_URL}" \
+          curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.gz \
+      ;fi \
     ;fi
 
 # Download SELinux Policy
-RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
+RUN if [ ! -e "${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})" ]; then \
+      echo "Downloading selinux policy from ${!SELINUX_POLICY_URL}" \
+      curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL}) \
+    ;fi
 
 # Install Go
 COPY assets/go-dnsclient.patch ${DAPPER_SOURCE}
@@ -146,8 +153,11 @@ RUN go get gopkg.in/check.v1
 RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
 
-RUN cd ${DOWNLOADS} && \
-    curl -pfL ${!OS_BASE_URL} | tar xvJf -
+RUN if [ ! -e "${DOWNLOADS}/rootfs.tar" ]; then \
+      echo "Downloading rootfs from ${!OS_BASE_URL}" \
+      cd ${DOWNLOADS} && \
+      curl -pfL ${!OS_BASE_URL} | tar xvJf - \
+    ;fi
 
 ENTRYPOINT ["./scripts/entry"]
 CMD ["ci"]
