@@ -140,7 +140,7 @@ type EngineOpts struct {
 	ExecRoot       string            `yaml:"exec_root,omitempty" opt:"exec-root"`
 	Group          string            `yaml:"group,omitempty" opt:"group"`
 	Graph          string            `yaml:"graph,omitempty" opt:"graph"`
-	Host           string            `yaml:"host,omitempty" opt:"host"`
+	Host           []string          `yaml:"host,omitempty" opt:"host"`
 	LiveRestore    *bool             `yaml:"live_restore,omitempty" opt:"live-restore"`
 	LogDriver      string            `yaml:"log_driver,omitempty" opt:"log-driver"`
 	LogOpts        map[string]string `yaml:"log_opts,omitempty" opt:"log-opt"`
