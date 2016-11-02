@@ -12,7 +12,17 @@ done
 
 # add the images that we normally pull from hub
 if [ -e "assets/os-images.list" ]; then
-  DEVIMAGES=$(cat assets/os-images.list | tr "\n" " ")
+  for image in $(cat assets/os-images.list | tr "\n" " "); do
+    if [[ "$image" == *"xfce"* || "$image" == *"selinux"* ]]; then
+      continue
+    fi
+    DEVIMAGES="${DEVIMAGES} ${image}"
+  done
 fi
+
+echo "adding these images into the initrd (${IMAGES} ${DEVIMAGES})"
+for image in ${IMAGES} ${DEVIMAGES}; do
+  docker images --format "{{.Size}}\t\t{{.Repository}}:{{.Tag}}" ${image}
+done
 
 docker save ${IMAGES} ${DEVIMAGES} > build/images.tar
