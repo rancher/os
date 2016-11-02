@@ -18,7 +18,7 @@ cd ..
 
 BUILDDIR=$(pwd)
 
-for repo in linux os-kernel os-base os-images os-services; do
+for repo in os-kernel os-base os-images os-services os-packer; do
   if [ ! -d "$repo" ]; then
     git clone https://github.com/rancher/$repo
   fi
@@ -39,12 +39,15 @@ cd ..
 
 # this is the "build" suite
 # test if artifact already exists and is current, then skip.
-cd linux
-LINUX_KERNEL_VERSION=$(make kernelversion)
-echo "Linux kernel version: ${LINUX_KERNEL_VERSION}"
-cd ..
+
 
 cd os-kernel
+# if there is no source, clone it and check out what we're releasing.
+./scripts/clone
+cd ../linux
+LINUX_KERNEL_VERSION=$(make kernelversion)
+echo "Linux kernel version: ${LINUX_KERNEL_VERSION}"
+cd ../os-kernel
 #TODO: hardcoded linux source dir bad.
 #TODO: build for arm, arm64 etc
 #TODO: optionally skip this
