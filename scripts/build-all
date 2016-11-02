@@ -89,5 +89,6 @@ cd os
     cp ../os-images/dist/images assets/os-images.list
     make dev
   fi
+  ls -lah dist/artifacts/rancheros.iso
 cd ..
 
