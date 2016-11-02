@@ -66,6 +66,15 @@ if [ "$REBUILD" == "1" ] || [ ! -e "dist/kernel/build.tar.gz" ]; then
 fi
 cd ..
 
+cd os-images
+  if [ "$REBUILD" == "1" ] || [ ! -e "dist/images" ]; then
+    REBUILD=1
+    make
+  fi
+cd ..
+
+#TODO: need to bundle the os-images and modified services files into the iso
+
 cd os
   if [ "$REBUILD" == "1" ] || [ ! -e "dist/artifacts/rancheros.iso" ]; then
     REBUILD=1
@@ -80,6 +89,3 @@ cd os
   fi
 cd ..
 
-# now build the os images...?
-# and then stand up a registry that the iso should be cfg'd to get them from...
-# or possibly just build them into the "dev" image so they get preloaded.
