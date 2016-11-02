@@ -25,6 +25,9 @@ run: build/initrd/.id .dapper
 	./.dapper -m bind build-target
 	./scripts/run
 
+docs:
+	./scripts/docs
+
 shell-bind: .dapper
 	./.dapper -m bind -s
 
