@@ -10,4 +10,9 @@ for i in $IMAGES; do
     fi
 done
 
-docker save ${IMAGES} > build/images.tar
+# add the images that we normally pull from hub
+if [ -e "assets/os-images.list" ]; then
+  DEVIMAGES=$(cat assets/os-images.list | tr "\n" " ")
+fi
+
+docker save ${IMAGES} ${DEVIMAGES} > build/images.tar

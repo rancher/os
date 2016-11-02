@@ -85,6 +85,8 @@ cd os
     # TODO selinux profile?
     ls -la
     cd ../..
+    # Add the images we built in os-images
+    cp ../os-images/dist/images assets/os-images.list
     make dev
   fi
 cd ..
