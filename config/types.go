@@ -89,6 +89,7 @@ type CloudConfig struct {
 	Mounts            [][]string    `yaml:"mounts,omitempty"`
 	Rancher           RancherConfig `yaml:"rancher,omitempty"`
 	Runcmd            [][]string    `yaml:"runcmd,omitempty"`
+	Bootcmd           [][]string    `yaml:"bootcmd,omitempty"`
 }
 
 type File struct {

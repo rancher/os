@@ -268,3 +268,18 @@ func RunScript(path string) error {
 
 	return cmd.Run()
 }
+
+func RunCommandSequence(commandSequence [][]string) {
+	for _, command := range commandSequence {
+		if len(command) == 0 {
+			continue
+		}
+
+		cmd := exec.Command(command[0], command[1:]...)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Errorf("Failed to run %s: %v", command, err)
+		}
+	}
+}
