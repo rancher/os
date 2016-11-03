@@ -15,11 +15,17 @@ type ServiceFactory struct {
 func (s *ServiceFactory) Create(project *project.Project, name string, serviceConfig *composeConfig.ServiceConfig) (project.Service, error) {
 	if after := serviceConfig.Labels["io.rancher.os.after"]; after != "" {
 		for _, dep := range util.TrimSplit(after, ",") {
+			if dep == "cloud-init" {
+				dep = "cloud-init-execute"
+			}
 			s.Deps[name] = append(s.Deps[name], dep)
 		}
 	}
 	if before := serviceConfig.Labels["io.rancher.os.before"]; before != "" {
 		for _, dep := range util.TrimSplit(before, ",") {
+			if dep == "cloud-init" {
+				dep = "cloud-init-execute"
+			}
 			s.Deps[dep] = append(s.Deps[dep], name)
 		}
 	}
