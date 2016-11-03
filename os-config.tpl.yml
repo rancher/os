@@ -65,21 +65,6 @@ rancher:
       - command-volumes
       - system-volumes
     {{end -}}
-    all-volumes:
-      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
-      command: echo
-      labels:
-        io.rancher.os.createonly: "true"
-        io.rancher.os.scope: system
-      log_driver: json-file
-      net: none
-      privileged: true
-      read_only: true
-      volumes_from:
-      - container-data-volumes
-      - command-volumes
-      - user-volumes
-      - system-volumes
     cloud-init:
       image: {{.OS_REPO}}/os-cloudinit:{{.VERSION}}{{.SUFFIX}}
       labels:
@@ -161,23 +146,12 @@ rancher:
       privileged: true
       restart: always
       volumes_from:
-      - all-volumes
+      - command-volumes
+      - system-volumes
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
       - /media:/media:shared
       - /mnt:/mnt:shared
-    container-data-volumes:
-      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
-      command: echo
-      labels:
-        io.rancher.os.createonly: "true"
-        io.rancher.os.scope: system
-      log_driver: json-file
-      net: none
-      privileged: true
-      read_only: true
-      volumes:
-      - /var/lib/docker:/var/lib/docker
     network-pre:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: netconf
@@ -257,10 +231,13 @@ rancher:
       - /etc/resolv.conf:/etc/resolv.conf
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /etc/selinux:/etc/selinux
+      - /home:/home
       - /lib/firmware:/lib/firmware
       - /lib/modules:/lib/modules
+      - /opt:/opt
       - /run:/run
       - /usr/share/ros:/usr/share/ros
+      - /var/lib/docker:/var/lib/docker
       - /var/lib/rancher/cache:/var/lib/rancher/cache
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/lib/rancher:/var/lib/rancher
@@ -292,19 +269,6 @@ rancher:
       volumes_from:
       - command-volumes
       - system-volumes
-    user-volumes:
-      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
-      command: echo
-      labels:
-        io.rancher.os.createonly: "true"
-        io.rancher.os.scope: system
-      log_driver: json-file
-      net: none
-      privileged: true
-      read_only: true
-      volumes:
-      - /home:/home
-      - /opt:/opt
     docker:
       {{if eq "amd64" .ARCH -}}
       image: {{.OS_REPO}}/os-docker:1.12.1{{.SUFFIX}}
@@ -326,7 +290,8 @@ rancher:
       privileged: true
       restart: always
       volumes_from:
-      - all-volumes
+      - command-volumes
+      - system-volumes
       volumes:
       - /sys:/host/sys
       - /var/lib/system-docker:/var/lib/system-docker:shared
