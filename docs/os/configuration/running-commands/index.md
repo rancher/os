@@ -21,7 +21,7 @@ Commands specified using `runcmd` will be executed within the context of the `co
 
 When using `runcmd`, RancherOS will wait for all commands to complete before starting Docker. As a result, any `docker run` command should not be placed under `runcmd`. Instead, the `/etc/rc.local` script can be used. RancherOS will not wait for commands in this script to complete, so you can use the `wait-for-docker` command to ensure that the Docker daemon is running before performing any `docker run` commands.
 
-```
+```yaml
 #cloud-config
 rancher:
 write_files:
@@ -35,3 +35,16 @@ write_files:
 ```
 
 Running Docker commands in this manner is useful when pieces of the `docker run` command are dynamically generated. For services whose configuration is static, [adding a system service]({{site.baseurl}}/os/system-services/adding-system-services/) is recommended.
+
+## Running Commands Early in the Boot Process
+---
+
+The `bootcmd` parameter can be used to run commands earlier in the boot process. In particular, `bootcmd` will be executed while RancherOS is still running from memory and before System Docker and any system services are started.
+
+The syntax for bootcmd is the same as `runcmd`.
+
+```yaml
+#cloud-config
+bootcmd:
+- [ mdadm, --assemble, --scan ]
+```

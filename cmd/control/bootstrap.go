@@ -34,6 +34,8 @@ func bootstrapAction(c *cli.Context) error {
 		}
 	}
 
+	util.RunCommandSequence(cfg.Bootcmd)
+
 	if cfg.Rancher.State.Dev != "" && cfg.Rancher.State.Wait {
 		waitForRoot(cfg)
 	}
