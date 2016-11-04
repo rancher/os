@@ -1,7 +1,8 @@
 ---
 title: Custom RancherOS ISO
 layout: os-default
-
+redirect_from:
+  - os/configuration/custom-rancheros-iso/
 ---
 
 ## Custom RancherOS ISO
