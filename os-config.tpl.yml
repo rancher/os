@@ -229,7 +229,8 @@ rancher:
       - command-volumes
       - system-volumes
     syslog:
-      image: {{.OS_REPO}}/os-syslog:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: rsyslogd -n
       labels:
         io.rancher.os.scope: system
       log_driver: json-file
