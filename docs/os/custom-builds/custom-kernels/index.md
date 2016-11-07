@@ -1,7 +1,8 @@
 ---
 title: Custom Kernels in RancherOS
 layout: os-default
-
+redirect_from:
+  - os/configuration/custom-kernels/
 ---
 
 ## Custom Kernels
