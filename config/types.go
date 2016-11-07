@@ -7,6 +7,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
+	"github.com/rancher/os/config/yaml"
 )
 
 const (
@@ -83,13 +84,13 @@ type Repository struct {
 type Repositories map[string]Repository
 
 type CloudConfig struct {
-	SSHAuthorizedKeys []string      `yaml:"ssh_authorized_keys"`
-	WriteFiles        []File        `yaml:"write_files"`
-	Hostname          string        `yaml:"hostname"`
-	Mounts            [][]string    `yaml:"mounts,omitempty"`
-	Rancher           RancherConfig `yaml:"rancher,omitempty"`
-	Runcmd            [][]string    `yaml:"runcmd,omitempty"`
-	Bootcmd           [][]string    `yaml:"bootcmd,omitempty"`
+	SSHAuthorizedKeys []string              `yaml:"ssh_authorized_keys"`
+	WriteFiles        []File                `yaml:"write_files"`
+	Hostname          string                `yaml:"hostname"`
+	Mounts            [][]string            `yaml:"mounts,omitempty"`
+	Rancher           RancherConfig         `yaml:"rancher,omitempty"`
+	Runcmd            []yaml.StringandSlice `yaml:"runcmd,omitempty"`
+	Bootcmd           []yaml.StringandSlice `yaml:"bootcmd,omitempty"`
 }
 
 type File struct {

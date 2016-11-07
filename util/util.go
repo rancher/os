@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	osYaml "github.com/rancher/os/config/yaml"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -269,13 +270,16 @@ func RunScript(path string) error {
 	return cmd.Run()
 }
 
-func RunCommandSequence(commandSequence [][]string) {
+func RunCommandSequence(commandSequence []osYaml.StringandSlice) {
 	for _, command := range commandSequence {
-		if len(command) == 0 {
+		var cmd *exec.Cmd
+		if command.StringValue != "" {
+			cmd = exec.Command("sh", "-c", command.StringValue)
+		} else if len(command.SliceValue) > 0 {
+			cmd = exec.Command(command.SliceValue[0], command.SliceValue[1:]...)
+		} else {
 			continue
 		}
-
-		cmd := exec.Command(command[0], command[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
