@@ -24,7 +24,7 @@
         "console": {"type": "string"},
         "environment": {"type": "object"},
         "services": {"type": "object"},
-        "bootstrap_containers": {"type": "object"},
+        "bootstrap": {"type": "object"},
         "autoformat": {"type": "object"},
         "bootstrap_docker": {"$ref": "#/definitions/docker_config"},
         "cloud_init": {"$ref": "#/definitions/cloud_init_config"},
@@ -47,7 +47,8 @@
         "registry_auths": {"type": "object"},
         "defaults": {"$ref": "#/definitions/defaults_config"},
         "resize_device": {"type": "string"},
-        "sysctl": {"type": "object"}
+        "sysctl": {"type": "object"},
+        "restart_services": {"type": "array"}
       }
     },
 
@@ -110,24 +111,24 @@
         "ca_key": {"type": "string"},
         "environment": {"$ref": "#/definitions/list_of_strings"},
         "storage_context": {"type": "string"},
-        "exec": {"type": "boolean"},
+        "exec": {"type": ["boolean", "null"]},
         "bridge": {"type": "string"},
         "config_file": {"type": "string"},
         "containerd": {"type": "string"},
-        "debug": {"type": "boolean"},
+        "debug": {"type": ["boolean", "null"]},
         "exec_root": {"type": "string"},
         "group": {"type": "string"},
         "graph": {"type": "string"},
-        "host": {"type": "string"},
-        "live_restore": {"type": "boolean"},
+        "host": {"type": "array"},
+        "live_restore": {"type": ["boolean", "null"]},
         "log_driver": {"type": "string"},
         "log_opts": {"type": "object"},
         "pid_file": {"type": "string"},
         "registry_mirror": {"type": "string"},
-        "restart": {"type": "boolean"},
-        "selinux_enabled": {"type": "boolean"},
+        "restart": {"type": ["boolean", "null"]},
+        "selinux_enabled": {"type": ["boolean", "null"]},
         "storage_driver": {"type": "string"},
-        "userland_proxy": {"type": "boolean"}
+        "userland_proxy": {"type": ["boolean", "null"]}
       }
     },
 
