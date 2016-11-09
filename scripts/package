@@ -4,10 +4,14 @@ set -e
 cd $(dirname $0)
 
 if [ "$ROOTFS" != "0" ]; then
+    echo "---------- ./package-rootfs"
     ./package-rootfs
 fi
+echo "---------- ./package-initrd"
 ./package-initrd
+echo "---------- ./package-iso"
 ./package-iso
 if [ "$INSTALLER" != "0" ]; then
+echo "---------- ./package-installer"
     ./package-installer
 fi

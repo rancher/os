@@ -13,7 +13,14 @@ done
 # add the images that we normally pull from hub
 if [ -e "assets/os-images.list" ]; then
   for image in $(cat assets/os-images.list | tr "\n" " "); do
-    if [[ "$image" == *"xfce"* || "$image" == *"selinux"* ]]; then
+    if [[ "$image" == *"xfce"* \
+          || "$image" == *"selinux"* \
+          || "$image" == *"fedora"* \
+          || "$image" == *"centos"* \
+          || "$image" == *"debian"* \
+          || "$image" == *"ubuntu"* \
+          || "$image" == *"openvmtools"* \
+       ]]; then
       continue
     fi
     DEVIMAGES="${DEVIMAGES} ${image}"

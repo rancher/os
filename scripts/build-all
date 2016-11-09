@@ -64,7 +64,7 @@ get_build_checksum() {
   local commit=$(git rev-parse --short HEAD)
   local dirty=$(git status --porcelain --untracked-files=no)
   if [ "$dirty" != "" ]; then
-    local dirtyhash=echo "$dirty" | md5sum -
+    local dirtyhash=$(echo "$dirty" | md5sum - | sed 's/ .*//')
     commit="$commit-dirty$dirtyhash"
   fi
   echo "$commit"
@@ -119,7 +119,7 @@ cd ../os-kernel
 #TODO: build for arm, arm64 etc
 #TODO: optionally skip this
 # TODO: the checksum for this should be in the kernel repo
-if requires_rebuild "../linux/linux-${LINUX_KERNEL_VERSION}-rancher-x86.tar" ; then
+if requires_rebuild "../linux/linux-${LINUX_KERNEL_VERSION}-rancher+-x86.tar" ; then
   # TODO: there is an assumption in the os-kernel build tools that there is only one linux*.tar file :()
   REBUILD=1
   #TODO: optionally skip this to use the kernel already built
@@ -150,17 +150,28 @@ cd os
     REBUILD=1
     mkdir -p assets/downloads/
     cd assets/downloads/
-    cp ../../../os-kernel/dist/kernel/linux-${LINUX_KERNEL_VERSION}-rancher-x86.tar.gz kernel.tar.gz
+    cp ../../../os-kernel/dist/kernel/linux-${LINUX_KERNEL_VERSION}-rancher+-x86.tar.gz kernel.tar.gz
     tar xvJf ../../../os-base/dist/artifacts/os-base_amd64.tar.xz
     # TODO selinux profile?
     ls -la
     cd ../..
     # Add the images we built in os-images
     cp ../os-images/dist/images assets/os-images.list
-    make dev
+    make ci
     write_build_checksum
   fi
   ls -lah dist/artifacts/rancheros.iso
+  OSBRANCH=$()
+  OSSHA=$(get_build_checksum)
+cd ..
+
+cd os-packer
+ if requires_rebuild ; then
+   source aws.env
+   docker tag "os:${OSBRANCH}" "rancher/os:${OSSHA}"
+   make test-build
+   write_build_checksum
+ fi
 cd ..
 
 cd os
