@@ -81,3 +81,11 @@ rancher:
       - 8.8.8.8
       - 8.8.4.4
 ```
+
+#### Validating a Configuration File
+
+To validate a configuration file you can use the `ros config validate` command.
+
+```
+$ sudo ros config validate -i cloud-config.yml
+```
