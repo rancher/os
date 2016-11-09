@@ -5,6 +5,7 @@ package init
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -12,6 +13,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/mount"
+	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/util"
@@ -143,23 +145,18 @@ func tryMountState(cfg *config.CloudConfig) error {
 	return mountState(cfg)
 }
 
-func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, bool, error) {
 	if !isInitrd() || cfg.Rancher.State.Dev == "" {
-		return cfg, nil
+		return cfg, false, nil
 	}
 
 	if err := tryMountState(cfg); !cfg.Rancher.State.Required && err != nil {
-		return cfg, nil
+		return cfg, false, nil
 	} else if err != nil {
-		return cfg, err
+		return cfg, false, err
 	}
 
-	log.Debugf("Switching to new root at %s %s", STATE, cfg.Rancher.State.Directory)
-	if err := switchRoot(STATE, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr); err != nil {
-		return cfg, err
-	}
-
-	return mountOem(cfg)
+	return cfg, true, nil
 }
 
 func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*dfs.Config, []string) {
@@ -218,6 +215,9 @@ func RunInit() error {
 	}
 
 	boot2DockerEnvironment := false
+	var shouldSwitchRoot bool
+	var cloudConfigBootFile []byte
+	var metadataFile []byte
 	initFuncs := []config.CfgFunc{
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dfs.PrepareFs(&mountConfig)
@@ -265,7 +265,84 @@ func RunInit() error {
 
 			return cfg, nil
 		},
-		tryMountAndBootstrap,
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			var err error
+			cfg, shouldSwitchRoot, err = tryMountAndBootstrap(cfg)
+			if err != nil {
+				return nil, err
+			}
+			return cfg, nil
+		},
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if err := os.MkdirAll(config.CloudConfigDir, os.ModeDir|0755); err != nil {
+				log.Error(err)
+			}
+
+			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(STATE).Rancher.CloudInit.Datasources
+			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
+				log.Error(err)
+			}
+
+			network := false
+			for _, datasource := range cfg.Rancher.CloudInit.Datasources {
+				if cloudinitsave.RequiresNetwork(datasource) {
+					network = true
+					break
+				}
+			}
+
+			if network {
+				if err := runCloudInitServices(cfg); err != nil {
+					log.Error(err)
+				}
+			} else {
+				if err := cloudinitsave.MountConfigDrive(); err != nil {
+					log.Error(err)
+				}
+				if err := cloudinitsave.SaveCloudConfig(false); err != nil {
+					log.Error(err)
+				}
+				if err := cloudinitsave.UnmountConfigDrive(); err != nil {
+					log.Error(err)
+				}
+			}
+			return cfg, nil
+		},
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			var err error
+			cloudConfigBootFile, err = ioutil.ReadFile(config.CloudConfigBootFile)
+			if err != nil {
+				log.Error(err)
+			}
+			metadataFile, err = ioutil.ReadFile(config.MetaDataFile)
+			if err != nil {
+				log.Error(err)
+			}
+			return cfg, nil
+		},
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if !shouldSwitchRoot {
+				return cfg, nil
+			}
+			log.Debugf("Switching to new root at %s %s", STATE, cfg.Rancher.State.Directory)
+			if err := switchRoot(STATE, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr); err != nil {
+				return cfg, err
+			}
+			return cfg, nil
+		},
+		mountOem,
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if err := os.MkdirAll(config.CloudConfigDir, os.ModeDir|0755); err != nil {
+				log.Error(err)
+			}
+			if err := util.WriteFileAtomic(config.CloudConfigBootFile, cloudConfigBootFile, 400); err != nil {
+				log.Error(err)
+			}
+			if err := util.WriteFileAtomic(config.MetaDataFile, metadataFile, 400); err != nil {
+				log.Error(err)
+			}
+			return cfg, nil
+		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {

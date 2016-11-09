@@ -1,10 +1,12 @@
 ---
-title: Pre-packing Docker Images
+title: Image Preloading
 layout: os-default
+redirect_from:
+  - os/configuration/prepacking-docker-images/
 
 ---
 
-## Pre-packing Docker Images
+## Image Preloading
 ---
 
 On boot, RancherOS scans `/var/lib/rancher/preload/docker` and `/var/lib/rancher/preload/system-docker` directories and tries to load container image archives it finds there, with `docker load` and `system-docker load`.

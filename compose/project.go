@@ -201,7 +201,7 @@ func newCoreServiceProject(cfg *config.CloudConfig, useNetwork, loadConsole bool
 
 	go func() {
 		for event := range projectEvents {
-			if event.EventType == events.ContainerStarted && event.ServiceName == "ntp" {
+			if event.EventType == events.ContainerStarted && event.ServiceName == "network" {
 				useNetwork = true
 			}
 		}
