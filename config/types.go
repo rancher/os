@@ -134,23 +134,24 @@ type UpgradeConfig struct {
 }
 
 type EngineOpts struct {
-	Bridge         string            `yaml:"bridge,omitempty" opt:"bridge"`
-	ConfigFile     string            `yaml:"config_file,omitempty" opt:"config-file"`
-	Containerd     string            `yaml:"containerd,omitempty" opt:"containerd"`
-	Debug          *bool             `yaml:"debug,omitempty" opt:"debug"`
-	ExecRoot       string            `yaml:"exec_root,omitempty" opt:"exec-root"`
-	Group          string            `yaml:"group,omitempty" opt:"group"`
-	Graph          string            `yaml:"graph,omitempty" opt:"graph"`
-	Host           []string          `yaml:"host,omitempty" opt:"host"`
-	LiveRestore    *bool             `yaml:"live_restore,omitempty" opt:"live-restore"`
-	LogDriver      string            `yaml:"log_driver,omitempty" opt:"log-driver"`
-	LogOpts        map[string]string `yaml:"log_opts,omitempty" opt:"log-opt"`
-	PidFile        string            `yaml:"pid_file,omitempty" opt:"pidfile"`
-	RegistryMirror string            `yaml:"registry_mirror,omitempty" opt:"registry-mirror"`
-	Restart        *bool             `yaml:"restart,omitempty" opt:"restart"`
-	SelinuxEnabled *bool             `yaml:"selinux_enabled,omitempty" opt:"selinux-enabled"`
-	StorageDriver  string            `yaml:"storage_driver,omitempty" opt:"storage-driver"`
-	UserlandProxy  *bool             `yaml:"userland_proxy,omitempty" opt:"userland-proxy"`
+	Bridge           string            `yaml:"bridge,omitempty" opt:"bridge"`
+	ConfigFile       string            `yaml:"config_file,omitempty" opt:"config-file"`
+	Containerd       string            `yaml:"containerd,omitempty" opt:"containerd"`
+	Debug            *bool             `yaml:"debug,omitempty" opt:"debug"`
+	ExecRoot         string            `yaml:"exec_root,omitempty" opt:"exec-root"`
+	Group            string            `yaml:"group,omitempty" opt:"group"`
+	Graph            string            `yaml:"graph,omitempty" opt:"graph"`
+	Host             []string          `yaml:"host,omitempty" opt:"host"`
+	InsecureRegistry []string          `yaml:"insecure_registry" opt:"insecure-registry"`
+	LiveRestore      *bool             `yaml:"live_restore,omitempty" opt:"live-restore"`
+	LogDriver        string            `yaml:"log_driver,omitempty" opt:"log-driver"`
+	LogOpts          map[string]string `yaml:"log_opts,omitempty" opt:"log-opt"`
+	PidFile          string            `yaml:"pid_file,omitempty" opt:"pidfile"`
+	RegistryMirror   string            `yaml:"registry_mirror,omitempty" opt:"registry-mirror"`
+	Restart          *bool             `yaml:"restart,omitempty" opt:"restart"`
+	SelinuxEnabled   *bool             `yaml:"selinux_enabled,omitempty" opt:"selinux-enabled"`
+	StorageDriver    string            `yaml:"storage_driver,omitempty" opt:"storage-driver"`
+	UserlandProxy    *bool             `yaml:"userland_proxy,omitempty" opt:"userland-proxy"`
 }
 
 type DockerConfig struct {
