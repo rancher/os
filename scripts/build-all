@@ -1,0 +1,178 @@
+#!/bin/bash
+
+set -e
+#set -x
+echo "Start  build $(date)" > ros-build-time
+
+# TODO: add a "version" flag - so I can build v0.8.0.
+# TODO: work out how to specify all the other repo remotes that are useful.
+
+REBUILD=0
+GITUPDATE=0
+CLEAN=0
+
+while [ "$#" -gt 0 ]; do
+  echo "param $1"
+    case $1 in
+        --rebuild)
+            REBUILD="1"
+            ;;
+        --gitupdate)
+            GITUPDATE="1"
+            ;;
+        --clean)
+            CLEAN="1"
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift 1
+done
+
+
+cd ..
+
+BUILDDIR=$(pwd)
+
+# TODO: extract into a checkout-rancheros?
+for repo in os-kernel os-base os-images os-services os-packer; do
+  echo "# $repo"
+  if [ ! -d "$repo" ]; then
+    git clone https://github.com/rancher/$repo
+  fi
+  cd "$repo"
+  if [ "$CLEAN" == "1" ]; then
+    if [ -e "scripts/clean" ]; then
+      ./scripts/clean
+    fi
+    rm -f ros-build-checksum
+    # TODO: what about a git reset?
+  fi
+  if [ "$GITUPDATE" == "1" ]; then
+    git fetch --all
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        echo "ERROR: $repo has uncommited changes"
+        exit
+    fi
+    git pull
+  fi
+  cd ..
+done
+
+get_build_checksum() {
+  local commit=$(git rev-parse --short HEAD)
+  local dirty=$(git status --porcelain --untracked-files=no)
+  if [ "$dirty" != "" ]; then
+    local dirtyhash=$(echo "$dirty" | md5sum - | sed 's/ .*//')
+    commit="$commit-dirty$dirtyhash"
+  fi
+  echo "$commit"
+}
+write_build_checksum() {
+  echo "$(get_build_checksum)" > ros-build-checksum
+}
+requires_rebuild() {
+  local artifact=$1
+  if [ "$artifact" != "" ] && [ ! -e "$artifact" ]; then
+    echo "===================== rebuilding $artifact not found"
+    return 0 #yup, rebuild
+  fi
+  if [ "$REBUILD" == "1" ]; then
+    echo "===================== rebuilding REBUILD==$REBUILD"
+    return 0 #yup, rebuild
+  fi
+  if [ -e "ros-build-checksum" ]; then
+    local lastbuilt=$(cat ros-build-checksum)
+    local commit=$(get_build_checksum)
+    if [ "$lastbuilt" != "$commit" ]; then
+      echo "=================== rebuilding, $lastbuilt != $commit"
+      return 0
+    fi
+  else
+    echo "===================== rebuilding, no ros-build-checksum found in $(pwd)"
+    return 0
+  fi
+  echo "Skipping $(pwd)"
+  return 255 #no need to build
+}
+
+# TODO: this can happen in paralell with os-kernel
+# TODO: and so should not rebuild whenever the kernel changes.
+cd os-base
+if requires_rebuild "dist/artifacts/os-base_amd64.tar.xz" ; then
+  REBUILD=1
+  make .dapper
+  ARCH='amd64' make ci
+  write_build_checksum
+fi
+cd ..
+
+cd os-kernel
+# if there is no source, clone it and check out what we're releasing.
+./scripts/clone
+cd ../linux
+LINUX_KERNEL_VERSION=$(make kernelversion)
+echo "Linux kernel version: ${LINUX_KERNEL_VERSION}"
+cd ../os-kernel
+#TODO: hardcoded linux source dir bad.
+#TODO: build for arm, arm64 etc
+#TODO: optionally skip this
+# TODO: the checksum for this should be in the kernel repo
+if requires_rebuild "../linux/linux-${LINUX_KERNEL_VERSION}-rancher+-x86.tar" ; then
+  # TODO: there is an assumption in the os-kernel build tools that there is only one linux*.tar file :()
+  REBUILD=1
+  #TODO: optionally skip this to use the kernel already built
+  #from os-kernel/scripts/extract
+  #cp cp ${CONFIG}/kernel-config ${DIR}/.config
+  cp config/kernel-config ../linux/.config
+  ./scripts/build-kernel --srcdir ${BUILDDIR}/linux
+fi
+if requires_rebuild "dist/kernel/build.tar.gz" ; then
+  REBUILD=1
+  ./scripts/package-kernel --srcdir ${BUILDDIR}/linux
+  write_build_checksum
+fi
+cd ..
+
+cd os-images
+  if requires_rebuild "dist/images" ; then
+    REBUILD=1
+    make
+    write_build_checksum
+  fi
+cd ..
+
+#TODO: need to bundle the os-images and modified services files into the iso
+
+cd os
+  if requires_rebuild "dist/artifacts/rancheros.iso" ; then
+    REBUILD=1
+    mkdir -p assets/downloads/
+    cd assets/downloads/
+    cp ../../../os-kernel/dist/kernel/linux-${LINUX_KERNEL_VERSION}-rancher+-x86.tar.gz kernel.tar.gz
+    tar xvJf ../../../os-base/dist/artifacts/os-base_amd64.tar.xz
+    # TODO selinux profile?
+    ls -la
+    cd ../..
+    # Add the images we built in os-images
+    cp ../os-images/dist/images assets/os-images.list
+    make ci
+    write_build_checksum
+  fi
+  ls -lah dist/artifacts/rancheros.iso
+  OSBRANCH=$()
+  OSSHA=$(get_build_checksum)
+cd ..
+
+cd os-packer
+ if requires_rebuild ; then
+   source aws.env
+   docker tag "os:${OSBRANCH}" "rancher/os:${OSSHA}"
+   make test-build
+   write_build_checksum
+ fi
+cd ..
+
+cd os
+echo "Finish build $(date)" >> ros-build-time

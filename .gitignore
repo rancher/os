@@ -1,5 +1,7 @@
 .DS_Store
 /assets/ca.crt
+/assets/downloads/
+/assets/os-images.list
 /state
 /bin
 /build
