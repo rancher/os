@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
@@ -115,6 +116,7 @@ func getName(c *C) string {
 func (s *QemuSuite) WaitForSSH(c *C) error {
 	sshArgs := []string{
 		"--qind",
+		"--notty",
 		"--name",
 		getName(c),
 		"ls -la",
@@ -122,15 +124,11 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 
 	var err error
 	for i := 0; i < 100; i++ {
-		fmt.Printf("Running %s %v\n", s.sshCommand, sshArgs)
-		cmd := exec.Command(s.sshCommand, sshArgs...)
-		var out []byte
-		if out, err = cmd.Output(); err == nil {
-			fmt.Printf("\t%v OK: %s\n", time.Now(), out)
+		if err := RunStreaming(s.sshCommand, sshArgs...); err == nil {
+			fmt.Printf("\t%d %v  OK\n", i, time.Now())
 			break
 		} else {
 			fmt.Printf("\t%d %v err: %v\n", i, time.Now(), err)
-			fmt.Printf("\t%v out: %s\n", time.Now(), out)
 		}
 		time.Sleep(1 * time.Second)
 	}
@@ -141,6 +139,7 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 
 	sshArgs = []string{
 		"--qind",
+		"--notty",
 		"--name",
 		getName(c),
 		"docker",
@@ -150,9 +149,7 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 	}
 
 	for i := 0; i < 20; i++ {
-		fmt.Printf("Running %s %v\n", s.sshCommand, sshArgs)
-		cmd := exec.Command(s.sshCommand, sshArgs...)
-		if err = cmd.Run(); err == nil {
+		if err := RunStreaming(s.sshCommand, sshArgs...); err == nil {
 			return nil
 		}
 		time.Sleep(50 * time.Millisecond)
@@ -161,18 +158,67 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 	return fmt.Errorf("Failed to check Docker version: %v", err)
 }
 
+func RunStreaming(command string, args ...string) error {
+	fmt.Printf("Running %s\n", command)
+	for i, v := range args {
+		fmt.Printf("%d\t (%s)\n", i, v)
+	}
+
+        cmd := exec.Command(command, args...)
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		fmt.Println(err)
+                return err
+	}
+	stderr, err := cmd.StderrPipe()
+	if err != nil {
+		fmt.Println(err)
+                return err
+	}
+        defer func() {
+                _ = stdout.Close()
+                _ = stderr.Close()
+        }()
+
+        err = cmd.Start()
+        if err != nil {
+		fmt.Println(err)
+                return err
+        }
+
+        errscanner := bufio.NewScanner(stderr)
+        go func() {
+                for errscanner.Scan() {
+                        fmt.Println(errscanner.Text())
+                }
+        }()
+        outscanner := bufio.NewScanner(stdout)
+        for outscanner.Scan() {
+                str := outscanner.Text()
+                fmt.Println(str)
+        }
+        if err := outscanner.Err(); err != nil {
+		fmt.Println(err)
+                return err
+        }
+        if err := cmd.Wait(); err != nil {
+		fmt.Println(err)
+                return err
+        }
+	return nil
+}
+
+
 func (s *QemuSuite) MakeCall(c *C, additionalArgs ...string) error {
 	sshArgs := []string{
 		"--qind",
+		"--notty",
 		"--name",
 		getName(c),
 	}
 	sshArgs = append(sshArgs, additionalArgs...)
 
-	cmd := exec.Command(s.sshCommand, sshArgs...)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return RunStreaming(s.sshCommand, sshArgs...)
 }
 
 func (s *QemuSuite) CheckCall(c *C, additionalArgs ...string) {

@@ -14,4 +14,8 @@ if [ ! -e ../dist/artifacts/initrd ]; then
     ../scripts/dev
 fi
 
-go test -timeout 30m -check.parallel 1
+if [ "$RUNTEST" != "" ]; then
+	RUNTEST="-check.f ${RUNTEST}"
+fi
+
+go test -timeout 9999m -check.parallel 1 $RUNTEST

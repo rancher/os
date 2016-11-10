@@ -9,7 +9,7 @@ chmod 0600 ./assets/rancher.key
 QEMU=1
 UNAME=$(uname)
 INTERACTIVE="-it"
-: ${SSH_PORT:=2233}
+: ${SSH_PORT:=2222}
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -49,11 +49,11 @@ elif [ "$QIND" == "1" ]; then
     echo "ssh to ${NAME}"
     if [ -n "$KEY" ]; then
         docker inspect ${NAME} >/dev/null 2>&1 || exit 1
-        docker cp ${KEY} ${NAME}:/stuff/$(basename ${KEY})
-        KEY_FILE=/stuff/$(basename ${KEY})
+        docker cp ${KEY} ${NAME}:/assets/$(basename ${KEY})
+        KEY_FILE=/assets/$(basename ${KEY})
     fi
-    echo "RUNNING exec docker exec ${INTERACTIVE} ${NAME} /ssh.sh -i ${KEY_FILE:-/stuff/rancher.key} rancher@localhost "$@""
-    exec docker exec ${INTERACTIVE} ${NAME} /ssh.sh -i ${KEY_FILE:-/stuff/rancher.key} rancher@localhost "$@"
+    echo "RUNNING exec docker exec ${INTERACTIVE} ${NAME} /ssh.sh -p ${SSH_PORT} -i ${KEY_FILE:-/assets/rancher.key} rancher@localhost "$@""
+    exec docker exec ${INTERACTIVE} ${NAME} /ssh.sh -p ${SSH_PORT} -i ${KEY_FILE:-/assets/rancher.key} rancher@localhost "$@"
 else
     exit 42
 fi

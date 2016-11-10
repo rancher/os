@@ -6,17 +6,23 @@ cd $(dirname $0)/..
 
 source ./scripts/run-common
 
+# NONQIND is used to remove the --qind arg from the list, and then pass the rest into the container
+NONQIND=""
+
 while [ "$#" -gt 0 ]; do
     case $1 in
         --append)
+	    NONQIND="$NONQIND $1"
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
             ;;
         --name)
+	    NONQIND="$NONQIND $1"
             shift 1
             NAME="$1"
             ;;
         --cloud-config)
+	    NONQIND="$NONQIND $1"
             shift 1
             CLOUD_CONFIG="$1" || :
             if [ ! -f ${CLOUD_CONFIG} ]; then
@@ -28,6 +34,7 @@ while [ "$#" -gt 0 ]; do
             SECOND_DRIVE=1
             ;;
         --arch)
+	    NONQIND="$NONQIND $1"
             shift 1
             ARCH="$1"
             ;;
@@ -58,6 +65,7 @@ while [ "$#" -gt 0 ]; do
             INSTALLED=1
             ;;
         --port)
+	    NONQIND="$NONQIND $1"
             shift 1
             SSH_PORT="$1"
             ;;
@@ -65,8 +73,37 @@ while [ "$#" -gt 0 ]; do
             break
             ;;
     esac
+    if [ "$1" != "--qind" ]; then
+	NONQIND="$NONQIND $1"
+    fi
     shift 1
 done
+
+if [ "$QIND" == "1" ]; then
+    docker build -t rancher/qind:${NAME} qind
+
+    NAME=${NAME:-ros-qind}
+
+    if [ "$FRESH" == "1" ]; then
+        docker rm -fv ${NAME} >/dev/null 2>&1 || :
+    fi
+    if ! docker inspect ${NAME} >/dev/null 2>&1; then
+        set -x
+        docker create --name=${NAME} -it \
+		    --device=/dev/kvm:/dev/kvm \
+                    rancher/qind:${NAME} \
+		    ${NONQIND} \
+                    "${@}"
+	docker cp scripts ${NAME}:/
+	docker cp assets/rancher.key ${NAME}:/assets/
+	docker cp assets/rancher.key.pub ${NAME}:/assets/
+	docker cp dist/artifacts/vmlinuz ${NAME}:/dist/artifacts/vmlinuz
+	docker cp build/initrd ${NAME}:/build/initrd
+	docker cp build/initrd.tmp ${NAME}:/build/initrd.tmp
+	docker cp bin/ros ${NAME}:/bin/ros
+    fi
+    exec docker start -ai ${NAME}
+fi
 
 declare -A network=(
     ["amd64"]="-net nic,vlan=0,model=virtio -net user,vlan=0,hostfwd=tcp::${SSH_PORT}-:22,hostname=rancher-dev"
@@ -143,91 +180,30 @@ if [ "$QEMU" == "1" ]; then
         CPU="-cpu host"
     fi
     HOME=${HOME:-/}
-    if [ "$INSTALLED" == "1" ]; then
-        set -x
-        exec qemu-system-${QEMUARCH} -serial stdio \
-            -rtc base=utc,clock=host \
-            ${KVM_ENABLE} \
-            ${CPU} \
-            ${machine["$ARCH"]} \
-            -m 2048 \
-            ${network["$ARCH"]} \
-            $(eval "${hd["$ARCH"]} ${HD}") \
-            ${SECOND_DRIVE_ENABLE} \
-            -smp 1 \
-            -nographic \
-            -display none \
-            -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
-            -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
-            -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
-            -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
-            ${QEMU_ARGS} \
-            "${@}"
-    else
-        set -x
-        exec qemu-system-${QEMUARCH} -serial stdio \
-            -rtc base=utc,clock=host \
-            ${KVM_ENABLE} \
-            ${CPU} \
-            ${machine["$ARCH"]} \
-            -kernel ${KERNEL} \
-            -initrd ${INITRD} \
-            -m 2048 \
-            ${network["$ARCH"]} \
-            $(eval "${hd["$ARCH"]} ${HD}") \
-            ${SECOND_DRIVE_ENABLE} \
-            -smp 1 \
-            -append "${KERNEL_ARGS}" \
-            -nographic \
-            -display none \
-            -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
-            -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
-            -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
-            -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
-            ${QEMU_ARGS} \
-            "${@}"
+    if [ "$INSTALLED" != "1" ]; then
+	INSTALLED_ARGS="-kernel ${KERNEL} -initrd ${INITRD}"
     fi
-
-elif [ "$QIND" == "1" ]; then
-
-    NAME=${NAME:-ros-qind}
-
-    if [ "$FRESH" == "1" ]; then
-        docker rm -fv ${NAME} >/dev/null 2>&1 || :
-    fi
-    if ! docker inspect ${NAME} >/dev/null 2>&1; then
-        if [ "$KVM" == "1" ]; then
-            KVM_ENABLE="--device=/dev/kvm:/dev/kvm"
-        fi
-
-        mkdir -p ./tmp
-        TMP=$(mktemp -d ./tmp/ros-qind-XXXXXX)
-        mkdir -p ${TMP}/stuff
-        trap "rm -rf ${TMP}" EXIT
-        ln ${CLOUD_CONFIG} ${KERNEL} ${INITRD} ./assets/rancher.key ./assets/rancher.key.pub ${TMP}/stuff/
-
-        KERNEL_FILE=$(basename ${KERNEL})
-        INITRD_FILE=$(basename ${INITRD})
-
-        if [ -n "$CLOUD_CONFIG" ]; then
-            CLOUD_CONFIG_ENABLE="--cloud-config /stuff/$(basename ${CLOUD_CONFIG})"
-        else
-            SSH_PUB_ENABLE="--ssh-pub /stuff/rancher.key.pub"
-        fi
-
-        set -x
-        docker create --name=${NAME} -it ${KVM_ENABLE} \
-                    rancher/qind \
-                    --hostname "rancher-dev" \
-                    ${CLOUD_CONFIG_ENABLE} \
-                    ${SSH_PUB_ENABLE} \
-                    -m 1G -kernel /stuff/${KERNEL_FILE} -initrd /stuff/${INITRD_FILE} -append "${KERNEL_ARGS}" \
-                    "${@}"
-
-        docker cp ${TMP}/stuff ${NAME}:/stuff
-        rm -rf ${TMP}
-    fi
-    exec docker start -ai ${NAME}
+	set -x
+	exec qemu-system-${QEMUARCH} -serial stdio \
+	    -rtc base=utc,clock=host \
+	    ${KVM_ENABLE} \
+	    ${CPU} \
+	    ${machine["$ARCH"]} \
+            ${INSTALLED_ARGS} \
+	    -append "${KERNEL_ARGS}" \
+	    -m 2048 \
+	    ${network["$ARCH"]} \
+	    $(eval "${hd["$ARCH"]} ${HD}") \
+	    ${SECOND_DRIVE_ENABLE} \
+	    -smp 1 \
+	    -nographic \
+	    -display none \
+	    -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
+	    -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
+	    -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
+	    -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
+	    ${QEMU_ARGS} \
+	    "${@}"
 
 else
     exit 42
