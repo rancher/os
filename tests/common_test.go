@@ -102,6 +102,9 @@ func (s *QemuSuite) runQemu(c *C, args ...string) error {
 		return err
 	}
 
+	fmt.Println("Pausing to let the VM start")
+	time.Sleep(10 * time.Second)
+
 	return s.WaitForSSH(c)
 }
 
@@ -124,7 +127,7 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 
 	var err error
 	for i := 0; i < 100; i++ {
-		if err := RunStreaming(s.sshCommand, sshArgs...); err == nil {
+		if err = RunStreaming(s.sshCommand, sshArgs...); err == nil {
 			fmt.Printf("\t%d %v  OK\n", i, time.Now())
 			break
 		} else {
@@ -148,21 +151,22 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 		"2>&1",
 	}
 
-	for i := 0; i < 20; i++ {
-		if err := RunStreaming(s.sshCommand, sshArgs...); err == nil {
+	for i := 0; i < 50; i++ {
+		if err = RunStreaming(s.sshCommand, sshArgs...); err == nil {
 			return nil
 		}
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
+		fmt.Printf("\t%d %v err: %v\n", i, time.Now(), err)
 	}
 
 	return fmt.Errorf("Failed to check Docker version: %v", err)
 }
 
 func RunStreaming(command string, args ...string) error {
-	fmt.Printf("Running %s\n", command)
-	for i, v := range args {
-		fmt.Printf("%d\t (%s)\n", i, v)
-	}
+//	fmt.Printf("Running %s\n", command)
+//	for i, v := range args {
+//		fmt.Printf("%d\t (%s)\n", i, v)
+//	}
 
         cmd := exec.Command(command, args...)
 	stdout, err := cmd.StdoutPipe()

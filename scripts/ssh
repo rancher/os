@@ -46,13 +46,11 @@ if [ "$QEMU" == "1" ]; then
     exec ssh -p ${SSH_PORT} -F ./assets/scripts_ssh_config -i ${KEY:-./assets/rancher.key} rancher@localhost "$@"
 elif [ "$QIND" == "1" ]; then
     NAME=${NAME:-ros-qind}
-    echo "ssh to ${NAME}"
     if [ -n "$KEY" ]; then
         docker inspect ${NAME} >/dev/null 2>&1 || exit 1
         docker cp ${KEY} ${NAME}:/assets/$(basename ${KEY})
         KEY_FILE=/assets/$(basename ${KEY})
     fi
-    echo "RUNNING exec docker exec ${INTERACTIVE} ${NAME} /ssh.sh -p ${SSH_PORT} -i ${KEY_FILE:-/assets/rancher.key} rancher@localhost "$@""
     exec docker exec ${INTERACTIVE} ${NAME} /ssh.sh -p ${SSH_PORT} -i ${KEY_FILE:-/assets/rancher.key} rancher@localhost "$@"
 else
     exit 42

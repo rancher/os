@@ -99,9 +99,10 @@ if [ "$QIND" == "1" ]; then
 	docker cp assets/rancher.key.pub ${NAME}:/assets/
 	docker cp dist/artifacts/vmlinuz ${NAME}:/dist/artifacts/vmlinuz
 	docker cp build/initrd ${NAME}:/build/initrd
-	docker cp build/initrd.tmp ${NAME}:/build/initrd.tmp
+	#docker cp build/initrd.tmp ${NAME}:/build/initrd.tmp
 	docker cp bin/ros ${NAME}:/bin/ros
     fi
+    echo "##### exec docker start -ai ${NAME}"
     exec docker start -ai ${NAME}
 fi
 

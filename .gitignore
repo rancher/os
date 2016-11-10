@@ -1,5 +1,6 @@
 .DS_Store
 /assets/ca.crt
+/assets/kernel.tar.gz
 /state
 /bin
 /build
