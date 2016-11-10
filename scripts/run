@@ -80,9 +80,9 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$QIND" == "1" ]; then
-    docker build -t rancher/qind:${NAME} qind
-
     NAME=${NAME:-ros-qind}
+
+    docker build -t rancher/qind:${NAME} qind
 
     if [ "$FRESH" == "1" ]; then
         docker rm -fv ${NAME} >/dev/null 2>&1 || :

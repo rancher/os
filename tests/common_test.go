@@ -131,7 +131,7 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 			fmt.Printf("\t%d %v  OK\n", i, time.Now())
 			break
 		} else {
-			fmt.Printf("\t%d %v err: %v\n", i, time.Now(), err)
+			fmt.Printf("\t%d %v (ls -al) err: %v\n", i, time.Now(), err)
 		}
 		time.Sleep(1 * time.Second)
 	}
@@ -156,7 +156,7 @@ func (s *QemuSuite) WaitForSSH(c *C) error {
 			return nil
 		}
 		time.Sleep(100 * time.Millisecond)
-		fmt.Printf("\t%d %v err: %v\n", i, time.Now(), err)
+		fmt.Printf("\t%d %v (docker version) err: %v\n", i, time.Now(), err)
 	}
 
 	return fmt.Errorf("Failed to check Docker version: %v", err)
