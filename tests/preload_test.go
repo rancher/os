@@ -7,6 +7,7 @@ import (
 func (s *QemuSuite) TestPreload(c *C) {
 	c.Parallel()
 	err := s.RunQemu(c, )
+	defer s.stopQemu(c)
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `

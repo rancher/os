@@ -10,6 +10,7 @@ func (s *QemuSuite) TestNetwork(c *C) {
 		args = append(args, netArgs...)
 	}
 	err := s.RunQemu(c, args...)
+	defer s.stopQemu(c)
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `

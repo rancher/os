@@ -9,6 +9,7 @@ import (
 func (s *QemuSuite) TestStartCommands(c *C) {
 	c.Parallel()
 	err := s.RunQemu(c, "--cloud-config", "./tests/assets/test_26/cloud-config.yml")
+	defer s.stopQemu(c)
 	c.Assert(err, IsNil)
 
 	for i := 1; i < 5; i++ {

@@ -5,6 +5,7 @@ import . "github.com/cpuguy83/check"
 func (s *QemuSuite) TestMisc(c *C) {
 	c.Parallel()
 	err := s.RunQemu(c, "--cloud-config", "./tests/assets/test_01/cloud-config.yml")
+	defer s.stopQemu(c)
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, "sudo ros env printenv FLANNEL_NETWORK | grep '10.244.0.0/16'")

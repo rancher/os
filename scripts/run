@@ -82,6 +82,7 @@ done
 if [ "$QIND" == "1" ]; then
     NAME=${NAME:-ros-qind}
 
+    cp -r tests qind/
     docker build -t rancher/qind:${NAME} qind
 
     if [ "$FRESH" == "1" ]; then

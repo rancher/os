@@ -9,6 +9,7 @@ import (
 func (s *QemuSuite) TestSharedMount(c *C) {
 	c.Parallel()
 	err := s.RunQemu(c, )
+	defer s.stopQemu(c)
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, fmt.Sprintf(`

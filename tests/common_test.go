@@ -103,7 +103,9 @@ func (s *QemuSuite) runQemu(c *C, args ...string) error {
 	}
 
 	fmt.Println("Pausing to let the VM start")
-	time.Sleep(10 * time.Second)
+	// If this delay is too short, then the docker exec can cause the container to stop with no error (i presume its a temporary issue)
+	// TODO: really should watch the log output instead
+	time.Sleep(20 * time.Second)
 
 	return s.WaitForSSH(c)
 }
@@ -231,7 +233,8 @@ func (s *QemuSuite) CheckCall(c *C, additionalArgs ...string) {
 
 func (s *QemuSuite) Reboot(c *C) {
 	s.MakeCall(c, "sudo reboot")
-	time.Sleep(3000 * time.Millisecond)
+	fmt.Println("Pausing to let the VM reboot")
+	time.Sleep(20 * time.Second)
 	c.Assert(s.WaitForSSH(c), IsNil)
 }
 

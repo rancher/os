@@ -5,6 +5,7 @@ import . "github.com/cpuguy83/check"
 func (s *QemuSuite) TestMounts(c *C) {
 	c.Parallel()
 	err := s.RunQemu(c, "--cloud-config", "./tests/assets/test_23/cloud-config.yml", "--second-drive")
+	defer s.stopQemu(c)
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, "cat /home/rancher/test | grep test")

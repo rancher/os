@@ -10,6 +10,7 @@ func (s *QemuSuite) TestUpgrade(c *C) {
 	c.Parallel()
 	//TODO: this will fail if its the first time we've ever run?
 	err := s.RunQemuInstalled(c, )
+	defer s.stopQemu(c)
 	c.Assert(err, IsNil)
 
 	s.CheckCall(c, `
