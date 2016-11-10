@@ -10,22 +10,23 @@ for i in $IMAGES; do
     fi
 done
 
+# TODO - this causes the start times of the integration-tests to go up massivly
 # add the images that we normally pull from hub
-if [ -e "assets/os-images.list" ]; then
-  for image in $(cat assets/os-images.list | tr "\n" " "); do
-    if [[ "$image" == *"xfce"* \
-          || "$image" == *"selinux"* \
-          || "$image" == *"fedora"* \
-          || "$image" == *"centos"* \
-          || "$image" == *"debian"* \
-          || "$image" == *"ubuntu"* \
-          || "$image" == *"openvmtools"* \
-       ]]; then
-      continue
-    fi
-    DEVIMAGES="${DEVIMAGES} ${image}"
-  done
-fi
+#if [ -e "assets/os-images.list" ]; then
+#  for image in $(cat assets/os-images.list | tr "\n" " "); do
+#    if [[ "$image" == *"xfce"* \
+#          || "$image" == *"selinux"* \
+#          || "$image" == *"fedora"* \
+#          || "$image" == *"centos"* \
+#          || "$image" == *"debian"* \
+#          || "$image" == *"ubuntu"* \
+#          || "$image" == *"openvmtools"* \
+#       ]]; then
+#      continue
+#    fi
+#    DEVIMAGES="${DEVIMAGES} ${image}"
+#  done
+#fi
 
 echo "adding these images into the initrd (${IMAGES} ${DEVIMAGES})"
 for image in ${IMAGES} ${DEVIMAGES}; do
