@@ -13,7 +13,8 @@ var schema = `{
     "hostname": {"type": "string"},
     "mounts": {"type": "array"},
     "rancher": {"$ref": "#/definitions/rancher_config"},
-    "runcmd": {"type": "array"}
+    "runcmd": {"type": "array"},
+    "bootcmd": {"type": "array"}
   },
 
   "definitions": {
