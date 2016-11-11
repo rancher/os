@@ -14,12 +14,12 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.6.1 - Docker 1.12.1 - Linux 4.4.19**
+**v0.7.1 - Docker 1.12.1 - Linux 4.4.19**
 
 ### ISO
 
 https://releases.rancher.com/os/latest/rancheros.iso  
-https://releases.rancher.com/os/v0.6.1/rancheros.iso  
+https://releases.rancher.com/os/v0.7.1/rancheros.iso  
 
 ### Additional Downloads
 
@@ -29,25 +29,25 @@ https://releases.rancher.com/os/v0.6.1/rancheros.iso
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
-* https://releases.rancher.com/os/latest/rancheros-v0.6.1.tar.gz
+* https://releases.rancher.com/os/latest/rancheros-v0.7.1.tar.gz
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
 * https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
 
-#### v0.6.1
+#### v0.7.1
 
-* https://releases.rancher.com/os/v0.6.1/initrd
-* https://releases.rancher.com/os/v0.6.1/iso-checksums.txt
-* https://releases.rancher.com/os/v0.6.1/rancheros-openstack.img
-* https://releases.rancher.com/os/v0.6.1/rancheros-raspberry-pi.zip
-* https://releases.rancher.com/os/v0.6.1/rancheros-v0.6.1.tar.gz
-* https://releases.rancher.com/os/v0.6.1/rancheros.iso
-* https://releases.rancher.com/os/v0.6.1/rootfs_arm.tar.gz
-* https://releases.rancher.com/os/v0.6.1/rootfs_arm64.tar.gz
-* https://releases.rancher.com/os/v0.6.1/rootfs.tar.gz
-* https://releases.rancher.com/os/v0.6.1/vmlinuz
+* https://releases.rancher.com/os/v0.7.1/initrd
+* https://releases.rancher.com/os/v0.7.1/iso-checksums.txt
+* https://releases.rancher.com/os/v0.7.1/rancheros-openstack.img
+* https://releases.rancher.com/os/v0.7.1/rancheros-raspberry-pi.zip
+* https://releases.rancher.com/os/v0.7.1/rancheros-v0.7.1.tar.gz
+* https://releases.rancher.com/os/v0.7.1/rancheros.iso
+* https://releases.rancher.com/os/v0.7.1/rootfs_arm.tar.gz
+* https://releases.rancher.com/os/v0.7.1/rootfs_arm64.tar.gz
+* https://releases.rancher.com/os/v0.7.1/rootfs.tar.gz
+* https://releases.rancher.com/os/v0.7.1/vmlinuz
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
@@ -74,7 +74,7 @@ us-west-2 | HVM |  [ami-1ed3007e](https://console.aws.amazon.com/ec2/home?region
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS.
 
-[Download Image](https://github.com/rancher/os/releases/download/v0.6.1/rancheros-v0.6.1.tar.gz)
+[Download Image](https://github.com/rancher/os/releases/download/v0.7.1/rancheros-v0.7.1.tar.gz)
 
 Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/).
 
