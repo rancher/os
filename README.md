@@ -28,13 +28,15 @@ https://releases.rancher.com/os/v0.7.1/rancheros.iso
 ### v0.7.1
 * https://releases.rancher.com/os/latest/initrd
 * https://releases.rancher.com/os/latest/iso-checksums.txt
+* https://releases.rancher.com/os/latest/rancheros-openstack.img
 * https://releases.rancher.com/os/latest/rancheros.iso
 * https://releases.rancher.com/os/latest/rancheros-v0.7.1.tar.gz
 * https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
 
 ### v0.7.0
-* https://releases.rancher.com/os/latest/rancheros-openstack.img
+
+
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
@@ -43,6 +45,7 @@ https://releases.rancher.com/os/v0.7.1/rancheros.iso
 
 * https://releases.rancher.com/os/v0.7.1/initrd
 * https://releases.rancher.com/os/v0.7.1/iso-checksums.txt
+* https://releases.rancher.com/os/v0.7.1/rancheros-openstack.img
 * https://releases.rancher.com/os/v0.7.1/rancheros.iso
 * https://releases.rancher.com/os/v0.7.1/rancheros-v0.7.1.tar.gz
 * https://releases.rancher.com/os/v0.7.1/rootfs.tar.gz
@@ -50,10 +53,9 @@ https://releases.rancher.com/os/v0.7.1/rancheros.iso
 
 #### v0.7.0 Links
 
-* https://releases.rancher.com/os/v0.7.0/rancheros-openstack.img
 * https://releases.rancher.com/os/v0.7.0/rancheros-raspberry-pi.zip
-* https://releases.rancher.com/os/v0.7.0/rootfs.tar.gz
-* https://releases.rancher.com/os/v0.7.0/vmlinuz
+* https://releases.rancher.com/os/v0.7.0/rootfs_arm.tar.gz
+* https://releases.rancher.com/os/v0.7.0/rootfs_arm64.tar.gz
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.  
 
