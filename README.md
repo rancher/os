@@ -25,7 +25,7 @@ https://releases.rancher.com/os/v0.7.1/rancheros.iso
 
 #### Latest Links
 
-### v0.7.1
+##### v0.7.1
 * https://releases.rancher.com/os/latest/initrd
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
@@ -34,7 +34,7 @@ https://releases.rancher.com/os/v0.7.1/rancheros.iso
 * https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
 
-### v0.7.0
+##### v0.7.0
 
 
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
