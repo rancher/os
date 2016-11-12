@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-INSTALLER_IMAGE=rancher/os:v0.7.0
+INSTALLER_IMAGE=rancher/os:v0.7.1
 
 ros config set rancher.network.interfaces.eth1.dhcp false
 if grep eth2 /proc/net/dev; then
