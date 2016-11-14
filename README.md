@@ -14,7 +14,7 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Latest Release
 
-**v0.7.1 - Docker 1.12.3**
+**v0.7.1 - Docker 1.12.3 - Linux 4.4.24**
 
 ### ISO
 
