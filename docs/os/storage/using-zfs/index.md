@@ -13,9 +13,12 @@ In order to start using ZFS, you'll need to first enable one of the [persistent 
 $ sudo ros console switch ubuntu
 $ sudo ros service enable kernel-headers
 $ sudo ros service up -d kernel-headers
+$ sudo ros service logs kernel-headers
 ```
 
 When RancherOS console has reloaded, you will have logged into the persistent console. The current kernel headers will need to be downloaded using the `ros service enable` and the service will be started with `ros service up -d kernel-headers`.
+
+You can make sure that the headers are in the right place by looking at the kernel-headers service logs.
 
 #### Installing ZFS on Ubuntu Console
 
@@ -25,6 +28,8 @@ Based on the [Ubuntu ZFS docs](https://wiki.ubuntu.com/Kernel/Reference/ZFS), yo
 $ sudo apt update
 $ sudo apt install zfs
 ```
+
+Then have a look at the zfs dmks build log file - which is likely to be a file similar to `/var/lib/dkms/zfs/0.6.5.6/build/make.log`.
 
 #### Mounting ZFS filesystems on boot
 
@@ -95,6 +100,7 @@ Now you'll need to remove `-s overlay` (or any other storage driver) from the Do
 $ sudo ros config set rancher.docker.storage_driver ''
 $ sudo ros config set rancher.docker.graph /zpool1/docker
 # After editing Docker daemon args, you'll need to start Docker
+$ sudo system-docker stop docker
 $ sudo system-docker start docker
 ```
 
