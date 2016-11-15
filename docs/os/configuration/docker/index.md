@@ -40,7 +40,8 @@ Key | Value
 `exec_root` | String
 `group` | String
 `graph` | String
-`host` | String
+`host` | List
+`insecure_registry` | List
 `live_restore` | Boolean
 `log_driver` | String
 `log_opts` | Map where keys and values are strings
