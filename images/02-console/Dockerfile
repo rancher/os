@@ -1,5 +1,4 @@
 FROM rancher/os-base
-COPY update-ssh-keys /usr/sbin/
 COPY build/lsb-release /etc/
 RUN sed -i 's/rancher:!/rancher:*/g' /etc/shadow && \
     sed -i 's/docker:!/docker:*/g' /etc/shadow && \

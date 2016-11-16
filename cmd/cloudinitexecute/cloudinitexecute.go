@@ -56,8 +56,12 @@ func Main() {
 
 func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 	if len(cfg.SSHAuthorizedKeys) > 0 {
-		authorizeSSHKeys("rancher", cfg.SSHAuthorizedKeys, sshKeyName)
-		authorizeSSHKeys("docker", cfg.SSHAuthorizedKeys, sshKeyName)
+		if err := authorizeSSHKeys("rancher", cfg.SSHAuthorizedKeys, sshKeyName); err != nil {
+			log.Error(err)
+		}
+		if err := authorizeSSHKeys("docker", cfg.SSHAuthorizedKeys, sshKeyName); err != nil {
+			log.Error(err)
+		}
 	}
 
 	WriteFiles(cfg, "console")
