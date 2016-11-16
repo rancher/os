@@ -7,7 +7,51 @@ redirect_from:
 
 ## Custom Kernels
 
-### Changing the Kernel in RancherOS 
+### Building and Packaging a Kernel to be used in RancherOS
+
+We build the kernel for RancherOS at the [os-kernel repository](https://github.com/rancher/os-kernel). You can use this repository to help package your own custom kernel to be used in RancherOS.
+
+
+1. Create a clone of the [os-kernel](https://github.com/rancher/os-kernel) repository to your local machine using `git clone`.
+    
+   ```
+   $ git clone https://github.com/rancher/os-kernel.git
+   ```
+
+2. In the `./Dockerfile.dapper` file, update the `KERNEL_TAG`, `KERNEL_VERSION`, `KERNEL_URL` and `KERNEL_SHA1`. `KERNEL_URL` points to Linux kernel sources archive, packaged as `.tar.gz` or `.tar.xz`. `KERNEL_SHA1` is the `SHA1` sum of the kernel sources archive. 
+
+   `./Dockerfile.dapper` file
+
+   ```bash
+   ########## Kernel version Configuration #############################
+   ENV KERNEL_TAG=v4.8.7
+   ENV KERNEL_VERSION=4.8.7-rancher
+   ENV KERNEL_SHA1=5c10724a0e7e97b72046be841df0c69c6e2a03c2
+   ENV KERNEL_URL=https://github.com/rancher/linux/archive/${KERNEL_TAG}.tar.gz
+   ```
+
+3. After you've replaced the `KERNEL_*` values, run `make` in the root `os-kernel` directory. After the build is completed, a `./dist/kernel` directory will be created with the freshly built kernel tarball and headers. 
+   
+   ```
+   $ make
+   ...snip...
+   --- 4.8.7-rancher Kernel prepared for RancherOS
+   	./dist/kernel/extra-linux-4.8.7-rancher-x86.tar.gz
+   	./dist/kernel/build-linux-4.8.7-rancher-x86.tar.gz
+   	./dist/kernel/linux-4.8.7-rancher-x86.tar.gz
+   	./dist/kernel/config
+   
+   Images ready to push:
+   rancher/os-extras:4.8.7-rancher
+   rancher/os-headers:4.8.7-rancher
+
+   ```
+
+Now you need to either upload the `./dist/kernel/linux-4.8.7-rancher-x86.tar.gz` file to somewhere, or copy that file into your clone of the `rancher/os` repo, as `assets/kernel.tar.gz`.
+
+The `build-<name>.tar.gz` and `extra-<name>.tar.gz` files are used to build the `rancher/os-extras` and `rancher/os-headers` images for your RancherOS release - which you will need to tag them with a different organisation name, push them to a registry, and create custom service.yml files.
+
+### Building a RancherOS release using the Packaged kernel files.
 
 By default, RancherOS ships with the kernel provided by the [os-kernel repository](https://github.com/rancher/os-kernel). Swapping out the default kernel can by done by [building your own custom RancherOS ISO]({{site.baseurl}}/os/configuration/custom-rancheros-iso/).
 
@@ -60,41 +104,3 @@ By default, RancherOS ships with the kernel provided by the [os-kernel repositor
     ```
   
  3. After you've replaced the URL with your custom kernel, you can follow the steps in [building your own custom RancherOS ISO]({{site.baseurl}}/os/configuration/custom-rancheros-iso/).
-
-### Packaging a Kernel to be used in RancherOS
-
-We build the kernel for RancherOS at the [os-kernel repository](https://github.com/rancher/os-kernel). You can use this repository to help package your own custom kernel to be used in RancherOS.
-
-
-1. Create a clone of the [os-kernel](https://github.com/rancher/os-kernel) repository to your local machine using `git clone`.
-    
-   ```
-   $ git clone https://github.com/rancher/os-kernel.git
-   ```
-
-2. In the `./scripts/build-common` file, update the `KERNEL_URL` and `KERNEL_SHA1`. `KERNEL_URL` points to Linux kernel sources archive, packaged as `.tar.gz` or `.tar.xz`. `KERNEL_SHA1` is the `SHA1` sum of the kernel sources archive. 
-
-   `./scripts/build-common` file
-
-   ```bash
-   #!/bin/bash
-   set -e
-
-   : ${KERNEL_URL:="https://github.com/rancher/linux/archive/Ubuntu-3.19.0-27.29.tar.gz"}
-   : ${KERNEL_SHA1:="84b9bc53bbb4dd465b97ea54a71a9805e27ae4f2"}
-   : ${ARTIFACTS:=$(pwd)/assets}
-   : ${BUILD:=$(pwd)/build}
-   : ${CONFIG:=$(pwd)/config}
-   : ${DIST:=$(pwd)/dist}
-   ```
-
-3. After you've replaced the `KERNEL_URL` and `KERNEL_SHA1`, run `make` in the root `os-kernel` directory. After the build is completed, a `./dist/kernel` directory will be created with the freshly built kernel tarball and headers. 
-   
-   ```
-   $ make
-   $ cd dist/kernel
-   $ ls
-   build.tar.gz                     extra.tar.gz    <name_of_kernel>.tar.gz
-   ```
-
-The `build.tar.gz` and `extra.tar.gz` files are used to build the `rancher/os-extras` and `rancher/os-headers` images for your RancherOS release - see https://github.com/rancher/os-images and https://github.com/rancher/os-services for how to build the images and make them available.
