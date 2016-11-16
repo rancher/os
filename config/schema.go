@@ -131,7 +131,8 @@ var schema = `{
         "restart": {"type": ["boolean", "null"]},
         "selinux_enabled": {"type": ["boolean", "null"]},
         "storage_driver": {"type": "string"},
-        "userland_proxy": {"type": ["boolean", "null"]}
+        "userland_proxy": {"type": ["boolean", "null"]},
+        "insecure_registry": {"$ref": "#/definitions/list_of_strings"}
       }
     },
 
