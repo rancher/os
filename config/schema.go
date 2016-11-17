@@ -26,6 +26,7 @@ var schema = `{
       "properties": {
         "console": {"type": "string"},
         "environment": {"type": "object"},
+        "cloud_init_services": {"type": "object"},
         "services": {"type": "object"},
         "bootstrap": {"type": "object"},
         "autoformat": {"type": "object"},
