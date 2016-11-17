@@ -45,6 +45,8 @@ func entrypointAction(c *cli.Context) error {
 		writeFiles(cfg)
 	}
 
+	setupPowerOperations()
+
 	if len(os.Args) < 3 {
 		return nil
 	}
@@ -73,4 +75,30 @@ func writeFiles(cfg *config.CloudConfig) error {
 
 	cloudinitexecute.WriteFiles(cfg, info.Name[1:])
 	return nil
+}
+
+func setupPowerOperations() {
+	for _, powerOperation := range []string{
+		"/sbin/poweroff",
+		"/sbin/shutdown",
+		"/sbin/reboot",
+		"/sbin/halt",
+		"/usr/sbin/poweroff",
+		"/usr/sbin/shutdown",
+		"/usr/sbin/reboot",
+		"/usr/sbin/halt",
+	} {
+		os.Remove(powerOperation)
+	}
+
+	for _, link := range []symlink{
+		{config.ROS_BIN, "/sbin/poweroff"},
+		{config.ROS_BIN, "/sbin/reboot"},
+		{config.ROS_BIN, "/sbin/halt"},
+		{config.ROS_BIN, "/sbin/shutdown"},
+	} {
+		if err := os.Symlink(link.oldname, link.newname); err != nil {
+			log.Error(err)
+		}
+	}
 }
