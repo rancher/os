@@ -7,8 +7,7 @@ import (
 )
 
 func (s *QemuSuite) TestUpgrade(c *C) {
-	err := s.RunQemuInstalled()
-	c.Assert(err, IsNil)
+	s.RunQemuInstalled(c)
 
 	s.CheckCall(c, `
 set -ex

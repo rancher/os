@@ -3,9 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestSshKeyMerge(c *C) {
-	err := s.RunQemu()
-	c.Assert(err, IsNil)
-
+	s.RunQemu(c)
 	s.CheckCall(c, `
 cat > test-merge << "SCRIPT"
 set -x -e

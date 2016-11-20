@@ -76,6 +76,17 @@ func configSubcommands() []cli.Command {
 				},
 			},
 		},
+		{
+			Name:   "validate",
+			Usage:  "validate configuration from stdin",
+			Action: validate,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input, i",
+					Usage: "File from which to read",
+				},
+			},
+		},
 	}
 }
 
@@ -83,9 +94,6 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 	imagesMap := map[string]int{}
 
 	for _, service := range cfg.Rancher.BootstrapContainers {
-		imagesMap[service.Image] = 1
-	}
-	for _, service := range cfg.Rancher.Autoformat {
 		imagesMap[service.Image] = 1
 	}
 	for _, service := range cfg.Rancher.Services {
@@ -186,18 +194,7 @@ func configGet(c *cli.Context) error {
 }
 
 func merge(c *cli.Context) error {
-	input := os.Stdin
-	inputFile := c.String("input")
-	if inputFile != "" {
-		var err error
-		input, err = os.Open(inputFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer input.Close()
-	}
-
-	bytes, err := ioutil.ReadAll(input)
+	bytes, err := inputBytes(c)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -226,4 +223,33 @@ func export(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func validate(c *cli.Context) error {
+	bytes, err := inputBytes(c)
+	if err != nil {
+		log.Fatal(err)
+	}
+	validationErrors, err := config.Validate(bytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, validationError := range validationErrors.Errors() {
+		log.Error(validationError)
+	}
+	return nil
+}
+
+func inputBytes(c *cli.Context) ([]byte, error) {
+	input := os.Stdin
+	inputFile := c.String("input")
+	if inputFile != "" {
+		var err error
+		input, err = os.Open(inputFile)
+		if err != nil {
+			return nil, err
+		}
+		defer input.Close()
+	}
+	return ioutil.ReadAll(input)
 }

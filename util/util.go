@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	osYaml "github.com/rancher/os/config/yaml"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -240,4 +242,48 @@ func ExistsAndExecutable(path string) bool {
 
 	mode := info.Mode().Perm()
 	return mode&os.ModePerm != 0
+}
+
+func RunScript(path string) error {
+	if !ExistsAndExecutable(path) {
+		return nil
+	}
+
+	script, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
+	magic := make([]byte, 2)
+	if _, err = script.Read(magic); err != nil {
+		return err
+	}
+
+	cmd := exec.Command("/bin/sh", path)
+	if string(magic) == "#!" {
+		cmd = exec.Command(path)
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+func RunCommandSequence(commandSequence []osYaml.StringandSlice) {
+	for _, command := range commandSequence {
+		var cmd *exec.Cmd
+		if command.StringValue != "" {
+			cmd = exec.Command("sh", "-c", command.StringValue)
+		} else if len(command.SliceValue) > 0 {
+			cmd = exec.Command(command.SliceValue[0], command.SliceValue[1:]...)
+		} else {
+			continue
+		}
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Errorf("Failed to run %s: %v", command, err)
+		}
+	}
 }

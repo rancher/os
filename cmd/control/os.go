@@ -1,7 +1,6 @@
 package control
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -79,6 +78,7 @@ func osSubcommands() []cli.Command {
 	}
 }
 
+// TODO: this and the getLatestImage should probably move to utils/network and be suitably cached.
 func getImages() (*Images, error) {
 	upgradeUrl, err := getUpgradeUrl()
 	if err != nil {
@@ -128,13 +128,30 @@ func osMetaDataGet(c *cli.Context) error {
 		log.Fatal(err)
 	}
 
-	for _, image := range images.Available {
+	cfg := config.LoadConfig()
+	runningName := cfg.Rancher.Upgrade.Image + ":" + config.VERSION
+
+	foundRunning := false
+	for i := len(images.Available) - 1; i >= 0; i-- {
+		image := images.Available[i]
 		_, _, err := client.ImageInspectWithRaw(context.Background(), image, false)
+		local := "local"
 		if dockerClient.IsErrImageNotFound(err) {
-			fmt.Println(image, "remote")
-		} else {
-			fmt.Println(image, "local")
+			local = "remote"
 		}
+		available := "available"
+		if image == images.Current {
+			available = "latest"
+		}
+		var running string
+		if image == runningName {
+			foundRunning = true
+			running = "running"
+		}
+		fmt.Println(image, local, available, running)
+	}
+	if !foundRunning {
+		fmt.Println(config.VERSION, "running")
 	}
 
 	return nil
@@ -178,8 +195,6 @@ func osVersion(c *cli.Context) error {
 }
 
 func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgradeConsole bool, kernelArgs string) error {
-	in := bufio.NewReader(os.Stdin)
-
 	command := []string{
 		"-t", "rancher-upgrade",
 		"-r", config.VERSION,
@@ -206,7 +221,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 	if len(imageSplit) > 1 && imageSplit[1] == config.VERSION+config.SUFFIX {
 		confirmation = fmt.Sprintf("Already at version %s. Continue anyway", imageSplit[1])
 	}
-	if !force && !yes(in, confirmation) {
+	if !force && !yes(confirmation) {
 		os.Exit(1)
 	}
 
@@ -256,7 +271,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 			return err
 		}
 
-		if reboot && (force || yes(in, "Continue with reboot")) {
+		if reboot && (force || yes("Continue with reboot")) {
 			log.Info("Rebooting")
 			power.Reboot()
 		}

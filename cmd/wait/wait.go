@@ -11,7 +11,7 @@ import (
 func Main() {
 	_, err := docker.NewClient(config.DOCKER_HOST)
 	if err != nil {
-		logrus.Errorf("Failed to conect to Docker")
+		logrus.Errorf("Failed to connect to Docker")
 		os.Exit(1)
 	}
 

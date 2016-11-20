@@ -1,10 +1,8 @@
 package control
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"sort"
 	"strings"
 
@@ -61,12 +59,11 @@ func consoleSwitch(c *cli.Context) error {
 	}
 
 	if !c.Bool("force") {
-		in := bufio.NewReader(os.Stdin)
 		fmt.Println(`Switching consoles will
 1. destroy the current console container
 2. log you out
 3. restart Docker`)
-		if !yes(in, "Continue") {
+		if !yes("Continue") {
 			return nil
 		}
 	}
@@ -86,7 +83,7 @@ func consoleSwitch(c *cli.Context) error {
 		Labels: map[string]string{
 			config.SCOPE: config.SYSTEM,
 		},
-		Command:     []string{"/usr/bin/switch-console", newConsole},
+		Command:     []string{"/usr/bin/ros", "switch-console", newConsole},
 		VolumesFrom: []string{"all-volumes"},
 	})
 	if err != nil {

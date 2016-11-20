@@ -34,6 +34,7 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
 COPY inputrc /etc/inputrc
 COPY growpart /usr/bin/growpart
 RUN sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
-    sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf
+    sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
+    sed -i 1,10d /etc/rsyslog.conf
 
 ENTRYPOINT ["/usr/bin/ros", "entrypoint"]

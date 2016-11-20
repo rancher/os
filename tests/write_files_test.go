@@ -3,8 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestWriteFiles(c *C) {
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_24/cloud-config.yml")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--cloud-config", "./tests/assets/test_24/cloud-config.yml")
 
 	s.CheckCall(c, "sudo cat /test | grep 'console content'")
 	s.CheckCall(c, "sudo cat /test2 | grep 'console content'")

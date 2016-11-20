@@ -16,10 +16,6 @@ import (
 	"github.com/rancher/os/util/network"
 )
 
-const (
-	dockerDone = "/run/docker-done"
-)
-
 func engineSubcommands() []cli.Command {
 	return []cli.Command{
 		{

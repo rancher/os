@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <title>{{ site.name }}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="{{ site.description }}">
+        <link href="{{site.baseurl}}/css/bootstrap.css" rel="stylesheet">
+        <link href="{{site.baseurl}}/css/syntax.css" rel="stylesheet">
+        <link href="{{site.baseurl}}/css/rancher.css" rel="stylesheet">
+        <link rel="stylesheet" href="{{site.baseurl}}/vendor/font-awesome/css/font-awesome.min.css">
+        <link rel="stylesheet" href="{{site.baseurl}}/vendor/lato/lato.css">
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row body" >
+                <div class="col-sm-3">
+                    {% include volume-sidebar.html %}
+                </div>
+                <div class="col-sm-9">
+                    <div class="content-container">
+                        {{ content }}
+                    </div>
+                </div>
+                <div class="col-sm-12">
+                    <div class="row">
+                        <span class="copyright" >Copyright &copy; 2016  <a href="http://rancher.com">Rancher Labs</a>. All Rights Reserved.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="{{site.baseurl}}/vendor/jquery.js"></script>
+    <script src="{{site.baseurl}}/vendor/bootstrap.js"></script>
+    <script src="{{site.baseurl}}/js/rancher.js"></script>
+</html>
