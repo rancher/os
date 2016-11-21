@@ -41,12 +41,12 @@ $ sudo ros service enable https://mydomain.com/example.yml
 
 <br>
 
-After the custom system service is enabled, you can start the service using `sudo ros service up -d <serviceName>`. The `<serviceName>` will be the names of the services inside the `docker-compose.yml`.
+After the custom system service is enabled, you can start the service using `sudo ros service up <serviceName>`. The `<serviceName>` will be the names of the services inside the `docker-compose.yml`.
 
 ```
-$ sudo ros service up -d nginxapp
+$ sudo ros service up nginxapp
 # If you have more than 1 service in your docker-compose.yml, add all service names to the command
-$ sudo ros service up -d service1 service2 service3
+$ sudo ros service up service1 service2 service3
 ```
 
 ### Launching Services from a web repository

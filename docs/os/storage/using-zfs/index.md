@@ -12,11 +12,11 @@ In order to start using ZFS, you'll need to first enable one of the [persistent 
 ```
 $ sudo ros console switch ubuntu
 $ sudo ros service enable kernel-headers
-$ sudo ros service up -d kernel-headers
+$ sudo ros service up kernel-headers
 $ sudo ros service logs kernel-headers
 ```
 
-When RancherOS console has reloaded, you will have logged into the persistent console. The current kernel headers will need to be downloaded using the `ros service enable` and the service will be started with `ros service up -d kernel-headers`.
+When RancherOS console has reloaded, you will have logged into the persistent console. The current kernel headers will need to be downloaded using the `ros service enable` and the service will be started with `ros service up kernel-headers`.
 
 You can make sure that the headers are in the right place by looking at the kernel-headers service logs.
 
