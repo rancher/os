@@ -18,6 +18,20 @@ func TestGenerateEngineOptsString(t *testing.T) {
 	if len(generateEngineOptsSlice(EngineOpts{})) != 0 {
 		t.Fail()
 	}
+	if len(generateEngineOptsSlice(EngineOpts{
+		Host: []string{
+			"",
+		},
+	})) != 0 {
+		t.Fail()
+	}
+	if len(generateEngineOptsSlice(EngineOpts{
+		LogOpts: map[string]string{
+			"max-file": "",
+		},
+	})) != 0 {
+		t.Fail()
+	}
 
 	testContains(t, fmt.Sprint(generateEngineOptsSlice(EngineOpts{
 		Bridge: "bridge",

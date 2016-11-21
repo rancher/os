@@ -43,11 +43,15 @@ func generateEngineOptsSlice(opts EngineOpts) []string {
 			}
 		case []string:
 			for _, elem := range value {
-				optsSlice = append(optsSlice, fmt.Sprintf("--%s", optTag), elem)
+				if elem != "" {
+					optsSlice = append(optsSlice, fmt.Sprintf("--%s", optTag), elem)
+				}
 			}
 		case map[string]string:
 			for k, v := range value {
-				optsSlice = append(optsSlice, fmt.Sprintf("--%s", optTag), fmt.Sprintf("%s=%s", k, v))
+				if v != "" {
+					optsSlice = append(optsSlice, fmt.Sprintf("--%s", optTag), fmt.Sprintf("%s=%s", k, v))
+				}
 			}
 		}
 	}
