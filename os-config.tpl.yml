@@ -37,7 +37,6 @@ rancher:
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
-        io.rancher.os.after: ntp
       log_driver: json-file
       net: host
       uts: host
