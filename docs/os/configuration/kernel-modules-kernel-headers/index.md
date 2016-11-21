@@ -17,14 +17,14 @@ The following commands can be used to install kernel headers for usage by contai
 
 ```
 $ sudo ros service enable kernel-headers
-$ sudo ros service up -d kernel-headers
+$ sudo ros service up kernel-headers
 ```
 
 #### System Docker
 
 ```
 $ sudo ros service enable kernel-headers-system-docker
-$ sudo ros service up -d kernel-headers-system-docker
+$ sudo ros service up kernel-headers-system-docker
 ```
 
 The `ros service` commands will install the kernel headers in `/lib/modules/$(uname -r)/build`. Based on which service you install, the kernel headers will be available to containers, in Docker or System Docker,  by bind mounting specific volumes. For any containers that compile a kernel module, the Docker command will need to bind mount in `/usr/src` and `/lib/modules`.
