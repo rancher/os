@@ -130,10 +130,6 @@ rancher:
       volumes:
       - /usr/bin/ros:/usr/bin/dockerlaunch:ro
       - /usr/bin/ros:/usr/bin/system-docker:ro
-      - /usr/bin/ros:/sbin/poweroff:ro
-      - /usr/bin/ros:/sbin/reboot:ro
-      - /usr/bin/ros:/sbin/halt:ro
-      - /usr/bin/ros:/sbin/shutdown:ro
       - /usr/bin/ros:/usr/bin/respawn:ro
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/bin/ros:/usr/bin/cloud-init-execute:ro
