@@ -156,6 +156,7 @@ var schema = `{
         "directory": {"type": "string"},
         "fstype": {"type": "string"},
         "dev": {"type": "string"},
+        "opt": {"$ref": "#/definitions/list_of_strings"},
         "wait": {"type": "boolean"},
         "required": {"type": "boolean"},
         "autoformat": {"$ref": "#/definitions/list_of_strings"},
@@ -163,6 +164,7 @@ var schema = `{
         "script": {"type": "string"},
         "oem_fstype": {"type": "string"},
         "oem_dev": {"type": "string"}
+        "oem_opt": {"$ref": "#/definitions/list_of_strings"},
       }
     },
 
