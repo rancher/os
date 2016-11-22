@@ -27,7 +27,8 @@ RUN apt-get update && \
         syslinux-common \
         vim \
         wget \
-        xorriso
+        xorriso \
+        btrfs-tools
 
 ########## Dapper Configuration #####################
 
