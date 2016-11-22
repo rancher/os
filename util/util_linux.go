@@ -5,6 +5,7 @@ package util
 import (
 	"os"
 	"syscall"
+	"strings"
 
 	"github.com/docker/docker/pkg/mount"
 )
@@ -25,7 +26,14 @@ func mountProc() error {
 	return nil
 }
 
-func Mount(device, directory, fsType, options string) error {
+func Mount(device, directory, fsType string, options_i interface{}) error {
+	options := ""
+        switch options_cast := options_i.(type) {
+	case string:
+		options = options_cast
+	case []string:
+		options = strings.Join(options_cast, ",")
+        }
 	if err := mountProc(); err != nil {
 		return nil
 	}

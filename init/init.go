@@ -96,7 +96,7 @@ func MainInit() {
 	}
 }
 
-func mountConfigured(display, dev, fsType, target string) error {
+func mountConfigured(display, dev, fsType, target string, options interface{}) error {
 	var err error
 
 	if dev == "" {
@@ -116,19 +116,19 @@ func mountConfigured(display, dev, fsType, target string) error {
 	}
 
 	log.Debugf("FsType has been set to %s", fsType)
-	log.Infof("Mounting %s device %s to %s", display, dev, target)
-	return util.Mount(dev, target, fsType, "")
+	log.Infof("Mounting %s device %s to %s with options %s", display, dev, target, options)
+	return util.Mount(dev, target, fsType, options)
 }
 
 func mountState(cfg *config.CloudConfig) error {
-	return mountConfigured("state", cfg.Rancher.State.Dev, cfg.Rancher.State.FsType, state)
+	return mountConfigured("state", cfg.Rancher.State.Dev, cfg.Rancher.State.FsType, STATE, cfg.Rancher.State.Opt)
 }
 
 func mountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if cfg == nil {
 		cfg = config.LoadConfig()
 	}
-	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OEM); err != nil {
+	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OEM, cfg.Rancher.State.OemOpt); err != nil {
 		log.Debugf("Not mounting OEM: %v", err)
 	} else {
 		log.Infof("Mounted OEM: %s", cfg.Rancher.State.OemDev)
