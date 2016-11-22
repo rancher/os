@@ -11,9 +11,9 @@ import (
 	"github.com/rancher/os/util"
 )
 
-var (
-	sshDir             = ".ssh"
-	authorizedKeysFile = path.Join(sshDir, "authorized_keys")
+const (
+	sshDirName             = ".ssh"
+	authorizedKeysFileName = "authorized_keys"
 )
 
 func authorizeSSHKeys(username string, authorizedKeys []string, name string) error {
@@ -44,19 +44,9 @@ func authorizeSSHKeys(username string, authorizedKeys []string, name string) err
 		}
 	}
 
-	sshDir = path.Join(homeDir, sshDir)
-	authorizedKeysFile = path.Join(homeDir, authorizedKeysFile)
+	sshDir := path.Join(homeDir, sshDirName)
+	authorizedKeysFile := path.Join(sshDir, authorizedKeysFileName)
 
-	for _, authorizedKey := range authorizedKeys {
-		if err = authorizeSSHKey(authorizedKey, uid, gid, homeDir); err != nil {
-			log.Errorf("Failed to authorize SSH key %s: %v", authorizedKey, err)
-		}
-	}
-
-	return nil
-}
-
-func authorizeSSHKey(authorizedKey string, uid, gid int, homeDir string) error {
 	if _, err := os.Stat(sshDir); os.IsNotExist(err) {
 		if err = os.Mkdir(sshDir, 0700); err != nil {
 			return err
@@ -65,6 +55,20 @@ func authorizeSSHKey(authorizedKey string, uid, gid int, homeDir string) error {
 		return err
 	}
 
+	if err = os.Chown(sshDir, uid, gid); err != nil {
+		return err
+	}
+
+	for _, authorizedKey := range authorizedKeys {
+		if err = authorizeSSHKey(authorizedKey, authorizedKeysFile, uid, gid); err != nil {
+			log.Errorf("Failed to authorize SSH key %s: %v", authorizedKey, err)
+		}
+	}
+
+	return nil
+}
+
+func authorizeSSHKey(authorizedKey, authorizedKeysFile string, uid, gid int) error {
 	authorizedKeysFileInfo, err := os.Stat(authorizedKeysFile)
 	if os.IsNotExist(err) {
 		keysFile, err := os.Create(authorizedKeysFile)
@@ -99,12 +103,6 @@ func authorizeSSHKey(authorizedKey string, uid, gid int, homeDir string) error {
 	if err = util.WriteFileAtomic(authorizedKeysFile, bytes, perm); err != nil {
 		return err
 	}
-	if err = os.Chown(sshDir, uid, gid); err != nil {
-		return err
-	}
-	if err = os.Chown(authorizedKeysFile, uid, gid); err != nil {
-		return err
-	}
 
-	return nil
+	return os.Chown(authorizedKeysFile, uid, gid)
 }

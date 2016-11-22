@@ -75,10 +75,6 @@ func consoleInitAction(c *cli.Context) error {
 		log.Error(err)
 	}
 
-	if err := writeOsRelease(); err != nil {
-		log.Error(err)
-	}
-
 	for _, link := range []symlink{
 		{"/var/lib/rancher/engine/docker", "/usr/bin/docker"},
 		{"/var/lib/rancher/engine/docker-containerd", "/usr/bin/docker-containerd"},
@@ -87,6 +83,8 @@ func consoleInitAction(c *cli.Context) error {
 		{"/var/lib/rancher/engine/dockerd", "/usr/bin/dockerd"},
 		{"/var/lib/rancher/engine/docker-proxy", "/usr/bin/docker-proxy"},
 		{"/var/lib/rancher/engine/docker-runc", "/usr/bin/docker-runc"},
+		{"/usr/share/rancher/os-release", "/usr/lib/os-release"},
+		{"/usr/share/rancher/os-release", "/etc/os-release"},
 	} {
 		syscall.Unlink(link.newname)
 		if err := os.Symlink(link.oldname, link.newname); err != nil {
@@ -210,33 +208,6 @@ func modifySshdConfig() error {
 	}
 
 	return ioutil.WriteFile("/etc/ssh/sshd_config", []byte(sshdConfigString), 0644)
-}
-
-func writeOsRelease() error {
-	idLike := "busybox"
-	if osRelease, err := ioutil.ReadFile("/etc/os-release"); err == nil {
-		for _, line := range strings.Split(string(osRelease), "\n") {
-			if strings.HasPrefix(line, "ID_LIKE") {
-				split := strings.Split(line, "ID_LIKE")
-				if len(split) > 1 {
-					idLike = split[1]
-				}
-			}
-		}
-	}
-
-	return ioutil.WriteFile("/etc/os-release", []byte(fmt.Sprintf(`
-NAME="RancherOS"
-VERSION=%s
-ID=rancheros
-ID_LIKE=%s
-VERSION_ID=%s
-PRETTY_NAME="RancherOS %s"
-HOME_URL=
-SUPPORT_URL=
-BUG_REPORT_URL=
-BUILD_ID=
-`, config.VERSION, idLike, config.VERSION, config.VERSION)), 0644)
 }
 
 func setupSSH(cfg *config.CloudConfig) error {

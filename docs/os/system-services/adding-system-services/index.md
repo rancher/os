@@ -24,7 +24,7 @@ disabled open-vm-tools
 # Enable a system service
 $ sudo ros service enable kernel-headers
 # Start a system service
-$ sudo ros service up -d kernel-headers
+$ sudo ros service up kernel-headers
 ```
 
 ### Disabling and Removing System Services
