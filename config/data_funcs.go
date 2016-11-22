@@ -164,11 +164,9 @@ func parseCmdline(cmdLine string) map[interface{}]interface{} {
 
 outer:
 	for _, part := range params {
-		if true &&
-			!strings.HasPrefix(part, "rancher.") &&
-			!strings.HasPrefix(part, "ssh_authorized_keys=") &&
-			!strings.HasPrefix(part, "hostname=") &&
-			!strings.HasPrefix(part, "default_hostname=") {
+		if strings.HasPrefix(part, "cc.") {
+			part = part[3:]
+		} else if !strings.HasPrefix(part, "rancher.") {
 			continue
 		}
 		var value string
