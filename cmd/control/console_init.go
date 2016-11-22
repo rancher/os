@@ -139,7 +139,7 @@ func generateRespawnConf(cmdline string) string {
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(" --autologin rancher")
 		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
 
 	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
@@ -151,7 +151,7 @@ func generateRespawnConf(cmdline string) string {
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(" --autologin rancher")
 		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
 	}
 
 	respawnConf.WriteString("/usr/sbin/sshd -D")
