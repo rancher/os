@@ -11,9 +11,9 @@ import (
 	"strings"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 	"github.com/rancher/os/selinux"
 	"github.com/rancher/os/util"
@@ -694,6 +694,7 @@ func LaunchDocker(config *Config, docker string, args ...string) (*exec.Cmd, err
 }
 
 func Main() {
+	log.InitLogger()
 	if os.Getenv("DOCKER_LAUNCH_DEBUG") == "true" {
 		log.SetLevel(log.DebugLevel)
 	}

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
 	machineUtil "github.com/docker/machine/utils"

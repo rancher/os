@@ -11,10 +11,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/rancher/os/log"
+
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	osYaml "github.com/rancher/os/config/yaml"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 const (

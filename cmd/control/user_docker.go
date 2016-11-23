@@ -12,13 +12,13 @@ import (
 
 	"path/filepath"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 

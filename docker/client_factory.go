@@ -6,11 +6,11 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	dockerclient "github.com/docker/engine-api/client"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 

@@ -10,8 +10,8 @@ import (
 	"sync"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/flynn/go-shlex"
+	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/config"
 	"github.com/ryanuber/go-glob"

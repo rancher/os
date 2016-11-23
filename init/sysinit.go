@@ -7,12 +7,12 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 )
 
 const (

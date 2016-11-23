@@ -11,11 +11,11 @@ import (
 	"strings"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
@@ -87,6 +87,7 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func MainInit() {
+	// TODO: log.InitLogger()
 	if err := RunInit(); err != nil {
 		log.Fatal(err)
 	}

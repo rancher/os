@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 	"github.com/vishvananda/netlink"
 )
 
@@ -23,7 +23,7 @@ type Bonding struct {
 func (b *Bonding) init() error {
 	_, err := os.Stat(bondingMasters)
 	if os.IsNotExist(err) {
-		logrus.Info("Loading bonding kernel module")
+		log.Info("Loading bonding kernel module")
 		cmd := exec.Command("modprobe", "bonding")
 		cmd.Stderr = os.Stderr
 		cmd.Stdout = os.Stdin
@@ -89,7 +89,7 @@ func (b *Bonding) RemoveSlave(slave string) error {
 	}
 
 	p := base + b.name + "/bonding/slaves"
-	logrus.Infof("Removing slave %s from master %s", slave, b.name)
+	log.Infof("Removing slave %s from master %s", slave, b.name)
 	return ioutil.WriteFile(p, []byte("-"+slave), 0644)
 }
 
@@ -101,7 +101,7 @@ func (b *Bonding) AddSlave(slave string) error {
 	}
 
 	p := base + b.name + "/bonding/slaves"
-	logrus.Infof("Adding slave %s to master %s", slave, b.name)
+	log.Infof("Adding slave %s to master %s", slave, b.name)
 	return ioutil.WriteFile(p, []byte("+"+slave), 0644)
 }
 
@@ -117,11 +117,11 @@ func (b *Bonding) Opt(key, value string) error {
 
 	p := base + b.name + "/bonding/" + key
 	if err := ioutil.WriteFile(p, []byte(value), 0644); err != nil {
-		logrus.Errorf("Failed to set %s=%s on %s: %v", key, value, b.name, err)
+		log.Errorf("Failed to set %s=%s on %s: %v", key, value, b.name, err)
 		return err
 	}
 
-	logrus.Infof("Set %s=%s on %s", key, value, b.name)
+	log.Infof("Set %s=%s on %s", key, value, b.name)
 
 	return nil
 }
@@ -138,6 +138,6 @@ func Bond(name string) (*Bonding, error) {
 		return b, nil
 	}
 
-	logrus.Infof("Creating bond %s", name)
+	log.Infof("Creating bond %s", name)
 	return b, ioutil.WriteFile(bondingMasters, []byte("+"+name), 0644)
 }

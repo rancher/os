@@ -1,7 +1,7 @@
 package network
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/config"
@@ -10,6 +10,7 @@ import (
 )
 
 func Main() {
+	log.InitLogger()
 	log.Infof("Running network")
 
 	cfg := config.LoadConfig()

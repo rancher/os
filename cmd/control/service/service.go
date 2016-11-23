@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	dockerApp "github.com/docker/libcompose/cli/docker/app"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/cmd/control/service/command"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util/network"
 )
 
@@ -24,7 +24,7 @@ func (p *projectFactory) Create(c *cli.Context) (project.APIProject, error) {
 
 func beforeApp(c *cli.Context) error {
 	if c.GlobalBool("verbose") {
-		logrus.SetLevel(logrus.DebugLevel)
+		log.SetLevel(log.DebugLevel)
 	}
 	return nil
 }
@@ -101,7 +101,7 @@ func disable(c *cli.Context) error {
 
 	if changed {
 		if err := updateIncludedServices(cfg); err != nil {
-			logrus.Fatal(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -122,7 +122,7 @@ func del(c *cli.Context) error {
 
 	if changed {
 		if err := updateIncludedServices(cfg); err != nil {
-			logrus.Fatal(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -137,7 +137,7 @@ func enable(c *cli.Context) error {
 	for _, service := range c.Args() {
 		if val, ok := cfg.Rancher.ServicesInclude[service]; !ok || !val {
 			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
-				logrus.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
+				log.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
 
 			cfg.Rancher.ServicesInclude[service] = true
@@ -147,11 +147,11 @@ func enable(c *cli.Context) error {
 
 	if len(enabledServices) > 0 {
 		if err := compose.StageServices(cfg, enabledServices...); err != nil {
-			logrus.Fatal(err)
+			log.Fatal(err)
 		}
 
 		if err := updateIncludedServices(cfg); err != nil {
-			logrus.Fatal(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -168,7 +168,7 @@ func list(c *cli.Context) error {
 
 	services, err := network.GetServices(cfg.Rancher.Repositories.ToArray())
 	if err != nil {
-		logrus.Fatalf("Failed to get services: %v", err)
+		log.Fatalf("Failed to get services: %v", err)
 	}
 
 	for _, service := range services {

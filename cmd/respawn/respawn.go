@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/rancher/os/log"
 )
 
 var (
@@ -23,6 +23,7 @@ var (
 )
 
 func Main() {
+	log.InitLogger()
 	runtime.GOMAXPROCS(1)
 	runtime.LockOSThread()
 	app := cli.NewApp()
