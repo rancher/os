@@ -1,11 +1,23 @@
 #!/bin/bash
 set -e
 
-cd $(dirname $0)
+cd $(dirname $0)/..
 
-./build
-./test
-./validate
-./prepare
-./package
-./integration-test
+./scripts/build
+./scripts/test
+./scripts/validate
+./scripts/prepare
+./scripts/package
+./scripts/integration-test
+
+echo "--- Run"
+echo "github-release release --user rancher --repo os --tag ${VERSION} --pre-release --draft"
+for file in $(ls dist/artifacts/); do
+	if [ "$file" != "installer.tar" ]; then
+		echo "github-release upload  --user rancher --repo os --tag ${VERSION} \
+			--file ./dist/kernel/${file} -name ${file}"
+	fi
+done
+echo
+
+cat dist/images | sed 's/^/docker push /'
