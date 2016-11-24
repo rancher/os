@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run|help')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|docs')
 
 .dapper:
 	@echo Downloading dapper
