@@ -63,6 +63,7 @@ var schema = `{
 
       "properties": {
         "encoding": {"type": "string"},
+        "container": {"type": "string"},
         "content": {"type": "string"},
         "owner": {"type": "string"},
         "path": {"type": "string"},
