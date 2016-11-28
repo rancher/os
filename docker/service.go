@@ -63,7 +63,7 @@ func (s *Service) requiresSyslog() bool {
 }
 
 func (s *Service) requiresUserDocker() bool {
-	return s.Config().Labels[config.SCOPE] != config.SYSTEM
+	return s.Config().Labels[config.ScopeLabel] != config.System
 }
 
 func appendLink(deps []project.ServiceRelationship, name string, optional bool, p *project.Project) []project.ServiceRelationship {
@@ -93,8 +93,8 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 		}
 		name := containerInfo.Name[1:]
 
-		origRebuildLabel := containerInfo.Config.Labels[config.REBUILD]
-		newRebuildLabel := s.Config().Labels[config.REBUILD]
+		origRebuildLabel := containerInfo.Config.Labels[config.RebuildLabel]
+		newRebuildLabel := s.Config().Labels[config.RebuildLabel]
 		rebuildLabelChanged := newRebuildLabel != origRebuildLabel
 		logrus.WithFields(logrus.Fields{
 			"origRebuildLabel":    origRebuildLabel,
@@ -113,8 +113,8 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 		}
 		if outOfSync {
 			if s.Name() == "console" {
-				origConsoleLabel := containerInfo.Config.Labels[config.CONSOLE]
-				newConsoleLabel := s.Config().Labels[config.CONSOLE]
+				origConsoleLabel := containerInfo.Config.Labels[config.ConsoleLabel]
+				newConsoleLabel := s.Config().Labels[config.ConsoleLabel]
 				if newConsoleLabel != origConsoleLabel {
 					return true, nil
 				}
@@ -154,13 +154,13 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 			return err
 		}
 	}
-	if labels[config.CREATE_ONLY] == "true" {
+	if labels[config.CreateOnlyLabel] == "true" {
 		return s.checkReload(labels)
 	}
 	if err := s.Service.Up(ctx, options); err != nil {
 		return err
 	}
-	if labels[config.DETACH] == "false" {
+	if labels[config.DetachLabel] == "false" {
 		if err := s.wait(ctx); err != nil {
 			return err
 		}
@@ -170,7 +170,7 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 }
 
 func (s *Service) checkReload(labels map[string]string) error {
-	if labels[config.RELOAD_CONFIG] == "true" {
+	if labels[config.ReloadConfigLabel] == "true" {
 		return project.ErrRestart
 	}
 	return nil
@@ -223,7 +223,6 @@ func (s *Service) rename(ctx context.Context) error {
 	if len(info.Name) > 0 && info.Name[1:] != s.Name() {
 		logrus.Debugf("Renaming container %s => %s", info.Name[1:], s.Name())
 		return client.ContainerRename(context.Background(), info.ID, s.Name())
-	} else {
-		return nil
 	}
+	return nil
 }

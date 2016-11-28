@@ -31,7 +31,7 @@ func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
 	launchConfig.LogFile = ""
 	launchConfig.NoLog = true
 
-	cmd, err := dfs.LaunchDocker(launchConfig, config.SYSTEM_DOCKER_BIN, args...)
+	cmd, err := dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -39,7 +39,7 @@ func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) 
 }
 
 func copyMoveRoot(rootfs string, rmUsr bool) error {
-	usrVer := fmt.Sprintf("usr-%s", config.VERSION)
+	usrVer := fmt.Sprintf("usr-%s", config.Version)
 	usr := path.Join(rootfs, usrVer)
 	targetUsr := path.Join(rootfs, "usr")
 	tmpDir := path.Join(rootfs, "tmp")

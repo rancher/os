@@ -47,12 +47,12 @@ func runDocker(name string) error {
 		}
 	}
 
-	currentContainerId, err := util.GetCurrentContainerId()
+	currentContainerID, err := util.GetCurrentContainerID()
 	if err != nil {
 		return err
 	}
 
-	currentContainer, err := client.ContainerInspect(context.Background(), currentContainerId)
+	currentContainer, err := client.ContainerInspect(context.Background(), currentContainerID)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func common(name string) {
 	}
 }
 
-func PowerOff() {
+func Off() {
 	common("poweroff")
 	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
 }
@@ -181,7 +181,7 @@ func shutDownContainers() error {
 		return err
 	}
 
-	currentContainerId, err := util.GetCurrentContainerId()
+	currentContainerID, err := util.GetCurrentContainerID()
 	if err != nil {
 		return err
 	}
@@ -189,7 +189,7 @@ func shutDownContainers() error {
 	var stopErrorStrings []string
 
 	for _, container := range containers {
-		if container.ID == currentContainerId {
+		if container.ID == currentContainerID {
 			continue
 		}
 
@@ -203,7 +203,7 @@ func shutDownContainers() error {
 	var waitErrorStrings []string
 
 	for _, container := range containers {
-		if container.ID == currentContainerId {
+		if container.ID == currentContainerID {
 			continue
 		}
 		_, waitErr := client.ContainerWait(context.Background(), container.ID)

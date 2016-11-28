@@ -7,11 +7,11 @@ import (
 )
 
 func NewSystemClient() (dockerClient.APIClient, error) {
-	return NewClient(config.DOCKER_SYSTEM_HOST)
+	return NewClient(config.SystemDockerHost)
 }
 
 func NewDefaultClient() (dockerClient.APIClient, error) {
-	return NewClient(config.DOCKER_HOST)
+	return NewClient(config.DockerHost)
 }
 
 func NewClient(endpoint string) (dockerClient.APIClient, error) {

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	DOCKER_CGROUPS_FILE = "/proc/self/cgroup"
+	dockerCgroupsFile = "/proc/self/cgroup"
 )
 
 type AnyMap map[interface{}]interface{}
@@ -196,8 +196,8 @@ func TrimSplit(str, sep string) []string {
 	return TrimSplitN(str, sep, -1)
 }
 
-func GetCurrentContainerId() (string, error) {
-	file, err := os.Open(DOCKER_CGROUPS_FILE)
+func GetCurrentContainerID() (string, error) {
+	file, err := os.Open(dockerCgroupsFile)
 
 	if err != nil {
 		return "", err

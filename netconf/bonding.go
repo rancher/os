@@ -119,9 +119,9 @@ func (b *Bonding) Opt(key, value string) error {
 	if err := ioutil.WriteFile(p, []byte(value), 0644); err != nil {
 		logrus.Errorf("Failed to set %s=%s on %s: %v", key, value, b.name, err)
 		return err
-	} else {
-		logrus.Infof("Set %s=%s on %s", key, value, b.name)
 	}
+
+	logrus.Infof("Set %s=%s on %s", key, value, b.name)
 
 	return nil
 }

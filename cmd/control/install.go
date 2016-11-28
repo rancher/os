@@ -66,7 +66,7 @@ func installAction(c *cli.Context) error {
 	image := c.String("image")
 	cfg := config.LoadConfig()
 	if image == "" {
-		image = cfg.Rancher.Upgrade.Image + ":" + config.VERSION + config.SUFFIX
+		image = cfg.Rancher.Upgrade.Image + ":" + config.Version + config.Suffix
 	}
 
 	installType := c.String("install-type")

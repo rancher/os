@@ -9,7 +9,7 @@ import (
 )
 
 func Main() {
-	_, err := docker.NewClient(config.DOCKER_HOST)
+	_, err := docker.NewClient(config.DockerHost)
 	if err != nil {
 		logrus.Errorf("Failed to connect to Docker")
 		os.Exit(1)
