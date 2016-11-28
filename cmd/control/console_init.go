@@ -219,8 +219,8 @@ func setupSSH(cfg *config.CloudConfig) error {
 			continue
 		}
 
-		saved, savedExists := cfg.Rancher.Ssh.Keys[keyType]
-		pub, pubExists := cfg.Rancher.Ssh.Keys[keyType+"-pub"]
+		saved, savedExists := cfg.Rancher.SSH.Keys[keyType]
+		pub, pubExists := cfg.Rancher.SSH.Keys[keyType+"-pub"]
 
 		if savedExists && pubExists {
 			// TODO check permissions

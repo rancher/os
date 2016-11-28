@@ -14,7 +14,7 @@ func Main() {
 
 	app.Name = os.Args[0]
 	app.Usage = "Control and configure RancherOS"
-	app.Version = config.VERSION
+	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
 	app.Before = func(c *cli.Context) error {

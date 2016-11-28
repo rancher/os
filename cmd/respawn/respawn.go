@@ -17,9 +17,9 @@ import (
 )
 
 var (
-	running     bool                = true
-	processes   map[int]*os.Process = map[int]*os.Process{}
-	processLock                     = sync.Mutex{}
+	running     = true
+	processes   = map[int]*os.Process{}
+	processLock = sync.Mutex{}
 )
 
 func Main() {

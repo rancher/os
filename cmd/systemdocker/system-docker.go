@@ -14,7 +14,7 @@ func Main() {
 	}
 
 	if os.Getenv("DOCKER_HOST") == "" {
-		os.Setenv("DOCKER_HOST", config.DOCKER_SYSTEM_HOST)
+		os.Setenv("DOCKER_HOST", config.SystemDockerHost)
 	}
 
 	docker.Main()

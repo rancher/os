@@ -36,17 +36,17 @@ func getServices(urls []string, key string) ([]string, error) {
 	result := []string{}
 
 	for _, url := range urls {
-		indexUrl := fmt.Sprintf("%s/index.yml", url)
-		content, err := LoadResource(indexUrl, true)
+		indexURL := fmt.Sprintf("%s/index.yml", url)
+		content, err := LoadResource(indexURL, true)
 		if err != nil {
-			log.Errorf("Failed to load %s: %v", indexUrl, err)
+			log.Errorf("Failed to load %s: %v", indexURL, err)
 			continue
 		}
 
 		services := make(map[string][]string)
 		err = yaml.Unmarshal(content, &services)
 		if err != nil {
-			log.Errorf("Failed to unmarshal %s: %v", indexUrl, err)
+			log.Errorf("Failed to unmarshal %s: %v", indexURL, err)
 			continue
 		}
 
@@ -59,14 +59,14 @@ func getServices(urls []string, key string) ([]string, error) {
 }
 
 func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
-	if cfg.Rancher.Network.HttpProxy != "" {
-		err := os.Setenv("HTTP_PROXY", cfg.Rancher.Network.HttpProxy)
+	if cfg.Rancher.Network.HTTPProxy != "" {
+		err := os.Setenv("HTTP_PROXY", cfg.Rancher.Network.HTTPProxy)
 		if err != nil {
 			log.Errorf("Unable to set HTTP_PROXY: %s", err)
 		}
 	}
-	if cfg.Rancher.Network.HttpsProxy != "" {
-		err := os.Setenv("HTTPS_PROXY", cfg.Rancher.Network.HttpsProxy)
+	if cfg.Rancher.Network.HTTPSProxy != "" {
+		err := os.Setenv("HTTPS_PROXY", cfg.Rancher.Network.HTTPSProxy)
 		if err != nil {
 			log.Errorf("Unable to set HTTPS_PROXY: %s", err)
 		}
@@ -128,7 +128,7 @@ func LoadResource(location string, network bool) ([]byte, error) {
 	return nil, ErrNotFound
 }
 
-func serviceUrl(url, name string) string {
+func serviceURL(url, name string) string {
 	return fmt.Sprintf("%s/%s/%s.yml", url, name[0:1], name)
 }
 
@@ -144,10 +144,10 @@ func LoadServiceResource(name string, useNetwork bool, cfg *config.CloudConfig) 
 
 	urls := cfg.Rancher.Repositories.ToArray()
 	for _, url := range urls {
-		serviceUrl := serviceUrl(url, name)
-		bytes, err = LoadResource(serviceUrl, useNetwork)
+		serviceURL := serviceURL(url, name)
+		bytes, err = LoadResource(serviceURL, useNetwork)
 		if err == nil {
-			log.Debugf("Loaded %s from %s", name, serviceUrl)
+			log.Debugf("Loaded %s from %s", name, serviceURL)
 			return bytes, nil
 		}
 	}

@@ -79,9 +79,9 @@ func consoleSwitch(c *cli.Context) error {
 		Privileged: true,
 		Net:        "host",
 		Pid:        "host",
-		Image:      config.OS_BASE,
+		Image:      config.OsBase,
 		Labels: map[string]string{
-			config.SCOPE: config.SYSTEM,
+			config.ScopeLabel: config.System,
 		},
 		Command:     []string{"/usr/bin/ros", "switch-console", newConsole},
 		VolumesFrom: []string{"all-volumes"},

@@ -46,7 +46,7 @@ type Config struct {
 	Fork            bool
 	PidOne          bool
 	CommandName     string
-	DnsConfig       config.DnsConfig
+	DNSConfig       config.DNSConfig
 	BridgeName      string
 	BridgeAddress   string
 	BridgeMtu       int
@@ -209,10 +209,9 @@ func execDocker(config *Config, docker, cmd string, args []string) (*exec.Cmd, e
 			PidOne()
 		}
 		return cmd, err
-	} else {
-		err := syscall.Exec(expand(docker), append([]string{cmd}, args...), env)
-		return nil, err
 	}
+
+	return nil, syscall.Exec(expand(docker), append([]string{cmd}, args...), env)
 }
 
 func copyDefault(folder, name string) error {
@@ -352,8 +351,8 @@ ff02::2    ip6-allrouters
 
 127.0.1.1       `+hostname)
 
-	if len(cfg.DnsConfig.Nameservers) != 0 {
-		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.DnsConfig.Nameservers, cfg.DnsConfig.Search, nil); err != nil {
+	if len(cfg.DNSConfig.Nameservers) != 0 {
+		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.DNSConfig.Nameservers, cfg.DNSConfig.Search, nil); err != nil {
 			return err
 		}
 	}
@@ -382,12 +381,10 @@ func GetValue(index int, args []string) string {
 	if len(parts) == 1 {
 		if len(args) > index+1 {
 			return args[index+1]
-		} else {
-			return ""
 		}
-	} else {
-		return parts[1]
+		return ""
 	}
+	return parts[1]
 }
 
 func ParseConfig(config *Config, args ...string) []string {

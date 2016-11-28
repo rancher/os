@@ -27,7 +27,7 @@ var entrypoints = map[string]func(){
 	"halt":               power.Halt,
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,
-	"poweroff":           power.PowerOff,
+	"poweroff":           power.Off,
 	"reboot":             power.Reboot,
 	"respawn":            respawn.Main,
 	"ros-sysinit":        sysinit.Main,

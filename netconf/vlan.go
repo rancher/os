@@ -9,7 +9,7 @@ import (
 )
 
 type VlanDefinition struct {
-	Id   int
+	ID   int
 	Name string
 }
 
@@ -65,7 +65,7 @@ func ParseVlanDefinitions(vlans string) ([]VlanDefinition, error) {
 		}
 
 		def := VlanDefinition{
-			Id: id,
+			ID: id,
 		}
 
 		if len(idName) > 1 {
