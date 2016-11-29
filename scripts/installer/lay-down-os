@@ -5,7 +5,9 @@ SCRIPTS_DIR=$(dirname ${0})
 
 VERSION=${VERSION:?"VERSION not set"}
 
-while getopts "i:f:c:d:t:r:o:p:ka:" OPTION
+MBR_FILE=mbr.bin
+
+while getopts "i:f:c:d:t:r:o:p:ka:g" OPTION
 do
     case ${OPTION} in
         i) DIST="$OPTARG" ;;
@@ -18,6 +20,7 @@ do
         k) KEXEC=y ;;
         a) APPEND="$OPTARG" ;;
         t) ENV="$OPTARG" ;;
+        g) MBR_FILE=gptmbr.bin ;;
         *) exit 1 ;;
     esac
 done
@@ -85,14 +88,14 @@ create_boot_dirs()
 }
 
 install_syslinux() {
-    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=${DEVICE}
+    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=${DEVICE}
     cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux
     extlinux --install ${BASE_DIR}/${BOOT}syslinux
 }
 
 install_syslinux_raid() {
-    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/sda
-    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/sdb
+    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=/dev/sda
+    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=/dev/sdb
     cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux
     extlinux --install --raid ${BASE_DIR}/${BOOT}syslinux
 }
@@ -275,3 +278,4 @@ fi
 if [ "$KEXEC" = "y" ]; then
     kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd --append="${KERNEL_ARGS} ${APPEND}" -f
 fi
+
