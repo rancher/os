@@ -10,9 +10,11 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/docker/libcompose/project/options"
+	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
+	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
 
@@ -53,6 +55,7 @@ func engineSwitch(c *cli.Context) error {
 	newEngine := c.Args()[0]
 
 	cfg := config.LoadConfig()
+	validateEngine(newEngine, cfg)
 
 	project, err := compose.GetProject(cfg, true, false)
 	if err != nil {
@@ -85,6 +88,7 @@ func engineEnable(c *cli.Context) error {
 	newEngine := c.Args()[0]
 
 	cfg := config.LoadConfig()
+	validateEngine(newEngine, cfg)
 
 	if err := compose.StageServices(cfg, newEngine); err != nil {
 		return err
@@ -99,13 +103,7 @@ func engineEnable(c *cli.Context) error {
 
 func engineList(c *cli.Context) error {
 	cfg := config.LoadConfig()
-
-	engines, err := network.GetEngines(cfg.Rancher.Repositories.ToArray())
-	if err != nil {
-		return err
-	}
-	sort.Strings(engines)
-
+	engines := availableEngines(cfg)
 	currentEngine := currentEngine()
 
 	for _, engine := range engines {
@@ -119,6 +117,22 @@ func engineList(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func validateEngine(engine string, cfg *config.CloudConfig) {
+	engines := availableEngines(cfg)
+	if !service.IsLocalOrURL(engine) && !util.Contains(engines, engine) {
+		log.Fatalf("%s is not a valid engine", engine)
+	}
+}
+
+func availableEngines(cfg *config.CloudConfig) []string {
+	engines, err := network.GetEngines(cfg.Rancher.Repositories.ToArray())
+	if err != nil {
+		log.Fatal(err)
+	}
+	sort.Strings(engines)
+	return engines
 }
 
 func currentEngine() (engine string) {
