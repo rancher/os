@@ -142,6 +142,9 @@ RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
 # Install Trash
 RUN go get github.com/rancher/trash
 
+# Install golint
+RUN go get github.com/golang/lint/golint
+
 RUN go get gopkg.in/check.v1
 
 # Install dapper
