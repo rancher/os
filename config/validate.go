@@ -5,7 +5,8 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// TODO: use this function from libcompose
+// ConvertKeysToStrings is temporarily copied from libcompose
+// TODO: just import this in the future
 func ConvertKeysToStrings(item interface{}) interface{} {
 	switch typedDatas := item.(type) {
 	case map[string]interface{}:
