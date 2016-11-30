@@ -20,9 +20,11 @@ for dev in ${DEVS[@]}; do
 
 
         if [ -e "/userdata.tar" ]; then
-            mkfs.ext4 -L B2D_STATE ${dev}
+            fstype=`ros config get rancher.state.fstype`
+            ( [ $fstype == auto ] || [ $fstype == "" ] || ! which mkfs.$fstype ) && fstype=ext4
+            mkfs.$fstype -L B2D_STATE ${dev}
             mkdir -p /mnt/new-root
-            mount -t ext4 ${dev} /mnt/new-root
+            mount -t $fstype ${dev} /mnt/new-root
             pushd /mnt/new-root
             mkdir -p ./var/lib/rancher/conf/cloud-config.d
             echo $(tar -xvf /userdata.tar)
@@ -54,7 +56,7 @@ EOF
             popd
             umount /mnt/new-root
         else
-            mkfs.ext4 -L RANCHER_STATE ${dev}
+            mkfs.$fstype -L RANCHER_STATE ${dev}
         fi
 
         # do not check another device

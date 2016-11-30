@@ -208,6 +208,13 @@ type SshConfig struct {
 	Keys map[string]string `yaml:"keys,omitempty"`
 }
 
+type NbdConfig struct {
+	Host       string `yaml:"host,omitempty"`
+	Port       uint16 `yaml:"port,omitempty"`
+	Name       string `yaml:"name,omitempty"`
+	BlockSize  uint16 `yaml:"block_size,omitempty"` 
+}
+
 type StateConfig struct {
 	Directory  string   `yaml:"directory,omitempty"`
 	FsType     string   `yaml:"fstype,omitempty"`
@@ -217,6 +224,10 @@ type StateConfig struct {
 	Required   bool     `yaml:"required,omitempty"`
 	Autoformat []string `yaml:"autoformat,omitempty"`
 	MdadmScan  bool     `yaml:"mdadm_scan,omitempty"`
+	LvmScan    bool     `yaml:"lvm_scan,omitempty"`
+	NetConf    bool     `yaml:"net_conf,omitempty"`
+	Decrypt    bool     `yaml:"decrypt,omitempty"`
+	Nbd        NbdConfig`yaml:"nbd,omitempty"`
 	Script     string   `yaml:"script,omitempty"`
 	OemFsType  string   `yaml:"oem_fstype,omitempty"`
 	OemDev     string   `yaml:"oem_dev,omitempty"`

@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+[ "$UID" -eq 0 ] || exec sudo bash "$0" "$@"
+
+read -p "Passphrase please:" pass
+for blk in `blkid -o list | grep LUKS | cut -f 1 -d ' '`; do
+  echo $pass | cryptsetup open --allow-discards $blk luks-`basename $blk`
+done
+
+[[ $1 == stay ]] || kill `ps -o pid,comm | grep respawn | cut -f 3 -d ' '`
