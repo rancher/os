@@ -1,9 +1,10 @@
 package config
 
 import (
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	shellwords "github.com/mattn/go-shellwords"
+	"github.com/rancher/os/log"
+
 	"strings"
 
 	"github.com/rancher/os/util"

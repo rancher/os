@@ -7,12 +7,12 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 )
 
 const (
@@ -20,7 +20,7 @@ const (
 )
 
 func hasImage(name string) bool {
-	stamp := path.Join(STATE, name)
+	stamp := path.Join(state, name)
 	if _, err := os.Stat(stamp); os.IsNotExist(err) {
 		return false
 	}
@@ -28,13 +28,13 @@ func hasImage(name string) bool {
 }
 
 func findImages(cfg *config.CloudConfig) ([]string, error) {
-	log.Debugf("Looking for images at %s", config.IMAGES_PATH)
+	log.Debugf("Looking for images at %s", config.ImagesPath)
 
 	result := []string{}
 
-	dir, err := os.Open(config.IMAGES_PATH)
+	dir, err := os.Open(config.ImagesPath)
 	if os.IsNotExist(err) {
-		log.Debugf("Not loading images, %s does not exist", config.IMAGES_PATH)
+		log.Debugf("Not loading images, %s does not exist", config.ImagesPath)
 		return result, nil
 	}
 	if err != nil {
@@ -49,7 +49,7 @@ func findImages(cfg *config.CloudConfig) ([]string, error) {
 	}
 
 	for _, fileName := range files {
-		if ok, _ := path.Match(config.IMAGES_PATTERN, fileName); ok {
+		if ok, _ := path.Match(config.ImagesPattern, fileName); ok {
 			log.Debugf("Found %s", fileName)
 			result = append(result, fileName)
 		}
@@ -74,7 +74,7 @@ func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			continue
 		}
 
-		inputFileName := path.Join(config.IMAGES_PATH, image)
+		inputFileName := path.Join(config.ImagesPath, image)
 		input, err := os.Open(inputFileName)
 		if err != nil {
 			return cfg, err
@@ -119,7 +119,7 @@ func SysInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			log.Infof("RancherOS %s started", config.VERSION)
+			log.Infof("RancherOS %s started", config.Version)
 			return cfg, nil
 		})
 	return err

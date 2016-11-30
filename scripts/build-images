@@ -7,6 +7,10 @@ BASE=images
 source $(dirname $0)/version
 cd $(dirname $0)/..
 
+mkdir -p dist
+rm -f dist/images
+touch dist/images
+
 for i in $BASE/[0-9]*; do
     name="os-$(echo ${i} | cut -f2 -d-)"
     tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
@@ -17,6 +21,7 @@ for i in $BASE/[0-9]*; do
 
     if dapper -d --build -f ${i}/Dockerfile -- -t rancher/${name} ${i}; then
         docker tag rancher/${name} ${tag}
+	echo "${tag}" >> dist/images
     elif [ "$?" != "42" ]; then
         exit 1
     else

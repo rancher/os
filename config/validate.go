@@ -5,24 +5,25 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 )
 
-// TODO: use this function from libcompose
-func convertKeysToStrings(item interface{}) interface{} {
+// ConvertKeysToStrings is temporarily copied from libcompose
+// TODO: just import this in the future
+func ConvertKeysToStrings(item interface{}) interface{} {
 	switch typedDatas := item.(type) {
 	case map[string]interface{}:
 		for key, value := range typedDatas {
-			typedDatas[key] = convertKeysToStrings(value)
+			typedDatas[key] = ConvertKeysToStrings(value)
 		}
 		return typedDatas
 	case map[interface{}]interface{}:
 		newMap := make(map[string]interface{})
 		for key, value := range typedDatas {
 			stringKey := key.(string)
-			newMap[stringKey] = convertKeysToStrings(value)
+			newMap[stringKey] = ConvertKeysToStrings(value)
 		}
 		return newMap
 	case []interface{}:
 		for i, value := range typedDatas {
-			typedDatas[i] = append(typedDatas, convertKeysToStrings(value))
+			typedDatas[i] = ConvertKeysToStrings(value)
 		}
 		return typedDatas
 	default:
@@ -35,7 +36,7 @@ func Validate(bytes []byte) (*gojsonschema.Result, error) {
 	if err := yaml.Unmarshal([]byte(bytes), &rawCfg); err != nil {
 		return nil, err
 	}
-	rawCfg = convertKeysToStrings(rawCfg).(map[string]interface{})
+	rawCfg = ConvertKeysToStrings(rawCfg).(map[string]interface{})
 	loader := gojsonschema.NewGoLoader(rawCfg)
 	schemaLoader := gojsonschema.NewStringLoader(schema)
 	return gojsonschema.Validate(schemaLoader, loader)

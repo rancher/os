@@ -3,18 +3,19 @@ package control
 import (
 	"os"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 )
 
 func Main() {
+	log.InitLogger()
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
 	app.Usage = "Control and configure RancherOS"
-	app.Version = config.VERSION
+	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
 	app.Before = func(c *cli.Context) error {

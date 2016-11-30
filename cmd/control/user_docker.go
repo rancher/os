@@ -12,27 +12,27 @@ import (
 
 	"path/filepath"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/docker/docker/daemon/graphdriver"
 )
 
 const (
-	DEFAULT_STORAGE_CONTEXT = "console"
-	DOCKER_PID_FILE         = "/var/run/docker.pid"
-	userDocker              = "user-docker"
-	sourceDirectory         = "/engine"
-	destDirectory           = "/var/lib/rancher/engine"
+	defaultStorageContext = "console"
+	dockerPidFile         = "/var/run/docker.pid"
+	userDocker            = "user-docker"
+	sourceDirectory       = "/engine"
+	destDirectory         = "/var/lib/rancher/engine"
 )
 
 var (
-	DOCKER_COMMAND = []string{
+	dockerCommand = []string{
 		"ros",
 		"docker-init",
 	}
@@ -124,7 +124,7 @@ func copyBinaries(source, dest string) error {
 }
 
 func writeConfigCerts(cfg *config.CloudConfig) error {
-	outDir := ServerTlsPath
+	outDir := ServerTLSPath
 	if err := os.MkdirAll(outDir, 0700); err != nil {
 		return err
 	}
@@ -156,7 +156,7 @@ func writeConfigCerts(cfg *config.CloudConfig) error {
 func startDocker(cfg *config.CloudConfig) error {
 	storageContext := cfg.Rancher.Docker.StorageContext
 	if storageContext == "" {
-		storageContext = DEFAULT_STORAGE_CONTEXT
+		storageContext = defaultStorageContext
 	}
 
 	log.Infof("Starting Docker in context: %s", storageContext)
@@ -198,7 +198,7 @@ func startDocker(cfg *config.CloudConfig) error {
 	cmd := []string{"docker-runc", "exec", "--", info.ID, "env"}
 	log.Info(dockerCfg.AppendEnv())
 	cmd = append(cmd, dockerCfg.AppendEnv()...)
-	cmd = append(cmd, DOCKER_COMMAND...)
+	cmd = append(cmd, dockerCommand...)
 	cmd = append(cmd, args...)
 	log.Infof("Running %v", cmd)
 
@@ -233,7 +233,7 @@ func getPid(service string, project *project.Project) (int, error) {
 	}
 
 	client, err := composeClient.Create(composeClient.Options{
-		Host: config.DOCKER_SYSTEM_HOST,
+		Host: config.SystemDockerHost,
 	})
 	if err != nil {
 		return 0, err

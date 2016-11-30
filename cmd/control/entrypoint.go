@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/rancher/os/log"
 	"golang.org/x/net/context"
 
 	"github.com/rancher/os/cmd/cloudinitexecute"
@@ -60,7 +60,7 @@ func entrypointAction(c *cli.Context) error {
 }
 
 func writeFiles(cfg *config.CloudConfig) error {
-	id, err := util.GetCurrentContainerId()
+	id, err := util.GetCurrentContainerID()
 	if err != nil {
 		return err
 	}
@@ -92,10 +92,10 @@ func setupPowerOperations() {
 	}
 
 	for _, link := range []symlink{
-		{config.ROS_BIN, "/sbin/poweroff"},
-		{config.ROS_BIN, "/sbin/reboot"},
-		{config.ROS_BIN, "/sbin/halt"},
-		{config.ROS_BIN, "/sbin/shutdown"},
+		{config.RosBin, "/sbin/poweroff"},
+		{config.RosBin, "/sbin/reboot"},
+		{config.RosBin, "/sbin/halt"},
+		{config.RosBin, "/sbin/shutdown"},
 	} {
 		if err := os.Symlink(link.oldname, link.newname); err != nil {
 			log.Error(err)

@@ -6,6 +6,5 @@ import (
 )
 
 func IsSystemContainer(serviceConfig *composeConfig.ServiceConfig) bool {
-	return serviceConfig.Labels[config.SCOPE] == config.SYSTEM
-
+	return serviceConfig.Labels[config.ScopeLabel] == config.System
 }

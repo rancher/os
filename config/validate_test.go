@@ -25,8 +25,19 @@ func testValidate(t *testing.T, cfg []byte, contains string) {
 func TestValidate(t *testing.T) {
 	testValidate(t, []byte("{}"), "")
 	testValidate(t, []byte(`rancher:
-  log: true
-`), "")
+  log: true`), "")
+	testValidate(t, []byte(`write_files:
+- container: console
+  path: /etc/rc.local
+  permissions: "0755"
+  owner: root
+  content: |
+    #!/bin/bash
+    wait-for-docker`), "")
+	testValidate(t, []byte(`rancher:
+  docker:
+    extra_args: ['--insecure-registry', 'my.registry.com']`), "")
+
 	testValidate(t, []byte("bad_key: {}"), "Additional property bad_key is not allowed")
 	testValidate(t, []byte("rancher: []"), "rancher: Invalid type. Expected: object, given: array")
 

@@ -8,12 +8,12 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util/network"
 )
 
@@ -79,9 +79,9 @@ func consoleSwitch(c *cli.Context) error {
 		Privileged: true,
 		Net:        "host",
 		Pid:        "host",
-		Image:      config.OS_BASE,
+		Image:      config.OsBase,
 		Labels: map[string]string{
-			config.SCOPE: config.SYSTEM,
+			config.ScopeLabel: config.System,
 		},
 		Command:     []string{"/usr/bin/ros", "switch-console", newConsole},
 		VolumesFrom: []string{"all-volumes"},

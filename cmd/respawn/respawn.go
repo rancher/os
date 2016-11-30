@@ -12,17 +12,18 @@ import (
 	"syscall"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/rancher/os/log"
 )
 
 var (
-	running     bool                = true
-	processes   map[int]*os.Process = map[int]*os.Process{}
-	processLock                     = sync.Mutex{}
+	running     = true
+	processes   = map[int]*os.Process{}
+	processLock = sync.Mutex{}
 )
 
 func Main() {
+	log.InitLogger()
 	runtime.GOMAXPROCS(1)
 	runtime.LockOSThread()
 	app := cli.NewApp()

@@ -25,7 +25,6 @@ import (
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/config"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/datasource/configdrive"
@@ -40,6 +39,7 @@ import (
 	"github.com/rancher/os/cmd/cloudinitsave/gce"
 	"github.com/rancher/os/cmd/network"
 	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 	"github.com/rancher/os/util"
 )
@@ -54,6 +54,7 @@ const (
 )
 
 func Main() {
+	log.InitLogger()
 	log.Info("Running cloud-init-save")
 
 	cfg := rancherConfig.LoadConfig()

@@ -9,8 +9,8 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 

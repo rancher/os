@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 

@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/template"
 
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
@@ -104,7 +104,7 @@ func imagesFromConfig(cfg *config.CloudConfig) []string {
 	i := 0
 	for image := range imagesMap {
 		images[i] = image
-		i += 1
+		i++
 	}
 	sort.Strings(images)
 	return images

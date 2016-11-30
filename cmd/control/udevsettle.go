@@ -4,8 +4,8 @@ import (
 	"os"
 	"os/exec"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/rancher/os/log"
 )
 
 func udevSettleAction(c *cli.Context) {

@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
 	machineUtil "github.com/docker/machine/utils"
@@ -16,8 +16,8 @@ import (
 const (
 	NAME          string = "rancher"
 	BITS          int    = 2048
-	ServerTlsPath string = "/etc/docker/tls"
-	ClientTlsPath string = "/home/rancher/.docker"
+	ServerTLSPath string = "/etc/docker/tls"
+	ClientTLSPath string = "/home/rancher/.docker"
 	Cert          string = "cert.pem"
 	Key           string = "key.pem"
 	ServerCert    string = "server-cert.pem"
@@ -141,9 +141,9 @@ func generate(c *cli.Context) error {
 func Generate(generateServer bool, outDir string, hostnames []string) error {
 	if outDir == "" {
 		if generateServer {
-			outDir = ServerTlsPath
+			outDir = ServerTLSPath
 		} else {
-			outDir = ClientTlsPath
+			outDir = ClientTLSPath
 		}
 		log.Infof("Out directory (-d, --dir) not specified, using default: %s", outDir)
 	}

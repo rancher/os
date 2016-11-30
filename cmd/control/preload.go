@@ -13,9 +13,9 @@ import (
 
 	"github.com/codegangsta/cli"
 
-	log "github.com/Sirupsen/logrus"
 	dockerClient "github.com/docker/engine-api/client"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 )
 
 const (

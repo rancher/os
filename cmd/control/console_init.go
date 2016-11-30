@@ -11,10 +11,10 @@ import (
 	"strings"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 
@@ -219,8 +219,8 @@ func setupSSH(cfg *config.CloudConfig) error {
 			continue
 		}
 
-		saved, savedExists := cfg.Rancher.Ssh.Keys[keyType]
-		pub, pubExists := cfg.Rancher.Ssh.Keys[keyType+"-pub"]
+		saved, savedExists := cfg.Rancher.SSH.Keys[keyType]
+		pub, pubExists := cfg.Rancher.SSH.Keys[keyType+"-pub"]
 
 		if savedExists && pubExists {
 			// TODO check permissions

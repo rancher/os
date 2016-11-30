@@ -1,7 +1,7 @@
 package network
 
 import (
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/config"
@@ -10,6 +10,7 @@ import (
 )
 
 func Main() {
+	log.InitLogger()
 	log.Infof("Running network")
 
 	cfg := config.LoadConfig()
@@ -19,12 +20,12 @@ func Main() {
 }
 
 func ApplyNetworkConfig(cfg *config.CloudConfig) {
-	nameservers := cfg.Rancher.Network.Dns.Nameservers
-	search := cfg.Rancher.Network.Dns.Search
-	userSetDns := len(nameservers) > 0 || len(search) > 0
-	if !userSetDns {
-		nameservers = cfg.Rancher.Defaults.Network.Dns.Nameservers
-		search = cfg.Rancher.Defaults.Network.Dns.Search
+	nameservers := cfg.Rancher.Network.DNS.Nameservers
+	search := cfg.Rancher.Network.DNS.Search
+	userSetDNS := len(nameservers) > 0 || len(search) > 0
+	if !userSetDNS {
+		nameservers = cfg.Rancher.Defaults.Network.DNS.Nameservers
+		search = cfg.Rancher.Defaults.Network.DNS.Search
 	}
 
 	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
@@ -40,7 +41,7 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	}
 
 	userSetHostname := cfg.Hostname != ""
-	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDns); err != nil {
+	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDNS); err != nil {
 		log.Error(err)
 	}
 

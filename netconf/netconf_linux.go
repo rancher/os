@@ -10,8 +10,8 @@ import (
 	"sync"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/flynn/go-shlex"
+	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/config"
 	"github.com/ryanuber/go-glob"
@@ -85,8 +85,8 @@ func createSlaveInterfaces(netCfg *config.NetworkConfig) {
 		}
 
 		for _, vlanDef := range vlanDefs {
-			if _, err = NewVlan(link, vlanDef.Name, vlanDef.Id); err != nil {
-				log.Errorf("Failed to create vlans on device %s, id %d: %v", link.Attrs().Name, vlanDef.Id, err)
+			if _, err = NewVlan(link, vlanDef.Name, vlanDef.ID); err != nil {
+				log.Errorf("Failed to create vlans on device %s, id %d: %v", link.Attrs().Name, vlanDef.ID, err)
 			}
 		}
 	}
@@ -183,7 +183,7 @@ func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
 	return err
 }
 
-func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDns bool) error {
+func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDNS bool) error {
 	populateDefault(netCfg)
 
 	links, err := netlink.LinkList()
@@ -203,7 +203,7 @@ func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDns bool) error {
 	for iface, args := range dhcpLinks {
 		wg.Add(1)
 		go func(iface, args string) {
-			runDhcp(netCfg, iface, args, setHostname, setDns)
+			runDhcp(netCfg, iface, args, setHostname, setDNS)
 			wg.Done()
 		}(iface, args)
 	}
@@ -212,7 +212,7 @@ func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDns bool) error {
 	return err
 }
 
-func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostname, setDns bool) {
+func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
 	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
@@ -230,7 +230,7 @@ func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostn
 		args = append(args, "-e", "force_hostname=true")
 	}
 
-	if !setDns {
+	if !setDNS {
 		args = append(args, "--nohook", "resolv.conf")
 	}
 
@@ -273,14 +273,14 @@ func setGateway(gateway string) error {
 		return nil
 	}
 
-	gatewayIp := net.ParseIP(gateway)
-	if gatewayIp == nil {
+	gatewayIP := net.ParseIP(gateway)
+	if gatewayIP == nil {
 		return errors.New("Invalid gateway address " + gateway)
 	}
 
 	route := netlink.Route{
 		Scope: netlink.SCOPE_UNIVERSE,
-		Gw:    gatewayIp,
+		Gw:    gatewayIP,
 	}
 
 	if err := netlink.RouteAdd(&route); err == syscall.EEXIST {
