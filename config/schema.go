@@ -37,6 +37,7 @@ var schema = `{
         "no_sharedroot": {"type": "boolean"},
         "log": {"type": "boolean"},
         "force_console_rebuild": {"type": "boolean"},
+        "recovery": {"type": "boolean"},
         "disable": {"$ref": "#/definitions/list_of_strings"},
         "services_include": {"type": "object"},
         "modules": {"$ref": "#/definitions/list_of_strings"},
