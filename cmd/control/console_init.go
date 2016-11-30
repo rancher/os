@@ -67,7 +67,7 @@ func consoleInitAction(c *cli.Context) error {
 		log.Error(err)
 	}
 
-	if err := writeRespawn(); err != nil {
+	if err := writeRespawn("rancher", true); err != nil {
 		log.Error(err)
 	}
 
@@ -129,7 +129,7 @@ func consoleInitAction(c *cli.Context) error {
 	return syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ())
 }
 
-func generateRespawnConf(cmdline string) string {
+func generateRespawnConf(cmdline, user string, sshd bool) string {
 	var respawnConf bytes.Buffer
 
 	for i := 1; i < 7; i++ {
@@ -137,7 +137,7 @@ func generateRespawnConf(cmdline string) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
+			respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
 	}
@@ -149,23 +149,25 @@ func generateRespawnConf(cmdline string) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
+			respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
 	}
 
-	respawnConf.WriteString("/usr/sbin/sshd -D")
+	if sshd {
+		respawnConf.WriteString("/usr/sbin/sshd -D")
+	}
 
 	return respawnConf.String()
 }
 
-func writeRespawn() error {
+func writeRespawn(user string, sshd bool) error {
 	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return err
 	}
 
-	respawn := generateRespawnConf(string(cmdline))
+	respawn := generateRespawnConf(string(cmdline), user, sshd)
 
 	files, err := ioutil.ReadDir("/etc/respawn.conf.d")
 	if err == nil {

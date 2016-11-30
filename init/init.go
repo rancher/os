@@ -239,6 +239,12 @@ func RunInit() error {
 		},
 		loadModules,
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if cfg.Rancher.Recovery {
+				recovery(nil)
+			}
+			return cfg, nil
+		},
+		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if util.ResolveDevice("LABEL=B2D_STATE") != "" {
 				boot2DockerEnvironment = true
 				cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
@@ -370,7 +376,7 @@ func RunInit() error {
 
 	cfg, err := config.ChainCfgFuncs(nil, initFuncs...)
 	if err != nil {
-		return err
+		recovery(err)
 	}
 
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
@@ -379,7 +385,7 @@ func RunInit() error {
 	log.Info("Launching System Docker")
 	_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
 	if err != nil {
-		return err
+		recovery(err)
 	}
 
 	return pidOne()
