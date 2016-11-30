@@ -3,7 +3,6 @@ package docker
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	dockerclient "github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
@@ -11,6 +10,7 @@ import (
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"golang.org/x/net/context"
 )
 
@@ -96,7 +96,7 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 		origRebuildLabel := containerInfo.Config.Labels[config.RebuildLabel]
 		newRebuildLabel := s.Config().Labels[config.RebuildLabel]
 		rebuildLabelChanged := newRebuildLabel != origRebuildLabel
-		logrus.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"origRebuildLabel":    origRebuildLabel,
 			"newRebuildLabel":     newRebuildLabel,
 			"rebuildLabelChanged": rebuildLabelChanged,
@@ -121,7 +121,7 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 			} else if rebuildLabelChanged || origRebuildLabel != "false" {
 				return true, nil
 			} else {
-				logrus.Warnf("%s needs rebuilding", name)
+				log.Warnf("%s needs rebuilding", name)
 			}
 		}
 	}
@@ -140,7 +140,7 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 		return err
 	}
 	if shouldRebuild {
-		logrus.Infof("Rebuilding %s", s.Name())
+		log.Infof("Rebuilding %s", s.Name())
 		cs, err := s.Service.Containers(ctx)
 		if err != nil {
 			return err
@@ -221,7 +221,7 @@ func (s *Service) rename(ctx context.Context) error {
 	}
 
 	if len(info.Name) > 0 && info.Name[1:] != s.Name() {
-		logrus.Debugf("Renaming container %s => %s", info.Name[1:], s.Name())
+		log.Debugf("Renaming container %s => %s", info.Name[1:], s.Name())
 		return client.ContainerRename(context.Background(), info.ID, s.Name())
 	}
 	return nil

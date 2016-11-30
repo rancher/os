@@ -8,9 +8,10 @@ import (
 	"path"
 	"strings"
 
+	"github.com/rancher/os/log"
+
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/packethost/packngo/metadata"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/netconf"
@@ -21,7 +22,7 @@ func enablePacketNetwork(cfg *config.RancherConfig) {
 	for _, v := range cfg.Network.Interfaces {
 		if v.Address != "" {
 			if err := netconf.ApplyNetworkConfigs(&cfg.Network); err != nil {
-				logrus.Errorf("Failed to bootstrap network: %v", err)
+				log.Errorf("Failed to bootstrap network: %v", err)
 				return
 			}
 			bootStrapped = true
@@ -36,7 +37,7 @@ func enablePacketNetwork(cfg *config.RancherConfig) {
 	c := metadata.NewClient(http.DefaultClient)
 	m, err := c.Metadata.Get()
 	if err != nil {
-		logrus.Errorf("Failed to get Packet metadata: %v", err)
+		log.Errorf("Failed to get Packet metadata: %v", err)
 		return
 	}
 
@@ -78,7 +79,7 @@ func enablePacketNetwork(cfg *config.RancherConfig) {
 
 	netCfg.Interfaces["bond0"] = bondCfg
 	b, _ := yaml.Marshal(netCfg)
-	logrus.Debugf("Generated network config: %s", string(b))
+	log.Debugf("Generated network config: %s", string(b))
 
 	cc := config.CloudConfig{
 		Rancher: config.RancherConfig{
@@ -89,15 +90,15 @@ func enablePacketNetwork(cfg *config.RancherConfig) {
 	// Post to phone home URL on first boot
 	if _, err = os.Stat(config.CloudConfigNetworkFile); err != nil {
 		if _, err = http.Post(m.PhoneHomeURL, "application/json", bytes.NewReader([]byte{})); err != nil {
-			logrus.Errorf("Failed to post to Packet phone home URL: %v", err)
+			log.Errorf("Failed to post to Packet phone home URL: %v", err)
 		}
 	}
 
 	if err := os.MkdirAll(path.Dir(config.CloudConfigNetworkFile), 0700); err != nil {
-		logrus.Errorf("Failed to create directory for file %s: %v", config.CloudConfigNetworkFile, err)
+		log.Errorf("Failed to create directory for file %s: %v", config.CloudConfigNetworkFile, err)
 	}
 
 	if err := config.WriteToFile(cc, config.CloudConfigNetworkFile); err != nil {
-		logrus.Errorf("Failed to save config file %s: %v", config.CloudConfigNetworkFile, err)
+		log.Errorf("Failed to save config file %s: %v", config.CloudConfigNetworkFile, err)
 	}
 }

@@ -5,7 +5,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/libcompose/cli/logger"
 	composeConfig "github.com/docker/libcompose/config"
@@ -16,6 +15,7 @@ import (
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/config"
 	rosDocker "github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )

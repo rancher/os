@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
 	dockerClient "github.com/docker/engine-api/client"

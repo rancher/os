@@ -10,10 +10,10 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
+	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/util"

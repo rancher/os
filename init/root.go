@@ -8,10 +8,10 @@ import (
 	"strings"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
+	"github.com/rancher/os/log"
 )
 
 func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) {

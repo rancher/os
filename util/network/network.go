@@ -11,8 +11,8 @@ import (
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 )
 
 var (

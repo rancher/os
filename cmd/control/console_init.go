@@ -11,10 +11,10 @@ import (
 	"strings"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 

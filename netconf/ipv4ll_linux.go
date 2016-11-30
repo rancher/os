@@ -6,7 +6,7 @@ import (
 	"math/rand"
 	"net"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 
 	"github.com/j-keck/arping"
 	"github.com/vishvananda/netlink"

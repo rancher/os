@@ -50,10 +50,12 @@ If you're on OS X, you can run RancherOS using [_xhyve_](https://github.com/mist
 
 ### Debugging and logging.
 
-You can enable extra log information by setting them using `sudo ros config set`,
+You can enable extra log information in the console by setting them using `sudo ros config set`,
 or as kernel boot parameters.
 Enable all logging by setting `rancher.debug` true
 or you can set `rancher.docker.debug`, `racher.system_docker.debug`, `rancher.bootstrap_docker.debug`, or `rancher.log` individually.
+
+You will also be able to view the debug logging information by running `dmesg` as root.
 
 ## Repositories
 

@@ -5,9 +5,11 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 )
 
 func Main() {
+	log.InitLogger()
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]

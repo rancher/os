@@ -9,8 +9,8 @@ import (
 	"strings"
 	"text/template"
 
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
