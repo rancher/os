@@ -1,3 +1,3 @@
-FROM rancher/os-base
-COPY auto-format.sh /usr/sbin/
+FROM rancher/os-console
+COPY auto-format.sh unlock /usr/sbin/
 COPY od-1m0 /

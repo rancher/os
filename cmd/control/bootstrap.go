@@ -22,9 +22,28 @@ func bootstrapAction(c *cli.Context) error {
 	cfg := config.LoadConfig()
 
 	if cfg.Rancher.State.MdadmScan {
-		if err := mdadmScan(); err != nil {
-			log.Errorf("Failed to run mdadm scan: %v", err)
+		cmdRun("mdadm", "--assemble", "--scan")
+	}
+
+	if cfg.Rancher.State.NetConf || cfg.Rancher.State.Nbd.Host != "" || cfg.Rancher.State.Decrypt {
+                if err := cmdStart("netconf"); err != nil {
+                        log.Errorf("Failed to start netconf: %v", err)
+                }
+	}
+
+	if cfg.Rancher.State.Nbd.Host != "" {
+		nbd := cfg.Rancher.State.Nbd
+		args := []string { nbd.Host }
+		if nbd.Port != 0 {
+			args = append(args, string(nbd.Port))
 		}
+		if nbd.Name != "" {
+			args = append(args, "-name", nbd.Name)
+		}
+		if nbd.BlockSize != 0 {
+			args = append(args, "-block-size", string(nbd.BlockSize))
+		}
+                cmdRun("nbd-client", args...)
 	}
 
 	stateScript := cfg.Rancher.State.Script
@@ -35,6 +54,15 @@ func bootstrapAction(c *cli.Context) error {
 	}
 
 	util.RunCommandSequence(cfg.Bootcmd)
+
+	if cfg.Rancher.State.Decrypt {
+		cmdRun("ros", "console-init")
+	}
+
+	if cfg.Rancher.State.LvmScan {
+		cmdRun("pvscan", "--activate", "ay")
+		cmdRun("vgchange", "--activate", "ay")
+	}
 
 	if cfg.Rancher.State.Dev != "" && cfg.Rancher.State.Wait {
 		waitForRoot(cfg)
@@ -54,11 +82,22 @@ func bootstrapAction(c *cli.Context) error {
 	return nil
 }
 
-func mdadmScan() error {
-	cmd := exec.Command("mdadm", "--assemble", "--scan")
+func cmdRun(cmdName string, args ...string) bool {
+	cmd := exec.Command(cmdName, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	if err := cmd.Run(); err != nil {
+		log.Errorf("Failed to run %v %v: %v", cmdName, args, err)
+		return false
+	}
+	return true
+}
+
+func cmdStart(cmdName string, args ...string) error {
+        cmd := exec.Command(cmdName, args...)
+        cmd.Stdout = os.Stdout
+        cmd.Stderr = os.Stderr
+        return cmd.Start()
 }
 
 func runStateScript(script string) error {
