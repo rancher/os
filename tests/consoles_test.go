@@ -51,3 +51,21 @@ sudo ros console list | grep debian | grep disabled`)
 sudo ros console list | grep default | grep disabled
 sudo ros console list | grep debian | grep current`)
 }
+
+func (s *QemuSuite) TestContainersRestartAfterConsoleSwitch(c *C) {
+	s.RunQemu(c)
+
+	s.CheckCall(c, `
+docker run -d --restart=always nginx
+docker ps | grep nginx`)
+
+	s.MakeCall("sudo ros console switch -f debian")
+	c.Assert(s.WaitForSSH(), IsNil)
+
+	s.CheckCall(c, "docker ps | grep nginx")
+	s.CheckCall(c, "sudo ros console enable default")
+
+	s.Reboot(c)
+
+	s.CheckCall(c, "docker ps | grep nginx")
+}
