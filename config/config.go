@@ -18,7 +18,7 @@ func Merge(bytes []byte) error {
 }
 
 func Export(private, full bool) (string, error) {
-	rawCfg := loadRawDiskConfig("", full)
+	rawCfg := loadRawConfig("", full)
 	if !private {
 		rawCfg = filterPrivateKeys(rawCfg)
 	}
