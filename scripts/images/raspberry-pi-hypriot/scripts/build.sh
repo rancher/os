@@ -6,8 +6,7 @@ cd $(dirname $0)/..
 # create build directory for assembling our image filesystem
 mkdir -p build/{boot,root,basefs} dist
 
-cp assets/raspberrypi-bootloader_*_armhf.deb build/bootloader.deb
-cp assets/rpi3-bootfiles.tar.gz build/rpi3-bootfiles.tar.gz
+cp assets/*.deb build/
 
 #---build SD card image---
 
@@ -50,12 +49,11 @@ echo "RancherOS: root partition" > build/root/root.txt
 
 # unpack and cleanup the basefs
 #- doing this on a local folder keeps our resulting image clean (no dirty blocks from a delete)
+dpkg-deb -x build/kernel.deb build/basefs
 dpkg-deb -x build/bootloader.deb build/basefs
-# upgrade Raspberry Pi bootfile for RPi3 support
-tar xvzf build/rpi3-bootfiles.tar.gz -C build/basefs/boot
 # remove RPi1 kernel, we only support RPi2 and RPi3 in ARMv7 mode
 rm -fr build/basefs/boot/kernel.img
-rm -fr build/basefs/lib/modules/{4.1.17+,4.1.17-hypriotos+}
+rm -fr build/basefs/lib/modules/{4.4.27+,4.4.27-hypriotos+}
 
 # populate kernel, bootloader and RancherOS rootfs
 cp -R build/basefs/* build/root

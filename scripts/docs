@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+set -x
+
+docker run --rm -v $(pwd)/docs:/site -p 4000:4000 andredumas/github-pages serve --watch
+

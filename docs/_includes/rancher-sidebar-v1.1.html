@@ -1,0 +1,182 @@
+<div class="sidebar-nav">
+    <div class="navbar navbar-inverse" role="navigation">
+
+        <!-- Brand and Toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://rancher.com/"><img src="{{site.baseurl}}/img/rancher-logo-nopadding.svg"></a>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <div>
+        <!--Start Google Search-->
+        <script>
+          (function() {
+            var cx = '007896692384436596364:60akf3bfmxm';
+            var gcse = document.createElement('script');
+            gcse.type = 'text/javascript';
+            gcse.async = true;
+            gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+                '//cse.google.com/cse.js?cx=' + cx;
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(gcse, s);
+          })();
+        </script>
+        <gcse:search></gcse:search>
+        <!--End Google Search-->
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav" id="mainmenu">
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/">Overview</a></li>
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/quick-start-guide/">Quick Start Guide</a></li>
+                <li class="panel">
+                     <a href="#installing-rancher" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Installing Rancher<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                     <ul class="collapse list-group-submenu" id="installing-rancher">
+                        <li>
+                            <a href="#installing-server" data-toggle="collapse" class="collapsed" data-parent="#installing-server">Installing Rancher server<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                              <ul class="collapse" id="installing-server">
+                                 <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/"><i class="fa fa-angle-double-right"></i>Single Node</a></li>
+                                 <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/multi-nodes/"><i class="fa fa-angle-double-right"></i>Multi Nodes</a></li>
+                                 <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/"><i class="fa fa-angle-double-right"></i>Basic SSL Configuration</a></li>
+                                  <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/no-internet-access/"><i class="fa fa-angle-double-right"></i>No Internet Access</a></li>
+                             </ul>
+                        </li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/">Adding Hosts</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#upgrading" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Upgrading Rancher<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="upgrading">
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/upgrading/">Single Node</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/upgrading/multi-nodes/">Multi Nodes</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#configuration" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Rancher Configuration<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                     <ul class="collapse list-group-submenu" id="configuration">
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/configuration/access-control/">Access Control</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/configuration/accounts/">Accounts</a></li>
+                        <li>
+                            <a href="#settings" data-toggle="collapse" class="collapsed" data-parent="#settings">Settings <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                            <ul class="collapse list-group-submenu" id="settings">
+                                <li><a class="hash" href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/configuration/settings/#host-registration"><i class="fa fa-angle-double-right"></i>Host-Registration</a></li>
+                                <li><a class="hash" href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/configuration/settings/#catalog"><i class="fa fa-angle-double-right"></i>Catalog</a></li>
+                            </ul>
+                        </li>
+                        <li><a class="hash" href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/configuration/machine-drivers/">Machine Drivers</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#environments" data-toggle="collapse" class="collapsed" data-parent="#mainmenu">Environments <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="environments">
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/">Environments</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/">Registries</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/certificates/">Certificates</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#hosts" data-toggle="collapse" class="collapsed" data-parent="#mainmenu">Hosts <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="hosts">
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/">Getting Started with Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/custom/">Adding Custom Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/amazon/">Adding Amazon EC2 Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/azure/">Adding Azure Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/digitalocean/">Adding DigitalOcean Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/exoscale/">Adding Exoscale Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/packet/">Adding Packet Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/rackspace/">Adding Rackspace Hosts</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/hosts/other/">Adding Hosts from Other Cloud Providers</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#rancherservice" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Rancher Infrastructure Services<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="rancherservice">
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/rancher-services/networking">Networking</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/rancher-services/load-balancer">Load Balancer</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/rancher-services/dns-service/">DNS Service</a></li>
+                         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/rancher-services/metadata-service/">Metadata Service</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/rancher-services/storage-service/">Persistent Storage Service</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/rancher-services/audit-log/">Audit Logging</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/rancher-services/service-accounts/">Service Accounts</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#cattle" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Cattle<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="cattle">
+                        <li><a class="hash" href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/stacks">Stacks</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/adding-services/">Adding Services</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/adding-load-balancers/">Adding Load Balancers</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/adding-external-services/">Adding External Services</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/adding-service-alias/">Adding Service Alias</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/health-checks/">Health Checks</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/scheduling/">Scheduling Services</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/internal-dns-service/">Internal DNS Service in Cattle Environments</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/external-dns-service/">External DNS Service using Route 53</a></li>
+                        <li class="panel">
+                            <a href="#rancher-compose" class="collapsed" data-toggle="collapse" data-parent="#cattle">Rancher-Compose<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                            <ul class="collapse list-group-submenu" id="rancher-compose">
+                                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/rancher-compose/">Rancher Compose</a></li>
+                                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/rancher-compose/commands/">Commands and Options</a></li>
+                                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/rancher-compose/upgrading/">Upgrading Services</a></li>
+                                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/rancher-compose/environment-interpolation/">Environment Interpolation</a></li>
+                                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/rancher-compose/build/">Building with AWS S3</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/labels/"> Labels in Rancher</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#kubernetes" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Kubernetes<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="kubernetes">
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/">Kubernetes</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/ingress/">Ingress Support</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/k8s-internal-dns-service/">Internal DNS Service in Kubernetes Environments</a></li>
+                    </ul>
+                </li>
+
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/mesos/">Mesos</a></li>
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/swarm/">Swarm</a></li>
+
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/native-docker/">Using Native Docker CLI with Rancher</a></li>
+                <li class="panel">
+                    <a href="#catalog" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Rancher Catalog<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="catalog">
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/catalog/">Catalog</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/catalog/private-catalog/">Creating Private Catalogs</a></li>
+                    </ul>
+                </li>
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/" data-toggle="refresh">API Documentation</a></li>
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/contributing/">Contributing to Rancher</a></li>
+                <li class="panel">
+                    <a href="#faqs" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">FAQs<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="faqs">
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/faqs/server/">FAQs about Rancher Server</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/faqs/agents/">FAQs about Rancher Agents/Hosts</a></li>
+                        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/faqs/troubleshooting/">Troubleshooting FAQS</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#docsarchive1" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">Docs Archive<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="docsarchive1">
+                        <li><a href="{{site.baseurl}}/rancher/v1.0/{{page.lang}}/"  data-toggle="refresh">Rancher v1.0</a></li>
+                    </ul>
+                </li>
+            </ul><!-- /.navbar-nav -->
+        </div><!-- /.navbar-collapse -->
+
+        <!--language select
+        <div class="btn-group" role="group" aria-label="...">
+            <a class="btn btn-default btn-xs" href="{{site.baseurl}}/rancher/{{page.version}}/en/">English</a>
+            <a class="btn btn-default btn-xs" href="{{site.baseurl}}/rancher/{{page.version}}/zh/">Chinese</a>
+        </div>
+        -->
+    </div> <!-- /.navbar-inverse -->
+</div> <!-- /.sidebar-nav -->

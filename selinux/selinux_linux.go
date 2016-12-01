@@ -9,3 +9,8 @@ func InitializeSelinux() (int, error) {
 	ret, err := C.selinux_init_load_policy(&enforce)
 	return int(ret), err
 }
+
+func SetFileContext(path string, context string) (int, error) {
+	ret, err := C.setfilecon(C.CString(path), C.CString(context))
+	return int(ret), err
+}

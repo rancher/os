@@ -8,20 +8,21 @@ import (
 	"path"
 	"strings"
 
+	"github.com/rancher/os/log"
+
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/packethost/packngo/metadata"
-	"github.com/rancher/netconf"
-	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/netconf"
 )
 
-func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
+func enablePacketNetwork(cfg *config.RancherConfig) {
 	bootStrapped := false
 	for _, v := range cfg.Network.Interfaces {
 		if v.Address != "" {
 			if err := netconf.ApplyNetworkConfigs(&cfg.Network); err != nil {
-				logrus.Errorf("Failed to bootstrap network: %v", err)
+				log.Errorf("Failed to bootstrap network: %v", err)
 				return
 			}
 			bootStrapped = true
@@ -36,11 +37,11 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 	c := metadata.NewClient(http.DefaultClient)
 	m, err := c.Metadata.Get()
 	if err != nil {
-		logrus.Errorf("Failed to get Packet metadata: %v", err)
+		log.Errorf("Failed to get Packet metadata: %v", err)
 		return
 	}
 
-	bondCfg := netconf.InterfaceConfig{
+	bondCfg := config.InterfaceConfig{
 		Addresses: []string{},
 		BondOpts: map[string]string{
 			"lacp_rate":        "1",
@@ -51,11 +52,11 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 			"mode":             "4",
 		},
 	}
-	netCfg := netconf.NetworkConfig{
-		Interfaces: map[string]netconf.InterfaceConfig{},
+	netCfg := config.NetworkConfig{
+		Interfaces: map[string]config.InterfaceConfig{},
 	}
 	for _, iface := range m.Network.Interfaces {
-		netCfg.Interfaces["mac="+iface.Mac] = netconf.InterfaceConfig{
+		netCfg.Interfaces["mac="+iface.Mac] = config.InterfaceConfig{
 			Bond: "bond0",
 		}
 	}
@@ -78,26 +79,26 @@ func enablePacketNetwork(cfg *rancherConfig.RancherConfig) {
 
 	netCfg.Interfaces["bond0"] = bondCfg
 	b, _ := yaml.Marshal(netCfg)
-	logrus.Debugf("Generated network config: %s", string(b))
+	log.Debugf("Generated network config: %s", string(b))
 
-	cc := rancherConfig.CloudConfig{
-		Rancher: rancherConfig.RancherConfig{
+	cc := config.CloudConfig{
+		Rancher: config.RancherConfig{
 			Network: netCfg,
 		},
 	}
 
 	// Post to phone home URL on first boot
-	if _, err = os.Stat(rancherConfig.CloudConfigNetworkFile); err != nil {
+	if _, err = os.Stat(config.CloudConfigNetworkFile); err != nil {
 		if _, err = http.Post(m.PhoneHomeURL, "application/json", bytes.NewReader([]byte{})); err != nil {
-			logrus.Errorf("Failed to post to Packet phone home URL: %v", err)
+			log.Errorf("Failed to post to Packet phone home URL: %v", err)
 		}
 	}
 
-	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile), 0700); err != nil {
-		logrus.Errorf("Failed to create directory for file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
+	if err := os.MkdirAll(path.Dir(config.CloudConfigNetworkFile), 0700); err != nil {
+		log.Errorf("Failed to create directory for file %s: %v", config.CloudConfigNetworkFile, err)
 	}
 
-	if err := rancherConfig.WriteToFile(cc, rancherConfig.CloudConfigNetworkFile); err != nil {
-		logrus.Errorf("Failed to save config file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
+	if err := config.WriteToFile(cc, config.CloudConfigNetworkFile); err != nil {
+		log.Errorf("Failed to save config file %s: %v", config.CloudConfigNetworkFile, err)
 	}
 }

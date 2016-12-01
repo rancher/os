@@ -3,12 +3,12 @@ package compose
 import (
 	"fmt"
 
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util/network"
 )
 

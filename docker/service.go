@@ -3,7 +3,6 @@ package docker
 import (
 	"fmt"
 
-	"github.com/Sirupsen/logrus"
 	dockerclient "github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
@@ -11,6 +10,7 @@ import (
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"golang.org/x/net/context"
 )
 
@@ -41,9 +41,7 @@ func (s *Service) DependentServices() []project.ServiceRelationship {
 	}
 
 	if s.requiresUserDocker() {
-		// Linking to cloud-init is a hack really.  The problem is we need to link to something
-		// that will trigger a reload
-		rels = appendLink(rels, "cloud-init", false, s.project)
+		rels = appendLink(rels, "docker", false, s.project)
 	} else if s.missingImage() {
 		rels = appendLink(rels, "network", false, s.project)
 	}
@@ -65,7 +63,7 @@ func (s *Service) requiresSyslog() bool {
 }
 
 func (s *Service) requiresUserDocker() bool {
-	return s.Config().Labels[config.SCOPE] != config.SYSTEM
+	return s.Config().Labels[config.ScopeLabel] != config.System
 }
 
 func appendLink(deps []project.ServiceRelationship, name string, optional bool, p *project.Project) []project.ServiceRelationship {
@@ -95,10 +93,10 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 		}
 		name := containerInfo.Name[1:]
 
-		origRebuildLabel := containerInfo.Config.Labels[config.REBUILD]
-		newRebuildLabel := s.Config().Labels[config.REBUILD]
+		origRebuildLabel := containerInfo.Config.Labels[config.RebuildLabel]
+		newRebuildLabel := s.Config().Labels[config.RebuildLabel]
 		rebuildLabelChanged := newRebuildLabel != origRebuildLabel
-		logrus.WithFields(logrus.Fields{
+		log.WithFields(log.Fields{
 			"origRebuildLabel":    origRebuildLabel,
 			"newRebuildLabel":     newRebuildLabel,
 			"rebuildLabelChanged": rebuildLabelChanged,
@@ -115,15 +113,15 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 		}
 		if outOfSync {
 			if s.Name() == "console" {
-				origConsoleLabel := containerInfo.Config.Labels[config.CONSOLE]
-				newConsoleLabel := s.Config().Labels[config.CONSOLE]
+				origConsoleLabel := containerInfo.Config.Labels[config.ConsoleLabel]
+				newConsoleLabel := s.Config().Labels[config.ConsoleLabel]
 				if newConsoleLabel != origConsoleLabel {
 					return true, nil
 				}
 			} else if rebuildLabelChanged || origRebuildLabel != "false" {
 				return true, nil
 			} else {
-				logrus.Warnf("%s needs rebuilding", name)
+				log.Warnf("%s needs rebuilding", name)
 			}
 		}
 	}
@@ -142,7 +140,7 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 		return err
 	}
 	if shouldRebuild {
-		logrus.Infof("Rebuilding %s", s.Name())
+		log.Infof("Rebuilding %s", s.Name())
 		cs, err := s.Service.Containers(ctx)
 		if err != nil {
 			return err
@@ -156,13 +154,13 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 			return err
 		}
 	}
-	if labels[config.CREATE_ONLY] == "true" {
+	if labels[config.CreateOnlyLabel] == "true" {
 		return s.checkReload(labels)
 	}
 	if err := s.Service.Up(ctx, options); err != nil {
 		return err
 	}
-	if labels[config.DETACH] == "false" {
+	if labels[config.DetachLabel] == "false" {
 		if err := s.wait(ctx); err != nil {
 			return err
 		}
@@ -172,7 +170,7 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 }
 
 func (s *Service) checkReload(labels map[string]string) error {
-	if labels[config.RELOAD_CONFIG] == "true" {
+	if labels[config.ReloadConfigLabel] == "true" {
 		return project.ErrRestart
 	}
 	return nil
@@ -223,9 +221,8 @@ func (s *Service) rename(ctx context.Context) error {
 	}
 
 	if len(info.Name) > 0 && info.Name[1:] != s.Name() {
-		logrus.Debugf("Renaming container %s => %s", info.Name[1:], s.Name())
+		log.Debugf("Renaming container %s => %s", info.Name[1:], s.Name())
 		return client.ContainerRename(context.Background(), info.ID, s.Name())
-	} else {
-		return nil
 	}
+	return nil
 }

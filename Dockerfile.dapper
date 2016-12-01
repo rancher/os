@@ -1,15 +1,6 @@
 FROM ubuntu:16.04
 # FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
-ENV DAPPER_ENV VERSION DEV_BUILD
-ENV DAPPER_DOCKER_SOCKET true
-ENV DAPPER_SOURCE /go/src/github.com/rancher/os
-ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd
-ENV DAPPER_RUN_ARGS --privileged
-ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
-ENV SHELL /bin/bash
-WORKDIR ${DAPPER_SOURCE}
-
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         build-essential \
@@ -38,6 +29,17 @@ RUN apt-get update && \
         wget \
         xorriso
 
+########## Dapper Configuration #####################
+
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST
+ENV DAPPER_DOCKER_SOCKET true
+ENV DAPPER_SOURCE /go/src/github.com/rancher/os
+ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd
+ENV DAPPER_RUN_ARGS --privileged
+ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
+ENV SHELL /bin/bash
+WORKDIR ${DAPPER_SOURCE}
+
 ########## General Configuration #####################
 ARG DAPPER_HOST_ARCH=amd64
 ARG HOST_ARCH=${DAPPER_HOST_ARCH}
@@ -53,7 +55,7 @@ ARG DOCKER_BUILD_VERSION=1.10.3
 ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.3/policy.29
 
-ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/Ubuntu-4.4.0-42.62-rancher1-1/linux-4.4.21-rancher-x86.tar.gz
+ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/v4.8.11/linux-4.8.11-rancher-x86.tar.gz
 ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.4.0-arm64.8/linux-4.4.0-rancher-arm64.tar.gz
 
 ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
@@ -70,9 +72,9 @@ ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
 ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-2
 
-ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2016.08.1-1/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2016.08.1-1/os-base_arm64.tar.xz
-ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.08.1-1/os-base_arm.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2016.08.1-2/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2016.08.1-2/os-base_arm64.tar.xz
+ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.08.1-2/os-base_arm.tar.xz
 ######################################################
 
 # Set up environment and export all ARGS as ENV
@@ -139,6 +141,9 @@ RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
 
 # Install Trash
 RUN go get github.com/rancher/trash
+
+# Install golint
+RUN go get github.com/golang/lint/golint
 
 RUN go get gopkg.in/check.v1
 
