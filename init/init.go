@@ -59,7 +59,10 @@ func loadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		}
 
 		log.Debugf("Loading module %s", module)
-		if err := exec.Command("modprobe", module).Run(); err != nil {
+		cmd := exec.Command("modprobe", module)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
 			log.Errorf("Could not load module %s, err %v", module, err)
 		}
 	}
