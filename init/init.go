@@ -359,10 +359,10 @@ func RunInit() error {
 
 			return config.LoadConfig(), nil
 		},
-		loadModules,
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dfs.PrepareFs(&mountConfig)
 		},
+		loadModules,
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			network.SetProxyEnvironmentVariables(c)
 			return c, nil
