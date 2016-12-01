@@ -14,4 +14,4 @@ if [ ! -e ../dist/artifacts/initrd ]; then
     ../scripts/dev
 fi
 
-go test -timeout 30m
+go test -v -check.vv -timeout 30m
