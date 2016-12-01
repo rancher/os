@@ -1,5 +1,6 @@
 #!/bin/bash
 set -e
+set -x
 
 source $(dirname $0)/version
 cd $(dirname $0)/..
@@ -10,6 +11,7 @@ ISO=${ARTIFACTS}/$(echo ${DISTRIB_ID} | tr '[:upper:]' '[:lower:]').iso
 CHECKSUM=iso-checksums.txt
 
 mkdir -p ${CD}/boot/isolinux
+mkdir -p ${CD}/rancheros
 
 if [ ! -f ${ARTIFACTS}/vmlinuz ] || [ ! -f ${ARTIFACTS}/initrd ]; then
     exit 0
@@ -20,6 +22,10 @@ cp ${ARTIFACTS}/vmlinuz                       ${CD}/boot
 cp scripts/isolinux.cfg                       ${CD}/boot/isolinux
 cp /usr/lib/ISOLINUX/isolinux.bin             ${CD}/boot/isolinux
 cp /usr/lib/syslinux/modules/bios/ldlinux.c32 ${CD}/boot/isolinux
+# add the installer image to the iso for non-network / dev/test
+cp ${ARTIFACTS}/installer.tar                 ${CD}/rancheros
+cp assets/bootinfoscript                ${CD}/rancheros
+gzip ${CD}/rancheros/installer.tar
 cd ${CD} && xorriso \
     -as mkisofs \
     -l -J -R -V "${DISTRIB_ID}" \

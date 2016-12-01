@@ -5,9 +5,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/*
 
 COPY ./build/vmlinuz ./build/initrd /dist/
-COPY conf lay-down-os seed-data set-disk-partitions /scripts/
+COPY conf ./build/ros /scripts/
 
 ARG VERSION
 ENV VERSION=${VERSION}
 
-ENTRYPOINT ["/scripts/lay-down-os"]
+ENTRYPOINT ["/scripts/ros"]

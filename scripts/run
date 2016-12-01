@@ -12,6 +12,7 @@ while [ "$#" -gt 0 ]; do
             BOOT_ISO=1
             QEMU=0
             QIND=0
+            REBUILD=0
             ;;
         --append)
             shift 1
@@ -59,7 +60,6 @@ while [ "$#" -gt 0 ]; do
             FRESH=1
             ;;
         --installed)
-            ./scripts/create-installed
             INSTALLED=1
             ;;
         *)
@@ -107,7 +107,11 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ]; then
 
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
-        qemu-img create -f qcow2 -o size=10G ${HD}
+        if [ ¨$INSTALLED¨ == ¨1¨ ]; then
+            ./scripts/create-installed
+        else
+        	qemu-img create -f qcow2 -o size=10G ${HD}
+        fi
     fi
 
     if [ "$SECOND_DRIVE" == "1" ]; then

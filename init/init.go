@@ -71,6 +71,7 @@ func loadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
+	showMounts("sysInit")
 	args := append([]string{config.SysInitBin}, os.Args[1:]...)
 
 	cmd := &exec.Cmd{
@@ -224,10 +225,12 @@ func RunInit() error {
 	var metadataFile []byte
 	initFuncs := []config.CfgFunc{
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("dfs.PrepareFs")
 			return c, dfs.PrepareFs(&mountConfig)
 		},
 		mountOem,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("showconfig")
 			cfg := config.LoadConfig()
 
 			if cfg.Rancher.Debug {
@@ -243,6 +246,7 @@ func RunInit() error {
 		},
 		loadModules,
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("read B2D_STATE")
 			if util.ResolveDevice("LABEL=B2D_STATE") != "" {
 				boot2DockerEnvironment = true
 				cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
@@ -270,6 +274,7 @@ func RunInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("tryMountAndBootstrap")
 			var err error
 			cfg, shouldSwitchRoot, err = tryMountAndBootstrap(cfg)
 			if err != nil {
@@ -278,6 +283,7 @@ func RunInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("cloudinit")
 			if err := os.MkdirAll(config.CloudConfigDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
 			}
@@ -313,6 +319,7 @@ func RunInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("readconfig")
 			var err error
 			cloudConfigBootFile, err = ioutil.ReadFile(config.CloudConfigBootFile)
 			if err != nil {
@@ -325,6 +332,7 @@ func RunInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("switchroot")
 			if !shouldSwitchRoot {
 				return cfg, nil
 			}
@@ -336,6 +344,7 @@ func RunInit() error {
 		},
 		mountOem,
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("write meta")
 			if err := os.MkdirAll(config.CloudConfigDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
 			}
@@ -348,6 +357,7 @@ func RunInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("set sate")
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)
@@ -360,10 +370,12 @@ func RunInit() error {
 			return config.LoadConfig(), nil
 		},
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("preparefs2")
 			return c, dfs.PrepareFs(&mountConfig)
 		},
 		loadModules,
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			showMounts("setproxy")
 			network.SetProxyEnvironmentVariables(c)
 			return c, nil
 		},
@@ -387,4 +399,13 @@ func RunInit() error {
 	}
 
 	return pidOne()
+}
+
+func showMounts(msg string) {
+	mounts, err := ioutil.ReadFile("/proc/mounts")
+	if err != nil {
+		log.Infof("+++++++++ showMounts(%s) ERROR: %s", msg, err)
+	} else {
+		log.Infof("+++++++++ showMounts(%s) %s", msg, mounts)
+	}
 }

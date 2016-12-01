@@ -46,4 +46,4 @@ REBUILD=1
 QEMUARCH=${qemuarch["${ARCH}"]}
 TTYCONS=${ttycons["${ARCH}"]}
 
-DEFAULT_KERNEL_ARGS="quiet rancher.password=rancher console=${TTYCONS} rancher.autologin=${TTYCONS}"
+DEFAULT_KERNEL_ARGS="rancher.debug=true rancher.password=rancher console=${TTYCONS} rancher.autologin=${TTYCONS}"

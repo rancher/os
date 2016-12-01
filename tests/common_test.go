@@ -64,6 +64,7 @@ func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) {
 		"--no-rebuild",
 		"--no-rm-usr",
 		"--installed",
+		"--fresh",
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
