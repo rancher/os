@@ -11,10 +11,10 @@ import (
 	"strings"
 	"syscall"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 
@@ -139,7 +139,7 @@ func generateRespawnConf(cmdline string) string {
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(" --autologin rancher")
 		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
 
 	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
@@ -151,7 +151,7 @@ func generateRespawnConf(cmdline string) string {
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(" --autologin rancher")
 		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
 	}
 
 	respawnConf.WriteString("/usr/sbin/sshd -D")
@@ -219,8 +219,8 @@ func setupSSH(cfg *config.CloudConfig) error {
 			continue
 		}
 
-		saved, savedExists := cfg.Rancher.SSH.Keys[keyType]
-		pub, pubExists := cfg.Rancher.SSH.Keys[keyType+"-pub"]
+		saved, savedExists := cfg.Rancher.Ssh.Keys[keyType]
+		pub, pubExists := cfg.Rancher.Ssh.Keys[keyType+"-pub"]
 
 		if savedExists && pubExists {
 			// TODO check permissions
