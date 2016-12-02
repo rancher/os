@@ -3,8 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestOem(c *C) {
-	err := s.RunQemu("--second-drive")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--second-drive")
 
 	s.CheckCall(c, `
 set -x

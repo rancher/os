@@ -31,9 +31,8 @@ var (
 		"arm":   "armhfbuild/nginx",
 		"arm64": "armhfbuild/nginx",
 	}[runtime.GOARCH]
-	DockerUrl = "https://experimental.docker.com/builds/Linux/x86_64/docker-1.10.0-dev"
-	Version   = os.Getenv("VERSION")
-	Suffix    = os.Getenv("SUFFIX")
+	Version = os.Getenv("VERSION")
+	Suffix  = os.Getenv("SUFFIX")
 )
 
 type QemuSuite struct {
@@ -47,7 +46,7 @@ func (s *QemuSuite) TearDownTest(c *C) {
 	time.Sleep(time.Millisecond * 1000)
 }
 
-func (s *QemuSuite) RunQemu(additionalArgs ...string) error {
+func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) {
 	runArgs := []string{
 		"--qemu",
 		"--no-rebuild",
@@ -56,10 +55,10 @@ func (s *QemuSuite) RunQemu(additionalArgs ...string) error {
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	return s.runQemu(runArgs...)
+	c.Assert(s.runQemu(runArgs...), IsNil)
 }
 
-func (s *QemuSuite) RunQemuInstalled(additionalArgs ...string) error {
+func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) {
 	runArgs := []string{
 		"--qemu",
 		"--no-rebuild",
@@ -68,7 +67,7 @@ func (s *QemuSuite) RunQemuInstalled(additionalArgs ...string) error {
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	return s.runQemu(runArgs...)
+	c.Assert(s.runQemu(runArgs...), IsNil)
 }
 
 func (s *QemuSuite) runQemu(args ...string) error {
@@ -85,14 +84,31 @@ func (s *QemuSuite) runQemu(args ...string) error {
 func (s *QemuSuite) WaitForSSH() error {
 	sshArgs := []string{
 		"--qemu",
+		"true",
+	}
+
+	var err error
+	for i := 0; i < 100; i++ {
+		cmd := exec.Command(s.sshCommand, sshArgs...)
+		if err = cmd.Run(); err == nil {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	if err != nil {
+		return fmt.Errorf("Failed to connect to SSH: %v", err)
+	}
+
+	sshArgs = []string{
+		"--qemu",
 		"docker",
 		"version",
 		">/dev/null",
 		"2>&1",
 	}
 
-	var err error
-	for i := 0; i < 300; i++ {
+	for i := 0; i < 20; i++ {
 		cmd := exec.Command(s.sshCommand, sshArgs...)
 		if err = cmd.Run(); err == nil {
 			return nil
@@ -100,7 +116,7 @@ func (s *QemuSuite) WaitForSSH() error {
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	return fmt.Errorf("Failed to connect to SSH: %v", err)
+	return fmt.Errorf("Failed to check Docker version: %v", err)
 }
 
 func (s *QemuSuite) MakeCall(additionalArgs ...string) error {

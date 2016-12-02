@@ -3,8 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestMounts(c *C) {
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_23/cloud-config.yml", "--second-drive")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--cloud-config", "./tests/assets/test_23/cloud-config.yml", "--second-drive")
 
 	s.CheckCall(c, "cat /home/rancher/test | grep test")
 

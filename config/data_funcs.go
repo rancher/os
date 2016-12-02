@@ -1,8 +1,8 @@
 package config
 
 import (
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/rancher/os/log"
 
 	"strings"
 

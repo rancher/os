@@ -1,0 +1,16 @@
+name: Rancher Documentation
+description: Documentation for Rancher
+
+
+#URL: http://rancher.github.io
+baseurl: ""
+
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+permalink: pretty
+
+gems: 
+  - jekyll-redirect-from

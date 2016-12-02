@@ -6,11 +6,11 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	dockerclient "github.com/docker/engine-api/client"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 
@@ -25,8 +25,8 @@ func NewClientFactory(opts composeClient.Options) (project.ClientFactory, error)
 	userOpts := opts
 	systemOpts := opts
 
-	userOpts.Host = config.DOCKER_HOST
-	systemOpts.Host = config.DOCKER_SYSTEM_HOST
+	userOpts.Host = config.DockerHost
+	systemOpts.Host = config.SystemDockerHost
 
 	userClient, err := composeClient.Create(userOpts)
 	if err != nil {
@@ -46,11 +46,11 @@ func NewClientFactory(opts composeClient.Options) (project.ClientFactory, error)
 
 func (c *ClientFactory) Create(service project.Service) dockerclient.APIClient {
 	if IsSystemContainer(service.Config()) {
-		waitFor(&c.systemOnce, c.systemClient, config.DOCKER_SYSTEM_HOST)
+		waitFor(&c.systemOnce, c.systemClient, config.SystemDockerHost)
 		return c.systemClient
 	}
 
-	waitFor(&c.userOnce, c.userClient, config.DOCKER_HOST)
+	waitFor(&c.userOnce, c.userClient, config.DockerHost)
 	return c.userClient
 }
 

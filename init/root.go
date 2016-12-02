@@ -8,10 +8,10 @@ import (
 	"strings"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/docker/pkg/archive"
-	"github.com/rancher/docker-from-scratch"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/dfs"
+	"github.com/rancher/os/log"
 )
 
 func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) {
@@ -21,7 +21,7 @@ func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) 
 		return false, err
 	}
 
-	if err := dockerlaunch.CreateSymlink(usrVer, path.Join(rootfs, "usr")); err != nil {
+	if err := dfs.CreateSymlink(usrVer, path.Join(rootfs, "usr")); err != nil {
 		return false, err
 	}
 
@@ -39,7 +39,7 @@ func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) 
 }
 
 func copyMoveRoot(rootfs string, rmUsr bool) error {
-	usrVer := fmt.Sprintf("usr-%s", config.VERSION)
+	usrVer := fmt.Sprintf("usr-%s", config.Version)
 	usr := path.Join(rootfs, usrVer)
 	targetUsr := path.Join(rootfs, "usr")
 	tmpDir := path.Join(rootfs, "tmp")

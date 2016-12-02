@@ -8,8 +8,7 @@ func (s *QemuSuite) TestNetwork(c *C) {
 	for i := 0; i < 7; i++ {
 		args = append(args, netArgs...)
 	}
-	err := s.RunQemu(args...)
-	c.Assert(err, IsNil)
+	s.RunQemu(c, args...)
 
 	s.CheckCall(c, `
 cat > test-merge << "SCRIPT"

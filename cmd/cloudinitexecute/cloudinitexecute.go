@@ -9,10 +9,10 @@ import (
 	"path"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/coreos-cloudinit/system"
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"golang.org/x/net/context"
 )
@@ -37,6 +37,7 @@ func init() {
 func Main() {
 	flags.Parse(os.Args[1:])
 
+	log.InitLogger()
 	log.Infof("Running cloud-init-execute: pre-console=%v, console=%v", preConsole, console)
 
 	cfg := rancherConfig.LoadConfig()
@@ -56,8 +57,12 @@ func Main() {
 
 func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 	if len(cfg.SSHAuthorizedKeys) > 0 {
-		authorizeSSHKeys("rancher", cfg.SSHAuthorizedKeys, sshKeyName)
-		authorizeSSHKeys("docker", cfg.SSHAuthorizedKeys, sshKeyName)
+		if err := authorizeSSHKeys("rancher", cfg.SSHAuthorizedKeys, sshKeyName); err != nil {
+			log.Error(err)
+		}
+		if err := authorizeSSHKeys("docker", cfg.SSHAuthorizedKeys, sshKeyName); err != nil {
+			log.Error(err)
+		}
 	}
 
 	WriteFiles(cfg, "console")
@@ -94,18 +99,7 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 		}
 	}
 
-	for _, runcmd := range cfg.Runcmd {
-		if len(runcmd) == 0 {
-			continue
-		}
-
-		cmd := exec.Command(runcmd[0], runcmd[1:]...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			log.Errorf("Failed to run %s: %v", runcmd, err)
-		}
-	}
+	util.RunCommandSequence(cfg.Runcmd)
 }
 
 func WriteFiles(cfg *rancherConfig.CloudConfig, container string) {

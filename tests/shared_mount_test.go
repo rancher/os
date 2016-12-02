@@ -7,9 +7,7 @@ import (
 )
 
 func (s *QemuSuite) TestSharedMount(c *C) {
-	err := s.RunQemu()
-	c.Assert(err, IsNil)
-
+	s.RunQemu(c)
 	s.CheckCall(c, fmt.Sprintf(`
 set -x -e
 
