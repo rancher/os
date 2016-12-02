@@ -159,7 +159,9 @@ func parseCmdline(cmdLine string) map[interface{}]interface{} {
 
 outer:
 	for _, part := range strings.Split(cmdLine, " ") {
-		if !strings.HasPrefix(part, "rancher.") {
+		if strings.HasPrefix(part, "cc.") {
+			part = part[3:]
+		} else if !strings.HasPrefix(part, "rancher.") {
 			continue
 		}
 
