@@ -1,0 +1,142 @@
+	<div class="sidebar-nav">
+    <div class="navbar navbar-inverse" role="navigation">
+
+        <!-- Brand and Toggle get grouped for better mobile display -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://rancher.com/rancher-os/"><img src="{{site.baseurl}}/img/rancheros-logo-horiz-wht.svg"></a>
+        </div>
+        <div class="clearfix"></div>
+
+        <div>
+            <!--Start Google Search-->
+            <script>
+              (function() {
+                var cx = '007896692384436596364:60akf3bfmxm';
+                var gcse = document.createElement('script');
+                gcse.type = 'text/javascript';
+                gcse.async = true;
+                gcse.src = (document.location.protocol == 'https:' ? 'https:' : 'http:') +
+                    '//cse.google.com/cse.js?cx=' + cx;
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(gcse, s);
+              })();
+            </script>
+            <gcse:search></gcse:search>
+            <!--End Google Search-->
+        </div>
+
+        <!-- Collect the nav links, forms, and other content for toggling -->
+        <div class="navbar-collapse collapse" >
+            <ul class="nav navbar-nav" id="mainmenu">
+                <li><a href="{{site.baseurl}}/os/">Overview</a></li>
+                <li><a href="{{site.baseurl}}/os/quick-start-guide/">Quick Start Guide</a></li>
+                <li class="panel">
+                    <a href="#running-rancheros" class="collapsed" data-toggle="collapse" data-parent="#mainmenu">
+                        <!--OLD HREF => {{site.baseurl}}/os/running-rancheros/-->
+                        Running RancherOS <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="running-rancheros">
+                        <li class="panel">
+                            <a href="#workstation" data-toggle="collapse" class="collapsed" data-parent="#running-rancheros">Workstation <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                            <ul class="collapse" id="workstation">
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/workstation/docker-machine/">Docker Machine</a></li>
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/workstation/boot-from-iso/">Boot from ISO</a></li>
+                            </ul>
+                        </li>
+                        <li class="panel">
+                            <a href="#cloud" data-toggle="collapse"  class="collapsed" data-parent="#running-rancheros">Cloud <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                            <ul class="collapse" id="cloud">
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/cloud/aws/">AWS</a></li>
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/cloud/gce/">GCE</a></li>
+                                <!--<li><a href="{{site.baseurl}}/os/running-rancheros/cloud/do/">DigitalOcean</a></li>-->
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/cloud/openstack/">Openstack</a></li>
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/cloud/azure/">Azure</a></li>
+                            </ul>
+                        </li>
+                        <li class="panel">
+                            <a href="#virtual-server" data-toggle="collapse" class="collapsed" data-parent="#running-rancheros">Bare metal and Virtual Server <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                            <ul class="collapse" id="virtual-server">
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/server/install-to-disk/">Install to Disk</a></li>
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/server/pxe/">PXE</a></li>
+                                <li><a href="{{site.baseurl}}/os/running-rancheros/server/raspberry-pi/">Raspberry Pi</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#configuration"  data-toggle="collapse" class="collapsed" data-parent="#mainmenu">Configuration <i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="configuration">
+                        <li><a href="{{site.baseurl}}/os/configuration/">Configuring RancherOS</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/ssh-keys/">SSH Keys</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/write-files/">Writing Files</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/running-commands/">Running Commands</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/hostname/">Setting the Hostname</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/custom-console/">Custom Console</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/docker/">Configuring Docker or System Docker</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/setting-up-docker-tls/">Setting up Docker TLS</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/private-registries/">Private Registries</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/switching-docker-versions/">Switching Docker Versions</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/users/">Users</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/resizing-device-partition/">Resizing a Device Partition</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/sysctl/">sysctl Settings</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/loading-kernel-modules/">Loading kernel modules</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/kernel-modules-kernel-headers/">Install kernel modules that require kernel headers</a></li>
+                        <li><a href="{{site.baseurl}}/os/configuration/dkms/">DKMS</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#systemservices"  data-toggle="collapse" class="collapsed" data-parent="#mainmenu">System Services<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="systemservices">
+                        <li><a href="{{site.baseurl}}/os/system-services/adding-system-services/">System Services</a></li>
+                        <li><a href="{{site.baseurl}}/os/system-services/built-in-system-services/">Built-in System Services</a></li>
+                        <li><a href="{{site.baseurl}}/os/system-services/custom-system-services/">Custom Services</a></li>
+                        <li><a href="{{site.baseurl}}/os/system-services/system-docker-volumes/">System Docker Volumes</a></li>
+                        <li><a href="{{site.baseurl}}/os/system-services/environment/">Environment</a></li>
+                    </ul>
+                <li class="panel">
+                    <a href="#bootprocess"  data-toggle="collapse" class="collapsed" data-parent="#mainmenu">Boot Process<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="bootprocess">
+                        <li><a href="{{site.baseurl}}/os/boot-process/built-in-system-services/">Built-in System Services</a></li>
+                        <li><a href="{{site.baseurl}}/os/boot-process/cloud-init">Cloud-init</a></li>
+                        <li><a href="{{site.baseurl}}/os/boot-process/image-preloading">Image Preloading</a></li>
+                    </ul>
+                </li>
+                </li>
+                <li class="panel">
+                    <a href="#storage"  data-toggle="collapse" class="collapsed" data-parent="#mainmenu">Storage<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="storage">
+                        <li><a href="{{site.baseurl}}/os/storage/state-partition">State Partition</a></li>
+                        <li><a href="{{site.baseurl}}/os/storage/additional-mounts/">Additional Mounts</a></li>
+                        <li><a href="{{site.baseurl}}/os/storage/using-zfs/">Using ZFS</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#networking"  data-toggle="collapse" class="collapsed" data-parent="#mainmenu">Networking<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="networking">
+                        <li><a href="{{site.baseurl}}/os/networking/interfaces/">Interfaces</a></li>
+                        <li><a href="{{site.baseurl}}/os/networking/dns/">DNS</a></li>
+                        <li><a href="{{site.baseurl}}/os/networking/proxy-settings/">Proxy Settings</a></li>
+                    </ul>
+                </li>
+                <li class="panel">
+                    <a href="#custombuilds"  data-toggle="collapse" class="collapsed" data-parent="#mainmenu">Custom Builds<i class="pull-right fa fa-angle-down"></i><i class="pull-right fa fa-angle-up"></i></a>
+                    <ul class="collapse list-group-submenu" id="custombuilds">
+                        <li><a href="{{site.baseurl}}/os/custom-builds/custom-rancheros-iso/">Custom RancherOS ISO</a></li>
+                        <li><a href="{{site.baseurl}}/os/custom-builds/custom-kernels/">Custom Kernels</a></li>
+                    </ul>
+                </li>
+                <li><a href="{{site.baseurl}}/os/upgrading/">Upgrading</a></li>
+                <li><a href="{{site.baseurl}}/os/amazon-ecs/">Amazon ECS</a></li>
+                <li><a href="{{site.baseurl}}/os/contributing/">Contributing to RancherOS</a></li>
+                <li><a href="{{site.baseurl}}/os/running-rancher-on-rancheros/">Tips on using Rancher with RancherOS</a></li>
+            </ul><!-- /.navbar-nav -->
+        </div><!-- /.navbar-collapse -->
+
+
+    </div> <!-- /.navbar-inverse -->
+</div> <!-- /.sidebar-nav -->

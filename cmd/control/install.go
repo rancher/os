@@ -1,13 +1,12 @@
 package control
 
 import (
-	"bufio"
 	"fmt"
 	"os"
 	"os/exec"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/power"
@@ -22,8 +21,10 @@ var installCommand = cli.Command{
 	Action:   installAction,
 	Flags: []cli.Flag{
 		cli.StringFlag{
-			Name:  "image, i",
-			Usage: "install from a certain image",
+			// TODO: need to validate ? -i rancher/os:v0.3.1 just sat there.
+			Name: "image, i",
+			Usage: `install from a certain image (e.g., 'rancher/os:v0.7.0')
+							use 'ros os list' to see what versions are available.`,
 		},
 		cli.StringFlag{
 			Name: "install-type, t",
@@ -65,7 +66,7 @@ func installAction(c *cli.Context) error {
 	image := c.String("image")
 	cfg := config.LoadConfig()
 	if image == "" {
-		image = cfg.Rancher.Upgrade.Image + ":" + config.VERSION + config.SUFFIX
+		image = cfg.Rancher.Upgrade.Image + ":" + config.Version + config.Suffix
 	}
 
 	installType := c.String("install-type")
@@ -97,12 +98,10 @@ func installAction(c *cli.Context) error {
 }
 
 func runInstall(image, installType, cloudConfig, device, append string, force, reboot bool) error {
-	in := bufio.NewReader(os.Stdin)
-
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
-		if !yes(in, "Continue") {
+		if !yes("Continue") {
 			os.Exit(1)
 		}
 	}
@@ -122,7 +121,7 @@ func runInstall(image, installType, cloudConfig, device, append string, force, r
 		return err
 	}
 
-	if reboot && (force || yes(in, "Continue with reboot")) {
+	if reboot && (force || yes("Continue with reboot")) {
 		log.Info("Rebooting")
 		power.Reboot()
 	}

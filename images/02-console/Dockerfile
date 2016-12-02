@@ -1,5 +1,4 @@
 FROM rancher/os-base
-COPY update-ssh-keys /usr/sbin/
 COPY build/lsb-release /etc/
 RUN sed -i 's/rancher:!/rancher:*/g' /etc/shadow && \
     sed -i 's/docker:!/docker:*/g' /etc/shadow && \
@@ -9,4 +8,3 @@ RUN sed -i 's/rancher:!/rancher:*/g' /etc/shadow && \
     echo '## allow password less for docker user' >> /etc/sudoers && \
     echo 'docker ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
 COPY prompt.sh /etc/profile.d/
-CMD ["/usr/sbin/console.sh"]

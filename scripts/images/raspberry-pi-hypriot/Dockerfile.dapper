@@ -8,12 +8,15 @@ RUN mkdir -p /source/assets
 
 # RancherOS for ARM
 RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm.tar.gz > /source/assets/rootfs_arm.tar.gz
+#COPY rootfs_arm.tar.gz /source/assets/rootfs_arm.tar.gz
 
-# Hypriot Kernel 4.1.17+ and bootfiles for RPi2
-RUN curl -fL http://downloads.hypriot.com/raspberrypi-bootloader_20160212-075712_armhf.deb > /source/assets/raspberrypi-bootloader_20160212-075712_armhf.deb
-
-# Bootfiles to support Raspberry Pi 3 B
-RUN curl -fL http://downloads.hypriot.com/rpi3-bootfiles.tar.gz > /source/assets/rpi3-bootfiles.tar.gz
+# 4.4.27-hypriotos-v7+
+# see https://packagecloud.io/Hypriot/rpi/?filter=debs
+ENV URL=https://packagecloud.io/Hypriot/rpi/packages/debian/jessie/
+RUN curl -fL $URL/raspberrypi-kernel_20161028-083330_armhf.deb/download \
+	> /source/assets/kernel.deb
+RUN curl -fL $URL/raspberrypi-bootloader_20161028-083330_armhf.deb/download \
+	> /source/assets/bootloader.deb
 
 WORKDIR /source
 CMD ["./scripts/build.sh"]

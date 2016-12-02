@@ -5,8 +5,8 @@ import (
 	"os/exec"
 	"syscall"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
+	"github.com/rancher/os/log"
 	"golang.org/x/net/context"
 
 	"github.com/rancher/os/cmd/cloudinitexecute"
@@ -45,6 +45,8 @@ func entrypointAction(c *cli.Context) error {
 		writeFiles(cfg)
 	}
 
+	setupPowerOperations()
+
 	if len(os.Args) < 3 {
 		return nil
 	}
@@ -58,7 +60,7 @@ func entrypointAction(c *cli.Context) error {
 }
 
 func writeFiles(cfg *config.CloudConfig) error {
-	id, err := util.GetCurrentContainerId()
+	id, err := util.GetCurrentContainerID()
 	if err != nil {
 		return err
 	}
@@ -73,4 +75,30 @@ func writeFiles(cfg *config.CloudConfig) error {
 
 	cloudinitexecute.WriteFiles(cfg, info.Name[1:])
 	return nil
+}
+
+func setupPowerOperations() {
+	for _, powerOperation := range []string{
+		"/sbin/poweroff",
+		"/sbin/shutdown",
+		"/sbin/reboot",
+		"/sbin/halt",
+		"/usr/sbin/poweroff",
+		"/usr/sbin/shutdown",
+		"/usr/sbin/reboot",
+		"/usr/sbin/halt",
+	} {
+		os.Remove(powerOperation)
+	}
+
+	for _, link := range []symlink{
+		{config.RosBin, "/sbin/poweroff"},
+		{config.RosBin, "/sbin/reboot"},
+		{config.RosBin, "/sbin/halt"},
+		{config.RosBin, "/sbin/shutdown"},
+	} {
+		if err := os.Symlink(link.oldname, link.newname); err != nil {
+			log.Error(err)
+		}
+	}
 }

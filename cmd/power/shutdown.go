@@ -5,14 +5,16 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 )
 
 func Main() {
+	log.InitLogger()
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
 	app.Usage = "Control and configure RancherOS"
-	app.Version = config.VERSION
+	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.Email = "sid@rancher.com"
 	app.EnableBashCompletion = true
@@ -39,7 +41,7 @@ func shutdown(c *cli.Context) error {
 	if reboot == "now" {
 		Reboot()
 	} else if poweroff == "now" {
-		PowerOff()
+		Off()
 	}
 
 	return nil

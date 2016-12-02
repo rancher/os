@@ -2,10 +2,13 @@ package docker
 
 import (
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config"
+
+	log "github.com/Sirupsen/logrus"
 )
 
 type ConfigEnvironment struct {
@@ -29,17 +32,23 @@ func appendEnv(array []string, key, value string) []string {
 
 func environmentFromCloudConfig(cfg *config.CloudConfig) map[string]string {
 	environment := cfg.Rancher.Environment
-	if cfg.Rancher.Network.HttpProxy != "" {
-		environment["http_proxy"] = cfg.Rancher.Network.HttpProxy
-		environment["HTTP_PROXY"] = cfg.Rancher.Network.HttpProxy
+	if cfg.Rancher.Network.HTTPProxy != "" {
+		environment["http_proxy"] = cfg.Rancher.Network.HTTPProxy
+		environment["HTTP_PROXY"] = cfg.Rancher.Network.HTTPProxy
 	}
-	if cfg.Rancher.Network.HttpsProxy != "" {
-		environment["https_proxy"] = cfg.Rancher.Network.HttpsProxy
-		environment["HTTPS_PROXY"] = cfg.Rancher.Network.HttpsProxy
+	if cfg.Rancher.Network.HTTPSProxy != "" {
+		environment["https_proxy"] = cfg.Rancher.Network.HTTPSProxy
+		environment["HTTPS_PROXY"] = cfg.Rancher.Network.HTTPSProxy
 	}
 	if cfg.Rancher.Network.NoProxy != "" {
 		environment["no_proxy"] = cfg.Rancher.Network.NoProxy
 		environment["NO_PROXY"] = cfg.Rancher.Network.NoProxy
+	}
+	b, err := ioutil.ReadFile("/proc/version")
+	if err == nil {
+		elem := strings.Split(string(b), " ")
+		environment["KERNEL_VERSION"] = elem[2]
+		log.Debugf("Using /proc/version to set rancher.environment.KERNEL_VERSION = %s", elem[2])
 	}
 	return environment
 }

@@ -7,12 +7,12 @@ import (
 	"sort"
 	"strings"
 
-	log "github.com/Sirupsen/logrus"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/coreos/coreos-cloudinit/datasource"
 	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 
@@ -31,27 +31,32 @@ func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*Cl
 	return c, nil
 }
 
-func loadRawDiskConfig(full bool) map[interface{}]interface{} {
+func loadRawDiskConfig(dirPrefix string, full bool) map[interface{}]interface{} {
 	var rawCfg map[interface{}]interface{}
 	if full {
 		rawCfg, _ = readConfigs(nil, true, false, OsConfigFile, OemConfigFile)
 	}
 
-	files := append(CloudConfigDirFiles(), CloudConfigFile)
+	files := CloudConfigDirFiles(dirPrefix)
+	files = append(files, path.Join(dirPrefix, CloudConfigFile))
 	additionalCfgs, _ := readConfigs(nil, true, false, files...)
 
 	return util.Merge(rawCfg, additionalCfgs)
 }
 
-func loadRawConfig() map[interface{}]interface{} {
-	rawCfg := loadRawDiskConfig(true)
+func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
+	rawCfg := loadRawDiskConfig(dirPrefix, full)
 	rawCfg = util.Merge(rawCfg, readCmdline())
 	rawCfg = applyDebugFlags(rawCfg)
 	return mergeMetadata(rawCfg, readMetadata())
 }
 
 func LoadConfig() *CloudConfig {
-	rawCfg := loadRawConfig()
+	return LoadConfigWithPrefix("")
+}
+
+func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
+	rawCfg := loadRawConfig(dirPrefix, true)
 
 	cfg := &CloudConfig{}
 	if err := util.Convert(rawCfg, cfg); err != nil {
@@ -63,8 +68,10 @@ func LoadConfig() *CloudConfig {
 	return cfg
 }
 
-func CloudConfigDirFiles() []string {
-	files, err := ioutil.ReadDir(CloudConfigDir)
+func CloudConfigDirFiles(dirPrefix string) []string {
+	cloudConfigDir := path.Join(dirPrefix, CloudConfigDir)
+
+	files, err := ioutil.ReadDir(cloudConfigDir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			// do nothing
@@ -78,7 +85,7 @@ func CloudConfigDirFiles() []string {
 	var finalFiles []string
 	for _, file := range files {
 		if !file.IsDir() && !strings.HasPrefix(file.Name(), ".") {
-			finalFiles = append(finalFiles, path.Join(CloudConfigDir, file.Name()))
+			finalFiles = append(finalFiles, path.Join(cloudConfigDir, file.Name()))
 		}
 	}
 
@@ -176,9 +183,6 @@ func amendNils(c *CloudConfig) *CloudConfig {
 	if t.Rancher.Environment == nil {
 		t.Rancher.Environment = map[string]string{}
 	}
-	if t.Rancher.Autoformat == nil {
-		t.Rancher.Autoformat = map[string]*composeConfig.ServiceConfigV1{}
-	}
 	if t.Rancher.BootstrapContainers == nil {
 		t.Rancher.BootstrapContainers = map[string]*composeConfig.ServiceConfigV1{}
 	}
@@ -199,7 +203,6 @@ func amendNils(c *CloudConfig) *CloudConfig {
 
 func amendContainerNames(c *CloudConfig) *CloudConfig {
 	for _, scm := range []map[string]*composeConfig.ServiceConfigV1{
-		c.Rancher.Autoformat,
 		c.Rancher.BootstrapContainers,
 		c.Rancher.Services,
 	} {

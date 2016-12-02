@@ -3,8 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestCustomDocker(c *C) {
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_05/cloud-config.yml")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--cloud-config", "./tests/assets/test_05/cloud-config.yml")
 
 	s.CheckCall(c, `
 set -ex
@@ -35,8 +34,7 @@ docker ps | grep nginx`)
 }
 
 func (s *QemuSuite) TestCustomDockerInPersistentConsole(c *C) {
-	err := s.RunQemu("--cloud-config", "./tests/assets/test_25/cloud-config.yml")
-	c.Assert(err, IsNil)
+	s.RunQemu(c, "--cloud-config", "./tests/assets/test_25/cloud-config.yml")
 
 	s.CheckCall(c, `
 set -ex

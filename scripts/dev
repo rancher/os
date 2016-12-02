@@ -6,4 +6,4 @@ cd $(dirname $0)
 
 ./build
 ./prepare
-INSTALLER=0 ROOTFS=0 ./package
+ROOTFS=0 ./package
