@@ -10,7 +10,7 @@ INITRD=${ARTIFACTS}/initrd
 
 mkdir -p ${ARTIFACTS}
 
-if [ ! -f ${ARTIFACTS}/vmlinuz ]; then
+if [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ]; then
     exit 0
 fi
 

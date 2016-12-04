@@ -7,16 +7,22 @@ source ./scripts/version
 
 DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}
 
-if [ ! -f $DOCKERFILE ] || [ ! -f dist/artifacts/vmlinuz ] || [ ! -f dist/artifacts/initrd ]; then
+if [ ! -f $DOCKERFILE ] || [ ! -f dist/artifacts/vmlinuz-${KERNEL_VERSION} ] || [ ! -f dist/artifacts/initrd ]; then
     exit 0
 fi
 
 mkdir -p ./scripts/installer/build
-cp ./dist/artifacts/{initrd,vmlinuz} ./scripts/installer/build
+cp ./dist/artifacts/initrd ./scripts/installer/build
+cp ./dist/artifacts/vmlinuz-${KERNEL_VERSION} ./scripts/installer/build
 cp ./bin/ros ./scripts/installer/build
 trap "rm -rf ./scripts/installer/build" EXIT
 
-docker build -t ${OS_REPO}/os:${VERSION}${SUFFIX} --build-arg VERSION=${VERSION} -f $DOCKERFILE ./scripts/installer
+docker build \
+    -t ${OS_REPO}/os:${VERSION}${SUFFIX} \
+    --build-arg VERSION=${VERSION} \
+    --build-arg KERNEL_VERSION=${KERNEL_VERSION} \
+    -f $DOCKERFILE \
+    ./scripts/installer
 docker save -o dist/artifacts/installer.tar ${OS_REPO}/os:${VERSION}${SUFFIX}
 echo ${OS_REPO}/os:${VERSION}${SUFFIX} >> dist/images
 echo Built ${OS_REPO}/os:${VERSION}${SUFFIX}

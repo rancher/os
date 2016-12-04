@@ -1,13 +1,17 @@
-FROM ubuntu:16.04
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y udev grub2 parted kexec-tools extlinux syslinux-common && \
-    rm -rf /var/lib/apt/*
+FROM rancher/os-alpineconsole
+# TODO: redo as cross platform
 
-COPY ./build/vmlinuz ./build/initrd /dist/
-COPY conf ./build/ros /scripts/
+# not installed atm udev, grub2, kexe-toos
+# parted: partprobe, e2fsprogs: mkfs.ext4, syslinux: extlinux&syslinux
+RUN apk --no-cache add syslinux parted e2fsprogs
+
+COPY conf /scripts/
 
 ARG VERSION
+ARG KERNEL_VERSION
 ENV VERSION=${VERSION}
+ENV KERNEL_VERSION=${KERNEL_VERSION}
 
+# TODO: separate out the 3 elements below - so we can mix and match updates
+COPY ./build/vmlinuz-${KERNEL_VERSION} ./build/initrd ./build/ros /dist/
 ENTRYPOINT ["/scripts/ros"]

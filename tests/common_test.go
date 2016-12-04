@@ -46,29 +46,37 @@ func (s *QemuSuite) TearDownTest(c *C) {
 	time.Sleep(time.Millisecond * 1000)
 }
 
-func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) {
-	runArgs := []string{
-		"--qemu",
-		"--no-rebuild",
-		"--no-rm-usr",
-		"--fresh",
-	}
-	runArgs = append(runArgs, additionalArgs...)
+// RunQemuWith requires user to specify all the `scripts/run` arguments
+func (s *QemuSuite) RunQemuWith(c *C, additionalArgs ...string) error {
 
-	c.Assert(s.runQemu(runArgs...), IsNil)
+	err := s.runQemu(additionalArgs...)
+	c.Assert(err, IsNil)
+	return err
 }
 
-func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) {
+func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) error {
 	runArgs := []string{
 		"--qemu",
 		"--no-rebuild",
 		"--no-rm-usr",
-		"--installed",
 		"--fresh",
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	c.Assert(s.runQemu(runArgs...), IsNil)
+	err := s.RunQemuWith(c, runArgs...)
+	c.Assert(err, IsNil)
+	return err
+}
+
+func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) error {
+	runArgs := []string{
+		"--fresh",
+	}
+	runArgs = append(runArgs, additionalArgs...)
+
+	err := s.RunQemu(c, runArgs...)
+	c.Assert(err, IsNil)
+	return err
 }
 
 func (s *QemuSuite) runQemu(args ...string) error {
@@ -134,6 +142,14 @@ func (s *QemuSuite) MakeCall(additionalArgs ...string) error {
 
 func (s *QemuSuite) CheckCall(c *C, additionalArgs ...string) {
 	c.Assert(s.MakeCall(additionalArgs...), IsNil)
+}
+
+func (s *QemuSuite) Stop(c *C) {
+	//s.MakeCall("sudo halt")
+	//time.Sleep(2000 * time.Millisecond)
+	//c.Assert(s.WaitForSSH(), IsNil)
+	c.Assert(s.qemuCmd.Process.Kill(), IsNil)
+	time.Sleep(time.Millisecond * 1000)
 }
 
 func (s *QemuSuite) Reboot(c *C) {

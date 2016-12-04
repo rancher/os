@@ -189,10 +189,6 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 			"install",
 			"-t", installType,
 			"-d", device,
-			//			"-f", strconv.FormatBool(force),
-			//			"--no-reboot", strconv.FormatBool(!reboot),
-			//			"-c", `"`+cloudConfig+`"`,
-			//			"-a", `"`+kappend+`"`
 		}
 		if force {
 			installerCmd = append(installerCmd, "-f")
@@ -280,9 +276,11 @@ func layDownOS(image, installType, cloudConfig, device, kappend string) error {
 			log.Errorf("%s", err)
 			return err
 		}
-		log.Infof("defer")
-		log.Infof("installGrub")
-		err = installGrub(baseName, device)
+		//log.Infof("installGrub")
+		//err = installGrub(baseName, device)
+		log.Infof("installSyslinux")
+		err = installSyslinux(device, baseName, bootDir)
+
 		if err != nil {
 			log.Errorf("%s", err)
 			return err
@@ -529,6 +527,7 @@ p
 1
 
 
+a
 w
 `))
 		w.Close()
@@ -566,7 +565,8 @@ func formatdevice(device, partition string) error {
 	log.Debugf("formatdevice %s", partition)
 
 	//mkfs.ext4 -F -i 4096 -L RANCHER_STATE ${partition}
-	cmd := exec.Command("mkfs.ext4", "-F", "-i", "4096", "-L", "RANCHER_STATE", partition)
+	// -O ^64bit: for syslinux: http://www.syslinux.org/wiki/index.php?title=Filesystem#ext
+	cmd := exec.Command("mkfs.ext4", "-F", "-i", "4096", "-O", "^64bit", "-L", "RANCHER_STATE", partition)
 	log.Debugf("Run(%v)", cmd)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -645,21 +645,33 @@ func installSyslinux(device, baseName, bootDir string) error {
 	log.Debugf("installSyslinux")
 
 	//dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=${device}
-	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/lib/syslinux/mbr/mbr.bin", "of="+device)
+	// ubuntu: /usr/lib/syslinux/mbr/mbr.bin
+	// alpine: /usr/share/syslinux/mbr.bin
+	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/mbr.bin", "of="+device)
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	log.Debugf("Run(%v)", cmd)
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Printf("dd: %s", err)
 		return err
 	}
 	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
-	cmd = exec.Command("sh", "-c", "cp", "/usr/lib/syslinux/modules/bios/*", filepath.Join(baseName, bootDir+"syslinux"))
-	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
-		return err
+	files, _ := ioutil.ReadDir("/usr/share/syslinux/")
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		if err := dfs.CopyFile(filepath.Join("/usr/share/syslinux/", file.Name()), filepath.Join(baseName, bootDir, "syslinux"), file.Name()); err != nil {
+			log.Errorf("copy syslinux: %s", err)
+			return err
+		}
 	}
+
 	//extlinux --install ${baseName}/${bootDir}syslinux
 	cmd = exec.Command("extlinux", "--install", filepath.Join(baseName, bootDir+"syslinux"))
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	log.Debugf("Run(%v)", cmd)
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Printf("extlinuux: %s", err)
 		return err
 	}
 	return nil
@@ -672,20 +684,26 @@ func installSyslinuxRaid(baseName, bootDir string) error {
 	//dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/sdb
 	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
 	//extlinux --install --raid ${baseName}/${bootDir}syslinux
-	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/lib/syslinux/mbr/mbr.bin", "of=/dev/sda")
+	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/mbr.bin", "of=/dev/sda")
 	if err := cmd.Run(); err != nil {
 		log.Printf("%s", err)
 		return err
 	}
-	cmd = exec.Command("dd", "bs=440", "count=1", "if=/usr/lib/syslinux/mbr/mbr.bin", "of=/dev/sdb")
+	cmd = exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/mbr.bin", "of=/dev/sdb")
 	if err := cmd.Run(); err != nil {
 		log.Printf("%s", err)
 		return err
 	}
-	cmd = exec.Command("sh", "-c", "cp", "/usr/lib/syslinux/modules/bios/*", filepath.Join(baseName, bootDir+"syslinux"))
-	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
-		return err
+	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
+	files, _ := ioutil.ReadDir("/usr/share/syslinux/")
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		if err := dfs.CopyFile(filepath.Join("/usr/share/syslinux/", file.Name()), filepath.Join(baseName, bootDir, "syslinux"), file.Name()); err != nil {
+			log.Errorf("copy syslinux: %s", err)
+			return err
+		}
 	}
 	cmd = exec.Command("extlinux", "--install", filepath.Join(baseName, bootDir+"syslinux"))
 	if err := cmd.Run(); err != nil {
@@ -784,13 +802,13 @@ func installRancher(baseName, bootDir, VERSION, DIST string) error {
 	log.Debugf("installRancher")
 
 	//cp ${DIST}/initrd ${baseName}/${bootDir}initrd-${VERSION}-rancheros
-	if err := dfs.CopyFile(DIST+"/initrd", baseName, bootDir+"initrd-"+VERSION+"-rancheros"); err != nil {
+	if err := dfs.CopyFile(DIST+"/initrd", filepath.Join(baseName, bootDir), "initrd-"+VERSION+"-rancheros"); err != nil {
 		log.Errorf("copy initrd: ", err)
 		return err
 	}
 
 	//cp ${DIST}/vmlinuz ${baseName}/${bootDir}vmlinuz-${VERSION}-rancheros
-	if err := dfs.CopyFile(DIST+"/vmlinuz", baseName, bootDir+"vmlinuz-"+VERSION+"-rancheros"); err != nil {
+	if err := dfs.CopyFile(DIST+"/vmlinuz", filepath.Join(baseName, bootDir), "vmlinuz-"+VERSION+"-rancheros"); err != nil {
 		log.Errorf("copy vmlinuz: %s", err)
 		return err
 	}

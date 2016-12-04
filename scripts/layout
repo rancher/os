@@ -44,7 +44,11 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     for i in vmlinuz vmlinux; do
         if [ -e ${BUILD}/kernel/boot/${i}-* ]; then
             mkdir -p dist/artifacts
-            cp ${BUILD}/kernel/boot/${i}-* dist/artifacts/vmlinuz
+            # frustratingly, the vmlinuz versioned filename != the tag name, so we need to do some guessing
+            # for eg, 4.9-rc8-rancher2 is called vmlinuz-4.9.0-rc8-rancher
+            echo "Copy ${BUILD}/kernel/boot/${i}-* to dist/artifacts/vmlinuz-${KERNEL_VERSION}"
+            cp ${BUILD}/kernel/boot/${i}-* "dist/artifacts/vmlinuz-${KERNEL_VERSION}"
+            cp ${BUILD}/kernel/boot/${i}-* ${BUILD}/kernel/vmlinuz
             break
         fi
     done
@@ -54,6 +58,15 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
         cp -rf ${BUILD}/kernel/lib ${INITRD_DIR}/usr/
         depmod -b ${INITRD_DIR}/usr $(basename ${INITRD_DIR}/usr/lib/modules/*)
     fi
+else
+	echo "no ${DOWNLOADS}/kernel.tar.gz found"
+	exit 1
+fi
+
+ls -lah dist/artifacts/vmlinuz-*
+if [ ! -e "dist/artifacts/vmlinuz-${KERNEL_VERSION}" ]; then
+	echo "Can't find dist/artifacts/vmlinuz-${KERNEL_VERSION}"
+	exit -1
 fi
 
 if [ -e ${DOWNLOADS}/policy.29 ]; then
