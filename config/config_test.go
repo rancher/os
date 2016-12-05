@@ -120,7 +120,7 @@ func TestParseCmdline(t *testing.T) {
 		"rancher": map[interface{}]interface{}{
 			"key": "a\nb",
 		},
-	}, parseCmdline("rancher.key=a\nb"))
+	}, parseCmdline("rancher.key=\"a\nb\""))
 
 	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
