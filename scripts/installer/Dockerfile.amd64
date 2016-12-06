@@ -1,11 +1,4 @@
-FROM rancher/os-alpineconsole
-# TODO: redo as cross platform
-
-# not installed atm udev, grub2, kexe-toos
-# parted: partprobe, e2fsprogs: mkfs.ext4, syslinux: extlinux&syslinux
-RUN apk --no-cache add syslinux parted e2fsprogs
-
-COPY conf /scripts/
+FROM rancher/os-installer
 
 ARG VERSION
 ARG KERNEL_VERSION
@@ -13,5 +6,7 @@ ENV VERSION=${VERSION}
 ENV KERNEL_VERSION=${KERNEL_VERSION}
 
 # TODO: separate out the 3 elements below - so we can mix and match updates
+RUN rm /dist/ \
+    && mkdir -p /dist/
 COPY ./build/vmlinuz-${KERNEL_VERSION} ./build/initrd ./build/ros /dist/
-ENTRYPOINT ["/scripts/ros"]
+

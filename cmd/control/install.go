@@ -155,34 +155,42 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		return nil
 	}
 
-	if _, err := os.Stat("/dist/vmlinuz"); os.IsNotExist(err) {
+	useIso := false
+	if _, err := os.Stat("/dist/initrd"); os.IsNotExist(err) {
 		log.Infof("trying to mount /dev/sr0 and then load image")
 
 		//try mounting cdrom/usb, and docker loading rancher/os:v...
-		os.MkdirAll("/ttt", 0755)
-		cmd := exec.Command("mount", "-t", "iso9660", "/dev/sr0", "/ttt")
+		//		ARGH! need to mount this in the host - or share it as a volume..
+		os.MkdirAll("/bootiso", 0755)
+		cmd := exec.Command("mount", "-t", "iso9660", "/dev/sr0", "/bootiso")
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 		if err := cmd.Run(); err != nil {
 			log.Infof("tried and failed to mount /dev/sr0: %s", err)
 		} else {
 			log.Infof("Mounted /dev/sr0")
-			if _, err := os.Stat("/ttt/rancheros/"); err == nil {
-				cmd := exec.Command("system-docker", "load", "-i", "/ttt/rancheros/installer.tar.gz")
+			if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
+				cmd := exec.Command("system-docker", "load", "-i", "/bootiso/rancheros/installer.tar.gz")
 				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 				if err := cmd.Run(); err != nil {
-					log.Infof("failed to load images from /ttt/rancheros: %s", err)
+					log.Infof("failed to load images from /bootiso/rancheros: %s", err)
 				} else {
-					log.Infof("Loaded images from /ttt/rancheros/installer.tar.gz")
+					log.Infof("Loaded images from /bootiso/rancheros/installer.tar.gz")
+
+					//TODO: add if os-installer:latest exists - we might have loaded a full installer?
+					useIso = true
+					// now use the installer image
+					cfg := config.LoadConfig()
+					// TODO: fix the fullinstaller Dockerfile to use the ${VERSION}${SUFFIX}
+					image = cfg.Rancher.Upgrade.Image + "-installer" + ":latest"
 				}
 			}
-			// TODO: could also poke around looking for the /boot/vmlinuz and initrd...
-			util.Unmount("/ttt")
+			// TODO: also poke around looking for the /boot/vmlinuz and initrd...
 		}
 
 		log.Infof("starting installer container for %s (new)", image)
 		installerCmd := []string{
 			"run", "--rm", "--net=host", "--privileged",
-			// bind mount host fs to access its /dev (udev isn't running in container)
+			// bind mount host fs to access its ros, vmlinuz, initrd and /dev (udev isn't running in container)
 			"-v", "/:/host",
 			"--volumes-from=user-volumes", "--volumes-from=command-volumes",
 			image,
@@ -207,7 +215,13 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		log.Debugf("Run(%v)", cmd)
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 		if err := cmd.Run(); err != nil {
+			if useIso {
+				util.Unmount("/bootiso")
+			}
 			return err
+		}
+		if useIso {
+			util.Unmount("/bootiso")
 		}
 		return nil
 	}
@@ -418,9 +432,6 @@ func seedData(baseName, cloudData string, files []string) error {
 
 	for _, f := range files {
 		e := strings.Split(f, ":")
-		//if err = os.MkdirAll(filepath.Join(baseName, e[1])); err != nil {
-		//	return err
-		//}
 		if err = dfs.CopyFile(e[0], baseName, e[1]); err != nil {
 			return err
 		}
