@@ -34,10 +34,11 @@ BUILD=build
 BASE=$(pwd)
 UNAME=$(uname)
 
-#KERNEL=${BASE}/dist/artifacts/vmlinuz-${KERNEL_VERSION}*
 KERNEL=${BASE}/build/kernel/vmlinuz
 INITRD_SRC=${BASE}/build/initrd
 INITRD=${BASE}/build/initrd.tmp
+#LINUXMOD=${BASE}/build/kernel/linuxmods
+
 
 QEMU=1
 FORMAT=1

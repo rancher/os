@@ -18,13 +18,23 @@ if [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || [ ! -f ${ARTIFACTS}/initrd
 fi
 
 cp ${ARTIFACTS}/initrd                        ${CD}/boot
-cp ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}     ${CD}/boot
+
+# TODO: these move to os-kernel
+pwd
+ls dist/artifacts/vmlinuz-${KERNEL_VERSION}
+
+cp ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}     ${CD}/boot/
+#TODO cp ${ARTIFACTS}/linuxmods-${KERNEL_VERSION}   ${CD}/boot/
+
 cat scripts/isolinux.cfg | envsubst >         ${CD}/boot/isolinux/isolinux.cfg
-cp /usr/lib/ISOLINUX/isolinux.bin             ${CD}/boot/isolinux
-cp /usr/lib/syslinux/modules/bios/ldlinux.c32 ${CD}/boot/isolinux
+cat scripts/isolinux_label.cfg | envsubst >   ${CD}/boot/isolinux/isolinux-${KERNEL_VERSION}.cfg
+cp ${CD}/boot/isolinux/isolinux-${KERNEL_VERSION}.cfg ${CD}/boot/isolinux/isolinux-current.cfg
+
+cp /usr/lib/ISOLINUX/isolinux.bin             ${CD}/boot/isolinux/
+cp /usr/lib/syslinux/modules/bios/ldlinux.c32 ${CD}/boot/isolinux/
 # add the installer image to the iso for non-network / dev/test
-cp ${ARTIFACTS}/installer.tar                 ${CD}/rancheros
-cp assets/bootinfoscript                ${CD}/rancheros
+cp ${ARTIFACTS}/installer.tar                 ${CD}/rancheros/
+cp assets/bootinfoscript                      ${CD}/rancheros/
 gzip ${CD}/rancheros/installer.tar
 cd ${CD} && xorriso \
     -as mkisofs \
