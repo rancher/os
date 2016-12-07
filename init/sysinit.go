@@ -1,7 +1,6 @@
 package init
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"syscall"
@@ -14,7 +13,6 @@ import (
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
 )
 
 const (
@@ -98,37 +96,11 @@ func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 func SysInit() error {
 	cfg := config.LoadConfig()
 
-	f, err := os.Create("/log")
-	if err != nil {
-		log.Errorf("Failed to make /log file %s", err)
-	}
-	defer f.Close()
-	log.Infof("----------------------------------SVEN--------------------------------------------------")
-	if isInitrd() {
-		log.Infof("-----trying /dev/sr0-------------")
-		// loading from ramdisk/iso, so mount /dev/cdrom (or whatever it is) and see if theres a rancheros dir
-		err := util.Mount("/dev/sr0", "/booted", "iso9660", "")
-		if err != nil {
-			fmt.Fprintf(f, "Failed to mount /dev/sr0: %s", err)
-			log.Debugf("Failed to mount /dev/sr0: %s", err)
-		} else {
-			if err := control.PreloadImages(docker.NewSystemClient, "/booted/rancheros"); err != nil {
-				fmt.Fprintf(f, "Failed to preload ISO System Docker images: %v", err)
-				log.Errorf("Failed to preload ISO System Docker images: %v", err)
-			} else {
-				fmt.Fprintf(f, "preloaded ISO images")
-				log.Infof("preloaded ISO images")
-			}
-		}
-	}
-	log.Infof("----------------------------------NEVS--------------------------------------------------")
-	f.Sync()
-
 	if err := control.PreloadImages(docker.NewSystemClient, systemImagesPreloadDirectory); err != nil {
 		log.Errorf("Failed to preload System Docker images: %v", err)
 	}
 
-	_, err = config.ChainCfgFuncs(cfg,
+	_, err := config.ChainCfgFuncs(cfg,
 		loadImages,
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			p, err := compose.GetProject(cfg, false, true)

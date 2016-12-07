@@ -71,6 +71,10 @@ var installCommand = cli.Command{
 			Name:  "append, a",
 			Usage: "append additional kernel parameters",
 		},
+		cli.BoolFlag{
+			Name:  "mountiso",
+			Usage: "mount the iso to get kernel and initrd",
+		},
 	},
 }
 
@@ -109,15 +113,16 @@ func installAction(c *cli.Context) error {
 	kappend := strings.TrimSpace(c.String("append"))
 	force := c.Bool("force")
 	reboot := !c.Bool("no-reboot")
+	mountiso := c.Bool("mountiso")
 
-	if err := runInstall(image, installType, cloudConfig, device, kappend, force, reboot); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, kappend, force, reboot, mountiso); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 	}
 
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, kappend string, force, reboot bool) error {
+func runInstall(image, installType, cloudConfig, device, kappend string, force, reboot, mountiso bool) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -156,74 +161,72 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	}
 
 	useIso := false
-	if _, err := os.Stat("/dist/initrd"); os.IsNotExist(err) {
-		log.Infof("trying to mount /dev/sr0 and then load image")
+	if !mountiso {
+		if _, err := os.Stat("/dist/initrd"); os.IsNotExist(err) {
+			log.Infof("trying to mount /dev/sr0 and then load image")
 
-		//try mounting cdrom/usb, and docker loading rancher/os:v...
-		//		ARGH! need to mount this in the host - or share it as a volume..
-		os.MkdirAll("/bootiso", 0755)
-		cmd := exec.Command("mount", "-t", "iso9660", "/dev/sr0", "/bootiso")
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		if err := cmd.Run(); err != nil {
-			log.Infof("tried and failed to mount /dev/sr0: %s", err)
-		} else {
-			log.Infof("Mounted /dev/sr0")
-			if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
-				cmd := exec.Command("system-docker", "load", "-i", "/bootiso/rancheros/installer.tar.gz")
-				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-				if err := cmd.Run(); err != nil {
-					log.Infof("failed to load images from /bootiso/rancheros: %s", err)
-				} else {
-					log.Infof("Loaded images from /bootiso/rancheros/installer.tar.gz")
+			if err = mountBootIso(); err == nil {
+				log.Infof("Mounted /dev/sr0")
+				if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
+					cmd := exec.Command("system-docker", "load", "-i", "/bootiso/rancheros/installer.tar.gz")
+					cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+					if err := cmd.Run(); err != nil {
+						log.Infof("failed to load images from /bootiso/rancheros: %s", err)
+					} else {
+						log.Infof("Loaded images from /bootiso/rancheros/installer.tar.gz")
 
-					//TODO: add if os-installer:latest exists - we might have loaded a full installer?
-					useIso = true
-					// now use the installer image
-					cfg := config.LoadConfig()
-					// TODO: fix the fullinstaller Dockerfile to use the ${VERSION}${SUFFIX}
-					image = cfg.Rancher.Upgrade.Image + "-installer" + ":latest"
+						//TODO: add if os-installer:latest exists - we might have loaded a full installer?
+						useIso = true
+						// now use the installer image
+						cfg := config.LoadConfig()
+						// TODO: fix the fullinstaller Dockerfile to use the ${VERSION}${SUFFIX}
+						image = cfg.Rancher.Upgrade.Image + "-installer" + ":latest"
+					}
 				}
+				// TODO: also poke around looking for the /boot/vmlinuz and initrd...
 			}
-			// TODO: also poke around looking for the /boot/vmlinuz and initrd...
-		}
 
-		log.Infof("starting installer container for %s (new)", image)
-		installerCmd := []string{
-			"run", "--rm", "--net=host", "--privileged",
-			// bind mount host fs to access its ros, vmlinuz, initrd and /dev (udev isn't running in container)
-			"-v", "/:/host",
-			"--volumes-from=user-volumes", "--volumes-from=command-volumes",
-			image,
-			"install",
-			"-t", installType,
-			"-d", device,
-		}
-		if force {
-			installerCmd = append(installerCmd, "-f")
-		}
-		if !reboot {
-			installerCmd = append(installerCmd, "--no-reboot")
-		}
-		if cloudConfig != "" {
-			installerCmd = append(installerCmd, "-c", cloudConfig)
-		}
-		if kappend != "" {
-			installerCmd = append(installerCmd, "-a", kappend)
-		}
+			log.Infof("starting installer container for %s (new)", image)
+			installerCmd := []string{
+				"run", "--rm", "--net=host", "--privileged",
+				// bind mount host fs to access its ros, vmlinuz, initrd and /dev (udev isn't running in container)
+				"-v", "/:/host",
+				"--volumes-from=user-volumes", "--volumes-from=command-volumes",
+				image,
+				"install",
+				"-t", installType,
+				"-d", device,
+			}
+			if force {
+				installerCmd = append(installerCmd, "-f")
+			}
+			if !reboot {
+				installerCmd = append(installerCmd, "--no-reboot")
+			}
+			if cloudConfig != "" {
+				installerCmd = append(installerCmd, "-c", cloudConfig)
+			}
+			if kappend != "" {
+				installerCmd = append(installerCmd, "-a", kappend)
+			}
+			if useIso {
+				installerCmd = append(installerCmd, "--mountiso")
+			}
 
-		cmd = exec.Command("system-docker", installerCmd...)
-		log.Debugf("Run(%v)", cmd)
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		if err := cmd.Run(); err != nil {
+			cmd := exec.Command("system-docker", installerCmd...)
+			log.Debugf("Run(%v)", cmd)
+			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+			if err := cmd.Run(); err != nil {
+				if useIso {
+					util.Unmount("/bootiso")
+				}
+				return err
+			}
 			if useIso {
 				util.Unmount("/bootiso")
 			}
-			return err
+			return nil
 		}
-		if useIso {
-			util.Unmount("/bootiso")
-		}
-		return nil
 	}
 
 	// TODO: needs to pass the log level on to the container
@@ -236,11 +239,18 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		log.Infof("running setDiskpartitions")
 		err := setDiskpartitions(device)
 		if err != nil {
-			log.Infof("error setDiskpartitions %s", err)
+			log.Errorf("error setDiskpartitions %s", err)
 			return err
 		}
 		// use the bind mounted host filesystem to get access to the /dev/vda1 device that udev on the host sets up (TODO: can we run a udevd inside the container? `mknod b 253 1 /dev/vda1` doesn't work)
 		device = "/host" + device
+		log.Infof("done setDiskpartitions")
+	}
+
+	if mountiso {
+		if err := mountBootIso(); err == nil {
+			log.Infof("Mounted /dev/sr0")
+		}
 	}
 
 	log.Infof("running layDownOS")
@@ -256,6 +266,21 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	}
 
 	return nil
+}
+
+func mountBootIso() error {
+	// TODO: need to add a label to the iso and mount using that.
+	//		ARGH! need to mount this in the host - or share it as a volume..
+	os.MkdirAll("/bootiso", 0755)
+	cmd := exec.Command("mount", "-t", "iso9660", "/dev/sr0", "/bootiso")
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	err := cmd.Run()
+	if err != nil {
+		log.Infof("tried and failed to mount /dev/sr0: %s", err)
+	} else {
+		log.Infof("Mounted /dev/sr0")
+	}
+	return err
 }
 
 func layDownOS(image, installType, cloudConfig, device, kappend string) error {
@@ -380,23 +405,23 @@ func layDownOS(image, installType, cloudConfig, device, kappend string) error {
 		ioutil.WriteFile(filepath.Join(baseName, bootDir+"append"), []byte(kappend), 0644)
 	}
 
-	menu := bootVars{
-		baseName: baseName,
-		bootDir:  bootDir,
-		Timeout:  1,
-		Fallback: 1, // need to be conditional on there being a 'rollback'?
-		Entries: []MenuEntry{
-			MenuEntry{"RancherOS-current", bootDir, VERSION, kernelArgs, kappend},
-			//			MenuEntry{"RancherOS-rollback", bootDir, ROLLBACK_VERSION, kernelArgs, kappend},
-		},
-	}
+	//menu := bootVars{
+	//	baseName: baseName,
+	//	bootDir:  bootDir,
+	//	Timeout:  1,
+	//	Fallback: 1, // need to be conditional on there being a 'rollback'?
+	//	Entries: []MenuEntry{
+	//		MenuEntry{"RancherOS-current", bootDir, VERSION, kernelArgs, kappend},
+	//		//			MenuEntry{"RancherOS-rollback", bootDir, ROLLBACK_VERSION, kernelArgs, kappend},
+	//	},
+	//}
 
-	log.Debugf("grubConfig")
-	grubConfig(menu)
-	log.Debugf("syslinuxConfig")
-	syslinuxConfig(menu)
-	log.Debugf("pvGrubConfig")
-	pvGrubConfig(menu)
+	//log.Debugf("grubConfig")
+	//grubConfig(menu)
+	//log.Debugf("syslinuxConfig")
+	//syslinuxConfig(menu)
+	//log.Debugf("pvGrubConfig")
+	//pvGrubConfig(menu)
 	log.Debugf("installRancher")
 	err := installRancher(baseName, bootDir, VERSION, DIST)
 	if err != nil {
@@ -451,7 +476,7 @@ func setDiskpartitions(device string) error {
 
 	file, err := os.Open("/proc/partitions")
 	if err != nil {
-		log.Printf("failed to read /proc/partitions %s", err)
+		log.Debugf("failed to read /proc/partitions %s", err)
 		return err
 	}
 	defer file.Close()
@@ -476,14 +501,14 @@ func setDiskpartitions(device string) error {
 		}
 	}
 	if !exists {
-		log.Printf("disk %s not found", device)
+		log.Debugf("disk %s not found", device)
 		return err
 	}
 	if haspartitions {
-		log.Printf("device %s already partitioned - checking if any are mounted", device)
+		log.Debugf("device %s already partitioned - checking if any are mounted", device)
 		file, err := os.Open("/proc/mounts")
 		if err != nil {
-			log.Printf("failed to read /proc/mounts %s", err)
+			log.Debugf("failed to read /proc/mounts %s", err)
 			return err
 		}
 		defer file.Close()
@@ -520,12 +545,16 @@ func setDiskpartitions(device string) error {
 		}
 	}
 	//do it!
+	log.Debugf("running dd")
 	cmd := exec.Command("dd", "if=/dev/zero", "of="+device, "bs=512", "count=2048")
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Printf("%s", err)
 		return err
 	}
+	log.Debugf("running partprobe")
 	cmd = exec.Command("partprobe", device)
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Printf("%s", err)
 		return err
@@ -539,12 +568,15 @@ p
 
 
 a
+1
 w
 `))
 		w.Close()
 	}()
+	log.Debugf("running fdisk")
 	cmd = exec.Command("fdisk", device)
 	cmd.Stdin = r
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Printf("%s", err)
 		return err
@@ -783,6 +815,7 @@ LABEL {{.Name}}
     APPEND {{.KernelArgs}} {{.Append}}
     INITRD ../initrd-{{.Version}}-rancheros
 {{end}}
+TIMEOUT 20   #2 seconds
 DEFAULT RancherOS-current
 
 {{- range .Entries}}
@@ -813,14 +846,32 @@ func installRancher(baseName, bootDir, VERSION, DIST string) error {
 	log.Debugf("installRancher")
 
 	//cp ${DIST}/initrd ${baseName}/${bootDir}initrd-${VERSION}-rancheros
-	if err := dfs.CopyFile(DIST+"/initrd", filepath.Join(baseName, bootDir), "initrd-"+VERSION+"-rancheros"); err != nil {
-		log.Errorf("copy initrd: ", err)
-		return err
-	}
+	//if err := dfs.CopyFile(DIST+"/initrd", filepath.Join(baseName, bootDir), "initrd-"+VERSION+"-rancheros"); err != nil {
+	//	log.Errorf("copy initrd: ", err)
+	//	return err
+	//}
 
 	//cp ${DIST}/vmlinuz ${baseName}/${bootDir}vmlinuz-${VERSION}-rancheros
-	if err := dfs.CopyFile(DIST+"/vmlinuz", filepath.Join(baseName, bootDir), "vmlinuz-"+VERSION+"-rancheros"); err != nil {
-		log.Errorf("copy vmlinuz: %s", err)
+	//if err := dfs.CopyFile(DIST+"/vmlinuz", filepath.Join(baseName, bootDir), "vmlinuz-"+VERSION+"-rancheros"); err != nil {
+	//	log.Errorf("copy vmlinuz: %s", err)
+	//	return err
+	//}
+	//return nil
+
+	// The ISO has all the files in it - the syslinux cfg's and the kernel&initrd, so we can copy them all from there
+	files, _ := ioutil.ReadDir(DIST)
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		if err := dfs.CopyFile(filepath.Join(DIST, file.Name()), filepath.Join(baseName, bootDir), file.Name()); err != nil {
+			log.Errorf("copy %s: %s", file.Name(), err)
+			return err
+		}
+	}
+	// the main syslinuxcfg
+	if err := dfs.CopyFile(filepath.Join(DIST, "isolinux", "isolinux.cfg"), filepath.Join(baseName, bootDir, "syslinux"), "syslinux.cfg"); err != nil {
+		log.Errorf("copy %s: %s", "syslinux.cfg", err)
 		return err
 	}
 	return nil
