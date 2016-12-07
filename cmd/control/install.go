@@ -248,6 +248,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	}
 
 	if mountiso {
+		// TODO: I hope to remove this from here later.
 		if err := mountBootIso(); err == nil {
 			log.Infof("Mounted /dev/sr0")
 		}
@@ -423,7 +424,7 @@ func layDownOS(image, installType, cloudConfig, device, kappend string) error {
 	//log.Debugf("pvGrubConfig")
 	//pvGrubConfig(menu)
 	log.Debugf("installRancher")
-	err := installRancher(baseName, bootDir, VERSION, DIST)
+	err := installRancher(baseName, bootDir, VERSION, DIST, kernelArgs+" "+kappend)
 	if err != nil {
 		log.Errorf("%s", err)
 		return err
@@ -842,23 +843,12 @@ DEFAULT RancherOS-current
 	return nil
 }
 
-func installRancher(baseName, bootDir, VERSION, DIST string) error {
+func installRancher(baseName, bootDir, VERSION, DIST, kappend string) error {
 	log.Debugf("installRancher")
 
-	//cp ${DIST}/initrd ${baseName}/${bootDir}initrd-${VERSION}-rancheros
-	//if err := dfs.CopyFile(DIST+"/initrd", filepath.Join(baseName, bootDir), "initrd-"+VERSION+"-rancheros"); err != nil {
-	//	log.Errorf("copy initrd: ", err)
-	//	return err
-	//}
+	// TODO detect if there already is a linux-current.cfg, if so, move it to linux-previous.cfg, and replace only current with the one in the image/iso
 
-	//cp ${DIST}/vmlinuz ${baseName}/${bootDir}vmlinuz-${VERSION}-rancheros
-	//if err := dfs.CopyFile(DIST+"/vmlinuz", filepath.Join(baseName, bootDir), "vmlinuz-"+VERSION+"-rancheros"); err != nil {
-	//	log.Errorf("copy vmlinuz: %s", err)
-	//	return err
-	//}
-	//return nil
-
-	// The ISO has all the files in it - the syslinux cfg's and the kernel&initrd, so we can copy them all from there
+	// The image/ISO have all the files in it - the syslinux cfg's and the kernel&initrd, so we can copy them all from there
 	files, _ := ioutil.ReadDir(DIST)
 	for _, file := range files {
 		if file.IsDir() {
@@ -872,6 +862,12 @@ func installRancher(baseName, bootDir, VERSION, DIST string) error {
 	// the main syslinuxcfg
 	if err := dfs.CopyFile(filepath.Join(DIST, "isolinux", "isolinux.cfg"), filepath.Join(baseName, bootDir, "syslinux"), "syslinux.cfg"); err != nil {
 		log.Errorf("copy %s: %s", "syslinux.cfg", err)
+		return err
+	}
+	// The global.cfg INCLUDE - useful for over-riding the APPEND line
+	err := ioutil.WriteFile(filepath.Join(filepath.Join(baseName, bootDir), "global.cfg"), []byte("APPEND "+kappend), 0644)
+	if err != nil {
+		log.Errorf("write (%s) %s", "global.cfg", err)
 		return err
 	}
 	return nil
