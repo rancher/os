@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -140,33 +141,36 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		installType == "syslinux" ||
 		installType == "gptsyslinux" {
 
-	// TODO: generalise to versions before 0.8.0-rc2
-	if image == "rancher/os:v0.7.0" {
-		log.Infof("starting installer container for %s", image)
-		if installType == "generic" {
-			cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=all-volumes",
-				"--entrypoint=/scripts/set-disk-partitions", image, device, diskType)
+	// Versions before 0.8.0-rc2 use the old calling convention (from the lay-down-os shell script)
+	imageVersion := strings.TrimPrefix(image, "rancher/os:v")
+	if image != imageVersion {
+		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
+		vArray := strings.Split(imageVersion, ".")
+		v, _ := strconv.ParseFloat(vArray[0]+"."+vArray[1], 32)
+		if v < 0.8 || imageVersion == "0.8.0-rc1" {
+			log.Infof("starting installer container for %s", image)
+			if installType == "generic" {
+				cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=all-volumes",
+					"--entrypoint=/scripts/set-disk-partitions", image, device, diskType)
+				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+				if err := cmd.Run(); err != nil {
+					return err
+				}
+			}
+			cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes",
+				"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig, "-a", kappend)
 			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 			if err := cmd.Run(); err != nil {
 				return err
 			}
+			return nil
 		}
-		cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes",
-			"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig, "-a", kappend)
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-		return nil
 	}
 
 	useIso := false
 	if !mountiso {
 		if _, err := os.Stat("/dist/initrd"); os.IsNotExist(err) {
-			log.Infof("trying to mount /dev/sr0 and then load image")
-
 			if err = mountBootIso(); err == nil {
-				log.Infof("Mounted /dev/sr0")
 				if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
 					cmd := exec.Command("system-docker", "load", "-i", "/bootiso/rancheros/installer.tar.gz")
 					cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
@@ -231,12 +235,11 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 
 	// TODO: needs to pass the log level on to the container
 	log.InitLogger()
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(log.InfoLevel)
 
 	log.Infof("running installation")
 
 	if installType == "generic" {
-		log.Infof("running setDiskpartitions")
 		err := setDiskpartitions(device)
 		if err != nil {
 			log.Errorf("error setDiskpartitions %s", err)
@@ -244,17 +247,15 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		}
 		// use the bind mounted host filesystem to get access to the /dev/vda1 device that udev on the host sets up (TODO: can we run a udevd inside the container? `mknod b 253 1 /dev/vda1` doesn't work)
 		device = "/host" + device
-		log.Infof("done setDiskpartitions")
 	}
 
 	if mountiso {
 		// TODO: I hope to remove this from here later.
-		if err := mountBootIso(); err == nil {
-			log.Infof("Mounted /dev/sr0")
+		if err := mountBootIso(); err != nil {
+			return err
 		}
 	}
 
-	log.Infof("running layDownOS")
 	err := layDownOS(image, installType, cloudConfig, device, kappend)
 	if err != nil {
 		log.Infof("error layDownOS %s", err)
@@ -273,19 +274,48 @@ func mountBootIso() error {
 	// TODO: need to add a label to the iso and mount using that.
 	//		ARGH! need to mount this in the host - or share it as a volume..
 	os.MkdirAll("/bootiso", 0755)
-	cmd := exec.Command("mount", "-t", "iso9660", "/dev/sr0", "/bootiso")
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	err := cmd.Run()
+
+	deviceName := "/dev/sr0"
+	deviceType := "iso9660"
+	// find the installation device
+	cmd := exec.Command("blkid", "-L", "RancherOS")
+	log.Debugf("Run(%v)", cmd)
+	cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
 	if err != nil {
-		log.Infof("tried and failed to mount /dev/sr0: %s", err)
+		log.Errorf("Failed to get RancherOS boot device: %s", err)
+		return err
+	}
+	deviceName = strings.TrimSpace(string(out))
+	log.Debugf("blkid found -L RancherOS: %s", deviceName)
+
+	cmd = exec.Command("blkid", deviceName)
+	log.Debugf("Run(%v)", cmd)
+	cmd.Stderr = os.Stderr
+	if out, err = cmd.Output(); err != nil {
+		log.Errorf("Failed to get RancherOS boot device type: %s", err)
+		return err
+	}
+	deviceType = strings.TrimSpace(string(out))
+	s1 := strings.Split(deviceType, "TYPE=\"")
+	s2 := strings.Split(s1[1], "\"")
+	deviceType = s2[0]
+	log.Debugf("blkid type of %s: %s", deviceName, deviceType)
+
+	cmd = exec.Command("mount", "-t", deviceType, deviceName, "/bootiso")
+	log.Debugf("Run(%v)", cmd)
+
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		log.Errorf("tried and failed to mount %s: %s", deviceName, err)
 	} else {
-		log.Infof("Mounted /dev/sr0")
+		log.Debugf("Mounted %s", deviceName)
 	}
 	return err
 }
 
 func layDownOS(image, installType, cloudConfig, device, kappend string) error {
-	log.Infof("layDownOS")
 	// ENV == installType
 	//[[ "$ARCH" == "arm" && "$ENV" != "rancher-upgrade" ]] && ENV=arm
 
@@ -309,7 +339,7 @@ func layDownOS(image, installType, cloudConfig, device, kappend string) error {
 
 	switch installType {
 	case "generic":
-		log.Infof("formatAndMount")
+		log.Debugf("formatAndMount")
 		var err error
 		bootDir, err = formatAndMount(baseName, bootDir, device, partition)
 		if err != nil {
@@ -318,20 +348,20 @@ func layDownOS(image, installType, cloudConfig, device, kappend string) error {
 		}
 		//log.Infof("installGrub")
 		//err = installGrub(baseName, device)
-		log.Infof("installSyslinux")
+		log.Debugf("installSyslinux")
 		err = installSyslinux(device, baseName, bootDir)
 
 		if err != nil {
 			log.Errorf("%s", err)
 			return err
 		}
-		log.Infof("seedData")
+		log.Debugf("seedData")
 		err = seedData(baseName, cloudConfig, FILES)
 		if err != nil {
 			log.Errorf("%s", err)
 			return err
 		}
-		log.Infof("seedData done")
+		log.Debugf("seedData done")
 	case "arm":
 		var err error
 		bootDir, err = formatAndMount(baseName, bootDir, device, partition)
@@ -502,20 +532,19 @@ func setDiskpartitions(device string) error {
 		}
 	}
 	if !exists {
-		log.Debugf("disk %s not found", device)
-		return err
+		return fmt.Errorf("disk %s not found: %s", device, err)
 	}
 	if haspartitions {
 		log.Debugf("device %s already partitioned - checking if any are mounted", device)
 		file, err := os.Open("/proc/mounts")
 		if err != nil {
-			log.Debugf("failed to read /proc/mounts %s", err)
+			log.Errorf("failed to read /proc/mounts %s", err)
 			return err
 		}
 		defer file.Close()
 		if partitionMounted(device, file) {
 			err = fmt.Errorf("partition %s mounted, cannot repartition", device)
-			log.Printf("%s", err)
+			log.Errorf("%s", err)
 			return err
 		}
 		cmd := exec.Command("system-docker", "ps", "-q")
@@ -535,12 +564,12 @@ func setDiskpartitions(device string) error {
 				cmd := exec.Command("system-docker", "exec", image, "cat /proc/mount")
 				cmd.Stdout = w
 				if err := cmd.Run(); err != nil {
-					log.Printf("%s", err)
+					log.Errorf("%s", err)
 				}
 			}()
 			if partitionMounted(device, r) {
 				err = fmt.Errorf("partition %s mounted in %s, cannot repartition", device, image)
-				log.Printf("%s", err)
+				log.Errorf("%s", err)
 				return err
 			}
 		}
@@ -548,16 +577,16 @@ func setDiskpartitions(device string) error {
 	//do it!
 	log.Debugf("running dd")
 	cmd := exec.Command("dd", "if=/dev/zero", "of="+device, "bs=512", "count=2048")
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Errorf("%s", err)
 		return err
 	}
 	log.Debugf("running partprobe")
 	cmd = exec.Command("partprobe", device)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Errorf("%s", err)
 		return err
 	}
 
@@ -577,9 +606,9 @@ w
 	log.Debugf("running fdisk")
 	cmd = exec.Command("fdisk", device)
 	cmd.Stdin = r
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Errorf("%s", err)
 		return err
 	}
 
@@ -598,7 +627,7 @@ func partitionMounted(device string, file io.Reader) bool {
 			}
 		}
 		if err := scanner.Err(); err != nil {
-			log.Printf("%s", err)
+			log.Errorf("%s", err)
 			return false
 		}
 	}
@@ -612,9 +641,9 @@ func formatdevice(device, partition string) error {
 	// -O ^64bit: for syslinux: http://www.syslinux.org/wiki/index.php?title=Filesystem#ext
 	cmd := exec.Command("mkfs.ext4", "-F", "-i", "4096", "-O", "^64bit", "-L", "RANCHER_STATE", partition)
 	log.Debugf("Run(%v)", cmd)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Debugf("mkfs.ext4: %s", err)
+		log.Errorf("mkfs.ext4: %s", err)
 		return err
 	}
 	return nil
@@ -650,7 +679,7 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, error) 
 	os.MkdirAll(baseName, 0755)
 	cmd = exec.Command("mount", rootfs, baseName)
 	log.Debugf("Run(%v)", cmd)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	return bootDir, cmd.Run()
 
 }
@@ -692,10 +721,10 @@ func installSyslinux(device, baseName, bootDir string) error {
 	// ubuntu: /usr/lib/syslinux/mbr/mbr.bin
 	// alpine: /usr/share/syslinux/mbr.bin
 	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/mbr.bin", "of="+device)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	log.Debugf("Run(%v)", cmd)
 	if err := cmd.Run(); err != nil {
-		log.Printf("dd: %s", err)
+		log.Errorf("dd: %s", err)
 		return err
 	}
 	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
@@ -712,10 +741,10 @@ func installSyslinux(device, baseName, bootDir string) error {
 
 	//extlinux --install ${baseName}/${bootDir}syslinux
 	cmd = exec.Command("extlinux", "--install", filepath.Join(baseName, bootDir+"syslinux"))
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	log.Debugf("Run(%v)", cmd)
 	if err := cmd.Run(); err != nil {
-		log.Printf("extlinuux: %s", err)
+		log.Errorf("extlinuux: %s", err)
 		return err
 	}
 	return nil
@@ -730,12 +759,12 @@ func installSyslinuxRaid(baseName, bootDir string) error {
 	//extlinux --install --raid ${baseName}/${bootDir}syslinux
 	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/mbr.bin", "of=/dev/sda")
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Errorf("%s", err)
 		return err
 	}
 	cmd = exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/mbr.bin", "of=/dev/sdb")
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Errorf("%s", err)
 		return err
 	}
 	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
@@ -751,7 +780,7 @@ func installSyslinuxRaid(baseName, bootDir string) error {
 	}
 	cmd = exec.Command("extlinux", "--install", filepath.Join(baseName, bootDir+"syslinux"))
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Errorf("%s", err)
 		return err
 	}
 	return nil
@@ -763,7 +792,7 @@ func installGrub(baseName, device string) error {
 	//grub-install --boot-directory=${baseName}/boot ${device}
 	cmd := exec.Command("grub-install", "--boot-directory="+baseName+"/boot", device)
 	if err := cmd.Run(); err != nil {
-		log.Printf("%s", err)
+		log.Errorf("%s", err)
 		return err
 	}
 	return nil
