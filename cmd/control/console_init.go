@@ -52,15 +52,17 @@ func consoleInitAction(c *cli.Context) error {
 	}
 
 	password := config.GetCmdline("rancher.password")
-	cmd := exec.Command("chpasswd")
-	cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	if password != "" {
+		cmd := exec.Command("chpasswd")
+		cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
 
-	cmd = exec.Command("bash", "-c", `sed -E -i 's/(rancher:.*:).*(:.*:.*:.*:.*:.*:.*)$/\1\2/' /etc/shadow`)
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
+		cmd = exec.Command("bash", "-c", `sed -E -i 's/(rancher:.*:).*(:.*:.*:.*:.*:.*:.*)$/\1\2/' /etc/shadow`)
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
 	}
 
 	if err := setupSSH(cfg); err != nil {
@@ -92,7 +94,7 @@ func consoleInitAction(c *cli.Context) error {
 		}
 	}
 
-	cmd = exec.Command("bash", "-c", `echo 'RancherOS \n \l' > /etc/issue`)
+	cmd := exec.Command("bash", "-c", `echo 'RancherOS \n \l' > /etc/issue`)
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
