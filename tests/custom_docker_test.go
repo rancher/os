@@ -11,6 +11,9 @@ set -ex
 docker version | grep 1.10.3
 
 sudo ros engine list | grep 1.10.3 | grep current
+(sudo ros engine switch invalid 2>&1 || true) | grep "invalid is not a valid engine"
+(sudo ros engine enable invalid 2>&1 || true) | grep "invalid is not a valid engine"
+
 docker run -d --restart=always nginx
 docker ps | grep nginx`)
 

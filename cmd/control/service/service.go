@@ -11,6 +11,7 @@ import (
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
+	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
 
@@ -91,6 +92,8 @@ func disable(c *cli.Context) error {
 	cfg := config.LoadConfig()
 
 	for _, service := range c.Args() {
+		validateService(service, cfg)
+
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
 			continue
 		}
@@ -113,9 +116,12 @@ func del(c *cli.Context) error {
 	cfg := config.LoadConfig()
 
 	for _, service := range c.Args() {
+		validateService(service, cfg)
+
 		if _, ok := cfg.Rancher.ServicesInclude[service]; !ok {
 			continue
 		}
+
 		delete(cfg.Rancher.ServicesInclude, service)
 		changed = true
 	}
@@ -135,8 +141,10 @@ func enable(c *cli.Context) error {
 	var enabledServices []string
 
 	for _, service := range c.Args() {
+		validateService(service, cfg)
+
 		if val, ok := cfg.Rancher.ServicesInclude[service]; !ok || !val {
-			if strings.HasPrefix(service, "/") && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
+			if isLocal(service) && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
 				log.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
 
@@ -166,10 +174,7 @@ func list(c *cli.Context) error {
 		clone[service] = enabled
 	}
 
-	services, err := network.GetServices(cfg.Rancher.Repositories.ToArray())
-	if err != nil {
-		log.Fatalf("Failed to get services: %v", err)
-	}
+	services := availableService(cfg)
 
 	for _, service := range services {
 		if enabled, ok := clone[service]; ok {
@@ -193,4 +198,27 @@ func list(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func isLocal(service string) bool {
+	return strings.HasPrefix(service, "/")
+}
+
+func IsLocalOrURL(service string) bool {
+	return isLocal(service) || strings.HasPrefix(service, "http:/") || strings.HasPrefix(service, "http:/")
+}
+
+func validateService(service string, cfg *config.CloudConfig) {
+	services := availableService(cfg)
+	if !IsLocalOrURL(service) && !util.Contains(services, service) {
+		log.Fatalf("%s is not a valid service", service)
+	}
+}
+
+func availableService(cfg *config.CloudConfig) []string {
+	services, err := network.GetServices(cfg.Rancher.Repositories.ToArray())
+	if err != nil {
+		log.Fatalf("Failed to get services: %v", err)
+	}
+	return services
 }

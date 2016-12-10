@@ -11,9 +11,11 @@ import (
 	"github.com/codegangsta/cli"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
+	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
+	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
 
@@ -54,6 +56,7 @@ func consoleSwitch(c *cli.Context) error {
 	newConsole := c.Args()[0]
 
 	cfg := config.LoadConfig()
+	validateConsole(newConsole, cfg)
 	if newConsole == currentConsole() {
 		log.Warnf("Console is already set to %s", newConsole)
 	}
@@ -106,6 +109,7 @@ func consoleEnable(c *cli.Context) error {
 	newConsole := c.Args()[0]
 
 	cfg := config.LoadConfig()
+	validateConsole(newConsole, cfg)
 
 	if newConsole != "default" {
 		if err := compose.StageServices(cfg, newConsole); err != nil {
@@ -122,14 +126,7 @@ func consoleEnable(c *cli.Context) error {
 
 func consoleList(c *cli.Context) error {
 	cfg := config.LoadConfig()
-
-	consoles, err := network.GetConsoles(cfg.Rancher.Repositories.ToArray())
-	if err != nil {
-		return err
-	}
-	consoles = append(consoles, "default")
-	sort.Strings(consoles)
-
+	consoles := availableConsoles(cfg)
 	currentConsole := currentConsole()
 
 	for _, console := range consoles {
@@ -143,6 +140,23 @@ func consoleList(c *cli.Context) error {
 	}
 
 	return nil
+}
+
+func validateConsole(console string, cfg *config.CloudConfig) {
+	consoles := availableConsoles(cfg)
+	if !service.IsLocalOrURL(console) && !util.Contains(consoles, console) {
+		log.Fatalf("%s is not a valid console", console)
+	}
+}
+
+func availableConsoles(cfg *config.CloudConfig) []string {
+	consoles, err := network.GetConsoles(cfg.Rancher.Repositories.ToArray())
+	if err != nil {
+		log.Fatal(err)
+	}
+	consoles = append(consoles, "default")
+	sort.Strings(consoles)
+	return consoles
 }
 
 func currentConsole() (console string) {
