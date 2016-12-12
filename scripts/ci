@@ -14,8 +14,7 @@ echo "--- Run"
 echo "github-release release --user rancher --repo os --tag ${VERSION} --pre-release --draft"
 for file in $(ls dist/artifacts/); do
 	if [ "$file" != "installer.tar" ]; then
-		echo "github-release upload  --user rancher --repo os --tag ${VERSION} \
-			--file ./dist/kernel/${file} -name ${file}"
+		echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${file} --name ${file}"
 	fi
 done
 echo
