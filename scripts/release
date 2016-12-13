@@ -7,3 +7,7 @@ export COMPRESS="xz --format=lzma -9 --memlimit-compress=80% -e"
 export INTEGRATION_TESTS=0
 
 exec $(dirname $0)/ci
+
+# make generated changelog
+lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
+git log --format="%s: %b" ${lastrelease}..${VERSION}  | grep "Merge pull" | sed 's/.*\(#.*\) from .*:\(.*\)/* \1: \2/g' > dist/artifacts/changelog.txt
