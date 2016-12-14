@@ -26,6 +26,10 @@ do
 done
 [[ "$ARCH" == "arm" && "$ENV" != "rancher-upgrade" ]] && ENV=arm
 
+if [[ "$ENV" == "gptsyslinux" ]]; then
+    MBR_FILE="gptmbr.bin"
+fi
+
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-"${SCRIPTS_DIR}/conf/empty.yml"}
 CONSOLE=tty0
@@ -89,14 +93,14 @@ create_boot_dirs()
 
 install_syslinux() {
     dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=${DEVICE}
-    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux
+    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux/
     extlinux --install ${BASE_DIR}/${BOOT}syslinux
 }
 
 install_syslinux_raid() {
     dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=/dev/sda
     dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=/dev/sdb
-    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux
+    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux/
     extlinux --install --raid ${BASE_DIR}/${BOOT}syslinux
 }
 
@@ -205,6 +209,16 @@ if [ -n ${ENV} ]; then
         "generic")
             format_and_mount
             install_grub
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            ;;
+        "syslinux")
+            format_and_mount
+            install_syslinux
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            ;;
+        "gptsyslinux")
+            format_and_mount
+            install_syslinux
             "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
         "arm")
