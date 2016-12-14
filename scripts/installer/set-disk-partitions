@@ -33,11 +33,7 @@ fi
 dd if=/dev/zero of=${DEVICE} bs=512 count=2048
 partprobe ${DEVICE}
 
-fdisk ${DEVICE} <<EOF
-n
-p
-1
+parted -s -a optimal ${DEVICE} mklabel msdos -- \
+  mkpart primary ext4 1 -1 \
+  set 1 boot on
 
-
-w
-EOF
