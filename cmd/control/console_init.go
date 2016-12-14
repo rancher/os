@@ -52,15 +52,17 @@ func consoleInitAction(c *cli.Context) error {
 	}
 
 	password := config.GetCmdline("rancher.password")
-	cmd := exec.Command("chpasswd")
-	cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
-	}
+	if password != "" {
+		cmd := exec.Command("chpasswd")
+		cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
 
-	cmd = exec.Command("bash", "-c", `sed -E -i 's/(rancher:.*:).*(:.*:.*:.*:.*:.*:.*)$/\1\2/' /etc/shadow`)
-	if err := cmd.Run(); err != nil {
-		log.Error(err)
+		cmd = exec.Command("bash", "-c", `sed -E -i 's/(rancher:.*:).*(:.*:.*:.*:.*:.*:.*)$/\1\2/' /etc/shadow`)
+		if err := cmd.Run(); err != nil {
+			log.Error(err)
+		}
 	}
 
 	if err := setupSSH(cfg); err != nil {
@@ -92,12 +94,22 @@ func consoleInitAction(c *cli.Context) error {
 		}
 	}
 
-	cmd = exec.Command("bash", "-c", `echo 'RancherOS \n \l' > /etc/issue`)
-	if err := cmd.Run(); err != nil {
+	// font backslashes need to be escaped for when issue is output! (but not the others..)
+	if err := ioutil.WriteFile("/etc/issue", []byte(`
+               ,        , ______                 _                 _____ _____
+  ,------------|'------'| | ___ \\               | |               /  _  /  ___|
+ / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
+ \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
+   |   .________.'----'   | |\\ \\ (_| | | | | (__| | | |  __/ |    | \\_/ /\\__/ /
+   |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
+   \\___/        \\___/     \s \r
+
+         RancherOS \n \l
+         `), 0644); err != nil {
 		log.Error(err)
 	}
 
-	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
+	cmd := exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}

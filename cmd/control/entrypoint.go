@@ -45,7 +45,7 @@ func entrypointAction(c *cli.Context) error {
 		writeFiles(cfg)
 	}
 
-	setupPowerOperations()
+	setupCommandSymlinks()
 
 	if len(os.Args) < 3 {
 		return nil
@@ -77,7 +77,7 @@ func writeFiles(cfg *config.CloudConfig) error {
 	return nil
 }
 
-func setupPowerOperations() {
+func setupCommandSymlinks() {
 	for _, powerOperation := range []string{
 		"/sbin/poweroff",
 		"/sbin/shutdown",
@@ -92,6 +92,13 @@ func setupPowerOperations() {
 	}
 
 	for _, link := range []symlink{
+		{config.RosBin, "/usr/bin/cloud-init-execute"},
+		{config.RosBin, "/usr/bin/cloud-init-save"},
+		{config.RosBin, "/usr/bin/dockerlaunch"},
+		{config.RosBin, "/usr/bin/respawn"},
+		{config.RosBin, "/usr/bin/system-docker"},
+		{config.RosBin, "/usr/sbin/netconf"},
+		{config.RosBin, "/usr/sbin/wait-for-docker"},
 		{config.RosBin, "/sbin/poweroff"},
 		{config.RosBin, "/sbin/reboot"},
 		{config.RosBin, "/sbin/halt"},

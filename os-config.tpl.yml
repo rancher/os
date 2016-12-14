@@ -121,7 +121,6 @@ rancher:
       - system-volumes
       volumes:
       - /usr/bin/ros:/usr/bin/ros
-      - /usr/bin/ros:/usr/bin/cloud-init-execute
     command-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
@@ -133,14 +132,7 @@ rancher:
       privileged: true
       read_only: true
       volumes:
-      - /usr/bin/ros:/usr/bin/dockerlaunch:ro
-      - /usr/bin/ros:/usr/bin/system-docker:ro
-      - /usr/bin/ros:/usr/bin/respawn:ro
       - /usr/bin/ros:/usr/bin/ros:ro
-      - /usr/bin/ros:/usr/bin/cloud-init-execute:ro
-      - /usr/bin/ros:/usr/bin/cloud-init-save:ro
-      - /usr/bin/ros:/usr/sbin/netconf:ro
-      - /usr/bin/ros:/usr/sbin/wait-for-docker:ro
       - /usr/share/rancher:/usr/share/rancher:ro
     console:
       image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}

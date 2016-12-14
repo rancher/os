@@ -16,7 +16,9 @@ func (s *QemuSuite) TestConsoleCommand(c *C) {
 
 	s.CheckCall(c, `
 sudo ros console list | grep default | grep current
-sudo ros console list | grep debian | grep disabled`)
+sudo ros console list | grep debian | grep disabled
+(sudo ros console switch invalid 2>&1 || true) | grep "invalid is not a valid console"
+(sudo ros console enable invalid 2>&1 || true) | grep "invalid is not a valid console"`)
 
 	s.MakeCall("sudo ros console switch -f debian")
 	c.Assert(s.WaitForSSH(), IsNil)

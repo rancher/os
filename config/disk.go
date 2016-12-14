@@ -44,8 +44,8 @@ func loadRawDiskConfig(dirPrefix string, full bool) map[interface{}]interface{} 
 	return util.Merge(rawCfg, additionalCfgs)
 }
 
-func loadRawConfig(dirPrefix string) map[interface{}]interface{} {
-	rawCfg := loadRawDiskConfig(dirPrefix, true)
+func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
+	rawCfg := loadRawDiskConfig(dirPrefix, full)
 	rawCfg = util.Merge(rawCfg, readCmdline())
 	rawCfg = applyDebugFlags(rawCfg)
 	return mergeMetadata(rawCfg, readMetadata())
@@ -56,7 +56,7 @@ func LoadConfig() *CloudConfig {
 }
 
 func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
-	rawCfg := loadRawConfig(dirPrefix)
+	rawCfg := loadRawConfig(dirPrefix, true)
 
 	cfg := &CloudConfig{}
 	if err := util.Convert(rawCfg, cfg); err != nil {
