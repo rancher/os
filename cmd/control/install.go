@@ -29,7 +29,10 @@ var installCommand = cli.Command{
 		cli.StringFlag{
 			Name: "install-type, t",
 			Usage: `generic:    (Default) Creates 1 ext4 partition and installs RancherOS
-                        amazon-ebs: Installs RancherOS and sets up PV-GRUB`,
+                        amazon-ebs: Installs RancherOS and sets up PV-GRUB
+                        syslinux: partition and format disk (mbr), then install RnancherOS and setup Syslinux
+                        gptsyslinux: partition and format disk (gpt), then install RnancherOS and setup Syslinux
+                        `,
 		},
 		cli.StringFlag{
 			Name:  "cloud-config, c",
@@ -105,10 +108,19 @@ func runInstall(image, installType, cloudConfig, device, append string, force, r
 			os.Exit(1)
 		}
 	}
+	diskType := "msdos"
+	if installType == "gptsyslinux" {
+		diskType = "gpt"
+	}
 
-	if installType == "generic" {
-		cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=all-volumes",
-			"--entrypoint=/scripts/set-disk-partitions", image, device)
+	if installType == "generic" ||
+		installType == "syslinux" ||
+		installType == "gptsyslinux" {
+
+		cmd := exec.Command("system-docker", "run",
+			"--net=host", "--privileged", "--volumes-from=all-volumes",
+			"--entrypoint=/scripts/set-disk-partitions",
+			image, device, diskType)
 		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 		if err := cmd.Run(); err != nil {
 			return err
