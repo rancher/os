@@ -5,7 +5,9 @@ SCRIPTS_DIR=$(dirname ${0})
 
 VERSION=${VERSION:?"VERSION not set"}
 
-while getopts "i:f:c:d:t:r:o:p:ka:" OPTION
+MBR_FILE=mbr.bin
+
+while getopts "i:f:c:d:t:r:o:p:ka:g" OPTION
 do
     case ${OPTION} in
         i) DIST="$OPTARG" ;;
@@ -18,10 +20,15 @@ do
         k) KEXEC=y ;;
         a) APPEND="$OPTARG" ;;
         t) ENV="$OPTARG" ;;
+        g) MBR_FILE=gptmbr.bin ;;
         *) exit 1 ;;
     esac
 done
 [[ "$ARCH" == "arm" && "$ENV" != "rancher-upgrade" ]] && ENV=arm
+
+if [[ "$ENV" == "gptsyslinux" ]]; then
+    MBR_FILE="gptmbr.bin"
+fi
 
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-"${SCRIPTS_DIR}/conf/empty.yml"}
@@ -85,15 +92,15 @@ create_boot_dirs()
 }
 
 install_syslinux() {
-    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=${DEVICE}
-    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux
+    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=${DEVICE}
+    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux/
     extlinux --install ${BASE_DIR}/${BOOT}syslinux
 }
 
 install_syslinux_raid() {
-    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/sda
-    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/sdb
-    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux
+    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=/dev/sda
+    dd bs=440 count=1 if=/usr/lib/syslinux/mbr/${MBR_FILE} of=/dev/sdb
+    cp /usr/lib/syslinux/modules/bios/* ${BASE_DIR}/${BOOT}syslinux/
     extlinux --install --raid ${BASE_DIR}/${BOOT}syslinux
 }
 
@@ -204,6 +211,16 @@ if [ -n ${ENV} ]; then
             install_grub
             "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
             ;;
+        "syslinux")
+            format_and_mount
+            install_syslinux
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            ;;
+        "gptsyslinux")
+            format_and_mount
+            install_syslinux
+            "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
+            ;;
         "arm")
             format_and_mount
             "${SCRIPTS_DIR}/seed-data" ${BASE_DIR} ${CLOUD_CONFIG} ${FILES}
@@ -275,3 +292,4 @@ fi
 if [ "$KEXEC" = "y" ]; then
     kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd --append="${KERNEL_ARGS} ${APPEND}" -f
 fi
+

@@ -4,6 +4,10 @@ set -e
 set -x
 
 DEVICE=${1}
+DISKTYPE=${2}
+if [[ -z $DISKTYPE ]]; then
+	DISKTYPE="msdos"
+fi
 
 if [[ -z $DEVICE ]]; then
     echo "Need to Pass a device name as arg1." 1>&2
@@ -33,11 +37,13 @@ fi
 dd if=/dev/zero of=${DEVICE} bs=512 count=2048
 partprobe ${DEVICE}
 
-fdisk ${DEVICE} <<EOF
-n
-p
-1
+# https://www.gnu.org/software/parted/manual/html_node/set.html
+# https://wiki.archlinux.org/index.php/syslinux
+BOOTFLAG="boot"
+if [ "${DISKTYPE}" == "gpt" ]; then
+    BOOTFLAG="legacy_boot"
+fi
+parted -s -a optimal ${DEVICE} mklabel ${DISKTYPE} -- \
+  mkpart primary ext4 1 -1 \
+  set 1 ${BOOTFLAG} on
 
-
-w
-EOF
