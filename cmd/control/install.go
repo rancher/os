@@ -236,7 +236,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	log.InitLogger()
 	log.SetLevel(log.InfoLevel)
 
-	log.Infof("running installation")
+	log.Debugf("running installation")
 
 	if installType == "generic" ||
 		installType == "syslinux" ||
@@ -245,6 +245,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		if installType == "gptsyslinux" {
 			diskType = "gpt"
 		}
+		log.Debugf("running setDiskpartitions")
 		err := setDiskpartitions(device, diskType)
 		if err != nil {
 			log.Errorf("error setDiskpartitions %s", err)
@@ -254,16 +255,18 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		device = "/host" + device
 	}
 
+	log.Debugf("running mountiso?")
 	if mountiso {
 		// TODO: I hope to remove this from here later.
 		if err := mountBootIso(); err != nil {
+			log.Errorf("error mountBootIso %s", err)
 			return err
 		}
 	}
 
 	err := layDownOS(image, installType, cloudConfig, device, kappend)
 	if err != nil {
-		log.Infof("error layDownOS %s", err)
+		log.Errorf("error layDownOS %s", err)
 		return err
 	}
 
@@ -368,7 +371,7 @@ func layDownOS(image, installType, cloudConfig, device, kappend string) error {
 		var err error
 		bootDir, err = formatAndMount(baseName, bootDir, device, partition)
 		if err != nil {
-			log.Errorf("%s", err)
+			log.Errorf("formatAndMount %s", err)
 			return err
 		}
 		//log.Infof("installGrub")
@@ -377,13 +380,13 @@ func layDownOS(image, installType, cloudConfig, device, kappend string) error {
 		err = installSyslinux(device, baseName, bootDir, diskType)
 
 		if err != nil {
-			log.Errorf("%s", err)
+			log.Errorf("installSyslinux %s", err)
 			return err
 		}
 		log.Debugf("seedData")
 		err = seedData(baseName, cloudConfig, FILES)
 		if err != nil {
-			log.Errorf("%s", err)
+			log.Errorf("seedData %s", err)
 			return err
 		}
 		log.Debugf("seedData done")
@@ -572,11 +575,17 @@ func setDiskpartitions(device, diskType string) error {
 			log.Errorf("%s", err)
 			return err
 		}
+
+		// TODO: work out where to do this - it is a so-so place for it
+		if err := os.Symlink("/usr/bin/ros", "/usr/bin/system-docker"); err != nil {
+			log.Errorf("ln error %s", err)
+		}
+
 		cmd := exec.Command("system-docker", "ps", "-q")
 		var outb bytes.Buffer
 		cmd.Stdout = &outb
 		if err := cmd.Run(); err != nil {
-			log.Printf("%s", err)
+			log.Printf("ps error: %s", err)
 			return err
 		}
 		for _, image := range strings.Split(outb.String(), "\n") {
@@ -586,15 +595,17 @@ func setDiskpartitions(device, diskType string) error {
 			r, w := io.Pipe()
 			go func() {
 				// TODO: consider a timeout
+				// TODO:some of these containers don't have cat / shell
 				cmd := exec.Command("system-docker", "exec", image, "cat /proc/mount")
 				cmd.Stdout = w
 				if err := cmd.Run(); err != nil {
-					log.Errorf("%s", err)
+					log.Debugf("%s cat %s", image, err)
 				}
+				w.Close()
 			}()
 			if partitionMounted(device, r) {
 				err = fmt.Errorf("partition %s mounted in %s, cannot repartition", device, image)
-				log.Errorf("%s", err)
+				log.Errorf("k? %s", err)
 				return err
 			}
 		}
@@ -604,14 +615,14 @@ func setDiskpartitions(device, diskType string) error {
 	cmd := exec.Command("dd", "if=/dev/zero", "of="+device, "bs=512", "count=2048")
 	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Errorf("%s", err)
+		log.Errorf("dd error %s", err)
 		return err
 	}
 	log.Debugf("running partprobe")
 	cmd = exec.Command("partprobe", device)
 	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Errorf("%s", err)
+		log.Errorf("partprobe error %s", err)
 		return err
 	}
 
@@ -626,7 +637,7 @@ func setDiskpartitions(device, diskType string) error {
 		"set 1 "+bootflag+" on")
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Errorf("%s", err)
+		log.Errorf("parted: %s", err)
 		return err
 	}
 
@@ -645,7 +656,7 @@ func partitionMounted(device string, file io.Reader) bool {
 			}
 		}
 		if err := scanner.Err(); err != nil {
-			log.Errorf("%s", err)
+			log.Errorf("scanner %s", err)
 			return false
 		}
 	}
@@ -691,6 +702,7 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, error) 
 			rootfs = string(out)
 		}
 	}
+	rootfs = strings.TrimSpace(rootfs)
 
 	log.Debugf("util.Mount %s, %s", rootfs, baseName)
 	//	return bootDir, util.Mount(rootfs, baseName, "", "")
@@ -707,14 +719,17 @@ func formatAndMount(baseName, bootDir, device, partition string) (string, error)
 
 	err := formatdevice(device, partition)
 	if err != nil {
+		log.Errorf("formatdevice %s", err)
 		return bootDir, err
 	}
 	bootDir, err = mountdevice(baseName, bootDir, partition, false)
 	if err != nil {
+		log.Errorf("mountdevice %s", err)
 		return bootDir, err
 	}
 	err = createbootDirs(baseName, bootDir)
 	if err != nil {
+		log.Errorf("createbootDirs %s", err)
 		return bootDir, err
 	}
 	return bootDir, nil

@@ -65,6 +65,9 @@ while [ "$#" -gt 0 ]; do
         --fresh)
             FRESH=1
             ;;
+        --nodisplay)
+            NODISPLAY=1
+            ;;
         --installed)
             INSTALLED=1
             ;;
@@ -105,7 +108,7 @@ fi
 if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     KVM=1
 fi
-
+set -x
 if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
     HD=${BASE}/state/hd.img
     HD2=${BASE}/state/hd2.img
@@ -192,9 +195,14 @@ elif [ "$BOOT_ISO" == "1" ] ||
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home "
             echo "----- $ISO_OPTS"
     fi
+    if [ "$NODISPLAY" == "1" ]; then
+        DISPLAY_OPTS="-nographic  -serial stdio -display none"
+    else
+        DISPLAY_OPTS="-curses"
+    fi
     set -x
     exec qemu-system-${QEMUARCH} \
-            -curses \
+            ${DISPLAY_OPTS} \
             -rtc base=utc,clock=host \
             ${KVM_ENABLE} \
             ${CPU} \
