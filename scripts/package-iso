@@ -32,6 +32,7 @@ cp /usr/lib/ISOLINUX/isolinux.bin             ${CD}/boot/isolinux/
 cp /usr/lib/syslinux/modules/bios/ldlinux.c32 ${CD}/boot/isolinux/
 # add the installer image to the iso for non-network / dev/test
 cp ${ARTIFACTS}/installer.tar                 ${CD}/rancheros/
+cp ${ARTIFACTS}/Dockerfile.amd64              ${CD}/rancheros/
 gzip ${CD}/rancheros/installer.tar
 cd ${CD} && xorriso \
     -as mkisofs \

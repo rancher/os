@@ -12,7 +12,7 @@ if [ ! -f $DOCKERFILE ] || [ ! -f dist/artifacts/vmlinuz-${KERNEL_VERSION} ] || 
     exit 0
 fi
 
-# TODO maybe extract the cration of the syslinux cfg files
+# TODO maybe extract the creation of the syslinux cfg files
 mkdir -p ${DIST}/boot/isolinux/
 cat scripts/isolinux.cfg | envsubst >         ${DIST}/boot/isolinux/isolinux.cfg
 cat scripts/isolinux_label.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/linux-current.cfg
@@ -20,11 +20,8 @@ cat scripts/isolinux_label.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/linu
 cat scripts/global.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
 
 
-mkdir -p ./scripts/installer/build
-cp ./dist/artifacts/initrd ./scripts/installer/build
-cp ./dist/artifacts/vmlinuz-${KERNEL_VERSION} ./scripts/installer/build
+mkdir -p ./scripts/installer/build/boot
 cp ./bin/ros ./scripts/installer/build
-cp -r ${DIST}/boot/* ./scripts/installer/build/
 trap "rm -rf ./scripts/installer/build" EXIT
 
 # installer base image - can be included in iso
@@ -36,12 +33,16 @@ docker build \
     -f $BASEDOCKERFILE \
     ./scripts/installer
 docker save -o dist/artifacts/installer.tar ${OS_REPO}/os-installer
+cp $DOCKERFILE dist/artifacts/
 
+cp ./dist/artifacts/initrd ./scripts/installer/build/boot
+cp ./dist/artifacts/vmlinuz-${KERNEL_VERSION} ./scripts/installer/build/boot
+cp -r ${DIST}/boot/* ./scripts/installer/build/boot
+cp $DOCKERFILE ./scripts/installer/build/Dockerfile
 # Full installer image with initrd - used for pulling from network
 docker build \
     -t ${OS_REPO}/os:${VERSION}${SUFFIX} \
-    -f $DOCKERFILE \
-    ./scripts/installer
+    ./scripts/installer/build
 
 docker save -o dist/artifacts/fullinstaller.tar ${OS_REPO}/os:${VERSION}${SUFFIX}
 echo ${OS_REPO}/os:${VERSION}${SUFFIX} >> dist/images

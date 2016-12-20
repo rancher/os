@@ -117,9 +117,7 @@ func InitLogger() {
 		return
 	}
 
-	// TODO: look into containerized syslog
-	//filename := "/dev/kmsg"
-	filename := "/var/log/log"
+	filename := "/dev/kmsg"
 	f, err := os.OpenFile(filename, os.O_WRONLY, 0644)
 	if err != nil {
 		logrus.Debugf("error opening %s: %s", filename, err)

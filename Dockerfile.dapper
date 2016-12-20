@@ -10,7 +10,7 @@ RUN apt-get update && \
         dosfstools \
         gccgo \
         genisoimage \
-	gettext \
+        gettext \
         git \
         isolinux \
         less \

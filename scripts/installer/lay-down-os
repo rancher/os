@@ -16,10 +16,11 @@ do
         c) CLOUD_CONFIG="$OPTARG" ;;
         a) APPEND="$OPTARG" ;;
         g) MBR_FILE=gptmbr.bin ;;
-        # used for testing?
-        k) KEXEC=y ;;
-        p) PARTITION="$OPTARG" ;;
+	# upgrade!
         r) ROLLBACK_VERSION="$OPTARG" ;;
+        k) KEXEC=y ;;
+        # used for testing?
+        p) PARTITION="$OPTARG" ;;
         # notused?
         i) DIST="$OPTARG" ;;
         f) FILES="$OPTARG" ;;

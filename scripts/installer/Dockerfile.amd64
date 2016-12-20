@@ -4,8 +4,6 @@ FROM rancher/os-installer
 RUN rm /dist/ \
     && mkdir -p /dist/
 
-# Run docker build in the `./build/` dir
 #COPY ./ros /bin/
-#needs to be a recursive copy
-COPY ./ /dist/
+COPY ./boot/ /dist/
 

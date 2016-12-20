@@ -150,7 +150,6 @@ rancher:
       - /usr/bin/iptables:/sbin/iptables:ro
       - /media:/media:shared
       - /mnt:/mnt:shared
-      - /:/host
     container-data-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo

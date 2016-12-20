@@ -65,8 +65,9 @@ while [ "$#" -gt 0 ]; do
         --fresh)
             FRESH=1
             ;;
-        --nodisplay)
-            NODISPLAY=1
+        --console)
+	    # use the bios console, not serial (lets you see syslinux)
+            CONSOLEDISPLAY=1
             ;;
         --installed)
             INSTALLED=1
@@ -154,6 +155,13 @@ if [ "$QIND" != "1" ]; then
     HOME=${HOME:-/}
 fi
 
+if [ "$CONSOLEDISPLAY" == "1" ]; then
+    DISPLAY_OPTS="-curses"
+else
+    # default
+    DISPLAY_OPTS="-nographic -serial stdio -display none"
+fi
+
 if [ "$QEMU" == "1" ]; then
 
     if [ "$INSTALLED" == "1" ]; then
@@ -164,7 +172,7 @@ if [ "$QEMU" == "1" ]; then
     fi
     set -x
     exec qemu-system-${QEMUARCH} \
-            -serial stdio \
+            ${DISPLAY_OPTS} \
             -rtc base=utc,clock=host \
             ${INSTALLED_ARGS} \
             -append "${KERNEL_ARGS}" \
@@ -176,8 +184,6 @@ if [ "$QEMU" == "1" ]; then
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
-            -nographic \
-            -display none \
             -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
             -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
@@ -194,11 +200,6 @@ elif [ "$BOOT_ISO" == "1" ] ||
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home "
             echo "----- $ISO_OPTS"
-    fi
-    if [ "$NODISPLAY" == "1" ]; then
-        DISPLAY_OPTS="-nographic  -serial stdio -display none"
-    else
-        DISPLAY_OPTS="-curses"
     fi
     set -x
     exec qemu-system-${QEMUARCH} \
