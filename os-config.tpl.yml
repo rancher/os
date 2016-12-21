@@ -78,7 +78,7 @@ rancher:
     {{if eq "amd64" .ARCH -}}
     acpid:
       image: {{.OS_REPO}}/os-acpid:{{.VERSION}}{{.SUFFIX}}
-      command: /usr/sbin/acpid -f
+      command: acpid -f
       labels:
         io.rancher.os.scope: system
       net: host
