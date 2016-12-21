@@ -1,43 +1,50 @@
-FROM rancher/os-rootfs
-RUN ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules
-# Cleanup Buildroot
-RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
-    sed -i '/^root/s!/bin/sh!/bin/bash!' /etc/passwd && \
-    echo 'RancherOS \n \l' > /etc/issue && \
-    rm -rf /run \
-       /linuxrc \
-       /etc/os-release \
-       /var/cache \
-       /var/lock \
-       /var/log \
-       /var/run \
-       /var/spool \
-       /var/lib/misc && \
-    mkdir -p \
-       /home \
-       /run \
-       /var/cache \
-       /var/lock \
-       /var/log \
-       /var/run \
-       /var/spool && \
-    passwd -l root && \
-    addgroup -g 1100 rancher && \
+FROM stratopkg/strato-min:0.0.1
+RUN wget -P /sbin https://github.com/joshwget/strato/releases/download/0.0.1/strato \
+    && chmod +x /sbin/strato \
+    && strato add bash \
+    openssh \
+    zlib \
+    e2fsprogs \
+    util-linux%agetty \
+    util-linux%partx \
+    util-linux%libuuid \
+    util-linux%libblkid \
+    kmod \
+    xz \
+    iproute2 \
+    dhcpcd \
+    eudev \
+    jq \
+    acpi \
+    rsync \
+    libestr \
+    json-c \
+    rsyslog \
+    sudo \
+    parted \
+    ntp \
+    && rm /sbin/strato
+
+RUN mkdir -p /etc/acpi
+RUN rm -rf /etc/ssh/*key*
+
+RUN addgroup -g 1100 rancher && \
     addgroup -g 1101 docker && \
     addgroup -g 1103 sudo && \
     adduser -u 1100 -G rancher -D -h /home/rancher -s /bin/bash rancher && \
     adduser -u 1101 -G docker -D -h /home/docker -s /bin/bash docker && \
     adduser rancher docker && \
     adduser rancher sudo && \
+    adduser rancher input && \
     adduser docker sudo && \
+    adduser docker input && \
     echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
+
 COPY inputrc /etc/inputrc
 COPY growpart /usr/bin/growpart
+
+# TODO: rebase this properly
 RUN sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
-    sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
-    sed -i 1,10d /etc/rsyslog.conf && \
-    echo "*.*                /var/log/syslog" >> /etc/rsyslog.conf
-# dump kernel log to console (but after we've finished booting)
-#    echo "kern.*                /dev/console" >> /etc/rsyslog.conf
+    sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf
 
 ENTRYPOINT ["/usr/bin/ros", "entrypoint"]
