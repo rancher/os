@@ -1,0 +1,64 @@
+#!/usr/bin/expect -f
+
+# set Variables
+# /home/sven/.docker/machine/machines/sven-test/id_rsa
+set sshkey [lrange $argv 0 0]
+# 718feb0e-1517-4f92-a6fa-2ee089cf12e4@sos.ewr1.packet.net
+set sshurl [lrange $argv 1 1] 
+
+set username [lrange $argv 2 2] 
+set password [lrange $argv 3 3]
+set command ""
+append command [lrange $argv 4 end]
+
+
+set timeout -1
+
+proc runcmd { username password cmd } {
+	send_user "<< username: $username"
+	send_user "<< password: $password"
+	send_user "<< cmd: $cmd"
+
+	set done 0;
+	while {$done == 0} {
+		expect  {
+			"*?login:" {
+				send -- "$username\r"
+			}
+			"*?assword:" {
+				send -- "$password\r"
+				#send -- "\r"
+			}
+			"*?:~#" {
+				send -- "$cmd\r"
+				set done 1
+			}
+			"*?Reached target Shutdown." {
+				set done 1
+			}
+		}
+	}
+}
+
+
+spawn ssh -F /dev/null -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=quiet -o ConnectionAttempts=3 -o ConnectTimeout=10 -o ControlMaster=no -o ControlPath=none -i $sshkey $sshurl
+match_max 100000
+send -- "\r"
+
+set running [ runcmd $username $password $command ]
+
+expect {
+	"*? (yes/no)?" {
+		send -- "no\r"
+		expect "# "
+	}
+	"# " {
+	}
+	"*?Restarting system" {
+	}
+	"*?kexec_core: Starting new kernel" {
+	}
+}
+
+send_user "<< DONE expect"
+send_user "<<"

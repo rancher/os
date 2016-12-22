@@ -125,7 +125,9 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
     fi
 
     if [ "$SECOND_DRIVE" == "1" ]; then
-        qemu-img create -f qcow2 -o size=10G ${HD2}
+        if [ "$FRESH" == "1" ]; then
+            qemu-img create -f qcow2 -o size=10G ${HD2}
+        fi
         SECOND_DRIVE_ENABLE=$(eval "${hd["$ARCH"]} ${HD2}")
     fi
 fi
