@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"time"
 
 	. "gopkg.in/check.v1"
@@ -12,8 +13,11 @@ func (s *QemuSuite) TestInstallMsDosMbr(c *C) {
 		"--iso",
 		"--fresh",
 	}
+	version := ""
 	{
 		s.RunQemuWith(c, runArgs...)
+		version = s.CheckOutput(c, version, Not(Equals), "sudo ros -v")
+		fmt.Printf("installing %s", version)
 
 		s.CheckCall(c, `
 echo "---------------------------------- generic"
@@ -34,7 +38,7 @@ sync
 	}
 	s.RunQemuWith(c, runArgs...)
 
-	s.CheckCall(c, "sudo ros -v")
+	s.CheckOutput(c, version, Equals, "sudo ros -v")
 	s.Stop(c)
 }
 
@@ -44,10 +48,12 @@ func (s *QemuSuite) TestInstallGptMbr(c *C) {
 		"--iso",
 		"--fresh",
 	}
+	version := ""
 	{
 		s.RunQemuWith(c, runArgs...)
 
-		s.CheckCall(c, "sudo ros -v") // sha from latest.
+		version = s.CheckOutput(c, version, Not(Equals), "sudo ros -v")
+		fmt.Printf("installing %s", version)
 
 		s.CheckCall(c, `
 echo "---------------------------------- gptsyslinux"
@@ -68,7 +74,7 @@ sync
 	}
 	s.RunQemuWith(c, runArgs...)
 
-	s.CheckCall(c, "sudo ros -v")
+	s.CheckOutput(c, version, Equals, "sudo ros -v")
 	// TEST parted output? (gpt non-uefi == legacy_boot)
 	s.Stop(c)
 }
@@ -81,10 +87,12 @@ func (s *QemuSuite) TestUpgradeFromImage(c *C) {
 		"--iso",
 		"--fresh",
 	}
+	version := ""
 	{
 		s.RunQemuWith(c, runArgs...)
 
-		s.CheckCall(c, "sudo ros -v") // sha
+		version = s.CheckOutput(c, version, Not(Equals), "sudo ros -v")
+		fmt.Printf("running %s", version)
 		s.CheckCall(c, "sudo uname -a")
 		//TODO: detect "last release, and install that
 		s.CheckCall(c, `
@@ -115,7 +123,7 @@ sync
 		}
 		s.RunQemuWith(c, runArgs...)
 
-		s.CheckCall(c, "sudo ros -v") // v0.7.1
+		s.CheckOutput(c, "ros version v0.7.1\n", Equals, "sudo ros -v")
 		s.CheckCall(c, "sudo uname -a")
 
 		// load the installer.tar.gz, get the other install files into an image, and runit.
@@ -136,7 +144,7 @@ sync
 	}
 	s.RunQemuWith(c, runArgs...)
 
-	s.CheckCall(c, "sudo ros -v") // whatever sha we had in iso boot
+	s.CheckOutput(c, version, Equals, "sudo ros -v")
 	s.CheckCall(c, "sudo uname -a")
 	s.Stop(c)
 }

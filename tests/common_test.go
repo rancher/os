@@ -132,20 +132,30 @@ func (s *QemuSuite) WaitForSSH() error {
 	return fmt.Errorf("Failed to check Docker version: %v", err)
 }
 
-func (s *QemuSuite) MakeCall(additionalArgs ...string) error {
+func (s *QemuSuite) MakeCall(additionalArgs ...string) (string, error) {
 	sshArgs := []string{
 		"--qemu",
 	}
 	sshArgs = append(sshArgs, additionalArgs...)
 
 	cmd := exec.Command(s.sshCommand, sshArgs...)
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := cmd.Output()
+	str := string(out)
+	fmt.Println(str)
+	return str, err
 }
 
 func (s *QemuSuite) CheckCall(c *C, additionalArgs ...string) {
-	c.Assert(s.MakeCall(additionalArgs...), IsNil)
+	_, err := s.MakeCall(additionalArgs...)
+	c.Assert(err, IsNil)
+}
+
+func (s *QemuSuite) CheckOutput(c *C, result string, check Checker, additionalArgs ...string) string {
+	out, err := s.MakeCall(additionalArgs...)
+	c.Assert(err, IsNil)
+	c.Assert(out, check, result)
+	return out
 }
 
 func (s *QemuSuite) Stop(c *C) {
