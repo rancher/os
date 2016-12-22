@@ -1,5 +1,7 @@
-FROM stratopkg/strato-min:0.0.1
-RUN wget -P /sbin https://github.com/joshwget/strato/releases/download/0.0.1/strato \
+FROM strato-min
+# FROM amd64=stratopkg/strato-min:0.0.1 arm64=stratopkg/strato-min:0.0.1_arm64 arm=skip
+
+RUN wget -O /sbin/strato "https://github.com/joshwget/strato/releases/download/0.0.1/strato_$(get-arch)" \
     && chmod +x /sbin/strato \
     && strato add bash \
     openssh \
