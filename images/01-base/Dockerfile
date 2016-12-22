@@ -29,6 +29,8 @@ RUN wget -O /sbin/strato "https://github.com/joshwget/strato/releases/download/0
 
 RUN mkdir -p /etc/acpi
 RUN rm -rf /etc/ssh/*key*
+RUN sed -i s/"\/bin\/ash"/"\/bin\/bash"/g /etc/passwd \
+    && rm /bin/sh && ln -s /bin/bash /bin/sh
 
 RUN addgroup -g 1100 rancher && \
     addgroup -g 1101 docker && \
