@@ -7,10 +7,10 @@ RUN wget -O /sbin/strato "https://github.com/joshwget/strato/releases/download/0
     openssh \
     zlib \
     e2fsprogs \
-    util-linux%agetty \
-    util-linux%partx \
-    util-linux%libuuid \
-    util-linux%libblkid \
+    util-linux#agetty \
+    util-linux#partx \
+    util-linux#libuuid \
+    util-linux#libblkid \
     kmod \
     xz \
     iproute2 \
