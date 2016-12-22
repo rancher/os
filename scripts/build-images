@@ -11,6 +11,8 @@ mkdir -p dist
 rm -f dist/images
 touch dist/images
 
+docker rmi stratopkg/strato-min:0.0.1
+
 for i in $BASE/[0-9]*; do
     name="os-$(echo ${i} | cut -f2 -d-)"
     tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
