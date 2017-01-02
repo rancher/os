@@ -1,16 +1,16 @@
-FROM strato-min
-# FROM amd64=stratopkg/strato-min:0.0.1 arm64=stratopkg/strato-min:0.0.1_arm64 arm=skip
+FROM joshwget/strato-min:0.0.2
+# FROM amd64=joshwget/strato-min:0.0.2 arm64=joshwget/strato-min:0.0.2_arm64 arm=skip
 
-RUN wget -O /sbin/strato "https://github.com/joshwget/strato/releases/download/0.0.1/strato_$(get-arch)" \
+RUN wget -O /sbin/strato "https://github.com/joshwget/strato/releases/download/0.0.2/strato_$(get-arch)" \
     && chmod +x /sbin/strato \
-    && strato add bash \
+    && strato --source="https://github.com/joshwget/strato-packages/raw/master/0.0.2/$(get-arch)/" add bash \
     openssh \
     zlib \
     e2fsprogs \
-    util-linux#agetty \
-    util-linux#partx \
-    util-linux#libuuid \
-    util-linux#libblkid \
+    agetty \
+    partx \
+    libuuid \
+    libblkid \
     kmod \
     xz \
     iproute2 \
