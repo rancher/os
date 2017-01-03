@@ -1,3 +1,5 @@
+With fully supported BTRFS, LVM2, cryptsetup/LUKS with SSH remote unlock out of the box (for state (root) partition as well) and some other features/improvements (like state and OEM partition mount options, SSH public key as kernel arg) which are all on PR stage of merging with original [Rancher OS](https://github.com/rancher/os) (e.g. [#1465](https://github.com/rancher/os/pull/1465), [#1439](https://github.com/rancher/os/pull/1439) )
+
 # RancherOS
 
 The smallest, easiest way to run Docker in production at scale.  Everything in RancherOS is a container managed by Docker.  This includes system services such as udev and rsyslog.  RancherOS includes only the bare minimum amount of software needed to run Docker.  This keeps the binary download of RancherOS very small.  Everything else can be pulled in dynamically through Docker.
