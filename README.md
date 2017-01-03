@@ -1,4 +1,4 @@
-With fully supported BTRFS, LVM2, cryptsetup/LUKS with SSH remote unlock out of the box (for state (root) partition as well) and some other features/improvements (like state and OEM partition mount options, SSH public key as kernel arg) which are all on PR stage of merging with original [Rancher OS](https://github.com/rancher/os) (e.g. [#1465](https://github.com/rancher/os/pull/1465), [#1439](https://github.com/rancher/os/pull/1439) )
+With fully supported BTRFS, XFS, LVM2, cryptsetup/LUKS with SSH remote unlock out of the box (for state (root) partition as well) and some other features/improvements (like state and OEM partition mount options, SSH public key as kernel arg) which are all on PR stage of merging with original [Rancher OS](https://github.com/rancher/os) (e.g. [#1465](https://github.com/rancher/os/pull/1465), [#1439](https://github.com/rancher/os/pull/1439), [39](https://github.com/rancher/os-base/pull/39)). Most of above features works perfectly for few months in production in my projects. Hope to find time to add LVM thin provisioning support and ZFS ouf of the box including for state (root) partition as well
 
 # RancherOS
 
