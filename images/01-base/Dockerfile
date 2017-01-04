@@ -25,6 +25,7 @@ RUN wget -O /sbin/strato "https://github.com/joshwget/strato/releases/download/0
     sudo \
     parted \
     ntp \
+    iptables \
     && rm /sbin/strato
 
 RUN mkdir -p /etc/acpi
