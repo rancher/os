@@ -1,17 +1,23 @@
-#!/bin/bash
-set -e
+#!/bin/bash -e
+
+is_not_a_valid() {
+   local target=$1
+   [ ! -x "$target" ] || [ ! -f "$target" ]
+}
+
+get_help_statement_for() {
+   local target=$1
+   grep '^# help:' $target | sed 's/# help://'
+}
 
 cd $(dirname $0)
+echo "Targets:"
 
-echo Targets:
-
-for i in *; do
-    if [ ! -x $i ] || [ ! -f $i ]; then
-        continue
-    fi
-
-    MSG=$(grep '^# help:' $i)
-    if [ -n "$MSG" ]; then
-        echo "   " ${i}: $(echo $MSG | sed 's/# help://')
-    fi
+for target in *; do
+   is_not_a_valid $target && continue
+   help_statement=$(get_help_statement_for $target)
+   if [ -n "$help_statement" ]; then
+      echo -e "   $target: $help_statement"
+   fi
 done
+
