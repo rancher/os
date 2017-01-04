@@ -26,14 +26,7 @@ func mountProc() error {
 	return nil
 }
 
-func Mount(device, directory, fsType string, options_i interface{}) error {
-	options := ""
-        switch options_cast := options_i.(type) {
-	case string:
-		options = options_cast
-	case []string:
-		options = strings.Join(options_cast, ",")
-        }
+func Mount(device, directory, fsType string, options ...string) error {
 	if err := mountProc(); err != nil {
 		return nil
 	}
@@ -45,5 +38,5 @@ func Mount(device, directory, fsType string, options_i interface{}) error {
 		}
 	}
 
-	return mount.Mount(device, directory, fsType, options)
+	return mount.Mount(device, directory, fsType, strings.Join(options, ","))
 }
