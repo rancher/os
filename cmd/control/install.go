@@ -30,8 +30,8 @@ var installCommand = cli.Command{
 			Name: "install-type, t",
 			Usage: `generic:    (Default) Creates 1 ext4 partition and installs RancherOS
                         amazon-ebs: Installs RancherOS and sets up PV-GRUB
-                        syslinux: partition and format disk (mbr), then install RnancherOS and setup Syslinux
-                        gptsyslinux: partition and format disk (gpt), then install RnancherOS and setup Syslinux
+                        syslinux: partition and format disk (mbr), then install RancherOS and setup Syslinux
+                        gptsyslinux: partition and format disk (gpt), then install RancherOS and setup Syslinux
                         `,
 		},
 		cli.StringFlag{
