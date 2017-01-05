@@ -11,7 +11,7 @@ import (
 )
 
 func bootstrapServices(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	if (len(cfg.Rancher.State.Autoformat) == 0 || util.ResolveDevice(cfg.Rancher.State.Dev) != "") && len(cfg.Bootcmd) == 0 {
+	if util.ResolveDevice(cfg.Rancher.State.Dev) != "" && len(cfg.Bootcmd) == 0 {
 		return cfg, nil
 	}
 	log.Info("Running Bootstrap")
