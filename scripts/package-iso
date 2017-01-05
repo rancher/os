@@ -10,7 +10,6 @@ ISO=${ARTIFACTS}/$(echo ${DISTRIB_ID} | tr '[:upper:]' '[:lower:]').iso
 CHECKSUM=iso-checksums.txt
 
 mkdir -p ${CD}/boot/isolinux
-mkdir -p ${CD}/boot/isolinux
 
 if [ ! -f ${ARTIFACTS}/vmlinuz ] || [ ! -f ${ARTIFACTS}/initrd ]; then
     exit 0
