@@ -27,6 +27,14 @@ func (s *StringandSlice) UnmarshalYAML(tag string, value interface{}) error {
 	return nil
 }
 
+/*func (s *StringandSlice) MarshalYAML() (interface{}, error) {
+	ulimitMap := make(map[string]Ulimit)
+	for _, ulimit := range u.Elements {
+		ulimitMap[ulimit.Name] = ulimit
+	}
+	return ulimitMap, nil
+}*/
+
 // TODO: use this function from libcompose
 func toStrings(s []interface{}) ([]string, error) {
 	if len(s) == 0 {

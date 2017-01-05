@@ -1,11 +1,15 @@
 package config
 
 import (
+	"regexp"
+	"strconv"
+
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/log"
 
 	"strings"
 
+	"github.com/fatih/structs"
 	"github.com/rancher/os/util"
 )
 
@@ -82,7 +86,7 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 		// Reached end, set the value
 		if last && value != nil {
 			if s, ok := value.(string); ok {
-				value = unmarshalOrReturnString(s)
+				value = dummyUnmarshall(s)
 			}
 
 			t[part] = value
@@ -113,7 +117,32 @@ func getOrSetVal(args string, data map[interface{}]interface{}, value interface{
 		t = newData
 	}
 
-	return "", tData
+	return nil, tData
+}
+
+func checkTypeAndSetVal(args string, data map[interface{}]interface{}, value interface{}) map[interface{}]interface{} {
+	if getFieldType(args, &CloudConfig{}) == "slice" {
+		prevValue, _ := getOrSetVal(args, data, nil)
+		prevSlice, ok := prevValue.([]interface{})
+		var newVal []interface{}
+		if ok {
+			newVal = prevSlice
+		}
+		switch v := value.(type) {
+		case []interface{}:
+			newVal = append(newVal, v...)
+		case []string:
+			for _, s := range v {
+				newVal = append(newVal, s)
+			}
+		case string:
+			newVal = append(newVal, v)
+		}
+		_, data = getOrSetVal(args, data, newVal)
+	} else {
+		_, data = getOrSetVal(args, data, value)
+	}
+	return data
 }
 
 // Replace newlines and colons with random strings
@@ -154,43 +183,90 @@ func unmarshalOrReturnString(value string) (result interface{}) {
 	return
 }
 
+func dummyUnmarshall(value string) interface{} {
+	if value == "true" {
+		return true
+	} else if value == "false" {
+		return false
+	} else if ok, _ := regexp.MatchString("^[0-9]+$", value); ok {
+		i, err := strconv.ParseInt(value, 10, 64)
+		if err == nil {
+			return i
+		}
+	}
+	return value
+}
+
+type Field interface {
+	Fields() []*structs.Field
+	FieldOk(string) (*structs.Field, bool)
+}
+
+func getFieldNameByTag(field Field, name string) *structs.Field {
+	for _, currentField := range field.Fields() {
+		currentName := currentField.Name()
+		tagSplit := strings.Split(currentField.Tag("yaml"), ",")
+		if len(tagSplit) > 0 && tagSplit[0] != "" {
+			currentName = tagSplit[0]
+		}
+		if currentName == name {
+			finalField, ok := field.FieldOk(currentField.Name())
+			if !ok {
+				return nil
+			}
+			return finalField
+		}
+	}
+	return nil
+}
+
+// Too slow
+func getFieldType(args string, obj interface{}) string {
+	fields := strings.Split(args, ".")
+
+	if len(fields) < 1 {
+		return ""
+	}
+
+	s := structs.New(obj)
+	currentField := getFieldNameByTag(s, fields[0])
+	if currentField == nil {
+		return ""
+	}
+
+	for _, field := range fields[1:] {
+		currentField = getFieldNameByTag(currentField, field)
+		if currentField == nil {
+			return ""
+		}
+	}
+
+	return currentField.Kind().String()
+}
+
 func parseCmdline(cmdLine string) map[interface{}]interface{} {
 	result := make(map[interface{}]interface{})
 
-outer:
 	for _, part := range strings.Split(cmdLine, " ") {
 		if !strings.HasPrefix(part, "rancher.") {
 			continue
 		}
 
-		var value string
+		var value interface{}
 		kv := strings.SplitN(part, "=", 2)
 
 		if len(kv) == 1 {
-			value = "true"
+			value = true
 		} else {
+			val := kv[1]
+			if len(val) > 2 && val[0] == '[' && val[len(val)-1] == ']' {
+				// Read legacy array format
+				_, result = getOrSetVal(kv[0], result, unmarshalOrReturnString(val))
+				continue
+			}
 			value = kv[1]
 		}
-
-		current := result
-		keys := strings.Split(kv[0], ".")
-		for i, key := range keys {
-			if i == len(keys)-1 {
-				current[key] = unmarshalOrReturnString(value)
-			} else {
-				if obj, ok := current[key]; ok {
-					if newCurrent, ok := obj.(map[interface{}]interface{}); ok {
-						current = newCurrent
-					} else {
-						continue outer
-					}
-				} else {
-					newCurrent := make(map[interface{}]interface{})
-					current[key] = newCurrent
-					current = newCurrent
-				}
-			}
-		}
+		result = checkTypeAndSetVal(kv[0], result, value)
 	}
 
 	log.Debugf("Input obj %v", result)

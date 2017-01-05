@@ -53,7 +53,7 @@ fi`)
 	s.CheckCall(c, `
 set -x -e
 
-sudo ros config set rancher.network.dns.search '[a,b]'
+sudo ros config set rancher.network.dns.search a b
 if [ "$(sudo ros config get rancher.network.dns.search)" == "- a
  - b
 
@@ -62,12 +62,12 @@ if [ "$(sudo ros config get rancher.network.dns.search)" == "- a
     exit 1
  fi
 
-sudo ros config set rancher.network.dns.search '[]'
-if [ "$(sudo ros config get rancher.network.dns.search)" == "[]
- " ]; then
-    sudo ros config get rancher.network.dns.search
-    exit 1
- fi`)
+#sudo ros config set rancher.network.dns.search '[]'
+#if [ "$(sudo ros config get rancher.network.dns.search)" == "[]
+# " ]; then
+#    sudo ros config get rancher.network.dns.search
+#    exit 1
+# fi`)
 
 	s.CheckCall(c, `
 set -x -e
