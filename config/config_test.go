@@ -148,15 +148,15 @@ func TestParseCmdline(t *testing.T) {
 
 	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
-			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config"},
+			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config?a=b"},
 		},
-	}, parseCmdline("rancher.strArray=[\"url:http://192.168.1.100/cloud-config\"]"))
+	}, parseCmdline("rancher.strArray=[\"url:http://192.168.1.100/cloud-config?a=b\"]"))
 
 	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
-			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config"},
+			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config?a=b"},
 		},
-	}, parseCmdline("rancher.strArray=[url:http://192.168.1.100/cloud-config]"))
+	}, parseCmdline("rancher.strArray=[url:http://192.168.1.100/cloud-config?a=b]"))
 }
 
 func TestGet(t *testing.T) {
