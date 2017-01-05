@@ -76,3 +76,25 @@ If you don't want to automatically switch Docker engines, you can also set which
 ```
 $ sudo ros engine enable docker-1.10.3
 ```
+
+## Using a Custom Version of Docker
+
+If you're using a version of Docker that isn't available by default or a custom build of Docker then you can create a custom Docker image and service file to distribute it.
+
+Docker engine images are built by adding the binaries to a folder named `engine` and then adding this folder to a `FROM scratch` image. For example, the following Dockerfile will build a Docker engine image.
+
+```
+FROM scratch
+COPY engine /engine
+```
+
+Once the image is built a [system service]({{site.baseurl}}/os/system-services/adding-system-services/) configuration file must be created. An [example file](https://github.com/rancher/os-services/blob/master/d/docker-1.12.3.yml) can be found in the rancher/os-services repo. Change the `image` field to point to the Docker engine image you've built.
+
+All of the previously mentioned methods of switching Docker engines are now available. For example, if your service file is located at `https://myservicefile` then the following cloud-config file could be used to use your custom Docker engine.
+
+```
+#cloud-config
+rancher:
+  docker:
+    engine: https://myservicefile
+```
