@@ -14,6 +14,7 @@ do
         f) FILES="$OPTARG" ;;
         c) CLOUD_CONFIG="$OPTARG" ;;
         d) DEVICE="$OPTARG" ;;
+        s) FILE_SYSTEM_TYPE="$OPTARG" ;;
         o) OEM="$OPTARG" ;;
         p) PARTITION="$OPTARG" ;;
         r) ROLLBACK_VERSION="$OPTARG" ;;
@@ -38,6 +39,7 @@ BOOT=boot/
 # TODO: Change this to a number so that users can specify.
 # Will need to make it so that our builds and packer APIs remain consistent.
 PARTITION=${PARTITION:=${DEVICE}1}
+FILE_SYSTEM_TYPE={$FILE_SYSTEM_TYPE:-ext4}
 KERNEL_ARGS="rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=${CONSOLE}"
 
 device_defined()
@@ -51,7 +53,10 @@ device_defined()
 format_device()
 {
     device_defined ${DEVICE}
-    mkfs.ext4 -F -i 4096 -L RANCHER_STATE ${PARTITION}
+    case ${FILE_SYSTEM_TYPE} in
+       btrfs) mkfs.btrfs -f         -L RANCHER_STATE ${PARTITION} ;;
+       xfs)   mkfs.xfs   -f -i 4096 -L RANCHER_STATE ${PARTITION} ;;
+       *)     mkfs.ext4  -F -i 4096 -L RANCHER_STATE ${PARTITION} ;;
 }
 
 get_dev()
