@@ -92,6 +92,8 @@ partprobe || true
 echo -e "a\n1\nw" | fdisk ${DEV_PREFIX}a || true
 partprobe || true
 
+wait_for_dev ${DEV_PREFIX}a1 ${DEV_PREFIX}a5 ${DEV_PREFIX}a6 ${DEV_PREFIX}a7
+
 if [ "$RAID" = "true" ]; then
     sfdisk --dump ${DEV_PREFIX}a | sfdisk --no-reread ${DEV_PREFIX}b
 
