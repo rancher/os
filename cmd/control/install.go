@@ -42,6 +42,10 @@ var installCommand = cli.Command{
 			Name:  "device, d",
 			Usage: "storage device",
 		},
+		cli.StringFlag{
+                        Name:  "file-system-type, s",
+                        Usage: "ext4 or btrfs",
+                },
 		cli.BoolFlag{
 			Name:  "force, f",
 			Usage: "[ DANGEROUS! Data loss can happen ] partition/format without prompting",
@@ -64,6 +68,12 @@ func installAction(c *cli.Context) error {
 	device := c.String("device")
 	if device == "" {
 		log.Fatal("Can not proceed without -d <dev> specified")
+	}
+
+	fileSystemType := c.String("file-system-type")
+	if fileSystemType == "" {
+		log.Info("No file system specified...defaulting to ext4")
+		fileSystemType = "ext4"
 	}
 
 	image := c.String("image")
@@ -93,14 +103,14 @@ func installAction(c *cli.Context) error {
 	force := c.Bool("force")
 	reboot := !c.Bool("no-reboot")
 
-	if err := runInstall(image, installType, cloudConfig, device, append, force, reboot); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, fileSystemType, append, force, reboot); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 	}
 
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, append string, force, reboot bool) error {
+func runInstall(image, installType, cloudConfig, device, fileSystemType, append string, force, reboot bool) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -127,7 +137,7 @@ func runInstall(image, installType, cloudConfig, device, append string, force, r
 		}
 	}
 	cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes",
-		"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig, "-a", append)
+		"--volumes-from=command-volumes", image, "-d", device, "-s", fileSystemType, "-t", installType, "-c", cloudConfig, "-a", append)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		return err

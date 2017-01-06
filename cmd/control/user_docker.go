@@ -20,6 +20,7 @@ import (
 	rosDocker "github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
+	"github.com/docker/docker/daemon/graphdriver"
 )
 
 const (
@@ -47,6 +48,24 @@ func userDockerAction(c *cli.Context) error {
 	}
 
 	cfg := config.LoadConfig()
+
+	if cfg.Rancher.Docker.StorageDriver == "" {
+		if cfg.Rancher.Docker.Graph == "" {
+			cfg.Rancher.Docker.Graph =  "/var/lib/docker"
+		}
+
+		fsMagic, err := graphdriver.GetFSMagic(cfg.Rancher.Docker.Graph)
+		if err == nil {
+			switch fsMagic {
+			case graphdriver.FsMagicBtrfs:
+				cfg.Rancher.Docker.StorageDriver = "btrfs"
+			case graphdriver.FsMagicZfs:
+				cfg.Rancher.Docker.StorageDriver = "zfs"
+			default:
+				cfg.Rancher.Docker.StorageDriver = "overlay"
+			}
+		}
+	}
 
 	return startDocker(cfg)
 }

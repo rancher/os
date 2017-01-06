@@ -148,6 +148,19 @@ var schema = `{
       }
     },
 
+    "nbd_config": {
+      "id": "#/definitions/nbd_config",
+      "type": "object",
+      "additionalProperties": false,
+
+      "properties": {
+        "host": {"type": "string"},
+        "port": {"type": "integer"},
+        "name": {"type": "string"},
+        "block_size": {"type": "integer"}
+      }
+    },
+
     "state_config": {
       "id": "#/definitions/state_config",
       "type": "object",
@@ -157,13 +170,19 @@ var schema = `{
         "directory": {"type": "string"},
         "fstype": {"type": "string"},
         "dev": {"type": "string"},
+        "opt": {"$ref": "#/definitions/list_of_strings"},
         "wait": {"type": "boolean"},
         "required": {"type": "boolean"},
         "autoformat": {"$ref": "#/definitions/list_of_strings"},
         "mdadm_scan": {"type": "boolean"},
+        "lvm_scan": {"type": "boolean"},
+        "net_conf": {"type": "boolean"},
+        "nbd_conf": {"$ref": "#/definitions/nbd_config"},
+        "decrypt": {"type": "boolean"},
         "script": {"type": "string"},
         "oem_fstype": {"type": "string"},
         "oem_dev": {"type": "string"}
+        "oem_opt": {"$ref": "#/definitions/list_of_strings"},
       }
     },
 

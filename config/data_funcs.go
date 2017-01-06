@@ -2,6 +2,7 @@ package config
 
 import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	shellwords "github.com/mattn/go-shellwords"
 	"github.com/rancher/os/log"
 
 	"strings"
@@ -156,15 +157,19 @@ func unmarshalOrReturnString(value string) (result interface{}) {
 
 func parseCmdline(cmdLine string) map[interface{}]interface{} {
 	result := make(map[interface{}]interface{})
+	params, err := shellwords.Parse(cmdLine)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err, "cmdline": cmdLine}).Error("Failed to parse kernel params")
+		return result
+	}
 
 outer:
-	for _, part := range strings.Split(cmdLine, " ") {
+	for _, part := range params {
 		if strings.HasPrefix(part, "cc.") {
 			part = part[3:]
 		} else if !strings.HasPrefix(part, "rancher.") {
 			continue
 		}
-
 		var value string
 		kv := strings.SplitN(part, "=", 2)
 

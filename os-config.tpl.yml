@@ -22,7 +22,10 @@ rancher:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
       log_driver: json-file
-      net: none
+      net: host
+      uts: host
+      pid: host
+      ipc: host
       privileged: true
       volumes:
       - /dev:/host/dev
@@ -30,6 +33,8 @@ rancher:
       - /lib/firmware:/lib/firmware
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/share/ros:/usr/share/ros:ro
+      - /usr/bin/ros:/usr/bin/respawn:ro
+      - /usr/bin/ros:/usr/sbin/netconf:ro
   cloud_init_services:
     cloud-init:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
@@ -55,7 +60,6 @@ rancher:
       - /var/lib/rancher/conf:/var/lib/rancher/conf
   bootstrap_docker:
     bridge: none
-    storage_driver: overlay
     restart: false
     graph: /var/lib/system-docker
     group: root
@@ -305,7 +309,6 @@ rancher:
       - /var/lib/system-docker:/var/lib/system-docker:shared
   system_docker:
     exec: true
-    storage_driver: overlay
     restart: false
     graph: /var/lib/system-docker
     group: root
@@ -326,7 +329,6 @@ rancher:
     {{else -}}
     engine: docker-1.11.2
     {{end -}}
-    storage_driver: overlay
     group: docker
     host: ["unix:///var/run/docker.sock"]
     log_opts:
