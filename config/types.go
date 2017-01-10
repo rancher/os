@@ -204,7 +204,8 @@ type DNSConfig struct {
 }
 
 type SSHConfig struct {
-	Keys map[string]string `yaml:"keys,omitempty"`
+	Keys    map[string]string `yaml:"keys,omitempty"`
+	Disable bool              `yaml:"disable,omitempty"`
 }
 
 type StateConfig struct {

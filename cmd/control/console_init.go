@@ -69,7 +69,7 @@ func consoleInitAction(c *cli.Context) error {
 		log.Error(err)
 	}
 
-	if err := writeRespawn(); err != nil {
+	if err := writeRespawn(cfg); err != nil {
 		log.Error(err)
 	}
 
@@ -141,7 +141,7 @@ func consoleInitAction(c *cli.Context) error {
 	return syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ())
 }
 
-func generateRespawnConf(cmdline string) string {
+func generateRespawnConf(cmdline string, sshd bool) string {
 	var respawnConf bytes.Buffer
 
 	for i := 1; i < 7; i++ {
@@ -166,18 +166,20 @@ func generateRespawnConf(cmdline string) string {
 		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
 	}
 
-	respawnConf.WriteString("/usr/sbin/sshd -D")
+	if sshd {
+		respawnConf.WriteString("/usr/sbin/sshd -D")
+	}
 
 	return respawnConf.String()
 }
 
-func writeRespawn() error {
+func writeRespawn(cfg *config.CloudConfig) error {
 	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return err
 	}
 
-	respawn := generateRespawnConf(string(cmdline))
+	respawn := generateRespawnConf(string(cmdline), !cfg.Rancher.SSH.Disable)
 
 	files, err := ioutil.ReadDir("/etc/respawn.conf.d")
 	if err == nil {
