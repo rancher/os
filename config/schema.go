@@ -144,7 +144,8 @@ var schema = `{
       "additionalProperties": false,
 
       "properties": {
-        "keys": {"type": "object"}
+        "keys": {"type": "object"},
+        "disable": {"type": "boolean"}
       }
     },
 
