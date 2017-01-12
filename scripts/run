@@ -5,6 +5,7 @@ set -e
 cd $(dirname $0)/..
 
 source ./scripts/run-common
+MEMORY=2048
 
 while [ "$#" -gt 0 ]; do
     case $1 in
@@ -31,6 +32,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         --second-drive)
             SECOND_DRIVE=1
+            ;;
+        --memory)
+            shift 1
+            MEMORY="$1"
             ;;
         --arch)
             shift 1
@@ -70,6 +75,7 @@ while [ "$#" -gt 0 ]; do
 done
 
 if [ "$QEMU" == "1" ] && ! which qemu-system-${QEMUARCH}; then
+    echo "ERROR: qemu not found - do you need to install it?"
     QEMU=0
 fi
 
@@ -154,7 +160,7 @@ if [ "$QEMU" == "1" ]; then
             ${KVM_ENABLE} \
             ${CPU} \
             ${machine["$ARCH"]} \
-            -m 2048 \
+            -m $MEMORY \
             ${network["$ARCH"]} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
@@ -176,7 +182,7 @@ elif [ "$BOOT_ISO" == "1" ]; then
             ${KVM_ENABLE} \
             ${CPU} \
             ${machine["$ARCH"]} \
-            -m 2048 \
+            -m $MEMORY \
             ${network["$ARCH"]} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
