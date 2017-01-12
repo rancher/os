@@ -7,29 +7,19 @@ redirect_from:
 
 ## Using ZFS
 
-In order to start using ZFS, you'll need to first enable one of the [persistent consoles]({{site.baseurl}}/os/configuration/custom-console/#console-persistence) and enable [kernel headers]({{site.baseurl}}/os/configuration/kernel-modules-kernel-headers/).
+#### Installing the ZFS service
+
 
 ```
-$ sudo ros console switch ubuntu
-$ sudo ros service enable kernel-headers
-$ sudo ros service up kernel-headers
-$ sudo ros service logs kernel-headers
+$ sudo ros service enable zfs
+$ sudo ros service up zfs
+$ sudo ros service logs zfs
+$ sudo depmod
 ```
 
-When RancherOS console has reloaded, you will have logged into the persistent console. The current kernel headers will need to be downloaded using the `ros service enable` and the service will be started with `ros service up kernel-headers`.
+The `zfs` service will install the kernel-headers for your kernel (if you build your own kernel, you'll need to replicate this service), and then download the [ZFS on Linux]() source, and build and install it. Then it will build a `zfs-tools` image that it can use to give you console access to the zfs tools.
 
-You can make sure that the headers are in the right place by looking at the kernel-headers service logs.
-
-#### Installing ZFS on Ubuntu Console
-
-Based on the [Ubuntu ZFS docs](https://wiki.ubuntu.com/Kernel/Reference/ZFS), you only need to install `zfs` package into the Ubuntu console to enable ZFS. All the other necessary packages will be installed as its dependencies.
-
-```
-$ sudo apt update
-$ sudo apt install zfs
-```
-
-Then have a look at the zfs dmks build log file - which is likely to be a file similar to `/var/lib/dkms/zfs/0.6.5.6/build/make.log`.
+> *Note:* if you switch consoles, you may need to re-run `ros enable zfs`.
 
 #### Mounting ZFS filesystems on boot
 
