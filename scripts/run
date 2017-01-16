@@ -70,6 +70,7 @@ while [ "$#" -gt 0 ]; do
             CONSOLEDISPLAY=1
             ;;
         --installed)
+            ./scripts/create-installed
             INSTALLED=1
             ;;
         *)
