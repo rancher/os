@@ -1,13 +1,9 @@
-FROM ubuntu:16.04
-ENV DEBIAN_FRONTEND noninteractive
-RUN apt-get update && \
-    apt-get install --no-install-recommends -y udev grub2 parted kexec-tools extlinux syslinux-common && \
-    rm -rf /var/lib/apt/*
+FROM rancher/os-installer
 
-COPY ./build/vmlinuz ./build/initrd /dist/
-COPY conf lay-down-os seed-data set-disk-partitions /scripts/
+# TODO: separate out the elements below - so we can mix and match updates
+RUN rm /dist/ \
+    && mkdir -p /dist/
 
-ARG VERSION
-ENV VERSION=${VERSION}
+#COPY ./ros /bin/
+COPY ./boot/ /dist/
 
-ENTRYPOINT ["/scripts/lay-down-os"]

@@ -15,6 +15,7 @@ import (
 	"errors"
 )
 
+// ResolveDevice this isn't reliable - blkid -L LABEL works more often :(
 func ResolveDevice(spec string) string {
 	cSpec := C.CString(spec)
 	defer C.free(unsafe.Pointer(cSpec))

@@ -1,11 +1,9 @@
 #!/bin/bash
-set -e
+set -ex
 
 cd $(dirname $0)/..
 
 source ./scripts/run-common
-
-INSTALLER=${BASE}/dist/artifacts/installer.tar
 
 if [ ! -e ${INITRD} ]; then
     cp bin/ros ${INITRD_SRC}/usr/bin/ros
@@ -25,26 +23,24 @@ trap "poweroff" EXIT
 
 sleep 5
 
-mount -t 9p -o trans=virtio,version=9p2000.L config-2 /mnt
-
 touch log
 openvt -s -- tail -f log &
-cat /mnt/installer.tar | system-docker load
-ros install -d /dev/vda -f --no-reboot >log 2>&1
+
+mount -t 9p -o trans=virtio,version=9p2000.L config-2 /mnt
+
+# use the install tarball in the iso
+ros install -d /dev/vda -f --no-reboot --append "console=ttyS0 rancher.autologin=ttyS0" >> /mnt/log 2>&1
 
 touch /mnt/success
 EOF
 
 rm -f build/{success,hd.img}
 qemu-img create -f qcow2 build/hd.img 8G
-cp ${INSTALLER} build/installer.tar
 qemu-system-${QEMUARCH} -serial stdio \
     -enable-kvm \
     -drive if=virtio,file=build/hd.img \
-    -kernel ${KERNEL} \
-    -initrd ${INITRD} \
+    -boot d -cdrom ./dist/artifacts/rancheros.iso \
     -m 2048 \
-    -append "${DEFAULT_KERNEL_ARGS}" \
     -smp 1 \
     -nographic \
     -display none \
@@ -55,3 +51,4 @@ qemu-system-${QEMUARCH} -serial stdio \
 
 mkdir -p state
 cp build/hd.img state/hd.img
+echo "------------------------ RancherOS installed to hd.img."

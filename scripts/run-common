@@ -34,9 +34,11 @@ BUILD=build
 BASE=$(pwd)
 UNAME=$(uname)
 
-KERNEL=${BASE}/dist/artifacts/vmlinuz
+KERNEL=${BASE}/build/kernel/vmlinuz
 INITRD_SRC=${BASE}/build/initrd
 INITRD=${BASE}/build/initrd.tmp
+#LINUXMOD=${BASE}/build/kernel/linuxmods
+
 
 QEMU=1
 FORMAT=1
@@ -46,4 +48,4 @@ REBUILD=1
 QEMUARCH=${qemuarch["${ARCH}"]}
 TTYCONS=${ttycons["${ARCH}"]}
 
-DEFAULT_KERNEL_ARGS="quiet rancher.password=rancher console=${TTYCONS} rancher.autologin=${TTYCONS}"
+DEFAULT_KERNEL_ARGS="rancher.debug=false rancher.password=rancher console=${TTYCONS} rancher.autologin=${TTYCONS}"

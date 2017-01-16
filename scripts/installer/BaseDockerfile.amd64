@@ -1,0 +1,23 @@
+FROM alpine
+# TODO: redo as cross platform, and without git etc :)
+
+ARG VERSION
+ARG KERNEL_VERSION
+ENV VERSION=${VERSION}
+ENV KERNEL_VERSION=${KERNEL_VERSION}
+
+# not installed atm udev, grub2, kexe-tools
+# parted: partprobe, e2fsprogs: mkfs.ext4, syslinux: extlinux&syslinux
+RUN apk --no-cache add syslinux parted e2fsprogs util-linux
+
+COPY conf /scripts/
+COPY ./build/ros /bin/
+#RUN cd /bin && ln -s ./ros ./system-docker
+#OR softlink in the host one - this image should only be used when installing from ISO..
+# (except its useful for testing)
+# && ln -s /host/usr/bin/ros /bin/
+
+RUN ln -s /bootiso/boot/ /dist
+
+ENTRYPOINT ["/bin/ros", "install"]
+

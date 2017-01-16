@@ -109,29 +109,30 @@ func InitLogger() {
 	}
 	thisLog := logrus.New()
 
-	filename := "/dev/kmsg"
-	f, err := os.OpenFile(filename, os.O_WRONLY, 0644)
-	if err != nil {
-		logrus.Debugf("error opening /dev/kmsg %s", err)
-	}
-
 	// Filter what the user sees (info level, unless they set --debug)
 	stdLogger := logrus.StandardLogger()
 	showuserHook, err := NewShowuserlogHook(stdLogger.Level)
 	if err != nil {
-		f.Close()
 		logrus.Errorf("hook failure %s", err)
+		return
 	}
 
-	// We're all set up, now we can make it global
-	appLog = thisLog
-	userHook = showuserHook
+	filename := "/dev/kmsg"
+	f, err := os.OpenFile(filename, os.O_WRONLY, 0644)
+	if err != nil {
+		logrus.Debugf("error opening %s: %s", filename, err)
+	} else {
+		// We're all set up, now we can make it global
+		appLog = thisLog
+		userHook = showuserHook
 
-	thisLog.Hooks.Add(showuserHook)
-	logrus.StandardLogger().Hooks.Add(showuserHook)
-	thisLog.Out = f
-	logrus.SetOutput(f)
-	thisLog.Level = logrus.DebugLevel
+		thisLog.Hooks.Add(showuserHook)
+		logrus.StandardLogger().Hooks.Add(showuserHook)
+
+		thisLog.Out = f
+		logrus.SetOutput(f)
+		thisLog.Level = logrus.DebugLevel
+	}
 
 	pwd, err := os.Getwd()
 	if err != nil {

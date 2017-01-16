@@ -37,6 +37,7 @@ BUILD_ID=
 HERE
 
 # need to make relative links to the os-release file
+mkdir -p ${INITRD_DIR}/usr/lib
 cd ${INITRD_DIR}/usr/lib
 ln -s ../share/rancher/os-release os-release
 cd $(dirname $0)/..

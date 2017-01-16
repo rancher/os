@@ -12,6 +12,13 @@ while [ "$#" -gt 0 ]; do
             BOOT_ISO=1
             QEMU=0
             QIND=0
+            REBUILD=0
+            ;;
+        --boothd)
+            BOOT_HD=1
+            QEMU=0
+            QIND=0
+            REBUILD=0
             ;;
         --append)
             shift 1
@@ -58,6 +65,10 @@ while [ "$#" -gt 0 ]; do
         --fresh)
             FRESH=1
             ;;
+        --console)
+	    # use the bios console, not serial (lets you see syslinux)
+            CONSOLEDISPLAY=1
+            ;;
         --installed)
             ./scripts/create-installed
             INSTALLED=1
@@ -99,30 +110,36 @@ fi
 if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
     KVM=1
 fi
-
-if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ]; then
+set -x
+if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
     HD=${BASE}/state/hd.img
     HD2=${BASE}/state/hd2.img
     [ "$FRESH" == "1" ] && rm -f ${HD} ${HD2} >/dev/null 2>&1 || :
 
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
-        qemu-img create -f qcow2 -o size=10G ${HD}
+        if [ ¨$INSTALLED¨ == ¨1¨ ]; then
+            ./scripts/create-installed
+        else
+        	qemu-img create -f qcow2 -o size=10G ${HD}
+        fi
     fi
 
     if [ "$SECOND_DRIVE" == "1" ]; then
-        qemu-img create -f qcow2 -o size=10G ${HD2}
+        if [ "$FRESH" == "1" ]; then
+            qemu-img create -f qcow2 -o size=10G ${HD2}
+        fi
         SECOND_DRIVE_ENABLE=$(eval "${hd["$ARCH"]} ${HD2}")
     fi
+fi
+
+if [ "$QIND" != "1" ]; then
     CPU=${cpu["$ARCH"]}
     if [ "$KVM" == "1" ] && [ "$ARCH" == "$HOST_ARCH" ]; then
         KVM_ENABLE="-enable-kvm"
         CPU="-cpu host"
     fi
-fi
 
-
-if [ "$QEMU" == "1" ]; then
     CCROOT=${BUILD}/cloud-config
     rm -rf ${CCROOT}
     mkdir -p ${CCROOT}
@@ -139,6 +156,17 @@ if [ "$QEMU" == "1" ]; then
     fi
 
     HOME=${HOME:-/}
+fi
+
+if [ "$CONSOLEDISPLAY" == "1" ]; then
+    DISPLAY_OPTS="-curses"
+else
+    # default
+    DISPLAY_OPTS="-nographic -serial stdio -display none"
+fi
+
+if [ "$QEMU" == "1" ]; then
+
     if [ "$INSTALLED" == "1" ]; then
         # kernel args only works when using -kernel
         KERNEL_ARGS=""
@@ -147,7 +175,7 @@ if [ "$QEMU" == "1" ]; then
     fi
     set -x
     exec qemu-system-${QEMUARCH} \
-            -serial stdio \
+            ${DISPLAY_OPTS} \
             -rtc base=utc,clock=host \
             ${INSTALLED_ARGS} \
             -append "${KERNEL_ARGS}" \
@@ -159,8 +187,6 @@ if [ "$QEMU" == "1" ]; then
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
-            -nographic \
-            -display none \
             -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
             -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
@@ -168,10 +194,19 @@ if [ "$QEMU" == "1" ]; then
             ${QEMU_ARGS} \
             "${@}"
 
-elif [ "$BOOT_ISO" == "1" ]; then
+elif [ "$BOOT_ISO" == "1" ] ||
+            [ "$BOOT_HD" == "1" ]; then
+    if [ "$BOOT_ISO" == "1" ]; then
+        ISO_OPTS="-boot d -cdrom ./dist/artifacts/rancheros.iso \
+            -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
+            -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
+            -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
+            -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home "
+            echo "----- $ISO_OPTS"
+    fi
     set -x
     exec qemu-system-${QEMUARCH} \
-            -curses \
+            ${DISPLAY_OPTS} \
             -rtc base=utc,clock=host \
             ${KVM_ENABLE} \
             ${CPU} \
@@ -181,8 +216,7 @@ elif [ "$BOOT_ISO" == "1" ]; then
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
-            -boot d \
-            -cdrom ./dist/artifacts/rancheros.iso
+            ${ISO_OPTS}
 elif [ "$QIND" == "1" ]; then
 
     NAME=${NAME:-ros-qind}

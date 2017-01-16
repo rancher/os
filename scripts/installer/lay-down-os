@@ -10,17 +10,21 @@ MBR_FILE=mbr.bin
 while getopts "i:f:c:d:t:r:o:p:ka:g" OPTION
 do
     case ${OPTION} in
-        i) DIST="$OPTARG" ;;
-        f) FILES="$OPTARG" ;;
-        c) CLOUD_CONFIG="$OPTARG" ;;
+        # used by `ros install`
         d) DEVICE="$OPTARG" ;;
-        o) OEM="$OPTARG" ;;
-        p) PARTITION="$OPTARG" ;;
+        t) ENV="$OPTARG" ;;     # install type
+        c) CLOUD_CONFIG="$OPTARG" ;;
+        a) APPEND="$OPTARG" ;;
+        g) MBR_FILE=gptmbr.bin ;;
+	# upgrade!
         r) ROLLBACK_VERSION="$OPTARG" ;;
         k) KEXEC=y ;;
-        a) APPEND="$OPTARG" ;;
-        t) ENV="$OPTARG" ;;
-        g) MBR_FILE=gptmbr.bin ;;
+        # used for testing?
+        p) PARTITION="$OPTARG" ;;
+        # notused?
+        i) DIST="$OPTARG" ;;
+        f) FILES="$OPTARG" ;;
+        o) OEM="$OPTARG" ;;
         *) exit 1 ;;
     esac
 done

@@ -17,6 +17,7 @@ func init() {
 	Suite(&QemuSuite{
 		runCommand: "../scripts/run",
 		sshCommand: "../scripts/ssh",
+		qemuCmd:    nil,
 	})
 }
 
@@ -42,11 +43,20 @@ type QemuSuite struct {
 }
 
 func (s *QemuSuite) TearDownTest(c *C) {
-	c.Assert(s.qemuCmd.Process.Kill(), IsNil)
-	time.Sleep(time.Millisecond * 1000)
+	if s.qemuCmd != nil {
+		s.Stop(c)
+	}
 }
 
-func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) {
+// RunQemuWith requires user to specify all the `scripts/run` arguments
+func (s *QemuSuite) RunQemuWith(c *C, additionalArgs ...string) error {
+
+	err := s.runQemu(c, additionalArgs...)
+	c.Assert(err, IsNil)
+	return err
+}
+
+func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) error {
 	runArgs := []string{
 		"--qemu",
 		"--no-rebuild",
@@ -55,28 +65,31 @@ func (s *QemuSuite) RunQemu(c *C, additionalArgs ...string) {
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	c.Assert(s.runQemu(runArgs...), IsNil)
+	err := s.RunQemuWith(c, runArgs...)
+	c.Assert(err, IsNil)
+	return err
 }
 
-func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) {
+func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) error {
 	runArgs := []string{
-		"--qemu",
-		"--no-rebuild",
-		"--no-rm-usr",
-		"--installed",
+		"--fresh",
 	}
 	runArgs = append(runArgs, additionalArgs...)
 
-	c.Assert(s.runQemu(runArgs...), IsNil)
+	err := s.RunQemu(c, runArgs...)
+	c.Assert(err, IsNil)
+	return err
 }
 
-func (s *QemuSuite) runQemu(args ...string) error {
+func (s *QemuSuite) runQemu(c *C, args ...string) error {
+	c.Assert(s.qemuCmd, IsNil) // can't run 2 qemu's at once (yet)
 	s.qemuCmd = exec.Command(s.runCommand, args...)
-	s.qemuCmd.Stdout = os.Stdout
+	//s.qemuCmd.Stdout = os.Stdout
 	s.qemuCmd.Stderr = os.Stderr
 	if err := s.qemuCmd.Start(); err != nil {
 		return err
 	}
+	fmt.Printf("--- %s: starting qemu %s, %v\n", c.TestName(), s.runCommand, args)
 
 	return s.WaitForSSH()
 }
@@ -119,23 +132,47 @@ func (s *QemuSuite) WaitForSSH() error {
 	return fmt.Errorf("Failed to check Docker version: %v", err)
 }
 
-func (s *QemuSuite) MakeCall(additionalArgs ...string) error {
+func (s *QemuSuite) MakeCall(additionalArgs ...string) (string, error) {
 	sshArgs := []string{
 		"--qemu",
 	}
 	sshArgs = append(sshArgs, additionalArgs...)
 
 	cmd := exec.Command(s.sshCommand, sshArgs...)
-	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	out, err := cmd.Output()
+	str := string(out)
+	fmt.Println(str)
+	return str, err
 }
 
 func (s *QemuSuite) CheckCall(c *C, additionalArgs ...string) {
-	c.Assert(s.MakeCall(additionalArgs...), IsNil)
+	_, err := s.MakeCall(additionalArgs...)
+	c.Assert(err, IsNil)
+}
+
+func (s *QemuSuite) CheckOutput(c *C, result string, check Checker, additionalArgs ...string) string {
+	out, err := s.MakeCall(additionalArgs...)
+	c.Assert(err, IsNil)
+	c.Assert(out, check, result)
+	return out
+}
+
+func (s *QemuSuite) Stop(c *C) {
+	//s.MakeCall("sudo halt")
+	//time.Sleep(2000 * time.Millisecond)
+	//c.Assert(s.WaitForSSH(), IsNil)
+
+	//fmt.Println("%s: stopping qemu", c.TestName())
+	c.Assert(s.qemuCmd.Process.Kill(), IsNil)
+	s.qemuCmd.Process.Wait()
+	//time.Sleep(time.Millisecond * 1000)
+	s.qemuCmd = nil
+	fmt.Printf("--- %s: qemu stopped", c.TestName())
 }
 
 func (s *QemuSuite) Reboot(c *C) {
+	fmt.Printf("--- %s: qemu reboot", c.TestName())
 	s.MakeCall("sudo reboot")
 	time.Sleep(3000 * time.Millisecond)
 	c.Assert(s.WaitForSSH(), IsNil)

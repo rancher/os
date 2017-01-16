@@ -39,3 +39,7 @@ func Mount(device, directory, fsType, options string) error {
 
 	return mount.Mount(device, directory, fsType, options)
 }
+
+func Unmount(target string) error {
+	return mount.Unmount(target)
+}
