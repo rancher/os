@@ -81,14 +81,18 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
         #cp ${ARTIFACTS}/linuxmods-${KERNEL_VERSION} ${BUILD}/kernel/linuxmods
     fi
 else
-	echo "no ${DOWNLOADS}/kernel.tar.gz found"
-	exit 1
+	if [ "$ARCH" == "amd64" ]; then
+		echo "no ${DOWNLOADS}/kernel.tar.gz found"
+		exit 1
+	fi
 fi
 
-ls -lah ${ARTIFACTS}/vmlinuz-*
-if [ ! -e "${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}" ]; then
-	echo "Can't find ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}"
-	exit -1
+if [ "$ARCH" == "amd64" ]; then
+	ls -lah ${ARTIFACTS}/vmlinuz-*
+	if [ ! -e "${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}" ]; then
+		echo "Can't find ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}"
+		exit -1
+	fi
 fi
 
 if [ -e ${DOWNLOADS}/policy.29 ]; then
