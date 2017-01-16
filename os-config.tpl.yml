@@ -4,13 +4,8 @@ rancher:
     SUFFIX: {{.SUFFIX}}
   defaults:
     hostname: {{.HOSTNAME_DEFAULT}}
-    {{if eq "amd64" .ARCH -}}
     docker:
-      engine: docker-1.12.3
-    {{else -}}
-    docker:
-      engine: docker-1.11.2
-    {{end -}}
+      engine: docker-1.12.6
     network:
       dns:
         nameservers: [8.8.8.8, 8.8.4.4]
@@ -279,11 +274,7 @@ rancher:
       - /home:/home
       - /opt:/opt
     docker:
-      {{if eq "amd64" .ARCH -}}
-      image: {{.OS_REPO}}/os-docker:1.12.3{{.SUFFIX}}
-      {{else -}}
-      image: {{.OS_REPO}}/os-docker:1.11.2{{.SUFFIX}}
-      {{end -}}
+      image: {{.OS_REPO}}/os-docker:1.12.6{{.SUFFIX}}
       command: ros user-docker
       environment:
       - HTTP_PROXY
@@ -321,11 +312,7 @@ rancher:
     url: {{.OS_RELEASES_YML}}/releases{{.SUFFIX}}.yml
     image: {{.OS_REPO}}/os
   docker:
-    {{if eq "amd64" .ARCH -}}
-    engine: docker-1.12.3
-    {{else -}}
-    engine: docker-1.11.2
-    {{end -}}
+    engine: docker-1.12.6
     storage_driver: overlay
     group: docker
     host: ["unix:///var/run/docker.sock"]
