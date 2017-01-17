@@ -8,10 +8,12 @@ import (
 )
 
 func (s *QemuSuite) TestInstallMsDosMbr(c *C) {
-	// ./scripts/run --no-format --append "rancher.debug=true"  --iso --fresh
+	// test_17 cloud config is an invalid http proxy cfg, so the installer has no network
 	runArgs := []string{
 		"--iso",
 		"--fresh",
+		"--cloud-config",
+		"./tests/assets/test_17/cloud-config.yml",
 	}
 	version := ""
 	{
