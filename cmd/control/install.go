@@ -150,9 +150,10 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	}
 
 	// Versions before 0.8.0-rc2 use the old calling convention (from the lay-down-os shell script)
-	imageVersion := strings.TrimPrefix(image, "rancher/os:v")
-	if image != imageVersion {
-		log.Infof("user specified different install image: %s != %s", image, imageVersion)
+	// TODO: This needs fixing before 0.8.0 GA's - actually parse the version string, and use for any numbered version before 0.8.0-rc3
+	imageVersion := strings.TrimPrefix(image, "rancher/os:")
+	if imageVersion == "v0.7.1" || imageVersion == "v0.7.0" {
+		log.Infof("user specified to install 0.7.0/0.7.1: %s", image)
 		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
 		vArray := strings.Split(imageVersion, ".")
 		v, _ := strconv.ParseFloat(vArray[0]+"."+vArray[1], 32)
@@ -188,10 +189,13 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	useIso := false
 	// --isoinstallerloaded is used if the ros has created the installer container from and image that was on the booted iso
 	if !isoinstallerloaded {
+		log.Infof("start !isoinstallerloaded")
+
 		if _, err := os.Stat("/dist/initrd"); os.IsNotExist(err) {
 			if err = mountBootIso(); err != nil {
 				log.Debugf("mountBootIso error %s", err)
 			} else {
+				log.Infof("trying to load /bootiso/rancheros/installer.tar.gz")
 				if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
 					cmd := exec.Command("system-docker", "load", "-i", "/bootiso/rancheros/installer.tar.gz")
 					cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
@@ -221,6 +225,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 				//				"install",
 				"-t", installType,
 				"-d", device,
+				"-i", image, // TODO: this isn't used - I'm just using it to over-ride the defaulting
 			}
 			if force {
 				installerCmd = append(installerCmd, "-f")
@@ -241,17 +246,16 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 				installerCmd = append(installerCmd, "--kexec")
 			}
 
+			// TODO: mount at /mnt for shared mount?
+			if useIso {
+				util.Unmount("/bootiso")
+			}
+
 			cmd := exec.Command("system-docker", installerCmd...)
 			log.Debugf("Run(%v)", cmd)
 			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 			if err := cmd.Run(); err != nil {
-				if useIso {
-					util.Unmount("/bootiso")
-				}
 				return err
-			}
-			if useIso {
-				util.Unmount("/bootiso")
 			}
 			return nil
 		}
@@ -287,7 +291,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 
 	if isoinstallerloaded {
 		log.Debugf("running isoinstallerloaded...")
-		// TODO: I hope to remove this from here later.
+		// TODO: detect if its not mounted and then optionally mount?
 		if err := mountBootIso(); err != nil {
 			log.Errorf("error mountBootIso %s", err)
 			return err
