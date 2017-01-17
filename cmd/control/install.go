@@ -152,7 +152,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	// Versions before 0.8.0-rc2 use the old calling convention (from the lay-down-os shell script)
 	// TODO: This needs fixing before 0.8.0 GA's - actually parse the version string, and use for any numbered version before 0.8.0-rc3
 	imageVersion := strings.TrimPrefix(image, "rancher/os:")
-	if imageVersion == "v0.7.1" || imageVersion == "v0.7.0" {
+	if imageVersion == "v0.7.1" || imageVersion == "v0.7.0" || imageVersion == "v0.5.0" {
 		log.Infof("user specified to install 0.7.0/0.7.1: %s", image)
 		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
 		vArray := strings.Split(imageVersion, ".")
