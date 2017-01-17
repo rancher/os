@@ -140,5 +140,4 @@ func InitLogger() {
 	}
 
 	thisLog.Debugf("START: %v in %s", os.Args, pwd)
-
 }

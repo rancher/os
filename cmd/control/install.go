@@ -127,14 +127,19 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
-	if err := runInstall(image, installType, cloudConfig, device, kappend, force, reboot, kexec, isoinstallerloaded); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, kappend, force, kexec, isoinstallerloaded); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
+	}
+
+	if !kexec && reboot && (force || yes("Continue with reboot")) {
+		log.Info("Rebooting")
+		power.Reboot()
 	}
 
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, kappend string, force, reboot, kexec, isoinstallerloaded bool) error {
+func runInstall(image, installType, cloudConfig, device, kappend string, force, kexec, isoinstallerloaded bool) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -227,12 +232,10 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 				"-d", device,
 				"-i", image, // TODO: this isn't used - I'm just using it to over-ride the defaulting
 			}
-			if force {
-				installerCmd = append(installerCmd, "-f")
-			}
-			if !reboot {
-				installerCmd = append(installerCmd, "--no-reboot")
-			}
+			// Need to call the inner container with force - the outer one does the "are you sure"
+			installerCmd = append(installerCmd, "-f")
+			// The outer container does the reboot (if needed)
+			installerCmd = append(installerCmd, "--no-reboot")
 			if cloudConfig != "" {
 				installerCmd = append(installerCmd, "-c", cloudConfig)
 			}
@@ -302,11 +305,6 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	if err != nil {
 		log.Errorf("error layDownOS %s", err)
 		return err
-	}
-
-	if !kexec && reboot && (force || yes("Continue with reboot")) {
-		log.Info("Rebooting")
-		power.Reboot()
 	}
 
 	return nil
