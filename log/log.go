@@ -46,6 +46,13 @@ func SetLevel(level Level) {
 	}
 }
 
+func GetLevel() Level {
+	if userHook != nil {
+		return Level(userHook.Level)
+	}
+	return Level(appLog.Level)
+}
+
 func Debugf(format string, args ...interface{}) {
 	appLog.Debugf(format, args...)
 }

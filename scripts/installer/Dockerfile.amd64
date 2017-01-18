@@ -4,6 +4,4 @@ FROM rancher/os-installer
 RUN rm /dist/ \
     && mkdir -p /dist/
 
-#COPY ./ros /bin/
 COPY ./boot/ /dist/
-

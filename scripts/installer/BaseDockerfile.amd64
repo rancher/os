@@ -19,5 +19,10 @@ COPY ./build/ros /bin/
 
 RUN ln -s /bootiso/boot/ /dist
 
+# need to make a /scripts/set-disk-partitions so that older releases can call the installer
+RUN echo "#!/bin/sh" > /scripts/set-disk-partitions \
+    && echo "echo 'set-disk-partitions deprecated'" >> /scripts/set-disk-partitions \
+    && chmod 755 /scripts/set-disk-partitions
+
 ENTRYPOINT ["/bin/ros", "install"]
 

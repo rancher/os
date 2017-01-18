@@ -74,6 +74,10 @@ var installCommand = cli.Command{
 			Name:  "kexec",
 			Usage: "reboot using kexec",
 		},
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "Run installer with debug output",
+		},
 	},
 }
 
@@ -81,6 +85,13 @@ func installAction(c *cli.Context) error {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
+
+	if c.Bool("debug") {
+		originalLevel := log.GetLevel()
+		defer log.SetLevel(originalLevel)
+		log.SetLevel(log.DebugLevel)
+	}
+
 	kappend := strings.TrimSpace(c.String("append"))
 	force := c.Bool("force")
 	kexec := c.Bool("kexec")
