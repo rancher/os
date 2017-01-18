@@ -154,7 +154,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
-		if !yes("Continue") {
+		if util.IsRunningInTty() && !yes("Continue") {
 			log.Infof("Not continuing with installation due to user not saying 'yes'")
 			os.Exit(1)
 		}
