@@ -74,6 +74,10 @@ var installCommand = cli.Command{
 			Name:  "kexec",
 			Usage: "reboot using kexec",
 		},
+		cli.BoolFlag{
+			Name:  "debug",
+			Usage: "Run installer with debug output",
+		},
 	},
 }
 
@@ -81,6 +85,13 @@ func installAction(c *cli.Context) error {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
+
+	if c.Bool("debug") {
+		originalLevel := log.GetLevel()
+		defer log.SetLevel(originalLevel)
+		log.SetLevel(log.DebugLevel)
+	}
+
 	kappend := strings.TrimSpace(c.String("append"))
 	force := c.Bool("force")
 	kexec := c.Bool("kexec")
@@ -143,7 +154,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
-		if !yes("Continue") {
+		if util.IsRunningInTty() && !yes("Continue") {
 			log.Infof("Not continuing with installation due to user not saying 'yes'")
 			os.Exit(1)
 		}
