@@ -85,8 +85,8 @@ func consoleInitAction(c *cli.Context) error {
 		{"/var/lib/rancher/engine/dockerd", "/usr/bin/dockerd"},
 		{"/var/lib/rancher/engine/docker-proxy", "/usr/bin/docker-proxy"},
 		{"/var/lib/rancher/engine/docker-runc", "/usr/bin/docker-runc"},
-		{"/usr/share/rancher/os-release", "/usr/lib/os-release"},
-		{"/usr/share/rancher/os-release", "/etc/os-release"},
+		{"/usr/share/ros/os-release", "/usr/lib/os-release"},
+		{"/usr/share/ros/os-release", "/etc/os-release"},
 	} {
 		syscall.Unlink(link.newname)
 		if err := os.Symlink(link.oldname, link.newname); err != nil {

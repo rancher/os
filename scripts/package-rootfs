@@ -22,26 +22,6 @@ if [ "$(docker info | grep 'Storage Driver: ' | sed 's/Storage Driver: //')" != 
     exit 0
 fi
 
-mkdir -p ${INITRD_DIR}/usr/share/rancher/
-cat <<HERE > ${INITRD_DIR}/usr/share/rancher/os-release
-NAME="RancherOS"
-VERSION=${VERSION}
-ID=rancheros
-ID_LIKE=
-VERSION_ID=${VERSION}
-PRETTY_NAME="RancherOS ${VERSION}"
-HOME_URL="http://rancher.com/rancher-os/"
-SUPPORT_URL="https://forums.rancher.com/c/rancher-os"
-BUG_REPORT_URL="https://github.com/rancher/os/issues"
-BUILD_ID=
-HERE
-
-# need to make relative links to the os-release file
-mkdir -p ${INITRD_DIR}/usr/lib
-cd ${INITRD_DIR}/usr/lib
-ln -s ../share/rancher/os-release os-release
-cd $(dirname $0)/..
-
 DFS=$(docker run -d --privileged -v /lib/modules/$(uname -r):/lib/modules/$(uname -r) ${DFS_IMAGE}${SUFFIX} ${DFS_ARGS})
 trap "docker rm -fv ${DFS_ARCH} ${DFS}" EXIT
 docker exec -i ${DFS} docker load < ${INITRD_DIR}/usr/share/ros/images.tar
