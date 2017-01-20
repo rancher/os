@@ -32,6 +32,7 @@ rancher:
       - /lib/firmware:/lib/firmware
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/share/ros:/usr/share/ros:ro
+      - /var/lib/rancher:/var/lib/rancher:ro
   cloud_init_services:
     cloud-init:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}

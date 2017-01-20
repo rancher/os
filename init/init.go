@@ -267,7 +267,17 @@ func RunInit() error {
 				}
 			}
 
-			return cfg, nil
+			// save here so the bootstrap service can see it (when booting from iso, its very early)
+			if boot2DockerEnvironment {
+				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
+					log.Errorf("Failed to update rancher.state.dev: %v", err)
+				}
+				if err := config.Set("rancher.state.autoformat", cfg.Rancher.State.Autoformat); err != nil {
+					log.Errorf("Failed to update rancher.state.autoformat: %v", err)
+				}
+			}
+
+			return config.LoadConfig(), nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			var err error
@@ -278,9 +288,6 @@ func RunInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			if err := os.MkdirAll(config.CloudConfigDir, os.ModeDir|0755); err != nil {
-				log.Error(err)
-			}
 
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
 			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
