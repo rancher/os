@@ -27,6 +27,19 @@ ln -s ros                      ${INITRD_DIR}/usr/bin/docker-runc
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/host-local
 
+cat <<HERE > ${INITRD_DIR}/usr/share/ros/os-release
+NAME="RancherOS"
+VERSION=${VERSION}
+ID=rancheros
+ID_LIKE=
+VERSION_ID=${VERSION}
+PRETTY_NAME="RancherOS ${VERSION}"
+HOME_URL="http://rancher.com/rancher-os/"
+SUPPORT_URL="https://forums.rancher.com/c/rancher-os"
+BUG_REPORT_URL="https://github.com/rancher/os/issues"
+BUILD_ID=
+HERE
+
 # Support upgrades from old persistent consoles that bind mount these
 touch ${INITRD_DIR}/usr/bin/docker-containerd
 touch ${INITRD_DIR}/usr/bin/docker-containerd-shim

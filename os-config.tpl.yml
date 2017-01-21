@@ -131,7 +131,6 @@ rancher:
       read_only: true
       volumes:
       - /usr/bin/ros:/usr/bin/ros:ro
-      - /usr/share/rancher:/usr/share/rancher:ro
     console:
       image: {{.OS_REPO}}/os-console:{{.VERSION}}{{.SUFFIX}}
       command: ros console-init
