@@ -1,8 +1,8 @@
 package integration
 
 import (
-	"strings"
 	. "gopkg.in/check.v1"
+	"strings"
 )
 
 func (s *QemuSuite) TestOsRelease(c *C) {
@@ -13,14 +13,14 @@ func (s *QemuSuite) TestOsRelease(c *C) {
 	s.CheckOutput(c, "VERSION="+version, Equals, "cat /etc/os-release | grep VERSION=")
 	s.CheckOutput(c, "NAME=\"RancherOS\"\n", Equals, "cat /etc/os-release | grep ^NAME=")
 
-        s.MakeCall("sudo ros console switch -f alpine")
-        c.Assert(s.WaitForSSH(), IsNil)
+	s.MakeCall("sudo ros console switch -f alpine")
+	c.Assert(s.WaitForSSH(), IsNil)
 
 	s.CheckOutput(c, "/sbin/apk\n", Equals, "which apk")
 	s.CheckOutput(c, "VERSION="+version, Equals, "cat /etc/os-release | grep VERSION=")
 	s.CheckOutput(c, "NAME=\"RancherOS\"\n", Equals, "cat /etc/os-release | grep ^NAME=")
 
-        s.Reboot(c)
+	s.Reboot(c)
 
 	s.CheckOutput(c, "/sbin/apk\n", Equals, "which apk")
 	s.CheckOutput(c, "VERSION="+version, Equals, "cat /etc/os-release | grep VERSION=")
