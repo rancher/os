@@ -34,6 +34,9 @@ shell-bind: .dapper
 clean:
 	@./scripts/clean
 
+itest:
+	./.dapper integration-test 2>&1 | tee dist/itest.log
+
 help:
 	@./scripts/help
 

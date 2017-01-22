@@ -6,6 +6,8 @@ cd $(dirname $0)/..
 
 source ./scripts/run-common
 
+MEMORY=2048
+
 while [ "$#" -gt 0 ]; do
     case $1 in
         --iso)
@@ -23,6 +25,10 @@ while [ "$#" -gt 0 ]; do
         --append)
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
+            ;;
+        --memory)
+            shift 1
+            MEMORY="$1"
             ;;
         --name)
             shift 1
@@ -182,7 +188,7 @@ if [ "$QEMU" == "1" ]; then
             ${KVM_ENABLE} \
             ${CPU} \
             ${machine["$ARCH"]} \
-            -m 2048 \
+            -m $MEMORY \
             ${network["$ARCH"]} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
@@ -211,7 +217,7 @@ elif [ "$BOOT_ISO" == "1" ] ||
             ${KVM_ENABLE} \
             ${CPU} \
             ${machine["$ARCH"]} \
-            -m 2048 \
+            -m MEMORY \
             ${network["$ARCH"]} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
