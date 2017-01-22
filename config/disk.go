@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -171,7 +172,7 @@ func readCmdline() map[interface{}]interface{} {
 		return nil
 	}
 
-	log.Debugf("Config cmdline %s", cmdLine)
+	//log.Debugf("Config cmdline %s", cmdLine)
 
 	cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(cmdLine))))
 
@@ -216,6 +217,10 @@ func amendContainerNames(c *CloudConfig) *CloudConfig {
 func WriteToFile(data interface{}, filename string) error {
 	content, err := yaml.Marshal(data)
 	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(filepath.Dir(filename), os.ModeDir|0755); err != nil {
 		return err
 	}
 

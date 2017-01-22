@@ -71,6 +71,10 @@ while [ "$#" -gt 0 ]; do
         --fresh)
             FRESH=1
             ;;
+        --b2d)
+            # use together with --fresh to trigger boot2docker/machine auto-format
+            AUTOFORMAT=1
+            ;;
         --console)
 	    # use the bios console, not serial (lets you see syslinux)
             CONSOLEDISPLAY=1
@@ -127,7 +131,13 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
         if [ ¨$INSTALLED¨ == ¨1¨ ]; then
             ./scripts/create-installed
         else
+		if [ "$AUTOFORMAT" == "1" ]; then
+			echo "boot2docker, please format-me" | cat - /dev/zero | head -c 5242880 > format-flag.txt # 5M
+		    qemu-img convert -f raw format-flag.txt -O qcow2 ${HD}
+            qemu-img resize ${HD} +10GB
+		else
         	qemu-img create -f qcow2 -o size=10G ${HD}
+		fi
         fi
     fi
 

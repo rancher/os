@@ -15,12 +15,15 @@ import (
 )
 
 func bootstrapAction(c *cli.Context) error {
+	log.Debugf("bootstrapAction")
 	if err := UdevSettle(); err != nil {
 		log.Errorf("Failed to run udev settle: %v", err)
 	}
 
+	log.Debugf("bootstrapAction: loadingConfig")
 	cfg := config.LoadConfig()
 
+	log.Debugf("bootstrapAction: MdadmScan(%v)", cfg.Rancher.State.MdadmScan)
 	if cfg.Rancher.State.MdadmScan {
 		if err := mdadmScan(); err != nil {
 			log.Errorf("Failed to run mdadm scan: %v", err)
@@ -28,12 +31,14 @@ func bootstrapAction(c *cli.Context) error {
 	}
 
 	stateScript := cfg.Rancher.State.Script
+	log.Debugf("bootstrapAction: stateScript(%v)", stateScript)
 	if stateScript != "" {
 		if err := runStateScript(stateScript); err != nil {
 			log.Errorf("Failed to run state script: %v", err)
 		}
 	}
 
+	log.Debugf("bootstrapAction: RunCommandSequence(%v)", cfg.Bootcmd)
 	util.RunCommandSequence(cfg.Bootcmd)
 
 	if cfg.Rancher.State.Dev != "" && cfg.Rancher.State.Wait {
@@ -41,12 +46,14 @@ func bootstrapAction(c *cli.Context) error {
 	}
 
 	autoformatDevices := cfg.Rancher.State.Autoformat
+	log.Debugf("bootstrapAction: Autoformat(%v)", cfg.Rancher.State.Autoformat)
 	if len(autoformatDevices) > 0 {
 		if err := autoformat(autoformatDevices); err != nil {
 			log.Errorf("Failed to run autoformat: %v", err)
 		}
 	}
 
+	log.Debugf("bootstrapAction: udev settle2")
 	if err := UdevSettle(); err != nil {
 		log.Errorf("Failed to run udev settle: %v", err)
 	}

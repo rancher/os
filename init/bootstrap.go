@@ -12,6 +12,8 @@ import (
 
 func bootstrapServices(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if util.ResolveDevice(cfg.Rancher.State.Dev) != "" && len(cfg.Bootcmd) == 0 {
+		log.Info("NOT Running Bootstrap")
+
 		return cfg, nil
 	}
 	log.Info("Running Bootstrap")
@@ -56,6 +58,8 @@ func stopDocker(c chan interface{}) error {
 
 func bootstrap(cfg *config.CloudConfig) error {
 	log.Info("Launching Bootstrap Docker")
+	log.Infof("bootstrap container: Autoformat(%v)", cfg.Rancher.State.Autoformat)
+
 	c, err := startDocker(cfg)
 	if err != nil {
 		return err
