@@ -6,9 +6,9 @@ import (
 
 	//"golang.org/x/net/context"
 
-	"github.com/rancher/os/log"
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	//"github.com/rancher/os/docker"
 	"github.com/rancher/os/hostname"
 	"github.com/rancher/os/netconf"
@@ -31,8 +31,8 @@ func Main() {
 
 	nameservers := cfg.Rancher.Network.DNS.Nameservers
 	search := cfg.Rancher.Network.DNS.Search
-	userSetDns := len(nameservers) > 0 || len(search) > 0
-	if !userSetDns {
+	userSetDNS := len(nameservers) > 0 || len(search) > 0
+	if !userSetDNS {
 		nameservers = cfg.Rancher.Defaults.Network.DNS.Nameservers
 		search = cfg.Rancher.Defaults.Network.DNS.Search
 	}
@@ -50,7 +50,7 @@ func Main() {
 	}
 
 	userSetHostname := cfg.Hostname != ""
-	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDns); err != nil {
+	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDNS); err != nil {
 		log.Error(err)
 	}
 
