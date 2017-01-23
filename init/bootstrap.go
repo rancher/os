@@ -21,12 +21,6 @@ func bootstrapServices(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	return cfg, err
 }
 
-func runCloudInitServiceSet(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	log.Info("Running cloud-init services")
-	_, err := compose.RunServiceSet("cloud-init", cfg, cfg.Rancher.CloudInitServices)
-	return cfg, err
-}
-
 func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.BootstrapDocker)
 	launchConfig.Fork = true
@@ -70,19 +64,5 @@ func bootstrap(cfg *config.CloudConfig) error {
 	_, err = config.ChainCfgFuncs(cfg,
 		loadImages,
 		bootstrapServices)
-	return err
-}
-
-func runCloudInitServices(cfg *config.CloudConfig) error {
-	c, err := startDocker(cfg)
-	if err != nil {
-		return err
-	}
-
-	defer stopDocker(c)
-
-	_, err = config.ChainCfgFuncs(cfg,
-		loadImages,
-		runCloudInitServiceSet)
 	return err
 }

@@ -4,7 +4,7 @@ import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestNetworkFromUrl(c *C) {
 	netArgs := []string{"-net", "nic,vlan=0,model=virtio"}
-	args := []string{"--append", "rancher.cloud_init.datasources=[url:https://gist.githubusercontent.com/joshwget/0bdc616cd26162ad87c535644c8b1ef6/raw/8cce947c08cf006e932b71d92ddbb96bae8e3325/gistfile1.txt]"}
+	args := []string{"--cloud-config", "./tests/assets/test_10/cloud-config.yml"}
 	for i := 0; i < 7; i++ {
 		args = append(args, netArgs...)
 	}

@@ -17,10 +17,10 @@ package cloudinitsave
 
 import (
 	"errors"
+	"flag"
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -35,9 +35,7 @@ import (
 	"github.com/coreos/coreos-cloudinit/datasource/proc_cmdline"
 	"github.com/coreos/coreos-cloudinit/datasource/url"
 	"github.com/coreos/coreos-cloudinit/pkg"
-	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/cmd/cloudinitsave/gce"
-	"github.com/rancher/os/cmd/network"
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
@@ -48,89 +46,27 @@ const (
 	datasourceInterval    = 100 * time.Millisecond
 	datasourceMaxInterval = 30 * time.Second
 	datasourceTimeout     = 5 * time.Minute
-	configDevName         = "config-2"
-	configDev             = "LABEL=" + configDevName
-	configDevMountPoint   = "/media/config-2"
 )
 
+var (
+	network bool
+	flags   *flag.FlagSet
+)
+
+func init() {
+	flags = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
+	flags.BoolVar(&network, "network", true, "use network based datasources")
+}
+
 func Main() {
+	flags.Parse(os.Args[1:])
+
 	log.InitLogger()
-	log.Info("Running cloud-init-save")
+	log.Infof("Running cloud-init-save: network=%v", network)
 
-	cfg := rancherConfig.LoadConfig()
-	network.ApplyNetworkConfig(cfg)
-
-	if err := SaveCloudConfig(true); err != nil {
+	if err := saveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
-}
-
-func MountConfigDrive() error {
-	if err := os.MkdirAll(configDevMountPoint, 644); err != nil {
-		return err
-	}
-
-	configDev := util.ResolveDevice(configDev)
-
-	if configDev == "" {
-		return mount.Mount(configDevName, configDevMountPoint, "9p", "trans=virtio,version=9p2000.L")
-	}
-
-	return mount.Mount(configDev, configDevMountPoint, "iso9660,vfat", "")
-}
-
-func UnmountConfigDrive() error {
-	return syscall.Unmount(configDevMountPoint, 0)
-}
-
-func SaveCloudConfig(network bool) error {
-	userDataBytes, metadata, err := fetchUserData(network)
-	if err != nil {
-		return err
-	}
-
-	userData := string(userDataBytes)
-	scriptBytes := []byte{}
-
-	if config.IsScript(userData) {
-		scriptBytes = userDataBytes
-		userDataBytes = []byte{}
-	} else if isCompose(userData) {
-		if userDataBytes, err = composeToCloudConfig(userDataBytes); err != nil {
-			log.Errorf("Failed to convert compose to cloud-config syntax: %v", err)
-			return err
-		}
-	} else if config.IsCloudConfig(userData) {
-		if _, err := rancherConfig.ReadConfig(userDataBytes, false); err != nil {
-			log.WithFields(log.Fields{"cloud-config": userData, "err": err}).Warn("Failed to parse cloud-config, not saving.")
-			userDataBytes = []byte{}
-		}
-	} else {
-		log.Errorf("Unrecognized user-data\n%s", userData)
-		userDataBytes = []byte{}
-	}
-
-	if _, err := rancherConfig.ReadConfig(userDataBytes, false); err != nil {
-		log.WithFields(log.Fields{"cloud-config": userData, "err": err}).Warn("Failed to parse cloud-config")
-		return errors.New("Failed to parse cloud-config")
-	}
-
-	return saveFiles(userDataBytes, scriptBytes, metadata)
-}
-
-func RequiresNetwork(datasource string) bool {
-	parts := strings.SplitN(datasource, ":", 2)
-	requiresNetwork, ok := map[string]bool{
-		"ec2":          true,
-		"file":         false,
-		"url":          true,
-		"cmdline":      true,
-		"configdrive":  false,
-		"digitalocean": true,
-		"gce":          true,
-		"packet":       true,
-	}[parts[0]]
-	return ok && requiresNetwork
 }
 
 func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
@@ -164,10 +100,10 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 	return nil
 }
 
-func currentDatasource(network bool) (datasource.Datasource, error) {
+func currentDatasource() (datasource.Datasource, error) {
 	cfg := rancherConfig.LoadConfig()
 
-	dss := getDatasources(cfg, network)
+	dss := getDatasources(cfg)
 	if len(dss) == 0 {
 		return nil, nil
 	}
@@ -176,9 +112,44 @@ func currentDatasource(network bool) (datasource.Datasource, error) {
 	return ds, nil
 }
 
-func fetchUserData(network bool) ([]byte, datasource.Metadata, error) {
+func saveCloudConfig() error {
+	userDataBytes, metadata, err := fetchUserData()
+	if err != nil {
+		return err
+	}
+
+	userData := string(userDataBytes)
+	scriptBytes := []byte{}
+
+	if config.IsScript(userData) {
+		scriptBytes = userDataBytes
+		userDataBytes = []byte{}
+	} else if isCompose(userData) {
+		if userDataBytes, err = composeToCloudConfig(userDataBytes); err != nil {
+			log.Errorf("Failed to convert compose to cloud-config syntax: %v", err)
+			return err
+		}
+	} else if config.IsCloudConfig(userData) {
+		if _, err := rancherConfig.ReadConfig(userDataBytes, false); err != nil {
+			log.WithFields(log.Fields{"cloud-config": userData, "err": err}).Warn("Failed to parse cloud-config, not saving.")
+			userDataBytes = []byte{}
+		}
+	} else {
+		log.Errorf("Unrecognized user-data\n%s", userData)
+		userDataBytes = []byte{}
+	}
+
+	if _, err := rancherConfig.ReadConfig(userDataBytes, false); err != nil {
+		log.WithFields(log.Fields{"cloud-config": userData, "err": err}).Warn("Failed to parse cloud-config")
+		return errors.New("Failed to parse cloud-config")
+	}
+
+	return saveFiles(userDataBytes, scriptBytes, metadata)
+}
+
+func fetchUserData() ([]byte, datasource.Metadata, error) {
 	var metadata datasource.Metadata
-	ds, err := currentDatasource(network)
+	ds, err := currentDatasource()
 	if err != nil || ds == nil {
 		log.Errorf("Failed to select datasource: %v", err)
 		return nil, metadata, err
@@ -200,7 +171,7 @@ func fetchUserData(network bool) ([]byte, datasource.Metadata, error) {
 
 // getDatasources creates a slice of possible Datasources for cloudinit based
 // on the different source command-line flags.
-func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.Datasource {
+func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 
 	for _, ds := range cfg.Rancher.CloudInit.Datasources {

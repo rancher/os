@@ -41,7 +41,9 @@ func (s *Service) DependentServices() []project.ServiceRelationship {
 	}
 
 	if s.requiresUserDocker() {
-		rels = appendLink(rels, "docker", false, s.project)
+		// Linking to cloud-init is a hack really.  The problem is we need to link to something
+		// that will trigger a reload
+		rels = appendLink(rels, "cloud-init", false, s.project)
 	} else if s.missingImage() {
 		rels = appendLink(rels, "network", false, s.project)
 	}
