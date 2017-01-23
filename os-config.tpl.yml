@@ -1,5 +1,3 @@
-runcmd:
-- [ sudo, dmesg, --console-off ]
 rancher:
   environment:
     VERSION: {{.VERSION}}
