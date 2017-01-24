@@ -33,6 +33,12 @@ type symlink struct {
 func consoleInitAction(c *cli.Context) error {
 	cfg := config.LoadConfig()
 
+	// Now that we're booted, stop writing debug messages to the console
+	cmd := exec.Command("sudo", "dmesg", "--console-off")
+	if err := cmd.Run(); err != nil {
+		log.Error(err)
+	}
+
 	if _, err := os.Stat(rancherHome); os.IsNotExist(err) {
 		if err := os.MkdirAll(rancherHome, 0755); err != nil {
 			log.Error(err)
@@ -96,7 +102,7 @@ func consoleInitAction(c *cli.Context) error {
 
 	// font backslashes need to be escaped for when issue is output! (but not the others..)
 	if err := ioutil.WriteFile("/etc/issue", []byte(`
-               ,        , ______                 _                 _____ _____
+               ,        , ______                 _                 _____ _____ TM
   ,------------|'------'| | ___ \\               | |               /  _  /  ___|
  / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
  \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
@@ -104,12 +110,12 @@ func consoleInitAction(c *cli.Context) error {
    |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
    \\___/        \\___/     \s \r
 
-         RancherOS \n \l
+         RancherOS `+config.Version+` \n \l
          `), 0644); err != nil {
 		log.Error(err)
 	}
 
-	cmd := exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
+	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}
