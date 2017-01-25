@@ -102,7 +102,7 @@ func consoleInitAction(c *cli.Context) error {
 
 	// font backslashes need to be escaped for when issue is output! (but not the others..)
 	if err := ioutil.WriteFile("/etc/issue", []byte(`
-               ,        , ______                 _                 _____ _____ TM
+               ,        , ______                 _                 _____ _____TM
   ,------------|'------'| | ___ \\               | |               /  _  /  ___|
  / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
  \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
