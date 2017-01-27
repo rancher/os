@@ -470,7 +470,7 @@ func layDownOS(image, installType, cloudConfig, device, kappend string, kexec bo
 		if err != nil {
 			return err
 		}
-		installSyslinuxRaid(baseName, bootDir, diskType)
+		installSyslinux(device, baseName, bootDir, diskType)
 	case "bootstrap":
 		CONSOLE = "ttyS0"
 		var err error
@@ -487,6 +487,7 @@ func layDownOS(image, installType, cloudConfig, device, kappend string, kexec bo
 		if err != nil {
 			return err
 		}
+		log.Infof("upgrading - %s, %s, %s, %s", device, baseName, bootDir, diskType)
 		// TODO: detect pv-grub, and don't kill it with syslinux
 		upgradeBootloader(device, baseName, bootDir, diskType)
 	default:
@@ -716,8 +717,7 @@ func formatdevice(device, partition string) error {
 }
 
 func mountdevice(baseName, bootDir, partition string, raw bool) (string, string, error) {
-	log.Debugf("mountdevice %s, raw %v", partition, raw)
-	device := ""
+	log.Infof("mountdevice %s, raw %v", partition, raw)
 
 	if raw {
 		log.Debugf("util.Mount (raw) %s, %s", partition, baseName)
@@ -725,6 +725,7 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, string,
 		cmd := exec.Command("lsblk", "-no", "pkname", partition)
 		log.Debugf("Run(%v)", cmd)
 		cmd.Stderr = os.Stderr
+		device := ""
 		if out, err := cmd.Output(); err == nil {
 			device = "/dev/" + strings.TrimSpace(string(out))
 		}
@@ -740,6 +741,7 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, string,
 	cmd.Stderr = os.Stderr
 	if out, err := cmd.Output(); err == nil {
 		partition = strings.TrimSpace(string(out))
+		baseName = filepath.Join(baseName, "boot")
 	} else {
 		cmd := exec.Command("blkid", "-L", "RANCHER_STATE")
 		log.Debugf("Run(%v)", cmd)
@@ -748,6 +750,7 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, string,
 			partition = strings.TrimSpace(string(out))
 		}
 	}
+	device := ""
 	cmd = exec.Command("lsblk", "-no", "pkname", partition)
 	log.Debugf("Run(%v)", cmd)
 	cmd.Stderr = os.Stderr
@@ -824,25 +827,21 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 		// TODO: in v0.9.0, need to detect what version syslinux we have
 		return nil
 	}
-	if err := setBootable(device, diskType); err != nil {
-		log.Debugf("setBootable(%s, %s): %s", device, diskType, err)
-		//return err
-	}
 	if err := os.Rename(grubDir, filepath.Join(baseName, bootDir+"grub_backup")); err != nil {
-		log.Debugf("Rename(%s): %s", grubDir, err)
+		log.Errorf("Rename(%s): %s", grubDir, err)
 		return err
 	}
 
 	syslinuxDir := filepath.Join(baseName, bootDir+"syslinux")
 	backupSyslinuxDir := filepath.Join(baseName, bootDir+"syslinux_backup")
 	if err := os.Rename(syslinuxDir, backupSyslinuxDir); err != nil {
-		log.Debugf("Rename(%s, %s): %s", syslinuxDir, backupSyslinuxDir, err)
+		log.Errorf("Rename(%s, %s): %s", syslinuxDir, backupSyslinuxDir, err)
 		return err
 	}
 	//mv the old syslinux into linux-previous.cfg
 	oldSyslinux, err := ioutil.ReadFile(filepath.Join(backupSyslinuxDir, "syslinux.cfg"))
 	if err != nil {
-		log.Debugf("read(%s / syslinux.cfg): %s", backupSyslinuxDir, err)
+		log.Errorf("read(%s / syslinux.cfg): %s", backupSyslinuxDir, err)
 
 		return err
 	}
@@ -853,16 +852,25 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 	//    LINUX ../vmlinuz-v0.7.1-rancheros
 	//    APPEND rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=tty0 rancher.password=rancher
 	//    INITRD ../initrd-v0.7.1-rancheros
+
 	cfg = strings.Replace(cfg, "current", "previous", -1)
-	cfg = strings.Replace(cfg, "../", "/boot/", -1)
 	// TODO consider removing the APPEND line - as the global.cfg should have the same result
 	ioutil.WriteFile(filepath.Join(baseName, bootDir, "linux-current.cfg"), []byte(cfg), 0644)
+
+	lines := strings.Split(cfg, "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "APPEND") {
+			// TODO: need to append any extra's the user specified
+			ioutil.WriteFile(filepath.Join(baseName, bootDir, "global.cfg"), []byte(cfg), 0644)
+			break
+		}
+	}
 
 	return installSyslinux(device, baseName, bootDir, diskType)
 }
 
 func installSyslinux(device, baseName, bootDir, diskType string) error {
-	log.Debugf("installSyslinux")
 
 	mbrFile := "mbr.bin"
 	if diskType == "gpt" {
@@ -872,12 +880,43 @@ func installSyslinux(device, baseName, bootDir, diskType string) error {
 	//dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=${device}
 	// ubuntu: /usr/lib/syslinux/mbr/mbr.bin
 	// alpine: /usr/share/syslinux/mbr.bin
-	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/"+mbrFile, "of="+device)
-	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	log.Debugf("Run(%v)", cmd)
-	if err := cmd.Run(); err != nil {
-		log.Errorf("dd: %s", err)
-		return err
+	if device == "/dev/" {
+		log.Infof("installSyslinuxRaid(%s)", device)
+		//RAID - assume sda&sdb
+		//TODO: fix this - not sure how to detect what disks should have mbr - perhaps we need a param
+		//      perhaps just assume and use the devices that make up the raid - mdadm
+		device = "/dev/sda"
+		if err := setBootable(device, diskType); err != nil {
+			log.Errorf("setBootable(%s, %s): %s", device, diskType, err)
+			//return err
+		}
+		cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/"+mbrFile, "of="+device)
+		if err := cmd.Run(); err != nil {
+			log.Errorf("%s", err)
+			return err
+		}
+		device = "/dev/sdb"
+		if err := setBootable(device, diskType); err != nil {
+			log.Errorf("setBootable(%s, %s): %s", device, diskType, err)
+			//return err
+		}
+		cmd = exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/"+mbrFile, "of="+device)
+		if err := cmd.Run(); err != nil {
+			log.Errorf("%s", err)
+			return err
+		}
+	} else {
+		if err := setBootable(device, diskType); err != nil {
+			log.Errorf("setBootable(%s, %s): %s", device, diskType, err)
+			//return err
+		}
+		log.Infof("installSyslinux(%s)", device)
+		cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/"+mbrFile, "of="+device)
+		log.Debugf("Run(%v)", cmd)
+		if err := cmd.Run(); err != nil {
+			log.Errorf("dd: %s", err)
+			return err
+		}
 	}
 	if err := os.MkdirAll(filepath.Join(baseName, bootDir+"syslinux"), 0755); err != nil {
 		return err
@@ -896,55 +935,15 @@ func installSyslinux(device, baseName, bootDir, diskType string) error {
 	}
 
 	//extlinux --install ${baseName}/${bootDir}syslinux
-	cmd = exec.Command("extlinux", "--install", filepath.Join(baseName, bootDir+"syslinux"))
+	cmd := exec.Command("extlinux", "--install", filepath.Join(baseName, bootDir+"syslinux"))
+	if device == "/dev/" {
+		//extlinux --install --raid ${baseName}/${bootDir}syslinux
+		cmd = exec.Command("extlinux", "--install", "--raid", filepath.Join(baseName, bootDir+"syslinux"))
+	}
 	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	log.Debugf("Run(%v)", cmd)
 	if err := cmd.Run(); err != nil {
-		log.Errorf("extlinuux: %s", err)
-		return err
-	}
-	return nil
-}
-
-func installSyslinuxRaid(baseName, bootDir, diskType string) error {
-	log.Debugf("installSyslinuxRaid")
-
-	mbrFile := "mbr.bin"
-	if diskType == "gpt" {
-		mbrFile = "gptmbr.bin"
-	}
-
-	//dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/sda
-	//dd bs=440 count=1 if=/usr/lib/syslinux/mbr/mbr.bin of=/dev/sdb
-	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
-	//extlinux --install --raid ${baseName}/${bootDir}syslinux
-	cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/"+mbrFile, "of=/dev/sda")
-	if err := cmd.Run(); err != nil {
-		log.Errorf("%s", err)
-		return err
-	}
-	cmd = exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/"+mbrFile, "of=/dev/sdb")
-	if err := cmd.Run(); err != nil {
-		log.Errorf("%s", err)
-		return err
-	}
-	if err := os.MkdirAll(filepath.Join(baseName, bootDir+"syslinux"), 0755); err != nil {
-		return err
-	}
-	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
-	files, _ := ioutil.ReadDir("/usr/share/syslinux/")
-	for _, file := range files {
-		if file.IsDir() {
-			continue
-		}
-		if err := dfs.CopyFile(filepath.Join("/usr/share/syslinux/", file.Name()), filepath.Join(baseName, bootDir, "syslinux"), file.Name()); err != nil {
-			log.Errorf("copy syslinux: %s", err)
-			return err
-		}
-	}
-	cmd = exec.Command("extlinux", "--install", "--raid", filepath.Join(baseName, bootDir+"syslinux"))
-	if err := cmd.Run(); err != nil {
-		log.Errorf("%s", err)
+		log.Errorf("extlinux: %s", err)
 		return err
 	}
 	return nil
@@ -975,6 +974,7 @@ func installRancher(baseName, bootDir, VERSION, DIST, kappend string) error {
 			log.Errorf("copy %s: %s", file.Name(), err)
 			return err
 		}
+		log.Debugf("copied %s to %s as %s", filepath.Join(DIST, file.Name()), filepath.Join(baseName, bootDir), file.Name())
 	}
 	// the general INCLUDE syslinuxcfg
 	if err := dfs.CopyFile(filepath.Join(DIST, "isolinux", "isolinux.cfg"), filepath.Join(baseName, bootDir, "syslinux"), "syslinux.cfg"); err != nil {

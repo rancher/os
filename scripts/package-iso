@@ -13,11 +13,12 @@ CHECKSUM=iso-checksums.txt
 mkdir -p ${CD}/boot/isolinux
 mkdir -p ${CD}/rancheros
 
-if [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || [ ! -f ${ARTIFACTS}/initrd ]; then
-    exit 0
+if [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || [ ! -f ${INITRD} ]; then
+    echo "ERROR: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${INITRD} not found"
+    exit 1
 fi
 
-cp ${ARTIFACTS}/initrd                        ${CD}/boot
+cp ${INITRD}                        ${CD}/boot
 
 # TODO: these move to os-kernel
 pwd
@@ -26,6 +27,7 @@ cp ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}     ${CD}/boot/
 #TODO cp ${ARTIFACTS}/linuxmods-${KERNEL_VERSION}   ${CD}/boot/
 
 # cfg files creation moved to package-installer
+DIST=$(pwd)/dist
 cp -r ${DIST}/boot/* ${CD}/boot/
 
 cp /usr/lib/ISOLINUX/isolinux.bin             ${CD}/boot/isolinux/
