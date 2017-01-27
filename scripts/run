@@ -227,7 +227,7 @@ elif [ "$BOOT_ISO" == "1" ] ||
             ${KVM_ENABLE} \
             ${CPU} \
             ${machine["$ARCH"]} \
-            -m MEMORY \
+            -m $MEMORY \
             ${network["$ARCH"]} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
