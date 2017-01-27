@@ -740,6 +740,7 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, string,
 	cmd.Stderr = os.Stderr
 	if out, err := cmd.Output(); err == nil {
 		partition = strings.TrimSpace(string(out))
+		baseName = filepath.Join(baseName, "boot")
 	} else {
 		cmd := exec.Command("blkid", "-L", "RANCHER_STATE")
 		log.Debugf("Run(%v)", cmd)
