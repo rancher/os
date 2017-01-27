@@ -1,3 +1,5 @@
+#!/bin/bash
+
 if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
     DIRTY="-dirty"
 fi
@@ -13,7 +15,8 @@ if [ -z "$VERSION" ]; then
     fi
 fi
 
-export VERSION COMMIT
+INITRD=${ARTIFACTS}/initrd-${VERSION}
+export VERSION COMMIT INITRD
 
 # Suffix
 export SUFFIX=""

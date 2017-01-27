@@ -8,11 +8,14 @@ source ./scripts/version
 BASEDOCKERFILE=./scripts/installer/BaseDockerfile.${ARCH}
 DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}
 
-if [ ! -f $DOCKERFILE ] || [ ! -f dist/artifacts/vmlinuz-${KERNEL_VERSION} ] || [ ! -f dist/artifacts/initrd ]; then
-    exit 0
+if [ ! -f $DOCKERFILE ] || [ ! -f dist/artifacts/vmlinuz-${KERNEL_VERSION} ] || [ ! -f ${INITRD} ]; then
+    echo "ERROR: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${INITRD} not found"
+    exit 1
 fi
 
 # TODO maybe extract the creation of the syslinux cfg files
+DIST=$(pwd)/dist
+echo "mkdir -p ${DIST}/boot/isolinux/"
 mkdir -p ${DIST}/boot/isolinux/
 cat scripts/isolinux.cfg | envsubst >         ${DIST}/boot/isolinux/isolinux.cfg
 cat scripts/isolinux_label.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/linux-current.cfg
@@ -35,7 +38,7 @@ docker build \
 docker save -o dist/artifacts/installer.tar ${OS_REPO}/os-installer
 cp $DOCKERFILE dist/artifacts/
 
-cp ./dist/artifacts/initrd ./scripts/installer/build/boot
+cp ${INITRD} ./scripts/installer/build/boot
 cp ./dist/artifacts/vmlinuz-${KERNEL_VERSION} ./scripts/installer/build/boot
 cp -r ${DIST}/boot/* ./scripts/installer/build/boot
 cp $DOCKERFILE ./scripts/installer/build/Dockerfile

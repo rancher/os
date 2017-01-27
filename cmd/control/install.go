@@ -975,6 +975,7 @@ func installRancher(baseName, bootDir, VERSION, DIST, kappend string) error {
 			log.Errorf("copy %s: %s", file.Name(), err)
 			return err
 		}
+		log.Debugf("copied %s to %s as %s", filepath.Join(DIST, file.Name()), filepath.Join(baseName, bootDir), file.Name())
 	}
 	// the general INCLUDE syslinuxcfg
 	if err := dfs.CopyFile(filepath.Join(DIST, "isolinux", "isolinux.cfg"), filepath.Join(baseName, bootDir, "syslinux"), "syslinux.cfg"); err != nil {
