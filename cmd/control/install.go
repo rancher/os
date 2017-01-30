@@ -15,6 +15,7 @@ import (
 	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
+	version "github.com/hashicorp/go-version"
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/config"
@@ -165,11 +166,23 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		diskType = "gpt"
 	}
 
-	// Versions before 0.8.0-rc2 use the old calling convention (from the lay-down-os shell script)
-	// TODO: This needs fixing before 0.8.0 GA's - actually parse the version string, and use for any numbered version before 0.8.0-rc3
+	// Versions before 0.8.0-rc3 use the old calling convention (from the lay-down-os shell script)
 	imageVersion := strings.TrimPrefix(image, "rancher/os:")
-	if imageVersion == "v0.7.1" || imageVersion == "v0.7.0" || imageVersion == "v0.5.0" {
-		log.Infof("user specified to install 0.7.0/0.7.1: %s", image)
+	installVer, err := version.NewVersion("999.999")
+	if strings.HasPrefix(imageVersion, "v") {
+		installVer, err = version.NewVersion(strings.TrimPrefix(imageVersion, "v"))
+		if err != nil {
+			log.Errorf("ERROR parsing %s: %s", imageVersion, err)
+			os.Exit(1)
+		}
+	}
+	newInstallerVersion, err := version.NewVersion("0.8.0-rc3")
+	if err != nil {
+		log.Errorf("ERROR parsing %s: %s", "0.8.0-rc3", err)
+		os.Exit(1)
+	}
+	if installVer.LessThan(newInstallerVersion) {
+		log.Infof("user specified to install pre v0.8.0: %s", image)
 		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
 		vArray := strings.Split(imageVersion, ".")
 		v, _ := strconv.ParseFloat(vArray[0]+"."+vArray[1], 32)
@@ -207,7 +220,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	if !isoinstallerloaded {
 		log.Infof("start !isoinstallerloaded")
 
-		if _, err := os.Stat("/dist/initrd"); os.IsNotExist(err) {
+		if _, err := os.Stat("/dist/initrd-" + config.Version); os.IsNotExist(err) {
 			if err = mountBootIso(); err != nil {
 				log.Debugf("mountBootIso error %s", err)
 			} else {
@@ -224,8 +237,11 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 						useIso = true
 						// now use the installer image
 						cfg := config.LoadConfig()
-						// TODO: fix the fullinstaller Dockerfile to use the ${VERSION}${SUFFIX}
-						image = cfg.Rancher.Upgrade.Image + "-installer" + ":latest"
+
+						if image == cfg.Rancher.Upgrade.Image+":"+config.Version+config.Suffix {
+							// TODO: fix the fullinstaller Dockerfile to use the ${VERSION}${SUFFIX}
+							image = cfg.Rancher.Upgrade.Image + "-installer" + ":latest"
+						}
 					}
 				}
 				// TODO: also poke around looking for the /boot/vmlinuz and initrd...
@@ -312,7 +328,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		}
 	}
 
-	err := layDownOS(image, installType, cloudConfig, device, kappend, kexec)
+	err = layDownOS(image, installType, cloudConfig, device, kappend, kexec)
 	if err != nil {
 		log.Errorf("error layDownOS %s", err)
 		return err
@@ -833,37 +849,42 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 	}
 
 	syslinuxDir := filepath.Join(baseName, bootDir+"syslinux")
-	backupSyslinuxDir := filepath.Join(baseName, bootDir+"syslinux_backup")
-	if err := os.Rename(syslinuxDir, backupSyslinuxDir); err != nil {
-		log.Errorf("Rename(%s, %s): %s", syslinuxDir, backupSyslinuxDir, err)
-		return err
-	}
-	//mv the old syslinux into linux-previous.cfg
-	oldSyslinux, err := ioutil.ReadFile(filepath.Join(backupSyslinuxDir, "syslinux.cfg"))
-	if err != nil {
-		log.Errorf("read(%s / syslinux.cfg): %s", backupSyslinuxDir, err)
+	// it seems that v0.5.0 didn't have a syslinux dir, while 0.7 does
+	if _, err := os.Stat(syslinuxDir); !os.IsNotExist(err) {
+		backupSyslinuxDir := filepath.Join(baseName, bootDir+"syslinux_backup")
+		if err := os.Rename(syslinuxDir, backupSyslinuxDir); err != nil {
+			log.Infof("error Rename(%s, %s): %s", syslinuxDir, backupSyslinuxDir, err)
+		} else {
+			log.Errorf("Rename(%s, %s): ok", syslinuxDir, backupSyslinuxDir)
+			//mv the old syslinux into linux-previous.cfg
+			oldSyslinux, err := ioutil.ReadFile(filepath.Join(backupSyslinuxDir, "syslinux.cfg"))
+			if err != nil {
+				log.Infof("error read(%s / syslinux.cfg): %s", backupSyslinuxDir, err)
+			} else {
+				log.Infof("read(%s / syslinux.cfg): ok", backupSyslinuxDir)
+				cfg := string(oldSyslinux)
+				//DEFAULT RancherOS-current
+				//
+				//LABEL RancherOS-current
+				//    LINUX ../vmlinuz-v0.7.1-rancheros
+				//    APPEND rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=tty0 rancher.password=rancher
+				//    INITRD ../initrd-v0.7.1-rancheros
 
-		return err
-	}
-	cfg := string(oldSyslinux)
-	//DEFAULT RancherOS-current
-	//
-	//LABEL RancherOS-current
-	//    LINUX ../vmlinuz-v0.7.1-rancheros
-	//    APPEND rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=tty0 rancher.password=rancher
-	//    INITRD ../initrd-v0.7.1-rancheros
+				cfg = strings.Replace(cfg, "current", "previous", -1)
+				// TODO consider removing the APPEND line - as the global.cfg should have the same result
+				ioutil.WriteFile(filepath.Join(baseName, bootDir, "linux-current.cfg"), []byte(cfg), 0644)
 
-	cfg = strings.Replace(cfg, "current", "previous", -1)
-	// TODO consider removing the APPEND line - as the global.cfg should have the same result
-	ioutil.WriteFile(filepath.Join(baseName, bootDir, "linux-current.cfg"), []byte(cfg), 0644)
-
-	lines := strings.Split(cfg, "\n")
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if strings.HasPrefix(line, "APPEND") {
-			// TODO: need to append any extra's the user specified
-			ioutil.WriteFile(filepath.Join(baseName, bootDir, "global.cfg"), []byte(cfg), 0644)
-			break
+				lines := strings.Split(cfg, "\n")
+				for _, line := range lines {
+					line = strings.TrimSpace(line)
+					if strings.HasPrefix(line, "APPEND") {
+						// TODO: need to append any extra's the user specified
+						log.Infof("wrote (%s) to global.cfg", []byte(cfg))
+						ioutil.WriteFile(filepath.Join(baseName, bootDir, "global.cfg"), []byte(cfg), 0644)
+						break
+					}
+				}
+			}
 		}
 	}
 
@@ -918,8 +939,11 @@ func installSyslinux(device, baseName, bootDir, diskType string) error {
 			return err
 		}
 	}
-	if err := os.MkdirAll(filepath.Join(baseName, bootDir+"syslinux"), 0755); err != nil {
-		return err
+
+	sysLinuxDir := filepath.Join(baseName, bootDir, "syslinux")
+	if err := os.MkdirAll(sysLinuxDir, 0755); err != nil {
+		log.Errorf("MkdirAll(%s)): %s", sysLinuxDir, err)
+		//return err
 	}
 
 	//cp /usr/lib/syslinux/modules/bios/* ${baseName}/${bootDir}syslinux
@@ -928,17 +952,17 @@ func installSyslinux(device, baseName, bootDir, diskType string) error {
 		if file.IsDir() {
 			continue
 		}
-		if err := dfs.CopyFile(filepath.Join("/usr/share/syslinux/", file.Name()), filepath.Join(baseName, bootDir, "syslinux"), file.Name()); err != nil {
+		if err := dfs.CopyFile(filepath.Join("/usr/share/syslinux/", file.Name()), sysLinuxDir, file.Name()); err != nil {
 			log.Errorf("copy syslinux: %s", err)
 			return err
 		}
 	}
 
 	//extlinux --install ${baseName}/${bootDir}syslinux
-	cmd := exec.Command("extlinux", "--install", filepath.Join(baseName, bootDir+"syslinux"))
+	cmd := exec.Command("extlinux", "--install", sysLinuxDir)
 	if device == "/dev/" {
 		//extlinux --install --raid ${baseName}/${bootDir}syslinux
-		cmd = exec.Command("extlinux", "--install", "--raid", filepath.Join(baseName, bootDir+"syslinux"))
+		cmd = exec.Command("extlinux", "--install", "--raid", sysLinuxDir)
 	}
 	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	log.Debugf("Run(%v)", cmd)
@@ -972,21 +996,24 @@ func installRancher(baseName, bootDir, VERSION, DIST, kappend string) error {
 		}
 		if err := dfs.CopyFile(filepath.Join(DIST, file.Name()), filepath.Join(baseName, bootDir), file.Name()); err != nil {
 			log.Errorf("copy %s: %s", file.Name(), err)
-			return err
+			//return err
 		}
 		log.Debugf("copied %s to %s as %s", filepath.Join(DIST, file.Name()), filepath.Join(baseName, bootDir), file.Name())
 	}
 	// the general INCLUDE syslinuxcfg
 	if err := dfs.CopyFile(filepath.Join(DIST, "isolinux", "isolinux.cfg"), filepath.Join(baseName, bootDir, "syslinux"), "syslinux.cfg"); err != nil {
-		log.Errorf("copy %s: %s", "syslinux.cfg", err)
-		return err
+		log.Errorf("copy global syslinux.cfgS%s: %s", "syslinux.cfg", err)
+		//return err
 	}
 
 	// The global.cfg INCLUDE - useful for over-riding the APPEND line
-	err := ioutil.WriteFile(filepath.Join(filepath.Join(baseName, bootDir), "global.cfg"), []byte("APPEND "+kappend), 0644)
-	if err != nil {
-		log.Errorf("write (%s) %s", "global.cfg", err)
-		return err
+	globalFile := filepath.Join(filepath.Join(baseName, bootDir), "global.cfg")
+	if _, err := os.Stat(globalFile); !os.IsNotExist(err) {
+		err := ioutil.WriteFile(globalFile, []byte("APPEND "+kappend), 0644)
+		if err != nil {
+			log.Errorf("write (%s) %s", "global.cfg", err)
+			return err
+		}
 	}
 	return nil
 }

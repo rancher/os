@@ -184,3 +184,15 @@ func (s *QemuSuite) LoadInstallerImage(c *C) {
 	cmd.Stderr = os.Stderr
 	c.Assert(cmd.Run(), IsNil)
 }
+
+func (s *QemuSuite) PullAndLoadInstallerImage(c *C, image string) {
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("docker pull %s", image))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	c.Assert(cmd.Run(), IsNil)
+
+	cmd = exec.Command("sh", "-c", fmt.Sprintf("docker save %s | ../scripts/ssh --qemu sudo system-docker load", image))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	c.Assert(cmd.Run(), IsNil)
+}
