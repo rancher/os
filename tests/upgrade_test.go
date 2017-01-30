@@ -40,7 +40,9 @@ func (s *QemuSuite) commonTestCode(c *C, startWithVersion, console string) {
 		c.Assert(Version, Equals, version)
 
 		fmt.Printf("installing %s", startWithVersion)
-		s.PullAndLoadInstallerImage(c, startWithVersion)
+		s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os:%s", startWithVersion))
+
+		//ADD a custom append line and make sure its kept in the upgraded version too
 
 		s.CheckCall(c, fmt.Sprintf(`
 echo "---------------------------------- generic"
@@ -48,9 +50,8 @@ set -ex
 echo "ssh_authorized_keys:" > config.yml
 echo "  - $(cat /home/rancher/.ssh/authorized_keys)" >> config.yml
 sudo ros install --force --no-reboot --device /dev/vda -c config.yml --append rancher.password=rancher -i rancher/os:%s
-sudo ros console enable %s
 sync
-		`, startWithVersion, console))
+		`, startWithVersion))
 		time.Sleep(500 * time.Millisecond)
 		s.Stop(c)
 	}
@@ -62,6 +63,15 @@ sync
 	s.RunQemuWith(c, runArgs...)
 
 	s.CheckOutput(c, "ros version "+startWithVersion+"\n", Equals, "sudo ros -v")
+
+	if console != "default" {
+		// Can't preload the startWithVersion console image, as some don't exist by that name - not sure how to approach that
+		//s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, startWithVersion))
+		// TODO: ouch. probably need to tag the dev / master version as latest cos this won't work
+		// Need to pull the image here - if we do it at boot, then the test will fail.
+		s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, "v0.8.0-rc3"))
+		s.CheckCall(c, fmt.Sprintf("sudo ros console enable %s", console))
+	}
 
 	s.LoadInstallerImage(c)
 	s.CheckCall(c, fmt.Sprintf("sudo ros os upgrade --no-reboot -i rancher/os:%s%s --force", Version, Suffix))

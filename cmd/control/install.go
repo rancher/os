@@ -220,7 +220,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	if !isoinstallerloaded {
 		log.Infof("start !isoinstallerloaded")
 
-		if _, err := os.Stat("/dist/initrd"); os.IsNotExist(err) {
+		if _, err := os.Stat("/dist/initrd-" + config.Version); os.IsNotExist(err) {
 			if err = mountBootIso(); err != nil {
 				log.Debugf("mountBootIso error %s", err)
 			} else {
@@ -237,8 +237,11 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 						useIso = true
 						// now use the installer image
 						cfg := config.LoadConfig()
-						// TODO: fix the fullinstaller Dockerfile to use the ${VERSION}${SUFFIX}
-						image = cfg.Rancher.Upgrade.Image + "-installer" + ":latest"
+
+						if image == cfg.Rancher.Upgrade.Image+":"+config.Version+config.Suffix {
+							// TODO: fix the fullinstaller Dockerfile to use the ${VERSION}${SUFFIX}
+							image = cfg.Rancher.Upgrade.Image + "-installer" + ":latest"
+						}
 					}
 				}
 				// TODO: also poke around looking for the /boot/vmlinuz and initrd...
