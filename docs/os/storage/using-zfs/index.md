@@ -9,57 +9,35 @@ redirect_from:
 
 #### Installing the ZFS service
 
+The `zfs` service will install the kernel-headers for your kernel (if you build your own kernel, you'll need to replicate this service), and then download the [ZFS on Linux]() source, and build and install it. Then it will build a `zfs-tools` image that will be used to give you access to the zfs tools.
+
+The only restriction is that you must mount your zpool into `/mnt`, as this is the only shared mount directory that will be accessible throughout the system-docker managed containers (including the console).
+
 
 ```
 $ sudo ros service enable zfs
 $ sudo ros service up zfs
-$ sudo ros service logs zfs
-$ sudo depmod
+$ sudo ros service logs --follow zfs
+# wait until the build is finished.
+$ lsmod | grep zfs
 ```
 
-The `zfs` service will install the kernel-headers for your kernel (if you build your own kernel, you'll need to replicate this service), and then download the [ZFS on Linux]() source, and build and install it. Then it will build a `zfs-tools` image that it can use to give you console access to the zfs tools.
-
-> *Note:* if you switch consoles, you may need to re-run `ros enable zfs`.
-
-#### Mounting ZFS filesystems on boot
-
-In order for ZFS to load on boot, it needs to be added to `modules` list in the config. Prior to adding it to the list of modules, you'll need to check to see if there are other modules that are currently enabled.
-
-```
-# Check to see what modules currently exist
-$ sudo ros config get rancher.modules
-# Make sure to include any modules that were already enabled
-$ sudo ros config set rancher.modules [zfs]
-```
-
-<br>
-
-You will also need to have the zpool cache imported on boot:
-
-```
-[ -f /etc/zfs/zpool.cache ] && zpool import -c /etc/zfs/zpool.cache -a
-```
-
-<br>
-
-A cloud-config `runcmd` instruction will do it for you:
-
-```
-# check current 'runcmd' list
-$ sudo ros config get runcmd
-[]
-# add the command we need to run on boot
-$ sudo ros config set runcmd "[[sh, -c, '[ -f /etc/zfs/zpool.cache ] && zpool import -c /etc/zfs/zpool.cache -a']]"
-```
+> *Note:* if you switch consoles, you may need to re-run `ros up zfs`.
 
 #### Using ZFS
 
-After it's installed, it should be ready to use!
+After it's installed, it should be ready to use. Make a zpool named `zpool1` using a device that you haven't yet partitioned (you can use `sudo fdisk -l` to list all the disks and their partitions).
+
+> *Note:* You need to mount the zpool in `/mnt` to make it available to your host and in containers.
+
 
 ```
-$ sudo modprobe zfs
 $ sudo zpool list
-$ sudo zpool create zpool1 /dev/<some-disk-dev>
+$ sudo zpool create zpool1 -m /mnt/zpool1 /dev/<some-disk-dev>
+$ sudo zpool list
+$ sudo zfs list
+$ sudo cp /etc/* /mnt/zpool1
+$ docker run --rm -it -v /mnt/zpool1/:/data alpine ls -la /data
 ```
 
 <br>
@@ -88,9 +66,8 @@ Now you'll need to remove `-s overlay` (or any other storage driver) from the Do
 
 ```
 $ sudo ros config set rancher.docker.storage_driver ''
-$ sudo ros config set rancher.docker.graph /zpool1/docker
-# After editing Docker daemon args, you'll need to start Docker
-$ sudo system-docker stop docker
+$ sudo ros config set rancher.docker.graph /mnt/zpool1/docker
+# Now that you've changed the Docker daemon args, you'll need to start Docker
 $ sudo system-docker start docker
 ```
 
@@ -98,41 +75,42 @@ After customizing the Docker daemon arguments and restarting `docker` system ser
 
 ```
 $ docker info
-Containers: 1
+Containers: 0
  Running: 0
  Paused: 0
- Stopped: 1
-Images: 1
-Server Version: 1.12.1
+ Stopped: 0
+Images: 0
+Server Version: 1.12.6
 Storage Driver: zfs
- Zpool: zpool1
- Zpool Health: ONLINE
+ Zpool: error while getting pool information strconv.ParseUint: parsing "": invalid syntax
+ Zpool Health: not available
  Parent Dataset: zpool1/docker
- Space Used By Parent: 27761152
- Space Available: 4100088320
+ Space Used By Parent: 19456
+ Space Available: 8256371200
  Parent Quota: no
  Compression: off
 Logging Driver: json-file
 Cgroup Driver: cgroupfs
 Plugins:
  Volume: local
- Network: host null bridge overlay
+ Network: host bridge null overlay
 Swarm: inactive
 Runtimes: runc
 Default Runtime: runc
 Security Options: seccomp
-Kernel Version: 4.4.16-rancher
-Operating System: RancherOS v0.6.0-rc8
+Kernel Version: 4.9.6-rancher
+Operating System: RancherOS v0.8.0-rc8
 OSType: linux
 Architecture: x86_64
-CPUs: 2
-Total Memory: 1.938 GiB
-Name: rancher
-ID: EK7Q:WTBH:33KR:UCRY:YAPI:N7RX:D25K:S7ZH:DRNY:ZJ3J:25XE:P3RF
-Docker Root Dir: /zpool1/docker
+CPUs: 1
+Total Memory: 1.953 GiB
+Name: ip-172-31-24-201.us-west-1.compute.internal
+ID: IEE7:YTUL:Y3F5:L6LF:5WI7:LECX:YDB5:LGWZ:QRPN:4KDI:LD66:KYTC
+Docker Root Dir: /mnt/zpool1/docker
 Debug Mode (client): false
 Debug Mode (server): false
 Registry: https://index.docker.io/v1/
 Insecure Registries:
  127.0.0.0/8
+
 ```
