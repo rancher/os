@@ -96,7 +96,8 @@ Please refer to our [RancherOS Documentation](http://docs.rancher.com/os/) websi
 ## Support, Discussion, and Community
 If you need any help with RancherOS or Rancher, please join us at either our [Rancher forums](http://forums.rancher.com) or [#rancher IRC channel](http://webchat.freenode.net/?channels=rancher) where most of our team hangs out at.
 
-For issues relating to security, please email security@rancher.com instead of posting an open issue in Github.
+For security issues, please email security@rancher.com instead of posting a public issue in GitHub.  You may (but are not required to) use the GPG key located on [Keybase](https://keybase.io/rancher).
+
 
 Please submit any **RancherOS** bugs, issues, and feature requests to [rancher/os](//github.com/rancher/os/issues).
 
