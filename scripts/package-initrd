@@ -12,6 +12,7 @@ ARTIFACTS=$(pwd)/dist/artifacts
 mkdir -p ${ARTIFACTS}
 
 if [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ]; then
+    echo "skipping package-initrd due to ARM build? (no kernel artifact)"
     exit 0
 fi
 

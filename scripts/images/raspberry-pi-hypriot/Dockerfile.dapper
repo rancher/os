@@ -10,12 +10,14 @@ RUN mkdir -p /source/assets
 RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm.tar.gz > /source/assets/rootfs_arm.tar.gz
 #COPY rootfs_arm.tar.gz /source/assets/rootfs_arm.tar.gz
 
-# 4.4.27-hypriotos-v7+
 # see https://packagecloud.io/Hypriot/rpi/?filter=debs
 ENV URL=https://packagecloud.io/Hypriot/rpi/packages/debian/jessie/
-RUN curl -fL $URL/raspberrypi-kernel_20161028-083330_armhf.deb/download \
+# 4.4.27-hypriotos-v7+
+ENV VER=20170119-202035
+
+RUN curl -fL ${URL}/raspberrypi-kernel_${VER}_armhf.deb/download \
 	> /source/assets/kernel.deb
-RUN curl -fL $URL/raspberrypi-bootloader_20161028-083330_armhf.deb/download \
+RUN curl -fL ${URL}/raspberrypi-bootloader_${VER}_armhf.deb/download \
 	> /source/assets/bootloader.deb
 
 WORKDIR /source

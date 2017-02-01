@@ -9,8 +9,8 @@ BASEDOCKERFILE=./scripts/installer/BaseDockerfile.${ARCH}
 DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}
 
 if [ ! -f $DOCKERFILE ] || [ ! -f dist/artifacts/vmlinuz-${KERNEL_VERSION} ] || [ ! -f ${INITRD} ]; then
-    echo "ERROR: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${INITRD} not found"
-    exit 1
+    echo "Skipping package-installer due to ARM build: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${INITRD} not found"
+    exit 0
 fi
 
 # TODO maybe extract the creation of the syslinux cfg files
