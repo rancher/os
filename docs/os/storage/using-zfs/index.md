@@ -17,6 +17,7 @@ The only restriction is that you must mount your zpool into `/mnt`, as this is t
 ```
 $ sudo ros service enable zfs
 $ sudo ros service up zfs
+# you can follow the progress of the build by running the following command in another ssh session:
 $ sudo ros service logs --follow zfs
 # wait until the build is finished.
 $ lsmod | grep zfs
