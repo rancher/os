@@ -1,4 +1,6 @@
-FROM debian:jessie
+FROM rancher/os-debianconsole-base
+# FROM amd64=debian:jessie arm64=aarch64/debian:jessie arm=armhf/debian:jessie
+
 ENV DAPPER_RUN_ARGS --privileged
 ENV DAPPER_OUTPUT dist
 RUN apt-get update -y
