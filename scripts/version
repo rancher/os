@@ -15,7 +15,7 @@ if [ -z "$VERSION" ]; then
     fi
 fi
 
-INITRD=${ARTIFACTS}/initrd-${VERSION}
+INITRD=initrd-${VERSION}
 export VERSION COMMIT INITRD
 
 # Suffix
