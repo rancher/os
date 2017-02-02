@@ -22,6 +22,8 @@ import (
 var entrypoints = map[string]func(){
 	"cloud-init-execute": cloudinitexecute.Main,
 	"cloud-init-save":    cloudinitsave.Main,
+	"console":            control.ConsoleInitMain,
+	"console.sh":         control.ConsoleInitMain,
 	"docker":             docker.Main,
 	"dockerlaunch":       dfs.Main,
 	"halt":               power.Halt,

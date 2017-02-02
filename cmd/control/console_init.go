@@ -30,7 +30,18 @@ type symlink struct {
 	oldname, newname string
 }
 
+func ConsoleInitMain() {
+	err := consoleInitFunc()
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
 func consoleInitAction(c *cli.Context) error {
+	return consoleInitFunc()
+}
+
+func consoleInitFunc() error {
 	cfg := config.LoadConfig()
 
 	// Now that we're booted, stop writing debug messages to the console
