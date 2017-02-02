@@ -2,13 +2,14 @@
 set -e
 set -x
 
-source $(dirname $0)/version
 cd $(dirname $0)/..
 
 ARTIFACTS=$(pwd)/dist/artifacts
 CD=${BUILD}/cd
 ISO=${ARTIFACTS}/$(echo ${DISTRIB_ID} | tr '[:upper:]' '[:lower:]').iso
 CHECKSUM=iso-checksums.txt
+
+source scripts/version
 
 mkdir -p ${CD}/boot/isolinux
 mkdir -p ${CD}/rancheros
