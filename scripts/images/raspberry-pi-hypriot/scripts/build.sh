@@ -29,6 +29,8 @@ fdisk -l build/run.img
 ls -al build/run.img
 
 # partition #1 - Type= c W95 FAT32 (LBA)
+losetup
+losetup -f
 losetup -d /dev/loop0 || /bin/true
 losetup --offset $BOOT_PARTITION_OFFSET --sizelimit $BOOT_PARTITION_BYTES /dev/loop0 build/run.img
 mkfs.vfat -n RancherOS /dev/loop0
