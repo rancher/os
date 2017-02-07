@@ -57,6 +57,53 @@ The config settings to set the url in which `ros` should look for an `index.yml`
 
 For example, in RancherOS v0.7.0, the `core` repository is set to `https://raw.githubusercontent.com/rancher/os-services/v0.7.0`.
 
+### Service development and testing
+
+If you're building your own services in a branch on GitHub, you can push to it, and then load your service from there.
+
+For example, when developing the zfs service:
+
+```
+rancher@zfs:~$ sudo ros config set rancher.repositories.zfs.url https://raw.githubusercontent.com/SvenDowideit/os-services/zfs-service
+rancher@zfs:~$ sudo ros service list
+disabled amazon-ecs-agent
+disabled kernel-extras
+enabled  kernel-headers
+disabled kernel-headers-system-docker
+disabled open-vm-tools
+disabled amazon-ecs-agent
+disabled kernel-extras
+disabled kernel-headers
+disabled kernel-headers-system-docker
+disabled open-vm-tools
+disabled zfs
+[rancher@zfs ~]$ sudo ros service enable zfs
+Pulling zfs (zombie/zfs)...
+latest: Pulling from zombie/zfs
+b3e1c725a85f: Pull complete
+4daad8bdde31: Pull complete
+63fe8c0068a8: Pull complete
+4a70713c436f: Pull complete
+bd842a2105a8: Pull complete
+d1a8c0826fbb: Pull complete
+5f1c5ffdf34c: Pull complete
+66c2263f2388: Pull complete
+Digest: sha256:eab7b8c21fbefb55f7ee311dd236acee215cb6a5d22942844178b8c6d4e02cd9
+Status: Downloaded newer image for zombie/zfs:latest
+[rancher@zfs ~]$ sudo ros service up zfs
+WARN[0000] The KERNEL_VERSION variable is not set. Substituting a blank string.
+INFO[0000] Project [os]: Starting project
+INFO[0000] [0/21] [zfs]: Starting
+INFO[0000] [1/21] [zfs]: Started
+INFO[0000] Project [os]: Project started
+
+```
+
+Beware that there is an overly aggressive caching of yml files - so when you push a new yml file to your repo, you need to
+delete the files in `/var/lib/rancher/cache`.
+
+The image that you specify in the service yml file needs to be pullable - either from a private registry, or on the Docker Hub.
+
 ### Creating your own Console
 
 Once you have your own Services repository, you can add a new service to its index.yml, and then add a `<service-name>.yml` file to the directory starting with the first letter.
