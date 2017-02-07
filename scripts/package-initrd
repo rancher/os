@@ -22,6 +22,6 @@ fi
 
 cd ${INITRD_DIR}
 
-echo Creating ${INITRD}
-find | cpio -H newc -o | ${COMPRESS} > ${INITRD}
-echo Done creating ${INITRD}
+echo Creating ${ARTIFACTS}/${INITRD}
+find | cpio -H newc -o | ${COMPRESS} > ${ARTIFACTS}/${INITRD}
+echo Done creating ${ARTIFACTS}/${INITRD}
