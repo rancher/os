@@ -62,11 +62,12 @@ var installCommand = cli.Command{
 			Name:  "append, a",
 			Usage: "append additional kernel parameters",
 		},
-		cli.StringFlag{ // TODO: hide..
-			Name:  "rollback, r",
-			Usage: "rollback version",
+		cli.StringFlag{
+			Name:   "rollback, r",
+			Usage:  "rollback version",
+			Hidden: true,
 		},
-		cli.BoolFlag{ // TODO: this should be hidden and internal only
+		cli.BoolFlag{
 			Name:   "isoinstallerloaded",
 			Usage:  "INTERNAL use only: mount the iso to get kernel and initrd",
 			Hidden: true,
@@ -503,7 +504,7 @@ func layDownOS(image, installType, cloudConfig, device, kappend string, kexec bo
 		if err != nil {
 			return err
 		}
-		log.Infof("upgrading - %s, %s, %s, %s", device, baseName, bootDir, diskType)
+		log.Debugf("upgrading - %s, %s, %s, %s", device, baseName, bootDir, diskType)
 		// TODO: detect pv-grub, and don't kill it with syslinux
 		upgradeBootloader(device, baseName, bootDir, diskType)
 	default:
@@ -733,7 +734,7 @@ func formatdevice(device, partition string) error {
 }
 
 func mountdevice(baseName, bootDir, partition string, raw bool) (string, string, error) {
-	log.Infof("mountdevice %s, raw %v", partition, raw)
+	log.Debugf("mountdevice %s, raw %v", partition, raw)
 
 	if raw {
 		log.Debugf("util.Mount (raw) %s, %s", partition, baseName)
@@ -843,7 +844,19 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 		// TODO: in v0.9.0, need to detect what version syslinux we have
 		return nil
 	}
-	if err := os.Rename(grubDir, filepath.Join(baseName, bootDir+"grub_backup")); err != nil {
+	// deal with systems which were previously upgraded, then rolled back, and are now being re-upgraded
+	grubBackup := filepath.Join(baseName, bootDir+"grub_backup")
+	if err := os.RemoveAll(grubBackup); err != nil {
+		log.Errorf("RemoveAll (%s): %s", grubBackup, err)
+		return err
+	}
+	backupSyslinuxDir := filepath.Join(baseName, bootDir+"syslinux_backup")
+	if err := os.RemoveAll(backupSyslinuxDir); err != nil {
+		log.Errorf("RemoveAll (%s): %s", backupSyslinuxDir, err)
+		return err
+	}
+
+	if err := os.Rename(grubDir, grubBackup); err != nil {
 		log.Errorf("Rename(%s): %s", grubDir, err)
 		return err
 	}
@@ -851,17 +864,14 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 	syslinuxDir := filepath.Join(baseName, bootDir+"syslinux")
 	// it seems that v0.5.0 didn't have a syslinux dir, while 0.7 does
 	if _, err := os.Stat(syslinuxDir); !os.IsNotExist(err) {
-		backupSyslinuxDir := filepath.Join(baseName, bootDir+"syslinux_backup")
 		if err := os.Rename(syslinuxDir, backupSyslinuxDir); err != nil {
 			log.Infof("error Rename(%s, %s): %s", syslinuxDir, backupSyslinuxDir, err)
 		} else {
-			log.Errorf("Rename(%s, %s): ok", syslinuxDir, backupSyslinuxDir)
 			//mv the old syslinux into linux-previous.cfg
 			oldSyslinux, err := ioutil.ReadFile(filepath.Join(backupSyslinuxDir, "syslinux.cfg"))
 			if err != nil {
 				log.Infof("error read(%s / syslinux.cfg): %s", backupSyslinuxDir, err)
 			} else {
-				log.Infof("read(%s / syslinux.cfg): ok", backupSyslinuxDir)
 				cfg := string(oldSyslinux)
 				//DEFAULT RancherOS-current
 				//
@@ -879,7 +889,6 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 					line = strings.TrimSpace(line)
 					if strings.HasPrefix(line, "APPEND") {
 						// TODO: need to append any extra's the user specified
-						log.Infof("wrote (%s) to global.cfg", []byte(cfg))
 						ioutil.WriteFile(filepath.Join(baseName, bootDir, "global.cfg"), []byte(cfg), 0644)
 						break
 					}
@@ -902,7 +911,7 @@ func installSyslinux(device, baseName, bootDir, diskType string) error {
 	// ubuntu: /usr/lib/syslinux/mbr/mbr.bin
 	// alpine: /usr/share/syslinux/mbr.bin
 	if device == "/dev/" {
-		log.Infof("installSyslinuxRaid(%s)", device)
+		log.Debugf("installSyslinuxRaid(%s)", device)
 		//RAID - assume sda&sdb
 		//TODO: fix this - not sure how to detect what disks should have mbr - perhaps we need a param
 		//      perhaps just assume and use the devices that make up the raid - mdadm
@@ -931,7 +940,7 @@ func installSyslinux(device, baseName, bootDir, diskType string) error {
 			log.Errorf("setBootable(%s, %s): %s", device, diskType, err)
 			//return err
 		}
-		log.Infof("installSyslinux(%s)", device)
+		log.Debugf("installSyslinux(%s)", device)
 		cmd := exec.Command("dd", "bs=440", "count=1", "if=/usr/share/syslinux/"+mbrFile, "of="+device)
 		log.Debugf("Run(%v)", cmd)
 		if err := cmd.Run(); err != nil {
