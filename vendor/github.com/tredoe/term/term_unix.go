@@ -11,14 +11,14 @@ package term
 import (
 	"io"
 	"os"
-	"syscall"
 
-	"github.com/kless/term/sys"
+	"github.com/tredoe/term/sys"
+	"golang.org/x/sys/unix"
 )
 
 // Default values for input and output.
 var (
-	InputFD int       = syscall.Stdin
+	InputFD int       = unix.Stdin
 	Input   io.Reader = os.Stdin
 	Output  io.Writer = os.Stdout
 )
@@ -178,7 +178,7 @@ func (t *Terminal) Fd() int {
 
 // GetSize returns the size of the term.
 func (t *Terminal) GetSize() (row, column int, err error) {
-	if err = sys.GetWinsize(syscall.Stdout, &t.size); err != nil {
+	if err = sys.GetWinsize(unix.Stdout, &t.size); err != nil {
 		return
 	}
 	return int(t.size.Row), int(t.size.Col), nil

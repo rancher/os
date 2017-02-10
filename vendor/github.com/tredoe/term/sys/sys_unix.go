@@ -12,14 +12,15 @@
 package sys
 
 import (
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/unix"
 )
 
 // int tcgetattr(int fd, struct termios *termios_p)
 
 func Getattr(fd int, state *Termios) (err error) {
-	_, _, e1 := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd),
+	_, _, e1 := unix.Syscall(unix.SYS_IOCTL, uintptr(fd),
 		uintptr(TCGETS), uintptr(unsafe.Pointer(state)))
 	if e1 != 0 {
 		err = e1
@@ -39,7 +40,7 @@ func Setattr(fd int, action uint, state *Termios) (err error) {
 		action = TCSETSF
 	}
 
-	_, _, e1 := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd),
+	_, _, e1 := unix.Syscall(unix.SYS_IOCTL, uintptr(fd),
 		uintptr(action), uintptr(unsafe.Pointer(state)))
 	if e1 != 0 {
 		err = e1
@@ -49,7 +50,7 @@ func Setattr(fd int, action uint, state *Termios) (err error) {
 
 // GetWinsize gets the winsize struct with the terminal size set by the kernel.
 func GetWinsize(fd int, ws *Winsize) (err error) {
-	_, _, e1 := syscall.Syscall(syscall.SYS_IOCTL, uintptr(fd),
+	_, _, e1 := unix.Syscall(unix.SYS_IOCTL, uintptr(fd),
 		uintptr(TIOCGWINSZ), uintptr(unsafe.Pointer(ws)))
 	if e1 != 0 {
 		err = e1

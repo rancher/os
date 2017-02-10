@@ -2,7 +2,7 @@
 
 package util
 
-import "github.com/kless/term"
+import "github.com/tredoe/term"
 
 func IsRunningInTty() bool {
 	return term.IsTerminal(1)

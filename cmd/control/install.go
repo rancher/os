@@ -15,7 +15,7 @@ import (
 	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
-	version "github.com/hashicorp/go-version"
+	"github.com/rancher/catalog-service/utils/version"
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/config"
@@ -169,20 +169,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 
 	// Versions before 0.8.0-rc3 use the old calling convention (from the lay-down-os shell script)
 	imageVersion := strings.TrimPrefix(image, "rancher/os:")
-	installVer, err := version.NewVersion("999.999")
-	if strings.HasPrefix(imageVersion, "v") {
-		installVer, err = version.NewVersion(strings.TrimPrefix(imageVersion, "v"))
-		if err != nil {
-			log.Errorf("ERROR parsing %s: %s", imageVersion, err)
-			os.Exit(1)
-		}
-	}
-	newInstallerVersion, err := version.NewVersion("0.8.0-rc3")
-	if err != nil {
-		log.Errorf("ERROR parsing %s: %s", "0.8.0-rc3", err)
-		os.Exit(1)
-	}
-	if installVer.LessThan(newInstallerVersion) {
+	if version.GreaterThan("v0.8.0-rc3", imageVersion) {
 		log.Infof("user specified to install pre v0.8.0: %s", image)
 		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
 		vArray := strings.Split(imageVersion, ".")
@@ -329,7 +316,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		}
 	}
 
-	err = layDownOS(image, installType, cloudConfig, device, kappend, kexec)
+	err := layDownOS(image, installType, cloudConfig, device, kappend, kexec)
 	if err != nil {
 		log.Errorf("error layDownOS %s", err)
 		return err
