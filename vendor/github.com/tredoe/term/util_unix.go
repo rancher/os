@@ -16,12 +16,12 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"syscall"
 	"time"
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/kless/term/sys"
+	"github.com/tredoe/term/sys"
+	"golang.org/x/sys/unix"
 )
 
 var shellsWithoutANSI = []string{"dumb", "cons25"}
@@ -95,7 +95,7 @@ func ReadPassword(password []byte) (n int, err error) {
 
 L:
 	for {
-		n, err = syscall.Read(InputFD, key)
+		n, err = unix.Read(InputFD, key)
 		if err != nil {
 			return 0, err
 		}
@@ -111,7 +111,7 @@ L:
 				}
 				continue
 			case sys.K_CTRL_C:
-				syscall.Write(syscall.Stdout, _CTRL_C)
+				unix.Write(unix.Stdout, _CTRL_C)
 				// Clean data stored, if any.
 				for i, v := range password {
 					if v == 0 {
@@ -129,7 +129,7 @@ L:
 			lenPassword++
 
 			if PasswordShadowed {
-				syscall.Write(syscall.Stdout, bytes.Repeat(_SHADOW_CHAR, rand.Intn(3)+1))
+				unix.Write(unix.Stdout, bytes.Repeat(_SHADOW_CHAR, rand.Intn(3)+1))
 			}
 			if lenPassword == len(password) {
 				break
@@ -137,7 +137,7 @@ L:
 		}
 	}
 
-	syscall.Write(syscall.Stdout, _RETURN)
+	unix.Write(unix.Stdout, _RETURN)
 	n = lenPassword
 	return
 }
@@ -160,7 +160,7 @@ func DetectWinSize() *WinSize {
 	}
 
 	changeSig := make(chan os.Signal)
-	signal.Notify(changeSig, syscall.SIGWINCH)
+	signal.Notify(changeSig, unix.SIGWINCH)
 
 	go func() {
 		for {
