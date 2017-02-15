@@ -205,7 +205,7 @@ func isLocal(service string) bool {
 }
 
 func IsLocalOrURL(service string) bool {
-	return isLocal(service) || strings.HasPrefix(service, "http:/") || strings.HasPrefix(service, "http:/")
+	return isLocal(service) || strings.HasPrefix(service, "http:/") || strings.HasPrefix(service, "https:/")
 }
 
 func validateService(service string, cfg *config.CloudConfig) {
