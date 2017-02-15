@@ -25,8 +25,6 @@ https://releases.rancher.com/os/v0.8.0/rancheros.iso
 
 #### Latest Links
 
-##### v0.8.0
-
 * https://releases.rancher.com/os/latest/initrd-v0.8.0
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
