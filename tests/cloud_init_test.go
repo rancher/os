@@ -18,3 +18,13 @@ EOF
 
 	s.CheckCall(c, "sudo ros config get rancher.log | grep true")
 }
+
+func (s *QemuSuite) TestIsoCloudConfig(c *C) {
+	runArgs := []string{
+		"--fresh",
+		"--cloud-config-iso",
+	}
+	s.RunQemuWith(c, runArgs...)
+
+	s.CheckCall(c, `ls .ssh/authorized_keys`)
+}
