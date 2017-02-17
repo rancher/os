@@ -7,8 +7,7 @@ import (
 
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config"
-
-	log "github.com/Sirupsen/logrus"
+	"github.com/rancher/os/log"
 )
 
 type ConfigEnvironment struct {
