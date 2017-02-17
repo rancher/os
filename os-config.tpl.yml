@@ -102,6 +102,7 @@ rancher:
       volumes_from:
       - container-data-volumes
       - command-volumes
+      - media-volumes
       - user-volumes
       - system-volumes
     cloud-init-execute:
@@ -148,8 +149,6 @@ rancher:
       - all-volumes
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
-      - /media:/media:shared
-      - /mnt:/mnt:shared
     container-data-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
@@ -162,6 +161,19 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
+    media-volumes:
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: echo
+      labels:
+        io.rancher.os.createonly: "true"
+        io.rancher.os.scope: system
+      log_driver: json-file
+      net: none
+      privileged: true
+      read_only: true
+      volumes:
+      - /media:/media:shared
+      - /mnt:/mnt:shared
     network:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: netconf
