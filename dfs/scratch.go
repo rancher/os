@@ -38,7 +38,7 @@ var (
 		{"none", "/sys/fs/cgroup", "tmpfs", ""},
 	}
 	optionalMounts = [][]string{
-		{"none", "/sys/fs/selinux", "selinuxfs", ""},
+		{"none", "/sys/fs/selinux", "selinuxfs", "ro"},
 	}
 )
 
