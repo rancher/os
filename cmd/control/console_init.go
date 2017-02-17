@@ -31,14 +31,24 @@ type symlink struct {
 }
 
 func ConsoleInitMain() {
-	err := consoleInitFunc()
-	if err != nil {
+	if err := consoleInitFunc(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func consoleInitAction(c *cli.Context) error {
 	return consoleInitFunc()
+}
+
+func createHomeDir(homedir string, uid, gid int) {
+	if _, err := os.Stat(homedir); os.IsNotExist(err) {
+		if err := os.MkdirAll(homedir, 0755); err != nil {
+			log.Error(err)
+		}
+		if err := os.Chown(homedir, uid, gid); err != nil {
+			log.Error(err)
+		}
+	}
 }
 
 func consoleInitFunc() error {
@@ -50,23 +60,8 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if _, err := os.Stat(rancherHome); os.IsNotExist(err) {
-		if err := os.MkdirAll(rancherHome, 0755); err != nil {
-			log.Error(err)
-		}
-		if err := os.Chown(rancherHome, 1100, 1100); err != nil {
-			log.Error(err)
-		}
-	}
-
-	if _, err := os.Stat(dockerHome); os.IsNotExist(err) {
-		if err := os.MkdirAll(dockerHome, 0755); err != nil {
-			log.Error(err)
-		}
-		if err := os.Chown(dockerHome, 1101, 1101); err != nil {
-			log.Error(err)
-		}
-	}
+	createHomeDir(rancherHome, 1100, 1100)
+	createHomeDir(dockerHome, 1101, 1101)
 
 	password := config.GetCmdline("rancher.password")
 	if password != "" {
