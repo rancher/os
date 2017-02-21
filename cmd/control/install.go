@@ -113,7 +113,8 @@ func installAction(c *cli.Context) error {
 	}
 	if installType == "rancher-upgrade" ||
 		installType == "upgrade" {
-		force = true // the os.go upgrade code already asks
+		installType = "upgrade" // rancher-upgrade is redundant!
+		force = true            // the os.go upgrade code already asks
 		reboot = false
 		isoinstallerloaded = true // OMG this flag is aweful - kill it with fire
 	}
@@ -121,8 +122,7 @@ func installAction(c *cli.Context) error {
 	if installType != "noformat" &&
 		installType != "raid" &&
 		installType != "bootstrap" &&
-		installType != "upgrade" &&
-		installType != "rancher-upgrade" {
+		installType != "upgrade" {
 		// These can use RANCHER_BOOT or RANCHER_STATE labels..
 		if device == "" {
 			log.Fatal("Can not proceed without -d <dev> specified")
@@ -131,7 +131,10 @@ func installAction(c *cli.Context) error {
 
 	cloudConfig := c.String("cloud-config")
 	if cloudConfig == "" {
-		log.Warn("Cloud-config not provided: you might need to provide cloud-config on bootDir with ssh_authorized_keys")
+		if installType != "upgrade" {
+			// TODO: I wonder if its plausible to merge a new cloud-config into an existing one on upgrade - so for now, i'm only turning off the warning
+			log.Warn("Cloud-config not provided: you might need to provide cloud-config on bootDir with ssh_authorized_keys")
+		}
 	} else {
 		uc := "/opt/user_config.yml"
 		if err := util.FileCopy(cloudConfig, uc); err != nil {
@@ -302,8 +305,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		device = "/host" + device
 	}
 
-	if installType == "rancher-upgrade" ||
-		installType == "upgrade" {
+	if installType == "upgrade" {
 		isoinstallerloaded = false
 	}
 
@@ -383,7 +385,7 @@ func mountBootIso() error {
 
 func layDownOS(image, installType, cloudConfig, device, kappend string, kexec bool) error {
 	// ENV == installType
-	//[[ "$ARCH" == "arm" && "$ENV" != "rancher-upgrade" ]] && ENV=arm
+	//[[ "$ARCH" == "arm" && "$ENV" != "upgrade" ]] && ENV=arm
 
 	// image == rancher/os:v0.7.0_arm
 	// TODO: remove the _arm suffix (but watch out, its not always there..)
@@ -483,9 +485,10 @@ func layDownOS(image, installType, cloudConfig, device, kappend string, kexec bo
 			return err
 		}
 		kernelArgs = kernelArgs + " rancher.cloud_init.datasources=[ec2,gce]"
-	case "upgrade":
-		fallthrough
 	case "rancher-upgrade":
+		installType = "upgrade" // rancher-upgrade is redundant
+		fallthrough
+	case "upgrade":
 		var err error
 		device, partition, err = mountdevice(baseName, bootDir, partition, false)
 		if err != nil {
