@@ -81,7 +81,11 @@ func MountConfigDrive() error {
 		return mount.Mount(configDevName, configDevMountPoint, "9p", "trans=virtio,version=9p2000.L")
 	}
 
-	return mount.Mount(configDev, configDevMountPoint, "iso9660,vfat", "")
+	fsType, err := util.GetFsType(configDev)
+	if err != nil {
+		return err
+	}
+	return mount.Mount(configDev, configDevMountPoint, fsType, "ro")
 }
 
 func UnmountConfigDrive() error {

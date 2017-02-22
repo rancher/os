@@ -42,6 +42,12 @@ while [ "$#" -gt 0 ]; do
                 exit 1
             fi
             ;;
+        --cloud-config-iso)
+            CLOUD_CONFIG_FORMAT="iso"
+            ;;
+        --cloud-config-fat)
+            CLOUD_CONFIG_FORMAT="fat"
+            ;;
         --second-drive)
             SECOND_DRIVE=1
             ;;
@@ -76,7 +82,7 @@ while [ "$#" -gt 0 ]; do
             AUTOFORMAT=1
             ;;
         --console)
-	    # use the bios console, not serial (lets you see syslinux)
+        # use the bios console, not serial (lets you see syslinux)
             CONSOLEDISPLAY=1
             ;;
         --installed)
@@ -131,13 +137,13 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
         if [ ¨$INSTALLED¨ == ¨1¨ ]; then
             ./scripts/create-installed
         else
-		if [ "$AUTOFORMAT" == "1" ]; then
-			echo "boot2docker, please format-me" | cat - /dev/zero | head -c 5242880 > format-flag.txt # 5M
-		    qemu-img convert -f raw format-flag.txt -O qcow2 ${HD}
+        if [ "$AUTOFORMAT" == "1" ]; then
+            echo "boot2docker, please format-me" | cat - /dev/zero | head -c 5242880 > format-flag.txt # 5M
+            qemu-img convert -f raw format-flag.txt -O qcow2 ${HD}
             qemu-img resize ${HD} +10GB
-		else
-        	qemu-img create -f qcow2 -o size=10G ${HD}
-		fi
+        else
+            qemu-img create -f qcow2 -o size=10G ${HD}
+        fi
         fi
     fi
 
@@ -170,6 +176,20 @@ if [ "$QIND" != "1" ]; then
         echo "ssh_authorized_keys:" >> ${USER_DATA}
         echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
     fi
+    case $CLOUD_CONFIG_FORMAT in
+        iso)
+            mkisofs -R -V config-2 -o ${BASE}/state/configdrive.iso ${CCROOT}
+            CLOUD_CONFIG_DISK="-cdrom ${BASE}/state/configdrive.iso"
+        ;;
+        fat)
+            echo "TODO: implement a vfat formated qemu img & copy the config files into it"
+            exit 1
+        ;;
+        *)
+            CLOUD_CONFIG_DISK="-fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
+                -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2"
+        ;;
+    esac
 
     HOME=${HOME:-/}
 fi
@@ -203,8 +223,7 @@ if [ "$QEMU" == "1" ]; then
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
-            -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
-            -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
+            ${CLOUD_CONFIG_DISK} \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
             ${QEMU_ARGS} \
@@ -214,8 +233,7 @@ elif [ "$BOOT_ISO" == "1" ] ||
             [ "$BOOT_HD" == "1" ]; then
     if [ "$BOOT_ISO" == "1" ]; then
         ISO_OPTS="-boot d -cdrom ./dist/artifacts/rancheros.iso \
-            -fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
-            -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2 \
+            ${CLOUD_CONFIG_DISK} \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home "
             echo "----- $ISO_OPTS"
