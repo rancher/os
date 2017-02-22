@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/util"
 )
@@ -45,13 +47,38 @@ func GetCmdline(key string) interface{} {
 	return v
 }
 
+// TOOO: value should be able to be an array here
 func Set(key string, value interface{}) error {
+	modified := checkTypeAndSetVal(key, map[interface{}]interface{}{}, value)
+	//_, modified := getOrSetVal(key, map[interface{}]interface{}{}, value)
+
+	fmt.Println("@!", modified)
+
 	existing, err := readConfigs(nil, false, true, CloudConfigFile)
 	if err != nil {
 		return err
 	}
 
-	_, modified := getOrSetVal(key, existing, value)
+	modified = util.Merge(existing, modified)
+
+	fmt.Println("##", modified)
+
+	c := &CloudConfig{}
+	if err = util.Convert(modified, c); err != nil {
+		return err
+	}
+
+	return WriteToFile(modified, CloudConfigFile)
+}
+
+func FastSet(key string, value interface{}) error {
+	existing, err := readConfigs(nil, false, true, CloudConfigFile)
+	if err != nil {
+		return err
+	}
+
+	//_, modified := getOrSetVal(key, existing, value)
+	modified := checkTypeAndSetVal(key, existing, value)
 
 	c := &CloudConfig{}
 	if err = util.Convert(modified, c); err != nil {

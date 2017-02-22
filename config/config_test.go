@@ -100,6 +100,44 @@ func TestUnmarshalOrReturnString(t *testing.T) {
 	assert.Equal([]interface{}{false, "a"}, unmarshalOrReturnString("[false,a]"))
 }
 
+func TestGetFieldType(t *testing.T) {
+	assert := require.New(t)
+
+	assert.Equal("string", getFieldType("S", &struct {
+		S string
+	}{}))
+	assert.Equal("int", getFieldType("S", &struct {
+		S int
+	}{}))
+	assert.Equal("slice", getFieldType("S", &struct {
+		S []string
+	}{}))
+
+	assert.Equal("string", getFieldType("F.S", &struct {
+		F struct {
+			S string
+		}
+	}{}))
+	assert.Equal("int", getFieldType("F.S", &struct {
+		F struct {
+			S int
+		}
+	}{}))
+	assert.Equal("slice", getFieldType("F.S", &struct {
+		F struct {
+			S []string
+		}
+	}{}))
+
+	assert.Equal("string", getFieldType("hostname", &CloudConfig{}))
+	assert.Equal("slice", getFieldType("ssh_authorized_keys", &CloudConfig{}))
+	assert.Equal("struct", getFieldType("rancher", &CloudConfig{}))
+
+	assert.Equal("string", getFieldType("rancher.console", &CloudConfig{}))
+	assert.Equal("bool", getFieldType("rancher.log", &CloudConfig{}))
+	assert.Equal("slice", getFieldType("rancher.disable", &CloudConfig{}))
+}
+
 func TestParseCmdline(t *testing.T) {
 	assert := require.New(t)
 
@@ -142,6 +180,41 @@ func TestParseCmdline(t *testing.T) {
 
 	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
+			"disable": []interface{}{"a"},
+		},
+	}, parseCmdline("rancher.disable=a"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"disable": []interface{}{"a", "b"},
+		},
+	}, parseCmdline("rancher.disable=a rancher.disable=b"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"cloud_init": map[interface{}]interface{}{
+				"datasources": []interface{}{
+					"url:http://192.168.1.100/cloud-config",
+				},
+			},
+		},
+	}, parseCmdline("rancher.cloud_init.datasources=url:http://192.168.1.100/cloud-config"))
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"cloud_init": map[interface{}]interface{}{
+				"datasources": []interface{}{
+					"packet",
+					"url:http://192.168.1.100/cloud-config",
+				},
+			},
+		},
+	}, parseCmdline("rancher.cloud_init.datasources=packet rancher.cloud_init.datasources=url:http://192.168.1.100/cloud-config"))
+
+	// Test legacy array format
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
 			"keyArray": []interface{}{int64(1), int64(2)},
 		},
 	}, parseCmdline("rancher.keyArray=[1,2]"))
@@ -174,10 +247,11 @@ func TestGet(t *testing.T) {
 
 	tests := map[string]interface{}{
 		"key": "value",
-		"rancher.key2.subkey":  "subvalue",
-		"rancher.key2.subnum":  42,
-		"rancher.key2.subkey2": "",
-		"foo": "",
+		"rancher.key2.subkey": "subvalue",
+		"rancher.key2.subnum": 42,
+		// TODO
+		//"rancher.key2.subkey2": "",
+		//"foo": "",
 	}
 
 	for k, v := range tests {

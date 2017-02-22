@@ -147,14 +147,24 @@ func env2map(env []string) map[string]string {
 }
 
 func configSet(c *cli.Context) error {
+
 	key := c.Args().Get(0)
-	value := c.Args().Get(1)
 	if key == "" {
 		return nil
 	}
 
-	err := config.Set(key, value)
-	if err != nil {
+	var value interface{}
+	if len(c.Args()) == 2 {
+		value = c.Args().Get(1)
+	} else if len(c.Args()) > 2 {
+		values := []interface{}{}
+		for _, arg := range c.Args()[1:] {
+			values = append(values, arg)
+		}
+		value = values
+	}
+
+	if err := config.Set(key, value); err != nil {
 		log.Fatal(err)
 	}
 

@@ -290,6 +290,7 @@ func RunInit() error {
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
+			fmt.Println("1", cfg.Rancher.CloudInit.Datasources)
 			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
 				log.Error(err)
 			}
@@ -356,9 +357,11 @@ func RunInit() error {
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if boot2DockerEnvironment {
+				fmt.Println("2", cfg.Rancher.State.Dev)
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)
 				}
+				fmt.Println("3", cfg.Rancher.State.Autoformat)
 				if err := config.Set("rancher.state.autoformat", cfg.Rancher.State.Autoformat); err != nil {
 					log.Errorf("Failed to update rancher.state.autoformat: %v", err)
 				}
