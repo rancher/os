@@ -182,6 +182,8 @@ if [ "$QIND" != "1" ]; then
             CLOUD_CONFIG_DISK="-cdrom ${BASE}/state/configdrive.iso"
         ;;
         fat)
+            echo "TODO: implement a vfat formated qemu img & copy the config files into it"
+            exit 1
         ;;
         *)
             CLOUD_CONFIG_DISK="-fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
