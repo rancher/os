@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/coreos/coreos-cloudinit/config"
+	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config/yaml"

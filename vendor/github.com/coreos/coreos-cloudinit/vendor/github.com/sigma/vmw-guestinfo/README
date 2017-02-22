@@ -1,3 +1,0 @@
-This package provides access to the guestinfo variables exposed to a VMware virtual machine.
-
-see examples/main.go for an example

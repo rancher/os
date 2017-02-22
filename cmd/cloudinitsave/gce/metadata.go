@@ -21,8 +21,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/coreos/coreos-cloudinit/datasource"
-	"github.com/coreos/coreos-cloudinit/datasource/metadata"
+	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 )
 
 const (
