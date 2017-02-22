@@ -1,0 +1,11 @@
+# Automatically trigger configdrive mounting.
+
+ACTION!="add|change", GOTO="coreos_configdrive_end"
+
+# A normal config drive. Block device formatted with iso9660 or fat
+SUBSYSTEM=="block", ENV{ID_FS_TYPE}=="iso9660|udf|vfat", ENV{ID_FS_LABEL}=="config-2", TAG+="systemd", ENV{SYSTEMD_WANTS}+="media-configdrive.mount"
+
+# Addtionally support virtfs from QEMU
+SUBSYSTEM=="virtio", DRIVER=="9pnet_virtio", ATTR{mount_tag}=="config-2", TAG+="systemd", ENV{SYSTEMD_WANTS}+="media-configvirtfs.mount"
+
+LABEL="coreos_configdrive_end"

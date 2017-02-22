@@ -1,0 +1,5 @@
+[Unit]
+Description=Watch for a cloud-config at %f
+
+[Path]
+PathExists=%f

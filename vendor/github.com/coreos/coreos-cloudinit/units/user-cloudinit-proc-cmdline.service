@@ -1,0 +1,14 @@
+[Unit]
+Description=Load cloud-config from url defined in /proc/cmdline
+Requires=coreos-setup-environment.service
+After=coreos-setup-environment.service
+After=system-config.target
+Before=user-config.target
+ConditionKernelCommandLine=cloud-config-url
+
+[Service]
+Type=oneshot
+TimeoutSec=10min
+RemainAfterExit=yes
+EnvironmentFile=-/etc/environment
+ExecStart=/usr/bin/coreos-cloudinit --from-proc-cmdline

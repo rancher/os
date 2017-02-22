@@ -1,0 +1,13 @@
+[Unit]
+Wants=user-configdrive.service
+Before=user-configdrive.service
+# Only mount config drive block devices automatically in virtual machines
+# or any host that has it explicitly enabled and not explicitly disabled.
+ConditionVirtualization=|vm
+ConditionKernelCommandLine=|coreos.configdrive=1
+ConditionKernelCommandLine=!coreos.configdrive=0
+
+[Mount]
+What=LABEL=config-2
+Where=/media/configdrive
+Options=ro

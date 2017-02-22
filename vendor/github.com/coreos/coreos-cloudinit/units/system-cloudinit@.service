@@ -1,0 +1,12 @@
+[Unit]
+Description=Load cloud-config from %f
+Requires=dbus.service
+After=dbus.service
+Before=system-config.target
+ConditionFileNotEmpty=%f
+
+[Service]
+Type=oneshot
+TimeoutSec=10min
+RemainAfterExit=yes
+ExecStart=/usr/bin/coreos-cloudinit --from-file=%f

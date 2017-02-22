@@ -1,0 +1,10 @@
+[Unit]
+Description=Load system-provided cloud configs
+
+# Generate /etc/environment
+Requires=coreos-setup-environment.service
+After=coreos-setup-environment.service
+
+# Load OEM cloud-config.yml
+Requires=system-cloudinit@usr-share-oem-cloud\x2dconfig.yml.service
+After=system-cloudinit@usr-share-oem-cloud\x2dconfig.yml.service

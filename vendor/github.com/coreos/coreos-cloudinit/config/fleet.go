@@ -25,6 +25,8 @@ type Fleet struct {
 	EtcdKeyPrefix           string  `yaml:"etcd_key_prefix"           env:"FLEET_ETCD_KEY_PREFIX"`
 	EtcdRequestTimeout      float64 `yaml:"etcd_request_timeout"      env:"FLEET_ETCD_REQUEST_TIMEOUT"`
 	EtcdServers             string  `yaml:"etcd_servers"              env:"FLEET_ETCD_SERVERS"`
+	EtcdUsername            string  `yaml:"etcd_username"             env:"FLEET_ETCD_USERNAME"`
+	EtcdPassword            string  `yaml:"etcd_password"             env:"FLEET_ETCD_PASSWORD"`
 	Metadata                string  `yaml:"metadata"                  env:"FLEET_METADATA"`
 	PublicIP                string  `yaml:"public_ip"                 env:"FLEET_PUBLIC_IP"`
 	TokenLimit              int     `yaml:"token_limit"               env:"FLEET_TOKEN_LIMIT"`
