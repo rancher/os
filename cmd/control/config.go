@@ -147,6 +147,10 @@ func env2map(env []string) map[string]string {
 }
 
 func configSet(c *cli.Context) error {
+	if c.NArg() < 2 {
+		return nil
+	}
+
 	key := c.Args().Get(0)
 	value := c.Args().Get(1)
 	if key == "" {
