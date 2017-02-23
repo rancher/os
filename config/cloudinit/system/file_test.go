@@ -154,7 +154,7 @@ func TestWriteFileInvalidEncodedContent(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	content_encodings := []string{
+	contentEncodings := []string{
 		"base64",
 		"b64",
 		"gz",
@@ -165,7 +165,7 @@ func TestWriteFileInvalidEncodedContent(t *testing.T) {
 		"gzip+b64",
 	}
 
-	for _, encoding := range content_encodings {
+	for _, encoding := range contentEncodings {
 		wf := File{config.File{
 			Path:     path.Join(dir, "tmp", "foo"),
 			Content:  "@&*#%invalid data*@&^#*&",

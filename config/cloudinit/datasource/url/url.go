@@ -19,37 +19,37 @@ import (
 	"github.com/rancher/os/config/cloudinit/pkg"
 )
 
-type remoteFile struct {
+type RemoteFile struct {
 	url string
 }
 
-func NewDatasource(url string) *remoteFile {
-	return &remoteFile{url}
+func NewDatasource(url string) *RemoteFile {
+	return &RemoteFile{url}
 }
 
-func (f *remoteFile) IsAvailable() bool {
-	client := pkg.NewHttpClient()
+func (f *RemoteFile) IsAvailable() bool {
+	client := pkg.NewHTTPClient()
 	_, err := client.Get(f.url)
 	return (err == nil)
 }
 
-func (f *remoteFile) AvailabilityChanges() bool {
+func (f *RemoteFile) AvailabilityChanges() bool {
 	return true
 }
 
-func (f *remoteFile) ConfigRoot() string {
+func (f *RemoteFile) ConfigRoot() string {
 	return ""
 }
 
-func (f *remoteFile) FetchMetadata() (datasource.Metadata, error) {
+func (f *RemoteFile) FetchMetadata() (datasource.Metadata, error) {
 	return datasource.Metadata{}, nil
 }
 
-func (f *remoteFile) FetchUserdata() ([]byte, error) {
-	client := pkg.NewHttpClient()
+func (f *RemoteFile) FetchUserdata() ([]byte, error) {
+	client := pkg.NewHTTPClient()
 	return client.GetRetry(f.url)
 }
 
-func (f *remoteFile) Type() string {
+func (f *RemoteFile) Type() string {
 	return "url"
 }

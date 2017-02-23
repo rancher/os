@@ -25,6 +25,11 @@ import (
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
+	"github.com/docker/docker/pkg/mount"
+	"github.com/rancher/os/cmd/cloudinitsave/gce"
+	"github.com/rancher/os/cmd/control"
+	"github.com/rancher/os/cmd/network"
+	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/configdrive"
@@ -32,14 +37,9 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/digitalocean"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/ec2"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
-	"github.com/rancher/os/config/cloudinit/datasource/proc_cmdline"
+	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
 	"github.com/rancher/os/config/cloudinit/datasource/url"
 	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/os/cmd/cloudinitsave/gce"
-	"github.com/rancher/os/cmd/control"
-	"github.com/rancher/os/cmd/network"
-	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 	"github.com/rancher/os/util"
@@ -237,7 +237,7 @@ func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.D
 		case "cmdline":
 			if network {
 				if len(parts) == 1 {
-					dss = append(dss, proc_cmdline.NewDatasource())
+					dss = append(dss, proccmdline.NewDatasource())
 				}
 			}
 		case "configdrive":

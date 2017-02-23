@@ -9,8 +9,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/rancher/os/config/cloudinit/system"
 	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/config/cloudinit/system"
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"

@@ -25,7 +25,7 @@ import (
 
 func TestAvailabilityChanges(t *testing.T) {
 	want := true
-	if ac := (MetadataService{}).AvailabilityChanges(); ac != want {
+	if ac := (Service{}).AvailabilityChanges(); ac != want {
 		t.Fatalf("bad AvailabilityChanges: want %t, got %t", want, ac)
 	}
 }
@@ -51,10 +51,10 @@ func TestIsAvailable(t *testing.T) {
 			expect:    false,
 		},
 	} {
-		service := &MetadataService{
+		service := &Service{
 			Root:       tt.root,
-			Client:     &test.HttpClient{Resources: tt.resources, Err: nil},
-			ApiVersion: tt.apiVersion,
+			Client:     &test.HTTPClient{Resources: tt.resources, Err: nil},
+			APIVersion: tt.apiVersion,
 		}
 		if a := service.IsAvailable(); a != tt.expect {
 			t.Fatalf("bad isAvailable (%q): want %t, got %t", tt.resources, tt.expect, a)
@@ -90,9 +90,9 @@ func TestFetchUserdata(t *testing.T) {
 			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test timeout error")},
 		},
 	} {
-		service := &MetadataService{
+		service := &Service{
 			Root:         tt.root,
-			Client:       &test.HttpClient{Resources: tt.resources, Err: tt.clientErr},
+			Client:       &test.HTTPClient{Resources: tt.resources, Err: tt.clientErr},
 			UserdataPath: tt.userdataPath,
 		}
 		data, err := service.FetchUserdata()
@@ -105,7 +105,7 @@ func TestFetchUserdata(t *testing.T) {
 	}
 }
 
-func TestUrls(t *testing.T) {
+func TestURLs(t *testing.T) {
 	for _, tt := range []struct {
 		root         string
 		userdataPath string
@@ -131,15 +131,15 @@ func TestUrls(t *testing.T) {
 			metadata:     "http://169.254.169.254/2009-04-04/meta-data",
 		},
 	} {
-		service := &MetadataService{
+		service := &Service{
 			Root:         tt.root,
 			UserdataPath: tt.userdataPath,
 			MetadataPath: tt.metadataPath,
 		}
-		if url := service.UserdataUrl(); url != tt.userdata {
+		if url := service.UserdataURL(); url != tt.userdata {
 			t.Fatalf("bad url (%q): want %q, got %q", tt.root, tt.userdata, url)
 		}
-		if url := service.MetadataUrl(); url != tt.metadata {
+		if url := service.MetadataURL(); url != tt.metadata {
 			t.Fatalf("bad url (%q): want %q, got %q", tt.root, tt.metadata, url)
 		}
 		if url := service.ConfigRoot(); url != tt.expectRoot {

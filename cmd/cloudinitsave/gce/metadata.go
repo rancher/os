@@ -32,7 +32,7 @@ const (
 )
 
 type MetadataService struct {
-	metadata.MetadataService
+	metadata.Service
 }
 
 func NewDatasource(root string) *MetadataService {
@@ -90,7 +90,7 @@ func (ms MetadataService) Type() string {
 }
 
 func (ms MetadataService) fetchString(key string) (string, error) {
-	data, err := ms.FetchData(ms.MetadataUrl() + key)
+	data, err := ms.FetchData(ms.MetadataURL() + key)
 	if err != nil {
 		return "", err
 	}
@@ -115,12 +115,12 @@ func (ms MetadataService) fetchIP(key string) (net.IP, error) {
 }
 
 func (ms MetadataService) FetchUserdata() ([]byte, error) {
-	data, err := ms.FetchData(ms.UserdataUrl())
+	data, err := ms.FetchData(ms.MetadataURL())
 	if err != nil {
 		return nil, err
 	}
 	if len(data) == 0 {
-		data, err = ms.FetchData(ms.MetadataUrl() + "instance/attributes/startup-script")
+		data, err = ms.FetchData(ms.MetadataURL() + "instance/attributes/startup-script")
 		if err != nil {
 			return nil, err
 		}

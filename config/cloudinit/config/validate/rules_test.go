@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestCheckDiscoveryUrl(t *testing.T) {
+func TestCheckDiscoveryURL(t *testing.T) {
 	tests := []struct {
 		config string
 
@@ -44,7 +44,7 @@ func TestCheckDiscoveryUrl(t *testing.T) {
 		if err != nil {
 			panic(err)
 		}
-		checkDiscoveryUrl(n, &r)
+		checkDiscoveryURL(n, &r)
 
 		if e := r.Entries(); !reflect.DeepEqual(tt.entries, e) {
 			t.Errorf("bad report (%d, %q): want %#v, got %#v", i, tt.config, tt.entries, e)

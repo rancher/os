@@ -25,21 +25,21 @@ import (
 type readConfigFunction func(key string) (string, error)
 type urlDownloadFunction func(url string) ([]byte, error)
 
-type vmware struct {
+type VMWare struct {
 	ovfFileName string
 	readConfig  readConfigFunction
 	urlDownload urlDownloadFunction
 }
 
-func (v vmware) AvailabilityChanges() bool {
+func (v VMWare) AvailabilityChanges() bool {
 	return false
 }
 
-func (v vmware) ConfigRoot() string {
+func (v VMWare) ConfigRoot() string {
 	return "/"
 }
 
-func (v vmware) FetchMetadata() (metadata datasource.Metadata, err error) {
+func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
 	metadata.Hostname, _ = v.readConfig("hostname")
 
 	netconf := map[string]string{}
@@ -121,7 +121,7 @@ func (v vmware) FetchMetadata() (metadata datasource.Metadata, err error) {
 	return
 }
 
-func (v vmware) FetchUserdata() ([]byte, error) {
+func (v VMWare) FetchUserdata() ([]byte, error) {
 	encoding, err := v.readConfig("coreos.config.data.encoding")
 	if err != nil {
 		return nil, err
@@ -154,6 +154,6 @@ func (v vmware) FetchUserdata() ([]byte, error) {
 	return []byte(data), nil
 }
 
-func (v vmware) Type() string {
-	return "vmware"
+func (v VMWare) Type() string {
+	return "VMWare"
 }

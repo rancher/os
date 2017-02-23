@@ -129,7 +129,7 @@ func TestFetchMetadata(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		v := vmware{readConfig: tt.variables.ReadConfig}
+		v := VMWare{readConfig: tt.variables.ReadConfig}
 		metadata, err := v.FetchMetadata()
 		if !reflect.DeepEqual(tt.err, err) {
 			t.Errorf("bad error (#%d): want %v, got %v", i, tt.err, err)
@@ -194,7 +194,7 @@ func TestFetchUserdata(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		v := vmware{
+		v := VMWare{
 			readConfig:  tt.variables.ReadConfig,
 			urlDownload: fakeDownloader,
 		}
@@ -210,7 +210,7 @@ func TestFetchUserdata(t *testing.T) {
 
 func TestFetchUserdataError(t *testing.T) {
 	testErr := errors.New("test error")
-	_, err := vmware{readConfig: func(_ string) (string, error) { return "", testErr }}.FetchUserdata()
+	_, err := VMWare{readConfig: func(_ string) (string, error) { return "", testErr }}.FetchUserdata()
 
 	if testErr != err {
 		t.Errorf("bad error: want %v, got %v", testErr, err)

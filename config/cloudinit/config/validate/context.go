@@ -18,17 +18,17 @@ import (
 	"strings"
 )
 
-// context represents the current position within a newline-delimited string.
+// Context represents the current position within a newline-delimited string.
 // Each line is loaded, one by one, into currentLine (newline omitted) and
 // lineNumber keeps track of its position within the original string.
-type context struct {
+type Context struct {
 	currentLine    string
 	remainingLines string
 	lineNumber     int
 }
 
-// Increment moves the context to the next line (if available).
-func (c *context) Increment() {
+// Increment moves the Context to the next line (if available).
+func (c *Context) Increment() {
 	if c.currentLine == "" && c.remainingLines == "" {
 		return
 	}
@@ -43,10 +43,10 @@ func (c *context) Increment() {
 	c.lineNumber++
 }
 
-// NewContext creates a context from the provided data. It strips out all
+// NewContext creates a Context from the provided data. It strips out all
 // carriage returns and moves to the first line (if available).
-func NewContext(content []byte) context {
-	c := context{remainingLines: strings.Replace(string(content), "\r", "", -1)}
+func NewContext(content []byte) Context {
+	c := Context{remainingLines: strings.Replace(string(content), "\r", "", -1)}
 	c.Increment()
 	return c
 }

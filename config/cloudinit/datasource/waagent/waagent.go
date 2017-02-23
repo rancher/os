@@ -25,29 +25,29 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource"
 )
 
-type waagent struct {
+type Waagent struct {
 	root     string
 	readFile func(filename string) ([]byte, error)
 }
 
-func NewDatasource(root string) *waagent {
-	return &waagent{root, ioutil.ReadFile}
+func NewDatasource(root string) *Waagent {
+	return &Waagent{root, ioutil.ReadFile}
 }
 
-func (a *waagent) IsAvailable() bool {
+func (a *Waagent) IsAvailable() bool {
 	_, err := os.Stat(path.Join(a.root, "provisioned"))
 	return !os.IsNotExist(err)
 }
 
-func (a *waagent) AvailabilityChanges() bool {
+func (a *Waagent) AvailabilityChanges() bool {
 	return true
 }
 
-func (a *waagent) ConfigRoot() string {
+func (a *Waagent) ConfigRoot() string {
 	return a.root
 }
 
-func (a *waagent) FetchMetadata() (metadata datasource.Metadata, err error) {
+func (a *Waagent) FetchMetadata() (metadata datasource.Metadata, err error) {
 	var metadataBytes []byte
 	if metadataBytes, err = a.tryReadFile(path.Join(a.root, "SharedConfig.xml")); err != nil {
 		return
@@ -57,7 +57,7 @@ func (a *waagent) FetchMetadata() (metadata datasource.Metadata, err error) {
 	}
 
 	type Instance struct {
-		Id             string `xml:"id,attr"`
+		ID             string `xml:"id,attr"`
 		Address        string `xml:"address,attr"`
 		InputEndpoints struct {
 			Endpoints []struct {
@@ -82,7 +82,7 @@ func (a *waagent) FetchMetadata() (metadata datasource.Metadata, err error) {
 
 	var instance Instance
 	for _, i := range m.Instances.Instances {
-		if i.Id == m.Incarnation.Instance {
+		if i.ID == m.Incarnation.Instance {
 			instance = i
 			break
 		}
@@ -99,15 +99,15 @@ func (a *waagent) FetchMetadata() (metadata datasource.Metadata, err error) {
 	return
 }
 
-func (a *waagent) FetchUserdata() ([]byte, error) {
+func (a *Waagent) FetchUserdata() ([]byte, error) {
 	return a.tryReadFile(path.Join(a.root, "CustomData"))
 }
 
-func (a *waagent) Type() string {
-	return "waagent"
+func (a *Waagent) Type() string {
+	return "Waagent"
 }
 
-func (a *waagent) tryReadFile(filename string) ([]byte, error) {
+func (a *Waagent) tryReadFile(filename string) ([]byte, error) {
 	log.Printf("Attempting to read from %q\n", filename)
 	data, err := a.readFile(filename)
 	if os.IsNotExist(err) {

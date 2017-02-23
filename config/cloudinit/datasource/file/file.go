@@ -21,35 +21,35 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource"
 )
 
-type localFile struct {
+type LocalFile struct {
 	path string
 }
 
-func NewDatasource(path string) *localFile {
-	return &localFile{path}
+func NewDatasource(path string) *LocalFile {
+	return &LocalFile{path}
 }
 
-func (f *localFile) IsAvailable() bool {
+func (f *LocalFile) IsAvailable() bool {
 	_, err := os.Stat(f.path)
 	return !os.IsNotExist(err)
 }
 
-func (f *localFile) AvailabilityChanges() bool {
+func (f *LocalFile) AvailabilityChanges() bool {
 	return true
 }
 
-func (f *localFile) ConfigRoot() string {
+func (f *LocalFile) ConfigRoot() string {
 	return ""
 }
 
-func (f *localFile) FetchMetadata() (datasource.Metadata, error) {
+func (f *LocalFile) FetchMetadata() (datasource.Metadata, error) {
 	return datasource.Metadata{}, nil
 }
 
-func (f *localFile) FetchUserdata() ([]byte, error) {
+func (f *LocalFile) FetchUserdata() ([]byte, error) {
 	return ioutil.ReadFile(f.path)
 }
 
-func (f *localFile) Type() string {
+func (f *LocalFile) Type() string {
 	return "local-file"
 }

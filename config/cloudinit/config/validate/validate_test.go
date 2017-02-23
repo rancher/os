@@ -60,7 +60,7 @@ func TestValidateCloudConfig(t *testing.T) {
 		err    error
 	}{
 		{
-			rules: []rule{func(_ node, _ *Report) { panic("something happened") }},
+			rules: []rule{func(_ Node, _ *Report) { panic("something happened") }},
 			err:   errors.New("something happened"),
 		},
 		{

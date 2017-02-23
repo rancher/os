@@ -20,13 +20,13 @@ import (
 	"github.com/rancher/os/config/cloudinit/system"
 )
 
-func SSHImportGithubUser(system_user string, github_user string) error {
-	url := fmt.Sprintf("https://api.github.com/users/%s/keys", github_user)
+func SSHImportGithubUser(systemUser string, githubUser string) error {
+	url := fmt.Sprintf("https://api.github.com/users/%s/keys", githubUser)
 	keys, err := fetchUserKeys(url)
 	if err != nil {
 		return err
 	}
 
-	key_name := fmt.Sprintf("github-%s", github_user)
-	return system.AuthorizeSSHKeys(system_user, key_name, keys)
+	keyName := fmt.Sprintf("github-%s", githubUser)
+	return system.AuthorizeSSHKeys(systemUser, keyName, keys)
 }

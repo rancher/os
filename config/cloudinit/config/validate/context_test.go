@@ -23,10 +23,10 @@ func TestNewContext(t *testing.T) {
 	tests := []struct {
 		in string
 
-		out context
+		out Context
 	}{
 		{
-			out: context{
+			out: Context{
 				currentLine:    "",
 				remainingLines: "",
 				lineNumber:     0,
@@ -34,7 +34,7 @@ func TestNewContext(t *testing.T) {
 		},
 		{
 			in: "this\r\nis\r\na\r\ntest",
-			out: context{
+			out: Context{
 				currentLine:    "this",
 				remainingLines: "is\na\ntest",
 				lineNumber:     1,
@@ -51,70 +51,70 @@ func TestNewContext(t *testing.T) {
 
 func TestIncrement(t *testing.T) {
 	tests := []struct {
-		init context
-		op   func(c *context)
+		init Context
+		op   func(c *Context)
 
-		res context
+		res Context
 	}{
 		{
-			init: context{
+			init: Context{
 				currentLine:    "",
 				remainingLines: "",
 				lineNumber:     0,
 			},
-			res: context{
+			res: Context{
 				currentLine:    "",
 				remainingLines: "",
 				lineNumber:     0,
 			},
-			op: func(c *context) {
+			op: func(c *Context) {
 				c.Increment()
 			},
 		},
 		{
-			init: context{
+			init: Context{
 				currentLine:    "test",
 				remainingLines: "",
 				lineNumber:     1,
 			},
-			res: context{
+			res: Context{
 				currentLine:    "",
 				remainingLines: "",
 				lineNumber:     2,
 			},
-			op: func(c *context) {
+			op: func(c *Context) {
 				c.Increment()
 				c.Increment()
 				c.Increment()
 			},
 		},
 		{
-			init: context{
+			init: Context{
 				currentLine:    "this",
 				remainingLines: "is\na\ntest",
 				lineNumber:     1,
 			},
-			res: context{
+			res: Context{
 				currentLine:    "is",
 				remainingLines: "a\ntest",
 				lineNumber:     2,
 			},
-			op: func(c *context) {
+			op: func(c *Context) {
 				c.Increment()
 			},
 		},
 		{
-			init: context{
+			init: Context{
 				currentLine:    "this",
 				remainingLines: "is\na\ntest",
 				lineNumber:     1,
 			},
-			res: context{
+			res: Context{
 				currentLine:    "test",
 				remainingLines: "",
 				lineNumber:     4,
 			},
-			op: func(c *context) {
+			op: func(c *Context) {
 				c.Increment()
 				c.Increment()
 				c.Increment()

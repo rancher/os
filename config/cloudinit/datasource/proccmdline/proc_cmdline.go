@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package proc_cmdline
+package proccmdline
 
 import (
 	"errors"
@@ -29,15 +29,15 @@ const (
 	ProcCmdlineCloudConfigFlag = "cloud-config-url"
 )
 
-type procCmdline struct {
+type ProcCmdline struct {
 	Location string
 }
 
-func NewDatasource() *procCmdline {
-	return &procCmdline{Location: ProcCmdlineLocation}
+func NewDatasource() *ProcCmdline {
+	return &ProcCmdline{Location: ProcCmdlineLocation}
 }
 
-func (c *procCmdline) IsAvailable() bool {
+func (c *ProcCmdline) IsAvailable() bool {
 	contents, err := ioutil.ReadFile(c.Location)
 	if err != nil {
 		return false
@@ -48,19 +48,19 @@ func (c *procCmdline) IsAvailable() bool {
 	return (err == nil)
 }
 
-func (c *procCmdline) AvailabilityChanges() bool {
+func (c *ProcCmdline) AvailabilityChanges() bool {
 	return false
 }
 
-func (c *procCmdline) ConfigRoot() string {
+func (c *ProcCmdline) ConfigRoot() string {
 	return ""
 }
 
-func (c *procCmdline) FetchMetadata() (datasource.Metadata, error) {
+func (c *ProcCmdline) FetchMetadata() (datasource.Metadata, error) {
 	return datasource.Metadata{}, nil
 }
 
-func (c *procCmdline) FetchUserdata() ([]byte, error) {
+func (c *ProcCmdline) FetchUserdata() ([]byte, error) {
 	contents, err := ioutil.ReadFile(c.Location)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (c *procCmdline) FetchUserdata() ([]byte, error) {
 		return nil, err
 	}
 
-	client := pkg.NewHttpClient()
+	client := pkg.NewHTTPClient()
 	cfg, err := client.GetRetry(url)
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (c *procCmdline) FetchUserdata() ([]byte, error) {
 	return cfg, nil
 }
 
-func (c *procCmdline) Type() string {
+func (c *ProcCmdline) Type() string {
 	return "proc-cmdline"
 }
 

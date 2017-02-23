@@ -34,7 +34,7 @@ func (ovf ovfWrapper) readConfig(key string) (string, error) {
 	return ovf.env.Properties["guestinfo."+key], nil
 }
 
-func NewDatasource(fileName string) *vmware {
+func NewDatasource(fileName string) *VMWare {
 	// read from provided ovf environment document (typically /media/ovfenv/ovf-env.xml)
 	if fileName != "" {
 		log.Printf("Using OVF environment from %s\n", fileName)
@@ -42,7 +42,7 @@ func NewDatasource(fileName string) *vmware {
 		if err != nil {
 			ovfEnv = make([]byte, 0)
 		}
-		return &vmware{
+		return &VMWare{
 			ovfFileName: fileName,
 			readConfig:  getOvfReadConfig(ovfEnv),
 			urlDownload: urlDownload,
@@ -53,7 +53,7 @@ func NewDatasource(fileName string) *vmware {
 	data, err := readConfig("ovfenv")
 	if err == nil && data != "" {
 		log.Printf("Using OVF environment from guestinfo\n")
-		return &vmware{
+		return &VMWare{
 			readConfig:  getOvfReadConfig([]byte(data)),
 			urlDownload: urlDownload,
 		}
@@ -61,13 +61,13 @@ func NewDatasource(fileName string) *vmware {
 
 	// if everything fails, fallback to directly reading variables from the backdoor
 	log.Printf("Using guestinfo variables\n")
-	return &vmware{
+	return &VMWare{
 		readConfig:  readConfig,
 		urlDownload: urlDownload,
 	}
 }
 
-func (v vmware) IsAvailable() bool {
+func (v VMWare) IsAvailable() bool {
 	if v.ovfFileName != "" {
 		_, err := os.Stat(v.ovfFileName)
 		return !os.IsNotExist(err)
@@ -96,6 +96,6 @@ func getOvfReadConfig(ovfEnv []byte) readConfigFunction {
 }
 
 func urlDownload(url string) ([]byte, error) {
-	client := pkg.NewHttpClient()
+	client := pkg.NewHTTPClient()
 	return client.GetRetry(url)
 }

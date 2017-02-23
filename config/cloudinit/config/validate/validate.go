@@ -74,7 +74,7 @@ func validateCloudConfig(config []byte, rules []rule) (report Report, err error)
 // parseCloudConfig parses the provided config into a node structure and logs
 // any parsing issues into the provided report. Unrecoverable errors are
 // returned as an error.
-func parseCloudConfig(cfg []byte, report *Report) (node, error) {
+func parseCloudConfig(cfg []byte, report *Report) (Node, error) {
 	yaml.UnmarshalMappingKeyTransform = func(nameIn string) (nameOut string) {
 		return nameIn
 	}
@@ -87,20 +87,20 @@ func parseCloudConfig(cfg []byte, report *Report) (node, error) {
 		if len(matches) == 3 {
 			line, err := strconv.Atoi(matches[1])
 			if err != nil {
-				return node{}, err
+				return Node{}, err
 			}
 			msg := matches[2]
 			report.Error(line, msg)
-			return node{}, nil
+			return Node{}, nil
 		}
 
 		matches = yamlError.FindStringSubmatch(err.Error())
 		if len(matches) == 2 {
 			report.Error(1, matches[1])
-			return node{}, nil
+			return Node{}, nil
 		}
 
-		return node{}, errors.New("couldn't parse yaml error")
+		return Node{}, errors.New("couldn't parse yaml error")
 	}
 	w := NewNode(weak, NewContext(cfg))
 	w = normalizeNodeNames(w, report)
@@ -111,7 +111,7 @@ func parseCloudConfig(cfg []byte, report *Report) (node, error) {
 	}
 	var strong config.CloudConfig
 	if err := yaml.Unmarshal([]byte(cfg), &strong); err != nil {
-		return node{}, err
+		return Node{}, err
 	}
 	s := NewNode(strong, NewContext(cfg))
 
@@ -134,7 +134,7 @@ func parseCloudConfig(cfg []byte, report *Report) (node, error) {
 // struct. If the two nodes are of compatible types, the yaml library correctly
 // parsed the value into the strongly typed unmarshalling. In this case, we
 // prefer the strong node because its actually the type we are expecting.
-func coerceNodes(w, s node) node {
+func coerceNodes(w, s Node) Node {
 	n := w
 	n.children = nil
 	if len(w.children) == 0 && len(s.children) == 0 &&
@@ -151,7 +151,7 @@ func coerceNodes(w, s node) node {
 
 // normalizeNodeNames replaces all occurences of '-' with '_' within key names
 // and makes a note of each replacement in the report.
-func normalizeNodeNames(node node, report *Report) node {
+func normalizeNodeNames(node Node, report *Report) Node {
 	if strings.Contains(node.name, "-") {
 		// TODO(crawford): Enable this message once the new validator hits stable.
 		//report.Info(node.line, fmt.Sprintf("%q uses '-' instead of '_'", node.name))

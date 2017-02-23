@@ -27,18 +27,18 @@ type UserKey struct {
 	Key string `json:"key"`
 }
 
-func SSHImportKeysFromURL(system_user string, url string) error {
+func SSHImportKeysFromURL(systemUser string, url string) error {
 	keys, err := fetchUserKeys(url)
 	if err != nil {
 		return err
 	}
 
-	key_name := fmt.Sprintf("coreos-cloudinit-%s", system_user)
-	return system.AuthorizeSSHKeys(system_user, key_name, keys)
+	keyName := fmt.Sprintf("coreos-cloudinit-%s", systemUser)
+	return system.AuthorizeSSHKeys(systemUser, keyName, keys)
 }
 
 func fetchUserKeys(url string) ([]string, error) {
-	client := pkg.NewHttpClient()
+	client := pkg.NewHTTPClient()
 	data, err := client.GetRetry(url)
 	if err != nil {
 		return nil, err

@@ -21,9 +21,9 @@ import (
 	"testing"
 )
 
-func TestCloudConfigUsersUrlMarshal(t *testing.T) {
+func TestCloudConfigUsersURLMarshal(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		gh_res := `
+		ghRes := `
 [
   {
     "key": "ssh-dss AAAAB3NzaC1kc3MAAACBAIHAu822ggSkIHrJYvhmBceOSVjuflfQm8RbMMDNVe9relQfuPbN+nxGGTCKzPLebeOcX+Wwi77TPXWwK3BZMglfXxhABlFPsuMb63Tqp94pBYsJdx/iFj9iGo6pKoM1k8ubOcqsUnq+BR9895zRbE7MjdwkGo67+QhCEwvkwAnNAAAAFQCuddVqXLCubzqnWmeHLQE+2GFfHwAAAIBnlXW5h15ndVuwi0htF4oodVSB1KwnTWcuBK+aE1zRs76yvRb0Ws+oifumThDwB/Tec6FQuAfRKfy6piChZqsu5KvL98I+2t5yyi1td+kMvdTnVL2lW44etDKseOcozmknCOmh4Dqvhl/2MwrDAhlPaN08EEq9h3w3mXtNLWH64QAAAIBAzDOKr17llngaKIdDXh+LtXKh87+zfjlTA36/9r2uF2kYE5uApDtu9sPCkt7+YBQt7R8prADPckwAiXwVdk0xijIOpLDBmoydQJJRQ+zTMxvpQmUr/1kUOv0zb+lB657CgvN0vVTmP2swPeMvgntt3C4vw7Ab+O+MS9peOAJbbQ=="
@@ -37,7 +37,7 @@ func TestCloudConfigUsersUrlMarshal(t *testing.T) {
   }
 ]
 `
-		fmt.Fprintln(w, gh_res)
+		fmt.Fprintln(w, ghRes)
 	}))
 	defer ts.Close()
 

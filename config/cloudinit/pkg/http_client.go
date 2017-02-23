@@ -26,8 +26,8 @@ import (
 )
 
 const (
-	HTTP_2xx = 2
-	HTTP_4xx = 4
+	HTTP2xx = 2
+	HTTP4xx = 4
 )
 
 type Err error
@@ -52,7 +52,7 @@ type ErrNetwork struct {
 	Err
 }
 
-type HttpClient struct {
+type HTTPClient struct {
 	// Initial backoff duration. Defaults to 50 milliseconds
 	InitialBackoff time.Duration
 
@@ -73,12 +73,12 @@ type Getter interface {
 	GetRetry(string) ([]byte, error)
 }
 
-func NewHttpClient() *HttpClient {
-	return NewHttpClientHeader(nil)
+func NewHTTPClient() *HTTPClient {
+	return NewHTTPClientHeader(nil)
 }
 
-func NewHttpClientHeader(header http.Header) *HttpClient {
-	hc := &HttpClient{
+func NewHTTPClientHeader(header http.Header) *HTTPClient {
+	hc := &HTTPClient{
 		InitialBackoff: 50 * time.Millisecond,
 		MaxBackoff:     time.Second * 5,
 		MaxRetries:     15,
@@ -100,9 +100,9 @@ func ExpBackoff(interval, max time.Duration) time.Duration {
 }
 
 // GetRetry fetches a given URL with support for exponential backoff and maximum retries
-func (h *HttpClient) GetRetry(rawurl string) ([]byte, error) {
+func (h *HTTPClient) GetRetry(rawurl string) ([]byte, error) {
 	if rawurl == "" {
-		return nil, ErrInvalid{errors.New("URL is empty. Skipping.")}
+		return nil, ErrInvalid{errors.New("URL is empty. Skipping")}
 	}
 
 	url, err := neturl.Parse(rawurl)
@@ -113,7 +113,7 @@ func (h *HttpClient) GetRetry(rawurl string) ([]byte, error) {
 	// Unfortunately, url.Parse is too generic to throw errors if a URL does not
 	// have a valid HTTP scheme. So, we have to do this extra validation
 	if !strings.HasPrefix(url.Scheme, "http") {
-		return nil, ErrInvalid{fmt.Errorf("URL %s does not have a valid HTTP scheme. Skipping.", rawurl)}
+		return nil, ErrInvalid{fmt.Errorf("URL %s does not have a valid HTTP scheme. Skipping", rawurl)}
 	}
 
 	dataURL := url.String()
@@ -142,7 +142,7 @@ func (h *HttpClient) GetRetry(rawurl string) ([]byte, error) {
 	return nil, ErrTimeout{fmt.Errorf("Unable to fetch data. Maximum retries reached: %d", h.MaxRetries)}
 }
 
-func (h *HttpClient) Get(dataURL string) ([]byte, error) {
+func (h *HTTPClient) Get(dataURL string) ([]byte, error) {
 	request, err := http.NewRequest("GET", dataURL, nil)
 	if err != nil {
 		return nil, err
@@ -152,9 +152,9 @@ func (h *HttpClient) Get(dataURL string) ([]byte, error) {
 	if resp, err := h.client.Do(request); err == nil {
 		defer resp.Body.Close()
 		switch resp.StatusCode / 100 {
-		case HTTP_2xx:
+		case HTTP2xx:
 			return ioutil.ReadAll(resp.Body)
-		case HTTP_4xx:
+		case HTTP4xx:
 			return nil, ErrNotFound{fmt.Errorf("Not found. HTTP status code: %d", resp.StatusCode)}
 		default:
 			return nil, ErrServer{fmt.Errorf("Server error. HTTP status code: %d", resp.StatusCode)}

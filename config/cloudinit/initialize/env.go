@@ -36,7 +36,7 @@ type Environment struct {
 	substitutions map[string]string
 }
 
-// TODO(jonboulle): this is getting unwieldy, should be able to simplify the interface somehow
+// NewEnvironment TODO(jonboulle): this is getting unwieldy, should be able to simplify the interface somehow
 func NewEnvironment(root, configRoot, workspace, sshKeyName string, metadata datasource.Metadata) *Environment {
 	firstNonNull := func(ip net.IP, env string) string {
 		if ip == nil {
@@ -110,7 +110,6 @@ func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
 	}
 	if len(ef.Vars) == 0 {
 		return nil
-	} else {
-		return &ef
 	}
+	return &ef
 }

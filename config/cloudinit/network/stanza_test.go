@@ -328,11 +328,11 @@ func TestParseInterfaceStanzaStaticPostUp(t *testing.T) {
 			expect: []route{
 				{
 					destination: func() net.IPNet {
-						if _, net, err := net.ParseCIDR("192.168.1.0/24"); err == nil {
-							return *net
-						} else {
+						_, net, err := net.ParseCIDR("192.168.1.0/24")
+						if err != nil {
 							panic(err)
 						}
+						return *net
 					}(),
 					gateway: net.IPv4(192, 168, 1, 1),
 				},

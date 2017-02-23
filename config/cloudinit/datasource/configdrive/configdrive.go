@@ -25,32 +25,32 @@ import (
 )
 
 const (
-	openstackApiVersion = "latest"
+	openstackAPIVersion = "latest"
 )
 
-type configDrive struct {
+type ConfigDrive struct {
 	root     string
 	readFile func(filename string) ([]byte, error)
 }
 
-func NewDatasource(root string) *configDrive {
-	return &configDrive{root, ioutil.ReadFile}
+func NewDatasource(root string) *ConfigDrive {
+	return &ConfigDrive{root, ioutil.ReadFile}
 }
 
-func (cd *configDrive) IsAvailable() bool {
+func (cd *ConfigDrive) IsAvailable() bool {
 	_, err := os.Stat(cd.root)
 	return !os.IsNotExist(err)
 }
 
-func (cd *configDrive) AvailabilityChanges() bool {
+func (cd *ConfigDrive) AvailabilityChanges() bool {
 	return true
 }
 
-func (cd *configDrive) ConfigRoot() string {
+func (cd *ConfigDrive) ConfigRoot() string {
 	return cd.openstackRoot()
 }
 
-func (cd *configDrive) FetchMetadata() (metadata datasource.Metadata, err error) {
+func (cd *ConfigDrive) FetchMetadata() (metadata datasource.Metadata, err error) {
 	var data []byte
 	var m struct {
 		SSHAuthorizedKeyMap map[string]string `json:"public_keys"`
@@ -76,23 +76,23 @@ func (cd *configDrive) FetchMetadata() (metadata datasource.Metadata, err error)
 	return
 }
 
-func (cd *configDrive) FetchUserdata() ([]byte, error) {
+func (cd *ConfigDrive) FetchUserdata() ([]byte, error) {
 	return cd.tryReadFile(path.Join(cd.openstackVersionRoot(), "user_data"))
 }
 
-func (cd *configDrive) Type() string {
+func (cd *ConfigDrive) Type() string {
 	return "cloud-drive"
 }
 
-func (cd *configDrive) openstackRoot() string {
+func (cd *ConfigDrive) openstackRoot() string {
 	return path.Join(cd.root, "openstack")
 }
 
-func (cd *configDrive) openstackVersionRoot() string {
-	return path.Join(cd.openstackRoot(), openstackApiVersion)
+func (cd *ConfigDrive) openstackVersionRoot() string {
+	return path.Join(cd.openstackRoot(), openstackAPIVersion)
 }
 
-func (cd *configDrive) tryReadFile(filename string) ([]byte, error) {
+func (cd *ConfigDrive) tryReadFile(filename string) ([]byte, error) {
 	log.Printf("Attempting to read from %q\n", filename)
 	data, err := cd.readFile(filename)
 	if os.IsNotExist(err) {

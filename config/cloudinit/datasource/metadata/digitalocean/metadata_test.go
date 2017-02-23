@@ -28,7 +28,7 @@ import (
 
 func TestType(t *testing.T) {
 	want := "digitalocean-metadata-service"
-	if kind := (metadataService{}).Type(); kind != want {
+	if kind := (MetadataService{}).Type(); kind != want {
 		t.Fatalf("bad type: want %q, got %q", want, kind)
 	}
 }
@@ -118,10 +118,10 @@ func TestFetchMetadata(t *testing.T) {
 			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 		},
 	} {
-		service := &metadataService{
-			MetadataService: metadata.MetadataService{
+		service := &MetadataService{
+			Service: metadata.Service{
 				Root:         tt.root,
-				Client:       &test.HttpClient{Resources: tt.resources, Err: tt.clientErr},
+				Client:       &test.HTTPClient{Resources: tt.resources, Err: tt.clientErr},
 				MetadataPath: tt.metadataPath,
 			},
 		}

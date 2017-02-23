@@ -24,11 +24,11 @@ import (
 	"github.com/rancher/os/config/cloudinit/config"
 )
 
-type rule func(config node, report *Report)
+type rule func(config Node, report *Report)
 
 // Rules contains all of the validation rules.
-var Rules []rule = []rule{
-	checkDiscoveryUrl,
+var Rules = []rule{
+	checkDiscoveryURL,
 	checkEncoding,
 	checkStructure,
 	checkValidity,
@@ -36,8 +36,8 @@ var Rules []rule = []rule{
 	checkWriteFilesUnderCoreos,
 }
 
-// checkDiscoveryUrl verifies that the string is a valid url.
-func checkDiscoveryUrl(cfg node, report *Report) {
+// checkDiscoveryURL verifies that the string is a valid url.
+func checkDiscoveryURL(cfg Node, report *Report) {
 	c := cfg.Child("coreos").Child("etcd").Child("discovery")
 	if !c.IsValid() {
 		return
@@ -50,7 +50,7 @@ func checkDiscoveryUrl(cfg node, report *Report) {
 
 // checkEncoding validates that, for each file under 'write_files', the
 // content can be decoded given the specified encoding.
-func checkEncoding(cfg node, report *Report) {
+func checkEncoding(cfg Node, report *Report) {
 	for _, f := range cfg.Child("write_files").children {
 		e := f.Child("encoding")
 		if !e.IsValid() {
@@ -67,12 +67,12 @@ func checkEncoding(cfg node, report *Report) {
 // checkStructure compares the provided config to the empty config.CloudConfig
 // structure. Each node is checked to make sure that it exists in the known
 // structure and that its type is compatible.
-func checkStructure(cfg node, report *Report) {
+func checkStructure(cfg Node, report *Report) {
 	g := NewNode(config.CloudConfig{}, NewContext([]byte{}))
 	checkNodeStructure(cfg, g, report)
 }
 
-func checkNodeStructure(n, g node, r *Report) {
+func checkNodeStructure(n, g Node, r *Report) {
 	if !isCompatible(n.Kind(), g.Kind()) {
 		r.Warning(n.line, fmt.Sprintf("incorrect type for %q (want %s)", n.name, g.HumanType()))
 		return
@@ -92,9 +92,9 @@ func checkNodeStructure(n, g node, r *Report) {
 		}
 	case reflect.Slice:
 		for _, cn := range n.children {
-			var cg node
+			var cg Node
 			c := g.Type().Elem()
-			toNode(reflect.New(c).Elem().Interface(), context{}, &cg)
+			toNode(reflect.New(c).Elem().Interface(), Context{}, &cg)
 			checkNodeStructure(cn, cg, r)
 		}
 	case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
@@ -123,12 +123,12 @@ func isCompatible(n, g reflect.Kind) bool {
 
 // checkValidity checks the value of every node in the provided config by
 // running config.AssertValid() on it.
-func checkValidity(cfg node, report *Report) {
+func checkValidity(cfg Node, report *Report) {
 	g := NewNode(config.CloudConfig{}, NewContext([]byte{}))
 	checkNodeValidity(cfg, g, report)
 }
 
-func checkNodeValidity(n, g node, r *Report) {
+func checkNodeValidity(n, g Node, r *Report) {
 	if err := config.AssertValid(n.Value, g.field.Tag.Get("valid")); err != nil {
 		r.Error(n.line, fmt.Sprintf("invalid value %v", n.Value.Interface()))
 	}
@@ -141,9 +141,9 @@ func checkNodeValidity(n, g node, r *Report) {
 		}
 	case reflect.Slice:
 		for _, cn := range n.children {
-			var cg node
+			var cg Node
 			c := g.Type().Elem()
-			toNode(reflect.New(c).Elem().Interface(), context{}, &cg)
+			toNode(reflect.New(c).Elem().Interface(), Context{}, &cg)
 			checkNodeValidity(cn, cg, r)
 		}
 	case reflect.String, reflect.Int, reflect.Float64, reflect.Bool:
@@ -155,7 +155,7 @@ func checkNodeValidity(n, g node, r *Report) {
 // checkWriteFiles checks to make sure that the target file can actually be
 // written. Note that this check is approximate (it only checks to see if the file
 // is under /usr).
-func checkWriteFiles(cfg node, report *Report) {
+func checkWriteFiles(cfg Node, report *Report) {
 	for _, f := range cfg.Child("write_files").children {
 		c := f.Child("path")
 		if !c.IsValid() {
@@ -172,7 +172,7 @@ func checkWriteFiles(cfg node, report *Report) {
 
 // checkWriteFilesUnderCoreos checks to see if the 'write_files' node is a
 // child of 'coreos' (it shouldn't be).
-func checkWriteFilesUnderCoreos(cfg node, report *Report) {
+func checkWriteFilesUnderCoreos(cfg Node, report *Report) {
 	c := cfg.Child("coreos").Child("write_files")
 	if c.IsValid() {
 		report.Info(c.line, "write_files doesn't belong under coreos")

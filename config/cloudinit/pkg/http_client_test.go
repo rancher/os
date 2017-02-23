@@ -49,7 +49,7 @@ func TestGetURLExpBackOff(t *testing.T) {
 		{1, "number of attempts: 1"},
 		{2, "number of attempts: 2"},
 	}
-	client := NewHttpClient()
+	client := NewHTTPClient()
 
 	for i, tt := range expBackoffTests {
 		mux := http.NewServeMux()
@@ -82,7 +82,7 @@ func TestGetURLExpBackOff(t *testing.T) {
 
 // Test that it stops retrying if a 4xx response comes back
 func TestGetURL4xx(t *testing.T) {
-	client := NewHttpClient()
+	client := NewHTTPClient()
 	retries := 0
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		retries++
@@ -115,7 +115,7 @@ coreos:
 		reboot-strategy: best-effort
 `
 
-	client := NewHttpClient()
+	client := NewHTTPClient()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, cloudcfg)
 	}))
@@ -133,16 +133,16 @@ coreos:
 
 // Test attempt to fetching using malformed URL
 func TestGetMalformedURL(t *testing.T) {
-	client := NewHttpClient()
+	client := NewHTTPClient()
 
 	var tests = []struct {
 		url  string
 		want string
 	}{
-		{"boo", "URL boo does not have a valid HTTP scheme. Skipping."},
-		{"mailto://boo", "URL mailto://boo does not have a valid HTTP scheme. Skipping."},
-		{"ftp://boo", "URL ftp://boo does not have a valid HTTP scheme. Skipping."},
-		{"", "URL is empty. Skipping."},
+		{"boo", "URL boo does not have a valid HTTP scheme. Skipping"},
+		{"mailto://boo", "URL mailto://boo does not have a valid HTTP scheme. Skipping"},
+		{"ftp://boo", "URL ftp://boo does not have a valid HTTP scheme. Skipping"},
+		{"", "URL is empty. Skipping"},
 	}
 
 	for _, test := range tests {

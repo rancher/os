@@ -38,12 +38,12 @@ func TestFetchMetadata(t *testing.T) {
 			files: test.NewMockFilesystem(test.File{Path: "/SharedConfig.xml", Contents: ""}),
 		},
 		{
-			root:  "/var/lib/waagent",
-			files: test.NewMockFilesystem(test.File{Path: "/var/lib/waagent/SharedConfig.xml", Contents: ""}),
+			root:  "/var/lib/Waagent",
+			files: test.NewMockFilesystem(test.File{Path: "/var/lib/Waagent/SharedConfig.xml", Contents: ""}),
 		},
 		{
-			root: "/var/lib/waagent",
-			files: test.NewMockFilesystem(test.File{Path: "/var/lib/waagent/SharedConfig.xml", Contents: `<?xml version="1.0" encoding="utf-8"?>
+			root: "/var/lib/Waagent",
+			files: test.NewMockFilesystem(test.File{Path: "/var/lib/Waagent/SharedConfig.xml", Contents: `<?xml version="1.0" encoding="utf-8"?>
 <SharedConfig version="1.0.0.0" goalStateIncarnation="1">
   <Deployment name="c8f9e4c9c18948e1bebf57c5685da756" guid="{1d10394f-c741-4a1a-a6bb-278f213c5a5e}" incarnation="0" isNonCancellableTopologyChangeEnabled="false">
     <Service name="core-test-1" guid="{00000000-0000-0000-0000-000000000000}" />
@@ -86,7 +86,7 @@ func TestFetchMetadata(t *testing.T) {
 			},
 		},
 	} {
-		a := waagent{tt.root, tt.files.ReadFile}
+		a := Waagent{tt.root, tt.files.ReadFile}
 		metadata, err := a.FetchMetadata()
 		if err != nil {
 			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
@@ -111,11 +111,11 @@ func TestFetchUserdata(t *testing.T) {
 			test.NewMockFilesystem(test.File{Path: "/CustomData", Contents: ""}),
 		},
 		{
-			"/var/lib/waagent/",
-			test.NewMockFilesystem(test.File{Path: "/var/lib/waagent/CustomData", Contents: ""}),
+			"/var/lib/Waagent/",
+			test.NewMockFilesystem(test.File{Path: "/var/lib/Waagent/CustomData", Contents: ""}),
 		},
 	} {
-		a := waagent{tt.root, tt.files.ReadFile}
+		a := Waagent{tt.root, tt.files.ReadFile}
 		_, err := a.FetchUserdata()
 		if err != nil {
 			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
@@ -133,11 +133,11 @@ func TestConfigRoot(t *testing.T) {
 			"/",
 		},
 		{
-			"/var/lib/waagent",
-			"/var/lib/waagent",
+			"/var/lib/Waagent",
+			"/var/lib/Waagent",
 		},
 	} {
-		a := waagent{tt.root, nil}
+		a := Waagent{tt.root, nil}
 		if configRoot := a.ConfigRoot(); configRoot != tt.configRoot {
 			t.Fatalf("bad config root for %q: want %q, got %q", tt, tt.configRoot, configRoot)
 		}
@@ -154,8 +154,8 @@ func TestNewDatasource(t *testing.T) {
 			expectRoot: "",
 		},
 		{
-			root:       "/var/lib/waagent",
-			expectRoot: "/var/lib/waagent",
+			root:       "/var/lib/Waagent",
+			expectRoot: "/var/lib/Waagent",
 		},
 	} {
 		service := NewDatasource(tt.root)

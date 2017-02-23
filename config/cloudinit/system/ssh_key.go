@@ -22,7 +22,7 @@ import (
 	"strings"
 )
 
-// Add the provide SSH public key to the core user's list of
+// AuthorizeSSHKeys adds the provided SSH public key to the core user's list of
 // authorized keys
 func AuthorizeSSHKeys(user string, keysName string, keys []string) error {
 	for i, key := range keys {

@@ -16,10 +16,10 @@
 
 package vmware
 
-func NewDatasource(fileName string) *vmware {
-	return &vmware{}
+func NewDatasource(fileName string) *VMWare {
+	return &VMWare{}
 }
 
-func (v vmware) IsAvailable() bool {
+func (v VMWare) IsAvailable() bool {
 	return false
 }

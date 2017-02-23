@@ -26,7 +26,7 @@ import (
 const (
 	DefaultAddress = "https://metadata.packet.net/"
 	apiVersion     = ""
-	userdataUrl    = "userdata"
+	userdataURL    = "userdata"
 	metadataPath   = "metadata"
 )
 
@@ -57,19 +57,19 @@ type Metadata struct {
 	NetworkData NetworkData `json:"network"`
 }
 
-type metadataService struct {
-	metadata.MetadataService
+type MetadataService struct {
+	metadata.Service
 }
 
-func NewDatasource(root string) *metadataService {
-	return &metadataService{MetadataService: metadata.NewDatasource(root, apiVersion, userdataUrl, metadataPath, nil)}
+func NewDatasource(root string) *MetadataService {
+	return &MetadataService{Service: metadata.NewDatasource(root, apiVersion, userdataURL, metadataPath, nil)}
 }
 
-func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err error) {
+func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err error) {
 	var data []byte
 	var m Metadata
 
-	if data, err = ms.FetchData(ms.MetadataUrl()); err != nil || len(data) == 0 {
+	if data, err = ms.FetchData(ms.MetadataURL()); err != nil || len(data) == 0 {
 		return
 	}
 
@@ -101,6 +101,6 @@ func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	return
 }
 
-func (ms metadataService) Type() string {
+func (ms MetadataService) Type() string {
 	return "packet-metadata-service"
 }

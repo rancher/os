@@ -29,15 +29,15 @@ const (
 	userdataPath = apiVersion + "instance/attributes/user-data"
 )
 
-type metadataService struct {
-	metadata.MetadataService
+type MetadataService struct {
+	metadata.Service
 }
 
-func NewDatasource(root string) *metadataService {
-	return &metadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath, http.Header{"Metadata-Flavor": {"Google"}})}
+func NewDatasource(root string) *MetadataService {
+	return &MetadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath, http.Header{"Metadata-Flavor": {"Google"}})}
 }
 
-func (ms metadataService) FetchMetadata() (datasource.Metadata, error) {
+func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	public, err := ms.fetchIP("network-interfaces/0/access-configs/0/external-ip")
 	if err != nil {
 		return datasource.Metadata{}, err
@@ -58,12 +58,12 @@ func (ms metadataService) FetchMetadata() (datasource.Metadata, error) {
 	}, nil
 }
 
-func (ms metadataService) Type() string {
+func (ms MetadataService) Type() string {
 	return "gce-metadata-service"
 }
 
-func (ms metadataService) fetchString(key string) (string, error) {
-	data, err := ms.FetchData(ms.MetadataUrl() + key)
+func (ms MetadataService) fetchString(key string) (string, error) {
+	data, err := ms.FetchData(ms.MetadataURL() + key)
 	if err != nil {
 		return "", err
 	}
@@ -71,7 +71,7 @@ func (ms metadataService) fetchString(key string) (string, error) {
 	return string(data), nil
 }
 
-func (ms metadataService) fetchIP(key string) (net.IP, error) {
+func (ms MetadataService) fetchIP(key string) (net.IP, error) {
 	str, err := ms.fetchString(key)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,6 @@ func (ms metadataService) fetchIP(key string) (net.IP, error) {
 
 	if ip := net.ParseIP(str); ip != nil {
 		return ip, nil
-	} else {
-		return nil, fmt.Errorf("couldn't parse %q as IP address", str)
 	}
+	return nil, fmt.Errorf("couldn't parse %q as IP address", str)
 }

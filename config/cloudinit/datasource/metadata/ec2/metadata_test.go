@@ -28,7 +28,7 @@ import (
 
 func TestType(t *testing.T) {
 	want := "ec2-metadata-service"
-	if kind := (metadataService{}).Type(); kind != want {
+	if kind := (MetadataService{}).Type(); kind != want {
 		t.Fatalf("bad type: want %q, got %q", want, kind)
 	}
 }
@@ -72,8 +72,8 @@ func TestFetchAttributes(t *testing.T) {
 			},
 		},
 	} {
-		service := metadataService{metadata.MetadataService{
-			Client: &test.HttpClient{Resources: s.resources, Err: s.err},
+		service := MetadataService{metadata.Service{
+			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
 		}}
 		for _, tt := range s.tests {
 			attrs, err := service.fetchAttributes(tt.path)
@@ -126,8 +126,8 @@ func TestFetchAttribute(t *testing.T) {
 			},
 		},
 	} {
-		service := metadataService{metadata.MetadataService{
-			Client: &test.HttpClient{Resources: s.resources, Err: s.err},
+		service := MetadataService{metadata.Service{
+			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
 		}}
 		for _, tt := range s.tests {
 			attr, err := service.fetchAttribute(tt.path)
@@ -199,9 +199,9 @@ func TestFetchMetadata(t *testing.T) {
 			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 		},
 	} {
-		service := &metadataService{metadata.MetadataService{
+		service := &MetadataService{metadata.Service{
 			Root:         tt.root,
-			Client:       &test.HttpClient{Resources: tt.resources, Err: tt.clientErr},
+			Client:       &test.HTTPClient{Resources: tt.resources, Err: tt.clientErr},
 			MetadataPath: tt.metadataPath,
 		}}
 		metadata, err := service.FetchMetadata()

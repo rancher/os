@@ -21,18 +21,18 @@ import (
 
 func TestChild(t *testing.T) {
 	tests := []struct {
-		parent node
+		parent Node
 		name   string
 
-		child node
+		child Node
 	}{
 		{},
 		{
 			name: "c1",
 		},
 		{
-			parent: node{
-				children: []node{
+			parent: Node{
+				children: []Node{
 					{name: "c1"},
 					{name: "c2"},
 					{name: "c3"},
@@ -40,15 +40,15 @@ func TestChild(t *testing.T) {
 			},
 		},
 		{
-			parent: node{
-				children: []node{
+			parent: Node{
+				children: []Node{
 					{name: "c1"},
 					{name: "c2"},
 					{name: "c3"},
 				},
 			},
 			name:  "c2",
-			child: node{name: "c2"},
+			child: Node{name: "c2"},
 		},
 	}
 
@@ -61,7 +61,7 @@ func TestChild(t *testing.T) {
 
 func TestHumanType(t *testing.T) {
 	tests := []struct {
-		node node
+		node Node
 
 		humanType string
 	}{
@@ -69,13 +69,13 @@ func TestHumanType(t *testing.T) {
 			humanType: "invalid",
 		},
 		{
-			node:      node{Value: reflect.ValueOf("hello")},
+			node:      Node{Value: reflect.ValueOf("hello")},
 			humanType: "string",
 		},
 		{
-			node: node{
+			node: Node{
 				Value: reflect.ValueOf([]int{1, 2}),
-				children: []node{
+				children: []Node{
 					{Value: reflect.ValueOf(1)},
 					{Value: reflect.ValueOf(2)},
 				}},
@@ -93,21 +93,21 @@ func TestHumanType(t *testing.T) {
 func TestToNode(t *testing.T) {
 	tests := []struct {
 		value   interface{}
-		context context
+		context Context
 
-		node node
+		node Node
 	}{
 		{},
 		{
 			value: struct{}{},
-			node:  node{Value: reflect.ValueOf(struct{}{})},
+			node:  Node{Value: reflect.ValueOf(struct{}{})},
 		},
 		{
 			value: struct {
 				A int `yaml:"a"`
 			}{},
-			node: node{
-				children: []node{
+			node: Node{
+				children: []Node{
 					{
 						name: "a",
 						field: reflect.TypeOf(struct {
@@ -121,8 +121,8 @@ func TestToNode(t *testing.T) {
 			value: struct {
 				A []int `yaml:"a"`
 			}{},
-			node: node{
-				children: []node{
+			node: Node{
+				children: []Node{
 					{
 						name: "a",
 						field: reflect.TypeOf(struct {
@@ -139,12 +139,12 @@ func TestToNode(t *testing.T) {
 				},
 			},
 			context: NewContext([]byte("a:\n  b: 2")),
-			node: node{
-				children: []node{
+			node: Node{
+				children: []Node{
 					{
 						line: 1,
 						name: "a",
-						children: []node{
+						children: []Node{
 							{name: "b", line: 2},
 						},
 					},
@@ -157,11 +157,11 @@ func TestToNode(t *testing.T) {
 					Jon bool `yaml:"b"`
 				} `yaml:"a"`
 			}{},
-			node: node{
-				children: []node{
+			node: Node{
+				children: []Node{
 					{
 						name: "a",
-						children: []node{
+						children: []Node{
 							{
 								name: "b",
 								field: reflect.TypeOf(struct {
@@ -190,7 +190,7 @@ func TestToNode(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		var node node
+		var node Node
 		toNode(tt.value, tt.context, &node)
 		if !nodesEqual(tt.node, node) {
 			t.Errorf("bad node (%#v): want %#v, got %#v", tt.value, tt.node, node)
@@ -201,7 +201,7 @@ func TestToNode(t *testing.T) {
 func TestFindKey(t *testing.T) {
 	tests := []struct {
 		key     string
-		context context
+		context Context
 
 		found bool
 	}{
@@ -242,7 +242,7 @@ func TestFindKey(t *testing.T) {
 
 func TestFindElem(t *testing.T) {
 	tests := []struct {
-		context context
+		context Context
 
 		found bool
 	}{
@@ -268,7 +268,7 @@ func TestFindElem(t *testing.T) {
 	}
 }
 
-func nodesEqual(a, b node) bool {
+func nodesEqual(a, b Node) bool {
 	if a.name != b.name ||
 		a.line != b.line ||
 		!reflect.DeepEqual(a.field, b.field) ||

@@ -25,48 +25,48 @@ var (
 	yamlElem = regexp.MustCompile(`^ *-`)
 )
 
-type node struct {
+type Node struct {
 	name     string
 	line     int
-	children []node
+	children []Node
 	field    reflect.StructField
 	reflect.Value
 }
 
-// Child attempts to find the child with the given name in the node's list of
-// children. If no such child is found, an invalid node is returned.
-func (n node) Child(name string) node {
+// Child attempts to find the child with the given name in the Node's list of
+// children. If no such child is found, an invalid Node is returned.
+func (n Node) Child(name string) Node {
 	for _, c := range n.children {
 		if c.name == name {
 			return c
 		}
 	}
-	return node{}
+	return Node{}
 }
 
 // HumanType returns the human-consumable string representation of the type of
-// the node.
-func (n node) HumanType() string {
+// the Node.
+func (n Node) HumanType() string {
 	switch k := n.Kind(); k {
 	case reflect.Slice:
 		c := n.Type().Elem()
-		return "[]" + node{Value: reflect.New(c).Elem()}.HumanType()
+		return "[]" + Node{Value: reflect.New(c).Elem()}.HumanType()
 	default:
 		return k.String()
 	}
 }
 
-// NewNode returns the node representation of the given value. The context
+// NewNode returns the Node representation of the given value. The context
 // will be used in an attempt to determine line numbers for the given value.
-func NewNode(value interface{}, context context) node {
-	var n node
+func NewNode(value interface{}, context Context) Node {
+	var n Node
 	toNode(value, context, &n)
 	return n
 }
 
-// toNode converts the given value into a node and then recursively processes
-// each of the nodes components (e.g. fields, array elements, keys).
-func toNode(v interface{}, c context, n *node) {
+// toNode converts the given value into a Node and then recursively processes
+// each of the Nodes components (e.g. fields, array elements, keys).
+func toNode(v interface{}, c Context, n *Node) {
 	vv := reflect.ValueOf(v)
 	if !vv.IsValid() {
 		return
@@ -76,7 +76,7 @@ func toNode(v interface{}, c context, n *node) {
 	switch vv.Kind() {
 	case reflect.Struct:
 		// Walk over each field in the structure, skipping unexported fields,
-		// and create a node for it.
+		// and create a Node for it.
 		for i := 0; i < vv.Type().NumField(); i++ {
 			ft := vv.Type().Field(i)
 			k := ft.Tag.Get("yaml")
@@ -84,7 +84,7 @@ func toNode(v interface{}, c context, n *node) {
 				continue
 			}
 
-			cn := node{name: k, field: ft}
+			cn := Node{name: k, field: ft}
 			c, ok := findKey(cn.name, c)
 			if ok {
 				cn.line = c.lineNumber
@@ -93,10 +93,10 @@ func toNode(v interface{}, c context, n *node) {
 			n.children = append(n.children, cn)
 		}
 	case reflect.Map:
-		// Walk over each key in the map and create a node for it.
+		// Walk over each key in the map and create a Node for it.
 		v := v.(map[interface{}]interface{})
 		for k, cv := range v {
-			cn := node{name: fmt.Sprintf("%s", k)}
+			cn := Node{name: fmt.Sprintf("%s", k)}
 			c, ok := findKey(cn.name, c)
 			if ok {
 				cn.line = c.lineNumber
@@ -105,12 +105,12 @@ func toNode(v interface{}, c context, n *node) {
 			n.children = append(n.children, cn)
 		}
 	case reflect.Slice:
-		// Walk over each element in the slice and create a node for it.
+		// Walk over each element in the slice and create a Node for it.
 		// While iterating over the slice, preserve the context after it
 		// is modified. This allows the line numbers to reflect the current
 		// element instead of the first.
 		for i := 0; i < vv.Len(); i++ {
-			cn := node{
+			cn := Node{
 				name:  fmt.Sprintf("%s[%d]", n.name, i),
 				field: n.field,
 			}
@@ -132,7 +132,7 @@ func toNode(v interface{}, c context, n *node) {
 // findKey attempts to find the requested key within the provided context.
 // A modified copy of the context is returned with every line up to the key
 // incremented past. A boolean, true if the key was found, is also returned.
-func findKey(key string, context context) (context, bool) {
+func findKey(key string, context Context) (Context, bool) {
 	return find(yamlKey, key, context)
 }
 
@@ -140,11 +140,11 @@ func findKey(key string, context context) (context, bool) {
 // A modified copy of the context is returned with every line up to the array
 // element incremented past. A boolean, true if the key was found, is also
 // returned.
-func findElem(context context) (context, bool) {
+func findElem(context Context) (Context, bool) {
 	return find(yamlElem, "", context)
 }
 
-func find(exp *regexp.Regexp, key string, context context) (context, bool) {
+func find(exp *regexp.Regexp, key string, context Context) (Context, bool) {
 	for len(context.currentLine) > 0 || len(context.remainingLines) > 0 {
 		matches := exp.FindStringSubmatch(context.currentLine)
 		if len(matches) > 0 && (key == "" || matches[1] == key) {

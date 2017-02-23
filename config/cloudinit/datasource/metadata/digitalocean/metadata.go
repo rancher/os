@@ -26,7 +26,7 @@ import (
 const (
 	DefaultAddress = "http://169.254.169.254/"
 	apiVersion     = "metadata/v1"
-	userdataUrl    = apiVersion + "/user-data"
+	userdataURL    = apiVersion + "/user-data"
 	metadataPath   = apiVersion + ".json"
 )
 
@@ -61,19 +61,19 @@ type Metadata struct {
 	DNS        DNS        `json:"dns"`
 }
 
-type metadataService struct {
-	metadata.MetadataService
+type MetadataService struct {
+	metadata.Service
 }
 
-func NewDatasource(root string) *metadataService {
-	return &metadataService{MetadataService: metadata.NewDatasource(root, apiVersion, userdataUrl, metadataPath, nil)}
+func NewDatasource(root string) *MetadataService {
+	return &MetadataService{Service: metadata.NewDatasource(root, apiVersion, userdataURL, metadataPath, nil)}
 }
 
-func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err error) {
+func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err error) {
 	var data []byte
 	var m Metadata
 
-	if data, err = ms.FetchData(ms.MetadataUrl()); err != nil || len(data) == 0 {
+	if data, err = ms.FetchData(ms.MetadataURL()); err != nil || len(data) == 0 {
 		return
 	}
 	if err = json.Unmarshal(data, &m); err != nil {
@@ -106,6 +106,6 @@ func (ms *metadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	return
 }
 
-func (ms metadataService) Type() string {
+func (ms MetadataService) Type() string {
 	return "digitalocean-metadata-service"
 }

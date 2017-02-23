@@ -21,39 +21,39 @@ import (
 	"github.com/rancher/os/config/cloudinit/pkg"
 )
 
-type MetadataService struct {
+type Service struct {
 	Root         string
 	Client       pkg.Getter
-	ApiVersion   string
+	APIVersion   string
 	UserdataPath string
 	MetadataPath string
 }
 
-func NewDatasource(root, apiVersion, userdataPath, metadataPath string, header http.Header) MetadataService {
+func NewDatasource(root, apiVersion, userdataPath, metadataPath string, header http.Header) Service {
 	if !strings.HasSuffix(root, "/") {
 		root += "/"
 	}
-	return MetadataService{root, pkg.NewHttpClientHeader(header), apiVersion, userdataPath, metadataPath}
+	return Service{root, pkg.NewHTTPClientHeader(header), apiVersion, userdataPath, metadataPath}
 }
 
-func (ms MetadataService) IsAvailable() bool {
-	_, err := ms.Client.Get(ms.Root + ms.ApiVersion)
+func (ms Service) IsAvailable() bool {
+	_, err := ms.Client.Get(ms.Root + ms.APIVersion)
 	return (err == nil)
 }
 
-func (ms MetadataService) AvailabilityChanges() bool {
+func (ms Service) AvailabilityChanges() bool {
 	return true
 }
 
-func (ms MetadataService) ConfigRoot() string {
+func (ms Service) ConfigRoot() string {
 	return ms.Root
 }
 
-func (ms MetadataService) FetchUserdata() ([]byte, error) {
-	return ms.FetchData(ms.UserdataUrl())
+func (ms Service) FetchUserdata() ([]byte, error) {
+	return ms.FetchData(ms.UserdataURL())
 }
 
-func (ms MetadataService) FetchData(url string) ([]byte, error) {
+func (ms Service) FetchData(url string) ([]byte, error) {
 	if data, err := ms.Client.GetRetry(url); err == nil {
 		return data, err
 	} else if _, ok := err.(pkg.ErrNotFound); ok {
@@ -63,10 +63,10 @@ func (ms MetadataService) FetchData(url string) ([]byte, error) {
 	}
 }
 
-func (ms MetadataService) MetadataUrl() string {
+func (ms Service) MetadataURL() string {
 	return (ms.Root + ms.MetadataPath)
 }
 
-func (ms MetadataService) UserdataUrl() string {
+func (ms Service) UserdataURL() string {
 	return (ms.Root + ms.UserdataPath)
 }

@@ -21,7 +21,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/config"
 )
 
-// flannel is a top-level structure which embeds its underlying configuration,
+// Flannel is a top-level structure which embeds its underlying configuration,
 // config.Flannel, and provides the system-specific Unit().
 type Flannel struct {
 	config.Flannel
