@@ -59,22 +59,21 @@ rancher:
 
 ### Amazon ECS enabled AMIs
 
-Latest Release: [v0.8.0](https://github.com/rancher/os/releases/tag/v0.8.0)
+Latest Release: [v0.8.1](https://github.com/rancher/os/releases/tag/v0.8.1)
 
 Region | Type | AMI
 ---|--- | ---
-ap-south-1 | HVM - ECS enabled | [ami-e18ffe8e](https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-e18ffe8e)
-eu-west-2 | HVM - ECS enabled | [ami-d90114bd](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#launchInstanceWizard:ami=ami-d90114bd)
-eu-west-1 | HVM - ECS enabled | [ami-aa2d0ccc](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-aa2d0ccc)
-ap-northeast-2 | HVM - ECS enabled | [ami-1da87873](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-1da87873)
-ap-northeast-1 | HVM - ECS enabled | [ami-5791dd30](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-5791dd30)
-sa-east-1 | HVM - ECS enabled | [ami-c5a5c2a9](https://sa-east-1.console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-c5a5c2a9)
-ca-central-1 | HVM - ECS enabled | [ami-85922fe1](https://ca-central-1.console.aws.amazon.com/ec2/home?region=ca-central-1#launchInstanceWizard:ami=ami-85922fe1)
-ap-southeast-1 | HVM - ECS enabled | [ami-a306b1c0](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-a306b1c0)
-ap-southeast-2 | HVM - ECS enabled | [ami-8aa4a5e9](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-8aa4a5e9)
-eu-central-1 | HVM - ECS enabled | [ami-5af93235](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-5af93235)
-us-east-1 | HVM - ECS enabled | [ami-f200cee4](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-f200cee4)
-us-east-2 | HVM - ECS enabled | [ami-eefadf8b](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-eefadf8b)
-us-west-1 | HVM - ECS enabled | [ami-e3045b83](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-e3045b83)
-us-west-2 | HVM - ECS enabled | [ami-e26bec82](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-e26bec82)
-
+ap-south-1 | HVM - ECS enabled | [ami-6538480a](https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-6538480a)
+eu-west-2 | HVM - ECS enabled | [ami-5cd4c138](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#launchInstanceWizard:ami=ami-5cd4c138)
+eu-west-1 | HVM - ECS enabled | [ami-4a90bd2c](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-4a90bd2c)
+ap-northeast-2 | HVM - ECS enabled | [ami-b519c9db](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-b519c9db)
+ap-northeast-1 | HVM - ECS enabled | [ami-2a612a4d](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-2a612a4d)
+sa-east-1 | HVM - ECS enabled | [ami-7660061a](https://sa-east-1.console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-7660061a)
+ca-central-1 | HVM - ECS enabled | [ami-8d79c4e9](https://ca-central-1.console.aws.amazon.com/ec2/home?region=ca-central-1#launchInstanceWizard:ami=ami-8d79c4e9)
+ap-southeast-1 | HVM - ECS enabled | [ami-e3aa1b80](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-e3aa1b80)
+ap-southeast-2 | HVM - ECS enabled | [ami-dd4546be](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-dd4546be)
+eu-central-1 | HVM - ECS enabled | [ami-07589268](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-07589268)
+us-east-1 | HVM - ECS enabled | [ami-a99340bf](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-a99340bf)
+us-east-2 | HVM - ECS enabled | [ami-a3a88dc6](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-a3a88dc6)
+us-west-1 | HVM - ECS enabled | [ami-e0085680](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-e0085680)
+us-west-2 | HVM - ECS enabled | [ami-58119138](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-58119138)
