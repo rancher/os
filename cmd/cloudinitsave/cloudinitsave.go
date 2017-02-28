@@ -26,7 +26,6 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/os/cmd/cloudinitsave/gce"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/cmd/network"
 	rancherConfig "github.com/rancher/os/config"
@@ -36,6 +35,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/file"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/digitalocean"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/ec2"
+	"github.com/rancher/os/config/cloudinit/datasource/metadata/gce"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
 	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
 	"github.com/rancher/os/config/cloudinit/datasource/url"

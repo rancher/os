@@ -18,6 +18,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
@@ -25,7 +27,7 @@ import (
 
 const (
 	apiVersion   = "computeMetadata/v1/"
-	metadataPath = apiVersion + "instance/"
+	metadataPath = apiVersion
 	userdataPath = apiVersion + "instance/attributes/user-data"
 )
 
@@ -38,24 +40,52 @@ func NewDatasource(root string) *MetadataService {
 }
 
 func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
-	public, err := ms.fetchIP("network-interfaces/0/access-configs/0/external-ip")
+	public, err := ms.fetchIP("instance/network-interfaces/0/access-configs/0/external-ip")
 	if err != nil {
 		return datasource.Metadata{}, err
 	}
-	local, err := ms.fetchIP("network-interfaces/0/ip")
+	local, err := ms.fetchIP("instance/network-interfaces/0/ip")
 	if err != nil {
 		return datasource.Metadata{}, err
 	}
-	hostname, err := ms.fetchString("hostname")
+	hostname, err := ms.fetchString("instance/hostname")
 	if err != nil {
 		return datasource.Metadata{}, err
 	}
 
-	return datasource.Metadata{
-		PublicIPv4:  public,
-		PrivateIPv4: local,
-		Hostname:    hostname,
-	}, nil
+	projectSSHKeys, err := ms.fetchString("project/attributes/sshKeys")
+	if err != nil {
+		return datasource.Metadata{}, err
+	}
+	instanceSSHKeys, err := ms.fetchString("instance/attributes/sshKeys")
+	if err != nil {
+		return datasource.Metadata{}, err
+	}
+	md := datasource.Metadata{
+		PublicIPv4:    public,
+		PrivateIPv4:   local,
+		Hostname:      hostname,
+		SSHPublicKeys: nil,
+	}
+
+	keyStrings := strings.Split(projectSSHKeys+"\n"+instanceSSHKeys, "\n")
+
+	i := 0
+	for _, keyString := range keyStrings {
+		keySlice := strings.SplitN(keyString, ":", 2)
+		if len(keySlice) == 2 {
+			key := strings.TrimSpace(keySlice[1])
+			if key != "" {
+				if md.SSHPublicKeys == nil {
+					md.SSHPublicKeys = map[string]string{}
+				}
+				md.SSHPublicKeys[strconv.Itoa(i)] = strings.TrimSpace(keySlice[1])
+				i++
+			}
+		}
+	}
+
+	return md, nil
 }
 
 func (ms MetadataService) Type() string {
@@ -85,4 +115,18 @@ func (ms MetadataService) fetchIP(key string) (net.IP, error) {
 		return ip, nil
 	}
 	return nil, fmt.Errorf("couldn't parse %q as IP address", str)
+}
+
+func (ms MetadataService) FetchUserdata() ([]byte, error) {
+	data, err := ms.FetchData(ms.MetadataURL())
+	if err != nil {
+		return nil, err
+	}
+	if len(data) == 0 {
+		data, err = ms.FetchData(ms.MetadataURL() + "instance/attributes/startup-script")
+		if err != nil {
+			return nil, err
+		}
+	}
+	return data, nil
 }

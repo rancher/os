@@ -35,6 +35,7 @@ func TestType(t *testing.T) {
 
 func TestFetchMetadata(t *testing.T) {
 	for _, tt := range []struct {
+		testName     string
 		root         string
 		metadataPath string
 		resources    map[string]string
@@ -43,13 +44,15 @@ func TestFetchMetadata(t *testing.T) {
 		expectErr    error
 	}{
 		{
+			testName:     "one",
 			root:         "/",
-			metadataPath: "computeMetadata/v1/instance/",
+			metadataPath: "computeMetadata/v1/",
 			resources:    map[string]string{},
 		},
 		{
+			testName:     "two",
 			root:         "/",
-			metadataPath: "computeMetadata/v1/instance/",
+			metadataPath: "computeMetadata/v1/",
 			resources: map[string]string{
 				"/computeMetadata/v1/instance/hostname": "host",
 			},
@@ -58,8 +61,9 @@ func TestFetchMetadata(t *testing.T) {
 			},
 		},
 		{
+			testName:     "three",
 			root:         "/",
-			metadataPath: "computeMetadata/v1/instance/",
+			metadataPath: "computeMetadata/v1/",
 			resources: map[string]string{
 				"/computeMetadata/v1/instance/hostname":                                          "host",
 				"/computeMetadata/v1/instance/network-interfaces/0/ip":                           "1.2.3.4",
@@ -72,6 +76,7 @@ func TestFetchMetadata(t *testing.T) {
 			},
 		},
 		{
+			testName:  "four",
 			clientErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 			expectErr: pkg.ErrTimeout{Err: fmt.Errorf("test error")},
 		},
@@ -83,10 +88,10 @@ func TestFetchMetadata(t *testing.T) {
 		}}
 		metadata, err := service.FetchMetadata()
 		if Error(err) != Error(tt.expectErr) {
-			t.Fatalf("bad error (%q): want %q, got %q", tt.resources, tt.expectErr, err)
+			t.Fatalf("bad error (%q): want \n%q\n, got \n%q\n", tt.resources, tt.expectErr, err)
 		}
 		if !reflect.DeepEqual(tt.expect, metadata) {
-			t.Fatalf("bad fetch (%q): want %#v, got %#v", tt.resources, tt.expect, metadata)
+			t.Fatalf("bad fetch %s(%q): want \n%#v\n, got \n%#v\n", tt.testName, tt.resources, tt.expect, metadata)
 		}
 	}
 }
