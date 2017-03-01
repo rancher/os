@@ -45,6 +45,11 @@ func (f *RemoteFile) String() string {
 }
 
 func (f *RemoteFile) AvailabilityChanges() bool {
+	if f.lastError != nil {
+		if _, ok := f.lastError.(pkg.ErrNotFound); ok {
+			return false
+		}
+	}
 	return true
 }
 

@@ -276,6 +276,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 			for {
 				log.Infof("cloud-init: Checking availability of %q\n", s.Type())
 				if s.IsAvailable() {
+					log.Infof("cloud-init: Datasource GOOD: %s", s)
 					ds <- s
 					return
 				}
