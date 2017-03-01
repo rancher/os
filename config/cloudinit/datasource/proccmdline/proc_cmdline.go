@@ -16,9 +16,11 @@ package proccmdline
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"strings"
+
+	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/pkg"
@@ -30,7 +32,8 @@ const (
 )
 
 type ProcCmdline struct {
-	Location string
+	Location  string
+	lastError error
 }
 
 func NewDatasource() *ProcCmdline {
@@ -38,14 +41,23 @@ func NewDatasource() *ProcCmdline {
 }
 
 func (c *ProcCmdline) IsAvailable() bool {
-	contents, err := ioutil.ReadFile(c.Location)
-	if err != nil {
+	var contents []byte
+	contents, c.lastError = ioutil.ReadFile(c.Location)
+	if c.lastError != nil {
 		return false
 	}
 
 	cmdline := strings.TrimSpace(string(contents))
-	_, err = findCloudConfigURL(cmdline)
-	return (err == nil)
+	_, c.lastError = findCloudConfigURL(cmdline)
+	return (c.lastError == nil)
+}
+
+func (c *ProcCmdline) Finish() error {
+	return nil
+}
+
+func (c *ProcCmdline) String() string {
+	return fmt.Sprintf("%s: %s (lastError: %s)", c.Type(), c.Location, c.lastError)
 }
 
 func (c *ProcCmdline) AvailabilityChanges() bool {

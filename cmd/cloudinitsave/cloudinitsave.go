@@ -20,12 +20,10 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/cmd/network"
 	rancherConfig "github.com/rancher/os/config"
@@ -49,9 +47,6 @@ const (
 	datasourceInterval    = 100 * time.Millisecond
 	datasourceMaxInterval = 30 * time.Second
 	datasourceTimeout     = 5 * time.Minute
-	configDevName         = "config-2"
-	configDev             = "LABEL=" + configDevName
-	configDevMountPoint   = "/media/config-2"
 )
 
 func Main() {
@@ -70,29 +65,8 @@ func Main() {
 	}
 }
 
-func MountConfigDrive() error {
-	if err := os.MkdirAll(configDevMountPoint, 644); err != nil {
-		return err
-	}
-
-	configDev := util.ResolveDevice(configDev)
-
-	if configDev == "" {
-		return mount.Mount(configDevName, configDevMountPoint, "9p", "trans=virtio,version=9p2000.L")
-	}
-
-	fsType, err := util.GetFsType(configDev)
-	if err != nil {
-		return err
-	}
-	return mount.Mount(configDev, configDevMountPoint, fsType, "ro")
-}
-
-func UnmountConfigDrive() error {
-	return syscall.Unmount(configDevMountPoint, 0)
-}
-
 func SaveCloudConfig(network bool) error {
+	log.Debugf("SaveCloudConfig")
 	userDataBytes, metadata, err := fetchUserData(network)
 	if err != nil {
 		return err
@@ -178,6 +152,7 @@ func currentDatasource(network bool) (datasource.Datasource, error) {
 
 	dss := getDatasources(cfg, network)
 	if len(dss) == 0 {
+		log.Errorf("currentDatasource - none found")
 		return nil, nil
 	}
 
@@ -299,11 +274,13 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 
 			duration := datasourceInterval
 			for {
-				log.Infof("Checking availability of %q\n", s.Type())
+				log.Infof("cloud-init: Checking availability of %q\n", s.Type())
 				if s.IsAvailable() {
 					ds <- s
 					return
-				} else if !s.AvailabilityChanges() {
+				}
+				log.Errorf("cloud-init: Datasource not ready: %s", s)
+				if !s.AvailabilityChanges() {
 					return
 				}
 				select {

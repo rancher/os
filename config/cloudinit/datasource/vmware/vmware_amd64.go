@@ -16,14 +16,15 @@ package vmware
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
+
+	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/config/cloudinit/pkg"
 
 	"github.com/sigma/vmw-guestinfo/rpcvmx"
 	"github.com/sigma/vmw-guestinfo/vmcheck"
-	"github.com/sigma/vmw-ovflib"
+	ovf "github.com/sigma/vmw-ovflib"
 )
 
 type ovfWrapper struct {
@@ -69,8 +70,8 @@ func NewDatasource(fileName string) *VMWare {
 
 func (v VMWare) IsAvailable() bool {
 	if v.ovfFileName != "" {
-		_, err := os.Stat(v.ovfFileName)
-		return !os.IsNotExist(err)
+		_, v.lastError = os.Stat(v.ovfFileName)
+		return !os.IsNotExist(v.lastError)
 	}
 	return vmcheck.IsVirtualWorld()
 }

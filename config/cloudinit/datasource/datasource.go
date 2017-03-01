@@ -25,6 +25,9 @@ type Datasource interface {
 	FetchMetadata() (Metadata, error)
 	FetchUserdata() ([]byte, error)
 	Type() string
+	String() string
+	// Finish gives the datasource the oportunity to clean up, unmount or release any open / cache resources
+	Finish() error
 }
 
 type Metadata struct {

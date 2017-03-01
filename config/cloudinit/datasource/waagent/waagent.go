@@ -16,27 +16,38 @@ package waagent
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"path"
+
+	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 )
 
 type Waagent struct {
-	root     string
-	readFile func(filename string) ([]byte, error)
+	root      string
+	readFile  func(filename string) ([]byte, error)
+	lastError error
 }
 
 func NewDatasource(root string) *Waagent {
-	return &Waagent{root, ioutil.ReadFile}
+	return &Waagent{root, ioutil.ReadFile, nil}
 }
 
 func (a *Waagent) IsAvailable() bool {
-	_, err := os.Stat(path.Join(a.root, "provisioned"))
-	return !os.IsNotExist(err)
+	_, a.lastError = os.Stat(path.Join(a.root, "provisioned"))
+	return !os.IsNotExist(a.lastError)
+}
+
+func (a *Waagent) Finish() error {
+	return nil
+}
+
+func (a *Waagent) String() string {
+	return fmt.Sprintf("%s: %s (lastError: %s)", a.Type(), a.root, a.lastError)
 }
 
 func (a *Waagent) AvailabilityChanges() bool {

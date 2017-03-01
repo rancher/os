@@ -57,7 +57,7 @@ func TestFetchMetadata(t *testing.T) {
 			},
 		},
 	} {
-		cd := ConfigDrive{tt.root, tt.files.ReadFile}
+		cd := ConfigDrive{tt.root, tt.files.ReadFile, nil}
 		metadata, err := cd.FetchMetadata()
 		if err != nil {
 			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
@@ -91,7 +91,7 @@ func TestFetchUserdata(t *testing.T) {
 			"userdata",
 		},
 	} {
-		cd := ConfigDrive{tt.root, tt.files.ReadFile}
+		cd := ConfigDrive{tt.root, tt.files.ReadFile, nil}
 		userdata, err := cd.FetchUserdata()
 		if err != nil {
 			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
@@ -116,7 +116,7 @@ func TestConfigRoot(t *testing.T) {
 			"/media/configdrive/openstack",
 		},
 	} {
-		cd := ConfigDrive{tt.root, nil}
+		cd := ConfigDrive{tt.root, nil, nil}
 		if configRoot := cd.ConfigRoot(); configRoot != tt.configRoot {
 			t.Fatalf("bad config root for %q: want %q, got %q", tt, tt.configRoot, configRoot)
 		}

@@ -16,30 +16,59 @@ package configdrive
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
+	"syscall"
 
+	"github.com/rancher/os/log"
+
+	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/rancher/os/util"
 )
 
 const (
+	configDevName       = "config-2"
+	configDev           = "LABEL=" + configDevName
+	configDevMountPoint = "/media/config-2"
 	openstackAPIVersion = "latest"
 )
 
 type ConfigDrive struct {
-	root     string
-	readFile func(filename string) ([]byte, error)
+	root      string
+	readFile  func(filename string) ([]byte, error)
+	lastError error
 }
 
 func NewDatasource(root string) *ConfigDrive {
-	return &ConfigDrive{root, ioutil.ReadFile}
+	return &ConfigDrive{root, ioutil.ReadFile, nil}
 }
 
 func (cd *ConfigDrive) IsAvailable() bool {
-	_, err := os.Stat(cd.root)
-	return !os.IsNotExist(err)
+	if cd.root == configDevMountPoint {
+		cd.lastError = MountConfigDrive()
+		if cd.lastError != nil {
+			log.Error(cd.lastError)
+			return false
+		}
+		defer cd.Finish()
+	}
+
+	_, cd.lastError = os.Stat(cd.root)
+	return !os.IsNotExist(cd.lastError)
+}
+
+func (cd *ConfigDrive) Finish() error {
+	return UnmountConfigDrive()
+}
+
+func (cd *ConfigDrive) String() string {
+	if cd.lastError != nil {
+		return fmt.Sprintf("%s: %s (lastError: %s)", cd.Type(), cd.root, cd.lastError)
+	}
+	return fmt.Sprintf("%s: %s", cd.Type(), cd.root)
 }
 
 func (cd *ConfigDrive) AvailabilityChanges() bool {
@@ -93,10 +122,45 @@ func (cd *ConfigDrive) openstackVersionRoot() string {
 }
 
 func (cd *ConfigDrive) tryReadFile(filename string) ([]byte, error) {
+	if cd.root == configDevMountPoint {
+		cd.lastError = MountConfigDrive()
+		if cd.lastError != nil {
+			log.Error(cd.lastError)
+			return nil, cd.lastError
+		}
+		defer cd.Finish()
+	}
 	log.Printf("Attempting to read from %q\n", filename)
 	data, err := cd.readFile(filename)
 	if os.IsNotExist(err) {
 		err = nil
 	}
+	if err != nil {
+		log.Errorf("ERROR read cloud-config file(%s) - err: %q", filename, err)
+	} else {
+		log.Debugf("SUCCESS read cloud-config file(%s) - date: %s", filename, string(data))
+	}
 	return data, err
+}
+
+func MountConfigDrive() error {
+	if err := os.MkdirAll(configDevMountPoint, 644); err != nil {
+		return err
+	}
+
+	configDev := util.ResolveDevice(configDev)
+
+	if configDev == "" {
+		return mount.Mount(configDevName, configDevMountPoint, "9p", "trans=virtio,version=9p2000.L")
+	}
+
+	fsType, err := util.GetFsType(configDev)
+	if err != nil {
+		return err
+	}
+	return mount.Mount(configDev, configDevMountPoint, fsType, "ro")
+}
+
+func UnmountConfigDrive() error {
+	return syscall.Unmount(configDevMountPoint, 0)
 }
