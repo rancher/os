@@ -67,7 +67,6 @@ rancher:
   cloud_init:
     datasources:
     - configdrive:/media/config-2
-    - url:http://example.com/404-error
   repositories:
     core:
       url: {{.OS_SERVICES_REPO}}/{{.REPO_VERSION}}

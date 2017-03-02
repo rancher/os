@@ -67,8 +67,80 @@ func Main() {
 
 func SaveCloudConfig(network bool) error {
 	log.Debugf("SaveCloudConfig")
-	userDataBytes, metadata, err := fetchUserData(network)
+	cfg := rancherConfig.LoadConfig()
+
+	dss := getDatasources(cfg, network)
+	if len(dss) == 0 {
+		log.Errorf("currentDatasource - none found")
+		return nil
+	}
+
+	selectDatasource(dss)
+	return nil
+}
+
+func RequiresNetwork(datasource string) bool {
+	// TODO: move into the datasources (and metadatasources)
+	parts := strings.SplitN(datasource, ":", 2)
+	requiresNetwork, ok := map[string]bool{
+		"ec2":          true,
+		"file":         false,
+		"url":          true,
+		"cmdline":      true,
+		"configdrive":  false,
+		"digitalocean": true,
+		"gce":          true,
+		"packet":       true,
+	}[parts[0]]
+	return ok && requiresNetwork
+}
+
+func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
+	os.MkdirAll(rancherConfig.CloudConfigDir, os.ModeDir|0600)
+
+	if len(scriptBytes) > 0 {
+		log.Infof("Writing to %s", rancherConfig.CloudConfigScriptFile)
+		if err := util.WriteFileAtomic(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
+			log.Errorf("Error while writing file %s: %v", rancherConfig.CloudConfigScriptFile, err)
+			return err
+		}
+	}
+
+	if len(cloudConfigBytes) > 0 {
+		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
+			return err
+		}
+		// Don't put secrets into the log
+		//log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
+	}
+
+	metaDataBytes, err := yaml.Marshal(metadata)
 	if err != nil {
+		return err
+	}
+
+	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
+		return err
+	}
+	// Don't put secrets into the log
+	//log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
+
+	return nil
+}
+
+func fetchAndSave(ds datasource.Datasource) error {
+	var metadata datasource.Metadata
+
+	log.Infof("Fetching user-data from datasource %s", ds)
+	userDataBytes, err := ds.FetchUserdata()
+	if err != nil {
+		log.Errorf("Failed fetching user-data from datasource: %v", err)
+		return err
+	}
+	log.Infof("Fetching meta-data from datasource of type %v", ds.Type())
+	metadata, err = ds.FetchMetadata()
+	if err != nil {
+		log.Errorf("Failed fetching meta-data from datasource: %v", err)
 		return err
 	}
 
@@ -99,87 +171,6 @@ func SaveCloudConfig(network bool) error {
 	}
 
 	return saveFiles(userDataBytes, scriptBytes, metadata)
-}
-
-func RequiresNetwork(datasource string) bool {
-	parts := strings.SplitN(datasource, ":", 2)
-	requiresNetwork, ok := map[string]bool{
-		"ec2":          true,
-		"file":         false,
-		"url":          true,
-		"cmdline":      true,
-		"configdrive":  false,
-		"digitalocean": true,
-		"gce":          true,
-		"packet":       true,
-	}[parts[0]]
-	return ok && requiresNetwork
-}
-
-func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
-	os.MkdirAll(rancherConfig.CloudConfigDir, os.ModeDir|0600)
-
-	if len(scriptBytes) > 0 {
-		log.Infof("Writing to %s", rancherConfig.CloudConfigScriptFile)
-		if err := util.WriteFileAtomic(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
-			log.Errorf("Error while writing file %s: %v", rancherConfig.CloudConfigScriptFile, err)
-			return err
-		}
-	}
-
-	if len(cloudConfigBytes) > 0 {
-		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
-			return err
-		}
-		log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
-	}
-
-	metaDataBytes, err := yaml.Marshal(metadata)
-	if err != nil {
-		return err
-	}
-
-	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
-		return err
-	}
-	log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
-
-	return nil
-}
-
-func currentDatasource(network bool) (datasource.Datasource, error) {
-	cfg := rancherConfig.LoadConfig()
-
-	dss := getDatasources(cfg, network)
-	if len(dss) == 0 {
-		log.Errorf("currentDatasource - none found")
-		return nil, nil
-	}
-
-	ds := selectDatasource(dss)
-	return ds, nil
-}
-
-func fetchUserData(network bool) ([]byte, datasource.Metadata, error) {
-	var metadata datasource.Metadata
-	ds, err := currentDatasource(network)
-	if err != nil || ds == nil {
-		log.Errorf("Failed to select datasource: %v", err)
-		return nil, metadata, err
-	}
-	log.Infof("Fetching user-data from datasource %v", ds.Type())
-	userDataBytes, err := ds.FetchUserdata()
-	if err != nil {
-		log.Errorf("Failed fetching user-data from datasource: %v", err)
-		return nil, metadata, err
-	}
-	log.Infof("Fetching meta-data from datasource of type %v", ds.Type())
-	metadata, err = ds.FetchMetadata()
-	if err != nil {
-		log.Errorf("Failed fetching meta-data from datasource: %v", err)
-		return nil, metadata, err
-	}
-	return userDataBytes, metadata, nil
 }
 
 // getDatasources creates a slice of possible Datasources for cloudinit based
@@ -276,14 +267,15 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 			for {
 				log.Infof("cloud-init: Checking availability of %q\n", s.Type())
 				if s.IsAvailable() {
-					log.Infof("cloud-init: Datasource GOOD: %s", s)
+					log.Infof("cloud-init: Datasource available: %s", s)
 					ds <- s
 					return
 				}
-				log.Errorf("cloud-init: Datasource not ready: %s", s)
 				if !s.AvailabilityChanges() {
+					log.Infof("cloud-init: Datasource unavailable, skipping: %s", s)
 					return
 				}
+				log.Errorf("cloud-init: Datasource not ready, will retry: %s", s)
 				select {
 				case <-stop:
 					return
@@ -303,6 +295,10 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 	var s datasource.Datasource
 	select {
 	case s = <-ds:
+		err := fetchAndSave(s)
+		if err != nil {
+			log.Errorf("Error fetching cloud-init datasource(%s): %s", s, err)
+		}
 	case <-done:
 	case <-time.After(datasourceTimeout):
 	}

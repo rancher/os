@@ -37,13 +37,14 @@ const (
 )
 
 type ConfigDrive struct {
-	root      string
-	readFile  func(filename string) ([]byte, error)
-	lastError error
+	root                string
+	readFile            func(filename string) ([]byte, error)
+	lastError           error
+	availabilityChanges bool
 }
 
 func NewDatasource(root string) *ConfigDrive {
-	return &ConfigDrive{root, ioutil.ReadFile, nil}
+	return &ConfigDrive{root, ioutil.ReadFile, nil, true}
 }
 
 func (cd *ConfigDrive) IsAvailable() bool {
@@ -51,6 +52,8 @@ func (cd *ConfigDrive) IsAvailable() bool {
 		cd.lastError = MountConfigDrive()
 		if cd.lastError != nil {
 			log.Error(cd.lastError)
+			// Don't keep retrying if we can't mount
+			cd.availabilityChanges = false
 			return false
 		}
 		defer cd.Finish()
@@ -58,6 +61,7 @@ func (cd *ConfigDrive) IsAvailable() bool {
 
 	_, cd.lastError = os.Stat(cd.root)
 	return !os.IsNotExist(cd.lastError)
+	// TODO: consider changing IsNotExists to not-available _and_ does not change
 }
 
 func (cd *ConfigDrive) Finish() error {
@@ -72,7 +76,7 @@ func (cd *ConfigDrive) String() string {
 }
 
 func (cd *ConfigDrive) AvailabilityChanges() bool {
-	return true
+	return cd.availabilityChanges
 }
 
 func (cd *ConfigDrive) ConfigRoot() string {
@@ -130,15 +134,13 @@ func (cd *ConfigDrive) tryReadFile(filename string) ([]byte, error) {
 		}
 		defer cd.Finish()
 	}
-	log.Printf("Attempting to read from %q\n", filename)
+	log.Debugf("Attempting to read from %q\n", filename)
 	data, err := cd.readFile(filename)
 	if os.IsNotExist(err) {
 		err = nil
 	}
 	if err != nil {
 		log.Errorf("ERROR read cloud-config file(%s) - err: %q", filename, err)
-	} else {
-		log.Debugf("SUCCESS read cloud-config file(%s) - date: %s", filename, string(data))
 	}
 	return data, err
 }

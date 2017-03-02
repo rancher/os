@@ -46,7 +46,9 @@ func (f *RemoteFile) String() string {
 
 func (f *RemoteFile) AvailabilityChanges() bool {
 	if f.lastError != nil {
-		if _, ok := f.lastError.(pkg.ErrNotFound); ok {
+		// if we have a Network error, then we should retry.
+		// otherwise, we've made a request to the server, and its said nope.
+		if _, ok := f.lastError.(pkg.ErrNetwork); !ok {
 			return false
 		}
 	}
