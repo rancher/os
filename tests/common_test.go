@@ -106,7 +106,8 @@ func (s *QemuSuite) WaitForSSH() error {
 		if err = cmd.Run(); err == nil {
 			break
 		}
-		time.Sleep(500 * time.Millisecond)
+		fmt.Printf("s%d", i)
+		time.Sleep(time.Second)
 	}
 
 	if err != nil {
@@ -126,6 +127,7 @@ func (s *QemuSuite) WaitForSSH() error {
 		if err = cmd.Run(); err == nil {
 			return nil
 		}
+		fmt.Printf("d%d", i)
 		time.Sleep(500 * time.Millisecond)
 	}
 
@@ -185,7 +187,7 @@ func (s *QemuSuite) LoadInstallerImage(c *C) {
 	c.Assert(cmd.Run(), IsNil)
 }
 
-func (s *QemuSuite) PullAndLoadInstallerImage(c *C, image string) {
+func (s *QemuSuite) PullAndLoadImage(c *C, image string) {
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("docker pull %s", image))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
