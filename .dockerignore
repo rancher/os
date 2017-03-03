@@ -2,6 +2,7 @@
 .idea
 .trash-cache
 bin
+docs
 state
 build
 images/*/build

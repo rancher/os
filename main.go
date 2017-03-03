@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/containernetworking/cni/plugins/ipam/host-local"
+	hostlocal "github.com/containernetworking/cni/plugins/ipam/host-local"
 	"github.com/containernetworking/cni/plugins/main/bridge"
 	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
-	"github.com/rancher/cniglue"
+	glue "github.com/rancher/cniglue"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/cmd/control"
