@@ -5,12 +5,10 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
-)
-
-const (
-	cacheDirectory = "/var/lib/rancher/cache/"
 )
 
 func locationHash(location string) string {
@@ -18,28 +16,34 @@ func locationHash(location string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-func cacheLookup(location string) []byte {
-	cacheFile := cacheDirectory + locationHash(location)
+func CacheLookup(location string) ([]byte, error) {
+	cacheFile := filepath.Join(config.CacheDirectory, location)
 	bytes, err := ioutil.ReadFile(cacheFile)
 	if err == nil {
 		log.Debugf("Using cached file: %s", cacheFile)
-		return bytes
+		return bytes, nil
 	}
-	return nil
+	log.Debugf("Cached file not found: %s", cacheFile)
+	return nil, err
 }
 
-func cacheAdd(location string, data []byte) {
-	tempFile, err := ioutil.TempFile(cacheDirectory, "")
+func cacheAdd(location string, data []byte) error {
+	os.MkdirAll(config.CacheDirectory, 0755)
+	tempFile, err := ioutil.TempFile(config.CacheDirectory, "")
 	if err != nil {
-		return
+		return err
 	}
 	defer os.Remove(tempFile.Name())
 
 	_, err = tempFile.Write(data)
 	if err != nil {
-		return
+		return err
 	}
 
-	cacheFile := cacheDirectory + locationHash(location)
+	cacheFile := filepath.Join(config.CacheDirectory, location)
+	cacheDir := filepath.Dir(cacheFile)
+	log.Debugf("writing %s to %s", cacheFile, cacheDir)
+	os.MkdirAll(cacheDir, 0755)
 	os.Rename(tempFile.Name(), cacheFile)
+	return nil
 }

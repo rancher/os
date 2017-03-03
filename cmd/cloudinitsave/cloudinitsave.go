@@ -328,7 +328,8 @@ func isCompose(content string) bool {
 	return strings.HasPrefix(content, "#compose\n")
 }
 
-func composeToCloudConfig(bytes []byte) ([]byte, error) {
+//TODO: move to config?
+func ComposeToCloudConfig(bytes []byte) ([]byte, error) {
 	compose := make(map[interface{}]interface{})
 	err := yaml.Unmarshal(bytes, &compose)
 	if err != nil {
