@@ -3,13 +3,17 @@ package control
 import (
 	"fmt"
 	"os"
+	"sort"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
 	"github.com/codegangsta/cli"
+	composeApp "github.com/docker/libcompose/cli/app"
 	libcomposeConfig "github.com/docker/libcompose/config"
+	serviceApp "github.com/rancher/os/cmd/control/service/app"
 
 	"github.com/rancher/os/cmd/control/service"
+
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util/network"
@@ -31,6 +35,8 @@ func Main() {
 		return nil
 	}
 
+	factory := &service.ProjectFactory{}
+
 	app.Commands = []cli.Command{
 		{
 			Name:      "fetch",
@@ -47,55 +53,84 @@ func Main() {
 			HideHelp:  true,
 			Action:    listServices,
 		}, {
-			Name:      "install",
+			Name: "add, install, upgrade",
+			// TODO: add an --apply or --up ...
+			// TODO: also support the repo-name prefix
 			ShortName: "",
 			Usage:     "install/upgrade service / RancherOS",
 			HideHelp:  true,
-			Action:    dummy,
+			Action:    service.Enable,
 		}, {
-			Name:      "remove",
+			Name:      "remove, delete",
 			ShortName: "",
 			Usage:     "remove service",
 			HideHelp:  true,
-			Action:    dummy,
+			Action:    service.Del,
 		}, {
-			Name:      "logs",
-			ShortName: "",
-			Usage:     "service logs",
-			HideHelp:  true,
-			Action:    dummy,
+			Name:  "logs, log",
+			Usage: "View output from containers",
+			//Before: verifyOneOrMoreServices,
+			Action: composeApp.WithProject(factory, serviceApp.ProjectLog),
+			Flags: []cli.Flag{
+				cli.IntFlag{
+					Name:  "lines",
+					Usage: "number of lines to tail",
+					Value: 100,
+				},
+				cli.BoolFlag{
+					Name:  "follow",
+					Usage: "Follow log output.",
+				},
+			},
 		},
-		// settings
+		// settings / partial configs
 		{
-			Name:      "get",
+			Name: "get",
+			// TODO: also add the merge command functionality
 			ShortName: "",
 			Usage:     "get config value(s)",
 			HideHelp:  true,
-			Action:    dummy,
+			Action:    configGet,
 		}, {
 			Name:      "set",
 			ShortName: "",
 			Usage:     "set config value(s)",
 			HideHelp:  true,
-			Action:    dummy,
+			Action:    configSet,
 		},
 		// complete config
 		{
-			Name:      "export",
-			ShortName: "",
-			Usage:     "export config",
-			HideHelp:  true,
-			Action:    dummy,
+			Name:  "export",
+			Usage: "export configuration",
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "output, o",
+					Usage: "File to which to save",
+				},
+				cli.BoolFlag{
+					Name:  "private, p",
+					Usage: "Include the generated private keys",
+				},
+				cli.BoolFlag{
+					Name:  "full, f",
+					Usage: "Export full configuration, including internal and default settings",
+				},
+			},
+			Action: export,
+		}, {
+			Name:   "validate",
+			Usage:  "validate configuration from stdin",
+			Action: validate,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input, i",
+					Usage: "File from which to read",
+				},
+			},
 		}, {
 			Name:      "apply",
 			ShortName: "",
 			Usage:     "apply service&config changes",
-			HideHelp:  true,
-			Action:    dummy,
-		}, {
-			Name:      "validate",
-			ShortName: "",
-			Usage:     "validate config / service file",
 			HideHelp:  true,
 			Action:    dummy,
 		},
@@ -114,6 +149,7 @@ func Main() {
 }
 
 func dummy(c *cli.Context) error {
+	fmt.Printf("Not implemented yet - use the `ros old` commands for now\n")
 	return nil
 }
 
@@ -132,12 +168,33 @@ func listServices(c *cli.Context) error {
 	//get the current cfg, and the make a cfg with all cached services
 	//then iterate through, listing all possible services, and what version is running, vs what version they could run
 	//Can't just merge current cfg and cached services, as we lose service.yml version info
+
 	currentConfig := config.LoadConfig()
 	cachedConfigs := GetAllServices()
 	// TODO: sort them!
-	fmt.Printf("Running\n")
-	for serviceName, serviceConfig := range currentConfig.Rancher.Services {
-		fmt.Printf("\t%s: %s\n", serviceName, serviceConfig.Image)
+	fmt.Printf("Enabled\n")
+	enabledServices := make([]string, len(currentConfig.Rancher.Services)+len(currentConfig.Rancher.ServicesInclude))
+	i := 0
+	for k, _ := range currentConfig.Rancher.Services {
+		enabledServices[i] = k
+		i++
+	}
+	for k, _ := range currentConfig.Rancher.ServicesInclude {
+		enabledServices[i] = k
+		i++
+	}
+	sort.Strings(enabledServices)
+	for _, serviceName := range enabledServices {
+		// TODO: add running / stopped, error etc state
+		// TODO: separate the volumes out too (they don't need the image listed - list the volumes instead)
+		serviceConfig, _ := currentConfig.Rancher.Services[serviceName]
+		if serviceConfig != nil {
+			fmt.Printf("\t%s: %s\n", serviceName, serviceConfig.Image)
+
+		} else {
+			fmt.Printf("\t%s\n", serviceName)
+
+		}
 		if len(cachedConfigs[serviceName]) > 0 {
 			fmt.Printf("\t\tAlternatives: ")
 			for serviceLongName, _ := range cachedConfigs[serviceName] {

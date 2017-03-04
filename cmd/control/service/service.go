@@ -15,10 +15,10 @@ import (
 	"github.com/rancher/os/util/network"
 )
 
-type projectFactory struct {
+type ProjectFactory struct {
 }
 
-func (p *projectFactory) Create(c *cli.Context) (project.APIProject, error) {
+func (p *ProjectFactory) Create(c *cli.Context) (project.APIProject, error) {
 	cfg := config.LoadConfig()
 	return compose.GetProject(cfg, true, false)
 }
@@ -31,7 +31,7 @@ func beforeApp(c *cli.Context) error {
 }
 
 func Commands() cli.Command {
-	factory := &projectFactory{}
+	factory := &ProjectFactory{}
 
 	app := cli.Command{}
 	app.Name = "service"
@@ -63,7 +63,7 @@ func serviceSubCommands() []cli.Command {
 		{
 			Name:   "enable",
 			Usage:  "turn on an service",
-			Action: enable,
+			Action: Enable,
 		},
 		{
 			Name:   "disable",
@@ -78,7 +78,7 @@ func serviceSubCommands() []cli.Command {
 		{
 			Name:   "delete",
 			Usage:  "delete a service",
-			Action: del,
+			Action: Del,
 		},
 	}
 }
@@ -111,7 +111,7 @@ func disable(c *cli.Context) error {
 	return nil
 }
 
-func del(c *cli.Context) error {
+func Del(c *cli.Context) error {
 	changed := false
 	cfg := config.LoadConfig()
 
@@ -135,7 +135,7 @@ func del(c *cli.Context) error {
 	return nil
 }
 
-func enable(c *cli.Context) error {
+func Enable(c *cli.Context) error {
 	cfg := config.LoadConfig()
 
 	var enabledServices []string
