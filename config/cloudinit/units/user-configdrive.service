@@ -1,0 +1,23 @@
+[Unit]
+Description=Load cloud-config from /media/configdrive
+Requires=coreos-setup-environment.service
+After=coreos-setup-environment.service system-config.target
+Before=user-config.target
+
+# HACK: work around ordering between config drive and ec2 metadata It is
+# possible for OpenStack style systems to provide both the metadata service
+# and config drive, to prevent the two from stomping on each other, force
+# this to run after OEM and after metadata (if it exsts). I'm doing this
+# here instead of in the oem service because the oem unit is not written
+# to disk until the OEM cloud config is evaluated and I want to make sure
+# systemd knows about the ordering as early as possible.
+# coreos-cloudinit could implement a simple lock but that cannot be used
+# until after the systemd dbus calls are made non-blocking.
+After=oem-cloudinit.service
+
+[Service]
+Type=oneshot
+TimeoutSec=10min
+RemainAfterExit=yes
+EnvironmentFile=-/etc/environment
+ExecStart=/usr/bin/coreos-cloudinit --from-configdrive=/media/configdrive

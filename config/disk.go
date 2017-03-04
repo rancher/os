@@ -9,10 +9,10 @@ import (
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/coreos/coreos-cloudinit/datasource"
-	"github.com/coreos/coreos-cloudinit/initialize"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
+	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/rancher/os/config/cloudinit/initialize"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )

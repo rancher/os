@@ -1,0 +1,8 @@
+# Automatically trigger ovfenv mounting.
+
+ACTION!="add|change", GOTO="coreos_ovfenv_end"
+
+# A normal config drive. Block device formatted with iso9660 or fat
+SUBSYSTEM=="block", ENV{ID_FS_TYPE}=="iso9660|vfat", ENV{ID_FS_LABEL}=="OVF_ENV", TAG+="systemd", ENV{SYSTEMD_WANTS}+="media-ovfenv.mount"
+
+LABEL="coreos_ovfenv_end"

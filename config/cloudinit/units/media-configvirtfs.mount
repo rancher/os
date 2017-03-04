@@ -1,0 +1,18 @@
+[Unit]
+Wants=user-configvirtfs.service
+Before=user-configvirtfs.service
+# Only mount config drive block devices automatically in virtual machines
+# or any host that has it explicitly enabled and not explicitly disabled.
+ConditionVirtualization=|vm
+ConditionKernelCommandLine=|coreos.configdrive=1
+ConditionKernelCommandLine=!coreos.configdrive=0
+
+# Support old style setup for now
+Wants=addon-run@media-configvirtfs.service addon-config@media-configvirtfs.service
+Before=addon-run@media-configvirtfs.service addon-config@media-configvirtfs.service
+
+[Mount]
+What=config-2
+Where=/media/configvirtfs
+Options=ro,trans=virtio,version=9p2000.L
+Type=9p

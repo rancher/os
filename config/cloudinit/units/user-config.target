@@ -1,0 +1,11 @@
+[Unit]
+Description=Load user-provided cloud configs
+Requires=system-config.target
+After=system-config.target
+
+# Watch for configs at a couple common paths
+Requires=user-cloudinit@var-lib-coreos\x2dinstall-user_data.path
+After=user-cloudinit@var-lib-coreos\x2dinstall-user_data.path
+
+Requires=user-cloudinit-proc-cmdline.service
+After=user-cloudinit-proc-cmdline.service

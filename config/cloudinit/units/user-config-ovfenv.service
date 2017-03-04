@@ -1,0 +1,13 @@
+[Unit]
+Description=Load cloud-config from /media/ovfenv
+Requires=coreos-setup-environment.service
+After=coreos-setup-environment.service system-config.target
+Before=user-config.target
+After=user-config-vmw-tools.service
+
+[Service]
+Type=oneshot
+TimeoutSec=10min
+RemainAfterExit=yes
+EnvironmentFile=-/etc/environment
+ExecStart=/usr/bin/coreos-cloudinit --from-vmware-ovf-env=/media/ovfenv/ovf-env.xml
