@@ -153,7 +153,7 @@ func installAction(c *cli.Context) error {
 		return err
 	}
 
-	if !kexec && reboot && (force || yes("Continue with reboot")) {
+	if !kexec && reboot && (force || util.Yes("Continue with reboot")) {
 		log.Info("Rebooting")
 		power.Reboot()
 	}
@@ -165,7 +165,7 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
-		if util.IsRunningInTty() && !yes("Continue") {
+		if util.IsRunningInTty() && !util.Yes("Continue") {
 			log.Infof("Not continuing with installation due to user not saying 'yes'")
 			os.Exit(1)
 		}

@@ -1,11 +1,17 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/codegangsta/cli"
 	dockerApp "github.com/docker/libcompose/cli/docker/app"
+	composeConfig "github.com/docker/libcompose/config"
+
+	"github.com/docker/libcompose/project/options"
+
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/cmd/control/service/command"
 	"github.com/rancher/os/compose"
@@ -135,20 +141,125 @@ func Del(c *cli.Context) error {
 	return nil
 }
 
+//TODO: copied from cloudinitsave, move to config.
+func ComposeToCloudConfig(bytes []byte) ([]byte, error) {
+	compose := make(map[interface{}]interface{})
+	err := yaml.Unmarshal(bytes, &compose)
+	if err != nil {
+		return nil, err
+	}
+
+	return yaml.Marshal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"services": compose,
+		},
+	})
+}
+
+// TODO: this should move to something like config/service.go?
+// WARNING: this can contain more than one service - Josh and I aren't sure this is worth it
+func LoadService(repoName, serviceLongName string) (*config.CloudConfig, error) {
+	servicePath := fmt.Sprintf("%s/%s.yml", repoName, serviceLongName)
+	//log.Infof("loading %s", serviceLongName)
+	content, err := network.CacheLookup(servicePath)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to load %s: %v", servicePath, err)
+	}
+	if content, err = ComposeToCloudConfig(content); err != nil {
+		return nil, fmt.Errorf("Failed to convert compose to cloud-config syntax: %v", err)
+	}
+
+	p, err := config.ReadConfig(content, true)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to load %s : %v", servicePath, err)
+	}
+	return p, nil
+}
+
+// TODO: this should move to something like config/service.go?
+func IsConsole(serviceCfg *config.CloudConfig) bool {
+	//the service is called console, and has an io.rancher.os.console label.
+	for serviceName, service := range serviceCfg.Rancher.Services {
+		if serviceName == "console" {
+			for k := range service.Labels {
+				if k == "io.rancher.os.console" {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// TODO: this should move to something like config/service.go?
+func IsEngine(serviceCfg *config.CloudConfig) bool {
+	//the service is called docker, and the command is "ros user-docker"
+	for serviceName, service := range serviceCfg.Rancher.Services {
+		log.Infof("serviceName == %s", serviceName)
+		if serviceName == "docker" {
+			cmd := strings.Join(service.Command, " ")
+			log.Infof("service command == %s", cmd)
+			if cmd == "ros user-docker" {
+				log.Infof("yes, its a docker engine")
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func Enable(c *cli.Context) error {
 	cfg := config.LoadConfig()
 
 	var enabledServices []string
+	var consoleService, engineService string
+	var errorServices []string
+	serviceMap := make(map[string]*config.CloudConfig)
 
 	for _, service := range c.Args() {
-		validateService(service, cfg)
+		//validateService(service, cfg)
+		//log.Infof("start4")
+		// TODO: need to search for the service in all the repos.
+		// TODO: also need to deal with local file paths and URLs
+		serviceConfig, err := LoadService("core", service)
+		if err != nil {
+			log.Errorf("Failed to load %s: %s", service, err)
+			errorServices = append(errorServices, service)
+			continue
+		}
+		serviceMap[service] = serviceConfig
+	}
+	if len(serviceMap) == 0 {
+		log.Fatalf("No valid Services found")
+	}
+	if len(errorServices) > 0 {
+		if c.Bool("force") || !util.Yes("Some services failed to load, Continue?") {
+			log.Fatalf("Services failed to load: %v", errorServices)
+		}
+	}
 
+	for service, serviceConfig := range serviceMap {
 		if val, ok := cfg.Rancher.ServicesInclude[service]; !ok || !val {
 			if isLocal(service) && !strings.HasPrefix(service, "/var/lib/rancher/conf") {
 				log.Fatalf("ERROR: Service should be in path /var/lib/rancher/conf")
 			}
 
-			cfg.Rancher.ServicesInclude[service] = true
+			if IsConsole(serviceConfig) {
+				log.Debugf("Enabling the %s console", service)
+				if err := config.Set("rancher.console", service); err != nil {
+					log.Errorf("Failed to update 'rancher.console': %v", err)
+				}
+				consoleService = service
+
+			} else if IsEngine(serviceConfig) {
+				log.Debugf("Enabling the %s user engine", service)
+				if err := config.Set("rancher.docker.engine", service); err != nil {
+					log.Errorf("Failed to update 'rancher.docker.engine': %v", err)
+				}
+				engineService = service
+			} else {
+				cfg.Rancher.ServicesInclude[service] = true
+			}
 			enabledServices = append(enabledServices, service)
 		}
 	}
@@ -159,6 +270,64 @@ func Enable(c *cli.Context) error {
 		}
 
 		if err := updateIncludedServices(cfg); err != nil {
+			log.Fatal(err)
+		}
+	}
+
+	//TODO: fix the case where the user is applying both a new console and a new docker engine
+	if consoleService != "" && c.Bool("apply") {
+		//ros console switch.
+		if !c.Bool("force") {
+			fmt.Println(`Switching consoles will
+1. destroy the current console container
+2. log you out
+3. restart Docker`)
+			if !util.Yes("Continue") {
+				return nil
+			}
+			switchService, err := compose.CreateService(nil, "switch-console", &composeConfig.ServiceConfigV1{
+				LogDriver:  "json-file",
+				Privileged: true,
+				Net:        "host",
+				Pid:        "host",
+				Image:      config.OsBase,
+				Labels: map[string]string{
+					config.ScopeLabel: config.System,
+				},
+				Command:     []string{"/usr/bin/ros", "switch-console", consoleService},
+				VolumesFrom: []string{"all-volumes"},
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			if err = switchService.Delete(context.Background(), options.Delete{}); err != nil {
+				log.Fatal(err)
+			}
+			if err = switchService.Up(context.Background(), options.Up{}); err != nil {
+				log.Fatal(err)
+			}
+			if err = switchService.Log(context.Background(), true); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+	if engineService != "" && c.Bool("apply") {
+		log.Info("Starting the %s engine", engineService)
+		project, err := compose.GetProject(cfg, true, false)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if err = project.Stop(context.Background(), 10, "docker"); err != nil {
+			log.Fatal(err)
+		}
+
+		if err = compose.LoadSpecialService(project, cfg, "docker", engineService); err != nil {
+			log.Fatal(err)
+		}
+
+		if err = project.Up(context.Background(), options.Up{}, "docker"); err != nil {
 			log.Fatal(err)
 		}
 	}
