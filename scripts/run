@@ -22,6 +22,9 @@ while [ "$#" -gt 0 ]; do
             QIND=0
             REBUILD=0
             ;;
+        --pxe)
+            BOOT_PXE=1
+            ;;
         --append)
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
@@ -121,6 +124,14 @@ if [ "$FORMAT" == "1" ]; then
 fi
 if [ "$RM_USR" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.rm_usr"
+fi
+
+if [ "$BOOT_PXE" == "1" ]; then
+    sudo pixiecore boot \
+               "${KERNEL}" \
+               "${INITRD}" \
+               --cmdline="${KERNEL_ARGS}"
+    return 0
 fi
 
 if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
