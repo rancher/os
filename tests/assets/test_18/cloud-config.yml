@@ -1,6 +1,6 @@
 #cloud-config
 rancher:
-  console: debian
+  console: alpine
   services:
     missing_image:
       image: tianon/true
