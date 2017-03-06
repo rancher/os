@@ -1,4 +1,4 @@
-package control
+package util
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"github.com/rancher/os/log"
 )
 
-func yes(question string) bool {
+func Yes(question string) bool {
 	fmt.Printf("%s [y/N]: ", question)
 	in := bufio.NewReader(os.Stdin)
 	line, err := in.ReadString('\n')

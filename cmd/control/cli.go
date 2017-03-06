@@ -53,21 +53,31 @@ func Main() {
 			HideHelp:  true,
 			Action:    listServices,
 		}, {
-			Name: "add, install, upgrade",
+			Name: "install",
 			// TODO: add an --apply or --up ...
 			// TODO: also support the repo-name prefix
 			ShortName: "",
 			Usage:     "install/upgrade service / RancherOS",
 			HideHelp:  true,
 			Action:    service.Enable,
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "apply",
+					Usage: "Switch console/engine, or start service.",
+				},
+				cli.BoolFlag{
+					Name:  "force",
+					Usage: "Don't ask questions.",
+				},
+			},
 		}, {
-			Name:      "remove, delete",
+			Name:      "remove",
 			ShortName: "",
 			Usage:     "remove service",
 			HideHelp:  true,
 			Action:    service.Del,
 		}, {
-			Name:  "logs, log",
+			Name:  "logs",
 			Usage: "View output from containers",
 			//Before: verifyOneOrMoreServices,
 			Action: composeApp.WithProject(factory, serviceApp.ProjectLog),
@@ -238,21 +248,9 @@ func GetAllServices() map[string]map[string]*libcomposeConfig.ServiceConfigV1 {
 		}
 		for serviceType, serviceList := range services {
 			for _, serviceLongName := range serviceList {
-				servicePath := fmt.Sprintf("%s/%s.yml", repoName, serviceLongName)
-				//log.Infof("loading %s", serviceLongName)
-				content, err := network.CacheLookup(servicePath)
+				p, err := service.LoadService(repoName, serviceLongName)
 				if err != nil {
-					log.Errorf("Failed to load %s: %v", servicePath, err)
-					continue
-				}
-				if content, err = ComposeToCloudConfig(content); err != nil {
-					log.Errorf("Failed to convert compose to cloud-config syntax: %v", err)
-					continue
-				}
-
-				p, err := config.ReadConfig(content, true)
-				if err != nil {
-					log.Errorf("Failed to load %s : %v", servicePath, err)
+					log.Errorf("Failed to load %s/%s : %v", repoName, serviceLongName, err)
 				}
 
 				// yes, the serviceLongName is really only the yml file name
@@ -272,21 +270,6 @@ func GetAllServices() map[string]map[string]*libcomposeConfig.ServiceConfigV1 {
 	}
 
 	return result
-}
-
-//TODO: copied from cloudinitsave, move to config.
-func ComposeToCloudConfig(bytes []byte) ([]byte, error) {
-	compose := make(map[interface{}]interface{})
-	err := yaml.Unmarshal(bytes, &compose)
-	if err != nil {
-		return nil, err
-	}
-
-	return yaml.Marshal(map[interface{}]interface{}{
-		"rancher": map[interface{}]interface{}{
-			"services": compose,
-		},
-	})
 }
 
 var originalCli = []cli.Command{
