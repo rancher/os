@@ -86,7 +86,7 @@ func TestFetchMetadata(t *testing.T) {
 			},
 		},
 	} {
-		a := Waagent{tt.root, tt.files.ReadFile}
+		a := Waagent{tt.root, tt.files.ReadFile, nil}
 		metadata, err := a.FetchMetadata()
 		if err != nil {
 			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
@@ -115,7 +115,7 @@ func TestFetchUserdata(t *testing.T) {
 			test.NewMockFilesystem(test.File{Path: "/var/lib/Waagent/CustomData", Contents: ""}),
 		},
 	} {
-		a := Waagent{tt.root, tt.files.ReadFile}
+		a := Waagent{tt.root, tt.files.ReadFile, nil}
 		_, err := a.FetchUserdata()
 		if err != nil {
 			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
@@ -137,7 +137,7 @@ func TestConfigRoot(t *testing.T) {
 			"/var/lib/Waagent",
 		},
 	} {
-		a := Waagent{tt.root, nil}
+		a := Waagent{tt.root, nil, nil}
 		if configRoot := a.ConfigRoot(); configRoot != tt.configRoot {
 			t.Fatalf("bad config root for %q: want %q, got %q", tt, tt.configRoot, configRoot)
 		}

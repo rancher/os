@@ -15,6 +15,7 @@
 package metadata
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -27,18 +28,27 @@ type Service struct {
 	APIVersion   string
 	UserdataPath string
 	MetadataPath string
+	lastError    error
 }
 
 func NewDatasource(root, apiVersion, userdataPath, metadataPath string, header http.Header) Service {
 	if !strings.HasSuffix(root, "/") {
 		root += "/"
 	}
-	return Service{root, pkg.NewHTTPClientHeader(header), apiVersion, userdataPath, metadataPath}
+	return Service{root, pkg.NewHTTPClientHeader(header), apiVersion, userdataPath, metadataPath, nil}
 }
 
 func (ms Service) IsAvailable() bool {
-	_, err := ms.Client.Get(ms.Root + ms.APIVersion)
-	return (err == nil)
+	_, ms.lastError = ms.Client.Get(ms.Root + ms.APIVersion)
+	return (ms.lastError == nil)
+}
+
+func (ms *Service) Finish() error {
+	return nil
+}
+
+func (ms *Service) String() string {
+	return fmt.Sprintf("%s: %s (lastError: %s)", "metadata", ms.Root+":"+ms.UserdataPath, ms.lastError)
 }
 
 func (ms Service) AvailabilityChanges() bool {

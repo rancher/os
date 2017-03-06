@@ -15,22 +15,33 @@
 package url
 
 import (
+	"fmt"
+
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/pkg"
 )
 
 type RemoteFile struct {
-	url string
+	url       string
+	lastError error
 }
 
 func NewDatasource(url string) *RemoteFile {
-	return &RemoteFile{url}
+	return &RemoteFile{url, nil}
 }
 
 func (f *RemoteFile) IsAvailable() bool {
 	client := pkg.NewHTTPClient()
-	_, err := client.Get(f.url)
-	return (err == nil)
+	_, f.lastError = client.Get(f.url)
+	return (f.lastError == nil)
+}
+
+func (f *RemoteFile) Finish() error {
+	return nil
+}
+
+func (f *RemoteFile) String() string {
+	return fmt.Sprintf("%s: %s (lastError: %s)", f.Type(), f.url, f.lastError)
 }
 
 func (f *RemoteFile) AvailabilityChanges() bool {
