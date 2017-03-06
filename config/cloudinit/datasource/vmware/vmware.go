@@ -29,6 +29,15 @@ type VMWare struct {
 	ovfFileName string
 	readConfig  readConfigFunction
 	urlDownload urlDownloadFunction
+	lastError   error
+}
+
+func (v VMWare) Finish() error {
+	return nil
+}
+
+func (v VMWare) String() string {
+	return fmt.Sprintf("%s: %s (lastError: %s)", v.Type(), v.ovfFileName, v.lastError)
 }
 
 func (v VMWare) AvailabilityChanges() bool {

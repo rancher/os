@@ -51,7 +51,7 @@ func (s *QemuSuite) DisableTestUpgradeInner(c *C) {
 		c.Assert(Version, Equals, version)
 
 		fmt.Printf("installing %s", startWithVersion)
-		s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os:%s", startWithVersion))
+		s.PullAndLoadImage(c, fmt.Sprintf("rancher/os:%s", startWithVersion))
 
 		//ADD a custom append line and make sure its kept in the upgraded version too
 
@@ -77,10 +77,10 @@ sync
 
 	if console != "default" {
 		// Can't preload the startWithVersion console image, as some don't exist by that name - not sure how to approach that
-		//s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, startWithVersion))
+		//s.PullAndLoadImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, startWithVersion))
 		// TODO: ouch. probably need to tag the dev / master version as latest cos this won't work
 		// Need to pull the image here - if we do it at boot, then the test will fail.
-		s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, "v0.8.0-rc3"))
+		s.PullAndLoadImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, "v0.8.0-rc3"))
 		s.MakeCall(fmt.Sprintf("sudo ros console switch -f %s", console))
 		c.Assert(s.WaitForSSH(), IsNil)
 	}
@@ -111,7 +111,7 @@ func (s *QemuSuite) commonTestCode(c *C, startWithVersion, console string) {
 		c.Assert(Version, Equals, version)
 
 		fmt.Printf("installing %s", startWithVersion)
-		s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os:%s", startWithVersion))
+		s.PullAndLoadImage(c, fmt.Sprintf("rancher/os:%s", startWithVersion))
 
 		//ADD a custom append line and make sure its kept in the upgraded version too
 
@@ -137,13 +137,13 @@ sync
 
 	if console != "default" {
 		// Can't preload the startWithVersion console image, as some don't exist by that name - not sure how to approach that
-		//s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, startWithVersion))
+		//s.PullAndLoadImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, startWithVersion))
 		// TODO: ouch. probably need to tag the dev / master version as latest cos this won't work
 		// Need to pull the image here - if we do it at boot, then the test will fail.
 		if console == "alpine" {
-			s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, "v0.8.0-rc5"))
+			s.PullAndLoadImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, "v0.8.0-rc5"))
 		} else {
-			s.PullAndLoadInstallerImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, "v0.8.0-rc3"))
+			s.PullAndLoadImage(c, fmt.Sprintf("rancher/os-%sconsole:%s", console, "v0.8.0-rc3"))
 		}
 		s.MakeCall(fmt.Sprintf("sudo ros console switch -f %s", console))
 		c.Assert(s.WaitForSSH(), IsNil)

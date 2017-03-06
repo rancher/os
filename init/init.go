@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
@@ -294,29 +293,10 @@ func RunInit() error {
 				log.Error(err)
 			}
 
-			network := false
-			for _, datasource := range cfg.Rancher.CloudInit.Datasources {
-				if cloudinitsave.RequiresNetwork(datasource) {
-					network = true
-					break
-				}
+			if err := runCloudInitServices(cfg); err != nil {
+				log.Error(err)
 			}
 
-			if network {
-				if err := runCloudInitServices(cfg); err != nil {
-					log.Error(err)
-				}
-			} else {
-				if err := cloudinitsave.MountConfigDrive(); err != nil {
-					log.Error(err)
-				}
-				if err := cloudinitsave.SaveCloudConfig(false); err != nil {
-					log.Error(err)
-				}
-				if err := cloudinitsave.UnmountConfigDrive(); err != nil {
-					log.Error(err)
-				}
-			}
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {

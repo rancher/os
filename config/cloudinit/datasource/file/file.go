@@ -15,6 +15,7 @@
 package file
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -22,16 +23,25 @@ import (
 )
 
 type LocalFile struct {
-	path string
+	path      string
+	lastError error
 }
 
 func NewDatasource(path string) *LocalFile {
-	return &LocalFile{path}
+	return &LocalFile{path, nil}
 }
 
 func (f *LocalFile) IsAvailable() bool {
-	_, err := os.Stat(f.path)
-	return !os.IsNotExist(err)
+	_, f.lastError = os.Stat(f.path)
+	return !os.IsNotExist(f.lastError)
+}
+
+func (f *LocalFile) Finish() error {
+	return nil
+}
+
+func (f *LocalFile) String() string {
+	return fmt.Sprintf("%s: %s (lastError: %s)", f.Type(), f.path, f.lastError)
 }
 
 func (f *LocalFile) AvailabilityChanges() bool {

@@ -1,4 +1,5 @@
 rancher:
+  debug: true
   environment:
     VERSION: {{.VERSION}}
     SUFFIX: {{.SUFFIX}}
