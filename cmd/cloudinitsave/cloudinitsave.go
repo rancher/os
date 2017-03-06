@@ -181,23 +181,24 @@ func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.D
 	for _, ds := range cfg.Rancher.CloudInit.Datasources {
 		parts := strings.SplitN(ds, ":", 2)
 
+		root := ""
+		if len(parts) > 1 {
+			root = parts[1]
+		}
+
 		switch parts[0] {
 		case "ec2":
 			if network {
-				if len(parts) == 1 {
-					dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))
-				} else {
-					dss = append(dss, ec2.NewDatasource(parts[1]))
-				}
+				dss = append(dss, ec2.NewDatasource(root))
 			}
 		case "file":
-			if len(parts) == 2 {
-				dss = append(dss, file.NewDatasource(parts[1]))
+			if root != "" {
+				dss = append(dss, file.NewDatasource(root))
 			}
 		case "url":
 			if network {
-				if len(parts) == 2 {
-					dss = append(dss, url.NewDatasource(parts[1]))
+				if root != "" {
+					dss = append(dss, url.NewDatasource(root))
 				}
 			}
 		case "cmdline":
@@ -207,28 +208,24 @@ func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.D
 				}
 			}
 		case "configdrive":
-			if len(parts) == 2 {
-				dss = append(dss, configdrive.NewDatasource(parts[1]))
+			if root != "" {
+				dss = append(dss, configdrive.NewDatasource(root))
 			}
 		case "digitalocean":
 			if network {
-				if len(parts) == 1 {
-					dss = append(dss, digitalocean.NewDatasource(digitalocean.DefaultAddress))
-				} else {
-					dss = append(dss, digitalocean.NewDatasource(parts[1]))
-				}
+				dss = append(dss, digitalocean.NewDatasource(root))
 			} else {
 				enableDoLinkLocal()
 			}
 		case "gce":
 			if network {
-				dss = append(dss, gce.NewDatasource("http://metadata.google.internal/"))
+				dss = append(dss, gce.NewDatasource(root))
 			}
 		case "packet":
 			if !network {
 				enablePacketNetwork(&cfg.Rancher)
 			}
-			dss = append(dss, packet.NewDatasource("https://metadata.packet.net/"))
+			dss = append(dss, packet.NewDatasource(root))
 		}
 	}
 

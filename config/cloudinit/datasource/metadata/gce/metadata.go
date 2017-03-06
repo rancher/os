@@ -26,9 +26,10 @@ import (
 )
 
 const (
-	apiVersion   = "computeMetadata/v1/"
-	metadataPath = apiVersion
-	userdataPath = apiVersion + "instance/attributes/user-data"
+	DefaultAddress = "http://metadata.google.internal/"
+	apiVersion     = "computeMetadata/v1/"
+	metadataPath   = apiVersion
+	userdataPath   = apiVersion + "instance/attributes/user-data"
 )
 
 type MetadataService struct {
@@ -36,6 +37,9 @@ type MetadataService struct {
 }
 
 func NewDatasource(root string) *MetadataService {
+	if root == "" {
+		root = DefaultAddress
+	}
 	return &MetadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath, http.Header{"Metadata-Flavor": {"Google"}})}
 }
 

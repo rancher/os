@@ -39,6 +39,9 @@ type MetadataService struct {
 }
 
 func NewDatasource(root string) *MetadataService {
+	if root == "" {
+		root = DefaultAddress
+	}
 	return &MetadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath, nil)}
 }
 
