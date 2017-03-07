@@ -20,6 +20,8 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/rancher/os/netconf"
+
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/test"
@@ -90,26 +92,23 @@ func TestFetchMetadata(t *testing.T) {
 					"0": "publickey1",
 					"1": "publickey2",
 				},
-				NetworkConfig: Metadata{
-					Interfaces: Interfaces{
-						Public: []Interface{
-							{
-								IPv4: &Address{
-									IPAddress: "192.168.1.2",
-									Netmask:   "255.255.255.0",
-									Gateway:   "192.168.1.1",
-								},
-								IPv6: &Address{
-									IPAddress: "fe00::",
-									Cidr:      126,
-									Gateway:   "fe00::",
-								},
-								MAC:  "ab:cd:ef:gh:ij",
-								Type: "public",
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Addresses: []string{
+								"192.168.1.2/255.255.255.0",
+								"fe00::",
 							},
+							//Netmask:  "255.255.255.0",
+							Gateway: "192.168.1.1",
+
+							//Cidr:      126,
+							GatewayIpv6: "fe00::",
+							//MAC:         "ab:cd:ef:gh:ij",
+							//Type:        "public",
 						},
 					},
-					PublicKeys: []string{"publickey1", "publickey2"},
+					//PublicKeys: []string{"publickey1", "publickey2"},
 				},
 			},
 		},
@@ -127,10 +126,10 @@ func TestFetchMetadata(t *testing.T) {
 		}
 		metadata, err := service.FetchMetadata()
 		if Error(err) != Error(tt.expectErr) {
-			t.Fatalf("bad error (%q): want %q, got %q", tt.resources, tt.expectErr, err)
+			t.Fatalf("bad error (%q): \nwant %#v,\n got %#v", tt.resources, tt.expectErr, err)
 		}
 		if !reflect.DeepEqual(tt.expect, metadata) {
-			t.Fatalf("bad fetch (%q): want %#q, got %#q", tt.resources, tt.expect, metadata)
+			t.Fatalf("bad fetch (%q): \nwant %#v,\n got %#v", tt.resources, tt.expect, metadata)
 		}
 	}
 }

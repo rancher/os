@@ -24,6 +24,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/test"
 	"github.com/rancher/os/config/cloudinit/pkg"
+	"github.com/rancher/os/netconf"
 )
 
 func TestType(t *testing.T) {
@@ -174,6 +175,16 @@ func TestFetchMetadata(t *testing.T) {
 				PrivateIPv4:   net.ParseIP("1.2.3.4"),
 				PublicIPv4:    net.ParseIP("5.6.7.8"),
 				SSHPublicKeys: map[string]string{"test1": "key"},
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Addresses: []string{
+								"1.2.3.4",
+								"5.6.7.8",
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -192,6 +203,16 @@ func TestFetchMetadata(t *testing.T) {
 				PrivateIPv4:   net.ParseIP("1.2.3.4"),
 				PublicIPv4:    net.ParseIP("5.6.7.8"),
 				SSHPublicKeys: map[string]string{"test1": "key"},
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Addresses: []string{
+								"1.2.3.4",
+								"5.6.7.8",
+							},
+						},
+					},
+				},
 			},
 		},
 		{

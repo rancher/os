@@ -102,10 +102,11 @@ func (cd *ConfigDrive) FetchMetadata() (metadata datasource.Metadata, err error)
 
 	metadata.SSHPublicKeys = m.SSHAuthorizedKeyMap
 	metadata.Hostname = m.Hostname
-	if m.NetworkConfig.ContentPath != "" {
-		metadata.NetworkConfig, err = cd.tryReadFile(path.Join(cd.openstackRoot(), m.NetworkConfig.ContentPath))
-	}
-
+	// TODO: I don't think we've used this for anything
+	/*	if m.NetworkConfig.ContentPath != "" {
+			metadata.NetworkConfig, err = cd.tryReadFile(path.Join(cd.openstackRoot(), m.NetworkConfig.ContentPath))
+		}
+	*/
 	return
 }
 

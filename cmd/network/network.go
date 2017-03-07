@@ -28,6 +28,7 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 		search = cfg.Rancher.Defaults.Network.DNS.Search
 	}
 
+	// TODO: don't write to the file if nameservers is still empty
 	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
 		log.Error(err)
 	}

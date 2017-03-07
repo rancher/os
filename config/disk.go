@@ -317,6 +317,7 @@ func readConfigFile(file string) ([]byte, error) {
 }
 
 func substituteVars(userDataBytes []byte, metadata datasource.Metadata) []byte {
+	// TODO: I think this currently does nothing - its hardcoded for COREOS env..
 	env := initialize.NewEnvironment("", "", "", "", metadata)
 	userData := env.Apply(string(userDataBytes))
 

@@ -13,7 +13,6 @@ import (
 	"github.com/flynn/go-shlex"
 	"github.com/rancher/os/log"
 
-	"github.com/rancher/os/config"
 	"github.com/ryanuber/go-glob"
 	"github.com/vishvananda/netlink"
 )
@@ -27,7 +26,7 @@ var (
 	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
 )
 
-func createInterfaces(netCfg *config.NetworkConfig) {
+func createInterfaces(netCfg *NetworkConfig) {
 	configured := map[string]bool{}
 
 	for name, iface := range netCfg.Interfaces {
@@ -65,7 +64,7 @@ func createInterfaces(netCfg *config.NetworkConfig) {
 	}
 }
 
-func createSlaveInterfaces(netCfg *config.NetworkConfig) {
+func createSlaveInterfaces(netCfg *NetworkConfig) {
 	links, err := netlink.LinkList()
 	if err != nil {
 		log.Errorf("Failed to list links: %v", err)
@@ -92,9 +91,9 @@ func createSlaveInterfaces(netCfg *config.NetworkConfig) {
 	}
 }
 
-func findMatch(link netlink.Link, netCfg *config.NetworkConfig) (config.InterfaceConfig, bool) {
+func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool) {
 	linkName := link.Attrs().Name
-	var match config.InterfaceConfig
+	var match InterfaceConfig
 	exactMatch := false
 	found := false
 
@@ -136,25 +135,25 @@ func findMatch(link netlink.Link, netCfg *config.NetworkConfig) (config.Interfac
 	return match, exactMatch || found
 }
 
-func populateDefault(netCfg *config.NetworkConfig) {
+func populateDefault(netCfg *NetworkConfig) {
 	if netCfg.Interfaces == nil {
-		netCfg.Interfaces = map[string]config.InterfaceConfig{}
+		netCfg.Interfaces = map[string]InterfaceConfig{}
 	}
 
 	if len(netCfg.Interfaces) == 0 {
-		netCfg.Interfaces["eth*"] = config.InterfaceConfig{
+		netCfg.Interfaces["eth*"] = InterfaceConfig{
 			DHCP: true,
 		}
 	}
 
 	if _, ok := netCfg.Interfaces["lo"]; !ok {
-		netCfg.Interfaces["lo"] = config.InterfaceConfig{
+		netCfg.Interfaces["lo"] = InterfaceConfig{
 			Address: "127.0.0.1/8",
 		}
 	}
 }
 
-func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
+func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 	populateDefault(netCfg)
 
 	log.Debugf("Config: %#v", netCfg)
@@ -183,7 +182,7 @@ func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
 	return err
 }
 
-func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDNS bool) error {
+func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 	populateDefault(netCfg)
 
 	links, err := netlink.LinkList()
@@ -212,7 +211,7 @@ func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDNS bool) error {
 	return err
 }
 
-func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
+func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
 	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
@@ -243,7 +242,7 @@ func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostn
 	}
 }
 
-func linkUp(link netlink.Link, netConf config.InterfaceConfig) error {
+func linkUp(link netlink.Link, netConf InterfaceConfig) error {
 	if err := netlink.LinkSetUp(link); err != nil {
 		log.Errorf("failed to setup link: %v", err)
 		return err
@@ -252,7 +251,7 @@ func linkUp(link netlink.Link, netConf config.InterfaceConfig) error {
 	return nil
 }
 
-func applyAddress(address string, link netlink.Link, netConf config.InterfaceConfig) error {
+func applyAddress(address string, link netlink.Link, netConf InterfaceConfig) error {
 	addr, err := netlink.ParseAddr(address)
 	if err != nil {
 		return err
@@ -294,7 +293,7 @@ func setGateway(gateway string) error {
 	return nil
 }
 
-func applyInterfaceConfig(link netlink.Link, netConf config.InterfaceConfig) error {
+func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	if netConf.Bond != "" {
 		if err := netlink.LinkSetDown(link); err != nil {
 			return err

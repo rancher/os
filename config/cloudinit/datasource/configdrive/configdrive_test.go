@@ -48,8 +48,7 @@ func TestFetchMetadata(t *testing.T) {
 				test.File{Path: "/media/configdrive/openstack/config_file.json", Contents: "make it work"},
 			),
 			metadata: datasource.Metadata{
-				Hostname:      "host",
-				NetworkConfig: []byte("make it work"),
+				Hostname: "host",
 				SSHPublicKeys: map[string]string{
 					"1": "key1",
 					"2": "key2",

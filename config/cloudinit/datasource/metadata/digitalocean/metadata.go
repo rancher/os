@@ -16,8 +16,12 @@ package digitalocean
 
 import (
 	"encoding/json"
-	"net"
+	"fmt"
 	"strconv"
+
+	"github.com/rancher/os/netconf"
+
+	"net"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
@@ -99,12 +103,70 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 			metadata.PrivateIPv6 = net.ParseIP(m.Interfaces.Private[0].IPv6.IPAddress)
 		}
 	}
+
+	metadata.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
+
+	ethNumber := 0
+
+	for _, eth := range m.Interfaces.Public {
+		network := netconf.InterfaceConfig{}
+
+		if eth.IPv4 != nil {
+			network.Gateway = eth.IPv4.Gateway
+
+			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.IPv4.IPAddress, eth.IPv4.Netmask))
+			if metadata.PublicIPv4 == nil {
+				metadata.PublicIPv4 = net.ParseIP(eth.IPv4.IPAddress)
+			}
+		}
+		if eth.AnchorIPv4 != nil {
+			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.AnchorIPv4.IPAddress, eth.AnchorIPv4.Netmask))
+
+		}
+		if eth.IPv6 != nil {
+			network.Addresses = append(network.Addresses, eth.IPv6.IPAddress)
+			network.GatewayIpv6 = eth.IPv6.Gateway
+			if metadata.PublicIPv6 == nil {
+				metadata.PublicIPv6 = net.ParseIP(eth.IPv6.IPAddress)
+			}
+		}
+		metadata.NetworkConfig.Interfaces[fmt.Sprintf("eth%d", ethNumber)] = network
+		ethNumber = ethNumber + 1
+	}
+
+	for _, eth := range m.Interfaces.Private {
+		network := netconf.InterfaceConfig{}
+		if eth.IPv4 != nil {
+			network.Gateway = eth.IPv4.Gateway
+
+			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.IPv4.IPAddress, eth.IPv4.Netmask))
+			if metadata.PrivateIPv4 == nil {
+				metadata.PrivateIPv4 = net.ParseIP(eth.IPv6.IPAddress)
+			}
+		}
+		if eth.AnchorIPv4 != nil {
+			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.AnchorIPv4.IPAddress, eth.AnchorIPv4.Netmask))
+
+		}
+		if eth.IPv6 != nil {
+			network.Address = eth.IPv6.IPAddress
+			network.GatewayIpv6 = eth.IPv6.Gateway
+			if metadata.PrivateIPv6 == nil {
+				metadata.PrivateIPv6 = net.ParseIP(eth.IPv6.IPAddress)
+			}
+		}
+		metadata.NetworkConfig.Interfaces[fmt.Sprintf("eth%d", ethNumber)] = network
+		ethNumber = ethNumber + 1
+	}
+
+	metadata.NetworkConfig.DNS.Nameservers = m.DNS.Nameservers
+
 	metadata.Hostname = m.Hostname
 	metadata.SSHPublicKeys = map[string]string{}
 	for i, key := range m.PublicKeys {
 		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
-	metadata.NetworkConfig = m
+	//	metadata.NetworkConfig = m
 
 	return
 }

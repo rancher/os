@@ -21,6 +21,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/rancher/os/netconf"
+
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 )
@@ -70,6 +72,22 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		PrivateIPv4:   local,
 		Hostname:      hostname,
 		SSHPublicKeys: nil,
+	}
+
+	addresses := []string{}
+	if public != nil {
+		addresses = append(addresses, public.String())
+	}
+	if local != nil {
+		addresses = append(addresses, local.String())
+	}
+	if len(addresses) > 0 {
+		network := netconf.InterfaceConfig{
+			Addresses: addresses,
+		}
+
+		md.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
+		md.NetworkConfig.Interfaces["eth0"] = network
 	}
 
 	keyStrings := strings.Split(projectSSHKeys+"\n"+instanceSSHKeys, "\n")

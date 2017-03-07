@@ -16,6 +16,8 @@ package datasource
 
 import (
 	"net"
+
+	"github.com/rancher/os/netconf"
 )
 
 type Datasource interface {
@@ -31,11 +33,17 @@ type Datasource interface {
 }
 
 type Metadata struct {
-	PublicIPv4    net.IP
-	PublicIPv6    net.IP
-	PrivateIPv4   net.IP
-	PrivateIPv6   net.IP
+	// TODO: move to netconf/types.go ?
+	// see https://ahmetalpbalkan.com/blog/comparison-of-instance-metadata-services/
 	Hostname      string
 	SSHPublicKeys map[string]string
-	NetworkConfig interface{}
+	NetworkConfig netconf.NetworkConfig
+
+	// probably unused, but its in the initialize.env code
+	// TODO: work out if there's any reason to keep it.
+	// Lets see if anyone notices when its not set.
+	PublicIPv4  net.IP
+	PublicIPv6  net.IP
+	PrivateIPv4 net.IP
+	PrivateIPv6 net.IP
 }

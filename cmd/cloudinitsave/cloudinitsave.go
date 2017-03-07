@@ -16,8 +16,10 @@
 package cloudinitsave
 
 import (
+	"bytes"
 	"errors"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -110,8 +112,8 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
 			return err
 		}
-		// Don't put secrets into the log
-		//log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
+		// TODO: Don't put secrets into the log
+		log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
 	}
 
 	metaDataBytes, err := yaml.Marshal(metadata)
@@ -122,8 +124,34 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
 		return err
 	}
-	// Don't put secrets into the log
-	//log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
+	// TODO: Don't put secrets into the log
+	log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
+
+	// if we write the empty meta yml, the merge fails.
+	// TODO: the problem is that a partially filled one will still have merge issues, so that needs fixing - presumably by making merge more clever, and making more fields optional
+	emptyMeta, err := yaml.Marshal(datasource.Metadata{})
+	if err != nil {
+		return err
+	}
+	if bytes.Compare(metaDataBytes, emptyMeta) == 0 {
+		log.Infof("not writing %s: its all defaults.", rancherConfig.CloudConfigNetworkFile)
+		return nil
+	}
+	// write the network.yml file from metadata
+	cc := rancherConfig.CloudConfig{
+		Rancher: rancherConfig.RancherConfig{
+			Network: metadata.NetworkConfig,
+		},
+	}
+
+	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile), 0700); err != nil {
+		log.Errorf("Failed to create directory for file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
+	}
+
+	if err := rancherConfig.WriteToFile(cc, rancherConfig.CloudConfigNetworkFile); err != nil {
+		log.Errorf("Failed to save config file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
+	}
+	log.Infof("Written to %s:", rancherConfig.CloudConfigNetworkFile)
 
 	return nil
 }
@@ -161,7 +189,7 @@ func fetchAndSave(ds datasource.Datasource) error {
 			userDataBytes = []byte{}
 		}
 	} else {
-		log.Errorf("Unrecognized user-data\n%s", userData)
+		log.Errorf("Unrecognized user-data\n(%s)", userData)
 		userDataBytes = []byte{}
 	}
 
@@ -233,8 +261,8 @@ func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.D
 }
 
 func enableDoLinkLocal() {
-	err := netconf.ApplyNetworkConfigs(&rancherConfig.NetworkConfig{
-		Interfaces: map[string]rancherConfig.InterfaceConfig{
+	err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
+		Interfaces: map[string]netconf.InterfaceConfig{
 			"eth0": {
 				IPV4LL: true,
 			},

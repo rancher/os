@@ -1,0 +1,29 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+if [ ! -e "./build/initrd/usr/share/ros/os-config.yml" ]; then
+	./.dapper release
+else
+	echo "using existing build of ros"
+#	./.dapper build-target
+fi
+
+source ./scripts/version
+
+echo "---------------------------------"
+echo "ln -s /usr/bin/ros /usr/bin/cloud-init-save"
+echo "ros config set rancher.cloud_init.datasources [packet:https://metadata.packet.net/]"
+#echo "ros config set rancher.cloud_init.datasources [packet:https://192.80.8.124/]"
+echo "cloud-init-save"
+echo "---------------------------------"
+
+docker run --rm -it \
+	-v $(pwd)/build/initrd/usr/share:/usr/share \
+	-v $(pwd)/bin/ros:/usr/bin/ros \
+	-v /etc/ssl/certs:/etc/ssl/certs \
+	-v /usr/share/ca-certificates:/usr/share/ca-certificates \
+	-w  /var/lib/rancher \
+	--entrypoint sh \
+		rancher/os-base:v0.8.1

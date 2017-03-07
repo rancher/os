@@ -22,6 +22,8 @@ import (
 	"net"
 	"strings"
 
+	"github.com/rancher/os/netconf"
+
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/pkg"
@@ -47,6 +49,7 @@ func NewDatasource(root string) *MetadataService {
 
 func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	metadata := datasource.Metadata{}
+	metadata.NetworkConfig = netconf.NetworkConfig{}
 
 	if keynames, err := ms.fetchAttributes(fmt.Sprintf("%s/public-keys", ms.MetadataURL())); err == nil {
 		keyIDs := make(map[string]string)
@@ -77,17 +80,24 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		return metadata, err
 	}
 
+	network := netconf.InterfaceConfig{}
 	if localAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/local-ipv4", ms.MetadataURL())); err == nil {
 		metadata.PrivateIPv4 = net.ParseIP(localAddr)
+		network.Addresses = append(network.Addresses, localAddr)
+
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
 
 	if publicAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/public-ipv4", ms.MetadataURL())); err == nil {
 		metadata.PublicIPv4 = net.ParseIP(publicAddr)
+		network.Addresses = append(network.Addresses, publicAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
+
+	metadata.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
+	metadata.NetworkConfig.Interfaces["eth0"] = network
 
 	return metadata, nil
 }
