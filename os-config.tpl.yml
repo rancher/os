@@ -189,6 +189,8 @@ rancher:
       volumes_from:
       - command-volumes
       - system-volumes
+      volumes:
+      - /usr/bin/iptables:/sbin/iptables:ro
     ntp:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: ntpd --nofork -g
