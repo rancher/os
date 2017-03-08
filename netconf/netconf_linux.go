@@ -325,22 +325,22 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 			log.Errorf("IPV4LL set failed: %v", err)
 			return err
 		}
-	} else {
-		addresses := []string{}
+	}
 
-		if netConf.Address != "" {
-			addresses = append(addresses, netConf.Address)
-		}
+	addresses := []string{}
 
-		if len(netConf.Addresses) > 0 {
-			addresses = append(addresses, netConf.Addresses...)
-		}
+	if netConf.Address != "" {
+		addresses = append(addresses, netConf.Address)
+	}
 
-		for _, address := range addresses {
-			err := applyAddress(address, link, netConf)
-			if err != nil {
-				log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
-			}
+	if len(netConf.Addresses) > 0 {
+		addresses = append(addresses, netConf.Addresses...)
+	}
+
+	for _, address := range addresses {
+		err := applyAddress(address, link, netConf)
+		if err != nil {
+			log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
 		}
 	}
 
