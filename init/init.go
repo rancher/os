@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -219,8 +220,9 @@ func RunInit() error {
 
 	boot2DockerEnvironment := false
 	var shouldSwitchRoot bool
-	var cloudConfigBootFile []byte
-	var metadataFile []byte
+
+	configFiles := make(map[string][]byte)
+
 	initFuncs := []config.CfgFunc{
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dfs.PrepareFs(&mountConfig)
@@ -300,14 +302,18 @@ func RunInit() error {
 			return cfg, nil
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			var err error
-			cloudConfigBootFile, err = ioutil.ReadFile(config.CloudConfigBootFile)
-			if err != nil {
-				log.Error(err)
+			filesToCopy := []string{
+				config.CloudConfigBootFile,
+				config.CloudConfigNetworkFile,
+				config.MetaDataFile,
 			}
-			metadataFile, err = ioutil.ReadFile(config.MetaDataFile)
-			if err != nil {
-				log.Error(err)
+			for _, name := range filesToCopy {
+				content, err := ioutil.ReadFile(name)
+				if err != nil {
+					log.Error(err)
+					continue
+				}
+				configFiles[name] = content
 			}
 			return cfg, nil
 		},
@@ -323,14 +329,13 @@ func RunInit() error {
 		},
 		mountOem,
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			if err := os.MkdirAll(config.CloudConfigDir, os.ModeDir|0755); err != nil {
-				log.Error(err)
-			}
-			if err := util.WriteFileAtomic(config.CloudConfigBootFile, cloudConfigBootFile, 400); err != nil {
-				log.Error(err)
-			}
-			if err := util.WriteFileAtomic(config.MetaDataFile, metadataFile, 400); err != nil {
-				log.Error(err)
+			for name, content := range configFiles {
+				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0755); err != nil {
+					log.Error(err)
+				}
+				if err := util.WriteFileAtomic(name, content, 400); err != nil {
+					log.Error(err)
+				}
 			}
 			return cfg, nil
 		},
