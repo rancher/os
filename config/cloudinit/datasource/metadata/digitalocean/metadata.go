@@ -76,6 +76,22 @@ func NewDatasource(root string) *MetadataService {
 	return &MetadataService{Service: metadata.NewDatasource(root, apiVersion, userdataURL, metadataPath, nil)}
 }
 
+// Parse IPv4 netmask written in IP form (e.g. "255.255.255.0").
+func ipmask(addr *Address) string {
+	ip := net.ParseIP(addr.IPAddress)
+	var mask net.IPMask
+	if addr.Netmask != "" {
+		mask = net.IPMask(net.ParseIP(addr.Netmask))
+	} else {
+		mask = net.CIDRMask(addr.Cidr, 32)
+	}
+	ipnet := net.IPNet{
+		IP:   ip,
+		Mask: mask,
+	}
+	return ipnet.String()
+}
+
 func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err error) {
 	var data []byte
 	var m Metadata
@@ -114,17 +130,16 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 		if eth.IPv4 != nil {
 			network.Gateway = eth.IPv4.Gateway
 
-			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.IPv4.IPAddress, eth.IPv4.Netmask))
+			network.Addresses = append(network.Addresses, ipmask(eth.IPv4))
 			if metadata.PublicIPv4 == nil {
 				metadata.PublicIPv4 = net.ParseIP(eth.IPv4.IPAddress)
 			}
 		}
 		if eth.AnchorIPv4 != nil {
-			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.AnchorIPv4.IPAddress, eth.AnchorIPv4.Netmask))
-
+			network.Addresses = append(network.Addresses, ipmask(eth.AnchorIPv4))
 		}
 		if eth.IPv6 != nil {
-			network.Addresses = append(network.Addresses, eth.IPv6.IPAddress)
+			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%d", eth.IPv6.IPAddress, eth.IPv6.Cidr))
 			network.GatewayIpv6 = eth.IPv6.Gateway
 			if metadata.PublicIPv6 == nil {
 				metadata.PublicIPv6 = net.ParseIP(eth.IPv6.IPAddress)
@@ -139,17 +154,17 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 		if eth.IPv4 != nil {
 			network.Gateway = eth.IPv4.Gateway
 
-			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.IPv4.IPAddress, eth.IPv4.Netmask))
+			network.Addresses = append(network.Addresses, ipmask(eth.IPv4))
+
 			if metadata.PrivateIPv4 == nil {
 				metadata.PrivateIPv4 = net.ParseIP(eth.IPv6.IPAddress)
 			}
 		}
 		if eth.AnchorIPv4 != nil {
-			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%s", eth.AnchorIPv4.IPAddress, eth.AnchorIPv4.Netmask))
-
+			network.Addresses = append(network.Addresses, ipmask(eth.AnchorIPv4))
 		}
 		if eth.IPv6 != nil {
-			network.Address = eth.IPv6.IPAddress
+			network.Addresses = append(network.Addresses, fmt.Sprintf("%s/%d", eth.IPv6.IPAddress, eth.IPv6.Cidr))
 			network.GatewayIpv6 = eth.IPv6.Gateway
 			if metadata.PrivateIPv6 == nil {
 				metadata.PrivateIPv6 = net.ParseIP(eth.IPv6.IPAddress)
@@ -166,7 +181,6 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	for i, key := range m.PublicKeys {
 		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
-	//	metadata.NetworkConfig = m
 
 	return
 }

@@ -15,6 +15,7 @@
 package packet
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -128,6 +129,12 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	}
 
 	metadata.NetworkConfig = netCfg
+
+	// This is not really the right place - perhaps we should add a call-home function in each datasource to be called after the network is applied
+	//(see the original in cmd/cloudsave/packet)
+	if _, err = http.Post(m.PhoneHomeURL, "application/json", bytes.NewReader([]byte{})); err != nil {
+		log.Errorf("Failed to post to Packet phone home URL: %v", err)
+	}
 
 	return
 }

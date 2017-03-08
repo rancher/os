@@ -41,6 +41,7 @@ func parseNetwork(netdata netconf.NetworkConfig, nameservers []net.IP) ([]Interf
 	var interfaces []InterfaceGenerator
 	var addresses []net.IPNet
 	var routes []route
+	// TODO: commented out because we don't use it - should combine with the code we do use...
 	/*	for _, netblock := range netdata.Netblocks {
 			addresses = append(addresses, net.IPNet{
 				IP:   netblock.Address,

@@ -65,6 +65,11 @@ func Main() {
 	if err := SaveCloudConfig(true); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
+
+	// Apply any newly detected network config.
+	//consider putting this in a separate init phase...
+	cfg = rancherConfig.LoadConfig()
+	network.ApplyNetworkConfig(cfg)
 }
 
 func SaveCloudConfig(network bool) error {

@@ -96,8 +96,8 @@ func TestFetchMetadata(t *testing.T) {
 					Interfaces: map[string]netconf.InterfaceConfig{
 						"eth0": netconf.InterfaceConfig{
 							Addresses: []string{
-								"192.168.1.2/255.255.255.0",
-								"fe00::",
+								"192.168.1.2/24",
+								"fe00::/126",
 							},
 							//Netmask:  "255.255.255.0",
 							Gateway: "192.168.1.1",
