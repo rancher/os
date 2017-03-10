@@ -69,6 +69,17 @@ func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
 	return cfg
 }
 
+func SaveInitCmdline(cmdLineArgs string) {
+	log.Infof("INITINIT: %s", cmdLineArgs)
+
+	elidedCfg := parseCmdline(cmdLineArgs)
+	log.Infof("SaveInitCmdline: %#v", elidedCfg)
+
+	if err := WriteToFile(elidedCfg, CloudConfigInitFile); err != nil {
+		log.Errorf("Failed to write init-cmdline config: %s", err)
+	}
+}
+
 func CloudConfigDirFiles(dirPrefix string) []string {
 	cloudConfigDir := path.Join(dirPrefix, CloudConfigDir)
 
