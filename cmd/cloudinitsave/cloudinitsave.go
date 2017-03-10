@@ -62,7 +62,7 @@ func Main() {
 	cfg := rancherConfig.LoadConfig()
 	network.ApplyNetworkConfig(cfg)
 
-	if err := SaveCloudConfig(true); err != nil {
+	if err := SaveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
 
@@ -72,11 +72,11 @@ func Main() {
 	network.ApplyNetworkConfig(cfg)
 }
 
-func SaveCloudConfig(network bool) error {
+func SaveCloudConfig() error {
 	log.Debugf("SaveCloudConfig")
 	cfg := rancherConfig.LoadConfig()
 
-	dss := getDatasources(cfg, network)
+	dss := getDatasources(cfg)
 	if len(dss) == 0 {
 		log.Errorf("currentDatasource - none found")
 		return nil
@@ -88,6 +88,7 @@ func SaveCloudConfig(network bool) error {
 
 func RequiresNetwork(datasource string) bool {
 	// TODO: move into the datasources (and metadatasources)
+	// and then we can enable that platforms defaults..
 	parts := strings.SplitN(datasource, ":", 2)
 	requiresNetwork, ok := map[string]bool{
 		"ec2":          true,
@@ -208,7 +209,7 @@ func fetchAndSave(ds datasource.Datasource) error {
 
 // getDatasources creates a slice of possible Datasources for cloudinit based
 // on the different source command-line flags.
-func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.Datasource {
+func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 
 	for _, ds := range cfg.Rancher.CloudInit.Datasources {
@@ -221,43 +222,29 @@ func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.D
 
 		switch parts[0] {
 		case "ec2":
-			if network {
-				dss = append(dss, ec2.NewDatasource(root))
-			}
+			dss = append(dss, ec2.NewDatasource(root))
 		case "file":
 			if root != "" {
 				dss = append(dss, file.NewDatasource(root))
 			}
 		case "url":
-			if network {
-				if root != "" {
-					dss = append(dss, url.NewDatasource(root))
-				}
+			if root != "" {
+				dss = append(dss, url.NewDatasource(root))
 			}
 		case "cmdline":
-			if network {
-				if len(parts) == 1 {
-					dss = append(dss, proccmdline.NewDatasource())
-				}
+			if len(parts) == 1 {
+				dss = append(dss, proccmdline.NewDatasource())
 			}
 		case "configdrive":
 			if root != "" {
 				dss = append(dss, configdrive.NewDatasource(root))
 			}
 		case "digitalocean":
-			if network {
-				dss = append(dss, digitalocean.NewDatasource(root))
-			} else {
-				enableDoLinkLocal()
-			}
+			// TODO: should we enableDoLinkLocal() - to avoid the need for the other kernel/oem options?
+			dss = append(dss, digitalocean.NewDatasource(root))
 		case "gce":
-			if network {
-				dss = append(dss, gce.NewDatasource(root))
-			}
+			dss = append(dss, gce.NewDatasource(root))
 		case "packet":
-			if !network {
-				enablePacketNetwork(&cfg.Rancher)
-			}
 			dss = append(dss, packet.NewDatasource(root))
 		}
 	}
