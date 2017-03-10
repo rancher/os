@@ -10,18 +10,15 @@ import (
 
 	"github.com/j-keck/arping"
 	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netlink/nl"
 )
 
 func AssignLinkLocalIP(link netlink.Link) error {
 	ifaceName := link.Attrs().Name
-	iface, err := net.InterfaceByName(ifaceName)
+
+	addrs, err := getLinkAddrs(link)
 	if err != nil {
-		log.Error("could not get information about interface")
 		return err
-	}
-	addrs, err := iface.Addrs()
-	if err != nil {
-		log.Error("Error fetching existing ip on interface")
 	}
 	for _, addr := range addrs {
 		if addr.String()[:7] == "169.254" {
@@ -62,6 +59,24 @@ func AssignLinkLocalIP(link netlink.Link) error {
 	return fmt.Errorf("Could not find a suitable ipv4ll")
 }
 
+func RemoveLinkLocalIP(link netlink.Link) error {
+	addrs, err := getLinkAddrs(link)
+	if err != nil {
+		return err
+	}
+	for _, addr := range addrs {
+		if addr.String()[:7] == "169.254" {
+			if err := netlink.AddrDel(link, &addr); err != nil {
+				log.Error("ipv4ll addr del failed")
+				return err
+			}
+			log.Infof("Removed LinkLocal %s from %s", addr.String(), link.Attrs().Name)
+			return nil
+		}
+	}
+	return nil
+}
+
 func getNewIPV4LLAddr(randomNum uint32) net.IP {
 	byte1 := randomNum & 255 // use least significant 8 bits
 	byte2 := randomNum >> 24 // use most significant 8 bits
@@ -72,4 +87,13 @@ func getPseudoRandomGenerator(haAddr []byte) (*rand.Source, error) {
 	seed, _ := binary.Varint(haAddr)
 	src := rand.NewSource(seed)
 	return &src, nil
+}
+
+func getLinkAddrs(link netlink.Link) ([]netlink.Addr, error) {
+	addrs, err := netlink.AddrList(link, nl.FAMILY_ALL)
+	if err != nil {
+		log.Error("Error fetching existing ip on interface, %s", err)
+		err = nil // atm, we ignore this, as the link may not have one?
+	}
+	return addrs, err
 }

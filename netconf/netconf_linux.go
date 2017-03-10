@@ -10,10 +10,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/flynn/go-shlex"
+	shlex "github.com/flynn/go-shlex"
 	"github.com/rancher/os/log"
 
-	"github.com/ryanuber/go-glob"
+	glob "github.com/ryanuber/go-glob"
 	"github.com/vishvananda/netlink"
 )
 
@@ -267,6 +267,19 @@ func applyAddress(address string, link netlink.Link, netConf InterfaceConfig) er
 	return nil
 }
 
+func removeAddress(addr netlink.Addr, link netlink.Link) error {
+	if err := netlink.AddrDel(link, &addr); err == syscall.EEXIST {
+		//Ignore this error
+	} else if err != nil {
+		log.Errorf("addr del failed: %v", err)
+	} else {
+		log.Infof("Removed %s from %s", addr.String(), link.Attrs().Name)
+	}
+
+	return nil
+}
+
+// setGateway will set _one_ gateway on an interface (ie, replace an existing one)
 func setGateway(gateway string) error {
 	if gateway == "" {
 		return nil
@@ -282,7 +295,7 @@ func setGateway(gateway string) error {
 		Gw:    gatewayIP,
 	}
 
-	if err := netlink.RouteAdd(&route); err == syscall.EEXIST {
+	if err := netlink.RouteReplace(&route); err == syscall.EEXIST {
 		//Ignore this error
 	} else if err != nil {
 		log.Errorf("gateway set failed: %v", err)
@@ -294,6 +307,11 @@ func setGateway(gateway string) error {
 }
 
 func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
+	//TODO: skip doing anything if the settings are "default"?
+	//TODO: how do you undo a non-default with a default?
+	// ATM, this removes
+
+	// TODO: undo
 	if netConf.Bond != "" {
 		if err := netlink.LinkSetDown(link); err != nil {
 			return err
@@ -309,6 +327,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		return nil
 	}
 
+	//TODO: undo
 	if netConf.Bridge != "" && netConf.Bridge != "true" {
 		b, err := NewBridge(netConf.Bridge)
 		if err != nil {
@@ -325,6 +344,11 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 			log.Errorf("IPV4LL set failed: %v", err)
 			return err
 		}
+	} else {
+		if err := RemoveLinkLocalIP(link); err != nil {
+			log.Errorf("IPV4LL del failed: %v", err)
+			return err
+		}
 	}
 
 	addresses := []string{}
@@ -337,13 +361,24 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		addresses = append(addresses, netConf.Addresses...)
 	}
 
+	existingAddrs, _ := getLinkAddrs(link)
+	addrMap := make(map[string]bool)
 	for _, address := range addresses {
+		addrMap[address] = true
+		log.Infof("Applying %s to %s", address, link.Attrs().Name)
 		err := applyAddress(address, link, netConf)
 		if err != nil {
 			log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
 		}
 	}
+	for _, addr := range existingAddrs {
+		if _, ok := addrMap[addr.IPNet.String()]; !ok {
+			log.Infof("removing  %s from %s", addr.String(), link.Attrs().Name)
+			removeAddress(addr, link)
+		}
+	}
 
+	// TODO: can we set to default?
 	if netConf.MTU > 0 {
 		if err := netlink.LinkSetMTU(link, netConf.MTU); err != nil {
 			log.Errorf("set MTU Failed: %v", err)
@@ -357,6 +392,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		return err
 	}
 
+	// TODO: how to remove a GW?
 	if err := setGateway(netConf.Gateway); err != nil {
 		log.Errorf("Fail to set gateway %s", netConf.Gateway)
 	}
@@ -365,6 +401,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		log.Errorf("Fail to set gateway %s", netConf.GatewayIpv6)
 	}
 
+	// TODO: how to remove a GW?
 	runCmds(netConf.PostUp, link.Attrs().Name)
 
 	return nil

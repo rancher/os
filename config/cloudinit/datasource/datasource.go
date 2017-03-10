@@ -39,9 +39,6 @@ type Metadata struct {
 	SSHPublicKeys map[string]string
 	NetworkConfig netconf.NetworkConfig
 
-	// probably unused, but its in the initialize.env code
-	// TODO: work out if there's any reason to keep it.
-	// Lets see if anyone notices when its not set.
 	PublicIPv4  net.IP
 	PublicIPv6  net.IP
 	PrivateIPv4 net.IP
