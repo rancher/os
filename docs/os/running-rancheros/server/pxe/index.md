@@ -18,7 +18,19 @@ initrd ${base-url}/initrd
 boot
 ```
 
-### Datasources 
+### Hiding sensitive kernel commandline parameters
+
+From RancherOS v0.9.0, secrets can be put on the `kernel` parameters line afer a `--` double dash, and they will be not be shown in any `/proc/cmdline`. These parameters
+will be passed to the RancherOS init process and stored in the `root` accessible `/var/lib/rancher/conf/cloud-init.d/init.yml` file, and are available to the root user from the `ros config` commands.
+
+For example, the `kernel` line above could be written as:
+
+```
+kernel ${base-url}/vmlinuz rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda] -- rancher.cloud_init.datasources=[url:http://example.com/cloud-config]
+```
+
+
+### cloud-init Datasources
 
 Valid [datasources](https://github.com/rancher/os/blob/3338c4ac63597940bcde7e6005f1cc09287062a2/cmd/cloudinit/cloudinit.go#L378) for RancherOS.
 
