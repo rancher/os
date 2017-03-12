@@ -153,7 +153,7 @@ func TestFetchMetadata(t *testing.T) {
 	}{
 		{
 			root:         "/",
-			metadataPath: "2009-04-04/meta-data",
+			metadataPath: "2009-04-04/meta-data/",
 			resources: map[string]string{
 				"/2009-04-04/meta-data/public-keys": "bad\n",
 			},
@@ -161,7 +161,7 @@ func TestFetchMetadata(t *testing.T) {
 		},
 		{
 			root:         "/",
-			metadataPath: "2009-04-04/meta-data",
+			metadataPath: "2009-04-04/meta-data/",
 			resources: map[string]string{
 				"/2009-04-04/meta-data/hostname":                  "host",
 				"/2009-04-04/meta-data/local-ipv4":                "1.2.3.4",
@@ -189,7 +189,7 @@ func TestFetchMetadata(t *testing.T) {
 		},
 		{
 			root:         "/",
-			metadataPath: "2009-04-04/meta-data",
+			metadataPath: "2009-04-04/meta-data/",
 			resources: map[string]string{
 				"/2009-04-04/meta-data/hostname":                  "host domain another_domain",
 				"/2009-04-04/meta-data/local-ipv4":                "1.2.3.4",
@@ -227,10 +227,10 @@ func TestFetchMetadata(t *testing.T) {
 		}}
 		metadata, err := service.FetchMetadata()
 		if Error(err) != Error(tt.expectErr) {
-			t.Fatalf("bad error (%q): want %q, got %q", tt.resources, tt.expectErr, err)
+			t.Fatalf("bad error (%q): \nwant %q, \ngot %q\n", tt.resources, tt.expectErr, err)
 		}
 		if !reflect.DeepEqual(tt.expect, metadata) {
-			t.Fatalf("bad fetch (%q): want %#v, got %#v", tt.resources, tt.expect, metadata)
+			t.Fatalf("bad fetch (%q): \nwant %#v, \ngot %#v\n", tt.resources, tt.expect, metadata)
 		}
 	}
 }

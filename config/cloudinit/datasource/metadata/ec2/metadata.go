@@ -32,8 +32,8 @@ import (
 const (
 	DefaultAddress = "http://169.254.169.254/"
 	apiVersion     = "2009-04-04/"
-	userdataPath   = apiVersion + "user-data"
-	metadataPath   = apiVersion + "meta-data"
+	userdataPath   = apiVersion + "user-data/"
+	metadataPath   = apiVersion + "meta-data/"
 )
 
 type MetadataService struct {
@@ -51,7 +51,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	metadata := datasource.Metadata{}
 	metadata.NetworkConfig = netconf.NetworkConfig{}
 
-	if keynames, err := ms.fetchAttributes(fmt.Sprintf("%s/public-keys", ms.MetadataURL())); err == nil {
+	if keynames, err := ms.fetchAttributes("public-keys"); err == nil {
 		keyIDs := make(map[string]string)
 		for _, keyname := range keynames {
 			tokens := strings.SplitN(keyname, "=", 2)
@@ -63,7 +63,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 
 		metadata.SSHPublicKeys = map[string]string{}
 		for name, id := range keyIDs {
-			sshkey, err := ms.fetchAttribute(fmt.Sprintf("%s/public-keys/%s/openssh-key", ms.MetadataURL(), id))
+			sshkey, err := ms.fetchAttribute(fmt.Sprintf("public-keys/%s/openssh-key", id))
 			if err != nil {
 				return metadata, err
 			}
@@ -74,14 +74,14 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		return metadata, err
 	}
 
-	if hostname, err := ms.fetchAttribute(fmt.Sprintf("%s/hostname", ms.MetadataURL())); err == nil {
+	if hostname, err := ms.fetchAttribute("hostname"); err == nil {
 		metadata.Hostname = strings.Split(hostname, " ")[0]
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
 
 	network := netconf.InterfaceConfig{}
-	if localAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/local-ipv4", ms.MetadataURL())); err == nil {
+	if localAddr, err := ms.fetchAttribute("local-ipv4"); err == nil {
 		metadata.PrivateIPv4 = net.ParseIP(localAddr)
 		network.Addresses = append(network.Addresses, localAddr)
 
@@ -89,7 +89,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		return metadata, err
 	}
 
-	if publicAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/public-ipv4", ms.MetadataURL())); err == nil {
+	if publicAddr, err := ms.fetchAttribute("public-ipv4"); err == nil {
 		metadata.PublicIPv4 = net.ParseIP(publicAddr)
 		network.Addresses = append(network.Addresses, publicAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
@@ -106,7 +106,8 @@ func (ms MetadataService) Type() string {
 	return "ec2-metadata-service"
 }
 
-func (ms MetadataService) fetchAttributes(url string) ([]string, error) {
+func (ms MetadataService) fetchAttributes(key string) ([]string, error) {
+	url := ms.MetadataURL() + key
 	resp, err := ms.FetchData(url)
 	if err != nil {
 		return nil, err
@@ -119,8 +120,8 @@ func (ms MetadataService) fetchAttributes(url string) ([]string, error) {
 	return data, scanner.Err()
 }
 
-func (ms MetadataService) fetchAttribute(url string) (string, error) {
-	attrs, err := ms.fetchAttributes(url)
+func (ms MetadataService) fetchAttribute(key string) (string, error) {
+	attrs, err := ms.fetchAttributes(key)
 	if err == nil && len(attrs) > 0 {
 		return attrs[0], nil
 	}
