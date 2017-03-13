@@ -145,6 +145,7 @@ func installAction(c *cli.Context) error {
 
 	if err := runInstall(image, installType, cloudConfig, device, kappend, force, kexec, isoinstallerloaded); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
+		return err
 	}
 
 	if !kexec && reboot && (force || yes("Continue with reboot")) {
