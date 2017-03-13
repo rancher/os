@@ -39,6 +39,8 @@ var entrypoints = map[string]func(){
 	"cni-glue":           glue.Main,
 	"bridge":             bridge.Main,
 	"host-local":         hostlocal.Main,
+	// new CLI
+	"os": control.NewMain,
 }
 
 func main() {
