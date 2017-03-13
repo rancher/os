@@ -57,8 +57,12 @@ func (s *QemuSuite) TestNetworkCfg(c *C) {
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
     inet 10.1.0.41/24 scope global eth0
        valid_lft forever preferred_lft forever
+    inet6 XX::XX:XX:XX:XX/64 scope link 
+       valid_lft forever preferred_lft forever
 3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
     inet 10.31.168.85/24 scope global eth1
+       valid_lft forever preferred_lft forever
+    inet6 XX::XX:XX:XX:XX/64 scope link 
        valid_lft forever preferred_lft forever
 4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
     inet6 XX::XX:XX:XX:XX/64 scope link 
