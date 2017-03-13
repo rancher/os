@@ -306,6 +306,7 @@ func setGateway(gateway string, add bool) error {
 			log.Errorf("gateway add failed: %v", err)
 			return err
 		}
+		log.Infof("Added default gateway %s", gateway)
 	} else {
 		if err := netlink.RouteReplace(&route); err == syscall.EEXIST {
 			//Ignore this error
@@ -313,9 +314,9 @@ func setGateway(gateway string, add bool) error {
 			log.Errorf("gateway replace failed: %v", err)
 			return err
 		}
+		log.Infof("Replaced default gateway %s", gateway)
 	}
 
-	log.Infof("Set default gateway %s", gateway)
 	return nil
 }
 
@@ -406,7 +407,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	}
 
 	// replace the existing gw with the main ipv4 one
-	if err := setGateway(netConf.Gateway, false); err != nil {
+	if err := setGateway(netConf.Gateway, true); err != nil {
 		log.Errorf("Fail to set gateway %s", netConf.Gateway)
 	}
 	//and then add the ipv6 one if it exists
