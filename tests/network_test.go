@@ -52,6 +52,8 @@ func (s *QemuSuite) TestNetworkCfg(c *C) {
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
     inet 127.0.0.1/8 scope host lo
        valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host 
+       valid_lft forever preferred_lft forever
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
     inet 10.1.0.41/24 scope global eth0
        valid_lft forever preferred_lft forever
