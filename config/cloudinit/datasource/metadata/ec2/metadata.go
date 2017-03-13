@@ -47,6 +47,11 @@ func NewDatasource(root string) *MetadataService {
 	return &MetadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath, nil)}
 }
 
+func (ms MetadataService) AvailabilityChanges() bool {
+	// TODO: if it can't find the network, maybe we can start it?
+	return false
+}
+
 func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	// see http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 	metadata := datasource.Metadata{}

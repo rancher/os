@@ -282,8 +282,9 @@ func removeAddress(addr netlink.Addr, link netlink.Link) error {
 	return nil
 }
 
-// setGateway will set _one_ gateway on an interface (ie, replace an existing one)
-func setGateway(gateway string) error {
+// setGateway(add=false) will set _one_ gateway on an interface (ie, replace an existing one)
+// setGateway(add=true) will add another gateway to an interface
+func setGateway(gateway string, add bool) error {
 	if gateway == "" {
 		return nil
 	}
@@ -298,11 +299,20 @@ func setGateway(gateway string) error {
 		Gw:    gatewayIP,
 	}
 
-	if err := netlink.RouteReplace(&route); err == syscall.EEXIST {
-		//Ignore this error
-	} else if err != nil {
-		log.Errorf("gateway set failed: %v", err)
-		return err
+	if add {
+		if err := netlink.RouteAdd(&route); err == syscall.EEXIST {
+			//Ignore this error
+		} else if err != nil {
+			log.Errorf("gateway add failed: %v", err)
+			return err
+		}
+	} else {
+		if err := netlink.RouteReplace(&route); err == syscall.EEXIST {
+			//Ignore this error
+		} else if err != nil {
+			log.Errorf("gateway replace failed: %v", err)
+			return err
+		}
 	}
 
 	log.Infof("Set default gateway %s", gateway)
@@ -376,8 +386,8 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	}
 	for _, addr := range existingAddrs {
 		if _, ok := addrMap[addr.IPNet.String()]; !ok {
-			log.Infof("removing  %s from %s", addr.String(), link.Attrs().Name)
-			removeAddress(addr, link)
+			log.Infof("leaving  %s from %s", addr.String(), link.Attrs().Name)
+			//removeAddress(addr, link)
 		}
 	}
 
@@ -395,12 +405,12 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		return err
 	}
 
-	// TODO: how to remove a GW?
-	if err := setGateway(netConf.Gateway); err != nil {
+	// replace the existing gw with the main ipv4 one
+	if err := setGateway(netConf.Gateway, false); err != nil {
 		log.Errorf("Fail to set gateway %s", netConf.Gateway)
 	}
-
-	if err := setGateway(netConf.GatewayIpv6); err != nil {
+	//and then add the ipv6 one if it exists
+	if err := setGateway(netConf.GatewayIpv6, true); err != nil {
 		log.Errorf("Fail to set gateway %s", netConf.GatewayIpv6)
 	}
 
