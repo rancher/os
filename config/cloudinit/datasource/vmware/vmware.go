@@ -125,7 +125,7 @@ func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
 			}
 		}
 	}
-	metadata.NetworkConfig = netconf
+	//	metadata.NetworkConfig = netconf
 
 	return
 }

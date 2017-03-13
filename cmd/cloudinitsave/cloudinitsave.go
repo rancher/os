@@ -16,8 +16,10 @@
 package cloudinitsave
 
 import (
+	"bytes"
 	"errors"
 	"os"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -60,16 +62,21 @@ func Main() {
 	cfg := rancherConfig.LoadConfig()
 	network.ApplyNetworkConfig(cfg)
 
-	if err := SaveCloudConfig(true); err != nil {
+	if err := SaveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
+
+	// Apply any newly detected network config.
+	//consider putting this in a separate init phase...
+	cfg = rancherConfig.LoadConfig()
+	network.ApplyNetworkConfig(cfg)
 }
 
-func SaveCloudConfig(network bool) error {
+func SaveCloudConfig() error {
 	log.Debugf("SaveCloudConfig")
 	cfg := rancherConfig.LoadConfig()
 
-	dss := getDatasources(cfg, network)
+	dss := getDatasources(cfg)
 	if len(dss) == 0 {
 		log.Errorf("currentDatasource - none found")
 		return nil
@@ -81,6 +88,7 @@ func SaveCloudConfig(network bool) error {
 
 func RequiresNetwork(datasource string) bool {
 	// TODO: move into the datasources (and metadatasources)
+	// and then we can enable that platforms defaults..
 	parts := strings.SplitN(datasource, ":", 2)
 	requiresNetwork, ok := map[string]bool{
 		"ec2":          true,
@@ -110,8 +118,8 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
 			return err
 		}
-		// Don't put secrets into the log
-		//log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
+		// TODO: Don't put secrets into the log
+		log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
 	}
 
 	metaDataBytes, err := yaml.Marshal(metadata)
@@ -122,8 +130,34 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
 		return err
 	}
-	// Don't put secrets into the log
-	//log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
+	// TODO: Don't put secrets into the log
+	log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
+
+	// if we write the empty meta yml, the merge fails.
+	// TODO: the problem is that a partially filled one will still have merge issues, so that needs fixing - presumably by making merge more clever, and making more fields optional
+	emptyMeta, err := yaml.Marshal(datasource.Metadata{})
+	if err != nil {
+		return err
+	}
+	if bytes.Compare(metaDataBytes, emptyMeta) == 0 {
+		log.Infof("not writing %s: its all defaults.", rancherConfig.CloudConfigNetworkFile)
+		return nil
+	}
+	// write the network.yml file from metadata
+	cc := rancherConfig.CloudConfig{
+		Rancher: rancherConfig.RancherConfig{
+			Network: metadata.NetworkConfig,
+		},
+	}
+
+	if err := os.MkdirAll(path.Dir(rancherConfig.CloudConfigNetworkFile), 0700); err != nil {
+		log.Errorf("Failed to create directory for file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
+	}
+
+	if err := rancherConfig.WriteToFile(cc, rancherConfig.CloudConfigNetworkFile); err != nil {
+		log.Errorf("Failed to save config file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
+	}
+	log.Infof("Written to %s:", rancherConfig.CloudConfigNetworkFile)
 
 	return nil
 }
@@ -161,7 +195,7 @@ func fetchAndSave(ds datasource.Datasource) error {
 			userDataBytes = []byte{}
 		}
 	} else {
-		log.Errorf("Unrecognized user-data\n%s", userData)
+		log.Errorf("Unrecognized user-data\n(%s)", userData)
 		userDataBytes = []byte{}
 	}
 
@@ -175,60 +209,43 @@ func fetchAndSave(ds datasource.Datasource) error {
 
 // getDatasources creates a slice of possible Datasources for cloudinit based
 // on the different source command-line flags.
-func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.Datasource {
+func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 
 	for _, ds := range cfg.Rancher.CloudInit.Datasources {
 		parts := strings.SplitN(ds, ":", 2)
 
+		root := ""
+		if len(parts) > 1 {
+			root = parts[1]
+		}
+
 		switch parts[0] {
 		case "ec2":
-			if network {
-				if len(parts) == 1 {
-					dss = append(dss, ec2.NewDatasource(ec2.DefaultAddress))
-				} else {
-					dss = append(dss, ec2.NewDatasource(parts[1]))
-				}
-			}
+			dss = append(dss, ec2.NewDatasource(root))
 		case "file":
-			if len(parts) == 2 {
-				dss = append(dss, file.NewDatasource(parts[1]))
+			if root != "" {
+				dss = append(dss, file.NewDatasource(root))
 			}
 		case "url":
-			if network {
-				if len(parts) == 2 {
-					dss = append(dss, url.NewDatasource(parts[1]))
-				}
+			if root != "" {
+				dss = append(dss, url.NewDatasource(root))
 			}
 		case "cmdline":
-			if network {
-				if len(parts) == 1 {
-					dss = append(dss, proccmdline.NewDatasource())
-				}
+			if len(parts) == 1 {
+				dss = append(dss, proccmdline.NewDatasource())
 			}
 		case "configdrive":
-			if len(parts) == 2 {
-				dss = append(dss, configdrive.NewDatasource(parts[1]))
+			if root != "" {
+				dss = append(dss, configdrive.NewDatasource(root))
 			}
 		case "digitalocean":
-			if network {
-				if len(parts) == 1 {
-					dss = append(dss, digitalocean.NewDatasource(digitalocean.DefaultAddress))
-				} else {
-					dss = append(dss, digitalocean.NewDatasource(parts[1]))
-				}
-			} else {
-				enableDoLinkLocal()
-			}
+			// TODO: should we enableDoLinkLocal() - to avoid the need for the other kernel/oem options?
+			dss = append(dss, digitalocean.NewDatasource(root))
 		case "gce":
-			if network {
-				dss = append(dss, gce.NewDatasource("http://metadata.google.internal/"))
-			}
+			dss = append(dss, gce.NewDatasource(root))
 		case "packet":
-			if !network {
-				enablePacketNetwork(&cfg.Rancher)
-			}
-			dss = append(dss, packet.NewDatasource("https://metadata.packet.net/"))
+			dss = append(dss, packet.NewDatasource(root))
 		}
 	}
 
@@ -236,8 +253,8 @@ func getDatasources(cfg *rancherConfig.CloudConfig, network bool) []datasource.D
 }
 
 func enableDoLinkLocal() {
-	err := netconf.ApplyNetworkConfigs(&rancherConfig.NetworkConfig{
-		Interfaces: map[string]rancherConfig.InterfaceConfig{
+	err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
+		Interfaces: map[string]netconf.InterfaceConfig{
 			"eth0": {
 				IPV4LL: true,
 			},

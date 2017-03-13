@@ -17,14 +17,15 @@ package network
 import (
 	"net"
 
-	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
+	"github.com/rancher/os/netconf"
 )
 
-func ProcessPacketNetconf(netdata packet.NetworkData) ([]InterfaceGenerator, error) {
+func ProcessPacketNetconf(netdata netconf.NetworkConfig) ([]InterfaceGenerator, error) {
 	var nameservers []net.IP
-	if netdata.DNS != nil {
-		nameservers = netdata.DNS
-	} else {
+	for _, v := range netdata.DNS.Nameservers {
+		nameservers = append(nameservers, net.ParseIP(v))
+	}
+	if len(nameservers) == 0 {
 		nameservers = append(nameservers, net.ParseIP("8.8.8.8"), net.ParseIP("8.8.4.4"))
 	}
 
@@ -36,43 +37,45 @@ func ProcessPacketNetconf(netdata packet.NetworkData) ([]InterfaceGenerator, err
 	return generators, nil
 }
 
-func parseNetwork(netdata packet.NetworkData, nameservers []net.IP) ([]InterfaceGenerator, error) {
+func parseNetwork(netdata netconf.NetworkConfig, nameservers []net.IP) ([]InterfaceGenerator, error) {
 	var interfaces []InterfaceGenerator
 	var addresses []net.IPNet
 	var routes []route
-	for _, netblock := range netdata.Netblocks {
-		addresses = append(addresses, net.IPNet{
-			IP:   netblock.Address,
-			Mask: net.IPMask(netblock.Netmask),
-		})
-		if netblock.Public == false {
-			routes = append(routes, route{
-				destination: net.IPNet{
-					IP:   net.IPv4(10, 0, 0, 0),
-					Mask: net.IPv4Mask(255, 0, 0, 0),
-				},
-				gateway: netblock.Gateway,
+	// TODO: commented out because we don't use it - should combine with the code we do use...
+	/*	for _, netblock := range netdata.Netblocks {
+			addresses = append(addresses, net.IPNet{
+				IP:   netblock.Address,
+				Mask: net.IPMask(netblock.Netmask),
 			})
-		} else {
-			if netblock.AddressFamily == 4 {
+			if netblock.Public == false {
 				routes = append(routes, route{
 					destination: net.IPNet{
-						IP:   net.IPv4zero,
-						Mask: net.IPMask(net.IPv4zero),
+						IP:   net.IPv4(10, 0, 0, 0),
+						Mask: net.IPv4Mask(255, 0, 0, 0),
 					},
 					gateway: netblock.Gateway,
 				})
 			} else {
-				routes = append(routes, route{
-					destination: net.IPNet{
-						IP:   net.IPv6zero,
-						Mask: net.IPMask(net.IPv6zero),
-					},
-					gateway: netblock.Gateway,
-				})
+				if netblock.AddressFamily == 4 {
+					routes = append(routes, route{
+						destination: net.IPNet{
+							IP:   net.IPv4zero,
+							Mask: net.IPMask(net.IPv4zero),
+						},
+						gateway: netblock.Gateway,
+					})
+				} else {
+					routes = append(routes, route{
+						destination: net.IPNet{
+							IP:   net.IPv6zero,
+							Mask: net.IPMask(net.IPv6zero),
+						},
+						gateway: netblock.Gateway,
+					})
+				}
 			}
 		}
-	}
+	*/
 
 	bond := bondInterface{
 		logicalInterface: logicalInterface{
@@ -92,14 +95,15 @@ func parseNetwork(netdata packet.NetworkData, nameservers []net.IP) ([]Interface
 		},
 	}
 
-	bond.hwaddr, _ = net.ParseMAC(netdata.Interfaces[0].Mac)
+	//bond.hwaddr, _ = net.ParseMAC(netdata.Interfaces[0].Mac)
 
-	for index, iface := range netdata.Interfaces {
-		bond.slaves = append(bond.slaves, iface.Name)
+	index := 0
+	for name := range netdata.Interfaces {
+		bond.slaves = append(bond.slaves, name)
 
 		interfaces = append(interfaces, &physicalInterface{
 			logicalInterface: logicalInterface{
-				name: iface.Name,
+				name: name,
 				config: configMethodStatic{
 					nameservers: nameservers,
 				},
@@ -107,6 +111,7 @@ func parseNetwork(netdata packet.NetworkData, nameservers []net.IP) ([]Interface
 				configDepth: index,
 			},
 		})
+		index = index + 1
 	}
 
 	interfaces = append(interfaces, &bond)

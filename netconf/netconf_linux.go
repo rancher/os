@@ -10,11 +10,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/flynn/go-shlex"
+	shlex "github.com/flynn/go-shlex"
 	"github.com/rancher/os/log"
 
-	"github.com/rancher/os/config"
-	"github.com/ryanuber/go-glob"
+	glob "github.com/ryanuber/go-glob"
 	"github.com/vishvananda/netlink"
 )
 
@@ -27,7 +26,7 @@ var (
 	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
 )
 
-func createInterfaces(netCfg *config.NetworkConfig) {
+func createInterfaces(netCfg *NetworkConfig) {
 	configured := map[string]bool{}
 
 	for name, iface := range netCfg.Interfaces {
@@ -65,7 +64,7 @@ func createInterfaces(netCfg *config.NetworkConfig) {
 	}
 }
 
-func createSlaveInterfaces(netCfg *config.NetworkConfig) {
+func createSlaveInterfaces(netCfg *NetworkConfig) {
 	links, err := netlink.LinkList()
 	if err != nil {
 		log.Errorf("Failed to list links: %v", err)
@@ -92,9 +91,9 @@ func createSlaveInterfaces(netCfg *config.NetworkConfig) {
 	}
 }
 
-func findMatch(link netlink.Link, netCfg *config.NetworkConfig) (config.InterfaceConfig, bool) {
+func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool) {
 	linkName := link.Attrs().Name
-	var match config.InterfaceConfig
+	var match InterfaceConfig
 	exactMatch := false
 	found := false
 
@@ -136,25 +135,28 @@ func findMatch(link netlink.Link, netCfg *config.NetworkConfig) (config.Interfac
 	return match, exactMatch || found
 }
 
-func populateDefault(netCfg *config.NetworkConfig) {
+func populateDefault(netCfg *NetworkConfig) {
 	if netCfg.Interfaces == nil {
-		netCfg.Interfaces = map[string]config.InterfaceConfig{}
+		netCfg.Interfaces = map[string]InterfaceConfig{}
 	}
 
 	if len(netCfg.Interfaces) == 0 {
-		netCfg.Interfaces["eth*"] = config.InterfaceConfig{
+		netCfg.Interfaces["eth*"] = InterfaceConfig{
 			DHCP: true,
 		}
 	}
 
 	if _, ok := netCfg.Interfaces["lo"]; !ok {
-		netCfg.Interfaces["lo"] = config.InterfaceConfig{
-			Address: "127.0.0.1/8",
+		netCfg.Interfaces["lo"] = InterfaceConfig{
+			Addresses: []string{
+				"127.0.0.1/8",
+				"::1/128",
+			},
 		}
 	}
 }
 
-func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
+func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 	populateDefault(netCfg)
 
 	log.Debugf("Config: %#v", netCfg)
@@ -183,7 +185,7 @@ func ApplyNetworkConfigs(netCfg *config.NetworkConfig) error {
 	return err
 }
 
-func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDNS bool) error {
+func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 	populateDefault(netCfg)
 
 	links, err := netlink.LinkList()
@@ -212,7 +214,7 @@ func RunDhcp(netCfg *config.NetworkConfig, setHostname, setDNS bool) error {
 	return err
 }
 
-func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
+func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
 	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
@@ -243,7 +245,7 @@ func runDhcp(netCfg *config.NetworkConfig, iface string, argstr string, setHostn
 	}
 }
 
-func linkUp(link netlink.Link, netConf config.InterfaceConfig) error {
+func linkUp(link netlink.Link, netConf InterfaceConfig) error {
 	if err := netlink.LinkSetUp(link); err != nil {
 		log.Errorf("failed to setup link: %v", err)
 		return err
@@ -252,7 +254,7 @@ func linkUp(link netlink.Link, netConf config.InterfaceConfig) error {
 	return nil
 }
 
-func applyAddress(address string, link netlink.Link, netConf config.InterfaceConfig) error {
+func applyAddress(address string, link netlink.Link, netConf InterfaceConfig) error {
 	addr, err := netlink.ParseAddr(address)
 	if err != nil {
 		return err
@@ -268,7 +270,21 @@ func applyAddress(address string, link netlink.Link, netConf config.InterfaceCon
 	return nil
 }
 
-func setGateway(gateway string) error {
+func removeAddress(addr netlink.Addr, link netlink.Link) error {
+	if err := netlink.AddrDel(link, &addr); err == syscall.EEXIST {
+		//Ignore this error
+	} else if err != nil {
+		log.Errorf("addr del failed: %v", err)
+	} else {
+		log.Infof("Removed %s from %s", addr.String(), link.Attrs().Name)
+	}
+
+	return nil
+}
+
+// setGateway(add=false) will set _one_ gateway on an interface (ie, replace an existing one)
+// setGateway(add=true) will add another gateway to an interface
+func setGateway(gateway string, add bool) error {
 	if gateway == "" {
 		return nil
 	}
@@ -283,18 +299,33 @@ func setGateway(gateway string) error {
 		Gw:    gatewayIP,
 	}
 
-	if err := netlink.RouteAdd(&route); err == syscall.EEXIST {
-		//Ignore this error
-	} else if err != nil {
-		log.Errorf("gateway set failed: %v", err)
-		return err
+	if add {
+		if err := netlink.RouteAdd(&route); err == syscall.EEXIST {
+			//Ignore this error
+		} else if err != nil {
+			log.Errorf("gateway add failed: %v", err)
+			return err
+		}
+		log.Infof("Added default gateway %s", gateway)
+	} else {
+		if err := netlink.RouteReplace(&route); err == syscall.EEXIST {
+			//Ignore this error
+		} else if err != nil {
+			log.Errorf("gateway replace failed: %v", err)
+			return err
+		}
+		log.Infof("Replaced default gateway %s", gateway)
 	}
 
-	log.Infof("Set default gateway %s", gateway)
 	return nil
 }
 
-func applyInterfaceConfig(link netlink.Link, netConf config.InterfaceConfig) error {
+func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
+	//TODO: skip doing anything if the settings are "default"?
+	//TODO: how do you undo a non-default with a default?
+	// ATM, this removes
+
+	// TODO: undo
 	if netConf.Bond != "" {
 		if err := netlink.LinkSetDown(link); err != nil {
 			return err
@@ -310,6 +341,7 @@ func applyInterfaceConfig(link netlink.Link, netConf config.InterfaceConfig) err
 		return nil
 	}
 
+	//TODO: undo
 	if netConf.Bridge != "" && netConf.Bridge != "true" {
 		b, err := NewBridge(netConf.Bridge)
 		if err != nil {
@@ -327,24 +359,40 @@ func applyInterfaceConfig(link netlink.Link, netConf config.InterfaceConfig) err
 			return err
 		}
 	} else {
-		addresses := []string{}
-
-		if netConf.Address != "" {
-			addresses = append(addresses, netConf.Address)
-		}
-
-		if len(netConf.Addresses) > 0 {
-			addresses = append(addresses, netConf.Addresses...)
-		}
-
-		for _, address := range addresses {
-			err := applyAddress(address, link, netConf)
-			if err != nil {
-				log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
-			}
+		if err := RemoveLinkLocalIP(link); err != nil {
+			log.Errorf("IPV4LL del failed: %v", err)
+			return err
 		}
 	}
 
+	addresses := []string{}
+
+	if netConf.Address != "" {
+		addresses = append(addresses, netConf.Address)
+	}
+
+	if len(netConf.Addresses) > 0 {
+		addresses = append(addresses, netConf.Addresses...)
+	}
+
+	existingAddrs, _ := getLinkAddrs(link)
+	addrMap := make(map[string]bool)
+	for _, address := range addresses {
+		addrMap[address] = true
+		log.Infof("Applying %s to %s", address, link.Attrs().Name)
+		err := applyAddress(address, link, netConf)
+		if err != nil {
+			log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
+		}
+	}
+	for _, addr := range existingAddrs {
+		if _, ok := addrMap[addr.IPNet.String()]; !ok {
+			log.Infof("leaving  %s from %s", addr.String(), link.Attrs().Name)
+			//removeAddress(addr, link)
+		}
+	}
+
+	// TODO: can we set to default?
 	if netConf.MTU > 0 {
 		if err := netlink.LinkSetMTU(link, netConf.MTU); err != nil {
 			log.Errorf("set MTU Failed: %v", err)
@@ -358,14 +406,16 @@ func applyInterfaceConfig(link netlink.Link, netConf config.InterfaceConfig) err
 		return err
 	}
 
-	if err := setGateway(netConf.Gateway); err != nil {
+	// replace the existing gw with the main ipv4 one
+	if err := setGateway(netConf.Gateway, true); err != nil {
 		log.Errorf("Fail to set gateway %s", netConf.Gateway)
 	}
-
-	if err := setGateway(netConf.GatewayIpv6); err != nil {
+	//and then add the ipv6 one if it exists
+	if err := setGateway(netConf.GatewayIpv6, true); err != nil {
 		log.Errorf("Fail to set gateway %s", netConf.GatewayIpv6)
 	}
 
+	// TODO: how to remove a GW? (on aws it seems to be hard to find out what the gw is :/)
 	runCmds(netConf.PostUp, link.Attrs().Name)
 
 	return nil

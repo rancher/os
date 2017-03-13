@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/rancher/os/config/cloudinit/pkg"
+	"github.com/rancher/os/log"
 )
 
 type Service struct {
@@ -40,6 +41,9 @@ func NewDatasource(root, apiVersion, userdataPath, metadataPath string, header h
 
 func (ms Service) IsAvailable() bool {
 	_, ms.lastError = ms.Client.Get(ms.Root + ms.APIVersion)
+	if ms.lastError != nil {
+		log.Errorf("%s: %s (lastError: %s)", "IsAvailable", ms.Root+":"+ms.UserdataPath, ms.lastError)
+	}
 	return (ms.lastError == nil)
 }
 
@@ -48,7 +52,7 @@ func (ms *Service) Finish() error {
 }
 
 func (ms *Service) String() string {
-	return fmt.Sprintf("%s: %s (lastError: %s)", "metadata", ms.Root+":"+ms.UserdataPath, ms.lastError)
+	return fmt.Sprintf("%s: %s (lastError: %s)", "metadata", ms.Root+ms.UserdataPath, ms.lastError)
 }
 
 func (ms Service) AvailabilityChanges() bool {

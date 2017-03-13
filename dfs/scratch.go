@@ -12,7 +12,6 @@ import (
 	"syscall"
 
 	"github.com/docker/libnetwork/resolvconf"
-	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 	"github.com/rancher/os/selinux"
@@ -46,7 +45,7 @@ type Config struct {
 	Fork            bool
 	PidOne          bool
 	CommandName     string
-	DNSConfig       config.DNSConfig
+	DNSConfig       netconf.DNSConfig
 	BridgeName      string
 	BridgeAddress   string
 	BridgeMtu       int
@@ -359,8 +358,8 @@ ff02::2    ip6-allrouters
 
 	if cfg.BridgeName != "" && cfg.BridgeName != "none" {
 		log.Debugf("Creating bridge %s (%s)", cfg.BridgeName, cfg.BridgeAddress)
-		if err := netconf.ApplyNetworkConfigs(&config.NetworkConfig{
-			Interfaces: map[string]config.InterfaceConfig{
+		if err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
+			Interfaces: map[string]netconf.InterfaceConfig{
 				cfg.BridgeName: {
 					Address: cfg.BridgeAddress,
 					MTU:     cfg.BridgeMtu,

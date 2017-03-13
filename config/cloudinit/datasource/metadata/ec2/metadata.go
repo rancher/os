@@ -22,6 +22,8 @@ import (
 	"net"
 	"strings"
 
+	"github.com/rancher/os/netconf"
+
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/pkg"
@@ -29,9 +31,9 @@ import (
 
 const (
 	DefaultAddress = "http://169.254.169.254/"
-	apiVersion     = "2009-04-04/"
-	userdataPath   = apiVersion + "user-data"
-	metadataPath   = apiVersion + "meta-data"
+	apiVersion     = "latest/"
+	userdataPath   = apiVersion + "user-data/"
+	metadataPath   = apiVersion + "meta-data/"
 )
 
 type MetadataService struct {
@@ -39,13 +41,23 @@ type MetadataService struct {
 }
 
 func NewDatasource(root string) *MetadataService {
+	if root == "" {
+		root = DefaultAddress
+	}
 	return &MetadataService{metadata.NewDatasource(root, apiVersion, userdataPath, metadataPath, nil)}
 }
 
-func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
-	metadata := datasource.Metadata{}
+func (ms MetadataService) AvailabilityChanges() bool {
+	// TODO: if it can't find the network, maybe we can start it?
+	return false
+}
 
-	if keynames, err := ms.fetchAttributes(fmt.Sprintf("%s/public-keys", ms.MetadataURL())); err == nil {
+func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
+	// see http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
+	metadata := datasource.Metadata{}
+	metadata.NetworkConfig = netconf.NetworkConfig{}
+
+	if keynames, err := ms.fetchAttributes("public-keys"); err == nil {
 		keyIDs := make(map[string]string)
 		for _, keyname := range keynames {
 			tokens := strings.SplitN(keyname, "=", 2)
@@ -57,7 +69,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 
 		metadata.SSHPublicKeys = map[string]string{}
 		for name, id := range keyIDs {
-			sshkey, err := ms.fetchAttribute(fmt.Sprintf("%s/public-keys/%s/openssh-key", ms.MetadataURL(), id))
+			sshkey, err := ms.fetchAttribute(fmt.Sprintf("public-keys/%s/openssh-key", id))
 			if err != nil {
 				return metadata, err
 			}
@@ -68,22 +80,63 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		return metadata, err
 	}
 
-	if hostname, err := ms.fetchAttribute(fmt.Sprintf("%s/hostname", ms.MetadataURL())); err == nil {
+	if hostname, err := ms.fetchAttribute("hostname"); err == nil {
 		metadata.Hostname = strings.Split(hostname, " ")[0]
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
 
-	if localAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/local-ipv4", ms.MetadataURL())); err == nil {
+	// TODO: these are only on the first interface - it looks like you can have as many as you need...
+	if localAddr, err := ms.fetchAttribute("local-ipv4"); err == nil {
 		metadata.PrivateIPv4 = net.ParseIP(localAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
-
-	if publicAddr, err := ms.fetchAttribute(fmt.Sprintf("%s/public-ipv4", ms.MetadataURL())); err == nil {
+	if publicAddr, err := ms.fetchAttribute("public-ipv4"); err == nil {
 		metadata.PublicIPv4 = net.ParseIP(publicAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
+	}
+
+	metadata.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
+	if macs, err := ms.fetchAttributes("network/interfaces/macs"); err != nil {
+		for _, mac := range macs {
+			if deviceNumber, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/device-number", mac)); err != nil {
+				network := netconf.InterfaceConfig{
+					DHCP: true,
+				}
+				/* Looks like we must use DHCP for aws
+				// private ipv4
+				if subnetCidrBlock, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv4-cidr-block", mac)); err != nil {
+					cidr := strings.Split(subnetCidrBlock, "/")
+					if localAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", mac)); err != nil {
+						for _, addr := range localAddr {
+							network.Addresses = append(network.Addresses, addr+"/"+cidr[1])
+						}
+					}
+				}
+				// ipv6
+				if localAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", mac)); err != nil {
+					if subnetCidrBlock, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv6-cidr-block", mac)); err != nil {
+						for i, addr := range localAddr {
+							cidr := strings.Split(subnetCidrBlock[i], "/")
+							network.Addresses = append(network.Addresses, addr+"/"+cidr[1])
+						}
+					}
+				}
+				*/
+				// disabled - it looks to me like you don't actually put the public IP on the eth device
+				/*				if publicAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/public-ipv4s", mac)); err != nil {
+									if vpcCidrBlock, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/vpc-ipv4-cidr-block", mac)); err != nil {
+										cidr := strings.Split(vpcCidrBlock, "/")
+										network.Addresses = append(network.Addresses, publicAddr+"/"+cidr[1])
+									}
+								}
+				*/
+
+				metadata.NetworkConfig.Interfaces["eth"+deviceNumber] = network
+			}
+		}
 	}
 
 	return metadata, nil
@@ -93,7 +146,8 @@ func (ms MetadataService) Type() string {
 	return "ec2-metadata-service"
 }
 
-func (ms MetadataService) fetchAttributes(url string) ([]string, error) {
+func (ms MetadataService) fetchAttributes(key string) ([]string, error) {
+	url := ms.MetadataURL() + key
 	resp, err := ms.FetchData(url)
 	if err != nil {
 		return nil, err
@@ -106,8 +160,8 @@ func (ms MetadataService) fetchAttributes(url string) ([]string, error) {
 	return data, scanner.Err()
 }
 
-func (ms MetadataService) fetchAttribute(url string) (string, error) {
-	attrs, err := ms.fetchAttributes(url)
+func (ms MetadataService) fetchAttribute(key string) (string, error) {
+	attrs, err := ms.fetchAttributes(key)
 	if err == nil && len(attrs) > 0 {
 		return attrs[0], nil
 	}

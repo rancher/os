@@ -742,23 +742,29 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, string,
 
 	//rootfs := partition
 	// Don't use ResolveDevice - it can fail, whereas `blkid -L LABEL` works more often
-	//if dev := util.ResolveDevice("LABEL=RANCHER_BOOT"); dev != "" {
-	cmd := exec.Command("blkid", "-L", "RANCHER_BOOT")
-	log.Debugf("Run(%v)", cmd)
-	cmd.Stderr = os.Stderr
-	if out, err := cmd.Output(); err == nil {
-		partition = strings.TrimSpace(string(out))
-		baseName = filepath.Join(baseName, "boot")
+
+	cfg := config.LoadConfig()
+	if dev := util.ResolveDevice(cfg.Rancher.State.Dev); dev != "" {
+		// try the rancher.state.dev setting
+		partition = dev
 	} else {
-		cmd := exec.Command("blkid", "-L", "RANCHER_STATE")
+		cmd := exec.Command("blkid", "-L", "RANCHER_BOOT")
 		log.Debugf("Run(%v)", cmd)
 		cmd.Stderr = os.Stderr
 		if out, err := cmd.Output(); err == nil {
 			partition = strings.TrimSpace(string(out))
+			baseName = filepath.Join(baseName, "boot")
+		} else {
+			cmd := exec.Command("blkid", "-L", "RANCHER_STATE")
+			log.Debugf("Run(%v)", cmd)
+			cmd.Stderr = os.Stderr
+			if out, err := cmd.Output(); err == nil {
+				partition = strings.TrimSpace(string(out))
+			}
 		}
 	}
 	device := ""
-	cmd = exec.Command("lsblk", "-no", "pkname", partition)
+	cmd := exec.Command("lsblk", "-no", "pkname", partition)
 	log.Debugf("Run(%v)", cmd)
 	cmd.Stderr = os.Stderr
 	if out, err := cmd.Output(); err == nil {
