@@ -35,6 +35,31 @@ func Main() {
 		return nil
 	}
 
+	//factory := &service.ProjectFactory{}
+
+	app.Commands = []cli.Command{}
+	app.Commands = append(app.Commands, originalCli...)
+	app.Commands = append(app.Commands, hiddenInternalCommands...)
+
+	app.Run(os.Args)
+}
+
+func NewMain() {
+	log.InitLogger()
+	app := cli.NewApp()
+
+	app.Name = os.Args[0]
+	app.Usage = "Control and configure RancherOS"
+	app.Version = config.Version
+	app.Author = "Rancher Labs, Inc."
+	app.EnableBashCompletion = true
+	app.Before = func(c *cli.Context) error {
+		if os.Geteuid() != 0 {
+			log.Fatalf("%s: Need to be root", os.Args[0])
+		}
+		return nil
+	}
+
 	factory := &service.ProjectFactory{}
 
 	app.Commands = []cli.Command{
@@ -143,14 +168,6 @@ func Main() {
 			Usage:     "apply service&config changes",
 			HideHelp:  true,
 			Action:    dummy,
-		},
-		// old..
-		{
-			Name:        "old",
-			ShortName:   "o",
-			Usage:       "old Command line (deprecated, will be removed in future)",
-			HideHelp:    true,
-			Subcommands: originalCli,
 		},
 	}
 	app.Commands = append(app.Commands, hiddenInternalCommands...)

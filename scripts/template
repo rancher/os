@@ -7,4 +7,4 @@ cd $(dirname $0)/..
 
 OUTPUT=build/initrd/usr/share/ros
 mkdir -p $OUTPUT
-./bin/host_ros old c generate < os-config.tpl.yml > $OUTPUT/os-config.yml
+./bin/host_ros c generate < os-config.tpl.yml > $OUTPUT/os-config.yml
