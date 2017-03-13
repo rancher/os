@@ -31,7 +31,7 @@ import (
 
 const (
 	DefaultAddress = "http://169.254.169.254/"
-	apiVersion     = "2009-04-04/"
+	apiVersion     = "latest/"
 	userdataPath   = apiVersion + "user-data/"
 	metadataPath   = apiVersion + "meta-data/"
 )
@@ -48,6 +48,7 @@ func NewDatasource(root string) *MetadataService {
 }
 
 func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
+	// see http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html
 	metadata := datasource.Metadata{}
 	metadata.NetworkConfig = netconf.NetworkConfig{}
 
@@ -80,24 +81,58 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		return metadata, err
 	}
 
-	network := netconf.InterfaceConfig{}
+	// TODO: these are only on the first interface - it looks like you can have as many as you need...
 	if localAddr, err := ms.fetchAttribute("local-ipv4"); err == nil {
 		metadata.PrivateIPv4 = net.ParseIP(localAddr)
-		network.Addresses = append(network.Addresses, localAddr)
-
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
-
 	if publicAddr, err := ms.fetchAttribute("public-ipv4"); err == nil {
 		metadata.PublicIPv4 = net.ParseIP(publicAddr)
-		network.Addresses = append(network.Addresses, publicAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
 
 	metadata.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
-	metadata.NetworkConfig.Interfaces["eth0"] = network
+	if macs, err := ms.fetchAttributes("network/interfaces/macs"); err != nil {
+		for _, mac := range macs {
+			if deviceNumber, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/device-number", mac)); err != nil {
+				network := netconf.InterfaceConfig{
+					DHCP: true,
+				}
+				/* Looks like we must use DHCP for aws
+				// private ipv4
+				if subnetCidrBlock, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv4-cidr-block", mac)); err != nil {
+					cidr := strings.Split(subnetCidrBlock, "/")
+					if localAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", mac)); err != nil {
+						for _, addr := range localAddr {
+							network.Addresses = append(network.Addresses, addr+"/"+cidr[1])
+						}
+					}
+				}
+				// ipv6
+				if localAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", mac)); err != nil {
+					if subnetCidrBlock, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv6-cidr-block", mac)); err != nil {
+						for i, addr := range localAddr {
+							cidr := strings.Split(subnetCidrBlock[i], "/")
+							network.Addresses = append(network.Addresses, addr+"/"+cidr[1])
+						}
+					}
+				}
+				*/
+				// disabled - it looks to me like you don't actually put the public IP on the eth device
+				/*				if publicAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/public-ipv4s", mac)); err != nil {
+									if vpcCidrBlock, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/vpc-ipv4-cidr-block", mac)); err != nil {
+										cidr := strings.Split(vpcCidrBlock, "/")
+										network.Addresses = append(network.Addresses, publicAddr+"/"+cidr[1])
+									}
+								}
+				*/
+
+				metadata.NetworkConfig.Interfaces["eth"+deviceNumber] = network
+			}
+		}
+	}
 
 	return metadata, nil
 }

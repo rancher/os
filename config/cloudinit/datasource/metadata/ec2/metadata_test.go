@@ -177,13 +177,13 @@ func TestFetchMetadata(t *testing.T) {
 				SSHPublicKeys: map[string]string{"test1": "key"},
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
-						"eth0": netconf.InterfaceConfig{
-							Addresses: []string{
-								"1.2.3.4",
-								"5.6.7.8",
-							},
-						},
-					},
+					/*			"eth0": netconf.InterfaceConfig{
+									Addresses: []string{
+										"1.2.3.4",
+										"5.6.7.8",
+									},
+								},
+					*/},
 				},
 			},
 		},
@@ -192,26 +192,26 @@ func TestFetchMetadata(t *testing.T) {
 			metadataPath: "2009-04-04/meta-data/",
 			resources: map[string]string{
 				"/2009-04-04/meta-data/hostname":                  "host domain another_domain",
-				"/2009-04-04/meta-data/local-ipv4":                "1.2.3.4",
-				"/2009-04-04/meta-data/public-ipv4":               "5.6.7.8",
+				"/2009-04-04/meta-data/local-ipv4":                "21.2.3.4",
+				"/2009-04-04/meta-data/public-ipv4":               "25.6.7.8",
 				"/2009-04-04/meta-data/public-keys":               "0=test1\n",
 				"/2009-04-04/meta-data/public-keys/0":             "openssh-key",
 				"/2009-04-04/meta-data/public-keys/0/openssh-key": "key",
 			},
 			expect: datasource.Metadata{
 				Hostname:      "host",
-				PrivateIPv4:   net.ParseIP("1.2.3.4"),
-				PublicIPv4:    net.ParseIP("5.6.7.8"),
+				PrivateIPv4:   net.ParseIP("21.2.3.4"),
+				PublicIPv4:    net.ParseIP("25.6.7.8"),
 				SSHPublicKeys: map[string]string{"test1": "key"},
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
-						"eth0": netconf.InterfaceConfig{
-							Addresses: []string{
-								"1.2.3.4",
-								"5.6.7.8",
-							},
-						},
-					},
+					/*						"eth0": netconf.InterfaceConfig{
+												Addresses: []string{
+													"1.2.3.4",
+													"5.6.7.8",
+												},
+											},
+					*/},
 				},
 			},
 		},

@@ -148,7 +148,10 @@ func populateDefault(netCfg *NetworkConfig) {
 
 	if _, ok := netCfg.Interfaces["lo"]; !ok {
 		netCfg.Interfaces["lo"] = InterfaceConfig{
-			Address: "127.0.0.1/8",
+			Addresses: []string{
+				"127.0.0.1/8",
+				"::1/128",
+			},
 		}
 	}
 }
@@ -401,7 +404,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		log.Errorf("Fail to set gateway %s", netConf.GatewayIpv6)
 	}
 
-	// TODO: how to remove a GW?
+	// TODO: how to remove a GW? (on aws it seems to be hard to find out what the gw is :/)
 	runCmds(netConf.PostUp, link.Attrs().Name)
 
 	return nil

@@ -41,6 +41,7 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 		log.Error(err)
 	}
 
+	// TODO: seems wrong to do this outside netconf
 	userSetHostname := cfg.Hostname != ""
 	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDNS); err != nil {
 		log.Error(err)
