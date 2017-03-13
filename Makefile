@@ -37,6 +37,16 @@ clean:
 itest:
 	./.dapper integration-test 2>&1 | tee dist/itest.log
 
+openstack:
+	cp dist/artifacts/rancheros.iso scripts/images/openstack/
+	cd scripts/images/openstack && ../../../.dapper
+
+openstack-run:
+	qemu-system-x86_64 -curses \
+		-net nic -net user \
+		-m 2048M \
+		--hdc scripts/images/openstack/dist/rancheros-openstack.img
+
 help:
 	@./scripts/help
 

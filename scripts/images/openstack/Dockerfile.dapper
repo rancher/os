@@ -6,7 +6,8 @@ RUN mkdir -p /source/assets
 # Change here to build a specific version
 ENV VERSION latest
 
-RUN curl -fL https://releases.rancher.com/os/${VERSION}/rancheros.iso > /source/assets/rancheros.iso
+#RUN curl -fL https://releases.rancher.com/os/${VERSION}/rancheros.iso > /source/assets/rancheros.iso
+COPY rancheros.iso /source/assets/rancheros.iso
 CMD ["/source/scripts/build.sh"]
 
 ENV DAPPER_RUN_ARGS --device /dev/kvm
