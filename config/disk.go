@@ -220,7 +220,7 @@ func WriteToFile(data interface{}, filename string) error {
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.Dir(filename), os.ModeDir|0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(filename), os.ModeDir|0700); err != nil {
 		return err
 	}
 

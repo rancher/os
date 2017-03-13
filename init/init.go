@@ -330,12 +330,18 @@ func RunInit() error {
 		mountOem,
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			for name, content := range configFiles {
-				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0755); err != nil {
+				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0700); err != nil {
 					log.Error(err)
 				}
 				if err := util.WriteFileAtomic(name, content, 400); err != nil {
 					log.Error(err)
 				}
+			}
+			if err := os.MkdirAll(config.VarRancherDir, os.ModeDir|0755); err != nil {
+				log.Error(err)
+			}
+			if err := os.Chmod(config.VarRancherDir, os.ModeDir|0755); err != nil {
+				log.Error(err)
 			}
 			return cfg, nil
 		},

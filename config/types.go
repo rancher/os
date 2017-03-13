@@ -38,6 +38,7 @@ const (
 	System            = "system"
 
 	OsConfigFile           = "/usr/share/ros/os-config.yml"
+	VarRancherDir          = "/var/lib/rancher"
 	CloudConfigDir         = "/var/lib/rancher/conf/cloud-config.d"
 	CloudConfigBootFile    = "/var/lib/rancher/conf/cloud-config.d/boot.yml"
 	CloudConfigNetworkFile = "/var/lib/rancher/conf/cloud-config.d/network.yml"
