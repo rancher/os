@@ -562,7 +562,7 @@ func seedData(baseName, cloudData string, files []string) error {
 		return err
 	}
 
-	if err = os.MkdirAll(filepath.Join(baseName, "/var/lib/rancher/conf/cloud-config.d"), 0755); err != nil {
+	if err = os.MkdirAll(filepath.Join(baseName, "/var/lib/rancher/conf/cloud-config.d"), 0700); err != nil {
 		return err
 	}
 
