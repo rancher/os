@@ -141,8 +141,8 @@ func Del(c *cli.Context) error {
 	return nil
 }
 
-//TODO: copied from cloudinitsave, move to config.
 func ComposeToCloudConfig(bytes []byte) ([]byte, error) {
+	//TODO: copied from cloudinitsave, move to config.
 	compose := make(map[interface{}]interface{})
 	err := yaml.Unmarshal(bytes, &compose)
 	if err != nil {
@@ -156,9 +156,9 @@ func ComposeToCloudConfig(bytes []byte) ([]byte, error) {
 	})
 }
 
-// TODO: this should move to something like config/service.go?
-// WARNING: this can contain more than one service - Josh and I aren't sure this is worth it
 func LoadService(repoName, serviceLongName string) (*config.CloudConfig, error) {
+	// TODO: this should move to something like config/service.go?
+	// WARNING: this can contain more than one service - Josh and I aren't sure this is worth it
 	servicePath := fmt.Sprintf("%s/%s.yml", repoName, serviceLongName)
 	//log.Infof("loading %s", serviceLongName)
 	content, err := network.CacheLookup(servicePath)
@@ -176,8 +176,8 @@ func LoadService(repoName, serviceLongName string) (*config.CloudConfig, error) 
 	return p, nil
 }
 
-// TODO: this should move to something like config/service.go?
 func IsConsole(serviceCfg *config.CloudConfig) bool {
+	// TODO: this should move to something like config/service.go?
 	//the service is called console, and has an io.rancher.os.console label.
 	for serviceName, service := range serviceCfg.Rancher.Services {
 		if serviceName == "console" {
@@ -191,8 +191,8 @@ func IsConsole(serviceCfg *config.CloudConfig) bool {
 	return false
 }
 
-// TODO: this should move to something like config/service.go?
 func IsEngine(serviceCfg *config.CloudConfig) bool {
+	// TODO: this should move to something like config/service.go?
 	//the service is called docker, and the command is "ros user-docker"
 	for serviceName, service := range serviceCfg.Rancher.Services {
 		log.Infof("serviceName == %s", serviceName)

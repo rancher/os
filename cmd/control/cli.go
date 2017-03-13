@@ -202,11 +202,11 @@ func listServices(c *cli.Context) error {
 	fmt.Printf("Enabled\n")
 	enabledServices := make([]string, len(currentConfig.Rancher.Services)+len(currentConfig.Rancher.ServicesInclude))
 	i := 0
-	for k, _ := range currentConfig.Rancher.Services {
+	for k := range currentConfig.Rancher.Services {
 		enabledServices[i] = k
 		i++
 	}
-	for k, _ := range currentConfig.Rancher.ServicesInclude {
+	for k := range currentConfig.Rancher.ServicesInclude {
 		enabledServices[i] = k
 		i++
 	}
@@ -224,7 +224,7 @@ func listServices(c *cli.Context) error {
 		}
 		if len(cachedConfigs[serviceName]) > 0 {
 			fmt.Printf("\t\tAlternatives: ")
-			for serviceLongName, _ := range cachedConfigs[serviceName] {
+			for serviceLongName := range cachedConfigs[serviceName] {
 				fmt.Printf("%s, ", serviceLongName)
 			}
 			fmt.Printf("\n")
@@ -235,7 +235,7 @@ func listServices(c *cli.Context) error {
 		if _, ok := currentConfig.Rancher.Services[serviceName]; ok {
 			continue
 		}
-		for serviceLongName, _ := range service {
+		for serviceLongName := range service {
 			fmt.Printf("\t%s: %s\n", serviceName, serviceLongName)
 		}
 	}
@@ -248,7 +248,7 @@ func GetAllServices() map[string]map[string]*libcomposeConfig.ServiceConfigV1 {
 	result := make(map[string]map[string]*libcomposeConfig.ServiceConfigV1)
 
 	cfg := config.LoadConfig()
-	for repoName, _ := range cfg.Rancher.Repositories {
+	for repoName := range cfg.Rancher.Repositories {
 		indexPath := fmt.Sprintf("%s/index.yml", repoName)
 		//content, err := network.LoadResource(indexPath, false)
 		content, err := network.CacheLookup(indexPath)
