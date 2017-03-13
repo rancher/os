@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -84,6 +85,10 @@ var installCommand = cli.Command{
 }
 
 func installAction(c *cli.Context) error {
+	if runtime.GOARCH != "amd64" {
+		log.Fatalf("ros install / upgrade only supported on 'amd64', not '%s'", runtime.GOARCH)
+	}
+
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
