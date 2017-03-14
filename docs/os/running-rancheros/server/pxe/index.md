@@ -31,6 +31,20 @@ kernel ${base-url}/vmlinuz rancher.state.dev=LABEL=RANCHER_STATE rancher.state.a
 
 The hidden part of the command line can be accessed with either `sudo ros config get rancher.environment.EXTRA_CMDLINE`, or by using a service file's environment array.
 
+An example service.yml file:
+
+```
+test:
+  image: alpine
+  command: echo "tell me a secret ${EXTRA_CMDLINE}"
+  labels:
+    io.rancher.os.scope: system
+  environment:
+  - EXTRA_CMDLINE
+```
+
+When this service is run, the `EXTRA_CMDLINE` will be set.
+
 
 ### cloud-init Datasources
 

@@ -36,4 +36,23 @@ func (s *QemuSuite) TestElideCmdLine(c *C) {
 	)
 
 	// And then add a service.yml file example.
+	s.CheckCall(c,
+		`echo 'test:
+  image: alpine
+  command: echo "tell me a secret ${EXTRA_CMDLINE}"
+  labels:
+    io.rancher.os.scope: system
+  environment:
+  - EXTRA_CMDLINE
+' > test.yml`)
+	s.CheckCall(c, "sudo mv test.yml /var/lib/rancher/conf/test.yml")
+	s.CheckCall(c, "sudo ros service enable /var/lib/rancher/conf/test.yml")
+	s.CheckCall(c, "sudo ros service up test")
+	s.CheckOutput(c,
+		"test_1 | tell me a secret /init cc.hostname=nope rancher.password=three\n",
+		Equals,
+		"sudo ros service logs test | grep secret",
+	)
+
+	// TODO: add a test showing we have the right password set
 }
