@@ -14,7 +14,7 @@ touch dist/images
 for i in $BASE/[0-9]*; do
     name="os-$(echo ${i} | cut -f2 -d-)"
     tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
-    echo Building ${tag}
+    echo "build-image: Building ${tag}"
     if [ -x ${i}/prebuild.sh ]; then
         ${i}/prebuild.sh
     fi
@@ -28,3 +28,5 @@ for i in $BASE/[0-9]*; do
         echo "WARN: Skipping ${tag}"
     fi
 done
+
+echo "build-image: DONE"

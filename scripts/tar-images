@@ -4,10 +4,14 @@ set -e
 cd $(dirname $0)/..
 
 IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)
+echo "tar-image: IMAGES=$IMAGES"
 for i in $IMAGES; do
+    echo "tar-image: pull($i)"
     if [ "${FORCE_PULL}" = "1" ] || ! docker inspect $i >/dev/null 2>&1; then
         docker pull $i
     fi
 done
 
+echo "tar-images: docker save ${IMAGES} > build/images.tar"
 docker save ${IMAGES} > build/images.tar
+echo "tar-images: DONE"
