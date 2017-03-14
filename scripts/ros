@@ -24,7 +24,6 @@ docker run --rm -it \
 	-v $(pwd)/bin/ros:/usr/bin/ros \
 	-v /etc/ssl/certs:/etc/ssl/certs \
 	-v /usr/share/ca-certificates:/usr/share/ca-certificates \
-	-v $(pwd)/bin/ros:/usr/bin/os \
 	-w  /var/lib/rancher \
 	--entrypoint sh \
 		rancher/os-base:v0.8.1

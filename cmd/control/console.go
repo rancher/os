@@ -66,7 +66,7 @@ func consoleSwitch(c *cli.Context) error {
 1. destroy the current console container
 2. log you out
 3. restart Docker`)
-		if !util.Yes("Continue") {
+		if !yes("Continue") {
 			return nil
 		}
 	}
@@ -111,7 +111,6 @@ func consoleEnable(c *cli.Context) error {
 	cfg := config.LoadConfig()
 	validateConsole(newConsole, cfg)
 
-	//TODO: why does default not need to be staged?
 	if newConsole != "default" {
 		if err := compose.StageServices(cfg, newConsole); err != nil {
 			return err

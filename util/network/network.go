@@ -32,48 +32,6 @@ func GetEngines(urls []string) ([]string, error) {
 	return getServices(urls, "engines")
 }
 
-func FetchAllServices() error {
-	cfg := config.LoadConfig()
-	for name, url := range cfg.Rancher.Repositories {
-		log.Infof("repo index %s: %v", name, url.URL)
-		indexURL := fmt.Sprintf("%s/index.yml", url.URL)
-		content, err := loadFromNetwork(indexURL)
-		if err != nil {
-			log.Errorf("Failed to load %s: %v", indexURL, err)
-			continue
-		}
-		// save the index file to the cache dir
-		cacheAdd(fmt.Sprintf("%s/index.yml", name), content)
-		// load it, and then download each service file and cache too
-		services := make(map[string][]string)
-		err = yaml.Unmarshal(content, &services)
-		if err != nil {
-			log.Errorf("Failed to unmarshal %s: %v", indexURL, err)
-			continue
-		}
-
-		for serviceType, serviceList := range services {
-			for _, serviceName := range serviceList {
-				fmt.Printf("\t%s is type %s from %s\n", serviceName, serviceType, name)
-				serviceURL := serviceURL(url.URL, serviceName)
-				content, err := loadFromNetwork(serviceURL)
-				if err != nil {
-					log.Errorf("Failed to load %s: %v", serviceURL, err)
-					continue
-				}
-				// save the service file to the cache dir
-				if err = cacheAdd(fmt.Sprintf("%s/%s.yml", name, serviceName), content); err != nil {
-					log.Errorf("cacheAdd: %s", err)
-				}
-				//display which services are new, and which are updated from previous cache
-				//and `listServices` will need to compare the cached servcies with the version that was enabled/up
-				//also list the services that are no longer updated (ie, purge candidates)
-			}
-		}
-	}
-	return nil
-}
-
 func getServices(urls []string, key string) ([]string, error) {
 	result := []string{}
 
@@ -122,11 +80,11 @@ func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
 }
 
 func loadFromNetwork(location string) ([]byte, error) {
-	/*	bytes := cacheLookup(location)
-		if bytes != nil {
-			return bytes, nil
-		}
-	*/
+	bytes := cacheLookup(location)
+	if bytes != nil {
+		return bytes, nil
+	}
+
 	cfg := config.LoadConfig()
 	SetProxyEnvironmentVariables(cfg)
 

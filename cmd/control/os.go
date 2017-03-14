@@ -22,7 +22,6 @@ import (
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
-	"github.com/rancher/os/util"
 )
 
 type Images struct {
@@ -227,7 +226,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 	if len(imageSplit) > 1 && imageSplit[1] == config.Version+config.Suffix {
 		confirmation = fmt.Sprintf("Already at version %s. Continue anyway", imageSplit[1])
 	}
-	if !force && !util.Yes(confirmation) {
+	if !force && !yes(confirmation) {
 		os.Exit(1)
 	}
 
@@ -277,7 +276,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 			return err
 		}
 
-		if reboot && (force || util.Yes("Continue with reboot")) {
+		if reboot && (force || yes("Continue with reboot")) {
 			log.Info("Rebooting")
 			power.Reboot()
 		}

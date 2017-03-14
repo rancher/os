@@ -1,11 +1,11 @@
 package main
 
 import (
-	hostlocal "github.com/containernetworking/cni/plugins/ipam/host-local"
+	"github.com/containernetworking/cni/plugins/ipam/host-local"
 	"github.com/containernetworking/cni/plugins/main/bridge"
 	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
-	glue "github.com/rancher/cniglue"
+	"github.com/rancher/cniglue"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/cmd/control"
@@ -39,8 +39,6 @@ var entrypoints = map[string]func(){
 	"cni-glue":           glue.Main,
 	"bridge":             bridge.Main,
 	"host-local":         hostlocal.Main,
-	// new CLI
-	"os": control.NewMain,
 }
 
 func main() {
