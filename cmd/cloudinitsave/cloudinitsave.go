@@ -143,9 +143,16 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		log.Infof("not writing %s: its all defaults.", rancherConfig.CloudConfigNetworkFile)
 		return nil
 	}
+
+	type nonRancherCfg struct {
+		Network netconf.NetworkConfig `yaml:"network,omitempty"`
+	}
+	type nonCfg struct {
+		Rancher nonRancherCfg `yaml:"rancher,omitempty"`
+	}
 	// write the network.yml file from metadata
-	cc := rancherConfig.CloudConfig{
-		Rancher: rancherConfig.RancherConfig{
+	cc := nonCfg{
+		Rancher: nonRancherCfg{
 			Network: metadata.NetworkConfig,
 		},
 	}
