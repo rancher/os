@@ -76,6 +76,11 @@ func NewDatasource(root string) *MetadataService {
 	return &MetadataService{Service: metadata.NewDatasource(root, apiVersion, userdataURL, metadataPath, nil)}
 }
 
+func (ms MetadataService) AvailabilityChanges() bool {
+	// TODO: if it can't find the network, maybe we can start it?
+	return false
+}
+
 // Parse IPv4 netmask written in IP form (e.g. "255.255.255.0").
 func ipmask(addr *Address) string {
 	ip := net.ParseIP(addr.IPAddress)
