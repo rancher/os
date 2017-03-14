@@ -198,6 +198,5 @@ outer:
 		}
 	}
 
-	log.Debugf("Input obj %v", result)
 	return result
 }

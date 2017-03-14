@@ -161,7 +161,6 @@ func readMetadata() datasource.Metadata {
 }
 
 func readCmdline() map[interface{}]interface{} {
-	log.Debug("Reading config cmdline")
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
@@ -171,8 +170,6 @@ func readCmdline() map[interface{}]interface{} {
 	if len(cmdLine) == 0 {
 		return nil
 	}
-
-	//log.Debugf("Config cmdline %s", cmdLine)
 
 	cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(cmdLine))))
 
