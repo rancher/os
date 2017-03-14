@@ -185,7 +185,7 @@ func fetchAndSave(ds datasource.Datasource) error {
 		scriptBytes = userDataBytes
 		userDataBytes = []byte{}
 	} else if isCompose(userData) {
-		if userDataBytes, err = ComposeToCloudConfig(userDataBytes); err != nil {
+		if userDataBytes, err = composeToCloudConfig(userDataBytes); err != nil {
 			log.Errorf("Failed to convert compose to cloud-config syntax: %v", err)
 			return err
 		}
@@ -328,9 +328,7 @@ func isCompose(content string) bool {
 	return strings.HasPrefix(content, "#compose\n")
 }
 
-// ComposeToCloudConfig converts a loaded compose file into a ros config struct
-func ComposeToCloudConfig(bytes []byte) ([]byte, error) {
-	//TODO: move to config?
+func composeToCloudConfig(bytes []byte) ([]byte, error) {
 	compose := make(map[interface{}]interface{})
 	err := yaml.Unmarshal(bytes, &compose)
 	if err != nil {

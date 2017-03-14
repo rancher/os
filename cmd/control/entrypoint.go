@@ -103,7 +103,6 @@ func setupCommandSymlinks() {
 		{config.RosBin, "/sbin/reboot"},
 		{config.RosBin, "/sbin/halt"},
 		{config.RosBin, "/sbin/shutdown"},
-		{config.RosBin, "/sbin/os"},
 	} {
 		if err := os.Symlink(link.oldname, link.newname); err != nil {
 			log.Error(err)
