@@ -29,6 +29,10 @@ while [ "$#" -gt 0 ]; do
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
             ;;
+        --append-init)
+            shift 1
+            APPEND_INIT="${APPEND_INIT} $1"
+            ;;
         --memory)
             shift 1
             MEMORY="$1"
@@ -124,6 +128,9 @@ if [ "$FORMAT" == "1" ]; then
 fi
 if [ "$RM_USR" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.rm_usr"
+fi
+if [ "$APPEND_INIT" != "" ]; then
+    KERNEL_ARGS="${KERNEL_ARGS} -- ${APPEND_INIT}"
 fi
 
 if [ "$BOOT_PXE" == "1" ]; then

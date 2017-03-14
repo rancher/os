@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -48,6 +49,7 @@ func loadRawDiskConfig(dirPrefix string, full bool) map[interface{}]interface{} 
 func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
 	rawCfg := loadRawDiskConfig(dirPrefix, full)
 	rawCfg = util.Merge(rawCfg, readCmdline())
+	rawCfg = util.Merge(rawCfg, readElidedCmdline(rawCfg))
 	rawCfg = applyDebugFlags(rawCfg)
 	return mergeMetadata(rawCfg, readMetadata())
 }
@@ -67,6 +69,35 @@ func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
 	cfg = amendNils(cfg)
 	cfg = amendContainerNames(cfg)
 	return cfg
+}
+
+func Insert(m interface{}, args ...interface{}) interface{} {
+	// TODO: move to util.go
+	if len(args)%2 != 0 {
+		panic("must have pairs of keys and values")
+	}
+	mv := reflect.ValueOf(m)
+	if mv.IsNil() {
+		mv = reflect.MakeMap(mv.Type())
+	}
+	for i := 0; i < len(args); i += 2 {
+		mv.SetMapIndex(reflect.ValueOf(args[i]), reflect.ValueOf(args[i+1]))
+	}
+	return mv.Interface()
+}
+
+func SaveInitCmdline(cmdLineArgs string) {
+	elidedCfg := parseCmdline(cmdLineArgs)
+
+	env := Insert(make(map[interface{}]interface{}), interface{}("EXTRA_CMDLINE"), interface{}(cmdLineArgs))
+	rancher := Insert(make(map[interface{}]interface{}), interface{}("environment"), env)
+	newCfg := Insert(elidedCfg, interface{}("rancher"), rancher)
+	// make it easy for readElidedCmdline(rawCfg)
+	newCfg = Insert(newCfg, interface{}("EXTRA_CMDLINE"), interface{}(cmdLineArgs))
+
+	if err := WriteToFile(newCfg, CloudConfigInitFile); err != nil {
+		log.Errorf("Failed to write init-cmdline config: %s", err)
+	}
 }
 
 func CloudConfigDirFiles(dirPrefix string) []string {
@@ -160,6 +191,20 @@ func readMetadata() datasource.Metadata {
 	return metadata
 }
 
+func readElidedCmdline(rawCfg map[interface{}]interface{}) map[interface{}]interface{} {
+
+	for k, v := range rawCfg {
+		if key, _ := k.(string); key == "EXTRA_CMDLINE" {
+			if val, ok := v.(string); ok {
+				cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(val))))
+
+				return cmdLineObj
+			}
+		}
+	}
+	return nil
+}
+
 func readCmdline() map[interface{}]interface{} {
 	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
@@ -230,6 +275,7 @@ func readConfigs(bytes []byte, substituteMetadataVars, returnErr bool, files ...
 	left := make(map[interface{}]interface{})
 	metadata := readMetadata()
 	for _, file := range files {
+		//os.Stderr.WriteString(fmt.Sprintf("READCONFIGS(%s)", file))
 		content, err := readConfigFile(file)
 		if err != nil {
 			if returnErr {

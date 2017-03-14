@@ -227,6 +227,13 @@ func RunInit() error {
 		func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dfs.PrepareFs(&mountConfig)
 		},
+		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			// will this be passed to cloud-init-save?
+			cmdLineArgs := strings.Join(os.Args, " ")
+			config.SaveInitCmdline(cmdLineArgs)
+
+			return c, nil
+		},
 		mountOem,
 		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg := config.LoadConfig()
@@ -303,6 +310,7 @@ func RunInit() error {
 		},
 		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
+				config.CloudConfigInitFile,
 				config.CloudConfigBootFile,
 				config.CloudConfigNetworkFile,
 				config.MetaDataFile,

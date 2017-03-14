@@ -40,6 +40,7 @@ const (
 	OsConfigFile           = "/usr/share/ros/os-config.yml"
 	VarRancherDir          = "/var/lib/rancher"
 	CloudConfigDir         = "/var/lib/rancher/conf/cloud-config.d"
+	CloudConfigInitFile    = "/var/lib/rancher/conf/cloud-config.d/init.yml"
 	CloudConfigBootFile    = "/var/lib/rancher/conf/cloud-config.d/boot.yml"
 	CloudConfigNetworkFile = "/var/lib/rancher/conf/cloud-config.d/network.yml"
 	CloudConfigScriptFile  = "/var/lib/rancher/conf/cloud-config-script"
@@ -85,9 +86,9 @@ type Repository struct {
 type Repositories map[string]Repository
 
 type CloudConfig struct {
-	SSHAuthorizedKeys []string              `yaml:"ssh_authorized_keys"`
-	WriteFiles        []File                `yaml:"write_files"`
-	Hostname          string                `yaml:"hostname"`
+	SSHAuthorizedKeys []string              `yaml:"ssh_authorized_keys,omitempty"`
+	WriteFiles        []File                `yaml:"write_files,omitempty"`
+	Hostname          string                `yaml:"hostname,omitempty"`
 	Mounts            [][]string            `yaml:"mounts,omitempty"`
 	Rancher           RancherConfig         `yaml:"rancher,omitempty"`
 	Runcmd            []yaml.StringandSlice `yaml:"runcmd,omitempty"`
