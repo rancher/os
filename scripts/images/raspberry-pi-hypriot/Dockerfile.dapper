@@ -9,8 +9,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
 RUN mkdir -p /source/assets
 
 # RancherOS for ARM
-RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm.tar.gz > /source/assets/rootfs_arm.tar.gz
-#COPY rootfs_arm.tar.gz /source/assets/rootfs_arm.tar.gz
+#RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm.tar.gz > /source/assets/rootfs_arm.tar.gz
+COPY rootfs_arm.tar.gz /source/assets/rootfs_arm.tar.gz
 
 # see https://packagecloud.io/Hypriot/rpi/?filter=debs
 ENV URL=https://packagecloud.io/Hypriot/rpi/packages/debian/jessie/
