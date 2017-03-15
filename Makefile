@@ -47,6 +47,12 @@ openstack-run:
 		-m 2048M \
 		--hdc scripts/images/openstack/dist/rancheros-openstack.img
 
+rpi: release
+	# scripts/images/raspberry-pi-hypriot/dist/rancheros-raspberry-pi.zip
+	cp dist/artifacts/rootfs_arm.tar.gz scripts/images/raspberry-pi-hypriot/
+	cd scripts/images/raspberry-pi-hypriot/ \
+		&& ../../../.dapper
+
 help:
 	@./scripts/help
 
