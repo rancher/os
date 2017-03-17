@@ -11,7 +11,7 @@ If you have a specific RanchersOS machine requirements, please check out our [gu
 
 ### Launching RancherOS using Docker Machine
 
-Before moving forward, you'll need to have [Docker Machine](https://docs.docker.com/machine/) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads) installed. Once you have VirtualBox and Docker Machine installed, it's just one command to get RancherOS running. 
+Before moving forward, you'll need to have [Docker Machine](https://docs.docker.com/machine/) and [VirtualBox](https://www.virtualbox.org/wiki/Downloads) installed. Once you have VirtualBox and Docker Machine installed, it's just one command to get RancherOS running.
 
 ```
 $ docker-machine create -d virtualbox --virtualbox-boot2docker-url https://releases.rancher.com/os/latest/rancheros.iso <MACHINE-NAME>
@@ -27,11 +27,11 @@ $ docker-machine ssh <MACHINE-NAME>
 
 ### A First Look At RancherOS
 
-There are two Docker daemons running in RancherOS. The first is called **System Docker**, which is where RancherOS runs system services like ntpd and syslog. You can use the `system-docker` command to control the **System Docker** daemon. 
+There are two Docker daemons running in RancherOS. The first is called **System Docker**, which is where RancherOS runs system services like ntpd and syslog. You can use the `system-docker` command to control the **System Docker** daemon.
 
 The other Docker daemon running on the system is **Docker**, which can be accessed by using the normal `docker` command.
 
-When you first launch RancherOS, there are no containers running in the Docker daemon. However, if you run the same command against the System Docker, you’ll see a number of system services that are shipped with RancherOS. 
+When you first launch RancherOS, there are no containers running in the Docker daemon. However, if you run the same command against the System Docker, you’ll see a number of system services that are shipped with RancherOS.
 
 > **Note:** `system-docker` can only be used by root, so it is necessary to use the `sudo` command whenever you want to interact with System Docker.
 
@@ -57,7 +57,7 @@ Some containers are run at boot time, and others, such as the `console`, `docker
 Let's try to deploy a normal Docker container on the Docker daemon.  The RancherOS Docker daemon is identical to any other Docker environment, so all normal Docker commands work.
 
 ```
-$ docker run -d nginx 
+$ docker run -d nginx
 ```
 
 You can see that the nginx container is up and running:
@@ -106,7 +106,7 @@ $ sudo chmod 755 /opt/rancher/bin/start.sh
 
 ### Using ROS
 
-Another useful command that can be used with RancherOS is `ros` which can be used to control and configure the system. 
+Another useful command that can be used with RancherOS is `ros` which can be used to control and configure the system.
 
 ```
 $ ros -v
@@ -130,5 +130,5 @@ $ sudo ros console switch ubuntu
 
 ### Conclusion
 
-RancherOS is a simple Linux distribution ideal for running Docker.  By embracing containerization of system services and leveraging Docker for management, RancherOS hopes to provide a very reliable, and easy to manage OS for running containers. 
+RancherOS is a simple Linux distribution ideal for running Docker.  By embracing containerization of system services and leveraging Docker for management, RancherOS hopes to provide a very reliable, and easy to manage OS for running containers.
 

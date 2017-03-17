@@ -12,6 +12,8 @@ When installing, there is no ability to pass in a [cloud-config]({{site.baseurl}
 
 Currently, only Raspberry Pi 2 and 3 are tested and known to work.
 
+> **Note:** It is not necessary to run `ros install` after installing RancherOS to an SD card.
+
 ### Using the entire SD Card
 
 RancherOS does not currently expand the root partition to fill the remainder of the SD card automatically. Instead, the following workaround can be used to store Docker containers on a larger partition that fills the remainder.

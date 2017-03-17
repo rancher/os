@@ -28,6 +28,9 @@ For the **User Data**, you'll need to pass in the [cloud-config]({{site.baseurl}
 rancher:
   environment:
     ECS_CLUSTER: your-ecs-cluster-name
+    # Note: You will need to add this variable, if using awslogs for ECS task.
+    ECS_AVAILABLE_LOGGING_DRIVERS: |-
+      ["json-file","awslogs"]
 # If you have selected a RancherOS AMI that does not have ECS enabled by default,
 # you'll need to enable the system service for the ECS agent.
   services_include:
