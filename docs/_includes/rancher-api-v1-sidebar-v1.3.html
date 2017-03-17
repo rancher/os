@@ -1,6 +1,6 @@
 <ul id="menu">
     <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/" >Rancher Documentation</a></li>
-    <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/">How to use the API v2-beta</a></li>
+    <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/">How to use the API v1</a></li>
     <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/access-control/">Setting up Access Control using the API</a></li>
     <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-keys/">What are API keys</a></li>
     <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/">API Resources</a></li>
@@ -88,12 +88,31 @@
               
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#delete">Delete</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#activate">Activate</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#continueupgrade">Continueupgrade</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#deactivate">Deactivate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#removeservicelink">Removeservicelink</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#rollback">Rollback</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#setservicelinks">Setservicelinks</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/dnsService/#upgrade">Upgrade</a></li>
+              
+        </ul>
+    </li>
+    
+    <li>
+        <a href="#">Environment <i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/">Environment</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#create">Create</a></li>
+              
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#update">Update</a></li>
+              
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#delete">Delete</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#activateservices">Activateservices</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#cancelrollback">Cancelrollback</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#cancelupgrade">Cancelupgrade</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#deactivateservices">Deactivateservices</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#exportconfig">Exportconfig</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#finishupgrade">Finishupgrade</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/environment/#rollback">Rollback</a></li>
               
         </ul>
     </li>
@@ -108,8 +127,8 @@
               
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#delete">Delete</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#activate">Activate</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#cancelrollback">Cancelrollback</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#cancelupgrade">Cancelupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#continueupgrade">Continueupgrade</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#deactivate">Deactivate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#finishupgrade">Finishupgrade</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/externalService/#rollback">Rollback</a></li>
@@ -130,7 +149,6 @@
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/host/#activate">Activate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/host/#deactivate">Deactivate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/host/#dockersocket">Dockersocket</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/host/#error">Error</a></li>
               
         </ul>
     </li>
@@ -157,8 +175,8 @@
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#delete">Delete</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#activate">Activate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#addservicelink">Addservicelink</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#cancelrollback">Cancelrollback</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#cancelupgrade">Cancelupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#continueupgrade">Continueupgrade</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#deactivate">Deactivate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#finishupgrade">Finishupgrade</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/loadBalancerService/#removeservicelink">Removeservicelink</a></li>
@@ -189,6 +207,9 @@
               
               
               
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/machineDriver/#activate">Activate</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/machineDriver/#deactivate">Deactivate</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/machineDriver/#reactivate">Reactivate</a></li>
               
         </ul>
     </li>
@@ -197,46 +218,9 @@
         <a href="#">Network <i class="pull-right fa fa-angle-down"></i></a>
         <ul>
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/network/">Network</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/network/#create">Create</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/network/#update">Update</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/network/#delete">Delete</a></li>
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">NetworkDriver <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriver/">NetworkDriver</a></li>
               
               
               
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">NetworkDriverService <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/">NetworkDriverService</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#create">Create</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#update">Update</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#delete">Delete</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#activate">Activate</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#addservicelink">Addservicelink</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#cancelupgrade">Cancelupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#continueupgrade">Continueupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#deactivate">Deactivate</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#finishupgrade">Finishupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#removeservicelink">Removeservicelink</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#restart">Restart</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#rollback">Rollback</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#setservicelinks">Setservicelinks</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/networkDriverService/#upgrade">Upgrade</a></li>
               
         </ul>
     </li>
@@ -251,7 +235,6 @@
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/project/#activate">Activate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/project/#deactivate">Deactivate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/project/#setmembers">Setmembers</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/project/#upgrade">Upgrade</a></li>
               
         </ul>
     </li>
@@ -265,17 +248,6 @@
               
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/projectMember/#activate">Activate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/projectMember/#deactivate">Deactivate</a></li>
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">ProjectTemplate <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/projectTemplate/">ProjectTemplate</a></li>
-              
-              
-              
               
         </ul>
     </li>
@@ -343,8 +315,8 @@
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#delete">Delete</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#activate">Activate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#addservicelink">Addservicelink</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#cancelrollback">Cancelrollback</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#cancelupgrade">Cancelupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#continueupgrade">Continueupgrade</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#deactivate">Deactivate</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#finishupgrade">Finishupgrade</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/service/#removeservicelink">Removeservicelink</a></li>
@@ -357,88 +329,9 @@
     </li>
     
     <li>
-        <a href="#">ServiceLog <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/serviceLog/">ServiceLog</a></li>
-              
-              
-              
-              
-        </ul>
-    </li>
-    
-    <li>
         <a href="#">Setting <i class="pull-right fa fa-angle-down"></i></a>
         <ul>
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/setting/">Setting</a></li>
-              
-              
-              
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">Stack <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/">Stack</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#create">Create</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#update">Update</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#delete">Delete</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#activateservices">Activateservices</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#addoutputs">Addoutputs</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#cancelupgrade">Cancelupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#deactivateservices">Deactivateservices</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#error">Error</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#exportconfig">Exportconfig</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#finishupgrade">Finishupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#rollback">Rollback</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/stack/#upgrade">Upgrade</a></li>
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">StorageDriver <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriver/">StorageDriver</a></li>
-              
-              
-              
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">StorageDriverService <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/">StorageDriverService</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#create">Create</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#update">Update</a></li>
-              
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#delete">Delete</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#activate">Activate</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#addservicelink">Addservicelink</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#cancelupgrade">Cancelupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#continueupgrade">Continueupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#deactivate">Deactivate</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#finishupgrade">Finishupgrade</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#removeservicelink">Removeservicelink</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#restart">Restart</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#rollback">Rollback</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#setservicelinks">Setservicelinks</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/storageDriverService/#upgrade">Upgrade</a></li>
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">Subnet <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/subnet/">Subnet</a></li>
               
               
               
@@ -463,23 +356,11 @@
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volume/">Volume</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volume/#create">Create</a></li>
               
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volume/#update">Update</a></li>
               
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volume/#delete">Delete</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volume/#restorefrombackup">Restorefrombackup</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volume/#reverttosnapshot">Reverttosnapshot</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volume/#snapshot">Snapshot</a></li>
-              
-        </ul>
-    </li>
-    
-    <li>
-        <a href="#">VolumeTemplate <i class="pull-right fa fa-angle-down"></i></a>
-        <ul>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volumeTemplate/">VolumeTemplate</a></li>
-              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/api/{{page.apiVersion}}/api-resources/volumeTemplate/#create">Create</a></li>
-              
-              
               
         </ul>
     </li>

@@ -2,8 +2,10 @@ name: Rancher Documentation
 description: Documentation for Rancher
 
 
-#URL: http://rancher.github.io
+URL: http://rancher.github.io
 baseurl: ""
+
+exclude: []
 
 markdown: kramdown
 highlighter: rouge
@@ -12,5 +14,5 @@ kramdown:
   syntax_highlighter: rouge
 permalink: pretty
 
-gems: 
+gems:
   - jekyll-redirect-from
