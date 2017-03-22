@@ -13,8 +13,12 @@ CHECKSUM=iso-checksums.txt
 mkdir -p ${CD}/boot/isolinux
 mkdir -p ${CD}/rancheros
 
-if [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || [ ! -f ${ARTIFACTS}/${INITRD} ]; then
-    echo "Skipping package-iso due to ARM build: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${ARTIFACTS}/${INITRD} not found"
+if \
+      [[ "${ARCH}" != "amd64" ]] || \
+      [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || \
+      [ ! -f ${ARTIFACTS}/${INITRD} ]; \
+    then
+    echo "Skipping package-iso due to ARM/ARM64 build: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${ARTIFACTS}/${INITRD} not found"
     exit 0
 fi
 
