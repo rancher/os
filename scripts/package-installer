@@ -9,8 +9,12 @@ BASEDOCKERFILE=./scripts/installer/BaseDockerfile.${ARCH}
 DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}
 ARTIFACTS=./dist/artifacts
 
-if [ ! -f $DOCKERFILE ] || [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || [ ! -f ${ARTIFACTS}/${INITRD} ]; then
-    echo "Skipping package-installer due to ARM build: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${ARTIFACTS}/${INITRD} not found"
+if \
+      [[ "${ARCH}" != "amd64" ]] || \
+      [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || \
+      [ ! -f ${ARTIFACTS}/${INITRD} ]; \
+      then
+    echo "Skipping package-installer due to ARM/ARM64 build: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${ARTIFACTS}/${INITRD} not found"
     exit 0
 fi
 
