@@ -31,6 +31,38 @@ func (s *QemuSuite) TestUpgrade080rc7(c *C) {
 	// alpine console is unlikely to work before 0.8.0-rc5
 	s.commonTestCode(c, "v0.8.0-rc7", "alpine")
 }
+func (s *QemuSuite) TestUpgrade081Persistent(c *C) {
+	s.commonTestCode(c, "v0.8.1", "alpine")
+}
+func (s *QemuSuite) TestUpgrade081RollBack(c *C) {
+	s.commonTestCode(c, "v0.7.1", "default")
+
+	runArgs := []string{
+		"--boothd",
+	}
+	{
+		// and now rollback to 0.8.1
+		thisVersion := "v0.8.1"
+		s.RunQemuWith(c, runArgs...)
+
+		s.CheckCall(c, fmt.Sprintf("sudo ros os upgrade --no-reboot -i rancher/os:%s%s --force", thisVersion, Suffix))
+
+		s.Reboot(c)
+		s.CheckOutput(c, "ros version "+thisVersion+"\n", Equals, "sudo ros -v")
+		s.Stop(c)
+	}
+	{
+		// and now re-upgrade to latest
+		thisVersion := Version
+		s.RunQemuWith(c, runArgs...)
+
+		s.CheckCall(c, fmt.Sprintf("sudo ros os upgrade --no-reboot -i rancher/os:%s%s --force", thisVersion, Suffix))
+
+		s.Reboot(c)
+		s.CheckOutput(c, "ros version "+thisVersion+"\n", Equals, "sudo ros -v")
+		s.Stop(c)
+	}
+}
 
 // DisabledTestUpgradeInner is used to debug the above tests if they fail - the current imple of the check code limits itself to depths _one_ stacktrace
 func (s *QemuSuite) DisableTestUpgradeInner(c *C) {
@@ -96,6 +128,7 @@ sync
 
 	s.Stop(c)
 }
+
 func (s *QemuSuite) commonTestCode(c *C, startWithVersion, console string) {
 	runArgs := []string{
 		"--iso",
