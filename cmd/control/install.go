@@ -336,48 +336,25 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 func mountBootIso() error {
 	deviceName := "/dev/sr0"
 	deviceType := "iso9660"
-	{ // force the defer
-		mountsFile, err := os.Open("/proc/mounts")
-		if err != nil {
-			log.Errorf("failed to read /proc/mounts %s", err)
-			return err
-		}
-		defer mountsFile.Close()
+	if d, t := util.Blkid("RancherOS"); d != "" {
+		deviceName = d
+		deviceType = t
+	}
 
-		if partitionMounted(deviceName, mountsFile) {
-			return nil
-		}
+	mountsFile, err := os.Open("/proc/mounts")
+	if err != nil {
+		log.Errorf("failed to read /proc/mounts %s", err)
+		return err
+	}
+	defer mountsFile.Close()
+
+	if partitionMounted(deviceName, mountsFile) {
+		return nil
 	}
 
 	os.MkdirAll("/bootiso", 0755)
-
-	// find the installation device
-	cmd := exec.Command("blkid", "-L", "RancherOS")
-	log.Debugf("Run(%v)", cmd)
-	cmd.Stderr = os.Stderr
-	out, err := cmd.Output()
-	if err != nil {
-		log.Errorf("Failed to get RancherOS boot device: %s", err)
-		return err
-	}
-	deviceName = strings.TrimSpace(string(out))
-	log.Debugf("blkid found -L RancherOS: %s", deviceName)
-
-	cmd = exec.Command("blkid", deviceName)
-	log.Debugf("Run(%v)", cmd)
-	cmd.Stderr = os.Stderr
-	if out, err = cmd.Output(); err != nil {
-		log.Errorf("Failed to get RancherOS boot device type: %s", err)
-		return err
-	}
-	deviceType = strings.TrimSpace(string(out))
-	s1 := strings.Split(deviceType, "TYPE=\"")
-	s2 := strings.Split(s1[1], "\"")
-	deviceType = s2[0]
-	log.Debugf("blkid type of %s: %s", deviceName, deviceType)
-
-	cmd = exec.Command("mount", "-t", deviceType, deviceName, "/bootiso")
-	log.Debugf("Run(%v)", cmd)
+	cmd := exec.Command("mount", "-t", deviceType, deviceName, "/bootiso")
+	log.Infof("mount (%#v)", cmd)
 
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	err = cmd.Run()
@@ -750,27 +727,21 @@ func mountdevice(baseName, bootDir, partition string, raw bool) (string, string,
 	// Don't use ResolveDevice - it can fail, whereas `blkid -L LABEL` works more often
 
 	cfg := config.LoadConfig()
-	cmd := exec.Command("blkid", "-L", "RANCHER_BOOT")
-	log.Debugf("Run(%v)", cmd)
-	cmd.Stderr = os.Stderr
-	if out, err := cmd.Output(); err == nil {
-		partition = strings.TrimSpace(string(out))
+	if d, _ := util.Blkid("RANCHER_BOOT"); d != "" {
+		partition = d
 		baseName = filepath.Join(baseName, "boot")
 	} else {
 		if dev := util.ResolveDevice(cfg.Rancher.State.Dev); dev != "" {
 			// try the rancher.state.dev setting
 			partition = dev
 		} else {
-			cmd := exec.Command("blkid", "-L", "RANCHER_STATE")
-			log.Debugf("Run(%v)", cmd)
-			cmd.Stderr = os.Stderr
-			if out, err := cmd.Output(); err == nil {
-				partition = strings.TrimSpace(string(out))
+			if d, _ := util.Blkid("RANCHER_STATE"); d != "" {
+				partition = d
 			}
 		}
 	}
 	device := ""
-	cmd = exec.Command("lsblk", "-no", "pkname", partition)
+	cmd := exec.Command("lsblk", "-no", "pkname", partition)
 	log.Debugf("Run(%v)", cmd)
 	cmd.Stderr = os.Stderr
 	if out, err := cmd.Output(); err == nil {
