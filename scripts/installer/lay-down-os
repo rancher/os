@@ -36,7 +36,7 @@ fi
 
 DIST=${DIST:-/dist}
 CLOUD_CONFIG=${CLOUD_CONFIG:-"${SCRIPTS_DIR}/conf/empty.yml"}
-CONSOLE=tty0
+CONSOLE=tty1
 BASE_DIR="/mnt/new_img"
 BOOT=boot/
 # TODO: Change this to a number so that users can specify.
