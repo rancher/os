@@ -13,6 +13,9 @@ Since RancherOS is a kernel and initrd, the upgrade process is downloading a new
 
 To see all of our releases, please visit our [releases page](https://github.com/rancher/os/releases) in GitHub.
 
+> **Note:** If you are using [`docker-machine`]({{site.baseurl}}/os/running-rancheros/workstation/docker-machine/) then you will not be able to upgrade your RancherOS version. You need to delete and re-create the machine.
+
+
 ### Version Control
 
 First, let's check what version you have running on your system.

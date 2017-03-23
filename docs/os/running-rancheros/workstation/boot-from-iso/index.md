@@ -9,7 +9,7 @@ The RancherOS ISO file can be used to create a fresh RancherOS install on KVM, V
 
 You must boot with at least **512MB** of memory. If you boot with the ISO, you will automatically be logged in as the `rancher` user. Only the ISO is set to use autologin by default. If you run from a cloud or install to disk, SSH keys or a password of your choice is expected to be used.
 
-> **Note:** If you are planning on [installing to disk]({{site.baseurl}}/os/running-rancheros/server/install-to-disk/), you will need at least 1.5GB of RAM. 
+> **Note:** If you are planning on [installing to disk]({{site.baseurl}}/os/running-rancheros/server/install-to-disk/), you will need at least 1.5GB of RAM.
 
 ### Install to Disk
 ---
@@ -17,7 +17,7 @@ After you boot RancherOS from ISO, you can follow the instructions [here]({{site
 
 ### Persisting State
 ---
-If you are running from the ISO, RancherOS will be running from memory. All downloaded Docker images, for example, will be stored in a ramdisk and will be lost after the server is rebooted. You can 
+If you are running from the ISO, RancherOS will be running from memory. All downloaded Docker images, for example, will be stored in a ramdisk and will be lost after the server is rebooted. You can
 create a file system with the label `RANCHER_STATE` to instruct RancherOS to use that partition to store state. Suppose you have a disk partition on the server called `/dev/sda`, the following command formats that partition and labels it `RANCHER_STATE`
 
 ```
@@ -38,13 +38,13 @@ After you reboot, the server RancherOS will use `/dev/sda` as the state partitio
 1. Download the RancherOS ISO.
 
 2. Start up a VM from VirtualBox.
-    
+   
     a. Open up VirtualBox. If you don't have VirtualBox, download it [here](https://www.virtualbox.org/wiki/Downloads).
 
      ![RancherOS on ISO 1]({{site.baseurl}}/img/os/Rancher_iso1.png)
 
     b. Provide a **name**, select the **type** to be _Linux_, and select the **version** to be _Other Linux (64-bit)_. Click **Continue**.
-        
+       
      ![RancherOS on ISO 2]({{site.baseurl}}/img/os/Rancher_iso2.png)
 
     c. Select at least **1GB** of RAM.
@@ -61,24 +61,24 @@ After you reboot, the server RancherOS will use `/dev/sda` as the state partitio
 
     f. Select **Dynamically allocated** and click **Continue**.
 
-     ![RancherOS on ISO 6]({{site.baseurl}}/img/os/Rancher_iso6.png)  
+     ![RancherOS on ISO 6]({{site.baseurl}}/img/os/Rancher_iso6.png) 
 
     g. Click **Create**.
 
-     ![RancherOS on ISO 7]({{site.baseurl}}/img/os/Rancher_iso7.png)  
-    
+     ![RancherOS on ISO 7]({{site.baseurl}}/img/os/Rancher_iso7.png) 
+   
     Your new VM should be created, but in a _Powered Off_ state.
 
 3. Start the VM from VirtualBox by clicking on the VM and clicking **Start** or right-click on the box and select **Start**. You will be immediately prompted to select an ISO. Find the RancherOS ISO that you have downloaded. Click **Start**.
 
-    ![RancherOS on ISO 7]({{site.baseurl}}/img/os/Rancher_iso7.png)  
+    ![RancherOS on ISO 7]({{site.baseurl}}/img/os/Rancher_iso7.png) 
 
 4. When RancherOS launches, you will be prompted for a rancher login and password. The login and password is 'rancher' (all lowercase).
 
     ```
     RancherOS rancher /dev/ttyl
     rancher login: rancher
-    Password: 
+    Password:
     ```
 
 Next, read about how to [install to disk]({{site.baseurl}}/os/running-rancheros/server/install-to-disk/) in order to have any changes to RancherOS to be saved.

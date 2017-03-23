@@ -6,6 +6,7 @@ redirect_from:
 ---
 
 ## Interfaces
+---
 
 Using `ros config`, you can configure specific interfaces. Wildcard globbing is supported so `eth*` will match `eth1` and `eth2`.  The available options you can configure are `address`, `gateway`, `mtu`, and `dhcp`.
 
@@ -93,4 +94,20 @@ rancher:
     interfaces:
       eth0:
         vlans: 100,200:foobar
+```
+
+### Bridging
+
+In this example, you can create a bridge interface.
+
+```
+#cloud-config
+rancher:
+  network:
+    interfaces:
+      br0:
+        bridge: true
+        dhcp: true
+      eth0:
+        bridge: br0
 ```

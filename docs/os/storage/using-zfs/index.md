@@ -6,6 +6,7 @@ redirect_from:
 ---
 
 ## Using ZFS
+---
 
 #### Installing the ZFS service
 
