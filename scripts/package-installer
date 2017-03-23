@@ -29,7 +29,6 @@ mv .dapper.tmp .dapper
 ./.dapper
 popd
 
-
 # TODO maybe extract the creation of the syslinux cfg files
 DIST=$(pwd)/dist
 echo "mkdir -p ${DIST}/boot/isolinux/"

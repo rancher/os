@@ -45,6 +45,26 @@ func (s *QemuSuite) TestUpgrade080rc7(c *C) {
 func (s *QemuSuite) TestUpgrade081Persistent(c *C) {
 	s.commonTestCode(c, "v0.8.1", "alpine", "")
 }
+func (s *QemuSuite) TestUpgradeKexec(c *C) {
+	s.commonTestCode(c, "v1.0.0", "default", "")
+
+	runArgs := []string{
+		"--boothd",
+		"--append", "rancher.debug=true",
+	}
+	{
+		s.RunQemuWith(c, runArgs...)
+
+		//	s.CheckCall(c, fmt.Sprintf("sudo ros os upgrade --force --kexec"))
+		s.CheckCall(c, fmt.Sprintf("sudo ros os upgrade --kexec -i rancher/os:%s%s --force", Version, Suffix))
+
+		time.Sleep(3000 * time.Millisecond)
+		c.Assert(s.WaitForSSH(), IsNil)
+
+		s.CheckOutput(c, "ros version "+Version+"\n", Equals, "sudo ros -v")
+		s.Stop(c)
+	}
+}
 func (s *QemuSuite) TestUpgrade081RollBack(c *C) {
 	s.commonTestCode(c, "v0.7.1", "default", "")
 
