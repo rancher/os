@@ -62,7 +62,7 @@ func Blkid(label string) (deviceName, deviceType string) {
 	s := bufio.NewScanner(r)
 	for s.Scan() {
 		line := s.Text()
-		log.Debugf("blkid: %s", cmd, line)
+		//log.Debugf("blkid: %s", cmd, line)
 		if !strings.Contains(line, `LABEL="`+label+`"`) {
 			continue
 		}
