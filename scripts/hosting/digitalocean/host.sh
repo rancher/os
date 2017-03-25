@@ -20,8 +20,8 @@ if [[ ! -e "$DIST" ]]; then
 fi
 
 source ${DIST}/../../scripts/version
-VMLINUX=$(ls -1 ${DIST}/vmlinuz-* | head -n1)
-INITRD="${DIST}/initrd-${VERSION}"
+VMLINUX=$(ls -1 ${DIST}/ | grep "^vmlinuz-" | head -n1)
+INITRD="initrd-${VERSION}"
 
 IP=$(curl ipinfo.io/ip)
 PORT=2115
