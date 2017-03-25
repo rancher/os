@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# get the kernel and initrd
+URL_BASE="https://releases.rancher.com/os/latest"
+VMLINUX="vmlinuz"
+INITRD="initrd"
+
+cd /tmp
+curl -O -L "${URL_BASE}/${VMLINUX}"
+curl -O -L "${URL_BASE}/${INITRD}"
+
+# setup the host ready for kexec
 PUBLIC_IPV4=$(wget -qO- http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/address)
 
 if [ "$(ros config get rancher.environment.installer)" == "true" ] && ros --version &>/dev/null; then
@@ -21,11 +31,6 @@ EOF
 	exit 0
 fi
 
-URL_BASE="https://releases.rancher.com/os/latest"
-cd /tmp
-curl -O -L "${URL_BASE}/vmlinuz"
-curl -O -L "${URL_BASE}/initrd"
-
 export DEBIAN_FRONTEND=noninteractive
 apt-get update && apt-get install -y kexec-tools ipcalc
 
@@ -34,4 +39,4 @@ PUBLIC_IPV4_CIDR=$(ipcalc ${PUBLIC_IPV4}/${PUBLIC_IPV4_NETMASK} | awk '/^Network
 PUBLIC_IPV4_GATEWAY=$(curl -s http://169.254.169.254/metadata/v1/interfaces/public/0/ipv4/gateway)
 
 
-kexec --initrd=initrd -l vmlinuz -f --command-line="quiet rancher.network.interfaces.eth0.address=${PUBLIC_IPV4}/${PUBLIC_IPV4_CIDR} rancher.network.interfaces.eth0.gateway=${PUBLIC_IPV4_GATEWAY} rancher.network.interfaces.eth0.dhcp=false rancher.cloud_init.datasources=[digitalocean] rancher.environment.installer=true"
+kexec --initrd=${INITRD} -l ${VMLINUX} -f --command-line="quiet rancher.network.interfaces.eth0.address=${PUBLIC_IPV4}/${PUBLIC_IPV4_CIDR} rancher.network.interfaces.eth0.gateway=${PUBLIC_IPV4_GATEWAY} rancher.network.interfaces.eth0.dhcp=false rancher.cloud_init.datasources=[digitalocean] rancher.environment.installer=true"
