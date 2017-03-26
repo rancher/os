@@ -51,6 +51,10 @@ var installCommand = cli.Command{
 			Name:  "device, d",
 			Usage: "storage device",
 		},
+		cli.StringFlag{
+			Name:  "source, s",
+			Usage: "source device",
+		},
 		cli.BoolFlag{
 			Name:  "force, f",
 			Usage: "[ DANGEROUS! Data loss can happen ] partition/format without prompting",
@@ -124,6 +128,7 @@ func installAction(c *cli.Context) error {
 		isoinstallerloaded = true // OMG this flag is aweful - kill it with fire
 	}
 	device := c.String("device")
+	source := c.String("source")
 	if installType != "noformat" &&
 		installType != "raid" &&
 		installType != "bootstrap" &&
@@ -148,7 +153,7 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
-	if err := runInstall(image, installType, cloudConfig, device, kappend, force, kexec, isoinstallerloaded); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, source, kappend, force, kexec, isoinstallerloaded); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 		return err
 	}
@@ -161,7 +166,7 @@ func installAction(c *cli.Context) error {
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, kappend string, force, kexec, isoinstallerloaded bool) error {
+func runInstall(image, installType, cloudConfig, device, source, kappend string, force, kexec, isoinstallerloaded bool) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -218,8 +223,8 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 		log.Infof("start !isoinstallerloaded")
 
 		if _, err := os.Stat("/dist/initrd-" + config.Version); os.IsNotExist(err) {
-			if err = mountBootIso(); err != nil {
-				log.Debugf("mountBootIso error %s", err)
+			if err = mountBootIso(source); err != nil {
+				log.Debugf("mountBootIso error %s on %s", err, source)
 			} else {
 				log.Infof("trying to load /bootiso/rancheros/installer.tar.gz")
 				if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
@@ -318,8 +323,8 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	if isoinstallerloaded {
 		log.Debugf("running isoinstallerloaded...")
 		// TODO: detect if its not mounted and then optionally mount?
-		if err := mountBootIso(); err != nil {
-			log.Errorf("error mountBootIso %s", err)
+		if err := mountBootIso(source); err != nil {
+			log.Errorf("error mountBootIso %s on %s", err, source)
 			return err
 		}
 	}
@@ -333,8 +338,12 @@ func runInstall(image, installType, cloudConfig, device, kappend string, force, 
 	return nil
 }
 
-func mountBootIso() error {
-	deviceName := "/dev/sr0"
+func mountBootIso(source string) error {
+	deviceName := source
+
+	if source == "" {
+		deviceName = "/dev/sr0"
+	}
 	deviceType := "iso9660"
 	if d, t := util.Blkid("RancherOS"); d != "" {
 		deviceName = d
