@@ -1,0 +1,72 @@
+#!/bin/bash
+
+
+# see https://forums.rancher.com/t/proposal-to-install-on-qemu/1236
+
+set -x -e
+
+cd $(dirname $0)/..
+source ./scripts/version
+BASE=$(pwd)
+
+STATE=/tmp
+DISK=${STATE}/rancheros.img
+CONFIG=${STATE}/cloud-config.yml
+export LOOPBACK=$(losetup -f)
+PARTITION=$(echo "${LOOPBACK}p1" | sed 's/dev/dev\/mapper/')
+DISPLAY_OPTS="-curses"
+# default
+#DISPLAY_OPTS="-nographic -serial stdio -display none"
+
+function clean_up {
+    sudo umount mount || true
+    sudo kpartx -d ${DISK} || true
+    sudo losetup -d ${LOOPBACK} || true
+    sudo rm ${DISK} || true
+}
+trap "clean_up; exit" SIGHUP SIGINT SIGTERM EXIT
+
+
+echo "writing to ${CONFIG} in ${STATE}"
+echo "#cloud-config" > ${CONFIG}
+echo "ssh_authorized_keys:" >> ${CONFIG}
+echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${CONFIG}
+
+qemu-img create ${DISK} 1G
+sudo losetup ${LOOPBACK} ${DISK}
+
+echo "n
+p
+1
+
+
+a
+w" | sudo fdisk ${LOOPBACK} || true
+
+sudo kpartx -a ${DISK}
+
+docker run --privileged -it --rm \
+    -v /dev/mapper:/dev/mapper \
+    -v /:/host \
+    -v ${STATE}:/cluster \
+    rancher/os:${VERSION} \
+	--isoinstallerloaded=1 \
+        --force \
+        --no-reboot \
+	--debug \
+        -c /cluster/cloud-config.yml \
+        -t generic \
+        -d ${LOOPBACK} \
+        -p ${PARTITION} \
+	--append "rancher.autologin=tty1"
+        #-f /cluster/images.tar.xz:var/lib/system-docker/preload/images.tar.xz
+
+
+sync
+
+qemu-system-x86_64 -enable-kvm \
+    ${DISPLAY_OPTS} \
+    -m 1024 \
+    -net nic,model=virtio \
+    -net user,hostfwd=tcp::2222-:22 \
+    -drive if=virtio,file=${DISK},format=raw
