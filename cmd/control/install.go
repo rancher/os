@@ -354,7 +354,7 @@ func mountBootIso() error {
 
 	os.MkdirAll("/bootiso", 0755)
 	cmd := exec.Command("mount", "-t", deviceType, deviceName, "/bootiso")
-	log.Infof("mount (%#v)", cmd)
+	log.Debugf("mount (%#v)", cmd)
 
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	err = cmd.Run()

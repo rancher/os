@@ -193,21 +193,21 @@ func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 		return err
 	}
 
-	dhcpLinks := map[string]string{}
-	for _, link := range links {
-		if match, ok := findMatch(link, netCfg); ok && match.DHCP {
-			dhcpLinks[link.Attrs().Name] = match.DHCPArgs
-		}
-	}
-
-	//run dhcp
 	wg := sync.WaitGroup{}
-	for iface, args := range dhcpLinks {
+
+	for _, link := range links {
+		name := link.Attrs().Name
+		args := ""
+		if match, ok := findMatch(link, netCfg); ok && match.DHCP {
+			args = match.DHCPArgs
+		} else {
+			args = "dhcpd --release"
+		}
 		wg.Add(1)
 		go func(iface, args string) {
 			runDhcp(netCfg, iface, args, setHostname, setDNS)
 			wg.Done()
-		}(iface, args)
+		}(name, args)
 	}
 	wg.Wait()
 
@@ -215,7 +215,6 @@ func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 }
 
 func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
-	log.Infof("Running DHCP on %s", iface)
 	args := []string{}
 	if argstr != "" {
 		var err error
@@ -238,6 +237,7 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, se
 
 	args = append(args, iface)
 	cmd := exec.Command(args[0], args[1:]...)
+	log.Infof("Running DHCP on %s: %s", iface, strings.Join(args, " "))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {

@@ -13,6 +13,8 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
+	"github.com/rancher/os/cmd/control"
+	//networkCmd "github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
@@ -302,6 +304,11 @@ func RunInit() error {
 				log.Error(err)
 			}
 
+			if err := control.UdevSettle(); err != nil {
+				log.Errorf("Failed to run udev settle: %v", err)
+			}
+
+			log.Debug("init: runCloudInitServices()")
 			if err := runCloudInitServices(cfg); err != nil {
 				log.Error(err)
 			}

@@ -26,7 +26,6 @@ import (
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
-	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/cmd/network"
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/config/cloudinit/config"
@@ -55,26 +54,17 @@ func Main() {
 	log.InitLogger()
 	log.Info("Running cloud-init-save")
 
-	if err := control.UdevSettle(); err != nil {
-		log.Errorf("Failed to run udev settle: %v", err)
-	}
-
-	cfg := rancherConfig.LoadConfig()
-	network.ApplyNetworkConfig(cfg)
-
 	if err := SaveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
-
-	// Apply any newly detected network config.
-	//consider putting this in a separate init phase...
-	cfg = rancherConfig.LoadConfig()
-	network.ApplyNetworkConfig(cfg)
 }
 
 func SaveCloudConfig() error {
 	log.Debugf("SaveCloudConfig")
+
 	cfg := rancherConfig.LoadConfig()
+	log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
+	network.ApplyNetworkConfig(cfg)
 
 	dss := getDatasources(cfg)
 	if len(dss) == 0 {
@@ -83,6 +73,12 @@ func SaveCloudConfig() error {
 	}
 
 	selectDatasource(dss)
+
+	// Apply any newly detected network config.
+	cfg = rancherConfig.LoadConfig()
+	log.Debugf("init: SaveCloudConfig(post ApplyNetworkConfig): %#v", cfg.Rancher.Network)
+	network.ApplyNetworkConfig(cfg)
+
 	return nil
 }
 

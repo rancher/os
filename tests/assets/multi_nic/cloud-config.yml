@@ -3,11 +3,13 @@ rancher:
   network:
     interfaces:
       eth0:
+        dhcp: true
+      eth1:
         address: 10.1.0.41/24
         gateway: 10.1.0.1
         mtu: 1500
         dhcp: false
-      eth1:
+      eth2:
         address: 10.31.168.85/24
         gateway: 10.31.168.1
         gateway_ipv6: "fe00:1234::"
