@@ -47,7 +47,6 @@ sudo kpartx -a ${DISK}
 
 docker run --privileged -it --rm \
     -v /dev/mapper:/dev/mapper \
-    -v /:/host \
     -v ${STATE}:/cluster \
     rancher/os:${VERSION} \
 	--isoinstallerloaded=1 \

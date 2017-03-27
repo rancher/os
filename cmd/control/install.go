@@ -97,7 +97,8 @@ func installAction(c *cli.Context) error {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
 
-	if c.Bool("debug") {
+	debug := c.Bool("debug")
+	if debug {
 		originalLevel := log.GetLevel()
 		defer log.SetLevel(originalLevel)
 		log.SetLevel(log.DebugLevel)
@@ -154,7 +155,7 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
-	if err := runInstall(image, installType, cloudConfig, device, partition, kappend, force, kexec, isoinstallerloaded); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, partition, kappend, force, kexec, isoinstallerloaded, debug); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 		return err
 	}
@@ -167,7 +168,7 @@ func installAction(c *cli.Context) error {
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, partition, kappend string, force, kexec, isoinstallerloaded bool) error {
+func runInstall(image, installType, cloudConfig, device, partition, kappend string, force, kexec, isoinstallerloaded, debug bool) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -278,6 +279,9 @@ func runInstall(image, installType, cloudConfig, device, partition, kappend stri
 			if kexec {
 				installerCmd = append(installerCmd, "--kexec")
 			}
+			if debug {
+				installerCmd = append(installerCmd, "--debug")
+			}
 
 			// TODO: mount at /mnt for shared mount?
 			if useIso {
@@ -300,10 +304,7 @@ func runInstall(image, installType, cloudConfig, device, partition, kappend stri
 
 	log.Debugf("running installation")
 
-	if partition != "" {
-		device = "/host" + device
-		partition = "/host" + partition
-	} else {
+	if partition == "" {
 		if installType == "generic" ||
 			installType == "syslinux" ||
 			installType == "gptsyslinux" {
