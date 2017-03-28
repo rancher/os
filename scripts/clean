@@ -3,3 +3,4 @@ set -e
 
 cd $(dirname $0)/..
 rm -rf build dist bin images/*/build state
+rm -rf ./scripts/images/openstack/dist

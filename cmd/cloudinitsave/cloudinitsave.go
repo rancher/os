@@ -62,10 +62,12 @@ func Main() {
 func SaveCloudConfig() error {
 	log.Debugf("SaveCloudConfig")
 
+	// TODO: can't run these here, but it needs to be triggered from here :()
 	cfg := rancherConfig.LoadConfig()
 	log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
 	network.ApplyNetworkConfig(cfg)
 
+	log.Debugf("datasources that will be consided: %#v", cfg.Rancher.CloudInit.Datasources)
 	dss := getDatasources(cfg)
 	if len(dss) == 0 {
 		log.Errorf("currentDatasource - none found")
@@ -74,6 +76,7 @@ func SaveCloudConfig() error {
 
 	selectDatasource(dss)
 
+	// TODO: can't run these here, but it needs to be triggered from here :()
 	// Apply any newly detected network config.
 	cfg = rancherConfig.LoadConfig()
 	log.Debugf("init: SaveCloudConfig(post ApplyNetworkConfig): %#v", cfg.Rancher.Network)

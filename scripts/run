@@ -25,6 +25,9 @@ while [ "$#" -gt 0 ]; do
         --pxe)
             BOOT_PXE=1
             ;;
+        --openstack)
+            USE_OPENSTACK_IMG=1
+            ;;
         --append)
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
@@ -152,16 +155,24 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
 
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
-        if [ ¨$INSTALLED¨ == ¨1¨ ]; then
-            ./scripts/create-installed
+        if [ "$USE_OPENSTACK_IMG" == "1" ]; then
+           if [ ! -e "dist/rancheros-openstack.img" ]; then
+               echo "please build the open stack image first (run make release)."
+               exit 1
+           fi
+           cp dist/rancheros-openstack.img $HD
         else
-        if [ "$AUTOFORMAT" == "1" ]; then
-            echo "boot2docker, please format-me" | cat - /dev/zero | head -c 5242880 > format-flag.txt # 5M
-            qemu-img convert -f raw format-flag.txt -O qcow2 ${HD}
-            qemu-img resize ${HD} +10GB
-        else
-            qemu-img create -f qcow2 -o size=10G ${HD}
-        fi
+            if [ ¨$INSTALLED¨ == ¨1¨ ]; then
+                ./scripts/create-installed
+            else
+                if [ "$AUTOFORMAT" == "1" ]; then
+                    echo "boot2docker, please format-me" | cat - /dev/zero | head -c 5242880 > format-flag.txt # 5M
+                    qemu-img convert -f raw format-flag.txt -O qcow2 ${HD}
+                    qemu-img resize ${HD} +10GB
+                else
+                    qemu-img create -f qcow2 -o size=10G ${HD}
+                fi
+            fi
         fi
     fi
 
@@ -180,34 +191,38 @@ if [ "$QIND" != "1" ]; then
         CPU="-cpu host"
     fi
 
-    CCROOT=${BUILD}/cloud-config
-    rm -rf ${CCROOT}
-    mkdir -p ${CCROOT}
-
-    USER_DATA=${CCROOT}/openstack/latest/user_data
-    mkdir -p $(dirname ${USER_DATA})
-    rm -f ${USER_DATA} || :
-    if [ -n "$CLOUD_CONFIG" ]; then
-        cat ${CLOUD_CONFIG} > ${USER_DATA}
+    if [[ "${CLOUD_CONFIG}" == *".iso" ]]; then
+        CLOUD_CONFIG_DISK="-cdrom ${CLOUD_CONFIG}"
     else
-        echo "#cloud-config" > ${USER_DATA}
-        echo "ssh_authorized_keys:" >> ${USER_DATA}
-        echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
+        CCROOT=${BUILD}/cloud-config
+        rm -rf ${CCROOT}
+        mkdir -p ${CCROOT}
+
+        USER_DATA=${CCROOT}/openstack/latest/user_data
+        mkdir -p $(dirname ${USER_DATA})
+        rm -f ${USER_DATA} || :
+        if [ -n "$CLOUD_CONFIG" ]; then
+            cat ${CLOUD_CONFIG} > ${USER_DATA}
+        else
+            echo "#cloud-config" > ${USER_DATA}
+            echo "ssh_authorized_keys:" >> ${USER_DATA}
+            echo "- $(<${BASE}/assets/rancher.key.pub)" >> ${USER_DATA}
+        fi
+        case $CLOUD_CONFIG_FORMAT in
+            iso)
+                mkisofs -R -V config-2 -o ${BASE}/state/configdrive.iso ${CCROOT}
+                CLOUD_CONFIG_DISK="-cdrom ${BASE}/state/configdrive.iso"
+            ;;
+            fat)
+                echo "TODO: implement a vfat formated qemu img & copy the config files into it"
+                exit 1
+            ;;
+            *)
+                CLOUD_CONFIG_DISK="-fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
+                    -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2"
+            ;;
+        esac
     fi
-    case $CLOUD_CONFIG_FORMAT in
-        iso)
-            mkisofs -R -V config-2 -o ${BASE}/state/configdrive.iso ${CCROOT}
-            CLOUD_CONFIG_DISK="-cdrom ${BASE}/state/configdrive.iso"
-        ;;
-        fat)
-            echo "TODO: implement a vfat formated qemu img & copy the config files into it"
-            exit 1
-        ;;
-        *)
-            CLOUD_CONFIG_DISK="-fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
-                -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=config-2"
-        ;;
-    esac
 
     HOME=${HOME:-/}
 fi
@@ -251,7 +266,6 @@ elif [ "$BOOT_ISO" == "1" ] ||
             [ "$BOOT_HD" == "1" ]; then
     if [ "$BOOT_ISO" == "1" ]; then
         ISO_OPTS="-boot d -cdrom ./dist/artifacts/rancheros.iso \
-            ${CLOUD_CONFIG_DISK} \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home "
             echo "----- $ISO_OPTS"
@@ -259,6 +273,7 @@ elif [ "$BOOT_ISO" == "1" ] ||
     set -x
     exec qemu-system-${QEMUARCH} \
             ${DISPLAY_OPTS} \
+            ${CLOUD_CONFIG_DISK} \
             -rtc base=utc,clock=host \
             ${KVM_ENABLE} \
             ${CPU} \

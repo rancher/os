@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|docs')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|docs|release')
 
 .dapper:
 	@echo Downloading dapper
@@ -34,12 +34,18 @@ shell-bind: .dapper
 clean:
 	@./scripts/clean
 
+release: release-build openstack
+
+release-build:
+	./.dapper release
+
 itest:
 	./.dapper integration-test 2>&1 | tee dist/itest.log
 
 openstack:
 	cp dist/artifacts/rancheros.iso scripts/images/openstack/
 	cd scripts/images/openstack && ../../../.dapper
+	cp ./scripts/images/openstack/dist/*.img dist/
 
 openstack-run:
 	qemu-system-x86_64 -curses \
