@@ -109,6 +109,9 @@ while [ "$#" -gt 0 ]; do
         --no-rebuild)
             REBUILD=0
             ;;
+        --no-network)
+            NO_NETWORK=1
+            ;;
         --fresh)
             FRESH=1
             ;;
@@ -281,6 +284,12 @@ if [ "$GUICONSOLE" == "" ]; then
 	fi
 fi
 
+if [ "${NO_NETWORK}" == "1" ]; then
+    NETWORK="-net none"
+else
+    NETWORK="${network["$ARCH"]}"
+fi
+
 if [ "$QEMU" == "1" ]; then
     if [ "$INSTALLED" == "1" ]; then
         # kernel args only works when using -kernel
@@ -298,7 +307,7 @@ if [ "$QEMU" == "1" ]; then
             ${CPU} \
             ${machine["$ARCH"]} \
             -m $MEMORY \
-            ${network["$ARCH"]} \
+            ${NETWORK} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
@@ -325,7 +334,7 @@ elif [ "$BOOT_ISO" == "1" ] ||
             ${CPU} \
             ${machine["$ARCH"]} \
             -m $MEMORY \
-            ${network["$ARCH"]} \
+            ${NETWORK} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
