@@ -67,7 +67,7 @@ At this point you'll have a ZFS filesystem created and mounted at `/zpool1/docke
 Now you'll need to remove `-s overlay` (or any other storage driver) from the Docker daemon args to allow docker to automatically detect `zfs`.
 
 ```
-$ sudo ros config set rancher.docker.storage_driver ''
+$ sudo ros config set rancher.docker.storage_driver 'zfs'
 $ sudo ros config set rancher.docker.graph /mnt/zpool1/docker
 # Now that you've changed the Docker daemon args, you'll need to start Docker
 $ sudo system-docker start docker
