@@ -78,7 +78,7 @@ var installCommand = cli.Command{
 			Hidden: true,
 		},
 		cli.BoolFlag{
-			Name:  "kexec",
+			Name:  "kexec, k",
 			Usage: "reboot using kexec",
 		},
 		cli.BoolFlag{
@@ -395,7 +395,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, kappend strin
 	CONSOLE := "tty0"
 	baseName := "/mnt/new_img"
 	bootDir := "boot/"
-	kernelArgs := "rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait" // console="+CONSOLE
+	kernelArgs := "rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait printk.devkmsg=on" // console="+CONSOLE
 
 	// unmount on trap
 	defer util.Unmount(baseName)
@@ -517,7 +517,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, kappend strin
 		install.PvGrubConfig(menu)
 	}
 	log.Debugf("installRancher")
-	err := installRancher(baseName, bootDir, VERSION, DIST, kernelArgs+" "+kappend)
+	currentCfg, err := installRancher(baseName, bootDir, VERSION, DIST, kernelArgs+" "+kappend)
 	if err != nil {
 		log.Errorf("%s", err)
 		return err
@@ -526,12 +526,19 @@ func layDownOS(image, installType, cloudConfig, device, partition, kappend strin
 
 	// Used by upgrade
 	if kexec {
+		vmlinuzFile, initrdFile, err := readSyslinuxCfg(currentCfg)
+		if err != nil {
+			log.Errorf("%s", err)
+			return err
+		}
 		//    kexec -l ${DIST}/vmlinuz --initrd=${DIST}/initrd --append="${kernelArgs} ${APPEND}" -f
-		cmd := exec.Command("kexec", "-l "+DIST+"/vmlinuz",
-			"--initrd="+DIST+"/initrd",
-			"--append='"+kernelArgs+" "+kappend+"'",
+		cmd := exec.Command(
+			"kexec",
+			"-l", DIST+"/"+vmlinuzFile,
+			"--initrd", DIST+"/"+initrdFile,
+			"--append", "'"+kernelArgs+" "+kappend+"'",
 			"-f")
-		log.Debugf("Run(%v)", cmd)
+		log.Debugf("Run(%#v)", cmd)
 		cmd.Stderr = os.Stderr
 		if _, err := cmd.Output(); err != nil {
 			log.Errorf("Failed to kexec: %s", err)
@@ -541,6 +548,31 @@ func layDownOS(image, installType, cloudConfig, device, partition, kappend strin
 	}
 
 	return nil
+}
+
+func readSyslinuxCfg(currentCfg string) (string, string, error) {
+	vmlinuzFile := ""
+	initrdFile := ""
+	// Need to parse currentCfg for the lines:
+	// KERNEL ../vmlinuz-4.9.18-rancher^M
+	// INITRD ../initrd-41e02e6-dirty^M
+	buf, err := ioutil.ReadFile(currentCfg)
+	if err != nil {
+		return vmlinuzFile, initrdFile, err
+	}
+	s := bufio.NewScanner(bytes.NewReader(buf))
+	for s.Scan() {
+		line := strings.TrimSpace(s.Text())
+		if strings.HasPrefix(line, "KERNEL") {
+			vmlinuzFile = strings.TrimSpace(strings.TrimPrefix(line, "KERNEL"))
+			vmlinuzFile = filepath.Base(vmlinuzFile)
+		}
+		if strings.HasPrefix(line, "INITRD") {
+			initrdFile = strings.TrimSpace(strings.TrimPrefix(line, "INITRD"))
+			initrdFile = filepath.Base(initrdFile)
+		}
+	}
+	return vmlinuzFile, initrdFile, err
 }
 
 // files is an array of 'sourcefile:destination' - but i've not seen any examples of it being used.
@@ -982,7 +1014,7 @@ func installSyslinux(device, baseName, bootDir, diskType string) error {
 	return nil
 }
 
-func installRancher(baseName, bootDir, VERSION, DIST, kappend string) error {
+func installRancher(baseName, bootDir, VERSION, DIST, kappend string) (string, error) {
 	log.Debugf("installRancher")
 
 	// detect if there already is a linux-current.cfg, if so, move it to linux-previous.cfg,
@@ -991,7 +1023,7 @@ func installRancher(baseName, bootDir, VERSION, DIST, kappend string) error {
 		previousCfg := filepath.Join(baseName, bootDir, "linux-previous.cfg")
 		if _, err := os.Stat(previousCfg); !os.IsNotExist(err) {
 			if err := os.Remove(previousCfg); err != nil {
-				return err
+				return currentCfg, err
 			}
 		}
 		os.Rename(currentCfg, previousCfg)
@@ -1021,8 +1053,8 @@ func installRancher(baseName, bootDir, VERSION, DIST, kappend string) error {
 		err := ioutil.WriteFile(globalFile, []byte("APPEND "+kappend), 0644)
 		if err != nil {
 			log.Errorf("write (%s) %s", "global.cfg", err)
-			return err
+			return currentCfg, err
 		}
 	}
-	return nil
+	return currentCfg, nil
 }

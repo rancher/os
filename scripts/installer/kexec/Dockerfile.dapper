@@ -1,0 +1,42 @@
+FROM ubuntu:16.04
+# FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
+
+
+RUN apt-get update \
+    && apt-get install -yq build-essential autoconf libtool gawk alien fakeroot \
+        zlib1g-dev uuid-dev libattr1-dev libblkid-dev libselinux-dev libudev-dev libdevmapper-dev \
+        module-init-tools \
+        parted lsscsi ksh curl git
+
+WORKDIR /source
+
+#ADD https://github.com/rancher/os-kernel/releases/download/v4.9.15-rancher/build-linux-4.9.15-rancher-x86.tar.gz .
+#RUN mkdir -p /usr/src/v4.9.15-rancher \
+#    && cd /usr/src/v4.9.15-rancher \
+#    && tar zxvf /source/build-linux-4.9.15-rancher-x86.tar.gz
+
+# https://www.kernel.org/pub/linux/utils/kernel/kexec/
+ENV VERSION 2.0.14
+ADD https://www.kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-$VERSION.tar.gz .
+
+RUN zcat kexec-tools-$VERSION.tar.gz | tar xvf - \
+  && cd kexec-tools-$VERSION \
+  && sed 's/loff_t/off_t/g' -i vmcore-dmesg/vmcore-dmesg.c \
+  && LDFLAGS=-static ./configure \
+  && make \
+  && make install
+RUN mkdir -p /source/dist \
+  && cp -r /usr/local/* /source/dist
+
+########## Dapper Configuration #####################
+
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST
+#ENV DAPPER_DOCKER_SOCKET true
+ENV DAPPER_SOURCE /source
+ENV DAPPER_OUTPUT ./dist
+#ENV DAPPER_RUN_ARGS --privileged
+#ENV TRASH_CACHE ${DAPPER_SOURCE}/.trash-cache
+#ENV SHELL /bin/bash
+
+CMD true
+
