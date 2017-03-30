@@ -395,7 +395,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, kappend strin
 	CONSOLE := "tty0"
 	baseName := "/mnt/new_img"
 	bootDir := "boot/"
-	kernelArgs := "rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait printk.devkmsg=on" // console="+CONSOLE
+	kernelArgs := "printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait" // console="+CONSOLE
 
 	// unmount on trap
 	defer util.Unmount(baseName)
@@ -1027,6 +1027,7 @@ func installRancher(baseName, bootDir, VERSION, DIST, kappend string) (string, e
 			}
 		}
 		os.Rename(currentCfg, previousCfg)
+		// TODO: now that we're parsing syslinux.cfg files, maybe we can delete old kernels and initrds
 	}
 
 	// The image/ISO have all the files in it - the syslinux cfg's and the kernel&initrd, so we can copy them all from there
@@ -1039,7 +1040,6 @@ func installRancher(baseName, bootDir, VERSION, DIST, kappend string) (string, e
 			log.Errorf("copy %s: %s", file.Name(), err)
 			//return err
 		}
-		log.Debugf("copied %s to %s as %s", filepath.Join(DIST, file.Name()), filepath.Join(baseName, bootDir), file.Name())
 	}
 	// the general INCLUDE syslinuxcfg
 	if err := dfs.CopyFile(filepath.Join(DIST, "isolinux", "isolinux.cfg"), filepath.Join(baseName, bootDir, "syslinux"), "syslinux.cfg"); err != nil {

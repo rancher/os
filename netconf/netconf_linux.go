@@ -24,6 +24,7 @@ const (
 
 var (
 	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
+	dhcpReleaseCmd  = "dhcpcd --release"
 )
 
 func createInterfaces(netCfg *NetworkConfig) {
@@ -186,10 +187,12 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 }
 
 func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
+	log.Debugf("RunDhcp")
 	populateDefault(netCfg)
 
 	links, err := netlink.LinkList()
 	if err != nil {
+		log.Errorf("RunDhcp failed to get LinkList, %s", err)
 		return err
 	}
 
@@ -197,21 +200,26 @@ func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 
 	for _, link := range links {
 		name := link.Attrs().Name
-		args := ""
-		if match, ok := findMatch(link, netCfg); ok && match.DHCP {
-			args = match.DHCPArgs
-		} else {
-			args = "dhcpd --release"
+		if name == "lo" {
+			continue
+		}
+		match, ok := findMatch(link, netCfg)
+		if !ok {
+			continue
 		}
 		wg.Add(1)
-		go func(iface, args string) {
-			runDhcp(netCfg, iface, args, setHostname, setDNS)
+		go func(iface string, match InterfaceConfig) {
+			if match.DHCP {
+				runDhcp(netCfg, iface, match.DHCPArgs, setHostname, setDNS)
+			} else {
+				runDhcp(netCfg, iface, dhcpReleaseCmd, false, true)
+			}
 			wg.Done()
-		}(name, args)
+		}(name, match)
 	}
 	wg.Wait()
 
-	return err
+	return nil
 }
 
 func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
@@ -387,8 +395,13 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	}
 	for _, addr := range existingAddrs {
 		if _, ok := addrMap[addr.IPNet.String()]; !ok {
-			log.Infof("leaving  %s from %s", addr.String(), link.Attrs().Name)
-			//removeAddress(addr, link)
+			if netConf.DHCP {
+				// let the dhcpcd take care of it
+				log.Infof("leaving  %s from %s", addr.String(), link.Attrs().Name)
+			} else {
+				log.Infof("removing  %s from %s", addr.String(), link.Attrs().Name)
+				removeAddress(addr, link)
+			}
 		}
 	}
 
