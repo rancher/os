@@ -841,9 +841,21 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 		return err
 	}
 	backupSyslinuxDir := filepath.Join(baseName, bootDir+"syslinux_backup")
-	if err := os.RemoveAll(backupSyslinuxDir); err != nil {
-		log.Errorf("RemoveAll (%s): %s", backupSyslinuxDir, err)
-		return err
+	if _, err := os.Stat(backupSyslinuxDir); !os.IsNotExist(err) {
+		backupSyslinuxLdlinuxSys := filepath.Join(backupSyslinuxDir, "ldlinux.sys")
+		if _, err := os.Stat(backupSyslinuxLdlinuxSys); !os.IsNotExist(err) {
+			//need a privileged container that can chattr -i ldlinux.sys
+			cmd := exec.Command("chattr", "-i", backupSyslinuxLdlinuxSys)
+			if err := cmd.Run(); err != nil {
+				log.Errorf("%s", err)
+				return err
+			}
+		}
+
+		if err := os.RemoveAll(backupSyslinuxDir); err != nil {
+			log.Errorf("RemoveAll (%s): %s", backupSyslinuxDir, err)
+			return err
+		}
 	}
 
 	if err := os.Rename(grubDir, grubBackup); err != nil {
