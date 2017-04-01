@@ -14,7 +14,7 @@ import (
 
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/cmd/control"
-	//networkCmd "github.com/rancher/os/cmd/network"
+	networkCmd "github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
@@ -308,10 +308,19 @@ func RunInit() error {
 				log.Errorf("Failed to run udev settle: %v", err)
 			}
 
+			//cfg := rancherConfig.LoadConfig()
+			log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
+			networkCmd.ApplyNetworkConfig(cfg)
+
 			log.Debug("init: runCloudInitServices()")
 			if err := runCloudInitServices(cfg); err != nil {
 				log.Error(err)
 			}
+
+			// Apply any newly detected network config.
+			cfg = config.LoadConfig()
+			log.Debugf("init: SaveCloudConfig(post ApplyNetworkConfig): %#v", cfg.Rancher.Network)
+			networkCmd.ApplyNetworkConfig(cfg)
 
 			return cfg, nil
 		},

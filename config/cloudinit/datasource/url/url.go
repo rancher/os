@@ -45,14 +45,17 @@ func (f *RemoteFile) String() string {
 }
 
 func (f *RemoteFile) AvailabilityChanges() bool {
-	if f.lastError != nil {
-		// if we have a Network error, then we should retry.
-		// otherwise, we've made a request to the server, and its said nope.
-		if _, ok := f.lastError.(pkg.ErrNetwork); !ok {
-			return false
+	return false
+	// TODO: we should trigger something to change the network state
+	/*	if f.lastError != nil {
+			// if we have a Network error, then we should retry.
+			// otherwise, we've made a request to the server, and its said nope.
+			if _, ok := f.lastError.(pkg.ErrNetwork); !ok {
+				return false
+			}
 		}
-	}
-	return true
+		return true
+	*/
 }
 
 func (f *RemoteFile) ConfigRoot() string {
