@@ -8,7 +8,8 @@ ENV KERNEL_VERSION=${KERNEL_VERSION}
 
 # not installed atm udev, grub2, kexe-tools
 # parted: partprobe, e2fsprogs: mkfs.ext4, syslinux: extlinux&syslinux
-RUN apk --no-cache add syslinux parted e2fsprogs util-linux
+# e2fsprogs-extra: chattr
+RUN apk --no-cache add syslinux parted e2fsprogs e2fsprogs-extra util-linux
 
 COPY conf /scripts/
 COPY ./build/ros /bin/
