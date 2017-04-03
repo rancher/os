@@ -17,6 +17,7 @@ COPY ./build/ros /bin/
 #OR softlink in the host one - this image should only be used when installing from ISO..
 # (except its useful for testing)
 # && ln -s /host/usr/bin/ros /bin/
+COPY kexec/dist/sbin/kexec /sbin/
 
 RUN ln -s /bootiso/boot/ /dist
 
