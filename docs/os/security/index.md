@@ -30,5 +30,6 @@ layout: os-default
 | ID | Description | Date | Resolution |
 |----|-------------|------|------------|
 | [CVE-2017-6074](http://seclists.org/oss-sec/2017/q1/471) | Local privilege-escalation using a user after free issue in [Datagram Congestion Control Protocol (DCCP)](https://wiki.linuxfoundation.org/networking/dccp). DCCP is built into the RancherOS kernel as a dynamically loaded module, and isn't loaded by default. | 17 Feb 2017 | [RancherOS v0.8.1](https://github.com/rancher/os/releases/tag/v0.8.1) using a [patched 4.9.12 Linux kernel](https://github.com/rancher/os-kernel/releases/tag/v4.9.12-rancher) |
+| [CVE-2017-7184](https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-7184) | Allows local users to obtain root privileges or cause a denial of service (heap-based out-of-bounds access) by leveraging the CAP_NET_ADMIN capability. | 3 April 2017 | [RancherOS v0.9.2-rc1](https://github.com/rancher/os/releases/tag/v0.9.2-rc1) using Linux 4.9.20 |
 
 
