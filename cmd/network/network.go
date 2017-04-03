@@ -43,10 +43,12 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 
 	// TODO: seems wrong to do this outside netconf
 	userSetHostname := cfg.Hostname != ""
+	log.Infof("Apply Network Config RunDhcp")
 	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDNS); err != nil {
 		log.Error(err)
 	}
 
+	log.Infof("Apply Network Config SyncHostname")
 	if err := hostname.SyncHostname(); err != nil {
 		log.Error(err)
 	}
