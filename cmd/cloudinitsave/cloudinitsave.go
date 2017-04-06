@@ -26,6 +26,7 @@ import (
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
+	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/cmd/network"
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/config/cloudinit/config"
@@ -53,6 +54,14 @@ const (
 func Main() {
 	log.InitLogger()
 	log.Info("Running cloud-init-save")
+
+	if err := control.UdevSettle(); err != nil {
+		log.Errorf("Failed to run udev settle: %v", err)
+	}
+
+	cfg := rancherConfig.LoadConfig()
+	log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
+	network.ApplyNetworkConfig(cfg)
 
 	if err := SaveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
