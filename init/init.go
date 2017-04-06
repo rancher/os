@@ -13,7 +13,7 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/os/cmd/control"
+	//	"github.com/rancher/os/cmd/control"
 	networkCmd "github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
@@ -304,9 +304,10 @@ func RunInit() error {
 				log.Error(err)
 			}
 
-			if err := control.UdevSettle(); err != nil {
-				log.Errorf("Failed to run udev settle: %v", err)
-			}
+			// Udev tools not available here at this point - defer to cloud-init-save container
+			//if err := control.UdevSettle(); err != nil {
+			//		log.Errorf("Failed to run udev settle: %v", err)
+			//	}
 
 			//cfg := rancherConfig.LoadConfig()
 			log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
