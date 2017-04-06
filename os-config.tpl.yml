@@ -6,7 +6,7 @@ rancher:
     hostname: {{.HOSTNAME_DEFAULT}}
     {{if eq "amd64" .ARCH -}}
     docker:
-      engine: docker-1.12.6
+      engine: docker-17.04.0-ce
     {{else -}}
     docker:
       engine: docker-1.11.2
@@ -294,7 +294,7 @@ rancher:
       - /opt:/opt
     docker:
       {{if eq "amd64" .ARCH -}}
-      image: {{.OS_REPO}}/os-docker:1.12.6{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.04.0{{.SUFFIX}}
       {{else -}}
       image: {{.OS_REPO}}/os-docker:1.11.2{{.SUFFIX}}
       {{end -}}
