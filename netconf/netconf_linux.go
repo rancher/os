@@ -395,7 +395,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	}
 	for _, addr := range existingAddrs {
 		if _, ok := addrMap[addr.IPNet.String()]; !ok {
-			if netConf.DHCP {
+			if netConf.DHCP || netConf.IPV4LL {
 				// let the dhcpcd take care of it
 				log.Infof("leaving  %s from %s", addr.String(), link.Attrs().Name)
 			} else {
