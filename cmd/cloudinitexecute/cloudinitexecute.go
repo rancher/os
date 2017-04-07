@@ -71,20 +71,24 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 		if len(mount) != 4 {
 			log.Errorf("Unable to mount %s: must specify exactly four arguments", mount[1])
 		}
-		device := util.ResolveDevice(mount[0])
+
+		source := mount[0]
+		if mount[2] != "nfs" && mount[2] != "nfs4" {
+			source = util.ResolveDevice(source)
+		}
 
 		if mount[2] == "swap" {
-			cmd := exec.Command("swapon", device)
+			cmd := exec.Command("swapon", source)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
 			err := cmd.Run()
 			if err != nil {
-				log.Errorf("Unable to swapon %s: %v", device, err)
+				log.Errorf("Unable to swapon %s: %v", source, err)
 			}
 			continue
 		}
 
-		cmdArgs := []string{device, mount[1]}
+		cmdArgs := []string{source, mount[1]}
 		if mount[2] != "" {
 			cmdArgs = append(cmdArgs, "-t", mount[2])
 		}
