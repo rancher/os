@@ -52,7 +52,7 @@ func osSubcommands() []cli.Command {
 					Usage: "do not reboot after upgrade",
 				},
 				cli.BoolFlag{
-					Name:  "kexec",
+					Name:  "kexec, k",
 					Usage: "reboot using kexec",
 				},
 				cli.StringFlag{
@@ -201,7 +201,7 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 	}
 
 	if kexec {
-		command = append(command, "-k")
+		command = append(command, "--kexec")
 	}
 
 	kernelArgs = strings.TrimSpace(kernelArgs)
