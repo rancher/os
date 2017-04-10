@@ -210,9 +210,13 @@ func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 		wg.Add(1)
 		go func(iface string, match InterfaceConfig) {
 			if match.DHCP {
+				// retrigger, perhaps we're running this to get the new address
 				runDhcp(netCfg, iface, match.DHCPArgs, setHostname, setDNS)
 			} else {
-				runDhcp(netCfg, iface, dhcpReleaseCmd, false, true)
+				if hasDhcp(iface) {
+					log.Infof("dhcp release %s", iface)
+					runDhcp(netCfg, iface, dhcpReleaseCmd, false, true)
+				}
 			}
 			wg.Done()
 		}(name, match)
@@ -220,6 +224,17 @@ func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 	wg.Wait()
 
 	return nil
+}
+
+func hasDhcp(iface string) bool {
+	cmd := exec.Command("dhcpcd", "-U", iface)
+	//cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
+	if err != nil {
+		log.Error(err)
+	}
+	log.Debugf("dhcpcd -u %s: %s", iface, out)
+	return len(out) > 0
 }
 
 func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {

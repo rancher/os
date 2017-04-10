@@ -57,8 +57,6 @@ func (s *QemuSuite) TestNetworkBootCfg(c *C) {
 			"3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000\n"+
 			"    inet 10.1.0.41/24 scope global eth1\n"+
 			"       valid_lft forever preferred_lft forever\n"+
-			"    inet6 fe80::5054:ff:fe12:3457/64 scope link \n"+
-			"       valid_lft forever preferred_lft forever\n"+
 			"4: eth2: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000\n"+
 			"5: eth3: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000\n"+
 			"6: docker-sys: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000\n"+
@@ -108,12 +106,8 @@ func (s *QemuSuite) TestNetworkBootAndCloudCfg(c *C) {
 			// Need a test for that (presumably once we have libmachine based tests)
 			"    inet 10.1.0.52/24 scope global eth1\n"+
 			"       valid_lft forever preferred_lft forever\n"+
-			"    inet6 fe80::5054:ff:fe12:3457/64 scope link \n"+
-			"       valid_lft forever preferred_lft forever\n"+
 			"4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000\n"+
 			"    inet 10.31.168.85/24 scope global eth2\n"+
-			"       valid_lft forever preferred_lft forever\n"+
-			"    inet6 fe80::5054:ff:fe12:3458/64 scope link \n"+
 			"       valid_lft forever preferred_lft forever\n"+
 			// TODO: I think it would be better if this was dhcp: false, but it could go either way
 			"5: eth3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000\n"+
@@ -168,12 +162,8 @@ func (s *QemuSuite) TestNetworkCfg(c *C) {
 			"3: eth1: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000\n"+
 			"    inet 10.1.0.41/24 scope global eth1\n"+
 			"       valid_lft forever preferred_lft forever\n"+
-			"    inet6 fe80::5054:ff:fe12:3457/64 scope link \n"+
-			"       valid_lft forever preferred_lft forever\n"+
 			"4: eth2: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000\n"+
 			"    inet 10.31.168.85/24 scope global eth2\n"+
-			"       valid_lft forever preferred_lft forever\n"+
-			"    inet6 fe80::5054:ff:fe12:3458/64 scope link \n"+
 			"       valid_lft forever preferred_lft forever\n"+
 			// TODO: I think it would be better if this was dhcp: false, but it could go either way
 			"5: eth3: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000\n"+
