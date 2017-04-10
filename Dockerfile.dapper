@@ -32,7 +32,7 @@ RUN apt-get update && \
 
 ########## Dapper Configuration #####################
 
-ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
 ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd ./build/kernel
