@@ -55,6 +55,10 @@ var installCommand = cli.Command{
 			Name:  "partition, p",
 			Usage: "partition to install to",
 		},
+		cli.StringFlag{
+			Name:  "statedir",
+			Usage: "install to rancher.state.directory",
+		},
 		cli.BoolFlag{
 			Name:  "force, f",
 			Usage: "[ DANGEROUS! Data loss can happen ] partition/format without prompting",
@@ -130,6 +134,10 @@ func installAction(c *cli.Context) error {
 	}
 	device := c.String("device")
 	partition := c.String("partition")
+	statedir := c.String("statedir")
+	if statedir != "" && installType != "noformat"  {
+		log.Fatal("--statedir %s requires --type noformat", statedir)
+	}
 	if installType != "noformat" &&
 		installType != "raid" &&
 		installType != "bootstrap" &&
@@ -155,7 +163,7 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
-	if err := runInstall(image, installType, cloudConfig, device, partition, kappend, force, kexec, isoinstallerloaded, debug); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, partition, statedir, kappend, force, kexec, isoinstallerloaded, debug); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 		return err
 	}
@@ -168,7 +176,7 @@ func installAction(c *cli.Context) error {
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, partition, kappend string, force, kexec, isoinstallerloaded, debug bool) error {
+func runInstall(image, installType, cloudConfig, device, partition, statedir, kappend string, force, kexec, isoinstallerloaded, debug bool) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -339,7 +347,7 @@ func runInstall(image, installType, cloudConfig, device, partition, kappend stri
 		}
 	}
 
-	err := layDownOS(image, installType, cloudConfig, device, partition, kappend, kexec)
+	err := layDownOS(image, installType, cloudConfig, device, partition, statedir, kappend, kexec)
 	if err != nil {
 		log.Errorf("error layDownOS %s", err)
 		return err
@@ -381,7 +389,7 @@ func mountBootIso() error {
 	return err
 }
 
-func layDownOS(image, installType, cloudConfig, device, partition, kappend string, kexec bool) error {
+func layDownOS(image, installType, cloudConfig, device, partition, statedir, kappend string, kexec bool) error {
 	// ENV == installType
 	//[[ "$ARCH" == "arm" && "$ENV" != "upgrade" ]] && ENV=arm
 
@@ -396,6 +404,9 @@ func layDownOS(image, installType, cloudConfig, device, partition, kappend strin
 	baseName := "/mnt/new_img"
 	bootDir := "boot/"
 	kernelArgs := "printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait" // console="+CONSOLE
+	if statedir != "" {
+		kernelArgs = kernelArgs + " rancher.state.directory="+statedir
+	}
 
 	// unmount on trap
 	defer util.Unmount(baseName)
@@ -465,6 +476,9 @@ func layDownOS(image, installType, cloudConfig, device, partition, kappend strin
 			return err
 		}
 		installSyslinux(device, baseName, bootDir, diskType)
+		if err := os.MkdirAll(filepath.Join(baseName, statedir), 0755); err != nil {
+			return err
+		}
 	case "raid":
 		var err error
 		device, partition, err = mountdevice(baseName, bootDir, device, partition, false)
