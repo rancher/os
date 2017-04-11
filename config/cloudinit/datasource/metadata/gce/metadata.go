@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rancher/os/netconf"
+	//"github.com/rancher/os/netconf"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
@@ -74,6 +74,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		SSHPublicKeys: nil,
 	}
 
+	/* Disabled, using DHCP like in pre-0.9.1 - missing gateway and netmask, and testing time
 	addresses := []string{}
 	if public != nil {
 		addresses = append(addresses, public.String())
@@ -89,6 +90,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		md.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
 		md.NetworkConfig.Interfaces["eth0"] = network
 	}
+	*/
 
 	keyStrings := strings.Split(projectSSHKeys+"\n"+instanceSSHKeys, "\n")
 
