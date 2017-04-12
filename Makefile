@@ -37,7 +37,7 @@ clean:
 release: release-build openstack
 
 release-build:
-	./.dapper release
+	./.dapper release 2>&1 | tee dist/release.log
 
 itest:
 	./.dapper integration-test 2>&1 | tee dist/itest.log
