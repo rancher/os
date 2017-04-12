@@ -37,9 +37,11 @@ clean:
 release: release-build openstack
 
 release-build:
+	mkdir -p dist
 	./.dapper release 2>&1 | tee dist/release.log
 
 itest:
+	mkdir -p dist
 	./.dapper integration-test 2>&1 | tee dist/itest.log
 
 openstack:
