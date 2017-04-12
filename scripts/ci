@@ -48,6 +48,15 @@ for file in $(ls dist/artifacts/); do
 	done
 	popd
 done
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/release.log --name release.log" >> dist/publish.sh
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/rancheros-openstack.img --name rancheros-openstack.img" >> dist/publish.sh
+pushd .
+cd dist
+for algo in sha256 md5; do
+    echo "$algo: $(${algo}sum rancheros-openstack.img)" >> ../../$CHECKSUM
+done
+popd
+
 echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ${CHECKSUM} --name checksums.txt" >> dist/publish.sh
 
 echo >> dist/publish.sh
