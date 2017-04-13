@@ -1,8 +1,22 @@
 #!/bin/bash
 
-ROS_VERSION="v0.9.2-symbiote"
-URL_BASE="https://github.com/SvenDowideit/os/releases/download/${ROS_VERSION}"
-VMLINUX="vmlinuz-4.9.21-rancher"
+#
+# This can be invoked either from the commandline of a fedora 25 vm, or as user-data
+# either way, the part inside the "if" needs to be run by hand from the console atmA
+#
+# The most experimental way, is to use the ./scripts/hosting/digitalocean/host.sh script to modify this one for the current build
+# push the rancher/os:sha image to hub, and then use
+#   doctl.exe compute droplet create --enable-ipv6 --enable-private-networking --image fedora-25-x64 --region sfo1 --size 2gb --ssh-keys 6956055 --ssh-keys 7170404 --user-data-file digitalocean.yml sven
+#  where:
+#$ cat digitalocean.yml
+##include
+#http://<IPaddress>:2115/digitalocean.sh
+#
+#
+
+ROS_VERSION="v1.0.1-rc1"
+URL_BASE="https://github.com/rancher/os/releases/download/${ROS_VERSION}"
+VMLINUX="vmlinuz-4.9.22-rancher"
 INITRD="initrd
 
 cd /tmp
@@ -11,11 +25,24 @@ curl -O -L "${URL_BASE}/${VMLINUX}"
 echo "downloading ${URL_BASE}/${INITRD}" > /dev/kmsg
 curl -O -L "${URL_BASE}/${INITRD}"
 
-if [ "$(ros config get rancher.environment.installer)" == "true" ] && ros --version &>/dev/null; then
-        ros install -f -c cloud-config.yml -d /dev/vda -p /dev/vda1 \
-                --statedir ros -t noformat \
-                --append "rancher.state.directory=ros rancher.debug=true printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0"
-        exit 0
+if type ros 2>/dev/null; then
+	if [ "$(ros config get rancher.environment.installer)" == "true" ] && ros --version &>/dev/null; then
+		# This stuff isn't called automatically atm, need to ru manually
+		#FIXME removing the grub dir stops `ros os upgrade` from re-installing syslinux, which seems to cause havoc
+		system-docker run -dit --privileged --name stuff alpine top
+		system-docker exec -it stuff mount /dev/vda1 /mnt
+		system-docker exec -it stuff rm -rf /mnt/boot/grub /mnt/boot/*fc25* /mnt/var /mnt/usr /mnt/dev /mnt/proc /mnt/sys /mnt/tmp
+		system-docker exec -it stuff umount /mnt
+		system-docker rm -f stuff
+
+
+		ros config set rancher.debug true
+		ros install -f --no-reboot \
+		         -d /dev/vda -p /dev/vda1 \
+        	        --statedir ros -t noformat \
+               	 --append "rancher.state.dev=LABEL=DOROOT rancher.state.directory=ros rancher.debug=true printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0"
+	        exit 0
+	fi
 fi
 
 echo "installing kexec" > /dev/kmsg

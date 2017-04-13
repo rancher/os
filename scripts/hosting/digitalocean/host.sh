@@ -49,4 +49,4 @@ echo
 echo
 
 cd ${DIST}
-caddy -port ${PORT}
+caddy -log stdout -port ${PORT}
