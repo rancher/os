@@ -135,7 +135,7 @@ func installAction(c *cli.Context) error {
 	device := c.String("device")
 	partition := c.String("partition")
 	statedir := c.String("statedir")
-	if statedir != "" && installType != "noformat"  {
+	if statedir != "" && installType != "noformat" {
 		log.Fatal("--statedir %s requires --type noformat", statedir)
 	}
 	if installType != "noformat" &&
@@ -411,7 +411,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	bootDir := "boot/"
 	kernelArgs := "printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait" // console="+CONSOLE
 	if statedir != "" {
-		kernelArgs = kernelArgs + " rancher.state.directory="+statedir
+		kernelArgs = kernelArgs + " rancher.state.directory=" + statedir
 	}
 
 	// unmount on trap
