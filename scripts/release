@@ -1,12 +1,13 @@
 #!/bin/bash
 set -e
 
-source $(dirname $0)/version
+cd $(dirname $0)/..
+source ./scripts/version
 export REPO_VERSION=$VERSION
 export COMPRESS="xz --format=lzma -9 --memlimit-compress=80% -e"
 export INTEGRATION_TESTS=0
 
-exec $(dirname $0)/ci
+./scripts/ci
 
 # make generated changelog
 lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
