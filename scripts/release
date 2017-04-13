@@ -11,3 +11,56 @@ exec $(dirname $0)/ci
 # make generated changelog
 lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
 git log --format="%s: %b" ${lastrelease}..${VERSION}  | grep "Merge pull" | sed 's/.*\(#.*\) from .*:\(.*\)/* \1: \2/g' > dist/artifacts/changelog.txt
+
+CHECKSUM="dist/checksums.txt"
+rm -f $CHECKSUM
+
+cat scripts/hosting/rancheros.ipxe | sed "s/latest/${VERSION}/g" > dist/artifacts/rancheros.ipxe
+
+echo "github-release release --user rancher --repo os --tag ${VERSION} --pre-release --draft" > dist/publish.sh
+chmod 755 dist/publish.sh
+
+for file in $(ls dist/artifacts/); do
+	if [[ "$file" == *"installer.tar" ]]; then
+		continue
+	fi
+	if [[ "$file" == "Dockerfile"* ]]; then
+		continue
+	fi
+
+	echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${file} --name ${file}" >> dist/publish.sh
+	if [[ "$file" == "initrd-"* ]]; then
+		echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${file} --name initrd" >> dist/publish.sh
+	fi
+	if [[ "$file" == "vmlinuz-"* ]]; then
+		echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${file} --name vmlinuz" >> dist/publish.sh
+	fi
+
+	#checksums
+	pushd .
+	cd dist/artifacts
+	for algo in sha256 md5; do
+	    echo "$algo: $(${algo}sum $file)" >> ../../$CHECKSUM
+	done
+	popd
+done
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/release.log --name release.log" >> dist/publish.sh
+
+# openstack image is made later atm
+#echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/rancheros-openstack.img --name rancheros-openstack.img" >> dist/publish.sh
+#pushd .
+#cd dist
+#for algo in sha256 md5; do
+#    echo "$algo: $(${algo}sum rancheros-openstack.img)" >> ../../$CHECKSUM
+#done
+#popd
+
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ${CHECKSUM} --name checksums.txt" >> dist/publish.sh
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/artifacts/changelog.txt --name changelog.txt" >> dist/publish.sh
+
+echo >> dist/publish.sh
+
+cat dist/images | sed 's/^/docker push /' >> dist/publish.sh
+
+echo "--- Run dist/publish.sh"
+cat dist/publish.sh

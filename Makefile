@@ -34,7 +34,7 @@ shell-bind: .dapper
 clean:
 	@./scripts/clean
 
-release: release-build openstack
+release: .dapper release-build openstack
 
 release-build:
 	mkdir -p dist
