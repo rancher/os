@@ -290,6 +290,12 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			if debug {
 				installerCmd = append(installerCmd, "--debug")
 			}
+			if partition != "" {
+				installerCmd = append(installerCmd, "--partition", partition)
+			}
+			if statedir != "" {
+				installerCmd = append(installerCmd, "--statedir", statedir)
+			}
 
 			// TODO: mount at /mnt for shared mount?
 			if useIso {
