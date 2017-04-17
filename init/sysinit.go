@@ -84,7 +84,7 @@ func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 
 		log.Infof("Loading images from %s", inputFileName)
 		if _, err = client.ImageLoad(context.Background(), input, true); err != nil {
-			return cfg, err
+			log.Fatalf("FATAL: failed loading images from %s: %s", inputFileName, err)
 		}
 
 		log.Infof("Done loading images from %s", inputFileName)

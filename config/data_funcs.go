@@ -16,7 +16,7 @@ func ChainCfgFuncs(cfg *CloudConfig, cfgFuncs ...CfgFunc) (*CloudConfig, error) 
 		log.Debugf("[%d/%d] Starting", i+1, len(cfgFuncs))
 		var err error
 		if cfg, err = cfgFunc(cfg); err != nil {
-			log.Errorf("Failed [%d/%d] %d%%", i+1, len(cfgFuncs), ((i + 1) * 100 / len(cfgFuncs)))
+			log.Errorf("Failed [%d/%d] %s", i+1, len(cfgFuncs), err)
 			return cfg, err
 		}
 		log.Debugf("[%d/%d] Done %d%%", i+1, len(cfgFuncs), ((i + 1) * 100 / len(cfgFuncs)))
