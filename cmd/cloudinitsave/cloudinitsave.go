@@ -59,19 +59,14 @@ func Main() {
 		log.Errorf("Failed to run udev settle: %v", err)
 	}
 
-	cfg := rancherConfig.LoadConfig()
-	log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
-	network.ApplyNetworkConfig(cfg)
-
-	if err := SaveCloudConfig(); err != nil {
+	if err := saveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
 }
 
-func SaveCloudConfig() error {
+func saveCloudConfig() error {
 	log.Debugf("SaveCloudConfig")
 
-	// TODO: can't run these here, but it needs to be triggered from here :()
 	cfg := rancherConfig.LoadConfig()
 	log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
 	network.ApplyNetworkConfig(cfg)
