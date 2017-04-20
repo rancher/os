@@ -13,4 +13,5 @@ func (s *QemuSuite) TestMounts(c *C) {
 	s.CheckCall(c, "mount | grep /home/rancher/a")
 	s.CheckCall(c, "mount | grep /home/rancher/b")
 	s.CheckCall(c, "mount | grep /home/rancher/c")
+	s.CheckCall(c, "mount | grep /home/rancher/d")
 }
