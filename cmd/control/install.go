@@ -939,6 +939,7 @@ func upgradeBootloader(device, baseName, bootDir, diskType string) error {
 				for _, line := range lines {
 					line = strings.TrimSpace(line)
 					if strings.HasPrefix(line, "APPEND") {
+						log.Errorf("write new (%s) %s", filepath.Join(baseName, bootDir, "global.cfg"), err)
 						// TODO: need to append any extra's the user specified
 						ioutil.WriteFile(filepath.Join(baseName, bootDir, "global.cfg"), []byte(cfg), 0644)
 						break
