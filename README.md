@@ -18,8 +18,8 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ### ISO
 
-https://releases.rancher.com/os/latest/rancheros.iso
-https://releases.rancher.com/os/v1.0.0/rancheros.iso
+- https://releases.rancher.com/os/latest/rancheros.iso
+- https://releases.rancher.com/os/v1.0.0/rancheros.iso
 
 ### Additional Downloads
 
@@ -34,6 +34,9 @@ https://releases.rancher.com/os/v1.0.0/rancheros.iso
 * https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
 * https://releases.rancher.com/os/latest/vmlinuz-4.9.21-rancher
+* https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
+* https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
+* https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
 
 #### v1.0.0 Links
 
@@ -46,12 +49,9 @@ https://releases.rancher.com/os/v1.0.0/rancheros.iso
 * https://releases.rancher.com/os/v1.0.0/rootfs.tar.gz
 * https://releases.rancher.com/os/v1.0.0/vmlinuz
 * https://releases.rancher.com/os/v1.0.0/vmlinuz-4.9.21-rancher
-
-#### v0.9.0 Links
-
-* https://releases.rancher.com/os/v0.9.0/rootfs_arm.tar.gz
-* https://releases.rancher.com/os/v0.9.0/rootfs_arm64.tar.gz
-* https://releases.rancher.com/os/v0.9.0/rancheros-raspberry-pi.zip
+* https://releases.rancher.com/os/v1.0.0/rootfs_arm.tar.gz
+* https://releases.rancher.com/os/v1.0.0/rootfs_arm64.tar.gz
+* https://releases.rancher.com/os/v1.0.0/rancheros-raspberry-pi.zip
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.
 
