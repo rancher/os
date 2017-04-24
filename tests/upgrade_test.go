@@ -10,6 +10,7 @@ import (
 )
 
 func (s *QemuSuite) TestUpgrade050(c *C) {
+	// install 0.5.0, and then upgrade to `this` version
 	s.commonTestCode(c, "v0.5.0", "default")
 }
 func (s *QemuSuite) TestUpgrade061(c *C) {
@@ -20,6 +21,12 @@ func (s *QemuSuite) TestUpgrade070(c *C) {
 }
 func (s *QemuSuite) TestUpgrade071(c *C) {
 	s.commonTestCode(c, "v0.7.1", "default")
+}
+func (s *QemuSuite) TestUpgrade090(c *C) {
+	s.commonTestCode(c, "v0.9.0", "default")
+}
+func (s *QemuSuite) TestUpgrade100(c *C) {
+	s.commonTestCode(c, "v1.0.0", "default")
 }
 func (s *QemuSuite) TestUpgrade071Persistent(c *C) {
 	s.commonTestCode(c, "v0.7.1", "ubuntu")
@@ -126,6 +133,9 @@ sync
 	s.CheckOutput(c, "ros version "+Version+"\n", Equals, "sudo ros -v")
 	s.CheckOutput(c, consoleVer, Equals, "sudo system-docker ps --filter name=^/console$ --format {{.Image}}")
 
+	// Make sure the original installed boot cmdline append value
+	s.CheckOutput(c, ".*rancher.password=rancher.*", Matches, "cat /proc/cmdline")
+
 	s.Stop(c)
 }
 
@@ -153,7 +163,7 @@ echo "---------------------------------- generic"
 set -ex
 echo "ssh_authorized_keys:" > config.yml
 echo "  - $(cat /home/rancher/.ssh/authorized_keys)" >> config.yml
-sudo ros install --force --no-reboot --device /dev/vda -c config.yml --append rancher.password=rancher -i rancher/os:%s
+sudo ros install --force --no-reboot --device /dev/vda -c config.yml --append "rancher.password=rancher rancher.cloud_init.datasources=[invalid]" -i rancher/os:%s
 sync
 		`, startWithVersion))
 		time.Sleep(500 * time.Millisecond)
@@ -167,6 +177,17 @@ sync
 	s.RunQemuWith(c, runArgs...)
 
 	s.CheckOutput(c, "ros version "+startWithVersion+"\n", Equals, "sudo ros -v")
+
+	if startWithVersion != "v0.5.0" && startWithVersion != "v0.6.1" {
+		//s.CheckOutput(c, ".*password=ranc.*", Matches, "cat /proc/cmdline")
+		cmdline := s.CheckOutput(c, "", Not(Equals), "cat /proc/cmdline")
+		if !strings.Contains(cmdline, "rancher.password=rancher") {
+			c.Errorf("output(%s) does not contain(%s)", cmdline, "rancher.password=rancher")
+		}
+		if !strings.Contains(cmdline, "rancher.cloud_init.datasources=[invalid]") {
+			c.Errorf("output(%s) does not contain(%s)", cmdline, "rancher.cloud_init.datasources=[invalid]")
+		}
+	}
 
 	if console != "default" {
 		// Can't preload the startWithVersion console image, as some don't exist by that name - not sure how to approach that
@@ -193,6 +214,18 @@ sync
 		s.CheckOutput(c, consoleVer, Equals, "sudo system-docker ps --filter name=^/console$ --format {{.Image}}")
 	} else {
 		s.CheckOutput(c, consoleVer, Not(Equals), "sudo system-docker ps --filter name=^/console$ --format {{.Image}}")
+	}
+
+	if startWithVersion != "v0.5.0" && startWithVersion != "v0.6.1" {
+		// Make sure the original installed boot cmdline append value
+		// s.CheckOutput(c, ".*rancher.password=rancher.*", Matches, "cat /proc/cmdline")
+		cmdline := s.CheckOutput(c, "", Not(Equals), "cat /proc/cmdline")
+		if !strings.Contains(cmdline, "rancher.password=rancher") {
+			c.Errorf("output(%s) does not contain(%s)", cmdline, "rancher.password=rancher")
+		}
+		if !strings.Contains(cmdline, "rancher.cloud_init.datasources=[invalid]") {
+			c.Errorf("output(%s) does not contain(%s)", cmdline, "rancher.cloud_init.datasources=[invalid]")
+		}
 	}
 
 	s.Stop(c)
