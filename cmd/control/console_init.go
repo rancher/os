@@ -91,6 +91,7 @@ func consoleInitFunc() error {
 
 	for _, link := range []symlink{
 		{"/var/lib/rancher/engine/docker", "/usr/bin/docker"},
+		{"/var/lib/rancher/engine/docker-init", "/usr/bin/docker-init"},
 		{"/var/lib/rancher/engine/docker-containerd", "/usr/bin/docker-containerd"},
 		{"/var/lib/rancher/engine/docker-containerd-ctr", "/usr/bin/docker-containerd-ctr"},
 		{"/var/lib/rancher/engine/docker-containerd-shim", "/usr/bin/docker-containerd-shim"},
