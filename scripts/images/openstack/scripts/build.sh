@@ -16,7 +16,11 @@ mount -t 9p -o trans=virtio,version=9p2000.L config-2 /mnt
 touch log
 sleep 5
 openvt -s -- tail -f log &
-ros install -d /dev/vda -f --no-reboot >log 2>&1
+ros install -d /dev/vda -f --no-reboot --append "printk.devkmsg=on \
+rancher.autologin=tty1 \
+rancher.autologin=ttyS0 \
+rancher.debug=true \
+" >log 2>&1
 
 touch /mnt/success
 EOF
