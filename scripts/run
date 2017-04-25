@@ -25,8 +25,29 @@ while [ "$#" -gt 0 ]; do
         --pxe)
             BOOT_PXE=1
             ;;
+        --do)
+            BOOT_HD=1
+            QEMU=0
+            QIND=0
+            REBUILD=0
+            CONSOLEDISPLAY=1
+            USE_OPENSTACK_IMG="digitalocean"
+            ;;
+        --digitalocean)
+            BOOT_HD=1
+            QEMU=0
+            QIND=0
+            REBUILD=0
+            CONSOLEDISPLAY=1
+            USE_OPENSTACK_IMG="digitalocean"
+            ;;
         --openstack)
-            USE_OPENSTACK_IMG=1
+            BOOT_HD=1
+            QEMU=0
+            QIND=0
+            REBUILD=0
+            CONSOLEDISPLAY=1
+            USE_OPENSTACK_IMG="openstack"
             ;;
         --append)
             shift 1
@@ -155,12 +176,13 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
 
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
-        if [ "$USE_OPENSTACK_IMG" == "1" ]; then
-           if [ ! -e "dist/rancheros-openstack.img" ]; then
+        if [ "$USE_OPENSTACK_IMG" != "" ]; then
+           if [ ! -e "dist/rancheros-${USE_OPENSTACK_IMG}.img" ]; then
                echo "please build the open stack image first (run make release)."
                exit 1
            fi
-           cp dist/rancheros-openstack.img $HD
+           cp dist/rancheros-${USE_OPENSTACK_IMG}.img $HD
+           qemu-img resize ${HD} +10GB
         else
             if [ ¨$INSTALLED¨ == ¨1¨ ]; then
                 ./scripts/create-installed
