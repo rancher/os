@@ -34,7 +34,7 @@ shell-bind: .dapper
 clean:
 	@./scripts/clean
 
-release: .dapper release-build openstack
+release: .dapper release-build qcows
 
 release-build:
 	mkdir -p dist
@@ -44,16 +44,13 @@ itest:
 	mkdir -p dist
 	./.dapper integration-test 2>&1 | tee dist/itest.log
 
-openstack:
+qcows:
 	cp dist/artifacts/rancheros.iso scripts/images/openstack/
-	cd scripts/images/openstack && ../../../.dapper
+	cd scripts/images/openstack && \
+		NAME=openstack ../../../.dapper
+	cd scripts/images/openstack && \
+		APPEND="console=tty1 rancher.debug=true printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0" NAME=digitalocean ../../../.dapper
 	cp ./scripts/images/openstack/dist/*.img dist/
-
-openstack-run:
-	qemu-system-x86_64 -curses \
-		-net nic -net user \
-		-m 2048M \
-		--hdc scripts/images/openstack/dist/rancheros-openstack.img
 
 rpi: release
 	# scripts/images/raspberry-pi-hypriot/dist/rancheros-raspberry-pi.zip

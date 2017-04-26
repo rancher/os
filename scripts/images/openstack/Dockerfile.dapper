@@ -12,3 +12,4 @@ CMD ["/source/scripts/build.sh"]
 
 ENV DAPPER_RUN_ARGS --device /dev/kvm
 ENV DAPPER_OUTPUT dist
+ENV DAPPER_ENV APPEND NAME
