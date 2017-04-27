@@ -7,7 +7,7 @@ layout: os-default
 ## Docker Machine
 ---
 
-Before we get started, you'll need to make sure that you have docker machine installed. Download it directly from the docker machine [releases](https://github.com/docker/machine/releases).  
+Before we get started, you'll need to make sure that you have docker machine installed. Download it directly from the docker machine [releases](https://github.com/docker/machine/releases).
 
 > **Note:** If you create a RancherOS instance using Docker Machine, you will not be able to upgrade your version of RancherOS.
 
@@ -15,7 +15,7 @@ Before we get started, you'll need to make sure that you have docker machine ins
 
 Get the latest `rancheros.iso` artifact from the RancherOS [releases](https://github.com/rancher/os/releases).
 
-### Using Docker Machine  
+### Using Docker Machine
 
 You can use Docker Machine to launch VMs for various providers. Currently only VirtualBox and AWS are supported.
 

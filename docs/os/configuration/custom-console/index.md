@@ -86,7 +86,7 @@ After logging back, you'll be in the Ubuntu console.
 ```
 $ sudo system-docker ps
 CONTAINER ID        IMAGE                                 COMMAND                  CREATED              STATUS              PORTS               NAMES
-6bf33541b2dc        rancher/os-ubuntuconsole:v0.5.0-rc3   "/usr/sbin/entry.sh /"   About a minute ago   Up About a minute  
+6bf33541b2dc        rancher/os-ubuntuconsole:v0.5.0-rc3   "/usr/sbin/entry.sh /"   About a minute ago   Up About a minute
 ```
 
 <br>

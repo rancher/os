@@ -40,15 +40,15 @@ If you've already started RancherOS and want to switch Docker engines, you can c
 
 ```
 $ sudo ros engine switch docker-1.11.2
-INFO[0000] Project [os]: Starting project               
-INFO[0000] [0/19] [docker]: Starting                    
+INFO[0000] Project [os]: Starting project
+INFO[0000] [0/19] [docker]: Starting
 Pulling docker (rancher/os-docker:1.11.2)...
 1.11.2: Pulling from rancher/os-docker
 2a6bbb293656: Pull complete
 Digest: sha256:ec57fb24f6d4856d737e14c81a20f303afbeef11fc896d31b4e498829f5d18b2
 Status: Downloaded newer image for rancher/os-docker:1.11.2
-INFO[0007] Recreating docker                            
-INFO[0007] [1/19] [docker]: Started                     
+INFO[0007] Recreating docker
+INFO[0007] [1/19] [docker]: Started
 INFO[0007] Project [os]: Project started
 $ docker version
 Client:

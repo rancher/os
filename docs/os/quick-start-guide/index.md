@@ -50,7 +50,6 @@ dc2cafca3c69        rancher/os-syslog:v0.5.0    "/usr/sbin/entry.sh /"   18 seco
 Some containers are run at boot time, and others, such as the `console`, `docker`, etc. containers are always running.
 
 ## Using RancherOS
----
 
 ### Deploying a Docker Container
 
@@ -116,7 +115,7 @@ ros version 0.0.1
 RancherOS state is controlled by a cloud config file. `ros` is used to edit the configuration of the system, to see for example the dns configuration of the system:
 
 ```
-$ sudo ros config get rancher.dns
+$ sudo ros config get rancher.network.dns.nameservers
 - 8.8.8.8
 - 8.8.4.4
 ```
@@ -131,4 +130,3 @@ $ sudo ros console switch ubuntu
 ### Conclusion
 
 RancherOS is a simple Linux distribution ideal for running Docker.  By embracing containerization of system services and leveraging Docker for management, RancherOS hopes to provide a very reliable, and easy to manage OS for running containers.
-

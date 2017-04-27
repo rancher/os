@@ -50,9 +50,9 @@ When this service is run, the `EXTRA_CMDLINE` will be set.
 
 Valid [datasources](https://github.com/rancher/os/blob/3338c4ac63597940bcde7e6005f1cc09287062a2/cmd/cloudinit/cloudinit.go#L378) for RancherOS.
 
-| type | default |  
+| type | default |
 |---|---|
-| ec2 | DefaultAddress | 
+| ec2 | DefaultAddress |
 | file | path |
 | url | url |
 | cmdline |  |
@@ -61,5 +61,5 @@ Valid [datasources](https://github.com/rancher/os/blob/3338c4ac63597940bcde7e600
 | gce |  |
 
 ### Cloud-Config
- 
+
 When booting via iPXE, RancherOS can be configured using a [cloud-config file]({{site.baseurl}}/os/configuration/#cloud-config).

@@ -29,7 +29,7 @@ It's easy to build your own RancherOS ISO.
    iso-checksums.txt	vmlinuz
    ```
 
-The `rancheros.iso` is ready to be used to [boot RancherOS from ISO]({{site.baseurl}}/os/running-rancheros/workstation/boot-from-iso/) or [launch RancherOS using Docker Machine]({{site.baseurl}}/os/running-rancheros/workstation/docker-machine). 
+The `rancheros.iso` is ready to be used to [boot RancherOS from ISO]({{site.baseurl}}/os/running-rancheros/workstation/boot-from-iso/) or [launch RancherOS using Docker Machine]({{site.baseurl}}/os/running-rancheros/workstation/docker-machine).
 
 
 ### Creating a GCE Image Archive
