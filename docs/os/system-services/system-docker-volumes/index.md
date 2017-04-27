@@ -18,7 +18,7 @@ Provides user accessible persistent storage directories, used by console service
 /opt
 ```
 
-### container-data-volumes 
+### container-data-volumes
 
 Provides docker storage directory, used by console service (and, indirectly, by docker)
 
@@ -26,7 +26,7 @@ Provides docker storage directory, used by console service (and, indirectly, by 
 /var/lib/docker
 ```
 
-### command-volumes 
+### command-volumes
 
 Provides necessary command binaries (read-only), used by system services:
 

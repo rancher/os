@@ -7,7 +7,6 @@ layout: os-default
 ## Installing Kernel Modules that require Kernel Headers
 ---
 
-
 To compile any kernel modules, you will need to download the kernel headers. The kernel headers are available in the form of a system service. Since the kernel headers are a system service, they need to be enabled using the `ros service` command.
 
 ### Installing Kernel Headers

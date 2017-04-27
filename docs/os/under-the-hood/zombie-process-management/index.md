@@ -1,5 +1,5 @@
 ---
-title: Zombie process management 
+title: Zombie process management
 layout: os-default
 
 ---

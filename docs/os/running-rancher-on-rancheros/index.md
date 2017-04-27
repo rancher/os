@@ -11,9 +11,9 @@ RancherOS can be used to launch [Rancher]({{site.baseurl}}/rancher/) and be used
 
 ### Launching Agents using Cloud-Config
 
-You can easily add hosts into Rancher by using [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config) to launch the rancher/agent container. 
+You can easily add hosts into Rancher by using [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config) to launch the rancher/agent container.
 
-After Rancher is launched and [host registration]({{site.baseurl}}/rancher/configuration/settings/#host-registration) has been saved, you will be able to find the [custom command]({{site.baseurl}}/rancher/rancher-ui/infrastructure/hosts/custom) in the **Infrastructure** -> **Hosts** -> **Custom** page. 
+After Rancher is launched and [host registration]({{site.baseurl}}/rancher/configuration/settings/#host-registration) has been saved, you will be able to find the [custom command]({{site.baseurl}}/rancher/rancher-ui/infrastructure/hosts/custom) in the **Infrastructure** -> **Hosts** -> **Custom** page.
 
 ```bash
 $ sudo docker run --d --privileged -v /var/run/docker.sock:/var/run/docker.sock \
@@ -41,13 +41,13 @@ rancher:
 ```
 <br>
 
-> **Note:** You can not name the service `rancher-agent` as this will not allow the rancher/agent container to be launched correctly. Please read more about why [you can't name your container as `rancher-agent`]({{site.baseurl}}/rancher/faqs/agents/#adding-in-name-rancher-agent). 
+> **Note:** You can not name the service `rancher-agent` as this will not allow the rancher/agent container to be launched correctly. Please read more about why [you can't name your container as `rancher-agent`]({{site.baseurl}}/rancher/faqs/agents/#adding-in-name-rancher-agent).
 
 ### Adding in Host Labels
 
 With each host, you have the ability to add labels to help you organize your hosts. The labels are added as an environment variable when launching the rancher/agent container. The host label in the UI will be a key/value pair and the keys must be unique identifiers. If you added two keys with different values, we'll take the last inputted value to use as the key/value pair.
 
-By adding labels to hosts, you can use these labels when [schedule services/load balancers/services]({{site.baseurl}}/rancher/rancher-ui/scheduling/) and create a whitelist or blacklist of hosts for your [services]({{site.baseurl}}/rancher/rancher-ui/applications/stacks/adding-services/) to run on. 
+By adding labels to hosts, you can use these labels when [schedule services/load balancers/services]({{site.baseurl}}/rancher/rancher-ui/scheduling/) and create a whitelist or blacklist of hosts for your [services]({{site.baseurl}}/rancher/rancher-ui/applications/stacks/adding-services/) to run on.
 
 When adding a custom host, you can add the labels using the UI and it will automatically add the environment variable (`CATTLE_HOST_LABELS`) with the key/value pair into the command on the UI screen.
 

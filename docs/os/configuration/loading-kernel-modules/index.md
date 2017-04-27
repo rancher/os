@@ -11,11 +11,11 @@ To compile any Kernel Modules, you first need to [deploy the Kernel Headers]({{s
 ### DKMS
 
 DKMS is supported by running the DKMS scripts inside a *privileged* container.
-  
+
 > To deploy containers that compiles DKMS modules, you will need to ensure that you bind-mount `/usr/src` and `/lib/modules`.
 
 > To deploy containers that run any DKMS operations (i.e., `modprobe`), you will need to ensure that you bind-mount `/lib/modules`.
-  
+
 By default, the `/lib/modules` folder is already available in the console deployed via [RancherOS System Services]({{site.baseurl}}/os/system-services/built-in-system-services/), but not `/usr/src`. You will likely need to [deploy your own container](#docker-example) for compilation purposes.
 
 To learn more about Docker's privileged mode, or to limit capabilities, please review the [Docker Runtime privilege and Linux capabilities documentation](https://docs.docker.com/engine/reference/run/#/runtime-privilege-and-linux-capabilities).
@@ -88,7 +88,7 @@ This functionality is also available via a kernel parameter. For example, the bt
 ### Ubuntu-based Kernel Manipulation
 
 For images that are or derive from Ubuntu, you will need some small packages for `depmod`(`kmod`) and `modprobe`(`module-init-tools`):
- 
+
 ```bash
 sudo apt-get install kmod module-init-tools
 ```
@@ -101,11 +101,11 @@ Messing around with the Kernel can be tricky, so here's some common issues:
 
 #### kernel source for this kernel does not seem to be installed.
 
-Simply put, the Kernel Headers (or Source) cannot be found; enable them via the [Kernel Headers System Service]({{site.baseurl}}/os/configuration/kernel-modules-kernel-headers/). 
+Simply put, the Kernel Headers (or Source) cannot be found; enable them via the [Kernel Headers System Service]({{site.baseurl}}/os/configuration/kernel-modules-kernel-headers/).
 
 #### Operation not Permitted
 
-When inside a container, you might see similar to the following: 
+When inside a container, you might see similar to the following:
 ```
 modprobe: ERROR: could not insert 'videodev': Operation not permitted
 ```

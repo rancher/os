@@ -25,7 +25,7 @@ When you create a RancherOS instance on AWS, for example, you can optionally pro
 
 A cloud-config file uses the YAML format. YAML is easy to understand and easy to parse. For more information on YAML, please read more at the [YAML site](http://www.yaml.org/start.html). The most important formatting principle is indentation or whitespace. This indentation indicates relationships of the items to one another. If something is indented more than the previous line, it is a sub-item of the top item that is less indented.
 
-Example: Notice how both are indented underneath `ssh-authorized-keys`.
+Example: Notice how both are indented underneath `ssh_authorized_keys`.
 
 ```yaml
 #cloud-config
@@ -38,7 +38,8 @@ In our example above, we have our `#cloud-config` line to indicate it's a cloud-
 
 ### Manually Changing Configuration
 
-To update RancherOS configuration after booting, the `ros config` command can be used.
+To update RancherOS configuration after booting, the `ros config set <key> <value>` command can be used.
+For more complicated settings, like the [sysctl settings]({{site.baseurl}}/os/sysctl/index.md), you can also create a small YAML file and then run `sudo ros config merge -i <your yaml file>`.
 
 #### Getting Values
 
@@ -50,7 +51,7 @@ $ sudo ros config get rancher.network.dns.nameservers
 - 8.8.4.4
 ```
 
-#### Setting Values 
+#### Setting Values
 
 You can set values in the `/var/lib/rancher/conf/cloud-config.yml` file.
 
