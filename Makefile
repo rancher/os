@@ -50,7 +50,7 @@ qcows:
 		NAME=openstack ../../../.dapper
 	cd scripts/images/openstack && \
 		APPEND="console=tty1 rancher.debug=true printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0" NAME=digitalocean ../../../.dapper
-	cp ./scripts/images/openstack/dist/*.img dist/
+	cp ./scripts/images/openstack/dist/*.img dist/artifacts/
 
 rpi: release
 	# scripts/images/raspberry-pi-hypriot/dist/rancheros-raspberry-pi.zip
