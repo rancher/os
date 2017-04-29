@@ -102,6 +102,13 @@ func Main() {
 			Action:          preloadImagesAction,
 		},
 		{
+			Name:            "recovery-init",
+			Hidden:          true,
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          recoveryInitAction,
+		},
+		{
 			Name:            "switch-console",
 			Hidden:          true,
 			HideHelp:        true,
