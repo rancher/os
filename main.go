@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/containernetworking/cni/plugins/ipam/host-local"
 	"github.com/containernetworking/cni/plugins/main/bridge"
 	"github.com/docker/docker/docker"
@@ -42,6 +45,15 @@ var entrypoints = map[string]func(){
 }
 
 func main() {
+	fmt.Fprintf(os.Stderr, "ros main(%s) ppid:%d - print to stdio", os.Args[0], os.Getppid())
+
+	filename := "/dev/kmsg"
+	f, err := os.OpenFile(filename, os.O_WRONLY, 0644)
+	if err == nil {
+		fmt.Fprintf(f, "ros main(%s) ppid:%d - print to %s\n", os.Args[0], os.Getppid(), filename)
+	}
+	f.Close()
+
 	for name, f := range entrypoints {
 		reexec.Register(name, f)
 	}

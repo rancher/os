@@ -101,26 +101,27 @@ func SysInit() error {
 	}
 
 	_, err := config.ChainCfgFuncs(cfg,
-		loadImages,
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			p, err := compose.GetProject(cfg, false, true)
-			if err != nil {
-				return cfg, err
-			}
-			return cfg, p.Up(context.Background(), options.Up{
-				Create: options.Create{
-					NoRecreate: true,
-				},
-				Log: cfg.Rancher.Log,
-			})
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			syscall.Sync()
-			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			log.Infof("RancherOS %s started", config.Version)
-			return cfg, nil
-		})
+		map[string]config.CfgFunc{
+			"loadImages": loadImages,
+			"start project": func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+				p, err := compose.GetProject(cfg, false, true)
+				if err != nil {
+					return cfg, err
+				}
+				return cfg, p.Up(context.Background(), options.Up{
+					Create: options.Create{
+						NoRecreate: true,
+					},
+					Log: cfg.Rancher.Log,
+				})
+			},
+			"sync": func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+				syscall.Sync()
+				return cfg, nil
+			},
+			"banner": func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+				log.Infof("RancherOS %s started", config.Version)
+				return cfg, nil
+			}})
 	return err
 }
