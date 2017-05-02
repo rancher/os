@@ -68,8 +68,10 @@ func bootstrap(cfg *config.CloudConfig) error {
 	defer stopDocker(c)
 
 	_, err = config.ChainCfgFuncs(cfg,
-		loadImages,
-		bootstrapServices)
+		[]config.CfgFuncData{
+			config.CfgFuncData{"bootstrap loadImages", loadImages},
+			config.CfgFuncData{"bootstrap Services", bootstrapServices},
+		})
 	return err
 }
 
@@ -82,7 +84,9 @@ func runCloudInitServices(cfg *config.CloudConfig) error {
 	defer stopDocker(c)
 
 	_, err = config.ChainCfgFuncs(cfg,
-		loadImages,
-		runCloudInitServiceSet)
+		[]config.CfgFuncData{
+			config.CfgFuncData{"cloudinit loadImages", loadImages},
+			config.CfgFuncData{"cloudinit Services", runCloudInitServiceSet},
+		})
 	return err
 }

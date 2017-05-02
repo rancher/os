@@ -90,7 +90,8 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func MainInit() {
-	// TODO: log.InitLogger()
+	log.InitLogger()
+	log.Infof("MainInit() start")
 	if err := RunInit(); err != nil {
 		log.Fatal(err)
 	}
@@ -223,19 +224,19 @@ func RunInit() error {
 
 	configFiles := make(map[string][]byte)
 
-	initFuncs := []config.CfgFunc{
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+	initFuncs := []config.CfgFuncData{
+		config.CfgFuncData{"preparefs", func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dfs.PrepareFs(&mountConfig)
-		},
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"save init cmdline", func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			// will this be passed to cloud-init-save?
 			cmdLineArgs := strings.Join(os.Args, " ")
 			config.SaveInitCmdline(cmdLineArgs)
 
 			return c, nil
-		},
-		mountOem,
-		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"mount OEM", mountOem},
+		config.CfgFuncData{"debug save cfg", func(_ *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg := config.LoadConfig()
 
 			if cfg.Rancher.Debug {
@@ -248,9 +249,9 @@ func RunInit() error {
 			}
 
 			return cfg, nil
-		},
-		loadModules,
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"load modules", loadModules},
+		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if util.ResolveDevice("LABEL=B2D_STATE") != "" {
 				boot2DockerEnvironment = true
 				cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
@@ -286,23 +287,23 @@ func RunInit() error {
 			}
 
 			return config.LoadConfig(), nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"mount and bootstrap", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			var err error
 			cfg, shouldSwitchRoot, err = tryMountAndBootstrap(cfg)
 			if err != nil {
 				return nil, err
 			}
 			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
 			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
 				log.Error(err)
 			}
 
-			log.Debug("init: runCloudInitServices()")
+			log.Debug("init, runCloudInitServices()")
 			if err := runCloudInitServices(cfg); err != nil {
 				log.Error(err)
 			}
@@ -311,8 +312,8 @@ func RunInit() error {
 			cfg = config.LoadConfig()
 
 			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"read cfg files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
 				config.CloudConfigInitFile,
 				config.CloudConfigBootFile,
@@ -328,8 +329,8 @@ func RunInit() error {
 				configFiles[name] = content
 			}
 			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"switchroot", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if !shouldSwitchRoot {
 				return cfg, nil
 			}
@@ -338,9 +339,9 @@ func RunInit() error {
 				return cfg, err
 			}
 			return cfg, nil
-		},
-		mountOem,
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"mount OEM2", mountOem},
+		config.CfgFuncData{"write cfg files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			for name, content := range configFiles {
 				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0700); err != nil {
 					log.Error(err)
@@ -356,8 +357,8 @@ func RunInit() error {
 				log.Error(err)
 			}
 			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)
@@ -368,21 +369,21 @@ func RunInit() error {
 			}
 
 			return config.LoadConfig(), nil
-		},
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"preparefs2", func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dfs.PrepareFs(&mountConfig)
-		},
-		loadModules,
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"load modules2", loadModules},
+		config.CfgFuncData{"set proxy env", func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			network.SetProxyEnvironmentVariables(c)
 			return c, nil
-		},
-		initializeSelinux,
-		setupSharedRoot,
-		sysInit,
+		}},
+		config.CfgFuncData{"init SELinux", initializeSelinux},
+		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
+		config.CfgFuncData{"sysinit", sysInit},
 	}
 
-	cfg, err := config.ChainCfgFuncs(nil, initFuncs...)
+	cfg, err := config.ChainCfgFuncs(nil, initFuncs)
 	if err != nil {
 		return err
 	}
