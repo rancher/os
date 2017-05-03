@@ -10,16 +10,29 @@ import (
 )
 
 type CfgFunc func(*CloudConfig) (*CloudConfig, error)
+type CfgFuncData struct {
+	Name string
+	Func CfgFunc
+}
+type CfgFuncs []CfgFuncData
 
-func ChainCfgFuncs(cfg *CloudConfig, cfgFuncs ...CfgFunc) (*CloudConfig, error) {
-	for i, cfgFunc := range cfgFuncs {
-		log.Debugf("[%d/%d] Starting", i+1, len(cfgFuncs))
+func ChainCfgFuncs(cfg *CloudConfig, cfgFuncs CfgFuncs) (*CloudConfig, error) {
+	len := len(cfgFuncs)
+	for c, d := range cfgFuncs {
+		i := c + 1
+		name := d.Name
+		cfgFunc := d.Func
+		if cfg == nil {
+			log.Infof("[%d/%d] Starting %s WITH NIL cfg", i, len, name)
+		} else {
+			log.Infof("[%d/%d] Starting %s", i, len, name)
+		}
 		var err error
 		if cfg, err = cfgFunc(cfg); err != nil {
-			log.Errorf("Failed [%d/%d] %s", i+1, len(cfgFuncs), err)
+			log.Errorf("Failed [%d/%d] %s: %s", i, len, name, err)
 			return cfg, err
 		}
-		log.Debugf("[%d/%d] Done %d%%", i+1, len(cfgFuncs), ((i + 1) * 100 / len(cfgFuncs)))
+		log.Debugf("[%d/%d] Done %s", i, len, name)
 	}
 	return cfg, nil
 }
