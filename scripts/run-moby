@@ -1,0 +1,11 @@
+#!/bin/bash
+
+cd $(dirname $0)/../dist/moby
+qemu-system-x86_64 \
+	-nographic \
+	-kernel ./rancheros-kernel \
+	-initrd ./rancheros-initrd.img \
+	-m 2048 \
+	-net nic,vlan=0,model=virtio \
+	-net user,vlan=0,hostfwd=tcp::3333-:22,hostname=rancher-moby \
+	-append 'printk.devkmsg=on rancher.debug=true rancher.password=rancher console=ttyS0 rancher.autologin=ttyS0 console=tty0 rancher.autologin=tty0 console=tty1 rancher.autologin=tty1 rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.rm_usr' 

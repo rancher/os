@@ -1,0 +1,66 @@
+#!/bin/bash
+set -e
+
+# Override using a local kernel build
+if [ -e ${DAPPER_SOURCE}/assets/kernel.tar.gz ]; then
+    echo "copying ${DAPPER_SOURCE}/assets/kernel.tar.gz ${DOWNLOADS}/kernel.tar.gz"
+    cp ${DAPPER_SOURCE}/assets/kernel.tar.gz ${DOWNLOADS}/kernel.tar.gz
+fi
+
+if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
+    mkdir -p ${BUILD}/kernel
+    tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
+
+    for i in vmlinuz vmlinux; do
+        if [ -e ${BUILD}/kernel/boot/${i}-* ]; then
+            mkdir -p ${ARTIFACTS}
+            # frustratingly, the vmlinuz versioned filename != the tag name, so we need to do some guessing
+            # for eg, 4.9-rc8-rancher2 is called vmlinuz-4.9.0-rc8-rancher
+            echo "Copy ${BUILD}/kernel/boot/${i}-* to ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}"
+            cp ${BUILD}/kernel/boot/${i}-* ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}
+            # use an unversioned filename for `scripts/run`
+            cp ${BUILD}/kernel/boot/${i}-* ${BUILD}/kernel/vmlinuz
+            break
+        fi
+    done
+
+    # TODO: move these into a separate tar.gz and add to the syslinux initrd line
+    if [ -d ${BUILD}/kernel/lib ]; then
+        rm -rf ${INITRD_DIR}/usr/lib
+        cp -rf ${BUILD}/kernel/lib ${INITRD_DIR}/usr/
+        depmod -b ${INITRD_DIR}/usr $(basename ${INITRD_DIR}/usr/lib/modules/*)
+
+        #TODO:
+        # new: put the kernel modules into their own initrd file
+        #mkdir -p ${BUILD}/kernel-fs/usr/
+        #pushd .
+        #cp -rf ${BUILD}/kernel/lib ${BUILD}/kernel-fs/usr/
+        #depmod -b ${BUILD}/kernel-fs/usr $(basename ${BUILD}/kernel-fs/usr/lib/modules/*)
+        ## and then package it up cpio
+        #cd ${BUILD}/kernel-fs/
+        #echo Creating kernel ${ARTIFACTS}/linuxmods-${KERNEL_VERSION}
+        
+        #if [ "$COMPRESS" == "" ]; then
+        #    COMPRESS="gzip -1"
+        #fi
+        #find | cpio -H newc -o | ${COMPRESS} > ${ARTIFACTS}/linuxmods-${KERNEL_VERSION}
+        #popd
+        #echo Done creating kernel ${ARTIFACTS}/linuxmods-${KERNEL_VERSION}
+        ## use an unversioned filename for `scripts/run`
+        #cp ${ARTIFACTS}/linuxmods-${KERNEL_VERSION} ${BUILD}/kernel/linuxmods
+    fi
+else
+	if [ "$ARCH" == "amd64" ]; then
+		echo "no ${DOWNLOADS}/kernel.tar.gz found"
+		exit 1
+	fi
+fi
+
+if [ "$ARCH" == "amd64" ]; then
+	ls -lah ${ARTIFACTS}/vmlinuz-*
+	if [ ! -e "${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}" ]; then
+		echo "Can't find ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}"
+		exit -1
+	fi
+fi
+

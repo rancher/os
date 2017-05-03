@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|docs|release')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|docs|release|moby')
 
 .dapper:
 	@echo Downloading dapper
@@ -27,6 +27,12 @@ run: build/initrd/.id .dapper
 
 docs:
 	./scripts/docs
+
+build-moby:
+	./scripts/build-moby
+
+run-moby:
+	./scripts/run-moby
 
 shell-bind: .dapper
 	./.dapper -m bind -s
