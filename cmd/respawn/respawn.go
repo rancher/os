@@ -144,7 +144,7 @@ func execute(line string, wg *sync.WaitGroup) {
 		count++
 
 		if count > 10 {
-			if start.Sub(time.Now()) <= (1 * time.Second) {
+			if time.Now().Sub(start) <= (1 * time.Second) {
 				log.Errorf("%s : restarted too fast, not executing", line)
 				break
 			}
