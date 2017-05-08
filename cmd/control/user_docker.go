@@ -25,7 +25,6 @@ import (
 const (
 	defaultStorageContext = "console"
 	dockerPidFile         = "/var/run/docker.pid"
-	userDocker            = "user-docker"
 	sourceDirectory       = "/engine"
 	destDirectory         = "/var/lib/rancher/engine"
 )

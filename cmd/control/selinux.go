@@ -17,7 +17,6 @@ func selinuxCommand() cli.Command {
 			"--net", "host", "--pid", "host", "--ipc", "host",
 			"-v", "/usr/bin/docker:/usr/bin/docker.dist:ro",
 			"-v", "/usr/bin/ros:/usr/bin/dockerlaunch:ro",
-			"-v", "/usr/bin/ros:/usr/bin/user-docker:ro",
 			"-v", "/usr/bin/ros:/usr/bin/system-docker:ro",
 			"-v", "/usr/bin/ros:/sbin/poweroff:ro",
 			"-v", "/usr/bin/ros:/sbin/reboot:ro",

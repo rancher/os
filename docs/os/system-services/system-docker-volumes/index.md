@@ -36,7 +36,6 @@ Provides necessary command binaries (read-only), used by system services:
 /usr/bin/docker-runc.dist
 /usr/bin/docker.dist
 /usr/bin/dockerlaunch
-/usr/bin/user-docker
 /usr/bin/system-docker
 /sbin/poweroff
 /sbin/reboot
