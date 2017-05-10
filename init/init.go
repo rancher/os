@@ -321,12 +321,14 @@ func RunInit() error {
 				config.MetaDataFile,
 			}
 			for _, name := range filesToCopy {
-				content, err := ioutil.ReadFile(name)
-				if err != nil {
-					log.Error(err)
-					continue
+				if _, err := os.Lstat(name); !os.IsNotExist(err) {
+					content, err := ioutil.ReadFile(name)
+					if err != nil {
+						log.Errorf("read cfg file (%s) %s", name, err)
+						continue
+					}
+					configFiles[name] = content
 				}
-				configFiles[name] = content
 			}
 			return cfg, nil
 		}},
