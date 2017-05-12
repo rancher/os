@@ -51,10 +51,10 @@ When this service is run, the `EXTRA_CMDLINE` will be set.
 Valid cloud-init datasources for RancherOS.
 
 | type | default |
-|---|---|
-| ec2 | DefaultAddress |
+|---|---|--|
+| ec2 | ec2's DefaultAddress |
 | file | path |
-| cmdline |  |
+| cmdline | /media/config-2 |
 | configdrive |  |
 | digitalocean | DefaultAddress |
 | ec2 | DefaultAddress |
@@ -62,6 +62,7 @@ Valid cloud-init datasources for RancherOS.
 | gce |  |
 | packet | DefaultAddress |
 | url | url |
+| * | This will add ["configdrive", "ec2", "digitalocean", "packet", "gce"] into the list of datasources to try |
 
 ### Cloud-Config
 
