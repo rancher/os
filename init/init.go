@@ -77,6 +77,9 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 		Path: config.RosBin,
 		Args: args,
 	}
+	env := os.Environ()
+	env = append(env, "LD_LIBRARY_PATH=/usr/lib")
+	cmd.Env = env
 
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
@@ -381,6 +384,7 @@ func RunInit() error {
 		config.CfgFuncData{"init SELinux", initializeSelinux},
 		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
 		config.CfgFuncData{"sysinit", sysInit},
+		config.CfgFuncData{"init auditd", initializeAuditd},
 	}
 
 	cfg, err := config.ChainCfgFuncs(nil, initFuncs)
