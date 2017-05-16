@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -159,6 +160,13 @@ func (s *QemuSuite) CheckOutput(c *C, result string, check Checker, additionalAr
 	out, err := s.MakeCall(additionalArgs...)
 	c.Assert(err, IsNil)
 	c.Assert(out, check, result)
+	return out
+}
+
+func (s *QemuSuite) CheckOutputContains(c *C, result string, additionalArgs ...string) string {
+	out, err := s.MakeCall(additionalArgs...)
+	c.Assert(err, IsNil)
+	c.Assert(strings.Contains(out, result), Equals, true)
 	return out
 }
 
