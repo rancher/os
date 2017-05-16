@@ -158,6 +158,7 @@ if [ "$APPEND_INIT" != "" ]; then
 fi
 
 if [ "$BOOT_PXE" == "1" ]; then
+    set -ex
     sudo pixiecore boot \
                "${KERNEL}" \
                "${INITRD}" \
@@ -177,12 +178,12 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
         if [ "$USE_OPENSTACK_IMG" != "" ]; then
-           if [ ! -e "dist/rancheros-${USE_OPENSTACK_IMG}.img" ]; then
+           if [ ! -e "dist/artifacts/rancheros-${USE_OPENSTACK_IMG}.img" ]; then
                echo "please build the open stack image first (run make release)."
                exit 1
            fi
-           cp dist/rancheros-${USE_OPENSTACK_IMG}.img $HD
-           qemu-img resize ${HD} +10GB
+           cp dist/artifacts/rancheros-${USE_OPENSTACK_IMG}.img $HD
+           qemu-img resize ${HD} 70GB
         else
             if [ ¨$INSTALLED¨ == ¨1¨ ]; then
                 ./scripts/create-installed

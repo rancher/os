@@ -47,9 +47,11 @@ itest:
 qcows:
 	cp dist/artifacts/rancheros.iso scripts/images/openstack/
 	cd scripts/images/openstack && \
+		APPEND="console=tty1 printk.devkmsg=on rancher.autologin=ttyS0" \
 		NAME=openstack ../../../.dapper
 	cd scripts/images/openstack && \
-		APPEND="console=tty1 rancher.debug=true printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0" NAME=digitalocean ../../../.dapper
+		APPEND="console=tty1 rancher.debug=true printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0" \
+		NAME=digitalocean ../../../.dapper
 	cp ./scripts/images/openstack/dist/*.img dist/artifacts/
 
 rpi: release
