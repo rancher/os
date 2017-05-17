@@ -265,6 +265,11 @@ if [ "$QEMU" == "1" ]; then
     else
         INSTALLED_ARGS="-kernel ${KERNEL} -initrd ${INITRD}"
     fi
+
+    # don't quit qemu using ctrl-c
+    stty intr ^]
+    stty susp ^]
+    stty quit ^]
     set -x
     exec qemu-system-${QEMUARCH} \
             ${DISPLAY_OPTS} \
@@ -294,6 +299,10 @@ elif [ "$BOOT_ISO" == "1" ] ||
             echo "----- $ISO_OPTS"
     fi
     set -x
+    # don't quit qemu using ctrl-c
+    stty intr ^]
+    stty susp ^]
+    stty quit ^]
     exec qemu-system-${QEMUARCH} \
             ${DISPLAY_OPTS} \
             ${CLOUD_CONFIG_DISK} \
