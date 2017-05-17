@@ -159,7 +159,8 @@ fi
 
 if [ "$BOOT_PXE" == "1" ]; then
     set -ex
-    sudo pixiecore boot \
+    PIXIECORE=$(which pixiecore)
+    sudo -E $PIXIECORE boot \
                "${KERNEL}" \
                "${INITRD}" \
                --cmdline="${KERNEL_ARGS}"
