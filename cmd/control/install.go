@@ -197,27 +197,29 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 		log.Infof("user specified to install pre v0.8.0: %s", image)
 		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
 		vArray := strings.Split(imageVersion, ".")
-		v, _ := strconv.ParseFloat(vArray[0]+"."+vArray[1], 32)
-		if v < 0.8 || imageVersion == "0.8.0-rc1" {
-			log.Infof("starting installer container for %s", image)
-			if installType == "generic" ||
-				installType == "syslinux" ||
-				installType == "gptsyslinux" {
-				cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=all-volumes",
-					"--entrypoint=/scripts/set-disk-partitions", image, device, diskType)
+		if len(vArray) >= 2 {
+			v, _ := strconv.ParseFloat(vArray[0]+"."+vArray[1], 32)
+			if v < 0.8 || imageVersion == "0.8.0-rc1" {
+				log.Infof("starting installer container for %s", image)
+				if installType == "generic" ||
+					installType == "syslinux" ||
+					installType == "gptsyslinux" {
+					cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=all-volumes",
+						"--entrypoint=/scripts/set-disk-partitions", image, device, diskType)
+					cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+					if err := cmd.Run(); err != nil {
+						return err
+					}
+				}
+				cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes",
+					"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig,
+					"-a", kappend)
 				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 				if err := cmd.Run(); err != nil {
 					return err
 				}
+				return nil
 			}
-			cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes",
-				"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig,
-				"-a", kappend)
-			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-			return nil
 		}
 	}
 
