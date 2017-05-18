@@ -3,7 +3,11 @@ set -e
 
 cd $(dirname $0)/..
 
-source ./scripts/version
+BUILD=$(pwd)/build
+INITRD_DIR=${BUILD}/initrd
+ARTIFACTS=$(pwd)/dist/artifacts
+
+source scripts/version
 
 BASEDOCKERFILE=./scripts/installer/BaseDockerfile.${ARCH}
 DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}

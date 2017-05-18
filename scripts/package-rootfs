@@ -4,14 +4,13 @@ set -o pipefail
 
 cd $(dirname $0)/..
 
-source scripts/version
-
 BUILD=$(pwd)/build
 IMAGE_CACHE=${BUILD}/image-cache
 PREPOP_DIR=${IMAGE_CACHE}/var/lib/system-docker
 INITRD_DIR=${BUILD}/initrd
 ARTIFACTS=$(pwd)/dist/artifacts
-INITRD=${ARTIFACTS}/initrd
+
+source scripts/version
 
 mkdir -p ${ARTIFACTS} ${PREPOP_DIR}
 
