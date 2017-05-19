@@ -1,6 +1,9 @@
 package network
 
 import (
+	"golang.org/x/net/context"
+
+	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
 
 	"github.com/docker/libnetwork/resolvconf"
@@ -14,6 +17,16 @@ func Main() {
 
 	cfg := config.LoadConfig()
 	ApplyNetworkConfig(cfg)
+
+	log.Infof("Restart syslog")
+	client, err := docker.NewSystemClient()
+	if err != nil {
+		log.Error(err)
+	}
+
+	if err := client.ContainerRestart(context.Background(), "syslog", 10); err != nil {
+		log.Error(err)
+	}
 
 	select {}
 }
