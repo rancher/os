@@ -142,11 +142,13 @@ func (ms MetadataService) fetchIP(key string) (net.IP, error) {
 }
 
 func (ms MetadataService) FetchUserdata() ([]byte, error) {
-	data, err := ms.FetchData(ms.MetadataURL())
+	// see https://github.com/number5/cloud-init/blob/master/cloudinit/sources/DataSourceGCE.py
+	data, err := ms.FetchData(ms.UserdataURL())
 	if err != nil {
 		return nil, err
 	}
 	if len(data) == 0 {
+		// see https://cloud.google.com/deployment-manager/docs/step-by-step-guide/setting-metadata-and-startup-scripts
 		data, err = ms.FetchData(ms.MetadataURL() + "instance/attributes/startup-script")
 		if err != nil {
 			return nil, err
