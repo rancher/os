@@ -272,7 +272,7 @@ func enableDoLinkLocal() {
 				IPV4LL: true,
 			},
 		},
-	})
+	}, false, false)
 	if err != nil {
 		log.Errorf("Failed to apply link local on eth0: %v", err)
 	}
