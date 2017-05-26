@@ -255,7 +255,7 @@ if [ "$CONSOLEDISPLAY" == "1" ]; then
     DISPLAY_OPTS="-curses"
 else
     # default
-    DISPLAY_OPTS="-nographic -serial stdio -display none"
+    DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
 fi
 
 if [ "$QEMU" == "1" ]; then
