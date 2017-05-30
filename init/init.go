@@ -18,6 +18,8 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
+
+	"github.com/SvenDowideit/cpuid"
 )
 
 const (
@@ -301,6 +303,13 @@ func RunInit() error {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
 			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
 				log.Error(err)
+			}
+
+			log.Infof("Hypervisor vendor: %s", cpuid.CPU.HypervisorName)
+			if cpuid.CPU.HypervisorName == "vmware" {
+				if err := config.Set("rancher.services_include.open-vm-tools", "true"); err != nil {
+					log.Error(err)
+				}
 			}
 
 			log.Debug("init, runCloudInitServices()")
