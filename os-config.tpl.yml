@@ -349,7 +349,7 @@ rancher:
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']
   auditd:
-    enabled: true
+    enabled: false
     rules:
       - "-i"
       - "-w /etc/docker -k docker"
