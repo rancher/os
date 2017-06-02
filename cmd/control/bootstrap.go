@@ -45,10 +45,9 @@ func bootstrapAction(c *cli.Context) error {
 		waitForRoot(cfg)
 	}
 
-	autoformatDevices := cfg.Rancher.State.Autoformat
-	log.Debugf("bootstrapAction: Autoformat(%v)", cfg.Rancher.State.Autoformat)
-	if len(autoformatDevices) > 0 {
-		if err := autoformat(autoformatDevices); err != nil {
+	if len(cfg.Rancher.State.Autoformat) > 0 {
+		log.Infof("bootstrap container: Autoformat(%v) as %s", cfg.Rancher.State.Autoformat, "ext4")
+		if err := autoformat(cfg.Rancher.State.Autoformat); err != nil {
 			log.Errorf("Failed to run autoformat: %v", err)
 		}
 	}

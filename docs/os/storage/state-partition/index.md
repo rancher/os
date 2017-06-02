@@ -14,16 +14,23 @@ rancher:
   state:
     fstype: auto
     dev: LABEL=RANCHER_STATE
-    autoformat:
-    - /dev/sda
-    - /dev/vda
 ```
 
 ### Autoformat
 
-You can specify a list of devices to check to format on boot.  If the state partition is already found, RancherOS will not try to auto format a partition. By default, auto-formatting is off.
+You can specify a list of devices to check to format on boot. If the state partition is already found, RancherOS will not try to auto format a partition. By default, auto-formatting is off.
 
-RancherOS will autoformat the partition to ext4 if the device specified in `autoformat`:
+RancherOS will autoformat the partition to `ext4` (_not_ what is set in `fstype`) if the device specified in `autoformat`:
 
 * Contains a boot2docker magic string
 * Starts with 1 megabyte of zeros and `rancher.state.formatzero` is true
+
+
+```yaml
+#cloud-config
+rancher:
+  state:
+    autoformat:
+    - /dev/sda
+    - /dev/vda
+```
