@@ -84,6 +84,7 @@ us-east-2 | HVM | [ami-902304f5](https://us-east-2.console.aws.amazon.com/ec2/ho
 us-west-1 | HVM | [ami-4a73542a](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-4a73542a)
 us-west-2 | HVM | [ami-7caa341c](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-7caa341c)
 
+Additionally, images are available with support for Amazon EC2 Container Service (ECS) [here](https://docs.rancher.com/os/amazon-ecs/#amazon-ecs-enabled-amis).
 
 ### Google Compute Engine
 
