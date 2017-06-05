@@ -54,10 +54,12 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 * https://releases.rancher.com/os/latest/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz
 * https://releases.rancher.com/os/latest/rancheros-raspberry-pi.zip
+* https://releases.rancher.com/os/latest/rancheros-raspberry-pi64.zip
 
 * https://releases.rancher.com/os/v1.0.2/rootfs_arm.tar.gz
 * https://releases.rancher.com/os/v1.0.2/rootfs_arm64.tar.gz
 * https://releases.rancher.com/os/v1.0.2/rancheros-raspberry-pi.zip
+* https://releases.rancher.com/os/v1.0.2/rancheros-raspberry-pi64.zip
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.
 

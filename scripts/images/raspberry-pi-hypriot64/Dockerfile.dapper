@@ -1,0 +1,28 @@
+FROM rancher/os-debianconsole-base
+# FROM amd64=debian:jessie arm64=aarch64/debian:jessie arm=armhf/debian:jessie
+
+ENV DAPPER_RUN_ARGS --privileged
+ENV DAPPER_OUTPUT dist
+RUN apt-get update -y
+RUN DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates curl dosfstools tree zip
+RUN mkdir -p /source/assets
+
+# RancherOS for ARM
+#RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz > /source/assets/rootfs_arm64.tar.gz
+COPY rootfs_arm64.tar.gz /source/assets/rootfs_arm64.tar.gz
+
+ENV URL=https://github.com/DieterReuter/rpi64-kernel/releases/download
+ENV VER=v20170303-160601
+
+RUN curl -fL ${URL}/${VER}/4.9.13-bee42-v8.tar.gz > /source/assets/kernel.tar.gz
+RUN curl -fL ${URL}/${VER}/bootfiles.tar.gz > /source/assets/bootfiles.tar.gz
+RUN curl -fL https://github.com/DieterReuter/rpi-bootloader/releases/download/v20170303-133934/rpi-bootloader.tar.gz > /source/assets/rpi-bootfiles.tar.gz
+
+#ENV RPI_URL=https://github.com/raspberrypi/firmware/raw/master/boot
+#RUN curl -fL ${RPI_URL}/bootcode.bin > /source/assets/bootcode.bin
+#RUN curl -fL ${RPI_URL}/fixup.dat > /source/assets/fixup.dat
+#RUN curl -fL ${RPI_URL}/start.elf > /source/assets/start.elf
+
+WORKDIR /source
+CMD ["./scripts/build.sh"]
