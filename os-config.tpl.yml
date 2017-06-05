@@ -243,6 +243,8 @@ rancher:
       - /etc/hosts:/etc/hosts
       - /etc/resolv.conf:/etc/resolv.conf
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
+      - /etc/rsyslog.conf:/etc/rsyslog.conf
+      - /etc/rsyslog.d:/etc/rsyslog.d
       - /etc/selinux:/etc/selinux
       - /lib/firmware:/lib/firmware
       - /lib/modules:/lib/modules
