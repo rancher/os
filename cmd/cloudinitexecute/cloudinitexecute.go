@@ -125,11 +125,15 @@ func WriteFiles(cfg *rancherConfig.CloudConfig, container string) {
 }
 
 func applyPreConsole(cfg *rancherConfig.CloudConfig) {
-	if _, err := os.Stat(resizeStamp); os.IsNotExist(err) && cfg.Rancher.ResizeDevice != "" {
-		if err := resizeDevice(cfg); err == nil {
-			os.Create(resizeStamp)
+	if cfg.Rancher.ResizeDevice != "" {
+		if _, err := os.Stat(resizeStamp); os.IsNotExist(err) {
+			if err := resizeDevice(cfg); err == nil {
+				os.Create(resizeStamp)
+			} else {
+				log.Errorf("Failed to resize %s: %s", cfg.Rancher.ResizeDevice, err)
+			}
 		} else {
-			log.Errorf("Failed to resize %s: %s", cfg.Rancher.ResizeDevice, err)
+			log.Infof("Skipped resizing %s because %s exists", cfg.Rancher.ResizeDevice, resizeStamp)
 		}
 	}
 
