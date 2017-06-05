@@ -91,7 +91,7 @@ To run this container in System Docker use the following command:
 ```
 $ sudo system-docker run -d --net=host --name busydash husseingalal/busydash
 ```
-In the commad, we used `--net=host` to tell System Docker not to containerize the container's networking, and use the host’s networking instead. After running the container, you can see the monitoring server by accessing `http://<IP_OF_MACHINE`.
+In the commad, we used `--net=host` to tell System Docker not to containerize the container's networking, and use the host’s networking instead. After running the container, you can see the monitoring server by accessing `http://<IP_OF_MACHINE>`.
 
 ![System Docker Container]({{site.baseurl}}/img/os/Rancher_busydash.png)
 
