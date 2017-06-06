@@ -28,3 +28,13 @@ func (s *QemuSuite) TestIsoCloudConfig(c *C) {
 
 	s.CheckCall(c, `ls .ssh/authorized_keys`)
 }
+
+func (s *QemuSuite) TestFatCloudConfig(c *C) {
+        runArgs := []string{
+                "--fresh",
+                "--cloud-config-fat",
+        }
+        s.RunQemuWith(c, runArgs...)
+
+        s.CheckCall(c, `ls .ssh/authorized_keys`)
+}
