@@ -1,9 +1,9 @@
-FROM joshwget/strato-min:0.0.2
-# FROM amd64=joshwget/strato-min:0.0.2 arm64=joshwget/strato-min:0.0.2_arm64 arm=skip
+FROM rancher/strato-min:0.0.2
+# FROM amd64=rancher/strato-min:0.0.2 arm64=rancher/strato-min:0.0.2_arm64 arm=skip
 
-RUN wget -O /sbin/strato "https://github.com/joshwget/strato/releases/download/0.0.2/strato_$(get-arch)" \
+RUN wget -O /sbin/strato "https://github.com/rancher/strato/releases/download/0.0.2/strato_$(get-arch)" \
     && chmod +x /sbin/strato \
-    && strato --source="https://github.com/joshwget/strato-packages/raw/master/0.0.2/$(get-arch)/" add bash \
+    && strato --source="https://github.com/rancher/strato-packages/raw/master/0.0.2/$(get-arch)/" add bash \
     openssh \
     zlib \
     e2fsprogs \
