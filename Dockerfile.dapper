@@ -19,6 +19,7 @@ RUN apt-get update && \
         libselinux1-dev \
         locales \
         module-init-tools \
+        mtools \
         openssh-client \
         pkg-config \
         qemu \
