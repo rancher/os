@@ -1,14 +1,21 @@
 FROM rancher/strato-min:0.0.2
 # FROM amd64=rancher/strato-min:0.0.2 arm64=rancher/strato-min:0.0.2_arm64 arm=skip
 
-RUN wget -O /sbin/strato "https://github.com/rancher/strato/releases/download/0.0.2/strato_$(get-arch)" \
+
+# You can build a locel strato repository, and run `make webserver` in that repo
+# and make build-images will automatically change the build-arg
+ARG STRATO_BIN=https://github.com/rancher/strato/releases/download/0.0.2
+ARG STRATO_REPO=https://github.com/rancher/strato-packages/raw/master/0.0.2/amd64/
+
+RUN wget -O /sbin/strato "${STRATO_BIN}/strato_$(get-arch)" \
     && chmod +x /sbin/strato \
-    && strato --source="https://github.com/rancher/strato-packages/raw/master/0.0.2/$(get-arch)/" add bash \
+    && strato --source="${STRATO_REPO}" add bash \
     openssh \
     zlib \
     e2fsprogs \
     agetty \
     partx \
+    sfdisk \
     libuuid \
     libblkid \
     kmod \
