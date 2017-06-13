@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gbazil/telnet"
+
 	. "gopkg.in/check.v1"
 )
 
@@ -41,6 +43,7 @@ type QemuSuite struct {
 	runCommand string
 	sshCommand string
 	qemuCmd    *exec.Cmd
+	netConsole telnet.Telnet
 }
 
 func (s *QemuSuite) TearDownTest(c *C) {
@@ -54,6 +57,9 @@ func (s *QemuSuite) RunQemuWith(c *C, additionalArgs ...string) error {
 
 	err := s.runQemu(c, additionalArgs...)
 	c.Assert(err, IsNil)
+	err = s.WaitForSSH()
+	c.Assert(err, IsNil)
+
 	return err
 }
 
@@ -82,19 +88,84 @@ func (s *QemuSuite) RunQemuInstalled(c *C, additionalArgs ...string) error {
 	return err
 }
 
+// RunQemuWithNetConsole requires user to specify all the `scripts/run` arguments
+func (s *QemuSuite) RunQemuWithNetConsole(c *C, additionalArgs ...string) error {
+	runArgs := []string{
+		"--netconsole",
+	}
+	runArgs = append(runArgs, additionalArgs...)
+
+	err := s.runQemu(c, runArgs...)
+	c.Assert(err, IsNil)
+
+	time.Sleep(500 * time.Millisecond)
+	// start telnet, and wait for prompt
+	for i := 0; i < 20; i++ {
+		s.netConsole, err = telnet.DialTimeout("127.0.0.1:4444", 5*time.Second)
+		if err == nil {
+			fmt.Printf("t%d SUCCEEDED\n", i)
+			break
+		}
+		fmt.Printf("t%d", i)
+		time.Sleep(500 * time.Millisecond)
+	}
+	c.Assert(err, IsNil)
+
+	for i := 0; i < 20; i++ {
+		time.Sleep(1 * time.Second)
+
+		res := s.NetCall("uname")
+		if strings.Contains(res, "Linux") {
+			fmt.Printf("W%d SUCCEEDED(%s)\n", i, res)
+			break
+		}
+	}
+
+	s.NetCall("ip a")
+	s.NetCall("cat /proc/cmdline")
+
+	return err
+}
+
+func (s *QemuSuite) NetCall(cmd string) string {
+	s.netConsole.Write(cmd + "\n")
+	r, err := s.netConsole.Read("\n")
+	fmt.Printf("cmd> %s", r)
+	result := ""
+	r = ""
+	for err == nil {
+		r, err = s.netConsole.Read("\n")
+		fmt.Printf("\t%s", r)
+		result = result + r
+	}
+	fmt.Printf("\n")
+	// Note, if the result contains something like "+ cmd\n", you may have set -xe on
+	return result
+}
+func (s *QemuSuite) NetCheckCall(c *C, additionalArgs ...string) {
+	out := s.NetCall(strings.Join(additionalArgs, " "))
+	c.Assert(out, Not(Equals), "")
+}
+func (s *QemuSuite) NetCheckOutput(c *C, result string, check Checker, additionalArgs ...string) string {
+	out := s.NetCall(strings.Join(additionalArgs, " "))
+	out = strings.Replace(out, "\r", "", -1)
+	c.Assert(out, check, result)
+	return out
+}
+
 func (s *QemuSuite) runQemu(c *C, args ...string) error {
 	c.Assert(s.qemuCmd, IsNil) // can't run 2 qemu's at once (yet)
 	s.qemuCmd = exec.Command(s.runCommand, args...)
-	if os.Getenv("DEBUG") != "" {
-		s.qemuCmd.Stdout = os.Stdout
-		s.qemuCmd.Stderr = os.Stderr
-	}
+	//if os.Getenv("DEBUG") != "" {
+	s.qemuCmd.Stdout = os.Stdout
+	s.qemuCmd.Stderr = os.Stderr
+	//}
 	if err := s.qemuCmd.Start(); err != nil {
 		return err
 	}
 	fmt.Printf("--- %s: starting qemu %s, %v\n", c.TestName(), s.runCommand, args)
 
-	return s.WaitForSSH()
+	return nil
 }
 
 func (s *QemuSuite) WaitForSSH() error {
@@ -171,12 +242,14 @@ func (s *QemuSuite) CheckOutputContains(c *C, result string, additionalArgs ...s
 }
 
 func (s *QemuSuite) Stop(c *C) {
-	//s.MakeCall("sudo halt")
-	//time.Sleep(2000 * time.Millisecond)
+	fmt.Printf("%s: stopping qemu\n", c.TestName())
+	//s.MakeCall("sudo poweroff")
+	time.Sleep(1000 * time.Millisecond)
 	//c.Assert(s.WaitForSSH(), IsNil)
 
-	//fmt.Println("%s: stopping qemu", c.TestName())
+	fmt.Printf("%s: stopping qemu 2\n", c.TestName())
 	c.Assert(s.qemuCmd.Process.Kill(), IsNil)
+	fmt.Printf("%s: stopping qemu 3\n", c.TestName())
 	s.qemuCmd.Process.Wait()
 	//time.Sleep(time.Millisecond * 1000)
 	s.qemuCmd = nil
