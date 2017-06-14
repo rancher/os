@@ -351,6 +351,7 @@ ff02::2    ip6-allrouters
 127.0.1.1       `+hostname)
 
 	if len(cfg.DNSConfig.Nameservers) != 0 {
+		log.Infof("Writing resolv.conf (%v) %v", cfg.DNSConfig.Nameservers, cfg.DNSConfig.Search)
 		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.DNSConfig.Nameservers, cfg.DNSConfig.Search, nil); err != nil {
 			return err
 		}
