@@ -567,7 +567,8 @@ func isHypervisorActive() bool {
 func getHypervisorCpuid(ax uint32) string {
 	a, b, c, d := cpuid(ax)
 	var info [4]uint32 = [4]uint32{a, b, c, d}
-	return strings.TrimRight(string((*[12]byte)(unsafe.Pointer(&info[1]))[:]), "\000")
+	name := strings.TrimRight(string((*[12]byte)(unsafe.Pointer(&info[1]))[:]), "\000")
+	return name
 }
 
 // see https://people.redhat.com/~rjones/virt-what/ for how full coverage is done
@@ -578,9 +579,10 @@ func hypervisorName() string {
 	}
 	// KVM has been caught to move its real signature to this leaf, and put something completely different in the
 	// standard location. So this leaf must be checked first.
-	if hv := getHypervisorCpuid(0x40000100); hv != "" {
-		return hv
-	}
+	// Sven removed it - in one test system, this leaf returns garbage :(
+	//if hv := getHypervisorCpuid(0x40000100); hv != "" {
+	//	return hv
+	//}
 
 	if hv := getHypervisorCpuid(0x40000000); hv != "" {
 		return hv

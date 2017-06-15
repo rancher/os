@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/SvenDowideit/cpuid"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
@@ -117,7 +118,7 @@ func consoleInitFunc() error {
    |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
    \\___/        \\___/     \s \r
 
-         RancherOS `+config.Version+` \n \l
+         RancherOS `+config.Version+` \n \l `+cpuid.CPU.HypervisorName+`
          `), 0644); err != nil {
 		log.Error(err)
 	}
