@@ -39,6 +39,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
 	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
 	"github.com/rancher/os/config/cloudinit/datasource/url"
+	"github.com/rancher/os/config/cloudinit/datasource/vmware"
 	"github.com/rancher/os/config/cloudinit/pkg"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
@@ -229,7 +230,7 @@ func getDatasources(datasources []string) []datasource.Datasource {
 
 		switch parts[0] {
 		case "*":
-			dss = append(dss, getDatasources([]string{"configdrive", "ec2", "digitalocean", "packet", "gce"})...)
+			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce"})...)
 		case "ec2":
 			dss = append(dss, ec2.NewDatasource(root))
 		case "file":
@@ -256,6 +257,8 @@ func getDatasources(datasources []string) []datasource.Datasource {
 			dss = append(dss, gce.NewDatasource(root))
 		case "packet":
 			dss = append(dss, packet.NewDatasource(root))
+		case "vmware":
+			dss = append(dss, vmware.NewDatasource(root))
 		}
 	}
 

@@ -131,19 +131,19 @@ func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
 }
 
 func (v VMWare) FetchUserdata() ([]byte, error) {
-	encoding, err := v.readConfig("coreos.config.data.encoding")
+	encoding, err := v.readConfig("cloud-init.data.encoding")
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := v.readConfig("coreos.config.data")
+	data, err := v.readConfig("cloud-init.config.data")
 	if err != nil {
 		return nil, err
 	}
 
 	// Try to fallback to url if no explicit data
 	if data == "" {
-		url, err := v.readConfig("coreos.config.url")
+		url, err := v.readConfig("cloud-init.config.url")
 		if err != nil {
 			return nil, err
 		}

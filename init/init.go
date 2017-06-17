@@ -300,6 +300,11 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
+			hypervisor := checkHypervisor(cfg)
+			if hypervisor == "vmware" {
+				// add vmware to the end - we don't want to over-ride an choices the user has made
+				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
+			}
 			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
 				log.Error(err)
 			}
@@ -362,10 +367,6 @@ func RunInit() error {
 
 			return cfg, nil
 		}},
-		config.CfgFuncData{"detect hypervisor", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			checkHypervisor()
-			return config.LoadConfig(), nil
-		}},
 		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 
 			if boot2DockerEnvironment {
@@ -409,7 +410,7 @@ func RunInit() error {
 	return pidOne()
 }
 
-func checkHypervisor() {
+func checkHypervisor(cfg *config.CloudConfig) string {
 	hvtools := cpuid.CPU.HypervisorName
 	if hvtools != "" {
 		log.Infof("Detected Hypervisor: %s", cpuid.CPU.HypervisorName)
@@ -421,4 +422,5 @@ func checkHypervisor() {
 			log.Error(err)
 		}
 	}
+	return cpuid.CPU.HypervisorName
 }
