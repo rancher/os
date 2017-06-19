@@ -1,9 +1,9 @@
-RaspberryPi 2 Image
-===================
+RaspberryPi 3 Image (ARMv8 | AARCH64 | ARM64)
+=============================================
 
-Build by running `dapper` in this folder and the build will produce `./dist/rancheros-rpi2.zip`.
+Build by running `dapper` in this folder and the build will produce `./dist/rancheros-raspberry-pi64.zip`.
 
-This image is compatible with the Raspberry Pi 3 too, but only ARMv7 is supported now.
+This image is compatible with the Raspberry Pi 3, since it is the only ARMv8 device in the Raspberry Pi family at the moment.
 
 Build Requirements
 ==================
