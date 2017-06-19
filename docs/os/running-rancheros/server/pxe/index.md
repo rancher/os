@@ -62,10 +62,29 @@ Valid cloud-init datasources for RancherOS.
 | gce |  |  |
 | packet | DefaultAddress |  |
 | url | url |  |
-| vmware |  | set `guestinfo.cloud-init.data.data`, `guestinfo.cloud-init.data.encoding`, or `guestinfo.cloud-init.data.url` |
+| vmware |  | set `guestinfo.cloud-init.config.data`, `guestinfo.cloud-init.config.data.encoding`, or `guestinfo.cloud-init.config.url` |
 | * | This will add ["configdrive", "vmware", "ec2", "digitalocean", "packet", "gce"] into the list of datasources to try |  |
 
 ### Cloud-Config
 
 When booting via iPXE, RancherOS can be configured using a [cloud-config file]({{site.baseurl}}/os/configuration/#cloud-config).
 
+### VMware guestinfo
+
+| GUESTINFO VARIABLE |	TYPE |
+|---|---|
+| `hostname |	hostname |
+| `interface.<n>.name` |	string |
+| `interface.<n>.mac` |	MAC address (is used to match the ethernet device's MAC address, not to set it) |
+| `interface.<n>.dhcp` |	{"yes", "no"} |
+| `interface.<n>.role` |	{"public", "private"} |
+| `interface.<n>.ip.<m>.address` |	CIDR IP address |
+| `interface.<n>.route.<l>.gateway` |	IP address |
+| `interface.<n>.route.<l>.destination` |	CIDR IP address (not available yet) |
+| `dns.server.<x>` | IP address |
+| `dns.domain.<y> |	DNS search domain` |
+| `cloud-init.config.data | string` |
+| `cloud-init.config.data.encoding` |	{"", "base64", "gzip+base64"} |
+| `cloud-init.config.url` |	URL |
+
+> **Note:** "n", "m", "l", "x" and "y" are 0-indexed, incrementing integers. The identifier for an interface (`<n>`) is used in the generation of the default interface name in the form `eth<n>`.
