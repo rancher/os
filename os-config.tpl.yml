@@ -348,3 +348,15 @@ rancher:
       max-file: 2
     tls_args: [--tlsverify, --tlscacert=/etc/docker/tls/ca.pem, --tlscert=/etc/docker/tls/server-cert.pem, --tlskey=/etc/docker/tls/server-key.pem,
       '-H=0.0.0.0:2376']
+  auditd:
+    enabled: false
+    rules:
+      - "-i"
+      - "-w /etc/docker -k docker"
+      - "-w /usr/bin/docker-containerd-ctr -k docker"
+      - "-w /usr/bin/docker-containerd -k docker"
+      - "-w /usr/bin/docker-containerd-shim -k docker"
+      - "-w /usr/bin/docker -k docker"
+      - "-w /usr/bin/docker-runc -k docker"
+      - "-w /var/lib/docker -k docker"
+      - "-w /var/run/docker.sock -k docker"

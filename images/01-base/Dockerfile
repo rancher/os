@@ -35,7 +35,6 @@ COPY inputrc /etc/inputrc
 COPY growpart /usr/bin/growpart
 RUN sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
     sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
-    sed -i 1,10d /etc/rsyslog.conf && \
     echo "*.*                /var/log/syslog" >> /etc/rsyslog.conf
 # dump kernel log to console (but after we've finished booting)
 #    echo "kern.*                /dev/console" >> /etc/rsyslog.conf

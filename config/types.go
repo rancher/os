@@ -129,6 +129,7 @@ type RancherConfig struct {
 	ResizeDevice        string                                    `yaml:"resize_device,omitempty"`
 	Sysctl              map[string]string                         `yaml:"sysctl,omitempty"`
 	RestartServices     []string                                  `yaml:"restart_services,omitempty"`
+	Auditd              AuditConfig                               `yaml:"auditd,omitempty"`
 }
 
 type UpgradeConfig struct {
@@ -188,6 +189,11 @@ type StateConfig struct {
 	Script     string   `yaml:"script,omitempty"`
 	OemFsType  string   `yaml:"oem_fstype,omitempty"`
 	OemDev     string   `yaml:"oem_dev,omitempty"`
+}
+
+type AuditConfig struct {
+	Enabled bool     `yaml:"enabled,omitempty"`
+	Rules   []string `yaml:"rules,omitempty"`
 }
 
 type CloudInit struct {

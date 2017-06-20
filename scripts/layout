@@ -114,6 +114,7 @@ if [ -e ${DOWNLOADS}/policy.29 ]; then
 fi
 
 DFS_ARCH=$(docker create ${DFS_IMAGE}${SUFFIX})
+ROOTFS=$(docker create rancher/os-rootfs true)
 trap "docker rm -fv ${DFS_ARCH} >/dev/null" EXIT
 
 docker export ${DFS_ARCH} | tar xf - -C ${INITRD_DIR} --exclude=usr/bin/docker*      \
@@ -122,5 +123,9 @@ docker export ${DFS_ARCH} | tar xf - -C ${INITRD_DIR} --exclude=usr/bin/docker* 
                                                       --exclude=usr/bin/ssh          \
                                                       --exclude=usr/libexec/git-core \
                                                       usr
+
+docker export ${ROOTFS} | tar xf - -C ${INITRD_DIR} --wildcards \
+    usr/lib/libau* usr/lib/libpthread* usr/lib/libuClibc* usr/lib/librt.* usr/lib/libdl* \
+    usr/lib/librt-* usr/lib/libm.* usr/lib/libm-* usr/lib/libc.* usr/lib/ld64* usr/sbin/au*
 
 ./scripts/hash-initrd
