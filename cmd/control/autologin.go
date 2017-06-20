@@ -27,7 +27,6 @@ func AutologinMain() {
 	app.Run(os.Args)
 }
 
-
 func autologinAction(c *cli.Context) error {
 	cmd := exec.Command("/bin/stty", "sane")
 	cmd.Stderr = os.Stderr
@@ -52,7 +51,7 @@ func autologinAction(c *cli.Context) error {
 	// replace \n and \l
 	banner := config.Banner
 	banner = strings.Replace(banner, "\\v", config.Version, -1)
-	banner = strings.Replace(banner, "\\s", "RancherOS " + runtime.GOARCH, -1)
+	banner = strings.Replace(banner, "\\s", "RancherOS "+runtime.GOARCH, -1)
 	banner = strings.Replace(banner, "\\r", "4.9....", -1)
 	banner = strings.Replace(banner, "\\n", cfg.Hostname, -1)
 	banner = strings.Replace(banner, "\\l", tty, -1)
@@ -69,4 +68,3 @@ func autologinAction(c *cli.Context) error {
 	}
 	return nil
 }
-
