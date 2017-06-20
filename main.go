@@ -23,6 +23,7 @@ import (
 )
 
 var entrypoints = map[string]func(){
+	"autologin":          control.AutologinMain,
 	"cloud-init-execute": cloudinitexecute.Main,
 	"cloud-init-save":    cloudinitsave.Main,
 	"console":            control.ConsoleInitMain,

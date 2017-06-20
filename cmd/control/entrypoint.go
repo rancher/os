@@ -79,6 +79,7 @@ func writeFiles(cfg *config.CloudConfig) error {
 
 func setupCommandSymlinks() {
 	for _, link := range []symlink{
+		{config.RosBin, "/usr/bin/autologin"},
 		{config.RosBin, "/usr/bin/cloud-init-execute"},
 		{config.RosBin, "/usr/bin/cloud-init-save"},
 		{config.RosBin, "/usr/bin/dockerlaunch"},

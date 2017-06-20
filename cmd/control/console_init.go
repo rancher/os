@@ -109,17 +109,7 @@ func consoleInitFunc() error {
 	}
 
 	// font backslashes need to be escaped for when issue is output! (but not the others..)
-	if err := ioutil.WriteFile("/etc/issue", []byte(`
-               ,        , ______                 _                 _____ _____TM
-  ,------------|'------'| | ___ \\               | |               /  _  /  ___|
- / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
- \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
-   |   .________.'----'   | |\\ \\ (_| | | | | (__| | | |  __/ |    | \\_/ /\\__/ /
-   |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
-   \\___/        \\___/     \s \r
-
-         RancherOS `+config.Version+` \n \l `+cpuid.CPU.HypervisorName+`
-         `), 0644); err != nil {
+	if err := ioutil.WriteFile("/etc/issue", []byte(config.Banner), 0644); err != nil {
 		log.Error(err)
 	}
 
@@ -163,7 +153,8 @@ func generateRespawnConf(cmdline, user string, sshd bool) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
+			respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o %s:tty%d", user, i))
+			//respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
@@ -175,7 +166,9 @@ func generateRespawnConf(cmdline, user string, sshd bool) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
+			//respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o rancher"))
+			respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o %s:%s", user, tty))
+			//respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
 	}

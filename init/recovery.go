@@ -6,6 +6,7 @@ import (
 	"github.com/docker/libcompose/yaml"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/netconf"
 )
 
 var (
@@ -55,8 +56,8 @@ func recovery(initFailure error) {
 
 	var recoveryConfig config.CloudConfig
 	recoveryConfig.Rancher.Defaults = config.Defaults{
-		Network: config.NetworkConfig{
-			DNS: config.DNSConfig{
+		Network: netconf.NetworkConfig{
+			DNS: netconf.DNSConfig{
 				Nameservers: []string{
 					"8.8.8.8",
 					"8.8.4.4",
@@ -82,8 +83,10 @@ func recovery(initFailure error) {
 	}
 
 	_, err = config.ChainCfgFuncs(&recoveryConfig,
-		loadImages,
-		recoveryServices)
+		[]config.CfgFuncData{
+			config.CfgFuncData{"loadImages", loadImages},
+			config.CfgFuncData{"recovery console", recoveryServices},
+		})
 	if err != nil {
 		log.Fatal(err)
 	}
