@@ -80,9 +80,9 @@ ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
 ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-2
 
-ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2017.02.3-1/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2017.02.3-1/os-base_arm64.tar.xz
-ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2017.02.3-1/os-base_arm.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2017.02.3-glibc-ssp-all/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2017.02.3-glibc-ssp.all/os-base_arm64.tar.xz
+ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2017.02.3-glibc-ssp.all/os-base_arm.tar.xz
 ######################################################
 
 # Set up environment and export all ARGS as ENV
