@@ -1,8 +1,13 @@
 FROM ubuntu:16.04
 # FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+# get the apt-cacher proxy set
+ARG APTPROXY=
+
+RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01proxy \
+    && cat /etc/apt/apt.conf.d/01proxy \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
         build-essential \
         ca-certificates \
         cpio \
@@ -32,7 +37,7 @@ RUN apt-get update && \
 
 ########## Dapper Configuration #####################
 
-ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG APTPROXY ENGINE_REGISTRY_MIRROR
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
 ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd ./build/kernel
