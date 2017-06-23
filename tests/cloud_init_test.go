@@ -30,11 +30,11 @@ func (s *QemuSuite) TestIsoCloudConfig(c *C) {
 }
 
 func (s *QemuSuite) TestFatCloudConfig(c *C) {
-        runArgs := []string{
-                "--fresh",
-                "--cloud-config-fat",
-        }
-        s.RunQemuWith(c, runArgs...)
+	runArgs := []string{
+		"--fresh",
+		"--cloud-config-fat",
+	}
+	s.RunQemuWith(c, runArgs...)
 
-        s.CheckCall(c, `ls .ssh/authorized_keys`)
+	s.CheckCall(c, `ls .ssh/authorized_keys`)
 }
