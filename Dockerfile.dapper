@@ -33,7 +33,8 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
         syslinux-common \
         vim \
         wget \
-        xorriso
+        xorriso \
+	telnet
 
 ########## Dapper Configuration #####################
 
