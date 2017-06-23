@@ -24,6 +24,7 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
         libselinux1-dev \
         locales \
         module-init-tools \
+        mtools \
         openssh-client \
         pkg-config \
         qemu \
