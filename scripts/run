@@ -120,6 +120,9 @@ while [ "$#" -gt 0 ]; do
         # use the bios console, not serial (lets you see syslinux)
             CONSOLEDISPLAY=1
             ;;
+        --netconsole)
+            NETCONSOLE=1
+            ;;
         --installed)
             ./scripts/create-installed
             INSTALLED=1
@@ -162,6 +165,7 @@ if [ "$APPEND_INIT" != "" ]; then
 fi
 
 if [ "$BOOT_PXE" == "1" ]; then
+    KERNEL_ARGS="console=tty1 rancher.console=tty1 rancher.autologin=tty1 ${KERNEL_ARGS}"
     set -ex
     PIXIECORE=$(which pixiecore)
     sudo -E $PIXIECORE boot \
@@ -259,15 +263,19 @@ if [ "$QIND" != "1" ]; then
     HOME=${HOME:-/}
 fi
 
+# default serial console
+DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
+
 if [ "$CONSOLEDISPLAY" == "1" ]; then
     DISPLAY_OPTS="-curses"
-else
-    # default
-    DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
+fi
+if [ "$NETCONSOLE" == "1" ]; then
+    # put ttyS1 on port 4444
+    DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
+    KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
 fi
 
 if [ "$QEMU" == "1" ]; then
-
     if [ "$INSTALLED" == "1" ]; then
         # kernel args only works when using -kernel
         KERNEL_ARGS=""
@@ -315,7 +323,8 @@ elif [ "$BOOT_ISO" == "1" ] ||
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
-            ${ISO_OPTS}
+            ${ISO_OPTS} \
+            "${@}"
 elif [ "$QIND" == "1" ]; then
 
     NAME=${NAME:-ros-qind}

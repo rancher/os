@@ -402,11 +402,6 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	addrMap := make(map[string]bool)
 	for _, address := range addresses {
 		addrMap[address] = true
-		log.Infof("Applying %s to %s", address, link.Attrs().Name)
-		err := applyAddress(address, link, netConf)
-		if err != nil {
-			log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
-		}
 	}
 	for _, addr := range existingAddrs {
 		if _, ok := addrMap[addr.IPNet.String()]; !ok {
@@ -417,6 +412,13 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 				log.Infof("removing  %s from %s", addr.String(), link.Attrs().Name)
 				removeAddress(addr, link)
 			}
+		}
+	}
+	for _, address := range addresses {
+		log.Infof("Applying %s to %s", address, link.Attrs().Name)
+		err := applyAddress(address, link, netConf)
+		if err != nil {
+			log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
 		}
 	}
 
