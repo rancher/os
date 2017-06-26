@@ -11,7 +11,7 @@ cp assets/*.tar.gz build/
 #---build SD card image---
 
 # size of root and boot partion (in MByte)
-IMAGE_TOTAL_SIZE=500
+IMAGE_TOTAL_SIZE=2048
 BOOT_PARTITION_START=2048
 BOOT_PARTITION_SIZE=25
 #---don't change here---
