@@ -58,7 +58,6 @@ func stopDocker(c chan interface{}) error {
 
 func bootstrap(cfg *config.CloudConfig) error {
 	log.Info("Launching Bootstrap Docker")
-	log.Infof("bootstrap container: Autoformat(%v)", cfg.Rancher.State.Autoformat)
 
 	c, err := startDocker(cfg)
 	if err != nil {

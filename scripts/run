@@ -22,6 +22,10 @@ while [ "$#" -gt 0 ]; do
             QIND=0
             REBUILD=0
             ;;
+        --resizehd)
+            shift 1
+            RESIZEHD=$1
+            ;;
         --pxe)
             BOOT_PXE=1
             ;;
@@ -201,6 +205,10 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
                     qemu-img create -f qcow2 -o size=10G ${HD}
                 fi
             fi
+        fi
+    else
+        if [ "$RESIZEHD" != "" ]; then
+            qemu-img resize ${HD} ${RESIZEHD}
         fi
     fi
 
