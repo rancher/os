@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 	"syscall"
+	"strings"
 
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/log"
@@ -30,7 +31,7 @@ func mountProc() error {
 	return nil
 }
 
-func Mount(device, directory, fsType, options string) error {
+func Mount(device, directory, fsType string, options ...string) error {
 	if err := mountProc(); err != nil {
 		return nil
 	}
@@ -42,7 +43,7 @@ func Mount(device, directory, fsType, options string) error {
 		}
 	}
 
-	return mount.Mount(device, directory, fsType, options)
+	return mount.Mount(device, directory, fsType, strings.Join(options, ","))
 }
 
 func Unmount(target string) error {
