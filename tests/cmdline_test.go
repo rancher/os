@@ -19,7 +19,7 @@ func (s *QemuSuite) TestElideCmdLine(c *C) {
 	s.RunQemuWith(c, runArgs...)
 
 	s.CheckOutput(c, "nope\n", Equals, "hostname")
-	cmdline := s.CheckOutput(c, "", Not(Equals), "cat /proc/cmdline",)
+	cmdline := s.CheckOutput(c, "", Not(Equals), "cat /proc/cmdline")
 	if strings.Contains(cmdline, extra) {
 		c.Errorf("/proc/cmdline (%s) contains info that should be elided (%s)", cmdline, extra)
 	}

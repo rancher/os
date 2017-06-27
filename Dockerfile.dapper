@@ -39,7 +39,7 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
 
 ########## Dapper Configuration #####################
 
-ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG APTPROXY
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG APTPROXY ENGINE_REGISTRY_MIRROR
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
 ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd ./build/kernel
@@ -63,9 +63,9 @@ ARG DOCKER_BUILD_VERSION=1.10.3
 ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.3/policy.29
 
-ARG KERNEL_VERSION_amd64=4.9.33-rancher
+ARG KERNEL_VERSION_amd64=4.9.34-rancher
 ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/v${KERNEL_VERSION_amd64}/linux-${KERNEL_VERSION_amd64}-x86.tar.gz
-ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.4.0-arm64.8/linux-4.4.0-rancher-arm64.tar.gz
+#ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.4.0-arm64.8/linux-4.4.0-rancher-arm64.tar.gz
 
 ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
 ARG DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm.tgz
@@ -81,9 +81,9 @@ ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
 ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-2
 
-ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2017.02.3-1/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2017.02.3-1/os-base_arm64.tar.xz
-ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2017.02.3-1/os-base_arm.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2017.02.3-glibc-ssp-all/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2017.02.3-glibc-ssp-all/os-base_arm64.tar.xz
+ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2017.02.3-glibc-ssp-all/os-base_arm.tar.xz
 ######################################################
 
 # Set up environment and export all ARGS as ENV
