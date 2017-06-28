@@ -10,14 +10,13 @@ There are two ways to edit the kernel parameters, in-place (editing the file and
 
 ### In-place editing
 
-For in-place editing, you will need to run a container with an editor and a mount to access the `/boot/global.cfg` file containing the kernel parameters.
+To edit the kernel boot parameters of an already installed RancherOS system, use the new `sudo ros config syslinux` editing command (uses `vi`).
 
 > To activate this setting, you will need to reboot.
 
-```bash
-$ sudo system-docker run --rm -it -v /:/host alpine vi /host/boot/global.cfg
-```
+#### Graphical boot screen
 
+RancherOS v1.1.0 added a syslinux boot menu, which on desktop systems can be switched to graphical mode by adding `UI vesamenu.c32` to a new line in `global.cfg` (use `sudo ros config syslinux` to edit the file).
 
 ### During installation
 
