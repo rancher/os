@@ -123,6 +123,9 @@ while [ "$#" -gt 0 ]; do
         --netconsole)
             NETCONSOLE=1
             ;;
+        --gui)
+            GUICONSOLE=1
+            ;;
         --installed)
             ./scripts/create-installed
             INSTALLED=1
@@ -265,16 +268,17 @@ if [ "$QIND" != "1" ]; then
     HOME=${HOME:-/}
 fi
 
-# default serial console
-DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
-
-if [ "$CONSOLEDISPLAY" == "1" ]; then
-    DISPLAY_OPTS="-curses"
-fi
-if [ "$NETCONSOLE" == "1" ]; then
-    # put ttyS1 on port 4444
-    DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
-    KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
+if [ "$GUICONSOLE" == "" ]; then
+	# default serial console
+	DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
+	if [ "$CONSOLEDISPLAY" == "1" ]; then
+	    DISPLAY_OPTS="-curses"
+	fi
+	if [ "$NETCONSOLE" == "1" ]; then
+	    # put ttyS1 on port 4444
+	    DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
+	    KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
+	fi
 fi
 
 if [ "$QEMU" == "1" ]; then
