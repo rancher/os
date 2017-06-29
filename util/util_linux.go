@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -30,19 +31,62 @@ func mountProc() error {
 	return nil
 }
 
-func Mount(device, directory, fsType, options string) error {
+func Mount(device, target, fsType, options string) error {
 	if err := mountProc(); err != nil {
 		return nil
 	}
 
-	if _, err := os.Stat(directory); os.IsNotExist(err) {
-		err = os.MkdirAll(directory, 0755)
-		if err != nil {
-			return err
+	bindMount := false
+	for _, v := range strings.Split(options, ",") {
+		if v == "bind" {
+			bindMount = true
+			break
 		}
 	}
 
-	return mount.Mount(device, directory, fsType, options)
+	if bindMount {
+		deviceInfo, err := os.Stat(device)
+		if err != nil {
+			return err
+		}
+		mode := deviceInfo.Mode()
+
+		switch {
+		case mode.IsDir():
+			if err := os.MkdirAll(target, 0755); err != nil {
+				return err
+			}
+		case mode.IsRegular():
+			err := os.MkdirAll(filepath.Dir(target), 0755)
+			if err != nil {
+				return err
+			}
+			file, err := os.OpenFile(target, os.O_CREATE, mode&os.ModePerm)
+			if err != nil {
+				return err
+			}
+			if err := file.Close(); err != nil {
+				return err
+			}
+		default:
+			return os.ErrInvalid
+		}
+	} else {
+		err := os.MkdirAll(target, 0755)
+		if err != nil {
+			return err
+		}
+
+		if fsType == "auto" || fsType == "" {
+			inferredType, err := GetFsType(device)
+			if err != nil {
+				return err
+			}
+			fsType = inferredType
+		}
+	}
+
+	return mount.Mount(device, target, fsType, options)
 }
 
 func Unmount(target string) error {
