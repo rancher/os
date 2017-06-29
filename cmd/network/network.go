@@ -42,6 +42,7 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	}
 
 	// TODO: don't write to the file if nameservers is still empty
+	log.Infof("Writing resolv.conf (%v) %v", nameservers, search)
 	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
 		log.Error(err)
 	}
