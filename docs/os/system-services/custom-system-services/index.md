@@ -104,6 +104,61 @@ delete the files in `/var/lib/rancher/cache`.
 
 The image that you specify in the service yml file needs to be pullable - either from a private registry, or on the Docker Hub.
 
+### Service cron
+
+RancherOS has a system cron service based on [Container Crontab](https://github.com/rancher/container-crontab). This can be used to start, restart or stop system containers.
+
+To use this on your service, add a `cron.schedule` label to your service's description:
+
+```
+my-service:
+  image: namespace/my-service:v1.0.0
+  command: my-command
+  labels:
+    io.rancher.os.scope: "system"
+    cron.schedule: "0 * * * * ?"
+```
+
+For a cron service that can be used with user Docker containers, see the `crontab` system service.
+
+### Service log rotation
+
+RancherOS provides a built in `logrotate` container that makes use of logrotate(8) to rotate system logs. This is called on an hourly basis by the `system-cron` container.
+
+If you would like to make use of system log rotation for your system service, do the following.
+
+Add `system-volumes` to your service description's `volumes_from` section. You could also use a volume group containing `system-volumes` e.g. `all-volumes`.
+
+```
+my-service:
+  image: namespace/my-service:v1.0.0
+  command: my-command
+  labels:
+    io.rancher.os.scope: "system"
+  volumes_from:
+    - system-volumes
+```
+
+Next, add an entry point script to your image and copy your logrotate configs to `/etc/logrotate.d/` on startup.
+
+Example Dockerfile:
+```
+FROM alpine:latest
+COPY logrotate-myservice.conf entrypoint.sh /
+ENTRYPOINT ["/entrypoint.sh"]
+```
+
+Example entrypoint.sh (Ensure that this script has the execute bit set).
+```
+#!/bin/sh
+
+cp logrotate-myservice.conf /etc/logrotate.d/myservice
+
+exec "$@"
+```
+
+Your service's log rotation config will now be included when the system logrotate runs. You can view logrotate output with `system-docker logs logrotate`.
+
 ### Creating your own Console
 
 Once you have your own Services repository, you can add a new service to its index.yml, and then add a `<service-name>.yml` file to the directory starting with the first letter.

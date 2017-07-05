@@ -1,0 +1,13 @@
+/var/log/messages
+/var/log/secure
+/var/log/syslog
+{
+	rotate 7
+	daily
+	delaycompress
+	missingok
+	sharedscripts
+	postrotate
+		/usr/bin/ros service kill --signal SIGHUP syslog
+	endscript
+}

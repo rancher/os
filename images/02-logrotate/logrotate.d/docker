@@ -1,0 +1,8 @@
+/var/log/docker.log
+/var/log/system-docker.log
+{
+	rotate 7
+	daily
+	missingok
+	copytruncate
+}
