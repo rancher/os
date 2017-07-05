@@ -29,19 +29,21 @@ var entrypoints = map[string]func(){
 	"console.sh":         control.ConsoleInitMain,
 	"docker":             docker.Main,
 	"dockerlaunch":       dfs.Main,
-	"halt":               power.Halt,
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,
-	"poweroff":           power.Off,
-	"reboot":             power.Reboot,
-	"respawn":            respawn.Main,
 	"ros-sysinit":        sysinit.Main,
-	"shutdown":           power.Main,
 	"system-docker":      systemdocker.Main,
 	"wait-for-docker":    wait.Main,
 	"cni-glue":           glue.Main,
 	"bridge":             bridge.Main,
 	"host-local":         hostlocal.Main,
+	"respawn":            respawn.Main,
+
+	// Power commands
+	"halt":     power.Shutdown,
+	"poweroff": power.Shutdown,
+	"reboot":   power.Shutdown,
+	"shutdown": power.Shutdown,
 }
 
 func main() {

@@ -19,6 +19,9 @@ import (
 	"github.com/rancher/os/util"
 )
 
+// You can't shutdown the system from a process in console because we want to stop the console container.
+// If you do that you kill yourself.  So we spawn a separate container to do power operations
+// This can up because on shutdown we want ssh to gracefully die, terminating ssh connections and not just hanging tcp session
 func runDocker(name string) error {
 	if os.ExpandEnv("${IN_DOCKER}") == "true" {
 		return nil
@@ -100,40 +103,24 @@ func runDocker(name string) error {
 	return nil
 }
 
-func common(name string) {
+func reboot(name string, force bool, code uint) {
 	if os.Geteuid() != 0 {
 		log.Fatalf("%s: Need to be root", os.Args[0])
 	}
 
-	if err := runDocker(name); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func Off() {
-	common("poweroff")
-	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
-}
-
-func Reboot() {
-	common("reboot")
-	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
-}
-
-func Halt() {
-	common("halt")
-	reboot(syscall.LINUX_REBOOT_CMD_HALT)
-}
-
-func reboot(code uint) {
-	err := shutDownContainers()
-	if err != nil {
-		log.Error(err)
+	if !force {
+		if err := runDocker(name); err != nil {
+			log.Fatal(err)
+		}
+		err := shutDownContainers()
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
 	syscall.Sync()
 
-	err = syscall.Reboot(int(code))
+	err := syscall.Reboot(int(code))
 	if err != nil {
 		log.Fatal(err)
 	}
