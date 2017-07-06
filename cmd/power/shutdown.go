@@ -11,15 +11,16 @@ import (
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
 )
 
 var (
-	haltFlag     bool
-	poweroffFlag bool
-	rebootFlag   bool
-	forceFlag    bool
-	kexecFlag    bool
+	haltFlag          bool
+	poweroffFlag      bool
+	rebootFlag        bool
+	forceFlag         bool
+	kexecFlag         bool
+	previouskexecFlag bool
+	kexecAppendFlag   string
 )
 
 func Shutdown() {
@@ -114,8 +115,18 @@ func Shutdown() {
 		// OR? maybe implement it as a `kexec` cli tool?
 		app.Flags = append(app.Flags, cli.BoolFlag{
 			Name:        "kexec",
-			Usage:       "kexec the default kernel",
+			Usage:       "kexec the default RancherOS cfg",
 			Destination: &kexecFlag,
+		})
+		app.Flags = append(app.Flags, cli.BoolFlag{
+			Name:        "kexec-previous",
+			Usage:       "kexec the previous RancherOS cfg",
+			Destination: &previouskexecFlag,
+		})
+		app.Flags = append(app.Flags, cli.StringFlag{
+			Name:        "kexec-append",
+			Usage:       "kexec using the specified kernel boot params (ignores global.cfg)",
+			Destination: &kexecAppendFlag,
 		})
 	} else {
 		app.Flags = append(app.Flags, cli.BoolFlag{
@@ -128,8 +139,12 @@ func Shutdown() {
 	app.Run(os.Args)
 }
 
-func Kexec(bootDir, append string) error {
-	cfgFile := filepath.Join(bootDir, "linux-current.cfg")
+func Kexec(previous bool, bootDir, append string) error {
+	cfg := "linux-current.cfg"
+	if previous {
+		cfg = "linux-previous.cfg"
+	}
+	cfgFile := filepath.Join(bootDir, cfg)
 	vmlinuzFile, initrdFile, err := install.ReadSyslinuxCfg(cfgFile)
 	if err != nil {
 		log.Errorf("%s", err)
@@ -149,7 +164,7 @@ func Kexec(bootDir, append string) error {
 		"kexec",
 		"-l", vmlinuzFile,
 		"--initrd", initrdFile,
-		"--append", "'"+append+"'",
+		"--append", append,
 		"-f")
 	log.Debugf("Run(%#v)", cmd)
 	cmd.Stderr = os.Stderr
@@ -168,21 +183,6 @@ func Reboot() {
 }
 
 func shutdown(c *cli.Context) error {
-	if kexecFlag {
-		if os.Geteuid() != 0 {
-			log.Fatalf("%s: Need to be root", os.Args[0])
-		}
-
-		// need to mount boot dir, or `system-docker run -v /:/host -w /host/boot` ?
-		baseName := "/mnt/new_img"
-		_, _, err := install.MountDevice(baseName, "", "", false)
-		if err != nil {
-			log.Errorf("ERROR: can't Kexec: %s", err)
-			return nil
-		}
-		defer util.Unmount(baseName)
-		return Kexec(filepath.Join(baseName, install.BootDir), "")
-	}
 	// the shutdown command's default is poweroff
 	var powerCmd uint
 	powerCmd = syscall.LINUX_REBOOT_CMD_POWER_OFF

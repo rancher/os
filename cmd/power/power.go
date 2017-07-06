@@ -13,6 +13,7 @@ import (
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
+	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/docker"
@@ -108,10 +109,31 @@ func reboot(name string, force bool, code uint) {
 		log.Fatalf("%s: Need to be root", os.Args[0])
 	}
 
+	// reboot -f should work even when system-docker is having problems
 	if !force {
+		if kexecFlag || previouskexecFlag || kexecAppendFlag != "" {
+			// pass through the cmdline args
+			name = ""
+		}
 		if err := runDocker(name); err != nil {
 			log.Fatal(err)
 		}
+	}
+
+	if kexecFlag || previouskexecFlag || kexecAppendFlag != "" {
+		// need to mount boot dir, or `system-docker run -v /:/host -w /host/boot` ?
+		baseName := "/mnt/new_img"
+		_, _, err := install.MountDevice(baseName, "", "", false)
+		if err != nil {
+			log.Errorf("ERROR: can't Kexec: %s", err)
+			return
+		}
+		defer util.Unmount(baseName)
+		Kexec(previouskexecFlag, filepath.Join(baseName, install.BootDir), kexecAppendFlag)
+		return
+	}
+
+	if !force {
 		err := shutDownContainers()
 		if err != nil {
 			log.Error(err)

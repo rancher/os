@@ -64,6 +64,7 @@ func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
 	cfg := &CloudConfig{}
 	if err := util.Convert(rawCfg, cfg); err != nil {
 		log.Errorf("Failed to parse configuration: %s", err)
+		log.Debugf("Bad cfg:\n%v\n", rawCfg)
 		return &CloudConfig{}
 	}
 	cfg = amendNils(cfg)

@@ -538,16 +538,15 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 		install.PvGrubConfig(menu)
 	}
 	log.Debugf("installRancher")
-	currentCfg, err := installRancher(baseName, VERSION, DIST, kernelArgs+" "+kappend)
+	_, err := installRancher(baseName, VERSION, DIST, kernelArgs+" "+kappend)
 	if err != nil {
 		log.Errorf("%s", err)
 		return err
 	}
 	log.Debugf("installRancher done")
 
-	// Used by upgrade
 	if kexec {
-		power.Kexec(currentCfg, kernelArgs+" "+kappend)
+		power.Kexec(false, filepath.Join(baseName, install.BootDir), kernelArgs+" "+kappend)
 	}
 
 	return nil
