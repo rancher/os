@@ -50,19 +50,20 @@ When this service is run, the `EXTRA_CMDLINE` will be set.
 
 Valid cloud-init datasources for RancherOS.
 
-| type | default |
+| type | default |  |
 |---|---|--|
-| ec2 | ec2's DefaultAddress |
-| file | path |
-| cmdline | /media/config-2 |
-| configdrive |  |
-| digitalocean | DefaultAddress |
-| ec2 | DefaultAddress |
-| file | path |
-| gce |  |
-| packet | DefaultAddress |
-| url | url |
-| * | This will add ["configdrive", "ec2", "digitalocean", "packet", "gce"] into the list of datasources to try |
+| ec2 | ec2's DefaultAddress |  |
+| file | path |  |
+| cmdline | /media/config-2 |  |
+| configdrive |  |  |
+| digitalocean | DefaultAddress |  |
+| ec2 | DefaultAddress |  |
+| file | path |  |
+| gce |  |  |
+| packet | DefaultAddress |  |
+| url | url |  |
+| vmware |  | set `guestinfo` cloud-init or interface data as per [VMware ESXi]({{site.baseurl}}/os/cloud/vmware-esxi) |
+| * | This will add ["configdrive", "vmware", "ec2", "digitalocean", "packet", "gce"] into the list of datasources to try |  |
 
 ### Cloud-Config
 

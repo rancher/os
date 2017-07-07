@@ -83,4 +83,10 @@ sudo ros config export --private --full | grep "ntp"
 sudo ros config export --full | grep "labels"
 
 sudo ros config export --private --full | grep "PRIVATE KEY"`)
+
+	s.CheckCall(c, `
+set -x -e
+sudo ros config get rancher.services_include | grep kvm-vm-tools
+`)
+
 }

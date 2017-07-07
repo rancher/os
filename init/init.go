@@ -18,6 +18,8 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
+
+	"github.com/SvenDowideit/cpuid"
 )
 
 const (
@@ -297,8 +299,12 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
+			hypervisor := checkHypervisor(cfg)
+			if hypervisor == "vmware" {
+				// add vmware to the end - we don't want to over-ride an choices the user has made
+				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
+			}
 			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
 				log.Error(err)
 			}
@@ -358,9 +364,11 @@ func RunInit() error {
 			if err := os.Chmod(config.VarRancherDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
 			}
+
 			return cfg, nil
 		}},
 		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)
@@ -400,4 +408,19 @@ func RunInit() error {
 	}
 
 	return pidOne()
+}
+
+func checkHypervisor(cfg *config.CloudConfig) string {
+	hvtools := cpuid.CPU.HypervisorName
+	if hvtools != "" {
+		log.Infof("Detected Hypervisor: %s", cpuid.CPU.HypervisorName)
+		if hvtools == "vmware" {
+			hvtools = "open"
+		}
+		log.Infof("Setting rancher.services_include." + hvtools + "-vm-tools=true")
+		if err := config.Set("rancher.services_include."+hvtools+"-vm-tools", "true"); err != nil {
+			log.Error(err)
+		}
+	}
+	return cpuid.CPU.HypervisorName
 }
