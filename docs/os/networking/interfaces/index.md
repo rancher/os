@@ -111,3 +111,58 @@ rancher:
       eth0:
         bridge: br0
 ```
+
+### Run custom network configuration commands
+
+You can configure `pre` and `post` network configuration commands to run in the `network` service container by adding `pre_cmds` and `post_cmds` array keys to `rancher.network`, or `pre_up` and`post_up` keys for specific `rancher.network.interfaces`.
+
+For example:
+
+```
+#cloud-config
+write_files:
+  - container: network
+    path: /var/lib/iptables/rules.sh
+    permissions: "0755"
+    owner: root:root
+    content: |
+      #!/bin/bash
+      set -ex
+      echo $@ >> /var/log/net.log
+      # the last line of the file needs to be a blank line or a comment
+rancher:
+  network:
+    dns:
+      nameservers:
+        - 8.8.4.4
+        - 4.2.2.3
+    pre_cmds:
+    - /var/lib/iptables/rules.sh pre_cmds
+    post_cmds:
+    - /var/lib/iptables/rules.sh post_cmds
+    interfaces:
+      lo:
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up lo
+        post_up:
+        - /var/lib/iptables/rules.sh post_up lo
+      eth0:
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up eth0
+        post_up:
+        - /var/lib/iptables/rules.sh post_up eth0
+      eth1:
+        dhcp: true
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up eth1
+        post_up:
+        - /var/lib/iptables/rules.sh post_up eth1
+      eth2:
+        address: 192.168.3.13/16
+        mtu: 1450
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up eth2
+        post_up:
+        - /var/lib/iptables/rules.sh post_up eth2
+```
+

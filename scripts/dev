@@ -4,6 +4,9 @@ set -e
 
 cd $(dirname $0)
 
+echo ------------------------ ./build
 ./build
+echo ------------------------ ./prepare
 ./prepare
+echo ------------------------ ./package
 ROOTFS=0 ./package

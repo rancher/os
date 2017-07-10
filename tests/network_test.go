@@ -222,3 +222,27 @@ func (s *QemuSuite) TestNetworkCfg(c *C) {
 			"sed '/inet6 fe80::5054:ff:fe12:.*\\/64/!s/inet6 .*\\/64 scope/inet6 XX::XX:XX:XX:XX\\/64 scope/'",
 	)
 }
+
+func (s *QemuSuite) TestNetworkCmds(c *C) {
+	args := []string{
+		"--cloud-config",
+		"tests/assets/pre_cmds/cloud-config.yml",
+		"-net", "nic,vlan=0,model=virtio",
+		"-net", "nic,vlan=1,model=virtio",
+	}
+	s.RunQemuWithNetConsole(c, args...)
+	s.NetCheckOutput(c,
+		"pre_cmds\n"+
+		"pre_up lo\n"+
+		"post_up lo\n"+
+		"pre_up eth0\n"+
+		"post_up eth0\n"+
+		"pre_up eth1\n"+
+		"post_up eth1\n"+
+		"pre_up eth2\n"+
+		"post_up eth2\n"+
+		"post_cmds\n",
+		Equals,
+		"cat /var/log/net.log",
+	)
+}

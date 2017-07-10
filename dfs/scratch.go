@@ -373,7 +373,7 @@ ff02::2    ip6-allrouters
 					Bridge:  "true",
 				},
 			},
-		}); err != nil {
+		}, false, false); err != nil {
 			return err
 		}
 	}

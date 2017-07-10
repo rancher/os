@@ -1,0 +1,47 @@
+#cloud-config
+write_files:
+  - container: network
+    path: /var/lib/iptables/rules.sh
+    permissions: "0755"
+    owner: root:root
+    content: |
+      #!/bin/bash
+      set -ex
+      echo $@ >> /var/log/net.log
+      # the last line of the file needs to be a blank line or a comment
+rancher:
+  network:
+    dns:
+      nameservers:
+        - 8.8.4.4
+        - 4.2.2.3
+    pre_cmds:
+    - /var/lib/iptables/rules.sh pre_cmds
+    post_cmds:
+    - /var/lib/iptables/rules.sh post_cmds
+    interfaces:
+      lo:
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up lo
+        post_up:
+        - /var/lib/iptables/rules.sh post_up lo
+      eth0:
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up eth0
+        post_up:
+        - /var/lib/iptables/rules.sh post_up eth0
+      eth1:
+        dhcp: true
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up eth1
+        post_up:
+        - /var/lib/iptables/rules.sh post_up eth1
+      eth2:
+        address: 192.168.3.13/16
+        mtu: 1450
+        pre_up:
+        - /var/lib/iptables/rules.sh pre_up eth2
+        post_up:
+        - /var/lib/iptables/rules.sh post_up eth2
+ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC85w9stZyiLQp/DkVO6fqwiShYcj1ClKdtCqgHtf+PLpJkFReSFu8y21y+ev09gsSMRRrjF7yt0pUHV6zncQhVeqsZtgc5WbELY2DOYUGmRn/CCvPbXovoBrQjSorqlBmpuPwsStYLr92Xn+VVsMNSUIegHY22DphGbDKG85vrKB8HxUxGIDxFBds/uE8FhSy+xsoyT/jUZDK6pgq2HnGl6D81ViIlKecpOpWlW3B+fea99ADNyZNVvDzbHE5pcI3VRw8u59WmpWOUgT6qacNVACl8GqpBvQk8sw7O/X9DSZHCKafeD9G5k+GYbAUz92fKWrx/lOXfUXPS3+c8dRIF
