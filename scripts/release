@@ -9,6 +9,14 @@ export INTEGRATION_TESTS=0
 
 ./scripts/ci
 
+# from scripts/ci
+echo PREPARE
+./scripts/prepare
+echo PACKAGE
+./scripts/package
+echo INTEGRATION-TEST
+./scripts/integration-test
+
 # make generated changelog
 lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
 git log --format="%s: %b" ${lastrelease}..${VERSION}  | grep "Merge pull" | sed 's/.*\(#.*\) from .*:\(.*\)/* \1: \2/g' > dist/artifacts/changelog.txt

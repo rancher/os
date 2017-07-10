@@ -176,14 +176,14 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 
 	//apply network config
 	for _, link := range links {
-		applyOuter(link, netCfg, wg, userSetHostname, userSetDNS)
+		applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
 	}
 	wg.Wait()
 
 	return err
 }
 
-func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg sync.WaitGroup, userSetHostname, userSetDNS bool) {
+func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg *sync.WaitGroup, userSetHostname, userSetDNS bool) {
 	log.Debugf("applyOuter(%V, %v)", userSetHostname, userSetDNS)
 	match, ok := findMatch(link, netCfg)
 	if !ok {

@@ -233,15 +233,15 @@ func (s *QemuSuite) TestNetworkCmds(c *C) {
 	s.RunQemuWithNetConsole(c, args...)
 	s.NetCheckOutput(c,
 		"pre_cmds\n"+
-		"pre_up lo\n"+
-		"post_up lo\n"+
-		"pre_up eth0\n"+
-		"post_up eth0\n"+
-		"pre_up eth1\n"+
-		"post_up eth1\n"+
-		"pre_up eth2\n"+
-		"post_up eth2\n"+
-		"post_cmds\n",
+			"pre_up lo\n"+
+			"post_up lo\n"+
+			"pre_up eth0\n"+
+			"post_up eth0\n"+
+			"pre_up eth1\n"+
+			"post_up eth1\n"+
+			"pre_up eth2\n"+
+			"post_up eth2\n"+
+			"post_cmds\n",
 		Equals,
 		"cat /var/log/net.log",
 	)
