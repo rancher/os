@@ -3,6 +3,7 @@ package control
 import (
 	"bufio"
 	"bytes"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -923,20 +924,45 @@ func installSyslinux(device, baseName, diskType string) error {
 	return nil
 }
 
+func different(existing, new string) bool {
+	// assume existing file exists
+	if _, err := os.Stat(new); os.IsNotExist(err) {
+		return true
+	}
+	data, err := ioutil.ReadFile(existing)
+	if err != nil {
+		return true
+	}
+	newData, err := ioutil.ReadFile(new)
+	if err != nil {
+		return true
+	}
+	md5sum := md5.Sum(data)
+	newmd5sum := md5.Sum(newData)
+	if md5sum != newmd5sum {
+		return true
+	}
+	return false
+}
+
 func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 	log.Debugf("installRancher")
 
 	// detect if there already is a linux-current.cfg, if so, move it to linux-previous.cfg,
 	currentCfg := filepath.Join(baseName, install.BootDir, "linux-current.cfg")
 	if _, err := os.Stat(currentCfg); !os.IsNotExist(err) {
-		previousCfg := filepath.Join(baseName, install.BootDir, "linux-previous.cfg")
-		if _, err := os.Stat(previousCfg); !os.IsNotExist(err) {
-			if err := os.Remove(previousCfg); err != nil {
-				return currentCfg, err
+		existingCfg := filepath.Join(DIST, "linux-current.cfg")
+		// only remove previous if there is a change to the current
+		if different(currentCfg, existingCfg) {
+			previousCfg := filepath.Join(baseName, install.BootDir, "linux-previous.cfg")
+			if _, err := os.Stat(previousCfg); !os.IsNotExist(err) {
+				if err := os.Remove(previousCfg); err != nil {
+					return currentCfg, err
+				}
 			}
+			os.Rename(currentCfg, previousCfg)
+			// TODO: now that we're parsing syslinux.cfg files, maybe we can delete old kernels and initrds
 		}
-		os.Rename(currentCfg, previousCfg)
-		// TODO: now that we're parsing syslinux.cfg files, maybe we can delete old kernels and initrds
 	}
 
 	// The image/ISO have all the files in it - the syslinux cfg's and the kernel&initrd, so we can copy them all from there
@@ -945,15 +971,26 @@ func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 		if file.IsDir() {
 			continue
 		}
-		if err := dfs.CopyFile(filepath.Join(DIST, file.Name()), filepath.Join(baseName, install.BootDir), file.Name()); err != nil {
+		// TODO: should overwrite anything other than the global.cfg
+		overwrite := true
+		if file.Name() == "global.cfg" {
+			overwrite = false
+		}
+		if err := dfs.CopyFileOverwrite(filepath.Join(DIST, file.Name()), filepath.Join(baseName, install.BootDir), file.Name(), overwrite); err != nil {
 			log.Errorf("copy %s: %s", file.Name(), err)
 			//return err
 		}
 	}
+
 	// the general INCLUDE syslinuxcfg
-	if err := dfs.CopyFile(filepath.Join(DIST, "isolinux", "isolinux.cfg"), filepath.Join(baseName, install.BootDir, "syslinux"), "syslinux.cfg"); err != nil {
+	isolinuxFile := filepath.Join(DIST, "isolinux", "isolinux.cfg")
+	syslinuxDir := filepath.Join(baseName, install.BootDir, "syslinux")
+	if err := dfs.CopyFileOverwrite(isolinuxFile, syslinuxDir, "syslinux.cfg", true); err != nil {
 		log.Errorf("copy global syslinux.cfgS%s: %s", "syslinux.cfg", err)
 		//return err
+	} else {
+		log.Debugf("installRancher copy global syslinux.cfgS OK")
+
 	}
 
 	// The global.cfg INCLUDE - useful for over-riding the APPEND line

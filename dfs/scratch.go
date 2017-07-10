@@ -264,15 +264,21 @@ func defaultFolders(folders ...string) error {
 }
 
 func CopyFile(src, folder, name string) error {
+	return CopyFileOverwrite(src, folder, name, false)
+}
+
+func CopyFileOverwrite(src, folder, name string, overwrite bool) error {
 	if _, err := os.Lstat(src); os.IsNotExist(err) {
 		log.Debugf("Not copying %s, does not exists", src)
 		return nil
 	}
 
 	dst := path.Join(folder, name)
-	if _, err := os.Lstat(dst); err == nil {
-		log.Debugf("Not copying %s => %s already exists", src, dst)
-		return nil
+	if !overwrite {
+		if _, err := os.Lstat(dst); err == nil {
+			log.Debugf("Not copying %s => %s already exists", src, dst)
+			return nil
+		}
 	}
 
 	if err := createDirs(folder); err != nil {

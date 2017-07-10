@@ -5,6 +5,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"sort"
 	"strings"
 	"text/template"
@@ -77,6 +78,11 @@ func configSubcommands() []cli.Command {
 			},
 		},
 		{
+			Name:   "syslinux",
+			Usage:  "edit Syslinux boot global.cfg",
+			Action: editSyslinux,
+		},
+		{
 			Name:   "validate",
 			Usage:  "validate configuration from stdin",
 			Action: validate,
@@ -144,6 +150,21 @@ func env2map(env []string) map[string]string {
 		m[d[0]] = d[1]
 	}
 	return m
+}
+
+func editSyslinux(c *cli.Context) error {
+	cmd := exec.Command("system-docker", "run", "--rm", "-it",
+		"-v", "/:/host",
+		"-w", "/host",
+		"--entrypoint=vi",
+		"rancher/os-console:"+config.Version,
+		"boot/global.cfg")
+	cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func configSet(c *cli.Context) error {
