@@ -161,6 +161,19 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/docker:/var/lib/docker
+    logrotate:
+      image: {{.OS_REPO}}/os-logrotate:{{.VERSION}}{{.SUFFIX}}
+      command: /usr/sbin/logrotate -v /etc/logrotate.conf
+      labels:
+        io.rancher.os.createonly: "true"
+        io.rancher.os.scope: system
+        io.rancher.os.before: system-cron
+        cron.schedule: "@hourly"
+      uts: host
+      privileged: true
+      volumes_from:
+      - command-volumes
+      - system-volumes
     media-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
@@ -215,7 +228,7 @@ rancher:
       - command-volumes
       - system-volumes
     syslog:
-      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-syslog:{{.VERSION}}{{.SUFFIX}}
       command: rsyslogd -n
       labels:
         io.rancher.os.scope: system
@@ -227,6 +240,15 @@ rancher:
       volumes_from:
       - command-volumes
       - system-volumes
+    system-cron:
+      image: rancher/container-crontab:v0.1.0
+      labels:
+        io.rancher.os.scope: system
+      uts: host
+      privileged: true
+      restart: always
+      volumes:
+       - /var/run/system-docker.sock:/var/run/docker.sock
     system-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
@@ -241,6 +263,7 @@ rancher:
       - /dev:/host/dev
       - /etc/docker:/etc/docker
       - /etc/hosts:/etc/hosts
+      - /etc/logrotate.d:/etc/logrotate.d
       - /etc/resolv.conf:/etc/resolv.conf
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /etc/selinux:/etc/selinux
