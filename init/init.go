@@ -224,19 +224,20 @@ func RunInit() error {
 
 	boot2DockerEnvironment := false
 	var shouldSwitchRoot bool
+	hypervisor := ""
 
 	configFiles := make(map[string][]byte)
 
 	initFuncs := []config.CfgFuncData{
-		config.CfgFuncData{"preparefs", func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			return c, dfs.PrepareFs(&mountConfig)
+		config.CfgFuncData{"preparefs", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			return cfg, dfs.PrepareFs(&mountConfig)
 		}},
-		config.CfgFuncData{"save init cmdline", func(c *config.CloudConfig) (*config.CloudConfig, error) {
+		config.CfgFuncData{"save init cmdline", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			// will this be passed to cloud-init-save?
 			cmdLineArgs := strings.Join(os.Args, " ")
 			config.SaveInitCmdline(cmdLineArgs)
 
-			return c, nil
+			return cfg, nil
 		}},
 		config.CfgFuncData{"mount OEM", mountOem},
 		config.CfgFuncData{"debug save cfg", func(_ *config.CloudConfig) (*config.CloudConfig, error) {
@@ -294,6 +295,7 @@ func RunInit() error {
 		config.CfgFuncData{"mount and bootstrap", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			var err error
 			cfg, shouldSwitchRoot, err = tryMountAndBootstrap(cfg)
+
 			if err != nil {
 				return nil, err
 			}
@@ -301,7 +303,7 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
-			hypervisor := checkHypervisor(cfg)
+			hypervisor = checkHypervisor(cfg)
 			if hypervisor == "vmware" {
 				// add vmware to the end - we don't want to over-ride an choices the user has made
 				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
@@ -368,8 +370,12 @@ func RunInit() error {
 
 			return cfg, nil
 		}},
+		config.CfgFuncData{"hypervisor tools", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			// Maybe we could set `rancher.hypervisor_service`, and defer this further?
+			enableHypervisorService(hypervisor)
+			return config.LoadConfig(), nil
+		}},
 		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)
@@ -381,13 +387,13 @@ func RunInit() error {
 
 			return config.LoadConfig(), nil
 		}},
-		config.CfgFuncData{"preparefs2", func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			return c, dfs.PrepareFs(&mountConfig)
+		config.CfgFuncData{"preparefs2", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			return cfg, dfs.PrepareFs(&mountConfig)
 		}},
 		config.CfgFuncData{"load modules2", loadModules},
-		config.CfgFuncData{"set proxy env", func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			network.SetProxyEnvironmentVariables(c)
-			return c, nil
+		config.CfgFuncData{"set proxy env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			network.SetProxyEnvironmentVariables(cfg)
+			return cfg, nil
 		}},
 		config.CfgFuncData{"init SELinux", initializeSelinux},
 		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
@@ -412,24 +418,33 @@ func RunInit() error {
 }
 
 func checkHypervisor(cfg *config.CloudConfig) string {
-	hvtools := cpuid.CPU.HypervisorName
-	if hvtools == "" {
+	if cpuid.CPU.HypervisorName == "" {
 		log.Infof("ros init: No Detected Hypervisor")
 	} else {
 		log.Infof("ros init: Detected Hypervisor: %s", cpuid.CPU.HypervisorName)
-		if hvtools == "vmware" {
-			hvtools = "open"
-		}
-		serviceName := hvtools + "-vm-tools"
-		// check quickly to see if there is a yml file available
-		if service.ValidService(serviceName, cfg) {
-			log.Infof("Setting rancher.services_include. %s=true", serviceName)
-			if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
-				log.Error(err)
-			}
-		} else {
-			log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
-		}
 	}
 	return cpuid.CPU.HypervisorName
+}
+
+func enableHypervisorService(hypervisorName string) {
+	if hypervisorName == "" {
+		return
+	}
+
+	if hypervisorName == "vmware" {
+		hypervisorName = "open"
+	}
+	serviceName := hypervisorName + "-vm-tools"
+	// check quickly to see if there is a yml file available
+	cfg := config.LoadConfig()
+	if service.ValidService(serviceName, cfg) {
+		log.Infof("Setting rancher.services_include. %s=true", serviceName)
+		log.Debugf("SVEN Setting rancher.services_include. %s=true", serviceName)
+		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
+			log.Error(err)
+		}
+	} else {
+		log.Infof("SVEN Skipping %s, can't get %s.yml file", serviceName, serviceName)
+		log.Debugf("SVEN Skipping %s, can't get %s.yml file", serviceName, serviceName)
+	}
 }

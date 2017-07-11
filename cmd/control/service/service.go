@@ -208,7 +208,7 @@ func IsLocalOrURL(service string) bool {
 	return isLocal(service) || strings.HasPrefix(service, "http:/") || strings.HasPrefix(service, "https:/")
 }
 
-// Check to see if the service definition exists
+// ValidService checks to see if the service definition exists
 func ValidService(service string, cfg *config.CloudConfig) bool {
 	services := availableService(cfg)
 	if !IsLocalOrURL(service) && !util.Contains(services, service) {

@@ -201,7 +201,7 @@ sudo ros service start network
 sleep 1
 ip a
 echo "==================="
-sudo ros install --force --no-reboot --device /dev/vda -c config.yml -a "console=ttyS0 rancher.console=ttyS0 rancher.autologin=ttyS0 rancher.console=ttyS1 rancher.autologin=ttyS1 rancher.debug=true"
+sudo ros install --force --no-reboot --device /dev/vda -c config.yml -a "console=ttyS0 rancher.autologin=ttyS0 console=ttyS1 rancher.autologin=ttyS1 rancher.debug=true"
 sync
 `)
 		time.Sleep(500 * time.Millisecond)
