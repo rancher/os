@@ -439,12 +439,10 @@ func enableHypervisorService(hypervisorName string) {
 	cfg := config.LoadConfig()
 	if service.ValidService(serviceName, cfg) {
 		log.Infof("Setting rancher.services_include. %s=true", serviceName)
-		log.Debugf("SVEN Setting rancher.services_include. %s=true", serviceName)
 		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
 			log.Error(err)
 		}
 	} else {
-		log.Infof("SVEN Skipping %s, can't get %s.yml file", serviceName, serviceName)
-		log.Debugf("SVEN Skipping %s, can't get %s.yml file", serviceName, serviceName)
+		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
 	}
 }
