@@ -13,6 +13,7 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
+	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
@@ -304,9 +305,9 @@ func RunInit() error {
 			if hypervisor == "vmware" {
 				// add vmware to the end - we don't want to over-ride an choices the user has made
 				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
-			}
-			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
-				log.Error(err)
+				if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
+					log.Error(err)
+				}
 			}
 
 			log.Debug("init, runCloudInitServices()")
@@ -412,14 +413,22 @@ func RunInit() error {
 
 func checkHypervisor(cfg *config.CloudConfig) string {
 	hvtools := cpuid.CPU.HypervisorName
-	if hvtools != "" {
-		log.Infof("Detected Hypervisor: %s", cpuid.CPU.HypervisorName)
+	if hvtools == "" {
+		log.Infof("ros init: No Detected Hypervisor")
+	} else {
+		log.Infof("ros init: Detected Hypervisor: %s", cpuid.CPU.HypervisorName)
 		if hvtools == "vmware" {
 			hvtools = "open"
 		}
-		log.Infof("Setting rancher.services_include." + hvtools + "-vm-tools=true")
-		if err := config.Set("rancher.services_include."+hvtools+"-vm-tools", "true"); err != nil {
-			log.Error(err)
+		serviceName := hvtools + "-vm-tools"
+		// check quickly to see if there is a yml file available
+		if service.ValidService(serviceName, cfg) {
+			log.Infof("Setting rancher.services_include. %s=true", serviceName)
+			if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
+				log.Error(err)
+			}
+		} else {
+			log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
 		}
 	}
 	return cpuid.CPU.HypervisorName
