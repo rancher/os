@@ -93,10 +93,10 @@ func loadFromNetwork(location string) ([]byte, error) {
 	updateDNSCache()
 
 	var resp *http.Response
-	log.Infof("LoadFromNetwork(%s)", location)
+	log.Debugf("LoadFromNetwork(%s)", location)
 	resp, err = http.Get(location)
-	log.Debugf("LoadFromNetwork(%s) returned %v", resp)
-	log.Debugf("LoadFromNetwork(%s) error %v", err)
+	log.Debugf("LoadFromNetwork(%s) returned %v", location, resp)
+	log.Debugf("LoadFromNetwork(%s) error %v", location, err)
 	if err == nil {
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
