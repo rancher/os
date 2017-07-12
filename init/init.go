@@ -94,8 +94,6 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 
 func MainInit() {
 	log.InitDeferedLogger()
-	log.Infof("MainInit() start")
-	defer log.Infof("MainInit() finish")
 
 	if err := RunInit(); err != nil {
 		log.Fatal(err)
@@ -231,13 +229,21 @@ func RunInit() error {
 	configFiles := make(map[string][]byte)
 
 	initFuncs := []config.CfgFuncData{
-		config.CfgFuncData{"preparefs", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			return cfg, dfs.PrepareFs(&mountConfig)
+		config.CfgFuncData{"preparefs", func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			return c, dfs.PrepareFs(&mountConfig)
 		}},
-		config.CfgFuncData{"save init cmdline", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		config.CfgFuncData{"save init cmdline", func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			// will this be passed to cloud-init-save?
 			cmdLineArgs := strings.Join(os.Args, " ")
 			config.SaveInitCmdline(cmdLineArgs)
+
+			cfg := config.LoadConfig()
+			log.Debugf("Cmdline debug = %s", cfg.Rancher.Debug)
+			if cfg.Rancher.Debug {
+				log.SetLevel(log.DebugLevel)
+			} else {
+				log.SetLevel(log.InfoLevel)
+			}
 
 			return cfg, nil
 		}},
@@ -258,9 +264,10 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"load modules", loadModules},
 		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			if util.ResolveDevice("LABEL=B2D_STATE") != "" {
+			if dev := util.ResolveDevice("LABEL=B2D_STATE"); dev != "" {
 				boot2DockerEnvironment = true
 				cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
+				log.Infof("boot2DockerEnvironment %s: %s", cfg.Rancher.State.Dev, dev)
 				return cfg, nil
 			}
 
@@ -277,6 +284,8 @@ func RunInit() error {
 						boot2DockerEnvironment = true
 						cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
 						cfg.Rancher.State.Autoformat = []string{device}
+						log.Infof("boot2DockerEnvironment %s: Autoformat %s", cfg.Rancher.State.Dev, cfg.Rancher.State.Autoformat[0])
+
 						break
 					}
 				}
@@ -319,10 +328,7 @@ func RunInit() error {
 				log.Error(err)
 			}
 
-			// return any newly detected network config.
-			cfg = config.LoadConfig()
-
-			return cfg, nil
+			return config.LoadConfig(), nil
 		}},
 		config.CfgFuncData{"read cfg files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
@@ -355,6 +361,7 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"mount OEM2", mountOem},
 		config.CfgFuncData{"write cfg files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			log.FsReady()
 			for name, content := range configFiles {
 				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0700); err != nil {
 					log.Error(err)
@@ -372,11 +379,6 @@ func RunInit() error {
 
 			return cfg, nil
 		}},
-		config.CfgFuncData{"hypervisor tools", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			// Maybe we could set `rancher.hypervisor_service`, and defer this further?
-			enableHypervisorService(hypervisor)
-			return config.LoadConfig(), nil
-		}},
 		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
@@ -387,6 +389,11 @@ func RunInit() error {
 				}
 			}
 
+			return config.LoadConfig(), nil
+		}},
+		config.CfgFuncData{"hypervisor tools", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			// Maybe we could set `rancher.hypervisor_service`, and defer this further?
+			enableHypervisorService(cfg, hypervisor)
 			return config.LoadConfig(), nil
 		}},
 		config.CfgFuncData{"preparefs2", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
@@ -409,15 +416,15 @@ func RunInit() error {
 
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
 	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
+	//launchConfig.NoLog = true
 
 	log.Info("Launching System Docker")
 	_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
 	if err != nil {
+		log.Errorf("Error Launching System Docker: %s", err)
 		return err
 	}
-
-	log.Infof("RunInit() finished")
-	log.SyslogReady(true)
+	// Code never gets here - rancher.system_docker.exec=true
 
 	return pidOne()
 }
@@ -431,7 +438,7 @@ func checkHypervisor(cfg *config.CloudConfig) string {
 	return cpuid.CPU.HypervisorName
 }
 
-func enableHypervisorService(hypervisorName string) {
+func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 	if hypervisorName == "" {
 		return
 	}
@@ -441,7 +448,6 @@ func enableHypervisorService(hypervisorName string) {
 	}
 	serviceName := hypervisorName + "-vm-tools"
 	// check quickly to see if there is a yml file available
-	cfg := config.LoadConfig()
 	if service.ValidService(serviceName, cfg) {
 		log.Infof("Setting rancher.services_include. %s=true", serviceName)
 		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {

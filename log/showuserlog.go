@@ -15,22 +15,23 @@ type ShowuserlogHook struct {
 	Level         logrus.Level
 	syslogHook    *logrus_syslog.SyslogHook
 	storedEntries []*logrus.Entry
+	appName       string
 }
 
 // NewShowuserlogHook creates a new hook for use
-func NewShowuserlogHook(l logrus.Level) (*ShowuserlogHook, error) {
-	return &ShowuserlogHook{l, nil, []*logrus.Entry{}}, nil
+func NewShowuserlogHook(l logrus.Level, app string) (*ShowuserlogHook, error) {
+	return &ShowuserlogHook{l, nil, []*logrus.Entry{}, app}, nil
 }
 
 // Fire is called by logrus when the Hook is active
 func (hook *ShowuserlogHook) Fire(entry *logrus.Entry) error {
-	line, err := entry.String()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to read entry, %v", err)
-		return err
-	}
 	if entry.Level <= hook.Level {
-		fmt.Printf("SVEN %s", line)
+		//if f, err := os.OpenFile("/dev/kmsg", os.O_WRONLY, 0644); err != nil {
+		//	fmt.Fprintf(f, "%s:%s: %s\n", hook.appName, entry.Level, entry.Message)
+		//	f.Close()
+		//} else {
+		fmt.Printf("[            ] %s:%s: %s\n", hook.appName, entry.Level, entry.Message)
+		//}
 	}
 
 	if hook.syslogHook == nil {
@@ -38,7 +39,7 @@ func (hook *ShowuserlogHook) Fire(entry *logrus.Entry) error {
 	} else {
 		err := hook.syslogHook.Fire(entry)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "LOGERR: Unable to write %s, %v", line, err)
+			fmt.Fprintf(os.Stderr, "LOGERR: Unable to syslog.Fire %v, %v", entry, err)
 			return err
 		}
 	}
@@ -59,7 +60,7 @@ func (hook *ShowuserlogHook) Levels() []logrus.Level {
 }
 
 // Set up Syslog Hook, and replay any stored entries.
-func (hook *ShowuserlogHook) LogSystemReady() error {
+func (hook *ShowuserlogHook) NotUsedYetLogSystemReady() error {
 	if hook.syslogHook == nil {
 		h, err := logrus_syslog.NewSyslogHook("", "", syslog.LOG_INFO, "")
 		if err != nil {

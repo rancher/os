@@ -55,7 +55,15 @@ func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
 }
 
 func LoadConfig() *CloudConfig {
-	return LoadConfigWithPrefix("")
+	cfg := LoadConfigWithPrefix("")
+
+	if cfg.Rancher.Debug {
+		log.SetDefaultLevel(log.DebugLevel)
+	} else {
+		log.SetDefaultLevel(log.InfoLevel)
+	}
+
+	return cfg
 }
 
 func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
