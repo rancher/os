@@ -12,7 +12,6 @@ package cpuid
 
 import (
 	"strings"
-	"unsafe"
 )
 
 // Vendor is a representation of a CPU vendor.
@@ -565,9 +564,8 @@ func isHypervisorActive() bool {
 }
 
 func getHypervisorCpuid(ax uint32) string {
-	a, b, c, d := cpuid(ax)
-	var info [4]uint32 = [4]uint32{a, b, c, d}
-	name := strings.TrimRight(string((*[12]byte)(unsafe.Pointer(&info[1]))[:]), "\000")
+	_, b, c, d := cpuid(ax)
+	name := strings.TrimRight(string(valAsString(b, c, d)), "\000")
 	return name
 }
 
@@ -584,10 +582,7 @@ func hypervisorName() string {
 	//	return hv
 	//}
 
-	if hv := getHypervisorCpuid(0x40000000); hv != "" {
-		return hv
-	}
-	return ""
+	return getHypervisorCpuid(0x40000000)
 }
 
 // https://en.wikipedia.org/wiki/CPUID#EAX.3D0:_Get_vendor_ID

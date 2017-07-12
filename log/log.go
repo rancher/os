@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 
+	"fmt"
+
 	"github.com/Sirupsen/logrus"
 )
 
@@ -110,7 +112,15 @@ func WithFields(fields Fields) *logrus.Entry {
 	return appLog.WithFields(logrus.Fields(fields))
 }
 
+// InitLogger sets up Logging to log to /dev/kmsg and to Syslog
 func InitLogger() {
+	InitDeferedLogger()
+	SyslogReady(false)
+}
+
+// InitDeferedLogger sets up logging to /dev/kmsg and to an internal buffer
+// which is then written to Syslog when signaled by SyslogReady()
+func InitDeferedLogger() {
 	if userHook != nil {
 		return // we've already initialised it
 	}
@@ -147,4 +157,18 @@ func InitLogger() {
 	}
 
 	thisLog.Debugf("START: %v in %s", os.Args, pwd)
+}
+
+// SyslogReady tells the storeing User hook to start writing to syslog
+func SyslogReady(logHook bool) error {
+	if userHook != nil {
+		if logHook {
+			logrus.Infof("Starting Syslog Hook")
+			fmt.Fprintf(appLog.Out, "------------ Starting defered Syslog Hook (%s) ----------------\n", os.Args[0])
+		} else {
+			fmt.Fprintf(appLog.Out, "------------ Starting Syslog Hook (%s) ----------------\n", os.Args[0])
+		}
+		return userHook.LogSystemReady()
+	}
+	return nil
 }

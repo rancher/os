@@ -93,7 +93,7 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func MainInit() {
-	log.InitLogger()
+	log.InitDeferedLogger()
 	log.Infof("MainInit() start")
 	if err := RunInit(); err != nil {
 		log.Fatal(err)
@@ -413,6 +413,8 @@ func RunInit() error {
 	if err != nil {
 		return err
 	}
+
+	log.SyslogReady(true)
 
 	return pidOne()
 }
