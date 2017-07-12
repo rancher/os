@@ -277,7 +277,7 @@ if [ "$GUICONSOLE" == "" ]; then
 	if [ "$NETCONSOLE" == "1" ]; then
 	    # put ttyS1 on port 4444
 	    DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
-	    KERNEL_ARGS="console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
+	    KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
 	fi
 fi
 

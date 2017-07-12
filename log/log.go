@@ -163,7 +163,7 @@ func InitDeferedLogger() {
 func SyslogReady(logHook bool) error {
 	if userHook != nil {
 		if logHook {
-			logrus.Infof("Starting Syslog Hook")
+			Infof("------------info Starting defered Syslog Hook (%s)", os.Args[0])
 			fmt.Fprintf(appLog.Out, "------------ Starting defered Syslog Hook (%s) ----------------\n", os.Args[0])
 		} else {
 			fmt.Fprintf(appLog.Out, "------------ Starting Syslog Hook (%s) ----------------\n", os.Args[0])

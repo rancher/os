@@ -69,6 +69,8 @@ func (hook *ShowuserlogHook) LogSystemReady() error {
 		hook.syslogHook = h
 
 		for _, entry := range hook.storedEntries {
+			line, _ := entry.String()
+			fmt.Printf("---- CATCHUP %s\n", line)
 			hook.syslogHook.Fire(entry)
 		}
 	}
