@@ -170,6 +170,7 @@ rancher:
         io.rancher.os.before: system-cron
         cron.schedule: "@hourly"
       uts: host
+      net: none
       privileged: true
       volumes_from:
       - command-volumes
@@ -245,6 +246,7 @@ rancher:
       labels:
         io.rancher.os.scope: system
       uts: host
+      net: none
       privileged: true
       restart: always
       volumes:
