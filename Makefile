@@ -43,6 +43,7 @@ release-build:
 itest:
 	mkdir -p dist
 	./.dapper integration-test 2>&1 | tee dist/itest.log
+	grep FAIL dist/itest.log || true
 
 qcows:
 	cp dist/artifacts/rancheros.iso scripts/images/openstack/
