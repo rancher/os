@@ -2,7 +2,7 @@
 
 cd $(dirname $0)/../dist/moby
 
-if [ "1" == "1" ]; then
+if [ "1" == "2" ]; then
   linuxkit run -mem 2048 rancheros
 else
   qemu-system-x86_64 \
@@ -10,6 +10,10 @@ else
 	-kernel ./rancheros-kernel \
 	-initrd ./rancheros-initrd.img \
 	-m 2048 \
+  -device virtio-rng-pci \
+  -smp 1 \
+  -enable-kvm \
+  -machine q35,accel=kvm:tcg \
 	-net nic,vlan=0,model=virtio \
 	-net user,vlan=0,hostfwd=tcp::3333-:22,hostname=rancher-moby \
 	-append 'printk.devkmsg=on rancher.debug=true rancher.password=rancher console=ttyS0 rancher.autologin=ttyS0 console=tty0 rancher.autologin=tty0 console=tty1 rancher.autologin=tty1 rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.rm_usr' 

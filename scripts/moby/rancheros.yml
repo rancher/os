@@ -7,8 +7,8 @@ init:
   - zombie/os
 #  - rancher/os-installer
 #  - rancher/os-initrd
-outputs:
-  - format: kernel+initrd
-  - format: iso-bios
+#outputs:
+#  - format: kernel+initrd
+#  - format: iso-bios
 #  - format: iso-efi
 #  - format: gcp-img
