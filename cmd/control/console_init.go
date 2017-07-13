@@ -11,7 +11,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/SvenDowideit/cpuid"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
@@ -154,7 +153,6 @@ func generateRespawnConf(cmdline, user string, sshd bool) string {
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o %s:tty%d", user, i))
-			//respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
@@ -166,9 +164,7 @@ func generateRespawnConf(cmdline, user string, sshd bool) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			//respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o rancher"))
 			respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o %s:%s", user, tty))
-			//respawnConf.WriteString(fmt.Sprintf(" --autologin %s", user))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
 	}
