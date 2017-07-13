@@ -59,7 +59,7 @@ func (hook *ShowuserlogHook) Levels() []logrus.Level {
 	}
 }
 
-// Set up Syslog Hook, and replay any stored entries.
+// NotUsedYetLogSystemReady Set up Syslog Hook, and replay any stored entries.
 func (hook *ShowuserlogHook) NotUsedYetLogSystemReady() error {
 	if hook.syslogHook == nil {
 		h, err := logrus_syslog.NewSyslogHook("", "", syslog.LOG_INFO, "")
