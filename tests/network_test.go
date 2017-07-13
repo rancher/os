@@ -59,7 +59,7 @@ func (s *QemuSuite) TestNetworkBootCfg(c *C) {
 			"       valid_lft forever preferred_lft forever\n"+
 			"4: eth2: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000\n"+
 			"5: eth3: <BROADCAST,MULTICAST> mtu 1500 qdisc noop state DOWN group default qlen 1000\n"+
-			"6: docker-sys: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000\n"+
+			"6: docker-sys: XXXXXXX......\n"+
 			"    inet 172.18.42.2/16 scope global docker-sys\n"+
 			"       valid_lft forever preferred_lft forever\n"+
 			"    inet6 XX::XX:XX:XX:XX/64 scope link \n"+
@@ -73,6 +73,7 @@ func (s *QemuSuite) TestNetworkBootCfg(c *C) {
 			// TODO: figure out why sometimes loopback is scope global
 			"sed 's/scope host lo/scope XXXX lo/g' | sed 's/scope global lo/scope XXXX lo/g' | "+
 			"sed 's/inet 10\\.0\\.2\\..*\\/24 brd/inet XX.XX.XX.XX\\/24 brd/' | "+
+			"sed 's/6: docker-sys: .*/6: docker-sys: XXXXXXX....../g' | "+
 			"sed 's/8: docker0: .*/8: docker0: XXXXXXX....../g' | "+
 			"sed '/inet6 fe80::5054:ff:fe12:.*\\/64/!s/inet6 .*\\/64 scope/inet6 XX::XX:XX:XX:XX\\/64 scope/'",
 		// fe80::18b6:9ff:fef5:be33

@@ -11,7 +11,7 @@ INITRD_DIR=${BUILD}/initrd
 echo Create initrd layout in $INITRD_DIR
 
 rm -rf ${INITRD_DIR}
-mkdir -p ${INITRD_DIR}/usr/{etc,bin,share/ros,var/lib/cni/bin}
+mkdir -p ${INITRD_DIR}/usr/{etc,lib,bin,share/ros,var/lib/cni/bin}
 
 ./scripts/template
 
@@ -39,6 +39,8 @@ SUPPORT_URL="https://forums.rancher.com/c/rancher-os"
 BUG_REPORT_URL="https://github.com/rancher/os/issues"
 BUILD_ID=
 HERE
+# TODO: usr/lib dir is overwritten by the kernel modules and firmware
+ln -s ../share/ros/os-release ${INITRD_DIR}/usr/lib/
 
 # Support upgrades from old persistent consoles that bind mount these
 touch ${INITRD_DIR}/usr/bin/docker-containerd

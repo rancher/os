@@ -3,13 +3,16 @@ package log
 import (
 	"io"
 	"os"
+	"path/filepath"
+
+	"io/ioutil"
 
 	"github.com/Sirupsen/logrus"
 )
 
-// Default to using the logrus standard logger until log.InitLogger(logLevel) is called
-var appLog = logrus.StandardLogger()
 var userHook *ShowuserlogHook
+var defaultLogLevel logrus.Level
+var debugThisLogger = false
 
 type Fields logrus.Fields
 type Level logrus.Level
@@ -35,13 +38,15 @@ const (
 )
 
 func SetOutput(out io.Writer) {
-	appLog.Out = out
+	logrus.SetOutput(out)
+}
+func SetDefaultLevel(level Level) {
+	defaultLogLevel = logrus.Level(level)
 }
 func SetLevel(level Level) {
 	if userHook != nil {
 		userHook.Level = logrus.Level(level)
 	} else {
-		appLog.Level = logrus.Level(level)
 		logrus.SetLevel(logrus.Level(level))
 	}
 }
@@ -50,101 +55,160 @@ func GetLevel() Level {
 	if userHook != nil {
 		return Level(userHook.Level)
 	}
-	return Level(appLog.Level)
+	return Level(logrus.GetLevel())
 }
 
 func Debugf(format string, args ...interface{}) {
-	appLog.Debugf(format, args...)
+	logrus.Debugf(format, args...)
 }
 func Infof(format string, args ...interface{}) {
-	appLog.Infof(format, args...)
+	logrus.Infof(format, args...)
 }
 func Printf(format string, args ...interface{}) {
-	appLog.Printf(format, args...)
+	logrus.Printf(format, args...)
 }
 func Warnf(format string, args ...interface{}) {
-	appLog.Warnf(format, args...)
+	logrus.Warnf(format, args...)
 }
 func Warningf(format string, args ...interface{}) {
-	appLog.Warningf(format, args...)
+	logrus.Warningf(format, args...)
 }
 func Errorf(format string, args ...interface{}) {
-	appLog.Errorf(format, args...)
+	logrus.Errorf(format, args...)
 }
 func Fatalf(format string, args ...interface{}) {
-	appLog.Fatalf(format, args...)
+	logrus.Fatalf(format, args...)
 }
 func Panicf(format string, args ...interface{}) {
-	appLog.Panicf(format, args...)
+	logrus.Panicf(format, args...)
 }
 
 func Debug(args ...interface{}) {
-	appLog.Debug(args...)
+	logrus.Debug(args...)
 }
 func Info(args ...interface{}) {
-	appLog.Info(args...)
+	logrus.Info(args...)
 }
 func Print(args ...interface{}) {
-	appLog.Print(args...)
+	logrus.Print(args...)
 }
 func Warn(args ...interface{}) {
-	appLog.Warn(args...)
+	logrus.Warn(args...)
 }
 func Warning(args ...interface{}) {
-	appLog.Warning(args...)
+	logrus.Warning(args...)
 }
 func Error(args ...interface{}) {
-	appLog.Error(args...)
+	logrus.Error(args...)
 }
 func Fatal(args ...interface{}) {
-	appLog.Fatal(args...)
+	logrus.Fatal(args...)
 }
 func Panic(args ...interface{}) {
-	appLog.Panic(args...)
+	logrus.Panic(args...)
 }
 
 func WithField(key string, value interface{}) *logrus.Entry {
-	return appLog.WithField(key, value)
+	return logrus.WithField(key, value)
 }
 func WithFields(fields Fields) *logrus.Entry {
-	return appLog.WithFields(logrus.Fields(fields))
+	return logrus.WithFields(logrus.Fields(fields))
 }
 
+// InitLogger sets up Logging to log to /dev/kmsg and to Syslog
 func InitLogger() {
+	if logTheseApps() {
+		innerInit(false)
+		FsReady()
+
+		pwd, err := os.Getwd()
+		if err != nil {
+			logrus.Error(err)
+		}
+		logrus.Debugf("START: %v in %s", os.Args, pwd)
+	}
+}
+
+func logTheseApps() bool {
+	// TODO: mmm, not very functional.
+	if filepath.Base(os.Args[0]) == "ros" ||
+		filepath.Base(os.Args[0]) == "host_ros" ||
+		filepath.Base(os.Args[0]) == "system-docker" {
+		return false
+	}
+	return true
+}
+
+// InitDeferedLogger stores the log messages until FsReady() is called
+// TODO: actually store them :)
+// TODO: need to work out how to pass entries from a binary run before we switchfs back to init and have it store and write it later
+func InitDeferedLogger() {
+	if logTheseApps() {
+		innerInit(true)
+		logrus.SetOutput(ioutil.Discard)
+
+		pwd, err := os.Getwd()
+		if err != nil {
+			logrus.Error(err)
+		}
+		logrus.Debugf("START: %v in %s", os.Args, pwd)
+	}
+}
+
+func innerInit(deferedHook bool) {
 	if userHook != nil {
 		return // we've already initialised it
 	}
-	thisLog := logrus.New()
 
-	// Filter what the user sees (info level, unless they set --debug)
-	stdLogger := logrus.StandardLogger()
-	showuserHook, err := NewShowuserlogHook(stdLogger.Level)
-	if err != nil {
-		logrus.Errorf("hook failure %s", err)
-		return
+	// All logs go through the Hooks, and they choose what to do with them.
+	logrus.StandardLogger().Level = logrus.DebugLevel
+
+	if logTheseApps() {
+		AddUserHook(deferedHook)
 	}
+}
 
-	filename := "/dev/kmsg"
-	f, err := os.OpenFile(filename, os.O_WRONLY, 0644)
+func FsReady() {
+	filename := "/var/log/boot/" + filepath.Base(os.Args[0]) + ".log"
+	if err := os.MkdirAll(filepath.Dir(filename), os.ModeDir|0755); debugThisLogger && err != nil {
+		logrus.Errorf("FsReady mkdir(%s): %s", filename, err)
+	}
+	f, err := os.OpenFile(filename, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 	if err != nil {
-		logrus.Debugf("error opening %s: %s", filename, err)
+		if debugThisLogger {
+			logrus.Errorf("FsReady opening %s: %s", filename, err)
+		}
 	} else {
-		// We're all set up, now we can make it global
-		appLog = thisLog
-		userHook = showuserHook
-
-		thisLog.Hooks.Add(showuserHook)
-		logrus.StandardLogger().Hooks.Add(showuserHook)
-
-		thisLog.Out = f
+		if debugThisLogger {
+			logrus.Infof("Setting log output for %s to: %s", os.Args[0], filename)
+		}
 		logrus.SetOutput(f)
-		thisLog.Level = logrus.DebugLevel
+	}
+}
+
+// AddUserHook is used to filter what log messages are written to the screen
+func AddUserHook(deferedHook bool) error {
+	if userHook != nil {
+		return nil
 	}
 
-	pwd, err := os.Getwd()
+	printLogLevel := logrus.InfoLevel
+
+	uh, err := NewShowuserlogHook(printLogLevel, filepath.Base(os.Args[0]))
 	if err != nil {
-		thisLog.Error(err)
+		logrus.Errorf("error creating userHook(%s): %s", os.Args[0], err)
+		return err
+	}
+	userHook = uh
+	logrus.StandardLogger().Hooks.Add(uh)
+
+	if debugThisLogger {
+		if deferedHook {
+			logrus.Debugf("------------info Starting defered User Hook (%s)", os.Args[0])
+		} else {
+			logrus.Debugf("------------info Starting User Hook (%s)", os.Args[0])
+		}
 	}
 
-	thisLog.Debugf("START: %v in %s", os.Args, pwd)
+	return nil
 }

@@ -18,4 +18,4 @@ if [ "$RUNTEST" != "" ]; then
 	RUNTEST="-check.f ${RUNTEST}"
 fi
 
-go test -v -timeout 9999m $RUNTEST
+time go test -v -timeout 9999m $RUNTEST

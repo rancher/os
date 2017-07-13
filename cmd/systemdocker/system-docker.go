@@ -9,7 +9,8 @@ import (
 )
 
 func Main() {
-	log.InitLogger()
+	log.SetLevel(log.DebugLevel)
+
 	if os.Geteuid() != 0 {
 		log.Fatalf("%s: Need to be root", os.Args[0])
 	}
@@ -18,5 +19,5 @@ func Main() {
 		os.Setenv("DOCKER_HOST", config.SystemDockerHost)
 	}
 
-	docker.Main()
+	docker.RancherOSMain()
 }
