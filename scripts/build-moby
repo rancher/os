@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+docker build -t zombie/os - < scripts/moby/Dockerfile
+
+
+cd dist
+mkdir -p moby
+cd moby
+moby build  -output kernel+initrd -output iso-bios ../../scripts/moby/rancheros.yml
+
+

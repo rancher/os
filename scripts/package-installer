@@ -62,8 +62,9 @@ cp -r ${DIST}/boot/* ./scripts/installer/build/boot
 cp $DOCKERFILE ./scripts/installer/build/Dockerfile
 # Full installer image with initrd - used for pulling from network
 docker build \
-    -t ${OS_REPO}/os:${VERSION}${SUFFIX} \
+    -t ${OS_REPO}/os \
     ./scripts/installer/build
+docker tag ${OS_REPO}/os ${OS_REPO}/os:${VERSION}${SUFFIX}
 
 docker save -o ${ARTIFACTS}/fullinstaller.tar ${OS_REPO}/os:${VERSION}${SUFFIX}
 echo ${OS_REPO}/os:${VERSION}${SUFFIX} >> dist/images
