@@ -37,6 +37,7 @@ var (
 			"/usr/share/ros:/usr/share/ros:ro",
 			"/var/lib/rancher:/var/lib/rancher",
 			"/var/lib/rancher/conf:/var/lib/rancher/conf",
+			"/var/run:/var/run",
 		},
 	}
 )
