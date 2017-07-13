@@ -94,6 +94,12 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 
 func MainInit() {
 	log.InitDeferedLogger()
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Starting Recovery console: %v\n", r)
+			recovery(nil)
+		}
+	}()
 
 	if err := RunInit(); err != nil {
 		log.Fatal(err)

@@ -2,7 +2,6 @@ package docker
 
 import (
 	"fmt"
-	"io/ioutil"
 	"strings"
 
 	composeConfig "github.com/docker/libcompose/config"
@@ -43,11 +42,9 @@ func environmentFromCloudConfig(cfg *config.CloudConfig) map[string]string {
 		environment["no_proxy"] = cfg.Rancher.Network.NoProxy
 		environment["NO_PROXY"] = cfg.Rancher.Network.NoProxy
 	}
-	b, err := ioutil.ReadFile("/proc/version")
-	if err == nil {
-		elem := strings.Split(string(b), " ")
-		environment["KERNEL_VERSION"] = elem[2]
-		log.Debugf("Using /proc/version to set rancher.environment.KERNEL_VERSION = %s", elem[2])
+	if v := config.GetKernelVersion(); v != "" {
+		environment["KERNEL_VERSION"] = v
+		log.Debugf("Using /proc/version to set rancher.environment.KERNEL_VERSION = %s", v)
 	}
 	return environment
 }

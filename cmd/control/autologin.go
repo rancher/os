@@ -52,7 +52,7 @@ func autologinAction(c *cli.Context) error {
 	banner := config.Banner
 	banner = strings.Replace(banner, "\\v", config.Version, -1)
 	banner = strings.Replace(banner, "\\s", "RancherOS "+runtime.GOARCH, -1)
-	banner = strings.Replace(banner, "\\r", "4.9....", -1)
+	banner = strings.Replace(banner, "\\r", config.GetKernelVersion(), -1)
 	banner = strings.Replace(banner, "\\n", cfg.Hostname, -1)
 	banner = strings.Replace(banner, "\\l", tty, -1)
 	banner = strings.Replace(banner, "\\\\", "\\", -1)
