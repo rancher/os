@@ -15,6 +15,7 @@ func recoveryInitAction(c *cli.Context) error {
 	}
 
 	os.Setenv("TERM", "linux")
+	os.Setenv("PS1", `[Recovery Console: \l \u@\h \W]\$`)
 
 	respawnBinPath, err := exec.LookPath("respawn")
 	if err != nil {

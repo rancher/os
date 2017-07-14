@@ -171,7 +171,7 @@ if [ "$APPEND_INIT" != "" ]; then
 fi
 
 if [ "$BOOT_PXE" == "1" ]; then
-    KERNEL_ARGS="console=tty1 rancher.console=tty1 rancher.autologin=tty1 ${KERNEL_ARGS}"
+    KERNEL_ARGS="console=tty1 rancher.autologin=tty1 ${KERNEL_ARGS}"
     set -ex
     PIXIECORE=$(which pixiecore)
     sudo -E $PIXIECORE boot \
