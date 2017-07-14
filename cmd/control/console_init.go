@@ -126,7 +126,7 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := ioutil.WriteFile(consoleDone, []byte(cfg.Rancher.Console), 0644); err != nil {
+	if err := ioutil.WriteFile(consoleDone, []byte(CurrentConsole()), 0644); err != nil {
 		log.Error(err)
 	}
 

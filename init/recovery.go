@@ -10,6 +10,8 @@ import (
 )
 
 var (
+
+	// TODO: move this into the os-config file so it can be customised.
 	recoveryDockerService = composeConfig.ServiceConfigV1{
 		Image: config.OsBase,
 		Command: yaml.Command{

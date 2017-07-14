@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"runtime"
 	"strings"
-	"syscall"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
@@ -58,11 +57,12 @@ func autologinAction(c *cli.Context) error {
 	banner = strings.Replace(banner, "\\l", tty, -1)
 	banner = strings.Replace(banner, "\\\\", "\\", -1)
 	banner = banner + "\n"
+	banner = banner + "Autologin " + CurrentConsole() + "\n"
 	fmt.Printf(banner)
 
 	loginBin := ""
 	args := []string{}
-	if cfg.Rancher.Console == "Acentos" || cfg.Rancher.Console == "Afedora" {
+	if CurrentConsole() == "centos" || CurrentConsole() == "fedora" {
 		// For some reason, centos and fedora ttyS0 and tty1 don't work with `login -f rancher`
 		// until I make time to read their source, lets just give us a way to get work done
 		loginBin = "bash"
@@ -78,18 +78,18 @@ func autologinAction(c *cli.Context) error {
 		fmt.Printf("error finding %s in path: %s", cmd.Args[0], err)
 		return err
 	}
-	os.Setenv("PS1", `[`+cfg.Rancher.Console+`: \l \u@\h \W]\$`)
+	os.Setenv("PS1", `[`+CurrentConsole()+`: \l \u@\h \W]\$`)
 
-	return syscall.Exec(loginBinPath, args, os.Environ())
+	// Causes all sorts of issues
+	//return syscall.Exec(loginBinPath, args, os.Environ())
+	cmd = exec.Command(loginBinPath, args...)
+	cmd.Env = os.Environ()
 
-	// cmd = exec.Command(loginBinPath, args...)
-	// cmd.Env = os.Environ()
-
-	// cmd.Stderr = os.Stderr
-	// cmd.Stdout = os.Stdout
-	// cmd.Stdin = os.Stdin
-	// if err := cmd.Run(); err != nil {
-	// 	log.Errorf("\nError starting %s: %s", cmd.Args[0], err)
-	// }
-	// return nil
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	if err := cmd.Run(); err != nil {
+		log.Errorf("\nError starting %s: %s", cmd.Args[0], err)
+	}
+	return nil
 }

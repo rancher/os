@@ -22,6 +22,7 @@ const (
 )
 
 func dockerInitAction(c *cli.Context) error {
+	// TODO: this should be replaced by a "Console ready event watcher"
 	for {
 		if _, err := os.Stat(consoleDone); err == nil {
 			break
