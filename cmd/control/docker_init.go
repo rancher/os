@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
@@ -70,9 +69,8 @@ func dockerInitAction(c *cli.Context) error {
 		fmt.Sprintf(`[ -e %s ] && source %s; exec /usr/bin/dockerlaunch %s %s $DOCKER_OPTS >> %s 2>&1`, dockerConf, dockerConf, dockerBin, strings.Join(c.Args(), " "), dockerLog),
 	}
 
-	cfg := config.LoadConfig()
-
-	if err := ioutil.WriteFile(dockerDone, []byte(cfg.Rancher.Docker.Engine), 0644); err != nil {
+	// TODO: this should be replaced by a "Docker ready event watcher"
+	if err := ioutil.WriteFile(dockerDone, []byte(CurrentEngine()), 0644); err != nil {
 		log.Error(err)
 	}
 
