@@ -81,7 +81,7 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := writeRespawn("rancher", true); err != nil {
+	if err := writeRespawn("rancher", true, false); err != nil {
 		log.Error(err)
 	}
 
@@ -144,15 +144,20 @@ func consoleInitFunc() error {
 	return syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ())
 }
 
-func generateRespawnConf(cmdline, user string, sshd bool) string {
+func generateRespawnConf(cmdline, user string, sshd, recovery bool) string {
 	var respawnConf bytes.Buffer
+
+	autologinBin := "/usr/bin/autologin"
+	if recovery {
+		autologinBin = "/usr/bin/recovery"
+	}
 
 	for i := 1; i < 7; i++ {
 		tty := fmt.Sprintf("tty%d", i)
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o %s:tty%d", user, i))
+			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:tty%d", autologinBin, user, i))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
@@ -164,7 +169,7 @@ func generateRespawnConf(cmdline, user string, sshd bool) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(fmt.Sprintf(" -n -l /usr/bin/autologin -o %s:%s", user, tty))
+			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:%s", autologinBin, user, tty))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
 	}
@@ -176,13 +181,13 @@ func generateRespawnConf(cmdline, user string, sshd bool) string {
 	return respawnConf.String()
 }
 
-func writeRespawn(user string, sshd bool) error {
+func writeRespawn(user string, sshd, recovery bool) error {
 	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return err
 	}
 
-	respawn := generateRespawnConf(string(cmdline), user, sshd)
+	respawn := generateRespawnConf(string(cmdline), user, sshd, recovery)
 
 	files, err := ioutil.ReadDir("/etc/respawn.conf.d")
 	if err == nil {

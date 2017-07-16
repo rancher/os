@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -47,6 +48,10 @@ func autologinAction(c *cli.Context) error {
 			tty = s[1]
 		}
 	}
+
+	mode := filepath.Base(os.Args[0])
+	console := CurrentConsole()
+
 	cfg := config.LoadConfig()
 	// replace \n and \l
 	banner := config.Banner
@@ -57,20 +62,22 @@ func autologinAction(c *cli.Context) error {
 	banner = strings.Replace(banner, "\\l", tty, -1)
 	banner = strings.Replace(banner, "\\\\", "\\", -1)
 	banner = banner + "\n"
-	banner = banner + "Autologin " + CurrentConsole() + "\n"
+	banner = banner + "Autologin " + console + "\n"
 	fmt.Printf(banner)
 
 	loginBin := ""
 	args := []string{}
-	if CurrentConsole() == "centos" || CurrentConsole() == "fedora" {
+	if console == "centos" || console == "fedora" ||
+		mode == "recovery" {
 		// For some reason, centos and fedora ttyS0 and tty1 don't work with `login -f rancher`
 		// until I make time to read their source, lets just give us a way to get work done
 		loginBin = "bash"
 		args = append(args, "--login")
-
+		os.Setenv("PROMPT_COMMAND", `echo "[`+fmt.Sprintf("Recovery console %s@%s:${PWD}", user, cfg.Hostname)+`]"`)
 	} else {
 		loginBin = "login"
 		args = append(args, "-f", user)
+		// TODO: add a PROMPT_COMMAND if we haven't switch-rooted
 	}
 
 	loginBinPath, err := exec.LookPath(loginBin)
@@ -78,12 +85,13 @@ func autologinAction(c *cli.Context) error {
 		fmt.Printf("error finding %s in path: %s", cmd.Args[0], err)
 		return err
 	}
-	os.Setenv("PS1", `[`+CurrentConsole()+`: \l \u@\h \W]\$`)
+	os.Setenv("TERM", "linux")
 
 	// Causes all sorts of issues
 	//return syscall.Exec(loginBinPath, args, os.Environ())
 	cmd = exec.Command(loginBinPath, args...)
 	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "SVEN", "MORE")
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout

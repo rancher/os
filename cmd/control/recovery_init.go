@@ -10,12 +10,9 @@ import (
 )
 
 func recoveryInitAction(c *cli.Context) error {
-	if err := writeRespawn("root", false); err != nil {
+	if err := writeRespawn("root", false, true); err != nil {
 		log.Error(err)
 	}
-
-	os.Setenv("TERM", "linux")
-	os.Setenv("PS1", `[Recovery Console: \l \u@\h \W]\$`)
 
 	respawnBinPath, err := exec.LookPath("respawn")
 	if err != nil {
