@@ -255,7 +255,7 @@ func validate(c *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	validationErrors, err := config.Validate(bytes)
+	validationErrors, err := config.ValidateBytes(bytes)
 	if err != nil {
 		log.Fatal(err)
 	}

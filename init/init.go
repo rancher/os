@@ -94,6 +94,7 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 
 func MainInit() {
 	log.InitDeferedLogger()
+	// TODO: this breaks and does nothing if the cfg is invalid (or is it due to threading?)
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Starting Recovery console: %v\n", r)

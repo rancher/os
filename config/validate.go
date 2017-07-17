@@ -31,11 +31,15 @@ func ConvertKeysToStrings(item interface{}) interface{} {
 	}
 }
 
-func Validate(bytes []byte) (*gojsonschema.Result, error) {
+func ValidateBytes(bytes []byte) (*gojsonschema.Result, error) {
 	var rawCfg map[string]interface{}
 	if err := yaml.Unmarshal([]byte(bytes), &rawCfg); err != nil {
 		return nil, err
 	}
+	return ValidateRawCfg(rawCfg)
+}
+
+func ValidateRawCfg(rawCfg interface{}) (*gojsonschema.Result, error) {
 	rawCfg = ConvertKeysToStrings(rawCfg).(map[string]interface{})
 	loader := gojsonschema.NewGoLoader(rawCfg)
 	schemaLoader := gojsonschema.NewStringLoader(schema)
