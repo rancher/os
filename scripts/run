@@ -10,6 +10,9 @@ MEMORY=2048
 
 while [ "$#" -gt 0 ]; do
     case $1 in
+	--debug)
+	    DEBUG=1
+            ;;
         --iso)
             BOOT_ISO=1
             QEMU=0
@@ -160,6 +163,9 @@ if [ "$REBUILD" == "1" ] || [ ! -e ${INITRD} ]; then
 fi
 
 KERNEL_ARGS="${DEFAULT_KERNEL_ARGS} ${QEMU_APPEND}"
+if [ "$DEBUG" == "1" ]; then
+    KERNEL_ARGS="${KERNEL_ARGS} rancher.debug=true"
+fi
 if [ "$FORMAT" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda]"
 fi
