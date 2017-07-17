@@ -23,6 +23,7 @@ import (
 )
 
 var entrypoints = map[string]func(){
+	"autologin":          control.AutologinMain,
 	"cloud-init-execute": cloudinitexecute.Main,
 	"cloud-init-save":    cloudinitsave.Main,
 	"console":            control.ConsoleInitMain,
@@ -31,6 +32,7 @@ var entrypoints = map[string]func(){
 	"dockerlaunch":       dfs.Main,
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,
+	"recovery":           control.AutologinMain,
 	"ros-sysinit":        sysinit.Main,
 	"system-docker":      systemdocker.Main,
 	"wait-for-docker":    wait.Main,

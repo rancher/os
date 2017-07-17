@@ -94,6 +94,13 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 
 func MainInit() {
 	log.InitDeferedLogger()
+	// TODO: this breaks and does nothing if the cfg is invalid (or is it due to threading?)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Starting Recovery console: %v\n", r)
+			recovery(nil)
+		}
+	}()
 
 	if err := RunInit(); err != nil {
 		log.Fatal(err)
@@ -263,6 +270,12 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"load modules", loadModules},
+		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if cfg.Rancher.Recovery {
+				recovery(nil)
+			}
+			return cfg, nil
+		}},
 		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if dev := util.ResolveDevice("LABEL=B2D_STATE"); dev != "" {
 				boot2DockerEnvironment = true
@@ -411,7 +424,7 @@ func RunInit() error {
 
 	cfg, err := config.ChainCfgFuncs(nil, initFuncs)
 	if err != nil {
-		return err
+		recovery(err)
 	}
 
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
@@ -422,6 +435,7 @@ func RunInit() error {
 	_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
 	if err != nil {
 		log.Errorf("Error Launching System Docker: %s", err)
+		recovery(err)
 		return err
 	}
 	// Code never gets here - rancher.system_docker.exec=true

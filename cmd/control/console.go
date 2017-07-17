@@ -2,18 +2,19 @@ package control
 
 import (
 	"fmt"
-	"io/ioutil"
 	"sort"
 	"strings"
 
 	"golang.org/x/net/context"
 
 	"github.com/codegangsta/cli"
+	"github.com/docker/docker/reference"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
@@ -57,7 +58,7 @@ func consoleSwitch(c *cli.Context) error {
 
 	cfg := config.LoadConfig()
 	validateConsole(newConsole, cfg)
-	if newConsole == currentConsole() {
+	if newConsole == CurrentConsole() {
 		log.Warnf("Console is already set to %s", newConsole)
 	}
 
@@ -127,10 +128,10 @@ func consoleEnable(c *cli.Context) error {
 func consoleList(c *cli.Context) error {
 	cfg := config.LoadConfig()
 	consoles := availableConsoles(cfg)
-	currentConsole := currentConsole()
+	CurrentConsole := CurrentConsole()
 
 	for _, console := range consoles {
-		if console == currentConsole {
+		if console == CurrentConsole {
 			fmt.Printf("current  %s\n", console)
 		} else if console == cfg.Rancher.Console {
 			fmt.Printf("enabled  %s\n", console)
@@ -159,12 +160,32 @@ func availableConsoles(cfg *config.CloudConfig) []string {
 	return consoles
 }
 
-func currentConsole() (console string) {
-	consoleBytes, err := ioutil.ReadFile("/run/console-done")
-	if err == nil {
-		console = strings.TrimSpace(string(consoleBytes))
-	} else {
+// CurrentConsole gets the name of the console that's running
+func CurrentConsole() (console string) {
+	// TODO: replace this docker container look up with a libcompose service lookup?
+
+	// sudo system-docker inspect --format "{{.Config.Image}}" console
+	client, err := docker.NewSystemClient()
+	if err != nil {
 		log.Warnf("Failed to detect current console: %v", err)
+		return
 	}
+	info, err := client.ContainerInspect(context.Background(), "console")
+	if err != nil {
+		log.Warnf("Failed to detect current console: %v", err)
+		return
+	}
+	// parse image name, then remove os- prefix and the console suffix
+	image, err := reference.ParseNamed(info.Config.Image)
+	if err != nil {
+		log.Warnf("Failed to detect current console(%s): %v", info.Config.Image, err)
+		return
+	}
+
+	if strings.Contains(image.Name(), "os-console") {
+		console = "default"
+		return
+	}
+	console = strings.TrimPrefix(strings.TrimSuffix(image.Name(), "console"), "rancher/os-")
 	return
 }

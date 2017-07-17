@@ -225,7 +225,15 @@ func merge(c *cli.Context) error {
 	}
 
 	if err = config.Merge(bytes); err != nil {
-		log.Fatal(err)
+		log.Error(err)
+		validationErrors, err := config.ValidateBytes(bytes)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, validationError := range validationErrors.Errors() {
+			log.Error(validationError)
+		}
+		log.Fatal("EXITING: Failed to parse configuration")
 	}
 
 	return nil
@@ -255,7 +263,7 @@ func validate(c *cli.Context) error {
 	if err != nil {
 		log.Fatal(err)
 	}
-	validationErrors, err := config.Validate(bytes)
+	validationErrors, err := config.ValidateBytes(bytes)
 	if err != nil {
 		log.Fatal(err)
 	}

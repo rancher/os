@@ -171,7 +171,7 @@ if [ "$APPEND_INIT" != "" ]; then
 fi
 
 if [ "$BOOT_PXE" == "1" ]; then
-    KERNEL_ARGS="console=tty1 rancher.console=tty1 rancher.autologin=tty1 ${KERNEL_ARGS}"
+    KERNEL_ARGS="console=tty1 rancher.autologin=tty1 ${KERNEL_ARGS}"
     set -ex
     PIXIECORE=$(which pixiecore)
     sudo -E $PIXIECORE boot \
@@ -311,6 +311,7 @@ if [ "$QEMU" == "1" ]; then
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
+            -device virtio-rng-pci \
             ${CLOUD_CONFIG_DISK} \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
@@ -338,6 +339,7 @@ elif [ "$BOOT_ISO" == "1" ] ||
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
+            -device virtio-rng-pci \
             ${ISO_OPTS} \
             "${@}"
 elif [ "$QIND" == "1" ]; then

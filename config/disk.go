@@ -71,8 +71,19 @@ func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
 
 	cfg := &CloudConfig{}
 	if err := util.Convert(rawCfg, cfg); err != nil {
-		log.Errorf("Failed to parse configuration: %s", err)
+		log.Errorf("EXITING: Failed to parse configuration: %s", err)
 		log.Debugf("Bad cfg:\n%v\n", rawCfg)
+		// no point returning {}, it'll just sit there broken
+		// TODO: print some context around what failed..
+		validationErrors, err := ValidateRawCfg(rawCfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, validationError := range validationErrors.Errors() {
+			log.Error(validationError)
+		}
+		// TODO: I'd love to panic & recover(), for issues on boot, but it doesn't work yet
+		os.Exit(-1)
 		return &CloudConfig{}
 	}
 	cfg = amendNils(cfg)

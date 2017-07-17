@@ -113,6 +113,7 @@ type RancherConfig struct {
 	NoSharedRoot        bool                                      `yaml:"no_sharedroot,omitempty"`
 	Log                 bool                                      `yaml:"log,omitempty"`
 	ForceConsoleRebuild bool                                      `yaml:"force_console_rebuild,omitempty"`
+	Recovery            bool                                      `yaml:"recovery,omitempty"`
 	Disable             []string                                  `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                           `yaml:"services_include,omitempty"`
 	Modules             []string                                  `yaml:"modules,omitempty"`
@@ -174,7 +175,8 @@ type DockerConfig struct {
 }
 
 type SSHConfig struct {
-	Keys map[string]string `yaml:"keys,omitempty"`
+	Keys   map[string]string `yaml:"keys,omitempty"`
+	Daemon bool              `yaml:"daemon,omitempty"`
 }
 
 type StateConfig struct {

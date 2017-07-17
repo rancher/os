@@ -11,7 +11,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/SvenDowideit/cpuid"
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
@@ -82,7 +81,7 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := writeRespawn(); err != nil {
+	if err := writeRespawn("rancher", cfg.Rancher.SSH.Daemon, false); err != nil {
 		log.Error(err)
 	}
 
@@ -109,17 +108,7 @@ func consoleInitFunc() error {
 	}
 
 	// font backslashes need to be escaped for when issue is output! (but not the others..)
-	if err := ioutil.WriteFile("/etc/issue", []byte(`
-               ,        , ______                 _                 _____ _____TM
-  ,------------|'------'| | ___ \\               | |               /  _  /  ___|
- / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
- \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
-   |   .________.'----'   | |\\ \\ (_| | | | | (__| | | |  __/ |    | \\_/ /\\__/ /
-   |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
-   \\___/        \\___/     \s \r
-
-         RancherOS `+config.Version+` \n \l `+cpuid.CPU.HypervisorName+`
-         `), 0644); err != nil {
+	if err := ioutil.WriteFile("/etc/issue", []byte(config.Banner), 0644); err != nil {
 		log.Error(err)
 	}
 
@@ -137,7 +126,7 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := ioutil.WriteFile(consoleDone, []byte(cfg.Rancher.Console), 0644); err != nil {
+	if err := ioutil.WriteFile(consoleDone, []byte(CurrentConsole()), 0644); err != nil {
 		log.Error(err)
 	}
 
@@ -155,15 +144,20 @@ func consoleInitFunc() error {
 	return syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ())
 }
 
-func generateRespawnConf(cmdline string) string {
+func generateRespawnConf(cmdline, user string, sshd, recovery bool) string {
 	var respawnConf bytes.Buffer
+
+	autologinBin := "/usr/bin/autologin"
+	if recovery {
+		autologinBin = "/usr/bin/recovery"
+	}
 
 	for i := 1; i < 7; i++ {
 		tty := fmt.Sprintf("tty%d", i)
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
+			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:tty%d", autologinBin, user, i))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
@@ -175,23 +169,25 @@ func generateRespawnConf(cmdline string) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
+			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:%s", autologinBin, user, tty))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
 	}
 
-	respawnConf.WriteString("/usr/sbin/sshd -D")
+	if sshd {
+		respawnConf.WriteString("/usr/sbin/sshd -D")
+	}
 
 	return respawnConf.String()
 }
 
-func writeRespawn() error {
+func writeRespawn(user string, sshd, recovery bool) error {
 	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return err
 	}
 
-	respawn := generateRespawnConf(string(cmdline))
+	respawn := generateRespawnConf(string(cmdline), user, sshd, recovery)
 
 	files, err := ioutil.ReadDir("/etc/respawn.conf.d")
 	if err == nil {

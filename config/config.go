@@ -1,9 +1,24 @@
 package config
 
 import (
+	"io/ioutil"
+	"strings"
+
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/util"
 )
+
+const Banner = `
+               ,        , ______                 _                 _____ _____TM
+  ,------------|'------'| | ___ \\               | |               /  _  /  ___|
+ / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
+ \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
+   |   .________.'----'   | |\\ \\ (_| | | | | (__| | | |  __/ |    | \\_/ /\\__/ /
+   |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
+   \\___/        \\___/     \s \r
+
+         RancherOS \v \n \l
+         `
 
 func Merge(bytes []byte) error {
 	data, err := readConfigs(bytes, false, true)
@@ -59,4 +74,13 @@ func Set(key string, value interface{}) error {
 	}
 
 	return WriteToFile(modified, CloudConfigFile)
+}
+
+func GetKernelVersion() string {
+	b, err := ioutil.ReadFile("/proc/version")
+	if err != nil {
+		return ""
+	}
+	elem := strings.Split(string(b), " ")
+	return elem[2]
 }
