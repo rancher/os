@@ -54,6 +54,7 @@ var schema = `{
         "resize_device": {"type": "string"},
         "sysctl": {"type": "object"},
         "restart_services": {"type": "array"}
+	"hypervisor_service": {"type": "boolean"}
       }
     },
 

@@ -16,6 +16,7 @@ rancher:
         nameservers: [8.8.8.8, 8.8.4.4]
   ssh:
     daemon: true
+  hypervisor_service: true
   bootstrap:
     bootstrap:
       image: {{.OS_REPO}}/os-bootstrap:{{.VERSION}}{{.SUFFIX}}

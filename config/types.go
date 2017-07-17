@@ -130,6 +130,7 @@ type RancherConfig struct {
 	ResizeDevice        string                                    `yaml:"resize_device,omitempty"`
 	Sysctl              map[string]string                         `yaml:"sysctl,omitempty"`
 	RestartServices     []string                                  `yaml:"restart_services,omitempty"`
+	HypervisorService   bool                                      `yaml:"hypervisor_service,omitempty"`
 }
 
 type UpgradeConfig struct {

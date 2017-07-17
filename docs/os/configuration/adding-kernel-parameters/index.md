@@ -48,3 +48,7 @@ On desktop systems the Syslinux boot menu can be switched to graphical mode by a
 #### Autologin console
 
 `rancher.autologin=<tty...>` will automatically log in the sepcified console - common values are `tty1`, `ttyS0` and `ttyAMA0` - depending on your platform.
+
+#### Enable/Disable hypervisor service auto-enable
+
+RancherOS v1.1.0 added detetion of Hypervisor, and then will try to download the a service called `<hypervisor>-vm-tools`. This may cause boot speed issues, and so can be disabled by setting `rancher.hypervisor_service=false`.

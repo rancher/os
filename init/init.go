@@ -405,7 +405,6 @@ func RunInit() error {
 			return config.LoadConfig(), nil
 		}},
 		config.CfgFuncData{"hypervisor tools", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			// Maybe we could set `rancher.hypervisor_service`, and defer this further?
 			enableHypervisorService(cfg, hypervisor)
 			return config.LoadConfig(), nil
 		}},
@@ -461,6 +460,11 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 		hypervisorName = "open"
 	}
 	serviceName := hypervisorName + "-vm-tools"
+	if !cfg.Rancher.HypervisorService {
+		log.Infof("Skipping %s as `rancher.hypervisor_service` is set to false", serviceName)
+		return
+	}
+
 	// check quickly to see if there is a yml file available
 	if service.ValidService(serviceName, cfg) {
 		log.Infof("Setting rancher.services_include. %s=true", serviceName)
