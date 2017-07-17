@@ -81,7 +81,7 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := writeRespawn("rancher", true, false); err != nil {
+	if err := writeRespawn("rancher", cfg.Rancher.SSH.Daemon, false); err != nil {
 		log.Error(err)
 	}
 

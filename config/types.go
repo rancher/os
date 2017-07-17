@@ -175,8 +175,8 @@ type DockerConfig struct {
 }
 
 type SSHConfig struct {
-	Keys    map[string]string `yaml:"keys,omitempty"`
-	Disable bool              `yaml:"disable,omitempty"`
+	Keys   map[string]string `yaml:"keys,omitempty"`
+	Daemon bool              `yaml:"daemon,omitempty"`
 }
 
 type StateConfig struct {

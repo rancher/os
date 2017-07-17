@@ -146,7 +146,7 @@ var schema = `{
 
       "properties": {
         "keys": {"type": "object"},
-        "disable": {"type": "boolean"}
+        "daemon": {"type": "boolean"}
       }
     },
 
