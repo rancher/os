@@ -182,6 +182,10 @@ func CurrentConsole() (console string) {
 		return
 	}
 
+	if strings.Contains(image.Name(), "os-console") {
+		console = "default"
+		return
+	}
 	console = strings.TrimPrefix(strings.TrimSuffix(image.Name(), "console"), "rancher/os-")
 	return
 }
