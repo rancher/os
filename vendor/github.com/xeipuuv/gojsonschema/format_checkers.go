@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"strings"
 	"time"
 )
 
@@ -51,14 +52,20 @@ type (
 	// http://tools.ietf.org/html/rfc3339#section-5.6
 	DateTimeFormatChecker struct{}
 
-	// URIFormatCheckers validates a URI with a valid Scheme per RFC3986
+	// URIFormatChecker validates a URI with a valid Scheme per RFC3986
 	URIFormatChecker struct{}
+
+	// URIReferenceFormatChecker validates a URI or relative-reference per RFC3986
+	URIReferenceFormatChecker struct{}
 
 	// HostnameFormatChecker validates a hostname is in the correct format
 	HostnameFormatChecker struct{}
 
 	// UUIDFormatChecker validates a UUID is in the correct format
 	UUIDFormatChecker struct{}
+
+	// RegexFormatChecker validates a regex is in the correct format
+	RegexFormatChecker struct{}
 )
 
 var (
@@ -66,13 +73,15 @@ var (
 	// so library users can add custom formatters
 	FormatCheckers = FormatCheckerChain{
 		formatters: map[string]FormatChecker{
-			"date-time": DateTimeFormatChecker{},
-			"hostname":  HostnameFormatChecker{},
-			"email":     EmailFormatChecker{},
-			"ipv4":      IPV4FormatChecker{},
-			"ipv6":      IPV6FormatChecker{},
-			"uri":       URIFormatChecker{},
-			"uuid":      UUIDFormatChecker{},
+			"date-time": 	 DateTimeFormatChecker{},
+			"hostname":  	 HostnameFormatChecker{},
+			"email":     	 EmailFormatChecker{},
+			"ipv4":      	 IPV4FormatChecker{},
+			"ipv6":      	 IPV6FormatChecker{},
+			"uri":       	 URIFormatChecker{},
+			"uri-reference": URIReferenceFormatChecker{},
+			"uuid":      	 UUIDFormatChecker{},
+			"regex":     	 RegexFormatChecker{},
 		},
 	}
 
@@ -80,7 +89,7 @@ var (
 	rxEmail = regexp.MustCompile("^(((([a-zA-Z]|\\d|[!#\\$%&'\\*\\+\\-\\/=\\?\\^_`{\\|}~]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])+(\\.([a-zA-Z]|\\d|[!#\\$%&'\\*\\+\\-\\/=\\?\\^_`{\\|}~]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])+)*)|((\\x22)((((\\x20|\\x09)*(\\x0d\\x0a))?(\\x20|\\x09)+)?(([\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x7f]|\\x21|[\\x23-\\x5b]|[\\x5d-\\x7e]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])|(\\([\\x01-\\x09\\x0b\\x0c\\x0d-\\x7f]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}]))))*(((\\x20|\\x09)*(\\x0d\\x0a))?(\\x20|\\x09)+)?(\\x22)))@((([a-zA-Z]|\\d|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])|(([a-zA-Z]|\\d|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])([a-zA-Z]|\\d|-|\\.|_|~|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])*([a-zA-Z]|\\d|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])))\\.)+(([a-zA-Z]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])|(([a-zA-Z]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])([a-zA-Z]|\\d|-|\\.|_|~|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])*([a-zA-Z]|[\\x{00A0}-\\x{D7FF}\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFEF}])))\\.?$")
 
 	// Regex credit: https://www.socketloop.com/tutorials/golang-validate-hostname
-	rxHostname = regexp.MustCompile(`^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$`)
+	rxHostname = regexp.MustCompile(`^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])(\.([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]{0,61}[a-zA-Z0-9]))*$`)
 
 	rxUUID = regexp.MustCompile("^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$")
 )
@@ -132,13 +141,13 @@ func (f EmailFormatChecker) IsFormat(input string) bool {
 // Credit: https://github.com/asaskevich/govalidator
 func (f IPV4FormatChecker) IsFormat(input string) bool {
 	ip := net.ParseIP(input)
-	return ip != nil && ip.To4() != nil
+	return ip != nil && strings.Contains(input, ".")
 }
 
 // Credit: https://github.com/asaskevich/govalidator
 func (f IPV6FormatChecker) IsFormat(input string) bool {
 	ip := net.ParseIP(input)
-	return ip != nil && ip.To4() == nil
+	return ip != nil && strings.Contains(input, ":")
 }
 
 func (f DateTimeFormatChecker) IsFormat(input string) bool {
@@ -168,10 +177,27 @@ func (f URIFormatChecker) IsFormat(input string) bool {
 	return true
 }
 
+func (f URIReferenceFormatChecker) IsFormat(input string) bool {
+	_, err := url.Parse(input)
+	return err == nil
+}
+
 func (f HostnameFormatChecker) IsFormat(input string) bool {
-	return rxHostname.MatchString(input)
+	return rxHostname.MatchString(input) && len(input) < 256
 }
 
 func (f UUIDFormatChecker) IsFormat(input string) bool {
 	return rxUUID.MatchString(input)
+}
+
+// IsFormat implements FormatChecker interface.
+func (f RegexFormatChecker) IsFormat(input string) bool {
+	if input == "" {
+		return true
+	}
+	_, err := regexp.Compile(input)
+	if err != nil {
+		return false
+	}
+	return true
 }
