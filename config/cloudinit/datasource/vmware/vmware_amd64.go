@@ -19,6 +19,7 @@ import (
 	"os"
 
 	"github.com/rancher/os/log"
+	"github.com/rancher/os/util"
 
 	"github.com/rancher/os/config/cloudinit/pkg"
 
@@ -36,6 +37,9 @@ func (ovf ovfWrapper) readConfig(key string) (string, error) {
 }
 
 func NewDatasource(fileName string) *VMWare {
+	if util.GetHypervisor() != "vmware" {
+		return nil
+	}
 	// read from provided ovf environment document (typically /media/ovfenv/ovf-env.xml)
 	if fileName != "" {
 		log.Printf("Using OVF environment from %s\n", fileName)
@@ -69,6 +73,9 @@ func NewDatasource(fileName string) *VMWare {
 }
 
 func (v VMWare) IsAvailable() bool {
+	if util.GetHypervisor() != "vmware" {
+		return false
+	}
 	if v.ovfFileName != "" {
 		_, v.lastError = os.Stat(v.ovfFileName)
 		return !os.IsNotExist(v.lastError)

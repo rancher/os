@@ -258,7 +258,11 @@ func getDatasources(datasources []string) []datasource.Datasource {
 		case "packet":
 			dss = append(dss, packet.NewDatasource(root))
 		case "vmware":
-			dss = append(dss, vmware.NewDatasource(root))
+			// made vmware datasource dependent on detecting vmware independently, as it crashes things otherwise
+			v := vmware.NewDatasource(root)
+			if v != nil {
+				dss = append(dss, v)
+			}
 		}
 	}
 
@@ -295,7 +299,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 
 			duration := datasourceInterval
 			for {
-				log.Infof("cloud-init: Checking availability of %q\n", s.Type())
+				log.Infof("cloud-init: Checking availability of %q", s.Type())
 				if s.IsAvailable() {
 					log.Infof("cloud-init: Datasource available: %s", s)
 					ds <- s

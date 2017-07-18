@@ -19,8 +19,6 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
-
-	"github.com/SvenDowideit/cpuid"
 )
 
 const (
@@ -93,7 +91,7 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func MainInit() {
-	log.InitDeferedLogger()
+	log.InitLogger()
 	// TODO: this breaks and does nothing if the cfg is invalid (or is it due to threading?)
 	defer func() {
 		if r := recover(); r != nil {
@@ -327,7 +325,7 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
-			hypervisor = checkHypervisor(cfg)
+			hypervisor = util.GetHypervisor()
 			if hypervisor == "vmware" {
 				// add vmware to the end - we don't want to over-ride an choices the user has made
 				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
@@ -343,12 +341,21 @@ func RunInit() error {
 
 			return config.LoadConfig(), nil
 		}},
-		config.CfgFuncData{"read cfg files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		config.CfgFuncData{"read cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
 				config.CloudConfigInitFile,
 				config.CloudConfigBootFile,
 				config.CloudConfigNetworkFile,
 				config.MetaDataFile,
+			}
+			// And all the files in /var/log/boot/
+			// TODO: I wonder if we can put this code into the log module, and have things write to the buffer until we FsReady()
+			bootLog := "/var/log/boot/"
+			if files, err := ioutil.ReadDir(bootLog); err == nil {
+				for _, file := range files {
+					filePath := filepath.Join(bootLog, file.Name())
+					filesToCopy = append(filesToCopy, filePath)
+				}
 			}
 			for _, name := range filesToCopy {
 				if _, err := os.Lstat(name); !os.IsNotExist(err) {
@@ -357,6 +364,7 @@ func RunInit() error {
 						log.Errorf("read cfg file (%s) %s", name, err)
 						continue
 					}
+					log.Debugf("Saved %s to memory", name)
 					configFiles[name] = content
 				}
 			}
@@ -373,8 +381,7 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"mount OEM2", mountOem},
-		config.CfgFuncData{"write cfg files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			log.FsReady()
+		config.CfgFuncData{"write cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			for name, content := range configFiles {
 				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0700); err != nil {
 					log.Error(err)
@@ -382,6 +389,7 @@ func RunInit() error {
 				if err := util.WriteFileAtomic(name, content, 400); err != nil {
 					log.Error(err)
 				}
+				log.Infof("Wrote log to %s", name)
 			}
 			if err := os.MkdirAll(config.VarRancherDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
@@ -389,6 +397,8 @@ func RunInit() error {
 			if err := os.Chmod(config.VarRancherDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
 			}
+			log.FsReady()
+			log.Debugf("WARNING: switchroot and mount OEM2 phases not written to log file")
 
 			return cfg, nil
 		}},
@@ -440,15 +450,6 @@ func RunInit() error {
 	// Code never gets here - rancher.system_docker.exec=true
 
 	return pidOne()
-}
-
-func checkHypervisor(cfg *config.CloudConfig) string {
-	if cpuid.CPU.HypervisorName == "" {
-		log.Infof("ros init: No Detected Hypervisor")
-	} else {
-		log.Infof("ros init: Detected Hypervisor: %s", cpuid.CPU.HypervisorName)
-	}
-	return cpuid.CPU.HypervisorName
 }
 
 func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
