@@ -356,6 +356,9 @@ func TestOvfTransport(t *testing.T) {
 
 		file.WriteString(tt.document)
 		v := NewDatasource(file.Name())
+		if v == nil {
+			continue
+		}
 		v.urlDownload = fakeDownloader
 
 		metadata, err := v.FetchMetadata()
