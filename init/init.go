@@ -217,6 +217,15 @@ func setupSharedRoot(c *config.CloudConfig) (*config.CloudConfig, error) {
 	return c, mount.MakeShared("/")
 }
 
+func PrintConfig() {
+	cfgString, err := config.Export(false, true)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Error("Error serializing config")
+	} else {
+		log.Debugf("Config: %s", cfgString)
+	}
+}
+
 func RunInit() error {
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 	if isInitrd() {
@@ -254,17 +263,9 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"mount OEM", mountOem},
 		config.CfgFuncData{"debug save cfg", func(_ *config.CloudConfig) (*config.CloudConfig, error) {
+			PrintConfig()
+
 			cfg := config.LoadConfig()
-
-			if cfg.Rancher.Debug {
-				cfgString, err := config.Export(false, true)
-				if err != nil {
-					log.WithFields(log.Fields{"err": err}).Error("Error serializing config")
-				} else {
-					log.Debugf("Config: %s", cfgString)
-				}
-			}
-
 			return cfg, nil
 		}},
 		config.CfgFuncData{"load modules", loadModules},
@@ -334,7 +335,7 @@ func RunInit() error {
 				}
 			}
 
-			log.Debug("init, runCloudInitServices()")
+			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
 			if err := runCloudInitServices(cfg); err != nil {
 				log.Error(err)
 			}
