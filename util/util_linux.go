@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/SvenDowideit/cpuid"
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/log"
 )
@@ -120,4 +121,14 @@ func Blkid(label string) (deviceName, deviceType string) {
 		return
 	}
 	return
+}
+
+// GetHypervisor tries to detect if we're running in a VM, and returns a string for its type
+func GetHypervisor() string {
+	if cpuid.CPU.HypervisorName == "" {
+		log.Infof("ros init: No Detected Hypervisor")
+	} else {
+		log.Infof("ros init: Detected Hypervisor: %s", cpuid.CPU.HypervisorName)
+	}
+	return cpuid.CPU.HypervisorName
 }

@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"io/ioutil"
-
 	"github.com/Sirupsen/logrus"
 )
 
@@ -132,8 +130,8 @@ func InitLogger() {
 func logTheseApps() bool {
 	// TODO: mmm, not very functional.
 	if filepath.Base(os.Args[0]) == "ros" ||
-		filepath.Base(os.Args[0]) == "host_ros" ||
-		filepath.Base(os.Args[0]) == "system-docker" {
+		//		filepath.Base(os.Args[0]) == "system-docker" ||
+		filepath.Base(os.Args[0]) == "host_ros" {
 		return false
 	}
 	return true
@@ -145,7 +143,12 @@ func logTheseApps() bool {
 func InitDeferedLogger() {
 	if logTheseApps() {
 		innerInit(true)
-		logrus.SetOutput(ioutil.Discard)
+		//logrus.SetOutput(ioutil.Discard)
+		// write to dmesg until we can write to file. (maybe we can do this if rancher.debug=true?)
+		f, err := os.OpenFile("/dev/kmsg", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
+		if err == nil {
+			logrus.SetOutput(f)
+		}
 
 		pwd, err := os.Getwd()
 		if err != nil {
