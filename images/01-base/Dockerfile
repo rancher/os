@@ -33,6 +33,7 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
 COPY inputrc /etc/inputrc
 COPY growpart /usr/bin/growpart
+COPY start_ntp.sh /bin/start_ntp.sh
 RUN sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
     sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
     sed -i 1,10d /etc/rsyslog.conf && \
