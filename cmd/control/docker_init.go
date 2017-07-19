@@ -29,21 +29,33 @@ func dockerInitAction(c *cli.Context) error {
 		time.Sleep(200 * time.Millisecond)
 	}
 
-	dockerBin := "/usr/bin/docker"
-	for _, binPath := range []string{
+	dockerBin := ""
+	dockerPaths := []string{
+		"/usr/bin",
 		"/opt/bin",
 		"/usr/local/bin",
 		"/var/lib/rancher/docker",
-	} {
+	}
+	for _, binPath := range dockerPaths {
 		if util.ExistsAndExecutable(path.Join(binPath, "dockerd")) {
 			dockerBin = path.Join(binPath, "dockerd")
 			break
 		}
-		if util.ExistsAndExecutable(path.Join(binPath, "docker")) {
-			dockerBin = path.Join(binPath, "docker")
-			break
+	}
+	if dockerBin == "" {
+		for _, binPath := range dockerPaths {
+			if util.ExistsAndExecutable(path.Join(binPath, "docker")) {
+				dockerBin = path.Join(binPath, "docker")
+				break
+			}
 		}
 	}
+	if dockerBin == "" {
+		err := fmt.Errorf("Failed to find either dockerd or docker binaries")
+		log.Error(err)
+		return err
+	}
+	log.Infof("Found %s", dockerBin)
 
 	if err := syscall.Mount("", "/", "", syscall.MS_SHARED|syscall.MS_REC, ""); err != nil {
 		log.Error(err)
