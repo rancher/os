@@ -193,7 +193,7 @@ rancher:
       - /usr/bin/iptables:/sbin/iptables:ro
     ntp:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
-      command: ntpd --nofork -g
+      command: /bin/start_ntp.sh
       labels:
         io.rancher.os.scope: system
         io.rancher.os.after: network
