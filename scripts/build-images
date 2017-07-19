@@ -11,6 +11,13 @@ mkdir -p dist
 rm -f dist/images
 touch dist/images
 
+if docker ps | grep strato-server; then
+	IP=$(docker inspect --format "{{.NetworkSettings.Networks.bridge.IPAddress}}" strato-server)
+	export STRATO_BIN="http://$IP:2015/"
+	export STRATO_REPO="http://$IP:2015/"
+	echo "using local STRATO server at $STRATO_REPO"
+fi
+
 for i in $BASE/[0-9]*; do
     name="os-$(echo ${i} | cut -f2 -d-)"
     tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
@@ -19,7 +26,7 @@ for i in $BASE/[0-9]*; do
         ${i}/prebuild.sh
     fi
 
-    if dapper -d --build -f ${i}/Dockerfile -- -t rancher/${name} ${i}; then
+    if dapper -d --build -f ${i}/Dockerfile -- $NOCACHE -t rancher/${name} ${i}; then
         docker tag rancher/${name} ${tag}
 	echo "${tag}" >> dist/images
     elif [ "$?" != "42" ]; then

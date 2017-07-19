@@ -154,7 +154,7 @@ sync
 	s.RunQemuWith(c, runArgs...)
 
 	s.CheckOutput(c, version, Equals, "sudo ros -v")
-	s.CheckOutput(c, disk, Equals, "blkid | cut -f 1 -d ' ' | sed 's/://'")
+	s.CheckOutput(c, disk, Equals, "sudo blkid | cut -f 1 -d ' ' | sed 's/://'")
 	s.CheckOutput(c, size, Not(Equals), "df -h | grep "+strings.TrimSpace(disk)+" | head -n1 | sed 's/ \\+/;/g' | cut -d ';' -f 2")
 
 	s.Stop(c)
