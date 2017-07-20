@@ -6,10 +6,12 @@ import (
 	"golang.org/x/net/context"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	dockerClient "github.com/docker/engine-api/client"
 	"github.com/docker/libcompose/cli/logger"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/docker"
 	composeClient "github.com/docker/libcompose/docker/client"
+
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/events"
 	"github.com/docker/libcompose/project/options"
@@ -245,13 +247,40 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 	}
 
 	// Reduce service configurations to just image and labels
+	needToPull := false
 	for _, serviceName := range p.ServiceConfigs.Keys() {
 		serviceConfig, _ := p.ServiceConfigs.Get(serviceName)
+
+		// test to see if we need to Pull
+		var client dockerClient.APIClient
+		if serviceConfig.Labels[config.ScopeLabel] != config.System {
+			client, err = rosDocker.NewDefaultClient()
+			if err != nil {
+				log.Error(err)
+			}
+		} else {
+			client, err = rosDocker.NewSystemClient()
+			if err != nil {
+				log.Error(err)
+			}
+		}
+		if client != nil {
+			_, _, err := client.ImageInspectWithRaw(context.Background(), serviceConfig.Image, false)
+			if err == nil {
+				log.Infof("Service %s using local image %s", serviceName, serviceConfig.Image)
+				continue
+			}
+		}
+		needToPull = true
+
 		p.ServiceConfigs.Add(serviceName, &composeConfig.ServiceConfig{
 			Image:  serviceConfig.Image,
 			Labels: serviceConfig.Labels,
 		})
 	}
 
-	return p.Pull(context.Background())
+	if needToPull {
+		return p.Pull(context.Background())
+	}
+	return nil
 }
