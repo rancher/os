@@ -172,7 +172,7 @@ func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
 }
 
 func (v VMWare) FetchUserdata() ([]byte, error) {
-	encoding, err := v.readConfig("cloud-init.config.data.encoding")
+	encoding, err := v.readConfig("cloud-init.data.encoding")
 	if err != nil {
 		return nil, err
 	}

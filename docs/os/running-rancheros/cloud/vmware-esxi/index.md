@@ -23,7 +23,7 @@ As of v1.1.0, RancherOS automatically detects that it is running on VMware ESXi,
 | `dns.server.<x>` | IP address |
 | `dns.domain.<y> |	DNS search domain` |
 | `cloud-init.config.data | string` |
-| `cloud-init.config.data.encoding` |	{"", "base64", "gzip+base64"} |
+| `cloud-init.data.encoding` |	{"", "base64", "gzip+base64"} |
 | `cloud-init.config.url` |	URL |
 
 > **Note:** "n", "m", "l", "x" and "y" are 0-indexed, incrementing integers. The identifier for an interface (`<n>`) is used in the generation of the default interface name in the form `eth<n>`.
