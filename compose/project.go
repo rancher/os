@@ -248,20 +248,27 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 
 	// Reduce service configurations to just image and labels
 	needToPull := false
+	var client, userClient, systemClient dockerClient.APIClient
 	for _, serviceName := range p.ServiceConfigs.Keys() {
 		serviceConfig, _ := p.ServiceConfigs.Get(serviceName)
 
 		// test to see if we need to Pull
-		var client dockerClient.APIClient
 		if serviceConfig.Labels[config.ScopeLabel] != config.System {
-			client, err = rosDocker.NewDefaultClient()
-			if err != nil {
-				log.Error(err)
+			if userClient == nil {
+				userClient, err = rosDocker.NewDefaultClient()
+				if err != nil {
+					log.Error(err)
+				}
+
 			}
+			client = userClient
 		} else {
-			client, err = rosDocker.NewSystemClient()
-			if err != nil {
-				log.Error(err)
+			if systemClient == nil {
+				systemClient, err = rosDocker.NewSystemClient()
+				if err != nil {
+					log.Error(err)
+				}
+				client = systemClient
 			}
 		}
 		if client != nil {
