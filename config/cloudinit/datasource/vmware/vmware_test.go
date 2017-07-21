@@ -216,28 +216,28 @@ func TestFetchUserdata(t *testing.T) {
 		},
 		{
 			variables: map[string]string{
-				"cloud-init.config.data.encoding": "",
-				"cloud-init.config.data":          "test config",
+				"cloud-init.data.encoding": "",
+				"cloud-init.config.data":   "test config",
 			},
 			userdata: "test config",
 		},
 		{
 			variables: map[string]string{
-				"cloud-init.config.data.encoding": "base64",
-				"cloud-init.config.data":          "dGVzdCBjb25maWc=",
+				"cloud-init.data.encoding": "base64",
+				"cloud-init.config.data":   "dGVzdCBjb25maWc=",
 			},
 			userdata: "test config",
 		},
 		{
 			variables: map[string]string{
-				"cloud-init.config.data.encoding": "gzip+base64",
-				"cloud-init.config.data":          "H4sIABaoWlUAAytJLS5RSM7PS8tMBwCQiHNZCwAAAA==",
+				"cloud-init.data.encoding": "gzip+base64",
+				"cloud-init.config.data":   "H4sIABaoWlUAAytJLS5RSM7PS8tMBwCQiHNZCwAAAA==",
 			},
 			userdata: "test config",
 		},
 		{
 			variables: map[string]string{
-				"cloud-init.config.data.encoding": "test encoding",
+				"cloud-init.data.encoding": "test encoding",
 			},
 			err: errors.New(`Unsupported encoding "test encoding"`),
 		},
