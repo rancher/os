@@ -5,7 +5,6 @@ cd $(dirname $0)/..
 source ./scripts/version
 export REPO_VERSION=$VERSION
 export COMPRESS="xz --format=lzma -9 --memlimit-compress=80% -e"
-export INTEGRATION_TESTS=0
 
 ./scripts/ci
 
@@ -14,12 +13,20 @@ echo PREPARE
 ./scripts/prepare
 echo PACKAGE
 ./scripts/package
-echo INTEGRATION-TEST
-./scripts/integration-test
+if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
+	export INTEGRATION_TESTS=1
+	echo INTEGRATION-TEST
+	./scripts/integration-test
+else
+	export INTEGRATION_TESTS=0
+	echo "Skipping integration tests"
+fi
 
-# make generated changelog
-lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
-git log --format="%s: %b" ${lastrelease}..${VERSION}  | grep "Merge pull" | sed 's/.*\(#.*\) from .*:\(.*\)/* \1: \2/g' > dist/artifacts/changelog.txt
+if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
+	# make generated changelog
+	lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
+	git log --format="%s: %b" ${lastrelease}..${VERSION}  | grep "Merge pull" | sed 's/.*\(#.*\) from .*:\(.*\)/* \1: \2/g' > dist/artifacts/changelog.txt
+fi
 
 CHECKSUM="dist/checksums.txt"
 rm -f $CHECKSUM
