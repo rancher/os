@@ -1,8 +1,8 @@
 package integration
 
-import . "gopkg.in/check.v1"
+import check "gopkg.in/check.v1"
 
-func (s *QemuSuite) TestRosLocalService(c *C) {
+func (s *QemuSuite) TestRosLocalService(c *check.C) {
 	s.RunQemu(c)
 
 	// System-docker
@@ -24,7 +24,7 @@ echo "    io.rancher.os.after: console" >> test.yml
 	s.CheckCall(c, `sudo ros service logs test | grep bin`)
 }
 
-func (s *QemuSuite) TestRosLocalServiceUser(c *C) {
+func (s *QemuSuite) TestRosLocalServiceUser(c *check.C) {
 	s.RunQemu(c)
 
 	// User-docker
