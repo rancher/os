@@ -384,10 +384,17 @@ func RunInit() error {
 		config.CfgFuncData{"mount OEM2", mountOem},
 		config.CfgFuncData{"write cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			for name, content := range configFiles {
-				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0700); err != nil {
+				dirMode := os.ModeDir | 0755
+				fileMode := os.FileMode(0444)
+				if strings.HasPrefix(name, "/var/lib/rancher/conf/") {
+					// only make the conf files harder to get to
+					dirMode = os.ModeDir | 0700
+					fileMode = os.FileMode(0400)
+				}
+				if err := os.MkdirAll(filepath.Dir(name), dirMode); err != nil {
 					log.Error(err)
 				}
-				if err := util.WriteFileAtomic(name, content, 400); err != nil {
+				if err := util.WriteFileAtomic(name, content, fileMode); err != nil {
 					log.Error(err)
 				}
 				log.Infof("Wrote log to %s", name)
