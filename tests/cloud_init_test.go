@@ -3,7 +3,7 @@ package integration
 import . "gopkg.in/check.v1"
 
 func (s *QemuSuite) TestReadDatasourcesFromDisk(c *C) {
-	s.RunQemu(c)
+	s.RunQemu(c, "--debug")
 
 	s.CheckCall(c, `
 sudo tee /var/lib/rancher/conf/cloud-config.d/datasources.yml << EOF
