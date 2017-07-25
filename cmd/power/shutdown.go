@@ -32,7 +32,7 @@ func Shutdown() {
 	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
-	app.Action = shutdown
+	app.Action = shutdownCliAction
 	app.Flags = []cli.Flag{
 		//    --no-wall
 		//        Do not send wall message before halt, power-off,
@@ -182,7 +182,7 @@ func Reboot() {
 	reboot("reboot", false, syscall.LINUX_REBOOT_CMD_RESTART)
 }
 
-func shutdown(c *cli.Context) error {
+func shutdownCliAction(c *cli.Context) error {
 	// the shutdown command's default is poweroff
 	var powerCmd uint
 	powerCmd = syscall.LINUX_REBOOT_CMD_POWER_OFF
@@ -204,7 +204,7 @@ func shutdown(c *cli.Context) error {
 		// TODO: if there are more params, LOG them
 	}
 
-	reboot(c.App.Name, forceFlag, powerCmd)
-
-	return nil
+	err := reboot(c.App.Name, forceFlag, powerCmd)
+	log.Error(err)
+	return err
 }
