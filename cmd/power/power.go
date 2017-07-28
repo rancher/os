@@ -187,15 +187,21 @@ func shutDownContainers() error {
 	}
 
 	var stopErrorStrings []string
+	consoleContainerIdx := -1
 
-	for _, container := range containers {
+	for idx, container := range containers {
 		if container.ID == currentContainerID {
 			continue
 		}
+		if container.Names[0] == "/console" {
+			consoleContainerIdx = idx
+			continue
+		}
 
-		log.Infof("Stopping %s : %v", container.ID[:12], container.Names)
+		log.Infof("Stopping %s : %s", container.Names[0], container.ID[:12])
 		stopErr := client.ContainerStop(context.Background(), container.ID, timeout)
 		if stopErr != nil {
+			log.Errorf("------- Error Stopping %s : %s", container.Names[0], stopErr.Error())
 			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
 		}
 	}
@@ -206,8 +212,31 @@ func shutDownContainers() error {
 		if container.ID == currentContainerID {
 			continue
 		}
+		if container.Names[0] == "/console" {
+			continue
+		}
+		log.Infof("Waiting %s : %s", container.Names[0], container.ID[:12])
 		_, waitErr := client.ContainerWait(context.Background(), container.ID)
 		if waitErr != nil {
+			log.Errorf("------- Error Waiting %s : %s", container.Names[0], waitErr.Error())
+			waitErrorStrings = append(waitErrorStrings, " ["+container.ID+"] "+waitErr.Error())
+		}
+	}
+
+	// and now stop the console
+	if consoleContainerIdx != -1 {
+		container := containers[consoleContainerIdx]
+		log.Infof("Console Stopping %v : %s", container.Names, container.ID[:12])
+		stopErr := client.ContainerStop(context.Background(), container.ID, timeout)
+		if stopErr != nil {
+			log.Errorf("------- Error Stopping %v : %s", container.Names, stopErr.Error())
+			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
+		}
+
+		log.Infof("Console Waiting %v : %s", container.Names, container.ID[:12])
+		_, waitErr := client.ContainerWait(context.Background(), container.ID)
+		if waitErr != nil {
+			log.Errorf("------- Error Waiting %v : %s", container.Names, waitErr.Error())
 			waitErrorStrings = append(waitErrorStrings, " ["+container.ID+"] "+waitErr.Error())
 		}
 	}

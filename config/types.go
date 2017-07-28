@@ -51,6 +51,7 @@ const (
 var (
 	OemConfigFile = OEM + "/oem-config.yml"
 	Version       string
+	BuildDate     string
 	Arch          string
 	Suffix        string
 	OsRepo        string

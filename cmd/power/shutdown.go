@@ -1,6 +1,7 @@
 package power
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -13,10 +14,9 @@ func Main() {
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
-	app.Usage = "Control and configure RancherOS"
+	app.Usage = fmt.Sprintf("%s RancherOS\nbuilt: %s", app.Name, config.BuildDate)
 	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
-	app.Email = "sid@rancher.com"
 	app.EnableBashCompletion = true
 	app.Action = shutdown
 	app.Flags = []cli.Flag{
@@ -30,6 +30,10 @@ func Main() {
 		},
 	}
 	app.HideHelp = true
+
+	log.Infof("%s, %s", app.Usage, app.Version)
+	fmt.Printf("%s, %s", app.Usage, app.Version)
+
 	app.Run(os.Args)
 }
 

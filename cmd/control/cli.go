@@ -1,6 +1,7 @@
 package control
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -14,7 +15,7 @@ func Main() {
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
-	app.Usage = "Control and configure RancherOS"
+	app.Usage = fmt.Sprintf("Control and configure RancherOS\nbuilt: %s", config.BuildDate)
 	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true

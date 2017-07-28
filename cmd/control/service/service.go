@@ -36,7 +36,6 @@ func Commands() cli.Command {
 	app := cli.Command{}
 	app.Name = "service"
 	app.ShortName = "s"
-	app.Usage = "Command line interface for services and compose."
 	app.Before = beforeApp
 	app.Flags = append(dockerApp.DockerClientFlags(), cli.BoolFlag{
 		Name: "verbose,debug",
