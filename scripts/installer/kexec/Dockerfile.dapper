@@ -10,7 +10,7 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
     && apt-get install -yq build-essential autoconf libtool gawk alien fakeroot \
         zlib1g-dev uuid-dev libattr1-dev libblkid-dev libselinux-dev libudev-dev libdevmapper-dev \
         module-init-tools \
-        parted lsscsi ksh curl git
+        parted lsscsi ksh curl git wget
 
 WORKDIR /source
 
@@ -20,8 +20,9 @@ WORKDIR /source
 #    && tar zxvf /source/build-linux-4.9.15-rancher-x86.tar.gz
 
 # https://www.kernel.org/pub/linux/utils/kernel/kexec/
-ENV VERSION 2.0.14
-ADD https://www.kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-$VERSION.tar.gz .
+ENV VERSION 2.0.15
+RUN wget https://www.kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-$VERSION.tar.gz \
+    && tar zxvf kexec-tools-$VERSION.tar.gz
 
 RUN zcat kexec-tools-$VERSION.tar.gz | tar xvf - \
   && cd kexec-tools-$VERSION \
