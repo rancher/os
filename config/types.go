@@ -132,6 +132,7 @@ type RancherConfig struct {
 	Sysctl              map[string]string                         `yaml:"sysctl,omitempty"`
 	RestartServices     []string                                  `yaml:"restart_services,omitempty"`
 	HypervisorService   bool                                      `yaml:"hypervisor_service,omitempty"`
+	ShutdownTimeout     int                                       `yaml:"shutdown_timeout,omitempty"`
 }
 
 type UpgradeConfig struct {

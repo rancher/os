@@ -2,11 +2,13 @@ package power
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/rancher/os/cmd/control/install"
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/docker"
@@ -80,21 +83,35 @@ func runDocker(name string) error {
 		return err
 	}
 
-	go func() {
-		client.ContainerAttach(context.Background(), types.ContainerAttachOptions{
-			ContainerID: powerContainer.ID,
-			Stream:      true,
-			Stderr:      true,
-			Stdout:      true,
-		})
-	}()
-
 	err = client.ContainerStart(context.Background(), powerContainer.ID)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.ContainerWait(context.Background(), powerContainer.ID)
+	reader, err := client.ContainerLogs(context.Background(), types.ContainerLogsOptions{
+		ContainerID: powerContainer.ID,
+		ShowStderr:  true,
+		ShowStdout:  true,
+		Follow:      true,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for {
+		p := make([]byte, 4096)
+		n, err := reader.Read(p)
+		if err != nil {
+			log.Error(err)
+			if n == 0 {
+				reader.Close()
+				break
+			}
+		}
+		if n > 0 {
+			fmt.Print(string(p))
+		}
+	}
 
 	if err != nil {
 		log.Fatal(err)
@@ -108,6 +125,34 @@ func reboot(name string, force bool, code uint) {
 	if os.Geteuid() != 0 {
 		log.Fatalf("%s: Need to be root", os.Args[0])
 	}
+
+	// Add shutdown timeout
+	cfg := config.LoadConfig()
+	timeoutValue := cfg.Rancher.ShutdownTimeout
+	if timeoutValue == 0 {
+		timeoutValue = 60
+	}
+	if timeoutValue < 5 {
+		timeoutValue = 5
+	}
+	log.Infof("Setting %s timeout to %d (rancher.shutdown_timeout set to %d)", os.Args[0], timeoutValue, cfg.Rancher.ShutdownTimeout)
+
+	go func() {
+		timeout := time.After(time.Duration(timeoutValue) * time.Second)
+		tick := time.Tick(100 * time.Millisecond)
+		// Keep trying until we're timed out or got a result or got an error
+		for {
+			select {
+			// Got a timeout! fail with a timeout error
+			case <-timeout:
+				log.Errorf("Container shutdown taking too long, forcing %s.", os.Args[0])
+				syscall.Sync()
+				syscall.Reboot(int(code))
+			case <-tick:
+				fmt.Printf(".")
+			}
+		}
+	}()
 
 	// reboot -f should work even when system-docker is having problems
 	if !force {
@@ -141,7 +186,6 @@ func reboot(name string, force bool, code uint) {
 	}
 
 	syscall.Sync()
-
 	err := syscall.Reboot(int(code))
 	if err != nil {
 		log.Fatal(err)
@@ -215,13 +259,20 @@ func shutDownContainers() error {
 		}
 	}
 
+	// lets see what containers are still running and only wait on those
+	containers, err = client.ContainerList(context.Background(), opts)
+	if err != nil {
+		return err
+	}
+
 	var waitErrorStrings []string
 
-	for _, container := range containers {
+	for idx, container := range containers {
 		if container.ID == currentContainerID {
 			continue
 		}
 		if container.Names[0] == "/console" {
+			consoleContainerIdx = idx
 			continue
 		}
 		log.Infof("Waiting %s : %s", container.Names[0], container.ID[:12])

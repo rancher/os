@@ -138,9 +138,6 @@ func Shutdown() {
 	//TODO: add the time and msg flags...
 	app.HideHelp = true
 
-	log.Infof("%s, %s", app.Usage, app.Version)
-	fmt.Printf("%s, %s", app.Usage, app.Version)
-
 	app.Run(os.Args)
 }
 
