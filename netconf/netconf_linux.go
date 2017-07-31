@@ -187,7 +187,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 }
 
 func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
-	log.Debugf("RunDhcp")
+	log.Debugf("RunDhcp(%V, %v)", setHostname, setDNS)
 	populateDefault(netCfg)
 
 	links, err := netlink.LinkList()
@@ -257,6 +257,10 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, se
 	if !setDNS {
 		args = append(args, "--nohook", "resolv.conf")
 	}
+
+	// Wait for lease
+	// TODO: this should be optional - based on kernel arg?
+	args = append(args, "-w", "--debug")
 
 	args = append(args, iface)
 	cmd := exec.Command(args[0], args[1:]...)
