@@ -14,8 +14,8 @@ COPY rootfs_arm.tar.gz /source/assets/rootfs_arm.tar.gz
 
 # see https://packagecloud.io/Hypriot/rpi/?filter=debs
 ENV URL=https://packagecloud.io/Hypriot/rpi/packages/debian/jessie/
-# 4.4.27-hypriotos-v7+
-ENV VER=20170119-202035
+# 4.4.50-hypriotos-v7+-1
+ENV VER=20170319-133405
 
 RUN curl -fL ${URL}/raspberrypi-kernel_${VER}_armhf.deb/download \
 	> /source/assets/kernel.deb
