@@ -11,7 +11,6 @@ import (
 func selinuxCommand() cli.Command {
 	app := cli.Command{}
 	app.Name = "selinux"
-	app.Usage = "Launch SELinux tools container."
 	app.Action = func(c *cli.Context) error {
 		argv := []string{"system-docker", "run", "-it", "--privileged", "--rm",
 			"--net", "host", "--pid", "host", "--ipc", "host",

@@ -1,4 +1,5 @@
 rancher:
+  shutdown_timeout: 60
   environment:
     VERSION: {{.VERSION}}
     SUFFIX: {{.SUFFIX}}

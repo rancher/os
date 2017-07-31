@@ -28,7 +28,7 @@ func Shutdown() {
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
-	app.Usage = "Control and configure RancherOS"
+	app.Usage = fmt.Sprintf("%s RancherOS\nbuilt: %s", app.Name, config.BuildDate)
 	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
@@ -136,6 +136,8 @@ func Shutdown() {
 		})
 	}
 	//TODO: add the time and msg flags...
+	app.HideHelp = true
+
 	app.Run(os.Args)
 }
 
