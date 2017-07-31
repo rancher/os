@@ -2,11 +2,13 @@ package power
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/net/context"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/rancher/os/cmd/control/install"
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/docker"
@@ -104,9 +107,9 @@ func runDocker(name string) error {
 	return nil
 }
 
-func reboot(name string, force bool, code uint) {
+func reboot(name string, force bool, code uint) error {
 	if os.Geteuid() != 0 {
-		log.Fatalf("%s: Need to be root", os.Args[0])
+		return fmt.Errorf("%s: Need to be root", os.Args[0])
 	}
 
 	// reboot -f should work even when system-docker is having problems
@@ -115,8 +118,47 @@ func reboot(name string, force bool, code uint) {
 			// pass through the cmdline args
 			name = ""
 		}
+
+		cfg := config.LoadConfig()
+		timeoutValue := cfg.Rancher.ShutdownTimeout
+		if timeoutValue == 0 {
+			timeoutValue = 60
+		}
+		if timeoutValue < 5 {
+			timeoutValue = 5
+		}
+
+		// This will block waiting for the dockerized shutdown to finish
+		if os.ExpandEnv("${IN_DOCKER}") != "true" {
+			go func() {
+				timeout := time.After(time.Duration(timeoutValue) * time.Second)
+				tick := time.Tick(100 * time.Millisecond)
+				// Keep trying until we're timed out or got a result or got an error
+				for {
+					select {
+					// Got a timeout! fail with a timeout error
+					case <-timeout:
+						fmt.Printf("Container shutdown taking too long, forcing %s.", name)
+						syscall.Sync()
+						syscall.Reboot(int(code))
+					case <-tick:
+						fmt.Printf(".")
+					}
+				}
+			}()
+		}
+
 		if err := runDocker(name); err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("Error starting shutdown container (Aborting shutdown, consider using --force):\n%s", err)
+		}
+		if os.ExpandEnv("${IN_DOCKER}") != "true" {
+			// not expected, runDocker shouldn't have an oportunity to return, as the shutdown container should halt the computer before the container exits.
+			log.Errorf("Error with shutdown container, consider adding --force")
+			return nil
+		}
+		err := shutDownContainers()
+		if err != nil {
+			log.Errorf("ERROR: calling shutDownContainers: %s", err)
 		}
 	}
 
@@ -125,27 +167,15 @@ func reboot(name string, force bool, code uint) {
 		baseName := "/mnt/new_img"
 		_, _, err := install.MountDevice(baseName, "", "", false)
 		if err != nil {
-			log.Errorf("ERROR: can't Kexec: %s", err)
-			return
+			return fmt.Errorf("ERROR: can't Kexec: %s", err)
 		}
 		defer util.Unmount(baseName)
 		Kexec(previouskexecFlag, filepath.Join(baseName, install.BootDir), kexecAppendFlag)
-		return
-	}
-
-	if !force {
-		err := shutDownContainers()
-		if err != nil {
-			log.Error(err)
-		}
+		return nil
 	}
 
 	syscall.Sync()
-
-	err := syscall.Reboot(int(code))
-	if err != nil {
-		log.Fatal(err)
-	}
+	return syscall.Reboot(int(code))
 }
 
 func shutDownContainers() error {
