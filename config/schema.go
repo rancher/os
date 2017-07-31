@@ -52,7 +52,8 @@ var schema = `{
         "defaults": {"$ref": "#/definitions/defaults_config"},
         "resize_device": {"type": "string"},
         "sysctl": {"type": "object"},
-        "restart_services": {"type": "array"}
+        "restart_services": {"type": "array"},
+        "shutdown_timeout": {"type": "integer"}
       }
     },
 

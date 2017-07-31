@@ -51,6 +51,7 @@ const (
 var (
 	OemConfigFile = OEM + "/oem-config.yml"
 	Version       string
+	BuildDate     string
 	Arch          string
 	Suffix        string
 	OsRepo        string
@@ -129,6 +130,7 @@ type RancherConfig struct {
 	ResizeDevice        string                                    `yaml:"resize_device,omitempty"`
 	Sysctl              map[string]string                         `yaml:"sysctl,omitempty"`
 	RestartServices     []string                                  `yaml:"restart_services,omitempty"`
+	ShutdownTimeout     int                                       `yaml:"shutdown_timeout,omitempty"`
 }
 
 type UpgradeConfig struct {
