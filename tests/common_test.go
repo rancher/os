@@ -155,6 +155,7 @@ func (s *QemuSuite) NetCheckOutput(c *C, result string, check Checker, additiona
 
 func (s *QemuSuite) runQemu(c *C, args ...string) error {
 	c.Assert(s.qemuCmd, IsNil) // can't run 2 qemu's at once (yet)
+	time.Sleep(time.Second)
 	s.qemuCmd = exec.Command(s.runCommand, args...)
 	if os.Getenv("DEBUG") != "" {
 		s.qemuCmd.Stdout = os.Stdout
