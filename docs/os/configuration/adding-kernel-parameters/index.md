@@ -39,7 +39,7 @@ On desktop systems the Syslinux boot menu can be switched to graphical mode by a
 
 #### Enable/Disable sshd
 
-`rancher.ssh.daemon=false` (its enabled in the os-config) can be used to start your RancherOS with no sshd daemon. This can be used to futher reduce the ports that your system is listening on.
+`rancher.ssh.daemon=false` (its enabled in the os-config) can be used to start your RancherOS with no sshd daemon. This can be used to further reduce the ports that your system is listening on.
 
 #### Enable debug logging
 

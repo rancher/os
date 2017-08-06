@@ -76,7 +76,7 @@ rancher/os:v0.4.5 remote
 rancher/os:v0.5.0 remote
 ```
 
-Alternatively, you can set the installer image to any image in System Docker to install RancherOS. This is particularily useful for machines that will not have direct access to the internet.
+Alternatively, you can set the installer image to any image in System Docker to install RancherOS. This is particularly useful for machines that will not have direct access to the internet.
 
 ### SSH into RancherOS
 
