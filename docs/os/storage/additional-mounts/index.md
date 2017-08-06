@@ -24,6 +24,6 @@ RancherOS uses the mount syscall rather than the `mount` command behind the scen
 
 ### Shared Mounts
 
-By default, `/media` and `/mnt` are mounted as shared in the console container. This means that mounts within these directories will propogate to the host as well as other system services that mount these folders as shared.
+By default, `/media` and `/mnt` are mounted as shared in the console container. This means that mounts within these directories will propagate to the host as well as other system services that mount these folders as shared.
 
 See [here](https://www.kernel.org/doc/Documentation/filesystems/sharedsubtree.txt) for a more detailed overview of shared mounts and their properties.
