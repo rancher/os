@@ -58,6 +58,7 @@ rpi:
 	# scripts/images/raspberry-pi-hypriot/dist/rancheros-raspberry-pi.zip
 	cp dist/artifacts/rootfs_arm.tar.gz scripts/images/raspberry-pi-hypriot/
 	cd scripts/images/raspberry-pi-hypriot/ \
+		&& ../../../.dapper
 
 rpi64:
 	# scripts/images/raspberry-pi-hypriot64/dist/rancheros-raspberry-pi.zip
