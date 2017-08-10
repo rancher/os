@@ -66,6 +66,17 @@ Key | Value | Default | Description
 `ca_key` | String (used only if `tls: true`) | `""` | PEM encoded CA TLS key.
 `storage_context` | String | `console` | Specifies the name of the system container in whose context to run the Docker daemon process.
 
+#### Example using extra_args for setting MTU
+
+The following example can be used to set MTU on the Docker daemon:
+
+```yaml
+#cloud-config
+rancher:
+  docker:
+    extra_args: [--mtu, 1460]
+```
+
 ### Configuring System Docker
 
 In your cloud-config, System Docker configuration is located under the `rancher.system_docker` key.
