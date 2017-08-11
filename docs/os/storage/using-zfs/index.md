@@ -26,7 +26,7 @@ $ lsmod | grep zfs
 
 > *Note:* if you switch consoles, you may need to re-run `ros up zfs`.
 
-#### Using ZFS
+#### Creating ZFS pools
 
 After it's installed, it should be ready to use. Make a zpool named `zpool1` using a device that you haven't yet partitioned (you can use `sudo fdisk -l` to list all the disks and their partitions).
 
@@ -45,6 +45,15 @@ $ docker run --rm -it -v /mnt/zpool1/:/data alpine ls -la /data
 <br>
 
 To experiment with ZFS, you can create zpool backed by just ordinary files, not necessarily real block devices. In fact, you can mix storage devices in your ZFS pools; it's perfectly fine to create a zpool backed by real devices **and** ordinary files.
+
+#### Using the ZFS debugger utility
+
+The `zdb` command may be used to display information about ZFS pools useful to diagnose failures and gather statistics. By default the utility tries to load pool configurations from `/etc/zfs/zpool.cache`. Since the RancherOS ZFS service does not make use of the ZFS cache file and instead detects pools by inspecting devices, the `zdb` utility has to be invoked with the `-e` flag.
+
+E.g. to show the configuration for the pool `zpool_1` you may run the following command:
+
+> $ sudo zdb -e -C zpool_1
+
 
 ## ZFS storage for Docker on RancherOS
 
