@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/util"
 )
 
@@ -41,6 +42,13 @@ func Export(private, full bool) (string, error) {
 	bytes, err := yaml.Marshal(rawCfg)
 	return string(bytes), err
 }
+func filterPrivateKeys(data map[interface{}]interface{}) map[interface{}]interface{} {
+	for _, privateKey := range PrivateKeys {
+		_, data = filterKey(data, strings.Split(privateKey, "."))
+	}
+
+	return data
+}
 
 func Get(key string) (interface{}, error) {
 	cfg := LoadConfig()
@@ -50,14 +58,8 @@ func Get(key string) (interface{}, error) {
 		return nil, err
 	}
 
-	v, _ := getOrSetVal(key, data, nil)
+	v, _ := cmdline.GetOrSetVal(key, data, nil)
 	return v, nil
-}
-
-func GetCmdline(key string) interface{} {
-	cmdline := readCmdline()
-	v, _ := getOrSetVal(key, cmdline, nil)
-	return v
 }
 
 func Set(key string, value interface{}) error {
@@ -66,7 +68,7 @@ func Set(key string, value interface{}) error {
 		return err
 	}
 
-	_, modified := getOrSetVal(key, existing, value)
+	_, modified := cmdline.GetOrSetVal(key, existing, value)
 
 	c := &CloudConfig{}
 	if err = util.Convert(modified, c); err != nil {

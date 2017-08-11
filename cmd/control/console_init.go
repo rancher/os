@@ -14,6 +14,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
@@ -63,7 +64,7 @@ func consoleInitFunc() error {
 	createHomeDir(rancherHome, 1100, 1100)
 	createHomeDir(dockerHome, 1101, 1101)
 
-	password := config.GetCmdline("rancher.password")
+	password := cmdline.GetCmdline("rancher.password")
 	if password != "" {
 		cmd := exec.Command("chpasswd")
 		cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))

@@ -11,8 +11,6 @@ import (
 	"path"
 	"strings"
 
-	"github.com/rancher/os/log"
-
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	osYaml "github.com/rancher/os/config/yaml"
 )
@@ -71,7 +69,6 @@ func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
 func Convert(from, to interface{}) error {
 	bytes, err := yaml.Marshal(from)
 	if err != nil {
-		log.WithFields(log.Fields{"from": from, "err": err}).Warn("Error serializing to YML")
 		return err
 	}
 
@@ -270,7 +267,7 @@ func RunScript(path string) error {
 	return cmd.Run()
 }
 
-func RunCommandSequence(commandSequence []osYaml.StringandSlice) {
+func RunCommandSequence(commandSequence []osYaml.StringandSlice) error {
 	for _, command := range commandSequence {
 		var cmd *exec.Cmd
 		if command.StringValue != "" {
@@ -283,7 +280,8 @@ func RunCommandSequence(commandSequence []osYaml.StringandSlice) {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
-			log.Errorf("Failed to run %s: %v", command, err)
+			return fmt.Errorf("Failed to run %s: %v", command, err)
 		}
 	}
+	return nil
 }
