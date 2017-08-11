@@ -62,7 +62,7 @@ rancher:
 
 ### Amazon ECS enabled AMIs
 
-Latest Release: [v1.0.0](https://github.com/rancher/os/releases/tag/v1.0.0)
+Latest Release: [v1.0.4](https://github.com/rancher/os/releases/tag/v1.0.4)
 
 Region | Type | AMI
 ---|--- | ---
