@@ -1,6 +1,6 @@
 ---
 title: Rancher RancherOS in VMware OSXi
-layout: os-default
+
 ---
 
 ## VMware ESXi

@@ -1,6 +1,6 @@
 ---
 title: Upgrading RancherOS
-layout: os-default
+
 
 ---
 

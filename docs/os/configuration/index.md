@@ -1,6 +1,6 @@
 ---
 title: Configuring RancherOS
-layout: os-default
+
 redirect_from:
   - os/cloud-config/
 ---

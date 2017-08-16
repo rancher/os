@@ -1,6 +1,6 @@
 ---
 title: Running RancherOS on Raspberry Pi
-layout: os-default
+
 ---
 
 ## Raspberry Pi

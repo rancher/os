@@ -1,6 +1,6 @@
 ---
 title: Users in RancherOS
-layout: os-default
+
 
 ---
 

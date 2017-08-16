@@ -1,6 +1,6 @@
 ---
 title: Image Preloading
-layout: os-default
+
 redirect_from:
   - os/configuration/prepacking-docker-images/
 

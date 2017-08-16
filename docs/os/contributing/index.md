@@ -1,6 +1,6 @@
 ---
 title: Contributing to RancherOS
-layout: os-default
+
 
 ---
 

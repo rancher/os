@@ -1,6 +1,6 @@
 ---
 title: Booting RancherOS with iPXE
-layout: os-default
+
 
 ---
 ## Booting RancherOS via iPXE

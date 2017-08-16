@@ -1,6 +1,6 @@
 ---
 title: sysctl Settings in RancherOS
-layout: os-default
+
 
 ---
 

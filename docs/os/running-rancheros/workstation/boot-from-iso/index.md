@@ -1,6 +1,6 @@
 ---
 title: Booting from ISO
-layout: os-default
+
 ---
 
 ## Boot from ISO

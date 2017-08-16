@@ -1,6 +1,6 @@
 ---
 title: Device Plug and Unplug
-layout: os-default
+
 
 ---
 

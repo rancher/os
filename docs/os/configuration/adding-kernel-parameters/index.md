@@ -1,6 +1,6 @@
 ---
 title: Adding kernel parameters
-layout: os-default
+
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Built-in System Services in RancherOS
-layout: os-default
+
 redirect_from:
   - os/system-services/built-in-system-services/
 ---

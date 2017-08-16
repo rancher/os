@@ -1,6 +1,6 @@
 ---
 title: Running Rancher on RancherOS
-layout: os-default
+
 
 ---
 

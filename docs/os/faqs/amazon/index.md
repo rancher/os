@@ -1,6 +1,6 @@
 ---
 title: Amazon FAQs
-layout: os-default
+
 
 ---
 

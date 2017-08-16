@@ -1,6 +1,6 @@
 ---
 title: Custom RancherOS ISO
-layout: os-default
+
 
 ---
 

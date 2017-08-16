@@ -1,0 +1,14 @@
+{% capture version %}/{{page.version}}/{% endcapture %}
+{% capture redirectto %}{{site.baseurl}}/{{ page.path | replace: "/latest/", version | replace: "index.md", "" }}{% endcapture %}
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Redirecting...</title>
+<link rel="canonical" href="{{redirectto}}">
+<meta http-equiv="refresh" content="0; url={{redirectto}}">
+<h1>Redirecting...</h1>
+version: {{version}}
+from (os/latest/en) {{site.baseurl}}/{{page.path}}
+to                  {{redirectto}}
+<a href="{{redirectto}}">Click here if you are not redirected.</a>
+<script>location="{{redirectto}}"</script>
+
