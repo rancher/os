@@ -36,7 +36,7 @@ Let’s walk through how to import and create a RancherOS on EC2 machine using t
 
     ![RancherOS on AWS 2]({{site.baseurl}}/img/os/Rancher_aws2.png)
 
-3. Go through the steps of creating the instance type through the AWS console. If you want to pass in a [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config) file during boot of RancherOS, you'd pass in the file as **User data** by expanding the **Advanced Details** in **Step 3: Configure Instance Details**. You can pass in the data as text or as a file.
+3. Go through the steps of creating the instance type through the AWS console. If you want to pass in a [cloud-config]({{page.baseurl}}/configuration/#cloud-config) file during boot of RancherOS, you'd pass in the file as **User data** by expanding the **Advanced Details** in **Step 3: Configure Instance Details**. You can pass in the data as text or as a file.
 
     ![RancherOS on AWS 6]({{site.baseurl}}/img/os/Rancher_aws6.png)
 

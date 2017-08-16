@@ -2,7 +2,7 @@
 title: Using ZFS in RancherOS
 
 redirect_from:
-  - os/configuration/storage/
+  - os/v1.1/en/configuration/storage/
 ---
 
 ## Using ZFS

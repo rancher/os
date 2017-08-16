@@ -48,5 +48,5 @@ defaults:
     values:
       layout: "os-default-v1.1"
       version: v1.1
-
+      baseurl: "/docs/os/v1.1/en"
 
