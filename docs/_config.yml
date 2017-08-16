@@ -42,6 +42,7 @@ defaults:
     values:
       layout: "os-default-v1.0"
       version: v1.0
+      baseurl: "/docs/os/v1.0/en"
   -
     scope:
       path: "os/v1.1"
