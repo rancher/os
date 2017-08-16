@@ -17,7 +17,7 @@ run: build-nginx
 # You can also examine the output html in the _sites dir.
 live:
 	docker run --rm -it -p 80:4000 \
-		-v $(PWD)/os:/build/os/v1.0/en \
+		-v $(PWD)/os:/build/os/v1.1/en \
 		-v $(PWD)/_site:/build/_site \
 		rancher/rancher.github.io:build jekyll serve -w -P 4000 --incremental
 

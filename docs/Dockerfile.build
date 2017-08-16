@@ -6,16 +6,18 @@ COPY _config.yml /build
 RUN jekyll build
 COPY . /build
 
+ENV OSVERSION v1.1
+
 # IMPORTANT: this line moves the development docs to where they would be in rancher/rancher.gihub.io
 RUN mv os os-orig \
-    && mkdir -p os/v1.0/en \
-    && mv os-orig/* os/v1.0/en/
+    && mkdir -p os/$OSVERSION/en \
+    && mv os-orig/* os/$OSVERSION/en/
 
 # Set up the latest pages that get converted into redirects
-ENV OS_DOCS_LATEST v1.0
+ENV OS_DOCS_LATEST $OSVERSION
 RUN mkdir -p os/latest/en \
-    && cp -r os/v1.0/en/* os/latest/en/ \
-    && cp -r os/v1.0/en/* os/latest/ \
-    && cp -r os/v1.0/en/* os/
+    && cp -r os/$OSVERSION/en/* os/latest/en/ \
+    && cp -r os/$OSVERSION/en/* os/latest/ \
+    && cp -r os/$OSVERSION/en/* os/
 
 RUN jekyll build

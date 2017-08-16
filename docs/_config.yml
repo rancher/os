@@ -22,7 +22,7 @@ defaults:
       path: "os"
     values:
       layout: "os-redirect"
-      version: v1.0
+      version: v1.1
       lang: en
   -
     # os/latest/quick-start-guide/ should redirect to os/v1.0/en/quick-start-guide
@@ -41,4 +41,12 @@ defaults:
       path: "os/v1.0"
     values:
       layout: "os-default-v1.0"
+      version: v1.0
+  -
+    scope:
+      path: "os/v1.1"
+    values:
+      layout: "os-default-v1.1"
+      version: v1.1
+
 
