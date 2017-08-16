@@ -1,6 +1,6 @@
 ---
 title: RancherOS security
-layout: os-default
+
 
 ---
 

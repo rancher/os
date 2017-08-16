@@ -1,6 +1,6 @@
 ---
 title: Cloud-init
-layout: os-default
+
 
 ---
 

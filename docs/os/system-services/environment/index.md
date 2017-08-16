@@ -1,6 +1,6 @@
 ---
 title: Environment
-layout: os-default
+
 
 ---
 

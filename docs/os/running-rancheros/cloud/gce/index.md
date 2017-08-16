@@ -1,6 +1,6 @@
 ---
 title: Running RancherOS on GCE
-layout: os-default
+
 
 ---
 ## Running RancherOS on Google Compute Engine (GCE)

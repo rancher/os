@@ -1,6 +1,6 @@
 ---
 title: Running Commands in RancherOS
-layout: os-default
+
 
 ---
 

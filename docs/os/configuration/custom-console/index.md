@@ -1,6 +1,6 @@
 ---
 title: Custom Console on RancherOS
-layout: os-default
+
 
 ---
 

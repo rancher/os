@@ -1,6 +1,6 @@
 ---
 title: Installing RancherOS to Disk
-layout: os-default
+
 ---
 
 ## Installing RancherOS to Disk
