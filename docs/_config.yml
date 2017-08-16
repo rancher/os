@@ -41,4 +41,5 @@ defaults:
       path: "os/v1.0"
     values:
       layout: "os-default-v1.0"
+      osbaseurl: "/docs/os/v1.0/en"
 

@@ -2,8 +2,8 @@
 title: System Services in RancherOS
 
 redirect_from:
-  - os/system-services/
-  - os/configuration/system-services/
+  - os/v1.0/en/system-services/
+  - os/v1.0/en/configuration/system-services/
 ---
 
 ## System Services

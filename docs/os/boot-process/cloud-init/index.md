@@ -10,7 +10,7 @@ Userdata and metadata can be fetched from a cloud provider, VM runtime, or manag
 
 ### Userdata
 
-Userdata is a file given by users when launching RancherOS hosts. It is stored in different locations depending on its format. If the userdata is a [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config) file, indicated by beginning with `#cloud-config` and being in YAML format, it is stored in `/var/lib/rancher/conf/cloud-config.d/boot.yml`. If the userdata is a script, indicated by beginning with `#!`, it is stored in `/var/lib/rancher/conf/cloud-config-script`.
+Userdata is a file given by users when launching RancherOS hosts. It is stored in different locations depending on its format. If the userdata is a [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config) file, indicated by beginning with `#cloud-config` and being in YAML format, it is stored in `/var/lib/rancher/conf/cloud-config.d/boot.yml`. If the userdata is a script, indicated by beginning with `#!`, it is stored in `/var/lib/rancher/conf/cloud-config-script`.
 
 ### Metadata
 
@@ -18,7 +18,7 @@ Although the specifics vary based on provider, a metadata file will typically co
 
 ## Configuration Load Order
 
-[Cloud-config]({{site.baseurl}}/os/configuration/#cloud-config/) is read by system services when they need to get configuration. Each additional file overwrites and extends the previous configuration file.
+[Cloud-config]({{page.osbaseurl}}/configuration/#cloud-config/) is read by system services when they need to get configuration. Each additional file overwrites and extends the previous configuration file.
 
 1. `/usr/share/ros/os-config.yml` - This is the system default configuration, which should **not** be modified by users.
 2. `/usr/share/ros/oem/oem-config.yml` - This will typically exist by OEM, which should **not** be modified by users.

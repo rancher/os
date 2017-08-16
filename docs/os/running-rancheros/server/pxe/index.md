@@ -66,5 +66,5 @@ Valid cloud-init datasources for RancherOS.
 
 ### Cloud-Config
 
-When booting via iPXE, RancherOS can be configured using a [cloud-config file]({{site.baseurl}}/os/configuration/#cloud-config).
+When booting via iPXE, RancherOS can be configured using a [cloud-config file]({{page.osbaseurl}}/configuration/#cloud-config).
 

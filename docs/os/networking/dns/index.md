@@ -2,7 +2,7 @@
 title: Configuring DNS in RancherOS
 
 redirect_from:
-  - os/configuration/networking/#dns
+  - os/v1.0/en/configuration/networking/#dns
 ---
 
 ## DNS
