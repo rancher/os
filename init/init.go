@@ -247,7 +247,7 @@ func RunInit() error {
 			return c, dfs.PrepareFs(&mountConfig)
 		}},
 		config.CfgFuncData{"save init cmdline", func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			// will this be passed to cloud-init-save?
+			// the Kernel Patch added for RancherOS passes `--` (only) elided kernel boot params to the init process
 			cmdLineArgs := strings.Join(os.Args, " ")
 			config.SaveInitCmdline(cmdLineArgs)
 
@@ -327,6 +327,11 @@ func RunInit() error {
 		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
 			hypervisor = util.GetHypervisor()
+			if hypervisor == "" {
+				log.Infof("ros init: No Detected Hypervisor")
+			} else {
+				log.Infof("ros init: Detected Hypervisor: %s", hypervisor)
+			}
 			if hypervisor == "vmware" {
 				// add vmware to the end - we don't want to over-ride an choices the user has made
 				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
@@ -339,6 +344,8 @@ func RunInit() error {
 			if err := runCloudInitServices(cfg); err != nil {
 				log.Error(err)
 			}
+			// It'd be nice to push to rsyslog before this, but we don't have network
+			log.AddRSyslogHook()
 
 			return config.LoadConfig(), nil
 		}},

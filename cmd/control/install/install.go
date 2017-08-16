@@ -47,7 +47,11 @@ func MountDevice(baseName, device, partition string, raw bool) (string, string, 
 		// Don't use ResolveDevice - it can fail, whereas `blkid -L LABEL` works more often
 
 		cfg := config.LoadConfig()
-		if d, _ := util.Blkid("RANCHER_BOOT"); d != "" {
+		d, _, err := util.Blkid("RANCHER_BOOT")
+		if err != nil {
+			log.Errorf("Failed to run blkid: %s", err)
+		}
+		if d != "" {
 			partition = d
 			baseName = filepath.Join(baseName, BootDir)
 		} else {
@@ -55,7 +59,11 @@ func MountDevice(baseName, device, partition string, raw bool) (string, string, 
 				// try the rancher.state.dev setting
 				partition = dev
 			} else {
-				if d, _ := util.Blkid("RANCHER_STATE"); d != "" {
+				d, _, err := util.Blkid("RANCHER_STATE")
+				if err != nil {
+					log.Errorf("Failed to run blkid: %s", err)
+				}
+				if d != "" {
 					partition = d
 				}
 			}

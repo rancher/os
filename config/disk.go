@@ -14,6 +14,7 @@ import (
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/initialize"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
@@ -48,7 +49,11 @@ func loadRawDiskConfig(dirPrefix string, full bool) map[interface{}]interface{} 
 
 func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
 	rawCfg := loadRawDiskConfig(dirPrefix, full)
-	rawCfg = util.Merge(rawCfg, readCmdline())
+	procCmdline, err := cmdline.Read(false)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
+	}
+	rawCfg = util.Merge(rawCfg, procCmdline)
 	rawCfg = util.Merge(rawCfg, readElidedCmdline(rawCfg))
 	rawCfg = applyDebugFlags(rawCfg)
 	return mergeMetadata(rawCfg, readMetadata())
@@ -107,7 +112,7 @@ func Insert(m interface{}, args ...interface{}) interface{} {
 }
 
 func SaveInitCmdline(cmdLineArgs string) {
-	elidedCfg := parseCmdline(cmdLineArgs)
+	elidedCfg := cmdline.Parse(cmdLineArgs, false)
 
 	env := Insert(make(map[interface{}]interface{}), interface{}("EXTRA_CMDLINE"), interface{}(cmdLineArgs))
 	rancher := Insert(make(map[interface{}]interface{}), interface{}("environment"), env)
@@ -155,10 +160,10 @@ func applyDebugFlags(rawCfg map[interface{}]interface{}) map[interface{}]interfa
 	}
 
 	log.SetLevel(log.DebugLevel)
-	_, rawCfg = getOrSetVal("rancher.docker.debug", rawCfg, true)
-	_, rawCfg = getOrSetVal("rancher.system_docker.debug", rawCfg, true)
-	_, rawCfg = getOrSetVal("rancher.bootstrap_docker.debug", rawCfg, true)
-	_, rawCfg = getOrSetVal("rancher.log", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.docker.debug", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.system_docker.debug", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.bootstrap_docker.debug", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.log", rawCfg, true)
 
 	return rawCfg
 }
@@ -216,29 +221,13 @@ func readElidedCmdline(rawCfg map[interface{}]interface{}) map[interface{}]inter
 	for k, v := range rawCfg {
 		if key, _ := k.(string); key == "EXTRA_CMDLINE" {
 			if val, ok := v.(string); ok {
-				cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(val))))
+				cmdLineObj := cmdline.Parse(strings.TrimSpace(util.UnescapeKernelParams(string(val))), false)
 
 				return cmdLineObj
 			}
 		}
 	}
 	return nil
-}
-
-func readCmdline() map[interface{}]interface{} {
-	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
-	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
-		return nil
-	}
-
-	if len(cmdLine) == 0 {
-		return nil
-	}
-
-	cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(cmdLine))))
-
-	return cmdLineObj
 }
 
 func amendNils(c *CloudConfig) *CloudConfig {

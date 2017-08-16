@@ -1,11 +1,17 @@
 package log
 
 import (
+	"fmt"
 	"io"
+	"log/syslog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Sirupsen/logrus"
+	lsyslog "github.com/Sirupsen/logrus/hooks/syslog"
+
+	"github.com/rancher/os/config/cmdline"
 )
 
 var userHook *ShowuserlogHook
@@ -118,6 +124,7 @@ func InitLogger() {
 	if logTheseApps() {
 		innerInit(false)
 		FsReady()
+		AddRSyslogHook()
 
 		pwd, err := os.Getwd()
 		if err != nil {
@@ -169,6 +176,37 @@ func innerInit(deferedHook bool) {
 	if logTheseApps() {
 		AddUserHook(deferedHook)
 	}
+}
+
+// AddRSyslogHook only needs to be called separately when using the InitDeferedLogger
+// init.Main can't read /proc/cmdline at start.
+// and then fails due to the network not being up
+// TODO: create a "defered SyslogHook that always gets initialised, but if it fails to connect, stores the logs
+//       and retries connecting every time its triggered....
+func AddRSyslogHook() {
+	val := cmdline.GetCmdline("netconsole")
+	netconsole := val.(string)
+	if netconsole != "" {
+		// "loglevel=8 netconsole=9999@10.0.2.14/,514@192.168.33.148/"
+
+		// 192.168.33.148:514
+		n := strings.Split(netconsole, ",")
+		if len(n) == 2 {
+			d := strings.Split(n[1], "@")
+			if len(d) == 2 {
+				netconsoleDestination := fmt.Sprintf("%s:%s", strings.TrimRight(d[1], "/"), d[0])
+
+				hook, err := lsyslog.NewSyslogHook("udp", netconsoleDestination, syslog.LOG_DEBUG, "")
+				if err == nil {
+					logrus.StandardLogger().Hooks.Add(hook)
+					Infof("Sending RancherOS Logs to: %s", netconsoleDestination)
+				} else {
+					Errorf("Error creating SyslogHook: %s", err)
+				}
+			}
+		}
+	}
+
 }
 
 func FsReady() {
