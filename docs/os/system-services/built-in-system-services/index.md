@@ -7,7 +7,7 @@ title: Built-in System Services in RancherOS
 ## Built-in System Services
 ---
 
-To launch RancherOS, we have built-in system services. They are defined in the [Docker Compose](https://docs.docker.com/compose/compose-file/) format, and can be found in the default system config file, `/usr/share/ros/os-config.yml`. You can [add your own system services]({{site.baseurl}}/os/system-services/) or override services in the cloud-config.
+To launch RancherOS, we have built-in system services. They are defined in the [Docker Compose](https://docs.docker.com/compose/compose-file/) format, and can be found in the default system config file, `/usr/share/ros/os-config.yml`. You can [add your own system services]({{page.osbaseurl}}/system-services/) or override services in the cloud-config.
 
 In start up order, here are the groups of services:
 
@@ -35,11 +35,11 @@ In start up order, here are the groups of services:
 
 ### preload-system-images & preload-user-images
 
-Read more about [pre-packing Docker images]({{site.baseurl}}/os/configuration/prepacking-docker-images/).
+Read more about [pre-packing Docker images]({{page.osbaseurl}}/configuration/prepacking-docker-images/).
 
 ### cloud-init-pre
 
-User-data (i.e. [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config)) and metadata from cloud provider, VM runtime, or a management service, is loaded in this service.
+User-data (i.e. [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config)) and metadata from cloud provider, VM runtime, or a management service, is loaded in this service.
 
 The user-data is written to:
 
@@ -47,13 +47,13 @@ The user-data is written to:
 * `/var/lib/rancher/conf/cloud-config-script` - If the user-data is a script, i.e begins with `#!`.
 * `/var/lib/rancher/conf/metadata` - If it is serialized cloud provider metadata.
 
-It is configured by the `rancher.cloud_init.datasources` list in [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config). It is pre-configured in cloud-provider specific images (e.g. AWS, GCE).
+It is configured by the `rancher.cloud_init.datasources` list in [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config). It is pre-configured in cloud-provider specific images (e.g. AWS, GCE).
 
 ### network-pre
 
 During this service, networking is set up, e.g. hostname, interfaces, and DNS.
 
-It is configured by `hostname` and `rancher.network`[settings]({{site.baseurl}}/os/networking/) in [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config).
+It is configured by `hostname` and `rancher.network`[settings]({{page.osbaseurl}}/networking/) in [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config).
 
 ### ntp
 
@@ -75,15 +75,15 @@ This service provides the RancherOS user interface by running `sshd` and `getty`
 
 1. If the `rancher.password=<password>` kernel parameter exists, it sets `<password>` as the password for the `rancher` user.
 
-2. If there are no host SSH keys, it generates host SSH keys and saves them under `rancher.ssh.keys` in [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config).
+2. If there are no host SSH keys, it generates host SSH keys and saves them under `rancher.ssh.keys` in [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config).
 
 3. Runs `cloud-init -execute`, which does the following:
 
-   * Updates `.ssh/authorized_keys` in `/home/rancher` and `/home/docker` from [cloud-config]({{site.baseurl}}/os/configuration/ssh-keys/) and metadata.
-   * Writes files specified by the `write_files` [cloud-config]({{site.baseurl}}/os/configuration/write-files/) setting.
-   * Resizes the device specified by the `rancher.resize_device` [cloud-config]({{site.baseurl}}/os/configuration/resizing-device-partition/) setting.
-   * Mount devices specified in the `mounts` [cloud-config]({{site.baseurl}}/os/configuration/additional-mounts/) setting.
-   * Set sysctl parameters specified in  the`rancher.sysctl` [cloud-config]({{site.baseurl}}/os/configuration/sysctl/) setting.
+   * Updates `.ssh/authorized_keys` in `/home/rancher` and `/home/docker` from [cloud-config]({{page.osbaseurl}}/configuration/ssh-keys/) and metadata.
+   * Writes files specified by the `write_files` [cloud-config]({{page.osbaseurl}}/configuration/write-files/) setting.
+   * Resizes the device specified by the `rancher.resize_device` [cloud-config]({{page.osbaseurl}}/configuration/resizing-device-partition/) setting.
+   * Mount devices specified in the `mounts` [cloud-config]({{page.osbaseurl}}/configuration/additional-mounts/) setting.
+   * Set sysctl parameters specified in  the`rancher.sysctl` [cloud-config]({{page.osbaseurl}}/configuration/sysctl/) setting.
 
 4. If user-data contained a file that started with `#!`, then a file would be saved at `/var/lib/rancher/conf/cloud-config-script` during cloud-init and then executed. Any errors are ignored.
 
@@ -100,7 +100,7 @@ Docker daemon args are read from `rancher.docker.args` cloud-config property (fo
 
 ### RancherOS Configuration Load Order
 
-[Cloud-config]({{site.baseurl}}/os/configuration/#cloud-config/) is read by system services when they need to get configuration. Each additional file overwrites and extends the previous configuration file.
+[Cloud-config]({{page.osbaseurl}}/configuration/#cloud-config/) is read by system services when they need to get configuration. Each additional file overwrites and extends the previous configuration file.
 
 1. `/usr/share/ros/os-config.yml` - This is the system default configuration, which should **not** be modified by users.
 2. `/usr/share/ros/oem/oem-config.yml` - This will typically exist by OEM, which should **not** be modified by users.

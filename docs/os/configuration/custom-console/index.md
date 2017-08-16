@@ -7,9 +7,9 @@ title: Custom Console on RancherOS
 ## Custom Console
 ---
 
-When [booting from the ISO]({{site.baseurl}}/os/running-rancheros/workstation/boot-from-iso/), RancherOS starts with the default console, which is based on busybox.
+When [booting from the ISO]({{page.osbaseurl}}/running-rancheros/workstation/boot-from-iso/), RancherOS starts with the default console, which is based on busybox.
 
-You can select which console you want RancherOS to start with using the [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config).
+You can select which console you want RancherOS to start with using the [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config).
 
 ### Enabling Consoles using Cloud-Config
 
@@ -106,7 +106,7 @@ All consoles except the default (busybox) console are persistent. Persistent con
 
 <br>
 
-> **Note:** When using a persistent console and in the current version's console, [rolling back]({{site.baseurl}}/os/upgrading/#rolling-back-an-upgrade) is not supported. For example, rolling back to v0.4.5 when using a v0.5.0 persistent console is not supported.
+> **Note:** When using a persistent console and in the current version's console, [rolling back]({{page.osbaseurl}}/upgrading/#rolling-back-an-upgrade) is not supported. For example, rolling back to v0.4.5 when using a v0.5.0 persistent console is not supported.
 
 ### Enabling Consoles
 

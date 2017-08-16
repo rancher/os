@@ -2,7 +2,7 @@
 title: Configuring RancherOS
 
 redirect_from:
-  - os/cloud-config/
+  - os/v1.0/en/cloud-config/
 ---
 
 ## Configuring RancherOS
@@ -39,7 +39,7 @@ In our example above, we have our `#cloud-config` line to indicate it's a cloud-
 ### Manually Changing Configuration
 
 To update RancherOS configuration after booting, the `ros config set <key> <value>` command can be used.
-For more complicated settings, like the [sysctl settings]({{site.baseurl}}/os/configuration/sysctl/index.md), you can also create a small YAML file and then run `sudo ros config merge -i <your yaml file>`.
+For more complicated settings, like the [sysctl settings]({{page.osbaseurl}}/configuration/sysctl/index.md), you can also create a small YAML file and then run `sudo ros config merge -i <your yaml file>`.
 
 #### Getting Values
 

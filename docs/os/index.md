@@ -17,12 +17,12 @@ Docker is an open-source platform designed for developers, system admins, and De
 
 * x86_64 server with at least 512MB of RAM.
 
-> **Note:** If you are planning on [installing to disk]({{site.baseurl}}/os/running-rancheros/server/install-to-disk/), you will need at least 1024MB of RAM.
+> **Note:** If you are planning on [installing to disk]({{page.osbaseurl}}/running-rancheros/server/install-to-disk/), you will need at least 1024MB of RAM.
 
 
 ### How this works
 
-Everything in RancherOS is a Docker container. We accomplish this by launching two instances of Docker. One is what we call **System Docker**, the first process on the system. All other system services, like `ntpd`, `syslog`, and `console`, are running in Docker containers. System Docker replaces traditional init systems like `systemd`, and can be used to launch [additional system services]({{site.baseurl}}/os/system-services/adding-system-services/).
+Everything in RancherOS is a Docker container. We accomplish this by launching two instances of Docker. One is what we call **System Docker**, the first process on the system. All other system services, like `ntpd`, `syslog`, and `console`, are running in Docker containers. System Docker replaces traditional init systems like `systemd`, and can be used to launch [additional system services]({{page.osbaseurl}}/system-services/adding-system-services/).
 
 System Docker runs a special container called **Docker**, which is another Docker daemon responsible for managing all of the user’s containers. Any containers that you launch as a user from the console will run inside this Docker. This creates isolation from the System Docker containers, and ensures normal user commands don’t impact system services.
 
@@ -33,7 +33,7 @@ System Docker runs a special container called **Docker**, which is another Docke
 
 ### Running RancherOS
 
-To find out more about installing RancherOS, jump to our [Quick Start Guide]({{site.baseurl}}/os/quick-start-guide/).
+To find out more about installing RancherOS, jump to our [Quick Start Guide]({{page.osbaseurl}}/quick-start-guide/).
 
 ### Latest Release
 

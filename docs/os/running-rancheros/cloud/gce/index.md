@@ -30,7 +30,7 @@ $ gcloud compute instances create --project <PROJECT_ID> --zone <ZONE_TO_CREATE_
 
 ### Using a Cloud Config File with GCE
 
-If you want to pass in your own cloud config file that will be processed by [cloud init]({{site.baseurl}}/os/configuration/#cloud-config), you can pass it as metadata upon creation of the instance during the `gcloud compute` command. The file will need to be stored locally before running the command. The key of the metadata will be `user-data` and the value is the location of the file. If any SSH keys are added in the cloud config file, it will also be added to the **rancher** user.
+If you want to pass in your own cloud config file that will be processed by [cloud init]({{page.osbaseurl}}/configuration/#cloud-config), you can pass it as metadata upon creation of the instance during the `gcloud compute` command. The file will need to be stored locally before running the command. The key of the metadata will be `user-data` and the value is the location of the file. If any SSH keys are added in the cloud config file, it will also be added to the **rancher** user.
 
 ```
 $ gcloud compute instances create --project <PROJECT_ID> --zone <ZONE_TO_CREATE_INSTANCE> <INSTANCE_NAME> --image <PRIVATE_IMAGE_NAME> --metadata-from-file user-data=/Directory/of/Cloud_Config.yml
