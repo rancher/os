@@ -1,12 +1,6 @@
 name: Rancher Documentation
 description: Documentation for Rancher
 
-
-URL: http://rancher.github.io
-baseurl: ""
-
-exclude: []
-
 markdown: kramdown
 highlighter: rouge
 kramdown:
@@ -16,3 +10,35 @@ permalink: pretty
 
 gems:
   - jekyll-redirect-from
+
+URL: "http://rancher.com"
+baseurl: "/docs"
+
+# RancherOS defaults
+defaults:
+  -
+    # os/quick-start-guide/ should redirect to os/v1.0/en/quick-start-guide
+    scope:
+      path: "os"
+    values:
+      layout: "os-redirect"
+      version: v1.0
+      lang: en
+  -
+    # os/latest/quick-start-guide/ should redirect to os/v1.0/en/quick-start-guide
+    scope:
+      path: "os/latest"
+    values:
+      layout: "os-latest-redirect"
+  -
+    # os/latest/en/quick-start-guide/ should redirect to os/v1.0/en/quick-start-guide
+    scope:
+      path: "os/latest/en"
+    values:
+      layout: "os-latest-en-redirect"
+  -
+    scope:
+      path: "os/v1.0"
+    values:
+      layout: "os-default-v1.0"
+
