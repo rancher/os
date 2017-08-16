@@ -49,7 +49,7 @@ func GetOrSetVal(args string, data map[interface{}]interface{}, value interface{
 		// Reached end, set the value
 		if last && value != nil {
 			if s, ok := value.(string); ok {
-				value = unmarshalOrReturnString(s)
+				value = UnmarshalOrReturnString(s)
 			}
 
 			t[part] = value
@@ -113,7 +113,7 @@ func reverseReplacement(result interface{}) interface{} {
 	return result
 }
 
-func unmarshalOrReturnString(value string) (result interface{}) {
+func UnmarshalOrReturnString(value string) (result interface{}) {
 	value = strings.Replace(value, "\n", newlineMagicString, -1)
 	value = strings.Replace(value, ":", colonMagicString, -1)
 	value = strings.Replace(value, "?", questionMarkMagicString, -1)
@@ -150,7 +150,7 @@ outer:
 		keys := strings.Split(kv[0], ".")
 		for i, key := range keys {
 			if i == len(keys)-1 {
-				current[key] = unmarshalOrReturnString(value)
+				current[key] = UnmarshalOrReturnString(value)
 			} else {
 				if obj, ok := current[key]; ok {
 					if newCurrent, ok := obj.(map[interface{}]interface{}); ok {
