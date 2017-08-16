@@ -15,13 +15,13 @@ Prior to launching RancherOS EC2 instances, the [ECS Container Instance IAM Role
 
 ### Launching an instance with ECS
 
-RancherOS makes it easy to join your ECS cluster. The ECS agent is a [system service]({{page.baseurl}}/system-services/adding-system-services/) that is enabled in the ECS enabled AMI. There may be other RancherOS AMIs that don't have the ECS agent enabled by default, but it can easily be added in the user data on any RancherOS AMI.
+RancherOS makes it easy to join your ECS cluster. The ECS agent is a [system service]({{page.osbaseurl}}/system-services/adding-system-services/) that is enabled in the ECS enabled AMI. There may be other RancherOS AMIs that don't have the ECS agent enabled by default, but it can easily be added in the user data on any RancherOS AMI.
 
 When launching the RancherOS AMI, you'll need to specify the **IAM Role** and **Advanced Details** -> **User Data** in the **Configure Instance Details** step.
 
 For the **IAM Role**, you'll need to be sure to select the ECS Container Instance IAM role.
 
-For the **User Data**, you'll need to pass in the [cloud-config]({{page.baseurl}}/configuration/#cloud-config) file.
+For the **User Data**, you'll need to pass in the [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config) file.
 
 ```yaml
 #cloud-config
@@ -41,7 +41,7 @@ rancher:
 
 By default, the ECS agent will be using the `latest` tag for the `amazon-ecs-agent` image. In v0.5.0, we introduced the ability to select which version of the `amazon-ecs-agent`.
 
-To select the version, you can update your [cloud-config]({{page.baseurl}}/configuration/#cloud-config) file.
+To select the version, you can update your [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config) file.
 
 ```yaml
 #cloud-config
