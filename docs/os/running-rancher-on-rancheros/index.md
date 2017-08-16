@@ -1,6 +1,6 @@
 ---
 title: Running Rancher on RancherOS
-layout: os-default
+
 
 ---
 
@@ -11,7 +11,7 @@ RancherOS can be used to launch [Rancher]({{site.baseurl}}/rancher/) and be used
 
 ### Launching Agents using Cloud-Config
 
-You can easily add hosts into Rancher by using [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config) to launch the rancher/agent container.
+You can easily add hosts into Rancher by using [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config) to launch the rancher/agent container.
 
 After Rancher is launched and [host registration]({{site.baseurl}}/rancher/configuration/settings/#host-registration) has been saved, you will be able to find the [custom command]({{site.baseurl}}/rancher/rancher-ui/infrastructure/hosts/custom) in the **Infrastructure** -> **Hosts** -> **Custom** page.
 

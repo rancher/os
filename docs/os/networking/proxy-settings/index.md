@@ -1,6 +1,6 @@
 ---
 title: Configuring Proxy Settings in RancherOS
-layout: os-default
+
 
 ---
 

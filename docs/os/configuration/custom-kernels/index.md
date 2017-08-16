@@ -1,6 +1,6 @@
 ---
 title: Custom Kernels in RancherOS
-layout: os-default
+
 
 ---
 
@@ -9,7 +9,7 @@ layout: os-default
 
 ### Changing the Kernel in RancherOS
 
-By default, RancherOS ships with the kernel provided by the [os-kernel repository](https://github.com/rancher/os-kernel). Swapping out the default kernel can by done by [building your own custom RancherOS ISO]({{site.baseurl}}/os/configuration/custom-rancheros-iso/).
+By default, RancherOS ships with the kernel provided by the [os-kernel repository](https://github.com/rancher/os-kernel). Swapping out the default kernel can by done by [building your own custom RancherOS ISO]({{page.osbaseurl}}/configuration/custom-rancheros-iso/).
 
  1. Create a clone of the main [RancherOS repository](https://github.com/rancher/os) to your local machine with a `git clone`.
 
@@ -59,7 +59,7 @@ By default, RancherOS ships with the kernel provided by the [os-kernel repositor
                  ...
     ```
 
- 3. After you've replaced the URL with your custom kernel, you can follow the steps in [building your own custom RancherOS ISO]({{site.baseurl}}/os/configuration/custom-rancheros-iso/).
+ 3. After you've replaced the URL with your custom kernel, you can follow the steps in [building your own custom RancherOS ISO]({{page.osbaseurl}}/configuration/custom-rancheros-iso/).
 
 ### Packaging a Kernel to be used in RancherOS
 

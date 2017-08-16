@@ -1,12 +1,12 @@
 ---
 title: DKMS / Loadable Kernel Modules in RancherOS
-layout: os-default
+
 
 ---
 
 ## Dynamic Kernel Module Support (DKMS) / Loadable Kernel Modules (LKM)
 
-To compile any Kernel Modules, you first need to [deploy the Kernel Headers]({{site.baseurl}}/os/configuration/kernel-modules-kernel-headers/).
+To compile any Kernel Modules, you first need to [deploy the Kernel Headers]({{page.osbaseurl}}/configuration/kernel-modules-kernel-headers/).
 
 ### DKMS
 
@@ -16,7 +16,7 @@ DKMS is supported by running the DKMS scripts inside a *privileged* container.
 
 > To deploy containers that run any DKMS operations (i.e., `modprobe`), you will need to ensure that you bind-mount `/lib/modules`.
 
-By default, the `/lib/modules` folder is already available in the console deployed via [RancherOS System Services]({{site.baseurl}}/os/system-services/built-in-system-services/), but not `/usr/src`. You will likely need to [deploy your own container](#docker-example) for compilation purposes.
+By default, the `/lib/modules` folder is already available in the console deployed via [RancherOS System Services]({{page.osbaseurl}}/system-services/built-in-system-services/), but not `/usr/src`. You will likely need to [deploy your own container](#docker-example) for compilation purposes.
 
 To learn more about Docker's privileged mode, or to limit capabilities, please review the [Docker Runtime privilege and Linux capabilities documentation](https://docs.docker.com/engine/reference/run/#/runtime-privilege-and-linux-capabilities).
 
@@ -71,7 +71,7 @@ find /lib*/modules/$(uname -r) -name *.ko | less
 zcat /proc/config.gz | less
 ```
 
-For more information regarding modifying the Kernel, please review the [Custom Kernels]({{site.baseurl}}/os/custom-builds/custom-kernels/) documentation.
+For more information regarding modifying the Kernel, please review the [Custom Kernels]({{page.osbaseurl}}/custom-builds/custom-kernels/) documentation.
 
 ### Auto-Loading Modules
 
@@ -101,7 +101,7 @@ Messing around with the Kernel can be tricky, so here's some common issues:
 
 #### kernel source for this kernel does not seem to be installed.
 
-Simply put, the Kernel Headers (or Source) cannot be found; enable them via the [Kernel Headers System Service]({{site.baseurl}}/os/configuration/kernel-modules-kernel-headers/).
+Simply put, the Kernel Headers (or Source) cannot be found; enable them via the [Kernel Headers System Service]({{page.osbaseurl}}/configuration/kernel-modules-kernel-headers/).
 
 #### Operation not Permitted
 

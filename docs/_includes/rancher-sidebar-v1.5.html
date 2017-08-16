@@ -12,7 +12,6 @@
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/#requirements-for-ha">HA Requirements</a></li>
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/#single-container-external-database">Using an External DB</a></li>
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/#single-container-bind-mount">Bind Mounted MySQL Volume</a></li>
-          <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/#alb">Using an ALB in AWS</a></li>
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/#elb">Using an ELB in AWS</a></li>
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/#ldap">Using LDAP/AD with TLS</a></li>
           <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/#http-proxy">Behind an HTTP Proxy</a></li>
@@ -23,7 +22,7 @@
                  <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/#example-nginx-configuration">Example NGINX Configuration</a></li>
                  <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/#example-apache-configuration">Example Apache Configuration</a></li>
                  <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/#example-haproxy-configuration">Example HAProxy Configuration</a></li>
-                 <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/#alb">Using an ALB in AWS with SSL</a></li>
+                 <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/#example-f5-big-ip-configuration">Example F5 BIG-IP Configuration</a></li>
                  <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/#elb">Using an ELB in AWS with SSL</a></li>
                  <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/installing-rancher/installing-server/basic-ssl-config/#using-self-signed-certs-beta">Using Self Signed Certs</a></li>
                </ul>
@@ -109,6 +108,8 @@
         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/">Adding Private Registries</a></li>
         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/#insecure-registries">Insecure Registries</a></li>
         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/#self-signed-certificates">Self Signed Certificates</a></li>
+        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/#using-amazons-ecr-registry">Using Amazon's ECR</a></li>
+        <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/#using-google-container-registry">Using Google Container Registry</a></li>
         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/#changing-the-default-registry">Changing the Default Registry</a></li>
         <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/environments/registries/#limiting-which-registries-can-be-used">Limiting Registries</a></li>
       </ul>
@@ -140,7 +141,7 @@
     <li>
           <a href="#">Cattle<i class="pull-right fa fa-angle-down"></i></a>
           <ul>
-                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/stacks">Stacks</a></li>
+                <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/stacks/">Stacks</a></li>
                 <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/adding-services/">Services</a></li>
                 <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/cattle/adding-load-balancers/">Load Balancers</a></li>
                 <li>
@@ -204,6 +205,7 @@
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/">Launching Kubernetes</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/resiliency-planes/">Resiliency Planes</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/providers/">Cloud Providers</a></li>
+              <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/private-registry/">Private Registry</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/disaster-recovery/">Disaster Recovery</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/backups/">Backups</a></li>
               <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/storage/">Persistent Storage</a></li>
@@ -211,7 +213,6 @@
                   <a href="#">Add-ons Support<i class="pull-right fa fa-angle-down"></i></a>
                   <ul>
                       <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/addons/">Add-ons Support</a></li>
-                      <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/addons/#private-registry-for-add-ons/">Private Registry for Installing Add-Ons</a></li>
                       <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/addons/#helm">Helm</a></li>
                       <li><a href="{{site.baseurl}}/rancher/{{page.version}}/{{page.lang}}/kubernetes/addons/#skydns">SkyDNS</a></li>
                   </ul>

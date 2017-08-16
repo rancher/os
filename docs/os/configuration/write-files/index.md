@@ -1,6 +1,6 @@
 ---
 title: Writing Files in RancherOS
-layout: os-default
+
 
 ---
 

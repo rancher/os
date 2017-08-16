@@ -1,6 +1,6 @@
 ---
 title: Startup Sequence
-layout: os-default
+
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Running RancherOS on Azure
-layout: os-default
+
 
 ---
 
