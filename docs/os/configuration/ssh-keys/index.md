@@ -1,6 +1,6 @@
 ---
 title: SSH Keys in RancherOS
-layout: os-default
+
 
 ---
 

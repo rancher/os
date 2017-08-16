@@ -1,6 +1,6 @@
 ---
 title: Setting the Hostname in RancherOS
-layout: os-default
+
 
 ---
 

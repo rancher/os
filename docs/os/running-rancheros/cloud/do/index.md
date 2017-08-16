@@ -1,6 +1,6 @@
 ---
 title: Running RancherOS on Digital Ocean
-layout: os-default
+
 
 ---
 

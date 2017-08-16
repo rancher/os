@@ -1,6 +1,6 @@
 ---
 title: Custom System Services in RancherOS
-layout: os-default
+
 ---
 
 ## Custom System Services

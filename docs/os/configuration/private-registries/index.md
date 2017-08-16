@@ -1,6 +1,6 @@
 ---
 title: Private Registries in RancherOS
-layout: os-default
+
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: DKMS / Loadable Kernel Modules in RancherOS
-layout: os-default
+
 
 ---
 

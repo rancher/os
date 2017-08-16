@@ -1,6 +1,6 @@
 ---
 title: Configuring Docker in RancherOS
-layout: os-default
+
 
 ---
 

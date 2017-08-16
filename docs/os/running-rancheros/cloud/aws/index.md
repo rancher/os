@@ -1,6 +1,6 @@
 ---
 title: Getting Started on Amazon EC2
-layout: os-default
+
 
 ---
 

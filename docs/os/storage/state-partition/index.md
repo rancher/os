@@ -1,6 +1,6 @@
 ---
 title: Persistent State Partition in RancherOS
-layout: os-default
+
 ---
 
 ## Persistent State Partition

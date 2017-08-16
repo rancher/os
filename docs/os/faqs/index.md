@@ -1,6 +1,6 @@
 ---
 title: FAQs
-layout: os-default
+
 
 ---
 
