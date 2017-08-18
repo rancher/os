@@ -13,7 +13,7 @@ func (s *QemuSuite) TestUpgrade050(c *C) {
 	// install 0.5.0, and then upgrade to `this` version
 	s.commonTestCode(c, "v0.5.0", "default", "")
 }
-func (s *QemuSuite) TestUpgrade061Docker1131(c *C) {
+func (s *QemuSuite) DISABLEDTestUpgrade061Docker1131(c *C) {
 	// Test that by setting the Docker version to 1.13.1 (not the default in 0.6.1), that upgrading leaves it as 1.13.1
 	s.commonTestCode(c, "v0.6.1", "default", "1.13.1")
 }
