@@ -10,7 +10,7 @@ rancher:
       engine: docker-17.03.1-ce
     {{else -}}
     docker:
-      engine: docker-1.11.2
+      engine: docker-1.12.6
     {{end -}}
     network:
       dns:
@@ -327,7 +327,7 @@ rancher:
       {{if eq "amd64" .ARCH -}}
       image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}
       {{else -}}
-      image: {{.OS_REPO}}/os-docker:1.11.2{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:1.12.6{{.SUFFIX}}
       {{end -}}
       command: ros user-docker
       environment:
@@ -369,7 +369,7 @@ rancher:
     {{if eq "amd64" .ARCH -}}
     engine: docker-17.03.1-ce
     {{else -}}
-    engine: docker-1.11.2
+    engine: docker-1.12.6
     {{end -}}
     storage_driver: overlay
     group: docker
