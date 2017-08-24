@@ -60,7 +60,7 @@ rm -fr build/basefs/lib/modules/{4.4.27+,4.4.27-hypriotos+}
 # populate kernel, bootloader and RancherOS rootfs
 cp -R build/basefs/* build/root
 tar -xf assets/rootfs_arm.tar.gz -C build/root
-echo "+dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 cgroup-enable=memory swapaccount=1 elevator=deadline rootwait console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty0 rancher.password=rancher rancher.autologin=ttyAMA0 rw init=/init" > build/root/boot/cmdline.txt
+echo "+dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 cgroup-enable=memory swapaccount=1 elevator=deadline rootwait console=ttyAMA0,115200 console=tty0 rancher.password=rancher rancher.autologin=ttyAMA0 rw init=/init" > build/root/boot/cmdline.txt
 # enable serial console mode for rpi3
 echo "enable_uart=1" > build/root/boot/config.txt
 
