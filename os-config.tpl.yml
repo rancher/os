@@ -7,10 +7,10 @@ rancher:
     hostname: {{.HOSTNAME_DEFAULT}}
     {{if eq "amd64" .ARCH -}}
     docker:
-      engine: docker-17.03.1-ce
+      engine: docker-17.03.2-ce
     {{else -}}
     docker:
-      engine: docker-1.12.6
+      engine: docker-17.03.1-ce
     {{end -}}
     network:
       dns:
@@ -325,9 +325,9 @@ rancher:
       - /opt:/opt
     docker:
       {{if eq "amd64" .ARCH -}}
-      image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.03.2{{.SUFFIX}}
       {{else -}}
-      image: {{.OS_REPO}}/os-docker:1.12.6{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}
       {{end -}}
       command: ros user-docker
       environment:
@@ -367,9 +367,9 @@ rancher:
     image: {{.OS_REPO}}/os
   docker:
     {{if eq "amd64" .ARCH -}}
-    engine: docker-17.03.1-ce
+    engine: docker-17.03.2-ce
     {{else -}}
-    engine: docker-1.12.6
+    engine: docker-17.03.1-ce
     {{end -}}
     storage_driver: overlay
     group: docker
