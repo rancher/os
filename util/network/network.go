@@ -88,15 +88,11 @@ func loadFromNetwork(location string) ([]byte, error) {
 	SetProxyEnvironmentVariables(cfg)
 
 	var err error
-	// Sven thinks that the dhcpcd --wait we added makes this less necessary
-	//for i := 0; i < 300; i++ {
-	updateDNSCache()
 
 	var resp *http.Response
 	log.Debugf("LoadFromNetwork(%s)", location)
 	resp, err = http.Get(location)
-	log.Debugf("LoadFromNetwork(%s) returned %v", location, resp)
-	log.Debugf("LoadFromNetwork(%s) error %v", location, err)
+	log.Debugf("LoadFromNetwork(%s) returned %v, %v", location, resp, err)
 	if err == nil {
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
@@ -111,9 +107,6 @@ func loadFromNetwork(location string) ([]byte, error) {
 		cacheAdd(location, bytes)
 		return bytes, nil
 	}
-
-	//	time.Sleep(100 * time.Millisecond)
-	//}
 
 	return nil, err
 }
