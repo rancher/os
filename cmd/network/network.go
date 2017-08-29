@@ -10,6 +10,7 @@ import (
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/hostname"
 	"github.com/rancher/os/netconf"
+	"io/ioutil"
 )
 
 func Main() {
@@ -33,18 +34,11 @@ func Main() {
 
 func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	log.Infof("Apply Network Config")
-	nameservers := cfg.Rancher.Network.DNS.Nameservers
-	search := cfg.Rancher.Network.DNS.Search
-	userSetDNS := len(nameservers) > 0 || len(search) > 0
-	if !userSetDNS {
-		nameservers = cfg.Rancher.Defaults.Network.DNS.Nameservers
-		search = cfg.Rancher.Defaults.Network.DNS.Search
-	}
-
-	// TODO: don't write to the file if nameservers is still empty
-	log.Infof("Writing resolv.conf (%v) %v", nameservers, search)
-	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
-		log.Error(err)
+	userSetDNS := len(cfg.Rancher.Network.DNS.Nameservers) > 0 || len(cfg.Rancher.Network.DNS.Search) > 0
+	if userSetDNS {
+		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search, nil); err != nil {
+			log.Error(err)
+		}
 	}
 
 	if err := hostname.SetHostnameFromCloudConfig(cfg); err != nil {
@@ -52,9 +46,27 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	}
 
 	userSetHostname := cfg.Hostname != ""
-	if err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network, userSetHostname, userSetDNS); err != nil {
+	dhcpSetDNS, err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network, userSetHostname, userSetDNS)
+	if err != nil {
 		log.Error(err)
 	}
+
+	if dhcpSetDNS {
+		log.Infof("DNS set by DHCP")
+	}
+
+	if !userSetDNS && !dhcpSetDNS {
+		// only write 8.8.8.8,8.8.4.4 as a last resort
+		log.Infof("Writing default resolv.conf - no user setting, and no DHCP setting")
+		if _, err := resolvconf.Build("/etc/resolv.conf",
+			cfg.Rancher.Defaults.Network.DNS.Nameservers,
+			cfg.Rancher.Defaults.Network.DNS.Search,
+			nil); err != nil {
+			log.Error(err)
+		}
+	}
+	resolve, err := ioutil.ReadFile("/etc/resolv.conf")
+	log.Debugf("Resolve.conf == [%s], %s", resolve, err)
 
 	log.Infof("Apply Network Config SyncHostname")
 	if err := hostname.SyncHostname(); err != nil {

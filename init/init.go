@@ -344,6 +344,7 @@ func RunInit() error {
 			if err := runCloudInitServices(cfg); err != nil {
 				log.Error(err)
 			}
+
 			// It'd be nice to push to rsyslog before this, but we don't have network
 			log.AddRSyslogHook()
 
@@ -355,6 +356,7 @@ func RunInit() error {
 				config.CloudConfigBootFile,
 				config.CloudConfigNetworkFile,
 				config.MetaDataFile,
+				config.EtcResolvConfFile,
 			}
 			// And all the files in /var/log/boot/
 			// TODO: I wonder if we can put this code into the log module, and have things write to the buffer until we FsReady()
@@ -418,6 +420,9 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+
+			log.Debugf("memory Resolve.conf == [%s]", configFiles["/etc/resolv.conf"])
+
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)

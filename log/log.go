@@ -14,6 +14,7 @@ import (
 	"github.com/rancher/os/config/cmdline"
 )
 
+var logFile *os.File
 var userHook *ShowuserlogHook
 var defaultLogLevel logrus.Level
 var debugThisLogger = false
@@ -154,7 +155,8 @@ func InitDeferedLogger() {
 		// write to dmesg until we can write to file. (maybe we can do this if rancher.debug=true?)
 		f, err := os.OpenFile("/dev/kmsg", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
 		if err == nil {
-			logrus.SetOutput(f)
+			logFile = f
+			logrus.SetOutput(logFile)
 		}
 
 		pwd, err := os.Getwd()
@@ -223,7 +225,8 @@ func FsReady() {
 		if debugThisLogger {
 			logrus.Infof("Setting log output for %s to: %s", os.Args[0], filename)
 		}
-		logrus.SetOutput(f)
+		logFile = f
+		logrus.SetOutput(logFile)
 	}
 }
 
