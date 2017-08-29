@@ -50,6 +50,7 @@ func (s *QemuSuite) TearDownTest(c *C) {
 	if s.qemuCmd != nil {
 		s.Stop(c)
 	}
+	time.Sleep(time.Second)
 }
 
 // RunQemuWith requires user to specify all the `scripts/run` arguments
@@ -252,7 +253,7 @@ func (s *QemuSuite) Stop(c *C) {
 	c.Assert(s.qemuCmd.Process.Kill(), IsNil)
 	fmt.Printf("%s: stopping qemu 3\n", c.TestName())
 	s.qemuCmd.Process.Wait()
-	//time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Second)
 	s.qemuCmd = nil
 	fmt.Printf("--- %s: qemu stopped", c.TestName())
 }
