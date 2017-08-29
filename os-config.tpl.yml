@@ -46,6 +46,7 @@ rancher:
       ipc: host
       privileged: true
       volumes:
+      - /etc/resolv.conf:/etc/resolv.conf
       - /dev:/host/dev
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /lib/modules:/lib/modules

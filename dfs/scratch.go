@@ -351,15 +351,20 @@ ff02::2    ip6-allrouters
 127.0.1.1       `+hostname)
 
 	if len(cfg.DNSConfig.Nameservers) != 0 {
-		log.Infof("Writing resolv.conf (%v) %v", cfg.DNSConfig.Nameservers, cfg.DNSConfig.Search)
-		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.DNSConfig.Nameservers, cfg.DNSConfig.Search, nil); err != nil {
-			return err
+		resolve, err := ioutil.ReadFile("/etc/resolv.conf")
+		log.Debugf("Resolve.conf == [%s], err", resolve, err)
+
+		if err != nil {
+			log.Infof("scratch Writing empty resolv.conf (%v) %v", []string{}, []string{})
+			if _, err := resolvconf.Build("/etc/resolv.conf", []string{}, []string{}, nil); err != nil {
+				return err
+			}
 		}
 	}
 
 	if cfg.BridgeName != "" && cfg.BridgeName != "none" {
 		log.Debugf("Creating bridge %s (%s)", cfg.BridgeName, cfg.BridgeAddress)
-		if err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
+		if _, err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
 			Interfaces: map[string]netconf.InterfaceConfig{
 				cfg.BridgeName: {
 					Address: cfg.BridgeAddress,
@@ -367,7 +372,8 @@ ff02::2    ip6-allrouters
 					Bridge:  "true",
 				},
 			},
-		}); err != nil {
+		}, false, false); err != nil {
+			log.Errorf("Error creating bridge: %s", err)
 			return err
 		}
 	}

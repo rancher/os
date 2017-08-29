@@ -28,6 +28,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         --pxe)
             BOOT_PXE=1
+            FORMAT=0
             ;;
         --do)
             BOOT_HD=1

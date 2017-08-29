@@ -157,7 +157,7 @@ func populateDefault(netCfg *NetworkConfig) {
 	}
 }
 
-func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
+func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool) (bool, error) {
 	populateDefault(netCfg)
 
 	log.Debugf("Config: %#v", netCfg)
@@ -169,7 +169,8 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 
 	links, err := netlink.LinkList()
 	if err != nil {
-		return err
+		log.Errorf("error getting LinkList: %s", err)
+		return false, err
 	}
 
 	//apply network config
@@ -182,8 +183,20 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
 		}
 	}
 
-	runCmds(netCfg.PostCmds, "")
-	return err
+	// make sure there was a DHCP set dns - or tell ros to write 8.8.8.8,8.8.8.4
+	log.Infof("Checking to see if DNS was set by DHCP")
+	dnsSet := false
+	for _, link := range links {
+		linkName := link.Attrs().Name
+		log.Infof("dns testing %s", linkName)
+		lease := getDhcpLease(linkName)
+		if _, ok := lease["domain_name_servers"]; ok {
+			log.Infof("dns was dhcp set for %s", linkName)
+			dnsSet = true
+		}
+	}
+
+	return dnsSet, err
 }
 
 func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
@@ -226,14 +239,36 @@ func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
 	return nil
 }
 
-func hasDhcp(iface string) bool {
+func getDhcpLease(iface string) (lease map[string]string) {
+	lease = make(map[string]string)
+
+	out := getDhcpLeaseString(iface)
+	log.Debugf("getDhcpLease %s: %s", iface, out)
+
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
+		l := strings.SplitN(line, "=", 2)
+		log.Debugf("line: %v", l)
+		if len(l) > 1 {
+			lease[l[0]] = l[1]
+		}
+	}
+	return lease
+}
+
+func getDhcpLeaseString(iface string) []byte {
 	cmd := exec.Command("dhcpcd", "-U", iface)
 	//cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
 	if err != nil {
 		log.Error(err)
 	}
-	log.Debugf("dhcpcd -u %s: %s", iface, out)
+	return out
+}
+
+func hasDhcp(iface string) bool {
+	out := getDhcpLeaseString(iface)
+	log.Debugf("dhcpcd -U %s: %s", iface, out)
 	return len(out) > 0
 }
 

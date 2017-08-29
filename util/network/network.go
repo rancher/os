@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 
@@ -88,28 +87,20 @@ func loadFromNetwork(location string) ([]byte, error) {
 	cfg := config.LoadConfig()
 	SetProxyEnvironmentVariables(cfg)
 
-	var err error
-	for i := 0; i < 300; i++ {
-		updateDNSCache()
-
-		var resp *http.Response
-		resp, err = http.Get(location)
-		if err == nil {
-			defer resp.Body.Close()
-			if resp.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
-			}
-
-			bytes, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				return nil, err
-			}
-
-			cacheAdd(location, bytes)
-			return bytes, nil
+	resp, err := http.Get(location)
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
 		}
 
-		time.Sleep(100 * time.Millisecond)
+		bytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		cacheAdd(location, bytes)
+		return bytes, nil
 	}
 
 	return nil, err
