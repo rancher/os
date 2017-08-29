@@ -13,7 +13,6 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
@@ -486,13 +485,14 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 		return
 	}
 
+	// Check removed - there's an x509 cert failure on first boot of an installed system
 	// check quickly to see if there is a yml file available
-	if service.ValidService(serviceName, cfg) {
-		log.Infof("Setting rancher.services_include. %s=true", serviceName)
-		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
-			log.Error(err)
-		}
-	} else {
-		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
+	//	if service.ValidService(serviceName, cfg) {
+	log.Infof("Setting rancher.services_include. %s=true", serviceName)
+	if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
+		log.Error(err)
 	}
+	//	} else {
+	//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
+	//	}
 }
