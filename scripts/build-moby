@@ -8,6 +8,7 @@ docker build -t zombie/os - < scripts/moby/Dockerfile
 cd dist
 mkdir -p moby
 cd moby
-moby build  -output kernel+initrd -output iso-bios ../../scripts/moby/rancheros.yml
+moby build  -output kernel+initrd ../../scripts/moby/rancheros.yml
+ #-output iso-bios 
 
 

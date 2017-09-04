@@ -11,9 +11,11 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
+	"time"
 )
 
 func AutologinMain() {
+	log.Infof("Sven AutologinMain")
 	log.InitLogger()
 	app := cli.NewApp()
 
@@ -25,10 +27,13 @@ func AutologinMain() {
 	app.EnableBashCompletion = true
 	app.Action = autologinAction
 	app.HideHelp = true
+	log.Infof("Sven AutologinMain:run")
 	app.Run(os.Args)
 }
 
 func autologinAction(c *cli.Context) error {
+	log.Infof("Sven autologinAction")
+
 	cmd := exec.Command("/bin/stty", "sane")
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
@@ -51,7 +56,10 @@ func autologinAction(c *cli.Context) error {
 
 	mode := filepath.Base(os.Args[0])
 	console := CurrentConsole()
+	return AutoLogin(user, tty, mode, console)
+}
 
+func AutoLogin(user, tty, mode, console string) error {
 	cfg := config.LoadConfig()
 	// replace \n and \l
 	banner := config.Banner
@@ -67,15 +75,17 @@ func autologinAction(c *cli.Context) error {
 
 	loginBin := ""
 	args := []string{}
-	if console == "centos" || console == "fedora" ||
-		mode == "recovery" {
+	if console == "centos" || console == "fedora" {
 		// For some reason, centos and fedora ttyS0 and tty1 don't work with `login -f rancher`
 		// until I make time to read their source, lets just give us a way to get work done
 		loginBin = "bash"
 		args = append(args, "--login")
-		if mode == "recovery" {
-			os.Setenv("PROMPT_COMMAND", `echo "[`+fmt.Sprintf("Recovery console %s@%s:${PWD}", user, cfg.Hostname)+`]"`)
-		}
+		os.Setenv("PROMPT_COMMAND", `echo "[`+fmt.Sprintf("Recovery console %s@%s:${PWD}", user, cfg.Hostname)+`]"`)
+	} else if mode == "recovery" {
+		loginBin = "/usr/bin/sh"
+		//args = append(args, "-l")
+		//args = []string{"sh", "-l"}
+		os.Setenv("PROMPT_COMMAND", `echo "[`+fmt.Sprintf("Recovery console %s@%s:${PWD}", user, cfg.Hostname)+`]"`)
 	} else {
 		loginBin = "login"
 		args = append(args, "-f", user)
@@ -84,14 +94,17 @@ func autologinAction(c *cli.Context) error {
 
 	loginBinPath, err := exec.LookPath(loginBin)
 	if err != nil {
-		fmt.Printf("error finding %s in path: %s", cmd.Args[0], err)
-		return err
+		fmt.Printf("error finding %s in path: %s", loginBin, err)
+		log.Errorf("error finding %s in path: %s", loginBin, err)
+		//loginBinPath = "/bin/sh"
+		loginBinPath = loginBin
+		//return err
 	}
 	os.Setenv("TERM", "linux")
 
 	// Causes all sorts of issues
 	//return syscall.Exec(loginBinPath, args, os.Environ())
-	cmd = exec.Command(loginBinPath, args...)
+	cmd := exec.Command(loginBinPath, args...)
 	cmd.Env = os.Environ()
 
 	cmd.Stderr = os.Stderr
@@ -99,6 +112,7 @@ func autologinAction(c *cli.Context) error {
 	cmd.Stdin = os.Stdin
 	if err := cmd.Run(); err != nil {
 		log.Errorf("\nError starting %s: %s", cmd.Args[0], err)
+		time.Sleep(5 * time.Minute)
 	}
 	return nil
 }

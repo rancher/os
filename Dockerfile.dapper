@@ -79,7 +79,8 @@ ARG OS_RELEASES_YML=https://releases.rancher.com/os
 
 ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
-ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-2
+ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-3
+#ARG DFS_IMAGE=rancher/os-base
 
 ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2017.02.5-1/os-base_amd64.tar.xz
 ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2017.02.5-1/os-base_arm64.tar.xz
@@ -105,7 +106,7 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     DOCKER_VERSION=${DOCKER_VERSION} \
     DOWNLOADS=/usr/src/downloads \
     GOPATH=/go \
-    GO_VERSION=1.7.6 \
+    GO_VERSION=1.9 \
     GOARCH=$ARCH \
     HOSTNAME_DEFAULT=${HOSTNAME_DEFAULT} \
     IMAGE_NAME=${IMAGE_NAME} \

@@ -13,6 +13,7 @@ cp bin/ros                     ${INITRD_DIR}/usr/bin/
 ln -s usr/bin/ros              ${INITRD_DIR}/init
 ln -s bin                      ${INITRD_DIR}/usr/sbin
 ln -s usr/sbin                 ${INITRD_DIR}/sbin
+ln -s ros                      ${INITRD_DIR}/usr/bin/recovery
 ln -s ros                      ${INITRD_DIR}/usr/bin/system-docker
 ln -s ros                      ${INITRD_DIR}/usr/bin/docker-runc
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge

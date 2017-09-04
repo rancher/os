@@ -1,9 +1,14 @@
 package init
 
 import (
+	"os"
+	"os/exec"
+	"syscall"
+
 	log "github.com/Sirupsen/logrus"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/yaml"
+	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/netconf"
@@ -51,7 +56,7 @@ func recoveryServices(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	return nil, err
 }
 
-func recovery(initFailure error) {
+func oldRecovery(initFailure error) {
 	if initFailure != nil {
 		log.Errorf("RancherOS has failed to boot: %v", initFailure)
 	}
@@ -90,6 +95,34 @@ func recovery(initFailure error) {
 			config.CfgFuncData{"loadImages", loadImages},
 			config.CfgFuncData{"recovery console", recoveryServices},
 		})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func recovery(initFailure error) {
+	log.Infof("SVEN: call recovery")
+	control.AutoLogin("root", "", "recovery", "default")
+}
+
+// this one dies in docker/docker/mflag/flag.go:1189 with out of index
+func rosRecovery(initFailure error) {
+	log.Infof("Test1")
+	rosBinPath, err := exec.LookPath("recovery")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Infof("Test2, %s", rosBinPath)
+	err = syscall.Exec(rosBinPath, []string{}, os.Environ())
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Infof("Test3, %s", err)
+}
+
+func shRecovery(initFailure error) {
+	err := syscall.Exec("/bin/sh", []string{}, os.Environ())
 	if err != nil {
 		log.Fatal(err)
 	}
