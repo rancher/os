@@ -6,7 +6,6 @@ import (
 
 	"github.com/containernetworking/cni/plugins/ipam/host-local"
 	"github.com/containernetworking/cni/plugins/main/bridge"
-	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancher/cniglue"
 	"github.com/rancher/os/cmd/cloudinitexecute"
@@ -28,7 +27,6 @@ var entrypoints = map[string]func(){
 	"cloud-init-save":    cloudinitsave.Main,
 	"console":            control.ConsoleInitMain,
 	"console.sh":         control.ConsoleInitMain,
-	"docker":             docker.Main,
 	"dockerlaunch":       dfs.Main,
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,
