@@ -8,7 +8,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/codegangsta/cli"
-	"github.com/docker/docker/reference"
+	"github.com/docker/distribution/reference"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control/service"
