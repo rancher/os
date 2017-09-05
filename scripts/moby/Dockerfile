@@ -9,6 +9,7 @@ RUN mkdir /tmp/initrd \
   && mkdir -p /tmp/initrd/var/lib/cni/bin \
   && ln -s ../../../../usr/bin/ros /tmp/initrd/var/lib/cni/bin/host-local \
   && ln -s ../../../../usr/bin/ros /tmp/initrd/var/lib/cni/bin/bridge \
+  && rm /tmp/initrd/usr/share/ros/images.tar \
   && cp -r --update --dereference --force /tmp/initrd/* / \
   && cd / \
   && rm -rf /tmp/initrd

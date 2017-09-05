@@ -3,7 +3,7 @@
 cd $(dirname $0)/../dist/moby
 
 if [ "1" == "2" ]; then
-  linuxkit run -mem 2048 -gui rancheros
+  linuxkit run -mem 4096 -gui rancheros
 else
 #	-nographic \
 #        -curses \
@@ -11,7 +11,7 @@ else
         -curses \
 	-kernel ./rancheros-kernel \
 	-initrd ./rancheros-initrd.img \
-	-m 2048 \
+	-m 4096 \
   -device virtio-rng-pci \
   -smp 1 \
   -enable-kvm \

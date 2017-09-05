@@ -4,11 +4,22 @@ set -e
 cd $(dirname $0)/..
 docker build -t zombie/os - < scripts/moby/Dockerfile
 
+#build the list of system services and images
+IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)
 
 cd dist
 mkdir -p moby
 cd moby
-moby build  -output kernel+initrd ../../scripts/moby/rancheros.yml
+cp ../../scripts/moby/rancheros.yml.tmpl rancheros.yml
+#echo "tar-image: IMAGES=$IMAGES"
+for i in $IMAGES; do
+   name=$(echo $i | sed 's/rancher\///' | sed 's/:.*//')
+   echo "system service: $name ($i)"
+   echo "  - name: $name" >> rancheros.yml
+   echo "    image: $i" >> rancheros.yml
+done
+
+moby build  -output kernel+initrd rancheros.yml
  #-output iso-bios 
 
 
