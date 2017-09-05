@@ -10,82 +10,22 @@ import (
 	"github.com/rancher/os/util"
 )
 
-func bootstrapServices(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+func bootstrap(cfg *config.CloudConfig) error {
+	log.Info("Launching Bootstrap Docker")
+
 	if util.ResolveDevice(cfg.Rancher.State.Dev) != "" && len(cfg.Bootcmd) == 0 {
 		log.Info("NOT Running Bootstrap")
 
 		return cfg, nil
 	}
 	log.Info("Running Bootstrap")
-	_, err := compose.RunServiceSet("bootstrap", cfg, cfg.Rancher.BootstrapContainers)
-	return cfg, err
-}
-
-func runCloudInitServiceSet(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	log.Info("Running cloud-init services")
-	_, err := compose.RunServiceSet("cloud-init", cfg, cfg.Rancher.CloudInitServices)
-	return cfg, err
-}
-
-func startDocker(cfg *config.CloudConfig) (chan interface{}, error) {
-	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.BootstrapDocker)
-	launchConfig.Fork = true
-	launchConfig.LogFile = ""
-	launchConfig.NoLog = true
-
-	cmd, err := dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	c := make(chan interface{})
-	go func() {
-		<-c
-		cmd.Process.Signal(syscall.SIGTERM)
-		cmd.Wait()
-		c <- struct{}{}
-	}()
-
-	return c, nil
-}
-
-func stopDocker(c chan interface{}) error {
-	c <- struct{}{}
-	<-c
-
-	return nil
-}
-
-func bootstrap(cfg *config.CloudConfig) error {
-	log.Info("Launching Bootstrap Docker")
-
-	c, err := startDocker(cfg)
-	if err != nil {
-		return err
-	}
-
-	defer stopDocker(c)
-
-	_, err = config.ChainCfgFuncs(cfg,
-		[]config.CfgFuncData{
-			config.CfgFuncData{"bootstrap loadImages", loadImages},
-			config.CfgFuncData{"bootstrap Services", bootstrapServices},
-		})
+	_, err := runc.RunServiceSet("bootstrap", cfg, cfg.Rancher.BootstrapContainers)
 	return err
 }
 
 func runCloudInitServices(cfg *config.CloudConfig) error {
-	c, err := startDocker(cfg)
-	if err != nil {
-		return err
-	}
+	log.Info("Running cloud-init services")
+	_, err := runc.RunServiceSet("cloud-init", cfg, cfg.Rancher.CloudInitServices)
 
-	defer stopDocker(c)
-
-	_, err = config.ChainCfgFuncs(cfg,
-		[]config.CfgFuncData{
-			config.CfgFuncData{"cloudinit loadImages", loadImages},
-			config.CfgFuncData{"cloudinit Services", runCloudInitServiceSet},
-		})
 	return err
 }
