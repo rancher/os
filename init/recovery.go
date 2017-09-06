@@ -85,7 +85,7 @@ func oldRecovery(initFailure error) {
 		},
 	}
 
-	_, err := startDocker(&recoveryConfig)
+	err := startDocker(&recoveryConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,6 +98,10 @@ func oldRecovery(initFailure error) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func startDocker(cfg *config.CloudConfig) error {
+	return nil
 }
 
 func recovery(initFailure error) {

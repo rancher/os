@@ -21,7 +21,7 @@ func Main() {
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
 	app.Before = func(c *cli.Context) error {
-		if os.Geteuid() != 0 && 
+		if os.Geteuid() != 0 &&
 			filepath.Base(os.Args[0]) != "host_ros" {
 			log.Fatalf("%s: Need to be root", os.Args[0])
 		}
@@ -29,6 +29,14 @@ func Main() {
 	}
 
 	app.Commands = []cli.Command{
+//		{
+//			Name:            "bootstrap",
+//			Hidden:          true,
+//			HideHelp:        true,
+//			SkipFlagParsing: true,
+//			Action:          bootstrapAction,
+//		},
+		runcCommand(),
 		{
 			Name:        "config",
 			ShortName:   "c",

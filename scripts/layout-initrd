@@ -8,6 +8,7 @@ mkdir -p ${INITRD_DIR}/usr/{etc,lib,bin,share/ros,var/lib/cni/bin}
 
 cp -rf assets/selinux          ${INITRD_DIR}/usr/etc
 cp -rf assets/docker           ${INITRD_DIR}/usr/etc
+cp -rf assets/spec             ${INITRD_DIR}/usr/share/
 cp build/images.tar            ${INITRD_DIR}/usr/share/ros/
 cp bin/ros                     ${INITRD_DIR}/usr/bin/
 ln -s usr/bin/ros              ${INITRD_DIR}/init
