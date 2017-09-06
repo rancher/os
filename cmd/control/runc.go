@@ -15,11 +15,27 @@ import (
 
 	composeConfig "github.com/docker/libcompose/config"
 
+	"github.com/docker/docker/reference"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
+	"github.com/rancher/os/util"
 )
 
 func runcCommand() cli.Command {
+	var pivot cli.Flag
+	if util.RootFsIsNotReal() {
+		pivot = cli.BoolFlag{
+			Name:  "pivot-root",
+			Usage: "pivot-root (defaulted to false due to tmmpfs/ramfs)",
+		}
+	} else {
+		pivot = cli.BoolTFlag{
+			Name:  "pivot-root",
+			Usage: "pivot-root (defaulted to true)",
+		}
+	}
+
 	return cli.Command{
 		Name:   "runc",
 		Usage:  "create, prepare and run using runc",
@@ -29,10 +45,8 @@ func runcCommand() cli.Command {
 				Name:  "bundle, b",
 				Usage: "path to the root of the bundle dir",
 			},
-			cli.BoolFlag{
-				Name:  "no-pivot",
-				Usage: "don't pivot-root (use for ramdisk)",
-			},
+			pivot,
+			// TODO: add a --delete ?
 		},
 	}
 }
@@ -43,6 +57,12 @@ func runcAction(c *cli.Context) error {
 		fmt.Print("Please specify the service name (needs to be in the os-config)")
 		return fmt.Errorf("Please specify the service name (needs to be in the os-config)")
 	}
+	bundleDir := c.String("bundle")
+	pivotRoot := c.Bool("pivot-root")
+	return Runc(serviceName, bundleDir, pivotRoot)
+}
+
+func Runc(serviceName, bundleDir string, pivotRoot bool) error {
 	cfg := config.LoadConfig()
 	service := cfg.Rancher.Services[serviceName]
 	if service == nil {
@@ -57,22 +77,32 @@ func runcAction(c *cli.Context) error {
 		return fmt.Errorf("Specified serviceName (%s) not found in RancherOS config", serviceName)
 	}
 
-	bundleDir := c.String("bundle")
 	if bundleDir == "" {
-		bundleDir, _ = os.Getwd()
+		// TODO: use the os-config image name to find the base bundle.
+		image, err := reference.ParseNamed(service.Image)
+		if err != nil {
+			bundleDir, _ = os.Getwd()
+		} else {
+			n := strings.Split(image.Name(), "/")
+			name := n[len(n)-1]
+			bundleDir = filepath.Join("/containers/services", name)
+		}
 	}
 	if _, err := os.Stat(bundleDir); err != nil && os.IsNotExist(err) {
 		fmt.Print("Bundle Dir (%s) not found", bundleDir)
 		return fmt.Errorf("Bundle Dir (%s) not found", bundleDir)
 	}
 
-	noPivot := c.Bool("no-pivot")
+	// TODO: instead of copying a canned spec file, need to generate from the os-config entry
+	cannedSpec := filepath.Join("/usr/share/spec/", serviceName+".spec")
+	if err := dfs.CopyFileOverwrite(cannedSpec, bundleDir, "config.json", true); err != nil {
+		fmt.Print("Failed to copy %s into bundleDir %s", cannedSpec, bundleDir)
+		return fmt.Errorf("Failed to copy %s into bundleDir %s", cannedSpec, bundleDir)
+	}
 
 	// TODO: either add a rw layer over the original bundle, or copy it to a new location
-	// TODO: use the os-config image name to find the base bundle.
-	// TODO: need to modify the basic config.json file so we have the os-config's command and other settings
 
-	err := runc(serviceName, bundleDir, noPivot, service)
+	err := runc(serviceName, bundleDir, !pivotRoot, service)
 	if err != nil {
 		fmt.Print("Runc error: %s\n", err)
 	} else {

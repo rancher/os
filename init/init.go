@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
@@ -23,9 +22,6 @@ import (
 const (
 	state            string = "/state"
 	boot2DockerMagic string = "boot2docker, please format-me"
-
-	tmpfsMagic int64 = 0x01021994
-	ramfsMagic int64 = 0x858458f6
 )
 
 var (
@@ -188,9 +184,7 @@ func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 }
 
 func isInitrd() bool {
-	var stat syscall.Statfs_t
-	syscall.Statfs("/", &stat)
-	return int64(stat.Type) == tmpfsMagic || int64(stat.Type) == ramfsMagic
+	return util.RootFsIsNotReal()
 }
 
 func setupSharedRoot(c *config.CloudConfig) (*config.CloudConfig, error) {
