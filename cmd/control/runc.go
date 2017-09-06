@@ -2,7 +2,6 @@ package control
 
 import (
 	"fmt"
-	"github.com/rancher/os/log"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -10,10 +9,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/codegangsta/cli"
-	composeConfig "github.com/docker/libcompose/config"
-	"github.com/rancher/os/config"
 	"golang.org/x/sys/unix"
+
+	"github.com/codegangsta/cli"
+
+	composeConfig "github.com/docker/libcompose/config"
+
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 )
 
 func runcCommand() cli.Command {
@@ -64,6 +67,10 @@ func runcAction(c *cli.Context) error {
 	}
 
 	noPivot := c.Bool("no-pivot")
+
+	// TODO: either add a rw layer over the original bundle, or copy it to a new location
+	// TODO: use the os-config image name to find the base bundle.
+	// TODO: need to modify the basic config.json file so we have the os-config's command and other settings
 
 	err := runc(serviceName, bundleDir, noPivot, service)
 	if err != nil {
