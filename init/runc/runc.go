@@ -1,3 +1,4 @@
+// +build amd64,linux
 package runc
 
 import (
@@ -9,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 
+	//"github.com/containerd/containerd/sys"
 	"golang.org/x/sys/unix"
 
 	composeConfig "github.com/docker/libcompose/config"
@@ -19,17 +21,55 @@ import (
 	"github.com/rancher/os/log"
 )
 
+// RunSet runs all the services in the list
+// TODO: extract from RunC once we have containerd
+func RunSet(serviceSet string, pivotRoot bool) error {
+	set := getServiceSet(serviceSet)
+	//TODO: need to order these based on scope labels
+	for name, _ := range set {
+		Run(name, "", pivotRoot)
+	}
+
+	return nil
+}
+
+func getServiceSet(name string) map[string]*composeConfig.ServiceConfigV1 {
+	cfg := config.LoadConfig()
+	var set map[string]*composeConfig.ServiceConfigV1
+	switch name {
+	case "services":
+		set = cfg.Rancher.Services
+	case "bootstrap":
+		set = cfg.Rancher.BootstrapContainers
+	case "cloud_init_services":
+		set = cfg.Rancher.CloudInitServices
+	case "recovery_services":
+		set = cfg.Rancher.RecoveryServices
+	}
+	return set
+}
+
+func getService(name string) *composeConfig.ServiceConfigV1 {
+	cfg := config.LoadConfig()
+
+	switch {
+	case cfg.Rancher.Services[name] != nil:
+		return cfg.Rancher.Services[name]
+	case cfg.Rancher.BootstrapContainers[name] != nil:
+		return cfg.Rancher.BootstrapContainers[name]
+	case cfg.Rancher.CloudInitServices[name] != nil:
+		return cfg.Rancher.CloudInitServices[name]
+	case cfg.Rancher.RecoveryServices[name] != nil:
+		return cfg.Rancher.RecoveryServices[name]
+	}
+
+	return nil
+}
+
 // Run can be used to start a service listed in rancher.services, rancher.bootstrap, or rancher.cloud_init_services
 func Run(serviceName, bundleDir string, pivotRoot bool) error {
-	cfg := config.LoadConfig()
-	service := cfg.Rancher.Services[serviceName]
-	if service == nil {
-		// maybe its bootstrap or cloud_init_services
-		service = cfg.Rancher.BootstrapContainers[serviceName]
-		if service == nil {
-			service = cfg.Rancher.CloudInitServices[serviceName]
-		}
-	}
+	service := getService(serviceName)
+
 	if service == nil {
 		fmt.Printf("Specified serviceName (%s) not found in RancherOS config", serviceName)
 		return fmt.Errorf("Specified serviceName (%s) not found in RancherOS config", serviceName)
@@ -60,11 +100,17 @@ func Run(serviceName, bundleDir string, pivotRoot bool) error {
 
 	// TODO: either add a rw layer over the original bundle, or copy it to a new location
 
-	err := runc(serviceName, bundleDir, !pivotRoot, service)
+	// need to set ourselves as a child subreaper or we cannot wait for runc as reparents to init
+	//if err := sys.SetSubreaper(1); err != nil {
+	if err := unix.Prctl(unix.PR_SET_CHILD_SUBREAPER, uintptr(1), 0, 0, 0); err != nil {
+		log.Errorf("Cannot set as subreaper: %v", err)
+	}
+
+	err := runc(serviceName, bundleDir, pivotRoot, service)
 	if err != nil {
-		fmt.Printf("Runc error: %s\n", err)
+		fmt.Printf("Runc error: %s", err)
 	} else {
-		fmt.Printf("Runc ok\n")
+		fmt.Printf("Runc ok")
 	}
 	return err
 }
@@ -83,6 +129,7 @@ func runc(serviceName, bundleDir string, noPivot bool, service *composeConfig.Se
 		"create", "--bundle", bundleDir, "--pid-file", pidfile,
 	}
 	if noPivot {
+		log.Infof("Starting runc service with --no-pivot")
 		args = append(args, "--no-pivot")
 	}
 	args = append(args, serviceName)
@@ -111,7 +158,7 @@ func runc(serviceName, bundleDir string, noPivot bool, service *composeConfig.Se
 		p, _ := os.FindProcess(pid)
 		state, err := p.Wait()
 		if err != nil {
-			log.Printf("Process wait error: %v", err)
+			log.Errorf("Process wait error: %v", err)
 		}
 		waitFor <- state
 	}()
@@ -135,6 +182,12 @@ func runc(serviceName, bundleDir string, noPivot bool, service *composeConfig.Se
 
 // prepareFilesystem sets up the mounts, before the container is created
 func prepareFilesystem(path string, service *composeConfig.ServiceConfigV1) error {
+
+	// TODO: work out why these dirs are needed (by console), and not on the host fs by default
+	const mode os.FileMode = 0755
+	os.MkdirAll("/opt", mode)
+	os.MkdirAll("/var/lib/rancher/cache", mode)
+
 	// execute the runtime config that should be done up front
 	// we execute Mounts before Mkdir so you can make a directory under a mount
 	// but we do mkdir of the destination path in case missing
@@ -145,41 +198,40 @@ func prepareFilesystem(path string, service *composeConfig.ServiceConfigV1) erro
 		//options := v[2]
 		mountType := "bind"
 
-		fmt.Printf("Volume(%s)\n", v)
-		fmt.Printf("  dest: %s\n", destination)
-		fmt.Printf("  src: %s\n", source)
+		//log.Infof("Volume(%s)", v)
+		//log.Infof("  dest: %s", destination)
+		//log.Infof("  src: %s", source)
 
 		s, err := os.Stat(source)
 		mkdir := destination
 		destFile := ""
 		switch {
 		case err != nil:
-			fmt.Printf("Error stating %s: %s\n", source, err)
+			log.Errorf("Error stating %s: %s", source, err)
 			//			mkdir = ""
 			// This is potentially flawed - we might want both to come into existence
 			mkdir = filepath.Dir(destination)
 			destFile = destination
 		case s.IsDir():
-			fmt.Printf("MkdirAll(%s)\n", destination)
 		default:
-			fmt.Printf("stating %s: not a Dir: %s\n", source, s.Mode())
+			log.Infof("stating %s: not a Dir: %s", source, s.Mode())
 			mkdir = filepath.Dir(destination)
 			destFile = destination
 		}
 		if mkdir != "" {
-			fmt.Printf("MkdirAll(%s)\n", mkdir)
+			log.Infof("MkdirAll(%s)", mkdir)
 
 			const mode os.FileMode = 0755
 			err := os.MkdirAll(mkdir, mode)
 			if err != nil {
-				log.Errorf("Cannot create directory for mount destination %s: %v\n", mkdir, err)
+				log.Errorf("Cannot create directory for mount destination %s: %v", mkdir, err)
 			}
 		}
 		// if the source is a file, then create the destination file too
 		if destFile != "" {
 			f, err := os.OpenFile(destFile, os.O_WRONLY|os.O_CREATE, s.Mode())
 			if err != nil {
-				log.Errorf("Cannot create file for mount destination %s: %v\n", destFile, err)
+				log.Errorf("Cannot create file for mount destination %s: %v", destFile, err)
 			}
 			f.Close()
 		}
@@ -202,11 +254,11 @@ func prepareFilesystem(path string, service *composeConfig.ServiceConfigV1) erro
 			d, err := os.Stat(destination)
 			switch {
 			case err != nil:
-				fmt.Printf("Error stating %s: %s\n", destination, err)
+				log.Errorf("Error stating %s: %s", destination, err)
 			case d.IsDir():
-				fmt.Printf("MkdirAll(%s)\n", destination)
+				log.Infof("MkdirAll(%s)", destination)
 			default:
-				fmt.Printf("stating %s: not a Dir: %s\n", destination, d.Mode())
+				log.Infof("stating %s: not a Dir: %s", destination, d.Mode())
 			}
 
 			return fmt.Errorf("Failed to mount %s to %s : %v", source, destination, err)

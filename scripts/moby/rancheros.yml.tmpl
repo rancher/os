@@ -2,7 +2,7 @@ kernel:
 #  image: "linuxkit/kernel:4.9.x"
   image: "rancher/os-kernel:4.9.45-rancher"
 #  cmdline: "debug ignore_loglevel log_buf_len=10M print_fatal_signals=1 LOGLEVEL=8 earlyprintk sched_debug initcall_debug option.debug=Y break=y console=ttyS0 console=tty0 console=tty1 page_poison=1 printk.devkmsg=on rancher.debug=true rancher.password=rancher rancher.autologin=ttyS0 rancher.autologin=tty0 rancher.autologin=tty1"
-  cmdline: 'loglevel=8 netconsole=+9999@10.10.10.123/,514@10.10.10.108/ rancher.recovery=true printk.devkmsg=on rancher.debug=true rancher.password=rancher console=ttyS0 rancher.autologin=ttyS0 console=tty0 rancher.autologin=tty0 console=tty1 rancher.autologin=tty1 rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.rm_usr'
+  cmdline: 'rancher.recovery=true printk.devkmsg=on rancher.debug=true rancher.password=rancher console=ttyS0 rancher.autologin=ttyS0 console=ttyS1 rancher.autologin=ttyS1 rancher.autologin=tty0 rancher.autologin=tty1 rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.rm_usr'
 init:
   - zombie/os
 #  - rancher/os-installer

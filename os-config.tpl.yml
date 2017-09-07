@@ -62,6 +62,31 @@ rancher:
       - /var/lib/rancher:/var/lib/rancher
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/log:/var/log
+  recovery_services:
+    recovery:
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: ros recovery-init
+      labels:
+        io.rancher.os.scope: system
+        io.rancher.os.detach: "false"
+      net: host
+      uts: host
+      pid: host
+      ipc: host
+      privileged: true
+      volumes:
+      - /usr/bin/iptables:/sbin/iptables:ro
+      - /:/host
+      - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
+      - /lib/modules:/lib/modules
+      - /lib/firmware:/lib/firmware
+      - /usr/bin/ros:/usr/bin/ros:ro
+      - /usr/bin/ros:/usr/bin/cloud-init-save
+      - /usr/bin/ros:/usr/bin/respawn:ro
+      - /usr/share/ros:/usr/share/ros:ro
+      - /var/lib/rancher:/var/lib/rancher
+      - /var/lib/rancher/conf:/var/lib/rancher/conf
+      - /var/run:/var/run
   bootstrap_docker:
     bridge: none
     storage_driver: overlay

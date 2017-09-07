@@ -5,10 +5,16 @@ cd $(dirname $0)/../dist/moby
 if [ "1" == "2" ]; then
   linuxkit run -mem 4096 -gui rancheros
 else
-#	-nographic \
+
+	CMDLINE="$(cat ./rancheros-cmdline)"
+
+	   # DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
+	   # KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
+#	-monitor telnet:127.0.0.1:1234,server,nowait \
 #        -curses \
+#	-serial tcp::4444,server \
   qemu-system-x86_64 \
-        -curses \
+	-nographic \
 	-kernel ./rancheros-kernel \
 	-initrd ./rancheros-initrd.img \
 	-m 4096 \
@@ -18,5 +24,5 @@ else
   -machine q35,accel=kvm:tcg \
 	-net nic,vlan=0,model=virtio \
 	-net user,vlan=0,hostfwd=tcp::3333-:22,hostname=rancher-moby \
-	-append 'rancher.recovery=true printk.devkmsg=on rancher.debug=true rancher.password=rancher console=ttyS0 rancher.autologin=ttyS0 console=tty0 rancher.autologin=tty0 console=tty1 rancher.autologin=tty1 rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.rm_usr' 
+	-append "$CMDLINE"
 fi

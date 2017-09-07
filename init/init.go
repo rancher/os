@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
+	"github.com/rancher/os/init/runc"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
@@ -91,7 +92,7 @@ func MainInit() {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Starting Recovery console: %v\n", r)
-			recovery(nil)
+			recovery(false)
 		}
 	}()
 
@@ -146,8 +147,13 @@ func tryMountState(cfg *config.CloudConfig) error {
 	}
 
 	// If we failed to mount lets run bootstrap and try again
-	if err := bootstrap(cfg); err != nil {
-		return err
+	if util.ResolveDevice(cfg.Rancher.State.Dev) != "" && len(cfg.Bootcmd) == 0 {
+		log.Info("NOT Running Bootstrap")
+	} else {
+		log.Info("Running Bootstrap")
+		if err := runc.RunSet("bootstrap", util.RootFsIsNotReal()); err != nil {
+			return err
+		}
 	}
 
 	return mountState(cfg)
@@ -262,12 +268,6 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"load modules", loadModules},
-		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			if cfg.Rancher.Recovery {
-				recovery(nil)
-			}
-			return cfg, nil
-		}},
 		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if dev := util.ResolveDevice("LABEL=B2D_STATE"); dev != "" {
 				boot2DockerEnvironment = true
@@ -334,7 +334,7 @@ func RunInit() error {
 			}
 
 			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
-			if err := runCloudInitServices(cfg); err != nil {
+			if err := runc.RunSet("cloud_init_services", util.RootFsIsNotReal()); err != nil {
 				log.Error(err)
 			}
 
@@ -451,12 +451,19 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"init SELinux", initializeSelinux},
 		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
+		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if cfg.Rancher.Recovery {
+				recovery(false)
+			}
+			return cfg, nil
+		}},
 		config.CfgFuncData{"sysinit", sysInit},
 	}
 
 	cfg, err := config.ChainCfgFuncs(nil, initFuncs)
 	if err != nil {
-		recovery(err)
+		log.Errorf("Error starting sysinit: %s", err)
+		recovery(false)
 	}
 
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
@@ -467,7 +474,7 @@ func RunInit() error {
 	_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
 	if err != nil {
 		log.Errorf("Error Launching System Docker: %s", err)
-		recovery(err)
+		recovery(false)
 		return err
 	}
 	// Code never gets here - rancher.system_docker.exec=true

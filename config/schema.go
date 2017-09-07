@@ -28,6 +28,7 @@ var schema = `{
         "environment": {"type": "object"},
         "cloud_init_services": {"type": "object"},
         "services": {"type": "object"},
+        "recovery_services": {"type": "object"},
         "bootstrap": {"type": "object"},
         "autoformat": {"type": "object"},
         "bootstrap_docker": {"$ref": "#/definitions/docker_config"},

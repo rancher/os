@@ -108,6 +108,7 @@ type RancherConfig struct {
 	Services            map[string]*composeConfig.ServiceConfigV1 `yaml:"services,omitempty"`
 	BootstrapContainers map[string]*composeConfig.ServiceConfigV1 `yaml:"bootstrap,omitempty"`
 	CloudInitServices   map[string]*composeConfig.ServiceConfigV1 `yaml:"cloud_init_services,omitempty"`
+	RecoveryServices    map[string]*composeConfig.ServiceConfigV1 `yaml:"recovery_services,omitempty"`
 	BootstrapDocker     DockerConfig                              `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                                 `yaml:"cloud_init,omitempty"`
 	Debug               bool                                      `yaml:"debug,omitempty"`
