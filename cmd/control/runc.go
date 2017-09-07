@@ -170,7 +170,7 @@ func runc(serviceName, bundleDir string, noPivot bool, service *composeConfig.Se
 	cleanup(bundleDir)
 	_ = os.Remove(pidfile)
 
-	_ = os.RemoveAll(tmpdir)
+	//_ = os.RemoveAll(tmpdir)
 
 	return nil
 }

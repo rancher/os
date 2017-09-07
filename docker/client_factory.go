@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -82,6 +83,8 @@ func ClientOK(endpoint string, test func() bool) error {
 		}
 		retry = true
 		log.Infof("Waiting for Docker at %s", endpoint)
+		// TODO: system-docker is going away - removeme / replace with runc/containerd
+		log.Fatalf("crash!\n%v", string(debug.Stack()))
 	}
 
 	if err != nil {

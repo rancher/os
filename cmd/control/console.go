@@ -18,6 +18,7 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
+	"os"
 )
 
 func consoleSubcommands() []cli.Command {
@@ -163,6 +164,9 @@ func availableConsoles(cfg *config.CloudConfig) []string {
 // CurrentConsole gets the name of the console that's running
 func CurrentConsole() (console string) {
 	// TODO: replace this docker container look up with a libcompose service lookup?
+	if _, err := os.Stat("/var/run/system-docker.sock"); err != nil {
+		return "default"
+	}
 
 	// sudo system-docker inspect --format "{{.Config.Image}}" console
 	client, err := docker.NewSystemClient()
