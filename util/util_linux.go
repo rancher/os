@@ -26,7 +26,6 @@ func RootFsIsNotReal() bool {
 	return int64(stat.Type) == tmpfsMagic || int64(stat.Type) == ramfsMagic
 }
 
-
 func mountProc() error {
 	if _, err := os.Stat("/proc/self/mountinfo"); os.IsNotExist(err) {
 		if _, err := os.Stat("/proc"); os.IsNotExist(err) {
