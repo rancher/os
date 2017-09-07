@@ -454,6 +454,7 @@ func RunInit() error {
 		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if cfg.Rancher.Recovery {
 				recovery(false)
+				pidOne() // need to wait, because the rinc.Run isn't.
 			}
 			return cfg, nil
 		}},

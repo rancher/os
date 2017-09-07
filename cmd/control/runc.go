@@ -46,5 +46,5 @@ func runcAction(c *cli.Context) error {
 	}
 	bundleDir := c.String("bundle")
 	pivotRoot := c.Bool("pivot-root")
-	return runc.Run(serviceName, bundleDir, pivotRoot)
+	return runc.Run(serviceName, bundleDir, !pivotRoot)
 }
