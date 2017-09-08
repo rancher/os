@@ -226,7 +226,7 @@
                 "soft": 1024
             }
         ],
-        "noNewPrivileges": true
+        "noNewPrivileges": false
     },
     "root": {
         "path": "rootfs",
