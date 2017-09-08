@@ -2,6 +2,8 @@
 
 [![GoDoc](https://godoc.org/github.com/docker/machine?status.png)](https://godoc.org/github.com/docker/machine)
 [![Build Status](https://travis-ci.org/docker/machine.svg?branch=master)](https://travis-ci.org/docker/machine)
+[![Windows Build Status](https://ci.appveyor.com/api/projects/status/github/docker/machine?svg=true)](https://ci.appveyor.com/project/dmp42/machine-fp5u5)
+[![Coverage Status](https://coveralls.io/repos/docker/machine/badge.svg?branch=master&service=github)](https://coveralls.io/github/docker/machine?branch=master)
 
 Want to hack on Machine? Awesome! Here are instructions to get you
 started.
@@ -10,106 +12,177 @@ Machine is a part of the [Docker](https://www.docker.com) project, and follows
 the same rules and principles. If you're already familiar with the way
 Docker does things, you'll feel right at home.
 
-Otherwise, go read
-[Docker's contributions guidelines](https://github.com/docker/docker/blob/master/CONTRIBUTING.md).
+Otherwise, please read [Docker's contributions
+guidelines](https://github.com/docker/docker/blob/master/CONTRIBUTING.md).
+
+# Building
 
 The requirements to build Machine are:
 
-1. A running instance of Docker
-2. The `bash` shell
+1.  A running instance of Docker or a Golang 1.6 development environment
+2.  The `bash` shell
+3.  [Make](https://www.gnu.org/software/make/)
 
-To build, run:
+## Build using Docker containers
 
-    $ script/build
+To build the `docker-machine` binary using containers, simply run:
 
-From the Machine repository's root.  Machine will run the build inside of a
-Docker container and the compiled binaries will appear in the project directory
-on the host.
+    $ export USE_CONTAINER=true
+    $ make build
 
-By default, Machine will run a build which cross-compiles binaries for a variety
-of architectures and operating systems.  If you know that you are only compiling
-for a particular architecture and/or operating system, you can speed up
-compilation by overriding the default argument that the build script passes
-to [gox](https://github.com/mitchellh/gox).  This is very useful if you want
-to iterate quickly on a new feature, bug fix, etc.
+## Local Go development environment
 
-For instance, if you only want to compile for use on OS X with the x86_64 arch,
-run:
+Make sure the source code directory is under a correct directory structure;
+Example of cloning and preparing the correct environment `GOPATH`:
 
-    $ script/build -osarch="darwin/amd64"
+    $ mkdir docker-machine
+    $ cd docker-machine
+    $ export GOPATH="$PWD"
+    $ go get github.com/docker/machine
+    $ cd src/github.com/docker/machine
 
-If you don't need to run the `docker build` to generate the image on each
-compile, i.e. if you have built the image already, you can skip the image build
-using the `SKIP_BUILD` environment variable, for instance:
+If you want to use your existing workspace, make sure your `GOPATH` is set to
+the directory that contains your `src` directory, e.g.:
 
-    $ SKIP_BUILD=1 script/build -osarch="darwin/amd64"
+    $ export GOPATH=/home/yourname/work
+    $ mkdir -p $GOPATH/src/github.com/docker
+    $ cd $GOPATH/src/github.com/docker && git clone git@github.com:docker/machine.git
+    $ cd machine        
 
-If you have any questions we're in #docker-machine on Freenode.
+At this point, simply run:
 
-## Unit Tests
+    $ make build
 
-To run the unit tests for the whole project, using the following script:
+## Built binary
 
-    $ script/test
+After the build is complete a `bin/docker-machine` binary will be created.
 
-This will run the unit tests inside of a container, so you don't have to worry
-about configuring your environment properly before doing so.
+You may call:
 
-To run the unit tests for only a specific subdirectory of the project, you can
-pass an argument to that script to specify which directory, e.g.:
+    $ make clean
 
-    $ script/test ./drivers/amazonec2
+to clean-up build results.
+
+## Tests and validation
+
+We use the usual `go` tools for this, to run those commands you need at least the linter which you can
+install with `go get -u github.com/golang/lint/golint`
+
+To run basic validation (dco, fmt), and the project unit tests, call:
+
+    $ make test
+
+If you want more indepth validation (vet, lint), and all tests with race detection, call:
+
+    $ make validate
 
 If you make a pull request, it is highly encouraged that you submit tests for
 the code that you have added or modified in the same pull request.
 
 ## Code Coverage
 
-Machine includes a script to check for missing `*_test.go` files and to generate
-an [HTML-based representation of which code is covered by tests](http://blog.golang.org/cover#TOC_5.).
+To generate an html code coverage report of the Machine codebase, run:
 
-To run the code coverage script, execute:
+    make coverage-serve
 
-```console
-$ ./script/coverage serve
-```
+And navigate to <http://localhost:8000> (hit `CTRL+C` to stop the server).
 
-You will see the results of the code coverage check as they come in.
+### Native build
 
-This will also generate the code coverage website and serve it from a container
-on port 8000.  By default, `/` will show you the source files from the base
-directory, and you can navigate to the coverage for any particular subdirectory
-of the Docker Machine repo's root by going to that path.  For instance, to see
-the coverage for the VirtualBox driver's package, browse to `/drivers/virtualbox`.
+Alternatively, if you are building natively, you can simply run:
 
-![](/docs/img/coverage.png)
+    make coverage-html
 
-You can hit `CTRL+C` to stop the server.
+
+## List of all targets
+
+### High-level targets
+
+    make clean
+    make build
+    make test
+    make validate
+
+### Advanced build targets
+
+Build for all supported OSes and architectures (binaries will be in the `bin` project subfolder):
+
+    make build-x
+
+Build for a specific list of OSes and architectures:
+
+    TARGET_OS=linux TARGET_ARCH="amd64 arm" make build-x
+
+You can further control build options through the following environment variables:
+
+    DEBUG=true # enable debug build
+    STATIC=true # build static (note: when cross-compiling, the build is always static)
+    VERBOSE=true # verbose output
+    PREFIX=folder # put binaries in another folder (not the default `./bin`)
+
+Scrub build results:
+
+    make build-clean
+
+### Coverage targets
+
+    make coverage-html
+    make coverage-serve
+    make coverage-send
+    make coverage-generate
+    make coverage-clean
+
+### Tests targets
+
+    make test-short
+    make test-long
+    make test-integration
+
+### Validation targets
+
+    make fmt
+    make vet
+    make lint
+    make dco
+
+### Restore, update and save dependencies
+
+When you make a fresh copy of the repo, all the dependecies are in `vendor/` directory for the builds to work. If you want to update the dependencies
+
+#### Restore the dependencies
+
+    make dep-restore
+
+   This uses godep to restores all the dependencies to your `$GOPATH`. Note that this changes the packages in your `$GOPATH`
+
+#### Add one ore more dependencies
+
+    go get -u <new dependency>
+
+#### Save the dependencies to `vendor/`
+
+    make dep-save
+
+4. Verify the changes in your repo, commit and submit a pull request
 
 ## Integration Tests
 
 ### Setup
 
-We utilize [BATS](https://github.com/sstephenson/bats) for integration testing.
-This runs tests against the generated binary.  To use, first make sure to
-[install BATS](https://github.com/sstephenson/bats).  Then run `./script/build`
-to generate the binary for your system.
+We use [BATS](https://github.com/sstephenson/bats) for integration testing, so,
+first make sure to [install it](https://github.com/sstephenson/bats#installing-bats-from-source).
 
 ### Basic Usage
 
-Once you have the binary, the integration tests can be invoked using the
-`test/integration/run-bats.sh` wrapper script.
+You first need to build, calling `make build`.
 
-Using this wrapper script, you can invoke a test or subset of tests for a
-particular driver.  To set the driver, use the `DRIVER` environment variable.
+You can then invoke integration tests calling `DRIVER=foo make test-integration TESTSUITE`, where `TESTSUITE` is
+one of the `test/integration` subfolder, and `foo` is the specific driver you want to test.
 
-The following examples are all shown relative to the project's root directory,
-but you should be able to invoke them from any directory without issue.
-
-To invoke just one test:
+Examples:
 
 ```console
-$ DRIVER=virtualbox ./test/integration/run-bats.sh test/integration/core/core-commands.bats
+$ DRIVER=virtualbox make test-integration test/integration/core/core-commands.bats
  ✓ virtualbox: machine should not exist
  ✓ virtualbox: create
  ✓ virtualbox: ls
@@ -133,25 +206,12 @@ Cleaning up machines...
 Successfully removed bats-virtualbox-test
 ```
 
-To invoke a shared test with a different driver:
-
-```console
-$ DRIVER=digitalocean ./test/integration/run-bats.sh test/integration/core/core-commands.bats
-...
-```
-
 To invoke a directory of tests recursively:
 
 ```console
-$ DRIVER=virtualbox ./test/integration/run-bats.sh test/integration/core/
+$ DRIVER=virtualbox make test-integration test/integration/core/
 ...
 ```
-
-If you want to invoke a group of tests across two or more different drivers at
-once (e.g. every test in the `drivers` directory), at the time of writing there
-is no first-class support to do so - you will have to write your own wrapper
-scripts, bash loops, etc.  However, in the future, this may gain first-class
-support as usage patterns become more clear.
 
 ### Extra Create Arguments
 
@@ -163,15 +223,13 @@ Keep in mind that Machine supports environment variables for many of these
 flags.  So, for instance, you could run the command (substituting, of course,
 the proper secrets):
 
-```
-$ DRIVER=amazonec2 \
-  AWS_VPC_ID=vpc-xxxxxxx \
-  AWS_SECRET_ACCESS_KEY=yyyyyyyyyyyyy \
-  AWS_ACCESS_KEY_ID=zzzzzzzzzzzzzzzz \
-  AWS_AMI=ami-12663b7a \
-  AWS_SSH_USER=ec2-user \
-  ./test/integration/run-bats.sh test/integration/core
-```
+    $ DRIVER=amazonec2 \
+      AWS_VPC_ID=vpc-xxxxxxx \
+      AWS_SECRET_ACCESS_KEY=yyyyyyyyyyyyy \
+      AWS_ACCESS_KEY_ID=zzzzzzzzzzzzzzzz \
+      AWS_AMI=ami-12663b7a \
+      AWS_SSH_USER=ec2-user \
+      make test-integration test/integration/core
 
 in order to run the core tests on Red Hat Enterprise Linux on Amazon.
 
@@ -183,11 +241,11 @@ guide you.
 
 At the time of writing, there is:
 
-1. A `core` directory which contains tests that are applicable to all drivers.
-2. A `drivers` directory which contains tests that are applicable only to
-specific drivers with sub-directories for each provider.
-3. A `cli` directory which is meant for testing functionality of the command
-line interface, without much regard for driver-specific details.
+1.  A `core` directory which contains tests that are applicable to all drivers.
+2.  A `drivers` directory which contains tests that are applicable only to
+    specific drivers with sub-directories for each provider.
+3.  A `cli` directory which is meant for testing functionality of the command
+    line interface, without much regard for driver-specific details.
 
 ### Guidelines
 
@@ -196,15 +254,15 @@ work in progress, but here are some general guidelines from the maintainers:
 
 1.  Ideally, each test file should have only one concern.
 2.  Tests generally should not spin up more than one machine unless the test is
-deliberately testing something which involves multiple machines, such as an `ls`
-test which involves several machines, or a test intended to create and check
-some property of a Swarm cluster.
+    deliberately testing something which involves multiple machines, such as an `ls`
+    test which involves several machines, or a test intended to create and check
+    some property of a Swarm cluster.
 3.  BATS will print the output of commands executed during a test if the test
-fails.  This can be useful, for instance to dump the magic `$output` variable
-that BATS provides and/or to get debugging information.
+    fails.  This can be useful, for instance to dump the magic `$output` variable
+    that BATS provides and/or to get debugging information.
 4.  It is not strictly needed to clean up the machines as part of the test.  The
-BATS wrapper script has a hook to take care of cleaning up all created machines
-after each test.
+    BATS wrapper script has a hook to take care of cleaning up all created machines
+    after each test.
 
 # Drivers
 
@@ -212,16 +270,12 @@ Docker Machine has several included drivers that supports provisioning hosts
 in various providers.  If you wish to contribute a driver, we ask the following
 to ensure we keep the driver in a consistent and stable state:
 
-- Address issues filed against this driver in a timely manner
-- Review PRs for the driver
-- Be responsible for maintaining the infrastructure to run unit tests
-and integration tests on the new supported environment
-- Participate in a weekly driver maintainer meeting
+-   Address issues filed against this driver in a timely manner
+-   Review PRs for the driver
+-   Be responsible for maintaining the infrastructure to run unit tests
+    and integration tests on the new supported environment
+-   Participate in a weekly driver maintainer meeting
 
-If you can commit to those, the next step is to make sure the driver adheres
-to the [spec](https://github.com/docker/machine/blob/master/docs/DRIVER_SPEC.md).
-
-Once you have created and tested the driver, you can open a PR.
 
 Note: even if those are met does not guarantee a driver will be accepted.
 If you have questions, please do not hesitate to contact us on IRC.

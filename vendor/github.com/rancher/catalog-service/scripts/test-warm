@@ -1,0 +1,17 @@
+#!/bin/bash
+set -ex
+
+cd $(dirname $0)/..
+
+git clone https://github.com/rancher/test-catalog.git /tmp/test-catalog
+
+./bin/rancher-catalog-service-sqlite --config scripts/test-setup.json --validate || true
+
+cd /tmp/test-catalog
+
+cp -r templates/many-versions/13 templates/many-versions/14
+sed -i 's/1.0.13/1.0.14/g' templates/many-versions/14/rancher-compose.yml
+git add templates/
+git config --global user.email "test@test.com"
+git config --global user.name "test"
+git commit -m "test"

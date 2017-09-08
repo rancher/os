@@ -138,7 +138,9 @@ func getThisCgroup(cgroupType string) (string, error) {
 		return "", fmt.Errorf("docker pid not found in /var/run/docker.pid")
 	}
 	pid, err := strconv.Atoi(result[0])
-
+	if err != nil {
+		return "", err
+	}
 	output, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/cgroup", pid))
 	if err != nil {
 		return "", err

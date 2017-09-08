@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
-	lsyslog "github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/sirupsen/logrus"
+	lsyslog "github.com/sirupsen/logrus/hooks/syslog"
 
 	"github.com/rancher/os/config/cmdline"
 )

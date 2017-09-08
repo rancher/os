@@ -1,15 +1,16 @@
-FROM golang:1.4.2-cross
+FROM golang:1.8.3
 
-# TODO: Vendor these `go get` commands using Godep.
-RUN go get github.com/mitchellh/gox
-RUN go get github.com/aktau/github-release
-RUN go get github.com/tools/godep
-RUN go get golang.org/x/tools/cmd/cover
+RUN apt-get update && apt-get install -y --no-install-recommends \
+                openssh-client \
+                rsync \
+        && rm -rf /var/lib/apt/lists/*
 
-ENV GOPATH /go/src/github.com/docker/machine/Godeps/_workspace:/go
-ENV MACHINE_BINARY /go/src/github.com/docker/machine/docker-machine
+RUN go get  github.com/golang/lint/golint \
+            github.com/mattn/goveralls \
+            golang.org/x/tools/cover
+
 ENV USER root
-
 WORKDIR /go/src/github.com/docker/machine
 
-ADD . /go/src/github.com/docker/machine
+COPY . ./
+RUN mkdir bin

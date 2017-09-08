@@ -1,18 +1,18 @@
-.PHONY: all test validate-dco validate-gofmt validate build
+# Plain make targets if not requested inside a container
+ifneq (,$(findstring test-integration,$(MAKECMDGOALS)))
+	include Makefile.inc
+	include mk/main.mk
+else ifneq ($(USE_CONTAINER), true)
+	include Makefile.inc
+	include mk/main.mk
+else
+# Otherwise, with docker, swallow all targets and forward into a container
+DOCKER_BUILD_DONE := ""
 
-all: validate test build
+test: .DEFAULT
 
-test:
-	script/test
+.DEFAULT:
+	@test ! -z "$(DOCKER_BUILD_DONE)" || ./script/build_in_container.sh $(MAKECMDGOALS)
+	$(eval DOCKER_BUILD_DONE := "done")
 
-validate-dco:
-	script/validate-dco
-
-validate-gofmt:
-	script/validate-gofmt
-
-validate: validate-dco validate-gofmt
-
-build:
-	script/build
-
+endif

@@ -1,0 +1,18 @@
+#!/bin/bash
+set -e
+
+cd $(dirname $0)/..
+
+./scripts/test-warm
+
+echo Running tests
+
+PACKAGES=". $(find -name '*.go' | xargs -I{} dirname {} |  cut -f2 -d/ | sort -u | grep -Ev '(^\.$|.git|.trash-cache|vendor|bin)' | sed -e 's!^!./!' -e 's!$!/...!')"
+
+[ "${ARCH}" == "amd64" ] && RACE=-race
+go test ${RACE} -cover -tags=test ${PACKAGES}
+
+./bin/rancher-catalog-service-sqlite --sqlite --config scripts/test-repo.json -p 8088 --track=false &
+trap "kill $!" exit
+cd integration
+tox -e flake8,py27

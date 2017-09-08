@@ -8,7 +8,7 @@ import (
 	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
-	machineUtil "github.com/docker/machine/utils"
+	machineUtil "github.com/docker/machine/libmachine/cert"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
 )

@@ -1,0 +1,11 @@
+{
+	"version": 0,
+	"dependencies": [
+		{
+			"importpath": "github.com/sigma/bdoor",
+			"repository": "https://github.com/sigma/bdoor",
+			"revision": "babf2a4017b020d4ce04e8167076186e82645dd1",
+			"branch": "master"
+		}
+	]
+}

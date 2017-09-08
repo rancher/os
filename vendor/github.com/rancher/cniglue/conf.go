@@ -1,43 +1,26 @@
 package glue
 
 import (
-	"encoding/json"
-	"os"
-	"path"
-
+	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
-	"github.com/opencontainers/specs/specs-go"
 )
 
 type DockerPluginState struct {
 	ContainerID string
-	State       specs.State
-	Spec        specs.Spec
 	HostConfig  container.HostConfig
 	Config      container.Config
+	Pid         int
 }
 
-func ReadState() (*DockerPluginState, error) {
-	pluginState := DockerPluginState{}
-	config := struct {
-		ID     string
-		Config container.Config
-	}{}
+func LookupPluginState(container types.ContainerJSON) (*DockerPluginState, error) {
+	result := &DockerPluginState{}
 
-	if err := json.NewDecoder(os.Stdin).Decode(&pluginState.State); err != nil {
-		return nil, err
+	result.ContainerID = container.ID
+	result.HostConfig = *container.HostConfig
+	result.Config = *container.Config
+	if container.State != nil {
+		result.Pid = container.State.Pid
 	}
 
-	if err := readJSONFile(os.Getenv("DOCKER_HOST_CONFIG"), &pluginState.HostConfig); err != nil {
-		return nil, err
-	}
-
-	if err := readJSONFile(os.Getenv("DOCKER_CONFIG"), &config); err != nil {
-		return nil, err
-	}
-
-	pluginState.Config = config.Config
-	pluginState.ContainerID = config.ID
-
-	return &pluginState, readJSONFile(path.Join(pluginState.State.BundlePath, "config.json"), &pluginState.Spec)
+	return result, nil
 }

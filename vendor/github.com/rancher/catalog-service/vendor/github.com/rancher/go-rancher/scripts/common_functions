@@ -1,0 +1,35 @@
+#!/bin/bash
+set -e
+
+set_project_vars()
+{
+    PACKAGE=./gopath/src/$(<.package)
+    PROJECT=$(basename $PACKAGE)
+
+    export GOPATH=$(pwd)/Godeps/_workspace:$(pwd)/gopath
+}
+
+gen() {
+    BASE=$1
+
+    curl -s "$BASE/schemas?_role=service" | jq . > schemas.json
+    echo Saved schemas.json
+
+    echo -n Generating go code...
+    rm -rf ../v2/generated_* || true
+    go run generator.go
+    echo " Done"
+
+    gofmt -w ../v2/generated_*
+    echo Formatted code
+
+    if [ -n "$2" ]; then
+        rm -rf ../$2
+        mv ../v2 ../$2
+        if [ -n "$3" ]; then
+            sed -i -e 's/package client/package '$2'/g' ../$2/*.go
+        fi
+        git checkout ../v2
+    fi
+    rm schemas.json
+}
