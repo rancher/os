@@ -35,11 +35,6 @@ func Main() {
 func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	log.Infof("Apply Network Config")
 	userSetDNS := len(cfg.Rancher.Network.DNS.Nameservers) > 0 || len(cfg.Rancher.Network.DNS.Search) > 0
-	if userSetDNS {
-		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search, nil); err != nil {
-			log.Error(err)
-		}
-	}
 
 	if err := hostname.SetHostnameFromCloudConfig(cfg); err != nil {
 		log.Error(err)
@@ -66,6 +61,14 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 			log.Error(err)
 		}
 	}
+	if userSetDNS {
+		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search, nil); err != nil {
+			log.Error(err)
+		} else {
+			log.Infof("writing to /etc/resolv.conf: nameservers: %v, search: %v", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search)
+		}
+	}
+
 	resolve, err := ioutil.ReadFile("/etc/resolv.conf")
 	log.Debugf("Resolve.conf == [%s], %s", resolve, err)
 
