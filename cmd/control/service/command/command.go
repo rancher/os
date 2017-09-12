@@ -145,7 +145,7 @@ func LogsCommand(factory composeApp.ProjectFactory) cli.Command {
 				Value: 100,
 			},
 			cli.BoolFlag{
-				Name:  "follow",
+				Name:  "follow, f",
 				Usage: "Follow log output.",
 			},
 		},
