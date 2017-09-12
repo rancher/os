@@ -15,6 +15,9 @@ import (
 )
 
 func bootstrapAction(c *cli.Context) error {
+	log.InitLogger()
+	log.Info("Running cloud-init-save")
+
 	log.Debugf("bootstrapAction")
 	if err := UdevSettle(); err != nil {
 		log.Errorf("Failed to run udev settle: %v", err)

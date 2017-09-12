@@ -359,11 +359,20 @@ func RunInit() error {
 			}
 			// And all the files in /var/log/boot/
 			// TODO: I wonder if we can put this code into the log module, and have things write to the buffer until we FsReady()
-			bootLog := "/var/log/boot/"
+			bootLog := "/var/log/"
 			if files, err := ioutil.ReadDir(bootLog); err == nil {
 				for _, file := range files {
 					filePath := filepath.Join(bootLog, file.Name())
 					filesToCopy = append(filesToCopy, filePath)
+					log.Debugf("Swizzle: Found %s to save", filePath)
+				}
+			}
+			bootLog = "/var/log/boot/"
+			if files, err := ioutil.ReadDir(bootLog); err == nil {
+				for _, file := range files {
+					filePath := filepath.Join(bootLog, file.Name())
+					filesToCopy = append(filesToCopy, filePath)
+					log.Debugf("Swizzle: Found %s to save", filePath)
 				}
 			}
 			for _, name := range filesToCopy {
@@ -373,7 +382,7 @@ func RunInit() error {
 						log.Errorf("read cfg file (%s) %s", name, err)
 						continue
 					}
-					log.Debugf("Saved %s to memory", name)
+					log.Debugf("Swizzle: Saved %s to memory", name)
 					configFiles[name] = content
 				}
 			}
@@ -405,7 +414,7 @@ func RunInit() error {
 				if err := util.WriteFileAtomic(name, content, fileMode); err != nil {
 					log.Error(err)
 				}
-				log.Infof("Wrote log to %s", name)
+				log.Infof("Swizzle: Wrote file to %s", name)
 			}
 			if err := os.MkdirAll(config.VarRancherDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
