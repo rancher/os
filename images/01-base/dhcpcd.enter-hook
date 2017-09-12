@@ -1,0 +1,6 @@
+#!/bin/bash
+
+echo "DHCPCD: $interface $reason" &>> /var/log/dhcpcd.debug.log
+echo "$(date)" &>> /var/log/dhcpcd.debug.log
+set | sed -ne 's/^new_//p' | sort &>> /var/log/dhcpcd.debug.log
+echo "--------------------------" &>> /var/log/dhcpcd.debug.log
