@@ -21,7 +21,7 @@ rancher:
   bootstrap:
     bootstrap:
       image: {{.OS_REPO}}/os-bootstrap:{{.VERSION}}{{.SUFFIX}}
-      command: ros bootstrap
+      command: ros-bootstrap
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -33,6 +33,7 @@ rancher:
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
       - /usr/bin/ros:/usr/bin/ros:ro
+      - /usr/bin/ros:/usr/bin/ros-bootstrap:ro
       - /usr/share/ros:/usr/share/ros:ro
       - /var/lib/rancher:/var/lib/rancher:ro
       - /var/log:/var/log

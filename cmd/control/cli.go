@@ -28,13 +28,6 @@ func Main() {
 
 	app.Commands = []cli.Command{
 		{
-			Name:            "bootstrap",
-			Hidden:          true,
-			HideHelp:        true,
-			SkipFlagParsing: true,
-			Action:          bootstrapAction,
-		},
-		{
 			Name:        "config",
 			ShortName:   "c",
 			Usage:       "configure settings",
