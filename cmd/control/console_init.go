@@ -216,12 +216,12 @@ func modifySshdConfig() error {
 	sshdConfigString := string(sshdConfig)
 
 	for _, item := range []string{
-		"UseDNS ",
-		"PermitRootLogin ",
-		"ServerKeyBits ",
-		"AllowGroups ",
+		"UseDNS no",
+		"PermitRootLogin no",
+		"ServerKeyBits 2048",
+		"AllowGroups docker",
 	} {
-		match, err := regexp.Match("(?m)^"+item, sshdConfig)
+		match, err := regexp.Match("^"+item, sshdConfig)
 		if err != nil {
 			return err
 		}
