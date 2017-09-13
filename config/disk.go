@@ -117,8 +117,6 @@ func SaveInitCmdline(cmdLineArgs string) {
 	env := Insert(make(map[interface{}]interface{}), interface{}("EXTRA_CMDLINE"), interface{}(cmdLineArgs))
 	rancher := Insert(make(map[interface{}]interface{}), interface{}("environment"), env)
 	newCfg := Insert(elidedCfg, interface{}("rancher"), rancher)
-	// make it easy for readElidedCmdline(rawCfg)
-	newCfg = Insert(newCfg, interface{}("EXTRA_CMDLINE"), interface{}(cmdLineArgs))
 
 	if err := WriteToFile(newCfg, CloudConfigInitFile); err != nil {
 		log.Errorf("Failed to write init-cmdline config: %s", err)
@@ -217,13 +215,16 @@ func readMetadata() datasource.Metadata {
 }
 
 func readElidedCmdline(rawCfg map[interface{}]interface{}) map[interface{}]interface{} {
+	if rancher, ok := rawCfg["rancher"].(map[interface{}]interface{}); ok {
+		if environment, ok := rancher["environment"].(map[interface{}]interface{}); ok {
+			for k, v := range environment {
+				if key, _ := k.(string); key == "EXTRA_CMDLINE" {
+					if val, ok := v.(string); ok {
+						cmdLineObj := cmdline.Parse(strings.TrimSpace(util.UnescapeKernelParams(string(val))), false)
 
-	for k, v := range rawCfg {
-		if key, _ := k.(string); key == "EXTRA_CMDLINE" {
-			if val, ok := v.(string); ok {
-				cmdLineObj := cmdline.Parse(strings.TrimSpace(util.UnescapeKernelParams(string(val))), false)
-
-				return cmdLineObj
+						return cmdLineObj
+					}
+				}
 			}
 		}
 	}
