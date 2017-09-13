@@ -37,6 +37,8 @@ func (s *QemuSuite) TestElideCmdLine(c *C) {
 		Equals,
 		"sudo ros config export | grep password",
 	)
+        // Make sure ros config export prints a valid cloud-config
+        s.CheckOutput(c, "#cloud-config\n", Equals, "sudo ros config export | head -1")
 
 	// And then add a service.yml file example.
 	s.CheckCall(c,
