@@ -7,16 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/cli"
-
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 
-func bootstrapAction(c *cli.Context) error {
+func BootstrapMain() {
 	log.InitLogger()
-	log.Info("Running cloud-init-save")
 
 	log.Debugf("bootstrapAction")
 	if err := UdevSettle(); err != nil {
@@ -62,8 +59,6 @@ func bootstrapAction(c *cli.Context) error {
 	if err := UdevSettle(); err != nil {
 		log.Errorf("Failed to run udev settle: %v", err)
 	}
-
-	return nil
 }
 
 func mdadmScan() error {
