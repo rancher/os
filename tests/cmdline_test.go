@@ -31,14 +31,13 @@ func (s *QemuSuite) TestElideCmdLine(c *C) {
 	// TODO: it seems that rancher.password and rancher.autologin are in `ros config export`, but accessible as `ros config get`
 	s.CheckOutput(c, "\n", Equals, "sudo ros config get rancher.password")
 	s.CheckOutput(c,
-		"EXTRA_CMDLINE: /init cc.hostname=nope rancher.password=three\n"+
-			"    EXTRA_CMDLINE: /init cc.hostname=nope rancher.password=three\n"+
+		"    EXTRA_CMDLINE: /init cc.hostname=nope rancher.password=three\n"+
 			"  password: three\n",
 		Equals,
 		"sudo ros config export | grep password",
 	)
-        // Make sure ros config export prints a valid cloud-config
-        s.CheckOutput(c, "#cloud-config\n", Equals, "sudo ros config export | head -1")
+	// Make sure ros config export prints a valid cloud-config
+	s.CheckOutput(c, "#cloud-config\n", Equals, "sudo ros config export | head -1")
 
 	// And then add a service.yml file example.
 	s.CheckCall(c,
