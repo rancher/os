@@ -57,7 +57,8 @@ func getServices(urls []string, key string) ([]string, error) {
 	return result, nil
 }
 
-func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
+func SetProxyEnvironmentVariables() {
+	cfg := config.LoadConfig()
 	if cfg.Rancher.Network.HTTPProxy != "" {
 		err := os.Setenv("HTTP_PROXY", cfg.Rancher.Network.HTTPProxy)
 		if err != nil {
@@ -78,14 +79,16 @@ func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
 	}
 }
 
-func loadFromNetwork(location string) ([]byte, error) {
+func LoadFromNetworkWithCache(location string) ([]byte, error) {
 	bytes := cacheLookup(location)
 	if bytes != nil {
 		return bytes, nil
 	}
+	return LoadFromNetwork(location)
+}
 
-	cfg := config.LoadConfig()
-	SetProxyEnvironmentVariables(cfg)
+func LoadFromNetwork(location string) ([]byte, error) {
+	SetProxyEnvironmentVariables()
 
 	var err error
 
@@ -116,7 +119,7 @@ func LoadResource(location string, network bool) ([]byte, error) {
 		if !network {
 			return nil, ErrNoNetwork
 		}
-		return loadFromNetwork(location)
+		return LoadFromNetworkWithCache(location)
 	} else if strings.HasPrefix(location, "/") {
 		return ioutil.ReadFile(location)
 	}
