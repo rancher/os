@@ -113,6 +113,23 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
+	// write out a profile.d file for the proxy settings.
+	// maybe write these on the host and bindmount into everywhere?
+	proxyLines := []string{}
+	for _, k := range []string{"http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY"} {
+		if v, ok := cfg.Rancher.Environment[k]; ok {
+			proxyLines = append(proxyLines, fmt.Sprintf("export %s=%s", k, v))
+		}
+	}
+
+	if len(proxyLines) > 0 {
+		proxyString := strings.Join(proxyLines, "\n")
+		proxyString = fmt.Sprintf("#!/bin/sh\n%s\n", proxyString)
+		if err := ioutil.WriteFile("/etc/profile.d/proxy.sh", []byte(proxyString), 0755); err != nil {
+			log.Error(err)
+		}
+	}
+
 	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
 	if err := cmd.Run(); err != nil {
 		log.Error(err)

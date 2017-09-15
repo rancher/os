@@ -147,6 +147,10 @@ rancher:
         io.rancher.os.after: cloud-init-execute
         io.docker.compose.rebuild: always
         io.rancher.os.console: default
+      environment:
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
       net: host
       uts: host
       pid: host

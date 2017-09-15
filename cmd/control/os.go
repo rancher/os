@@ -21,6 +21,7 @@ import (
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
 )
 
@@ -104,6 +105,9 @@ func getImages() (*Images, error) {
 
 		q := u.Query()
 		q.Set("current", config.Version)
+		if hypervisor := util.GetHypervisor(); hypervisor == "" {
+			q.Set("hypervisor", hypervisor)
+		}
 		u.RawQuery = q.Encode()
 		upgradeURL = u.String()
 

@@ -77,6 +77,18 @@ func SetProxyEnvironmentVariables() {
 			log.Errorf("Unable to set NO_PROXY: %s", err)
 		}
 	}
+	if cfg.Rancher.Network.HTTPProxy != "" {
+		config.Set("rancher.environment.http_proxy", cfg.Rancher.Network.HTTPProxy)
+		config.Set("rancher.environment.HTTP_PROXY", cfg.Rancher.Network.HTTPProxy)
+	}
+	if cfg.Rancher.Network.HTTPSProxy != "" {
+		config.Set("rancher.environment.https_proxy", cfg.Rancher.Network.HTTPSProxy)
+		config.Set("rancher.environment.HTTPS_PROXY", cfg.Rancher.Network.HTTPSProxy)
+	}
+	if cfg.Rancher.Network.NoProxy != "" {
+		config.Set("rancher.environment.no_proxy", cfg.Rancher.Network.NoProxy)
+		config.Set("rancher.environment.NO_PROXY", cfg.Rancher.Network.NoProxy)
+	}
 }
 
 func LoadFromNetworkWithCache(location string) ([]byte, error) {

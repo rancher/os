@@ -73,7 +73,9 @@ func autologinAction(c *cli.Context) error {
 		// until I make time to read their source, lets just give us a way to get work done
 		loginBin = "bash"
 		args = append(args, "--login")
-		os.Setenv("PROMPT_COMMAND", `echo "[`+fmt.Sprintf("Recovery console %s@%s:${PWD}", user, cfg.Hostname)+`]"`)
+		if mode == "recovery" {
+			os.Setenv("PROMPT_COMMAND", `echo "[`+fmt.Sprintf("Recovery console %s@%s:${PWD}", user, cfg.Hostname)+`]"`)
+		}
 	} else {
 		loginBin = "login"
 		args = append(args, "-f", user)
@@ -91,7 +93,6 @@ func autologinAction(c *cli.Context) error {
 	//return syscall.Exec(loginBinPath, args, os.Environ())
 	cmd = exec.Command(loginBinPath, args...)
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "SVEN", "MORE")
 
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
