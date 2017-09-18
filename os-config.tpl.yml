@@ -325,6 +325,7 @@ rancher:
       volumes:
       - /home:/home
       - /opt:/opt
+      - /var/lib/kubelet:/var/lib/kubelet
     docker:
       {{if eq "amd64" .ARCH -}}
       image: {{.OS_REPO}}/os-docker:17.03.2{{.SUFFIX}}
