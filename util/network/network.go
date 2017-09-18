@@ -57,7 +57,8 @@ func getServices(urls []string, key string) ([]string, error) {
 	return result, nil
 }
 
-func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
+func SetProxyEnvironmentVariables() {
+	cfg := config.LoadConfig()
 	if cfg.Rancher.Network.HTTPProxy != "" {
 		err := os.Setenv("HTTP_PROXY", cfg.Rancher.Network.HTTPProxy)
 		if err != nil {
@@ -76,16 +77,30 @@ func SetProxyEnvironmentVariables(cfg *config.CloudConfig) {
 			log.Errorf("Unable to set NO_PROXY: %s", err)
 		}
 	}
+	if cfg.Rancher.Network.HTTPProxy != "" {
+		config.Set("rancher.environment.http_proxy", cfg.Rancher.Network.HTTPProxy)
+		config.Set("rancher.environment.HTTP_PROXY", cfg.Rancher.Network.HTTPProxy)
+	}
+	if cfg.Rancher.Network.HTTPSProxy != "" {
+		config.Set("rancher.environment.https_proxy", cfg.Rancher.Network.HTTPSProxy)
+		config.Set("rancher.environment.HTTPS_PROXY", cfg.Rancher.Network.HTTPSProxy)
+	}
+	if cfg.Rancher.Network.NoProxy != "" {
+		config.Set("rancher.environment.no_proxy", cfg.Rancher.Network.NoProxy)
+		config.Set("rancher.environment.NO_PROXY", cfg.Rancher.Network.NoProxy)
+	}
 }
 
-func loadFromNetwork(location string) ([]byte, error) {
+func LoadFromNetworkWithCache(location string) ([]byte, error) {
 	bytes := cacheLookup(location)
 	if bytes != nil {
 		return bytes, nil
 	}
+	return LoadFromNetwork(location)
+}
 
-	cfg := config.LoadConfig()
-	SetProxyEnvironmentVariables(cfg)
+func LoadFromNetwork(location string) ([]byte, error) {
+	SetProxyEnvironmentVariables()
 
 	var err error
 
@@ -116,7 +131,7 @@ func LoadResource(location string, network bool) ([]byte, error) {
 		if !network {
 			return nil, ErrNoNetwork
 		}
-		return loadFromNetwork(location)
+		return LoadFromNetworkWithCache(location)
 	} else if strings.HasPrefix(location, "/") {
 		return ioutil.ReadFile(location)
 	}

@@ -3,7 +3,6 @@ package control
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
 	"runtime"
@@ -22,6 +21,8 @@ import (
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/util"
+	"github.com/rancher/os/util/network"
 )
 
 type Images struct {
@@ -83,7 +84,6 @@ func osSubcommands() []cli.Command {
 	}
 }
 
-// TODO: this and the getLatestImage should probably move to utils/network and be suitably cached.
 func getImages() (*Images, error) {
 	upgradeURL, err := getUpgradeURL()
 	if err != nil {
@@ -105,15 +105,13 @@ func getImages() (*Images, error) {
 
 		q := u.Query()
 		q.Set("current", config.Version)
+		if hypervisor := util.GetHypervisor(); hypervisor == "" {
+			q.Set("hypervisor", hypervisor)
+		}
 		u.RawQuery = q.Encode()
 		upgradeURL = u.String()
 
-		resp, err := http.Get(upgradeURL)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		body, err = ioutil.ReadAll(resp.Body)
+		body, err = network.LoadFromNetwork(upgradeURL)
 		if err != nil {
 			return nil, err
 		}

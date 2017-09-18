@@ -451,7 +451,8 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"load modules2", loadModules},
 		config.CfgFuncData{"set proxy env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			network.SetProxyEnvironmentVariables(cfg)
+			network.SetProxyEnvironmentVariables()
+
 			return cfg, nil
 		}},
 		config.CfgFuncData{"init SELinux", initializeSelinux},
