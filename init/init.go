@@ -380,9 +380,10 @@ func RunInit() error {
 			return c, dfs.PrepareFs(&mountConfig)
 		}},
 		config.CfgFuncData{"load modules2", loadModules},
-		config.CfgFuncData{"set proxy env", func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			network.SetProxyEnvironmentVariables(c)
-			return c, nil
+		config.CfgFuncData{"set proxy env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			network.SetProxyEnvironmentVariables()
+
+			return cfg, nil
 		}},
 		config.CfgFuncData{"init SELinux", initializeSelinux},
 		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
