@@ -10,6 +10,7 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	lsyslog "github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/google/gops/agent"
 
 	"github.com/rancher/os/config/cmdline"
 )
@@ -122,6 +123,9 @@ func WithFields(fields Fields) *logrus.Entry {
 
 // InitLogger sets up Logging to log to /dev/kmsg and to Syslog
 func InitLogger() {
+	if err := agent.Listen(nil); err != nil {
+		logrus.Errorf("Failed to start gops agent: %s", err)
+	}
 	if logTheseApps() {
 		innerInit(false)
 		FsReady()

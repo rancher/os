@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,11 +14,7 @@ func ConfigDir() (string, error) {
 	if runtime.GOOS == "windows" {
 		return filepath.Join(os.Getenv("APPDATA"), "gops"), nil
 	}
-	homeDir := guessUnixHomeDir()
-	if homeDir == "" {
-		return "", errors.New("unable to get current user home directory: os/user lookup failed; $HOME is empty")
-	}
-	return filepath.Join(homeDir, ".config", "gops"), nil
+	return filepath.Join("/run", "gops"), nil
 }
 
 func guessUnixHomeDir() string {
