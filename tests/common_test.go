@@ -50,6 +50,7 @@ func (s *QemuSuite) TearDownTest(c *C) {
 	if s.qemuCmd != nil {
 		s.Stop(c)
 	}
+	time.Sleep(time.Second)
 }
 
 // RunQemuWith requires user to specify all the `scripts/run` arguments
@@ -155,6 +156,7 @@ func (s *QemuSuite) NetCheckOutput(c *C, result string, check Checker, additiona
 
 func (s *QemuSuite) runQemu(c *C, args ...string) error {
 	c.Assert(s.qemuCmd, IsNil) // can't run 2 qemu's at once (yet)
+	time.Sleep(time.Second)
 	s.qemuCmd = exec.Command(s.runCommand, args...)
 	if os.Getenv("DEBUG") != "" {
 		s.qemuCmd.Stdout = os.Stdout
@@ -251,7 +253,7 @@ func (s *QemuSuite) Stop(c *C) {
 	c.Assert(s.qemuCmd.Process.Kill(), IsNil)
 	fmt.Printf("%s: stopping qemu 3\n", c.TestName())
 	s.qemuCmd.Process.Wait()
-	//time.Sleep(time.Millisecond * 1000)
+	time.Sleep(time.Second)
 	s.qemuCmd = nil
 	fmt.Printf("--- %s: qemu stopped", c.TestName())
 }

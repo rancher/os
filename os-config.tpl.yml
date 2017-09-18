@@ -46,6 +46,7 @@ rancher:
       ipc: host
       privileged: true
       volumes:
+      - /etc/resolv.conf:/etc/resolv.conf
       - /dev:/host/dev
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /lib/modules:/lib/modules
@@ -140,6 +141,10 @@ rancher:
         io.rancher.os.after: cloud-init-execute
         io.docker.compose.rebuild: always
         io.rancher.os.console: default
+      environment:
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
       net: host
       uts: host
       pid: host
@@ -293,6 +298,7 @@ rancher:
       volumes:
       - /home:/home
       - /opt:/opt
+      - /var/lib/kubelet:/var/lib/kubelet
     docker:
       {{if eq "amd64" .ARCH -}}
       image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}

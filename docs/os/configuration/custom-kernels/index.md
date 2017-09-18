@@ -46,7 +46,7 @@ By default, RancherOS ships with the kernel provided by the [os-kernel repositor
                  ...
     ```
 
-    `build.tar.gz` contains build headers to build additional modules (e.g. using DKMS): it is a subset of the kernel sources tarball. These files will be installed into `/usr/src/<os-kernel-tag>` using the `kernel-headers-system-docker` and `kernel-headers` services.
+    `build.tar.gz` contains build headers to build additional modules: it is a subset of the kernel sources tarball. These files will be installed into `/usr/src/<os-kernel-tag>` using the `kernel-headers-system-docker` and `kernel-headers` services.
 
     `extra.tar.gz` contains extra modules and firmware for your kernel and should be built into a `kernel-extras` service:
 

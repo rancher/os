@@ -46,6 +46,7 @@ const (
 	CloudConfigScriptFile  = "/var/lib/rancher/conf/cloud-config-script"
 	MetaDataFile           = "/var/lib/rancher/conf/metadata"
 	CloudConfigFile        = "/var/lib/rancher/conf/cloud-config.yml"
+	EtcResolvConfFile      = "/etc/resolv.conf"
 )
 
 var (

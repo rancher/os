@@ -43,8 +43,8 @@ func (s *QemuSuite) TestCustomDockerInPersistentConsole(c *C) {
 set -ex
 
 apt-get --version
-docker version | grep 1.10.3
-sudo ros engine list | grep 1.10.3 | grep current
+docker version | grep 17.06.1-ce
+sudo ros engine list | grep 17.06.1-ce | grep current
 docker run -d --restart=always nginx
 docker ps | grep nginx`)
 
