@@ -64,7 +64,7 @@ func (hook *ShowuserlogHook) NotUsedYetLogSystemReady() error {
 	if hook.syslogHook == nil {
 		h, err := logrus_syslog.NewSyslogHook("", "", syslog.LOG_INFO, "")
 		if err != nil {
-			logrus.Debugf("error creating SyslogHook: %s", err)
+			logrus.Debugf("error creating SyslogHook: %v", err)
 			return err
 		}
 		hook.syslogHook = h

@@ -237,14 +237,14 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 
 		if _, err := os.Stat("/dist/initrd-" + config.Version); os.IsNotExist(err) {
 			if err = mountBootIso(); err != nil {
-				log.Debugf("mountBootIso error %s", err)
+				log.Debugf("mountBootIso error %v", err)
 			} else {
 				log.Infof("trying to load /bootiso/rancheros/installer.tar.gz")
 				if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
 					cmd := exec.Command("system-docker", "load", "-i", "/bootiso/rancheros/installer.tar.gz")
 					cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 					if err := cmd.Run(); err != nil {
-						log.Infof("failed to load images from /bootiso/rancheros: %s", err)
+						log.Infof("failed to load images from /bootiso/rancheros: %v", err)
 					} else {
 						log.Infof("Loaded images from /bootiso/rancheros/installer.tar.gz")
 
