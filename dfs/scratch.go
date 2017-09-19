@@ -75,7 +75,7 @@ func createOptionalMounts(mounts ...[]string) {
 		log.Debugf("Mounting %s %s %s %s", mount[0], mount[1], mount[2], mount[3])
 		err := util.Mount(mount[0], mount[1], mount[2], mount[3])
 		if err != nil {
-			log.Debugf("Unable to mount %s %s %s %s: %s", mount[0], mount[1], mount[2], mount[3], err)
+			log.Debugf("Unable to mount %s %s %s %s: %v", mount[0], mount[1], mount[2], mount[3], err)
 		}
 	}
 }
@@ -358,7 +358,7 @@ ff02::2    ip6-allrouters
 
 	if len(cfg.DNSConfig.Nameservers) != 0 {
 		resolve, err := ioutil.ReadFile("/etc/resolv.conf")
-		log.Debugf("Resolve.conf == [%s], err", resolve, err)
+		log.Debugf("Resolve.conf == [%s], %v", resolve, err)
 
 		if err != nil {
 			log.Infof("scratch Writing empty resolv.conf (%v) %v", []string{}, []string{})

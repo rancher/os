@@ -251,7 +251,7 @@ func RunInit() error {
 			config.SaveInitCmdline(cmdLineArgs)
 
 			cfg := config.LoadConfig()
-			log.Debugf("Cmdline debug = %s", cfg.Rancher.Debug)
+			log.Debugf("Cmdline debug = %t", cfg.Rancher.Debug)
 			if cfg.Rancher.Debug {
 				log.SetLevel(log.DebugLevel)
 			} else {
