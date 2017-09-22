@@ -5,7 +5,7 @@ import (
 	"github.com/rancher/os/init/runc"
 	"github.com/rancher/os/util"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 )
 
 // Non-containerized way to get a console
