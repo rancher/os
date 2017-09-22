@@ -1,7 +1,13 @@
 package commands
 
-import "github.com/docker/machine/libmachine"
+import (
+	"github.com/docker/machine/log"
 
-func cmdKill(c CommandLine, api libmachine.API) error {
-	return runAction("kill", c, api)
+	"github.com/codegangsta/cli"
+)
+
+func cmdKill(c *cli.Context) {
+	if err := runActionWithContext("kill", c); err != nil {
+		log.Fatal(err)
+	}
 }

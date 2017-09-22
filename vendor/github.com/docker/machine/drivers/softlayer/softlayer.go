@@ -21,9 +21,8 @@ type HostSpec struct {
 	Cpu                            int               `json:"startCpus"`
 	Memory                         int               `json:"maxMemory"`
 	Datacenter                     Datacenter        `json:"datacenter"`
-	SshKeys                        []*SSHKey         `json:"sshKeys"`
+	SshKeys                        []*SshKey         `json:"sshKeys"`
 	BlockDevices                   []BlockDevice     `json:"blockDevices"`
-	NetworkMaxSpeeds               []NetworkMaxSpeed `json:"networkComponents"`
 	InstallScript                  string            `json:"postInstallScriptUri"`
 	PrivateNetOnly                 bool              `json:"privateNetworkOnlyFlag"`
 	Os                             string            `json:"operatingSystemReferenceCode"`
@@ -31,10 +30,6 @@ type HostSpec struct {
 	LocalDisk                      bool              `json:"localDiskFlag"`
 	PrimaryNetworkComponent        *NetworkComponent `json:"primaryNetworkComponent,omitempty"`
 	PrimaryBackendNetworkComponent *NetworkComponent `json:"primaryBackendNetworkComponent,omitempty"`
-}
-
-type NetworkMaxSpeed struct {
-	MaxSpeed int `json:"maxSpeed"`
 }
 
 type NetworkComponent struct {
@@ -45,7 +40,7 @@ type NetworkVLAN struct {
 	Id int `json:"id"`
 }
 
-type SSHKey struct {
+type SshKey struct {
 	Key   string `json:"key,omitempty"`
 	Id    int    `json:"id,omitempty"`
 	Label string `json:"label,omitempty"`
@@ -68,7 +63,7 @@ type sshKey struct {
 	*Client
 }
 
-type VirtualGuest struct {
+type virtualGuest struct {
 	*Client
 }
 
@@ -100,11 +95,11 @@ func (c *Client) newRequest(method, uri string, body interface{}) ([]byte, error
 	)
 
 	if body != nil {
-		bodyJSON, err := json.Marshal(body)
+		bodyJson, err := json.Marshal(body)
 		if err != nil {
 			return nil, err
 		}
-		req, err = http.NewRequest(method, url, bytes.NewBuffer(bodyJSON))
+		req, err = http.NewRequest(method, url, bytes.NewBuffer(bodyJson))
 	} else {
 		req, err = http.NewRequest(method, url, nil)
 	}
@@ -137,7 +132,7 @@ func (c *Client) newRequest(method, uri string, body interface{}) ([]byte, error
 	return data, nil
 }
 
-func (c *Client) SSHKey() *sshKey {
+func (c *Client) SshKey() *sshKey {
 	return &sshKey{c}
 }
 
@@ -145,11 +140,11 @@ func (c *sshKey) namespace() string {
 	return "SoftLayer_Security_Ssh_Key"
 }
 
-func (c *sshKey) Create(label, key string) (*SSHKey, error) {
+func (c *sshKey) Create(label, key string) (*SshKey, error) {
 	var (
 		method = "POST"
 		uri    = c.namespace()
-		body   = SSHKey{Key: key, Label: label}
+		body   = SshKey{Key: key, Label: label}
 	)
 
 	data, err := c.newRequest(method, uri, map[string]interface{}{"parameters": []interface{}{body}})
@@ -157,7 +152,7 @@ func (c *sshKey) Create(label, key string) (*SSHKey, error) {
 		return nil, err
 	}
 
-	var k SSHKey
+	var k SshKey
 	if err := json.Unmarshal(data, &k); err != nil {
 		return nil, err
 	}
@@ -178,15 +173,15 @@ func (c *sshKey) Delete(id int) error {
 	return nil
 }
 
-func (c *Client) VirtualGuest() *VirtualGuest {
-	return &VirtualGuest{c}
+func (c *Client) VirtualGuest() *virtualGuest {
+	return &virtualGuest{c}
 }
 
-func (c *VirtualGuest) namespace() string {
+func (c *virtualGuest) namespace() string {
 	return "SoftLayer_Virtual_Guest"
 }
 
-func (c *VirtualGuest) PowerState(id int) (string, error) {
+func (c *virtualGuest) PowerState(id int) (string, error) {
 	type state struct {
 		KeyName string `json:"keyName"`
 		Name    string `json:"name"`
@@ -208,7 +203,7 @@ func (c *VirtualGuest) PowerState(id int) (string, error) {
 	return s.Name, nil
 }
 
-func (c *VirtualGuest) ActiveTransaction(id int) (string, error) {
+func (c *virtualGuest) ActiveTransaction(id int) (string, error) {
 	type transactionStatus struct {
 		AverageDuration string `json:"averageDuration"`
 		FriendlyName    string `json:"friendlyName"`
@@ -241,7 +236,7 @@ func (c *VirtualGuest) ActiveTransaction(id int) (string, error) {
 	return t.TransactionStatus.Name, nil
 }
 
-func (c *VirtualGuest) Create(spec *HostSpec) (int, error) {
+func (c *virtualGuest) Create(spec *HostSpec) (int, error) {
 	var (
 		method = "POST"
 		uri    = c.namespace() + ".json"
@@ -253,7 +248,7 @@ func (c *VirtualGuest) Create(spec *HostSpec) (int, error) {
 	}
 
 	type createResp struct {
-		ID int `json:"id"`
+		Id int `json:"id"`
 	}
 
 	var r createResp
@@ -261,10 +256,10 @@ func (c *VirtualGuest) Create(spec *HostSpec) (int, error) {
 		return -1, err
 	}
 
-	return r.ID, nil
+	return r.Id, nil
 }
 
-func (c *VirtualGuest) Cancel(id int) error {
+func (c *virtualGuest) Cancel(id int) error {
 	var (
 		method = "DELETE"
 		uri    = fmt.Sprintf("%s/%v", c.namespace(), id)
@@ -277,7 +272,7 @@ func (c *VirtualGuest) Cancel(id int) error {
 	return nil
 }
 
-func (c *VirtualGuest) PowerOn(id int) error {
+func (c *virtualGuest) PowerOn(id int) error {
 	var (
 		method = "GET"
 		uri    = fmt.Sprintf("%s/%v/powerOn.json", c.namespace(), id)
@@ -290,7 +285,7 @@ func (c *VirtualGuest) PowerOn(id int) error {
 	return nil
 }
 
-func (c *VirtualGuest) PowerOff(id int) error {
+func (c *virtualGuest) PowerOff(id int) error {
 	var (
 		method = "GET"
 		uri    = fmt.Sprintf("%s/%v/powerOff.json", c.namespace(), id)
@@ -303,7 +298,7 @@ func (c *VirtualGuest) PowerOff(id int) error {
 	return nil
 }
 
-func (c *VirtualGuest) Pause(id int) error {
+func (c *virtualGuest) Pause(id int) error {
 	var (
 		method = "GET"
 		uri    = fmt.Sprintf("%s/%v/pause.json", c.namespace(), id)
@@ -316,7 +311,7 @@ func (c *VirtualGuest) Pause(id int) error {
 	return nil
 }
 
-func (c *VirtualGuest) Resume(id int) error {
+func (c *virtualGuest) Resume(id int) error {
 	var (
 		method = "GET"
 		uri    = fmt.Sprintf("%s/%v/resume.json", c.namespace(), id)
@@ -329,7 +324,7 @@ func (c *VirtualGuest) Resume(id int) error {
 	return nil
 }
 
-func (c *VirtualGuest) Reboot(id int) error {
+func (c *virtualGuest) Reboot(id int) error {
 	var (
 		method = "GET"
 		uri    = fmt.Sprintf("%s/%v/rebootSoft.json", c.namespace(), id)
@@ -342,7 +337,7 @@ func (c *VirtualGuest) Reboot(id int) error {
 	return nil
 }
 
-func (c *VirtualGuest) GetPublicIP(id int) (string, error) {
+func (c *virtualGuest) GetPublicIp(id int) (string, error) {
 	var (
 		method = "GET"
 		uri    = fmt.Sprintf("%s/%v/getPrimaryIpAddress.json", c.namespace(), id)
@@ -355,7 +350,7 @@ func (c *VirtualGuest) GetPublicIP(id int) (string, error) {
 	return strings.Replace(string(data), "\"", "", -1), nil
 }
 
-func (c *VirtualGuest) GetPrivateIP(id int) (string, error) {
+func (c *virtualGuest) GetPrivateIp(id int) (string, error) {
 	var (
 		method = "GET"
 		uri    = fmt.Sprintf("%s/%v/getPrimaryBackendIpAddress.json", c.namespace(), id)

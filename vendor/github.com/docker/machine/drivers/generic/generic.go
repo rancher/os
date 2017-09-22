@@ -1,80 +1,67 @@
 package generic
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"os"
-	"path"
-	"strconv"
+	"path/filepath"
 	"time"
 
-	"github.com/docker/machine/libmachine/drivers"
-	"github.com/docker/machine/libmachine/engine"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnflag"
-	"github.com/docker/machine/libmachine/mcnutils"
-	"github.com/docker/machine/libmachine/state"
+	"github.com/codegangsta/cli"
+	"github.com/docker/machine/drivers"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/state"
+	"github.com/docker/machine/utils"
 )
 
 type Driver struct {
 	*drivers.BaseDriver
-	EnginePort int
-	SSHKey     string
+	SSHKey string
 }
 
 const (
-	defaultTimeout = 15 * time.Second
+	defaultTimeout = 1 * time.Second
 )
+
+func init() {
+	drivers.Register("generic", &drivers.RegisteredDriver{
+		New:            NewDriver,
+		GetCreateFlags: GetCreateFlags,
+	})
+}
 
 // GetCreateFlags registers the flags this driver adds to
 // "docker hosts create"
-func (d *Driver) GetCreateFlags() []mcnflag.Flag {
-	return []mcnflag.Flag{
-		mcnflag.IntFlag{
-			Name:   "generic-engine-port",
-			Usage:  "Docker engine port",
-			Value:  engine.DefaultPort,
-			EnvVar: "GENERIC_ENGINE_PORT",
+func GetCreateFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.StringFlag{
+			Name:  "generic-ip-address",
+			Usage: "IP Address of machine",
+			Value: "",
 		},
-		mcnflag.StringFlag{
-			Name:   "generic-ip-address",
-			Usage:  "IP Address of machine",
-			EnvVar: "GENERIC_IP_ADDRESS",
+		cli.StringFlag{
+			Name:  "generic-ssh-user",
+			Usage: "SSH user",
+			Value: "root",
 		},
-		mcnflag.StringFlag{
-			Name:   "generic-ssh-user",
-			Usage:  "SSH user",
-			Value:  drivers.DefaultSSHUser,
-			EnvVar: "GENERIC_SSH_USER",
+		cli.StringFlag{
+			Name:  "generic-ssh-key",
+			Usage: "SSH private key path",
+			Value: filepath.Join(utils.GetHomeDir(), ".ssh", "id_rsa"),
 		},
-		mcnflag.StringFlag{
-			Name:   "generic-ssh-key",
-			Usage:  "SSH private key path (if not provided, default SSH key will be used)",
-			Value:  "",
-			EnvVar: "GENERIC_SSH_KEY",
-		},
-		mcnflag.IntFlag{
-			Name:   "generic-ssh-port",
-			Usage:  "SSH port",
-			Value:  drivers.DefaultSSHPort,
-			EnvVar: "GENERIC_SSH_PORT",
+		cli.IntFlag{
+			Name:  "generic-ssh-port",
+			Usage: "SSH port",
+			Value: 22,
 		},
 	}
 }
 
-// NewDriver creates and returns a new instance of the driver
-func NewDriver(hostName, storePath string) drivers.Driver {
-	return &Driver{
-		EnginePort: engine.DefaultPort,
-		BaseDriver: &drivers.BaseDriver{
-			MachineName: hostName,
-			StorePath:   storePath,
-		},
-	}
+func NewDriver(machineName string, storePath string, caCert string, privateKey string) (drivers.Driver, error) {
+	inner := drivers.NewBaseDriver(machineName, storePath, caCert, privateKey)
+	return &Driver{BaseDriver: inner}, nil
 }
 
-// DriverName returns the name of the driver
 func (d *Driver) DriverName() string {
 	return "generic"
 }
@@ -87,50 +74,36 @@ func (d *Driver) GetSSHUsername() string {
 	return d.SSHUser
 }
 
-func (d *Driver) GetSSHKeyPath() string {
-	return d.SSHKeyPath
-}
-
 func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
-	d.EnginePort = flags.Int("generic-engine-port")
 	d.IPAddress = flags.String("generic-ip-address")
 	d.SSHUser = flags.String("generic-ssh-user")
 	d.SSHKey = flags.String("generic-ssh-key")
 	d.SSHPort = flags.Int("generic-ssh-port")
 
 	if d.IPAddress == "" {
-		return errors.New("generic driver requires the --generic-ip-address option")
+		return fmt.Errorf("generic driver requires the --generic-ip-address option")
+	}
+
+	if d.SSHKey == "" {
+		return fmt.Errorf("generic driver requires the --generic-ssh-key option")
 	}
 
 	return nil
 }
 
 func (d *Driver) PreCreateCheck() error {
-	if d.SSHKey != "" {
-		if _, err := os.Stat(d.SSHKey); os.IsNotExist(err) {
-			return fmt.Errorf("SSH key does not exist: %q", d.SSHKey)
-		}
-
-		// TODO: validate the key is a valid key
-	}
-
 	return nil
 }
 
 func (d *Driver) Create() error {
-	if d.SSHKey == "" {
-		log.Info("No SSH key specified. Assuming an existing key at the default location.")
-	} else {
-		log.Info("Importing SSH key...")
+	log.Infof("Importing SSH key...")
 
-		d.SSHKeyPath = d.ResolveStorePath(path.Base(d.SSHKey))
-		if err := copySSHKey(d.SSHKey, d.SSHKeyPath); err != nil {
-			return err
-		}
+	if err := utils.CopyFile(d.SSHKey, d.GetSSHKeyPath()); err != nil {
+		return fmt.Errorf("unable to copy ssh key: %s", err)
+	}
 
-		if err := copySSHKey(d.SSHKey+".pub", d.SSHKeyPath+".pub"); err != nil {
-			log.Infof("Couldn't copy SSH public key : %s", err)
-		}
+	if err := os.Chmod(d.GetSSHKeyPath(), 0600); err != nil {
+		return err
 	}
 
 	log.Debugf("IP: %s", d.IPAddress)
@@ -139,58 +112,64 @@ func (d *Driver) Create() error {
 }
 
 func (d *Driver) GetURL() (string, error) {
-	if err := drivers.MustBeRunning(d); err != nil {
-		return "", err
-	}
-
 	ip, err := d.GetIP()
 	if err != nil {
 		return "", err
 	}
+	return fmt.Sprintf("tcp://%s:2376", ip), nil
+}
 
-	return fmt.Sprintf("tcp://%s", net.JoinHostPort(ip, strconv.Itoa(d.EnginePort))), nil
+func (d *Driver) GetIP() (string, error) {
+	if d.IPAddress == "" {
+		return "", fmt.Errorf("IP address is not set")
+	}
+	return d.IPAddress, nil
 }
 
 func (d *Driver) GetState() (state.State, error) {
-	address := net.JoinHostPort(d.IPAddress, strconv.Itoa(d.SSHPort))
-
-	_, err := net.DialTimeout("tcp", address, defaultTimeout)
+	addr := fmt.Sprintf("%s:%d", d.IPAddress, d.SSHPort)
+	_, err := net.DialTimeout("tcp", addr, defaultTimeout)
+	var st state.State
 	if err != nil {
-		return state.Stopped, nil
+		st = state.Stopped
+	} else {
+		st = state.Running
 	}
-
-	return state.Running, nil
+	return st, nil
 }
 
 func (d *Driver) Start() error {
-	return errors.New("generic driver does not support start")
+	return fmt.Errorf("generic driver does not support start")
 }
 
 func (d *Driver) Stop() error {
-	return errors.New("generic driver does not support stop")
-}
-
-func (d *Driver) Restart() error {
-	_, err := drivers.RunSSHCommandFromDriver(d, "sudo shutdown -r now")
-	return err
-}
-
-func (d *Driver) Kill() error {
-	return errors.New("generic driver does not support kill")
+	return fmt.Errorf("generic driver does not support stop")
 }
 
 func (d *Driver) Remove() error {
 	return nil
 }
 
-func copySSHKey(src, dst string) error {
-	if err := mcnutils.CopyFile(src, dst); err != nil {
-		return fmt.Errorf("unable to copy ssh key: %s", err)
-	}
+func (d *Driver) Restart() error {
+	log.Debug("Restarting...")
 
-	if err := os.Chmod(dst, 0600); err != nil {
-		return fmt.Errorf("unable to set permissions on the ssh key: %s", err)
+	if _, err := drivers.RunSSHCommandFromDriver(d, "sudo shutdown -r now"); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (d *Driver) Kill() error {
+	log.Debug("Killing...")
+
+	if _, err := drivers.RunSSHCommandFromDriver(d, "sudo shutdown -P now"); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *Driver) publicSSHKeyPath() string {
+	return d.GetSSHKeyPath() + ".pub"
 }

@@ -3,20 +3,19 @@ package softlayer
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"regexp"
 	"time"
 
-	"github.com/docker/machine/libmachine/drivers"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnflag"
-	"github.com/docker/machine/libmachine/ssh"
-	"github.com/docker/machine/libmachine/state"
+	"github.com/codegangsta/cli"
+	"github.com/docker/machine/drivers"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/ssh"
+	"github.com/docker/machine/state"
 )
 
 const (
-	APIEndpoint = "https://api.softlayer.com/rest/v3"
+	ApiEndpoint = "https://api.softlayer.com/rest/v3"
 )
 
 type Driver struct {
@@ -28,151 +27,128 @@ type Driver struct {
 }
 
 type deviceConfig struct {
-	DiskSize        int
-	Cpu             int
-	Hostname        string
-	Domain          string
-	Region          string
-	Memory          int
-	Image           string
-	HourlyBilling   bool
-	LocalDisk       bool
-	PrivateNet      bool
-	PublicVLAN      int
-	PrivateVLAN     int
-	NetworkMaxSpeed int
+	DiskSize      int
+	Cpu           int
+	Hostname      string
+	Domain        string
+	Region        string
+	Memory        int
+	Image         string
+	HourlyBilling bool
+	LocalDisk     bool
+	PrivateNet    bool
+	PublicVLAN    int
+	PrivateVLAN   int
 }
 
-const (
-	defaultMemory          = 1024
-	defaultDiskSize        = 0
-	defaultRegion          = "dal01"
-	defaultCpus            = 1
-	defaultImage           = "UBUNTU_LATEST"
-	defaultPublicVLANIP    = 0
-	defaultPrivateVLANIP   = 0
-	defaultNetworkMaxSpeed = 100
-)
+func init() {
+	drivers.Register("softlayer", &drivers.RegisteredDriver{
+		New:            NewDriver,
+		GetCreateFlags: GetCreateFlags,
+	})
+}
 
-func NewDriver(hostName, storePath string) drivers.Driver {
-	return &Driver{
-		Client: &Client{
-			Endpoint: APIEndpoint,
-		},
-		deviceConfig: &deviceConfig{
-			HourlyBilling:   true,
-			DiskSize:        defaultDiskSize,
-			Image:           defaultImage,
-			Memory:          defaultMemory,
-			Cpu:             defaultCpus,
-			Region:          defaultRegion,
-			PrivateVLAN:     defaultPrivateVLANIP,
-			PublicVLAN:      defaultPublicVLANIP,
-			NetworkMaxSpeed: defaultNetworkMaxSpeed,
-		},
-		BaseDriver: &drivers.BaseDriver{
-			MachineName: hostName,
-			StorePath:   storePath,
-		},
-	}
+func NewDriver(machineName string, storePath string, caCert string, privateKey string) (drivers.Driver, error) {
+	inner := drivers.NewBaseDriver(machineName, storePath, caCert, privateKey)
+	return &Driver{BaseDriver: inner}, nil
 }
 
 func (d *Driver) GetSSHHostname() (string, error) {
 	return d.GetIP()
 }
 
-func (d *Driver) GetCreateFlags() []mcnflag.Flag {
+func GetCreateFlags() []cli.Flag {
 	// Set hourly billing to true by default since codegangsta cli doesn't take default bool values
 	if os.Getenv("SOFTLAYER_HOURLY_BILLING") == "" {
 		os.Setenv("SOFTLAYER_HOURLY_BILLING", "true")
 	}
-	return []mcnflag.Flag{
-		mcnflag.IntFlag{
+	return []cli.Flag{
+		cli.IntFlag{
 			EnvVar: "SOFTLAYER_MEMORY",
 			Name:   "softlayer-memory",
 			Usage:  "Memory in MB for machine",
-			Value:  defaultMemory,
+			Value:  1024,
 		},
-		mcnflag.IntFlag{
+		cli.IntFlag{
 			EnvVar: "SOFTLAYER_DISK_SIZE",
 			Name:   "softlayer-disk-size",
 			Usage:  "Disk size for machine, a value of 0 uses the default size on softlayer",
-			Value:  defaultDiskSize,
+			Value:  0,
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "SOFTLAYER_USER",
 			Name:   "softlayer-user",
 			Usage:  "softlayer user account name",
+			Value:  "",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "SOFTLAYER_API_KEY",
 			Name:   "softlayer-api-key",
 			Usage:  "softlayer user API key",
+			Value:  "",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "SOFTLAYER_REGION",
 			Name:   "softlayer-region",
 			Usage:  "softlayer region for machine",
-			Value:  defaultRegion,
+			Value:  "dal01",
 		},
-		mcnflag.IntFlag{
+		cli.IntFlag{
 			EnvVar: "SOFTLAYER_CPU",
 			Name:   "softlayer-cpu",
 			Usage:  "number of CPU's for the machine",
-			Value:  defaultCpus,
+			Value:  1,
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "SOFTLAYER_HOSTNAME",
 			Name:   "softlayer-hostname",
 			Usage:  "hostname for the machine - defaults to machine name",
+			Value:  "",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "SOFTLAYER_DOMAIN",
 			Name:   "softlayer-domain",
 			Usage:  "domain name for machine",
+			Value:  "",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "SOFTLAYER_API_ENDPOINT",
 			Name:   "softlayer-api-endpoint",
 			Usage:  "softlayer api endpoint to use",
-			Value:  APIEndpoint,
+			Value:  ApiEndpoint,
 		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			EnvVar: "SOFTLAYER_HOURLY_BILLING",
 			Name:   "softlayer-hourly-billing",
 			Usage:  "set hourly billing for machine - on by default",
 		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			EnvVar: "SOFTLAYER_LOCAL_DISK",
 			Name:   "softlayer-local-disk",
 			Usage:  "use machine local disk instead of softlayer SAN",
 		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			EnvVar: "SOFTLAYER_PRIVATE_NET",
 			Name:   "softlayer-private-net-only",
 			Usage:  "Use only private networking",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "SOFTLAYER_IMAGE",
 			Name:   "softlayer-image",
 			Usage:  "OS image for machine",
-			Value:  defaultImage,
+			Value:  "UBUNTU_LATEST",
 		},
-		mcnflag.IntFlag{
+		cli.IntFlag{
 			EnvVar: "SOFTLAYER_PUBLIC_VLAN_ID",
 			Name:   "softlayer-public-vlan-id",
 			Usage:  "",
+			Value:  0,
 		},
-		mcnflag.IntFlag{
+		cli.IntFlag{
 			EnvVar: "SOFTLAYER_PRIVATE_VLAN_ID",
 			Name:   "softlayer-private-vlan-id",
 			Usage:  "",
-		},
-		mcnflag.IntFlag{
-			EnvVar: "SOFTLAYER_NETWORK_MAX_SPEED",
-			Name:   "softlayer-network-max-speed",
-			Usage:  "Max speed of public and private network",
-			Value:  defaultNetworkMaxSpeed,
+			Value:  0,
 		},
 	}
 }
@@ -226,7 +202,9 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 		ApiKey:   flags.String("softlayer-api-key"),
 	}
 
-	d.SetSwarmConfigFromFlags(flags)
+	d.SwarmMaster = flags.Bool("swarm-master")
+	d.SwarmHost = flags.String("swarm-host")
+	d.SwarmDiscovery = flags.String("swarm-discovery")
 	d.SSHUser = "root"
 	d.SSHPort = 22
 
@@ -235,19 +213,18 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	}
 
 	d.deviceConfig = &deviceConfig{
-		Hostname:        flags.String("softlayer-hostname"),
-		DiskSize:        flags.Int("softlayer-disk-size"),
-		Cpu:             flags.Int("softlayer-cpu"),
-		Domain:          flags.String("softlayer-domain"),
-		Memory:          flags.Int("softlayer-memory"),
-		PrivateNet:      flags.Bool("softlayer-private-net-only"),
-		LocalDisk:       flags.Bool("softlayer-local-disk"),
-		HourlyBilling:   flags.Bool("softlayer-hourly-billing"),
-		Image:           flags.String("softlayer-image"),
-		Region:          flags.String("softlayer-region"),
-		PublicVLAN:      flags.Int("softlayer-public-vlan-id"),
-		PrivateVLAN:     flags.Int("softlayer-private-vlan-id"),
-		NetworkMaxSpeed: flags.Int("softlayer-network-max-speed"),
+		Hostname:      flags.String("softlayer-hostname"),
+		DiskSize:      flags.Int("softlayer-disk-size"),
+		Cpu:           flags.Int("softlayer-cpu"),
+		Domain:        flags.String("softlayer-domain"),
+		Memory:        flags.Int("softlayer-memory"),
+		PrivateNet:    flags.Bool("softlayer-private-net-only"),
+		LocalDisk:     flags.Bool("softlayer-local-disk"),
+		HourlyBilling: flags.Bool("softlayer-hourly-billing"),
+		Image:         flags.String("softlayer-image"),
+		Region:        flags.String("softlayer-region"),
+		PublicVLAN:    flags.Int("softlayer-public-vlan-id"),
+		PrivateVLAN:   flags.Int("softlayer-private-vlan-id"),
 	}
 
 	if d.deviceConfig.Hostname == "" {
@@ -261,16 +238,11 @@ func (d *Driver) getClient() *Client {
 	return d.Client
 }
 
-// DriverName returns the name of the driver
 func (d *Driver) DriverName() string {
 	return "softlayer"
 }
 
 func (d *Driver) GetURL() (string, error) {
-	if err := drivers.MustBeRunning(d); err != nil {
-		return "", err
-	}
-
 	ip, err := d.GetIP()
 	if err != nil {
 		return "", err
@@ -278,8 +250,7 @@ func (d *Driver) GetURL() (string, error) {
 	if ip == "" {
 		return "", nil
 	}
-
-	return "tcp://" + net.JoinHostPort(ip, "2376"), nil
+	return "tcp://" + ip + ":2376", nil
 }
 
 func (d *Driver) GetIP() (string, error) {
@@ -287,17 +258,9 @@ func (d *Driver) GetIP() (string, error) {
 		return d.IPAddress, nil
 	}
 	if d.deviceConfig != nil && d.deviceConfig.PrivateNet == true {
-		return d.getClient().VirtualGuest().GetPrivateIP(d.Id)
-	}
-
-	if os.Getenv("SOFTLAYER_DOCKER_ON_PRIVATE_IP") == "" {
-		os.Setenv("SOFTLAYER_DOCKER_ON_PRIVATE_IP", "false")
-	}
-
-	if os.Getenv("SOFTLAYER_DOCKER_ON_PRIVATE_IP") == "true" {
-		return d.getClient().VirtualGuest().GetPrivateIP(d.Id)
+		return d.getClient().VirtualGuest().GetPrivateIp(d.Id)
 	} else {
-		return d.getClient().VirtualGuest().GetPublicIP(d.Id)
+		return d.getClient().VirtualGuest().GetPublicIp(d.Id)
 	}
 }
 
@@ -326,6 +289,10 @@ func (d *Driver) GetActiveTransaction() (string, error) {
 	return t, nil
 }
 
+func (d *Driver) PreCreateCheck() error {
+	return nil
+}
+
 func (d *Driver) waitForStart() {
 	log.Infof("Waiting for host to become available")
 	for {
@@ -344,7 +311,7 @@ func (d *Driver) waitForStart() {
 	}
 }
 
-func (d *Driver) getIP() (string, error) {
+func (d *Driver) getIp() (string, error) {
 	log.Infof("Getting Host IP")
 	for {
 		var (
@@ -352,27 +319,14 @@ func (d *Driver) getIP() (string, error) {
 			err error
 		)
 		if d.deviceConfig.PrivateNet {
-			ip, err = d.getClient().VirtualGuest().GetPrivateIP(d.Id)
+			ip, err = d.getClient().VirtualGuest().GetPrivateIp(d.Id)
 		} else {
-			ip, err = d.getClient().VirtualGuest().GetPublicIP(d.Id)
+			ip, err = d.getClient().VirtualGuest().GetPublicIp(d.Id)
 		}
 		if err != nil {
 			time.Sleep(2 * time.Second)
 			continue
 		}
-
-		// if docker daemon is expected to run on private IP
-		// it will overwrite settings from PrivateNet
-		if os.Getenv("SOFTLAYER_DOCKER_ON_PRIVATE_IP") == "" {
-			os.Setenv("SOFTLAYER_DOCKER_ON_PRIVATE_IP", "false")
-		}
-
-		if os.Getenv("SOFTLAYER_DOCKER_ON_PRIVATE_IP") == "true" {
-			ip, err = d.getClient().VirtualGuest().GetPrivateIP(d.Id)
-		} else {
-			ip, err = d.getClient().VirtualGuest().GetPublicIP(d.Id)
-		}
-
 		// not a perfect regex, but should be just fine for our needs
 		exp := regexp.MustCompile(`\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}`)
 		if exp.MatchString(ip) {
@@ -422,14 +376,14 @@ func (d *Driver) Create() error {
 	log.Infof("SSH key %s (%d) created in SoftLayer", key.Label, key.Id)
 	d.SSHKeyID = key.Id
 
-	spec.SshKeys = []*SSHKey{key}
+	spec.SshKeys = []*SshKey{key}
 
 	id, err := d.getClient().VirtualGuest().Create(spec)
 	if err != nil {
 		return fmt.Errorf("Error creating host: %q", err)
 	}
 	d.Id = id
-	d.getIP()
+	d.getIp()
 	d.waitForStart()
 	d.waitForSetupTransactions()
 
@@ -447,10 +401,6 @@ func (d *Driver) buildHostSpec() *HostSpec {
 		HourlyBilling:  d.deviceConfig.HourlyBilling,
 		PrivateNetOnly: d.deviceConfig.PrivateNet,
 		LocalDisk:      d.deviceConfig.LocalDisk,
-	}
-
-	if d.deviceConfig.NetworkMaxSpeed > 0 {
-		spec.NetworkMaxSpeeds = []NetworkMaxSpeed{{MaxSpeed: d.deviceConfig.NetworkMaxSpeed}}
 	}
 	if d.deviceConfig.DiskSize > 0 {
 		spec.BlockDevices = []BlockDevice{{Device: "0", DiskImage: DiskImage{Capacity: d.deviceConfig.DiskSize}}}
@@ -473,7 +423,7 @@ func (d *Driver) buildHostSpec() *HostSpec {
 	return spec
 }
 
-func (d *Driver) createSSHKey() (*SSHKey, error) {
+func (d *Driver) createSSHKey() (*SshKey, error) {
 	if err := ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
 		return nil, err
 	}
@@ -483,7 +433,7 @@ func (d *Driver) createSSHKey() (*SSHKey, error) {
 		return nil, err
 	}
 
-	key, err := d.getClient().SSHKey().Create(d.deviceConfig.Hostname, string(publicKey))
+	key, err := d.getClient().SshKey().Create(d.deviceConfig.Hostname, string(publicKey))
 	if err != nil {
 		return nil, err
 	}
@@ -493,6 +443,10 @@ func (d *Driver) createSSHKey() (*SSHKey, error) {
 
 func (d *Driver) publicSSHKeyPath() string {
 	return d.GetSSHKeyPath() + ".pub"
+}
+
+func (d *Driver) Kill() error {
+	return d.getClient().VirtualGuest().PowerOff(d.Id)
 }
 
 func (d *Driver) Remove() error {
@@ -510,25 +464,18 @@ func (d *Driver) Remove() error {
 	}
 
 	log.Infof("Removing SSH Key %d...", d.SSHKeyID)
-	if err = d.getClient().SSHKey().Delete(d.SSHKeyID); err != nil {
+	if err = d.getClient().SshKey().Delete(d.SSHKeyID); err != nil {
 		return err
 	}
 
 	return nil
 }
-
-func (d *Driver) Start() error {
-	return d.getClient().VirtualGuest().PowerOn(d.Id)
-}
-
-func (d *Driver) Stop() error {
-	return d.getClient().VirtualGuest().PowerOff(d.Id)
-}
-
 func (d *Driver) Restart() error {
 	return d.getClient().VirtualGuest().Reboot(d.Id)
 }
-
-func (d *Driver) Kill() error {
-	return d.Stop()
+func (d *Driver) Start() error {
+	return d.getClient().VirtualGuest().PowerOn(d.Id)
+}
+func (d *Driver) Stop() error {
+	return d.getClient().VirtualGuest().PowerOff(d.Id)
 }

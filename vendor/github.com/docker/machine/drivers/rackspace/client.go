@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/docker/machine/drivers/openstack"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/version"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/version"
 	"github.com/rackspace/gophercloud"
 	"github.com/rackspace/gophercloud/rackspace"
 )
@@ -17,6 +17,7 @@ func unsupportedOpErr(operation string) error {
 // Client is a Rackspace specialization of the generic OpenStack driver.
 type Client struct {
 	openstack.GenericClient
+
 	driver *Driver
 }
 
@@ -26,9 +27,9 @@ func (c *Client) Authenticate(d *openstack.Driver) error {
 		return nil
 	}
 
-	log.Debug("Authenticating to Rackspace.", map[string]string{
+	log.WithFields(log.Fields{
 		"Username": d.Username,
-	})
+	}).Debug("Authenticating to Rackspace.")
 
 	apiKey := c.driver.APIKey
 	opts := gophercloud.AuthOptions{
@@ -41,7 +42,7 @@ func (c *Client) Authenticate(d *openstack.Driver) error {
 		return err
 	}
 
-	provider.UserAgent.Prepend(fmt.Sprintf("docker-machine/v%d", version.APIVersion))
+	provider.UserAgent.Prepend(fmt.Sprintf("docker-machine/v%s", version.VERSION))
 
 	err = rackspace.Authenticate(provider, opts)
 	if err != nil {
@@ -63,13 +64,13 @@ func (c *Client) StopInstance(d *openstack.Driver) error {
 	return unsupportedOpErr("stop")
 }
 
-// GetInstanceIPAddresses can be short-circuited with the server's AccessIPv4Addr on Rackspace.
-func (c *Client) GetInstanceIPAddresses(d *openstack.Driver) ([]openstack.IPAddress, error) {
+// GetInstanceIpAddresses can be short-circuited with the server's AccessIPv4Addr on Rackspace.
+func (c *Client) GetInstanceIpAddresses(d *openstack.Driver) ([]openstack.IpAddress, error) {
 	server, err := c.GetServerDetail(d)
 	if err != nil {
 		return nil, err
 	}
-	return []openstack.IPAddress{
+	return []openstack.IpAddress{
 		{
 			Network:     "public",
 			Address:     server.AccessIPv4,

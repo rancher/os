@@ -3,30 +3,16 @@ package commands
 import (
 	"fmt"
 
-	"github.com/docker/machine/libmachine"
+	"github.com/docker/machine/log"
+
+	"github.com/codegangsta/cli"
 )
 
-func cmdURL(c CommandLine, api libmachine.API) error {
-	if len(c.Args()) > 1 {
-		return ErrExpectedOneMachine
-	}
-
-	target, err := targetHost(c, api)
+func cmdUrl(c *cli.Context) {
+	url, err := getHost(c).GetURL()
 	if err != nil {
-		return err
-	}
-
-	host, err := api.Load(target)
-	if err != nil {
-		return err
-	}
-
-	url, err := host.URL()
-	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
 	fmt.Println(url)
-
-	return nil
 }

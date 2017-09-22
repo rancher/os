@@ -1,12 +1,8 @@
 package engine
 
-const (
-	DefaultPort = 2376
-)
-
-type Options struct {
+type EngineOptions struct {
 	ArbitraryFlags   []string
-	DNS              []string `json:"Dns"`
+	Dns              []string
 	GraphDir         string
 	Env              []string
 	Ipv6             bool
@@ -15,7 +11,10 @@ type Options struct {
 	LogLevel         string
 	StorageDriver    string
 	SelinuxEnabled   bool
-	TLSVerify        bool `json:"TlsVerify"`
+	TlsCaCert        string
+	TlsCert          string
+	TlsKey           string
+	TlsVerify        bool
 	RegistryMirror   []string
 	InstallURL       string
 }

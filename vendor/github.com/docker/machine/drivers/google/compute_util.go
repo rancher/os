@@ -4,80 +4,60 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"regexp"
 	"strings"
 	"time"
 
-	"github.com/docker/machine/drivers/driverutil"
-	"github.com/docker/machine/libmachine/log"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/ssh"
 	raw "google.golang.org/api/compute/v1"
-
-	"errors"
-
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/googleapi"
 )
 
 // ComputeUtil is used to wrap the raw GCE API code and store common parameters.
 type ComputeUtil struct {
-	zone              string
-	instanceName      string
-	userName          string
-	project           string
-	diskTypeURL       string
-	address           string
-	network           string
-	subnetwork        string
-	preemptible       bool
-	useInternalIP     bool
-	useInternalIPOnly bool
-	service           *raw.Service
-	zoneURL           string
-	globalURL         string
-	SwarmMaster       bool
-	SwarmHost         string
-	openPorts         []string
+	zone          string
+	instanceName  string
+	userName      string
+	project       string
+	diskTypeURL   string
+	service       *raw.Service
+	zoneURL       string
+	authTokenPath string
+	globalURL     string
+	ipAddress     string
+	SwarmMaster   bool
+	SwarmHost     string
 }
 
 const (
-	apiURL            = "https://www.googleapis.com/compute/v1/projects/"
-	firewallRule      = "docker-machines"
-	dockerPort        = "2376"
-	firewallTargetTag = "docker-machine"
+	apiURL             = "https://www.googleapis.com/compute/v1/projects/"
+	imageName          = "https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/ubuntu-1404-trusty-v20150316"
+	firewallRule       = "docker-machines"
+	port               = "2376"
+	firewallTargetTag  = "docker-machine"
+	dockerStartCommand = "sudo service docker start"
+	dockerStopCommand  = "sudo service docker stop"
 )
 
 // NewComputeUtil creates and initializes a ComputeUtil.
 func newComputeUtil(driver *Driver) (*ComputeUtil, error) {
-	client, err := google.DefaultClient(oauth2.NoContext, raw.ComputeScope)
+	service, err := newGCEService(driver.ResolveStorePath("."), driver.AuthTokenPath)
 	if err != nil {
 		return nil, err
 	}
-
-	service, err := raw.New(client)
-	if err != nil {
-		return nil, err
+	c := ComputeUtil{
+		authTokenPath: driver.AuthTokenPath,
+		zone:          driver.Zone,
+		instanceName:  driver.MachineName,
+		userName:      driver.SSHUser,
+		project:       driver.Project,
+		diskTypeURL:   driver.DiskType,
+		service:       service,
+		zoneURL:       apiURL + driver.Project + "/zones/" + driver.Zone,
+		globalURL:     apiURL + driver.Project + "/global",
+		SwarmMaster:   driver.SwarmMaster,
+		SwarmHost:     driver.SwarmHost,
 	}
-
-	return &ComputeUtil{
-		zone:              driver.Zone,
-		instanceName:      driver.MachineName,
-		userName:          driver.SSHUser,
-		project:           driver.Project,
-		diskTypeURL:       driver.DiskType,
-		address:           driver.Address,
-		network:           driver.Network,
-		subnetwork:        driver.Subnetwork,
-		preemptible:       driver.Preemptible,
-		useInternalIP:     driver.UseInternalIP,
-		useInternalIPOnly: driver.UseInternalIPOnly,
-		service:           service,
-		zoneURL:           apiURL + driver.Project + "/zones/" + driver.Zone,
-		globalURL:         apiURL + driver.Project + "/global",
-		SwarmMaster:       driver.SwarmMaster,
-		SwarmHost:         driver.SwarmHost,
-		openPorts:         driver.OpenPorts,
-	}, nil
+	return &c, nil
 }
 
 func (c *ComputeUtil) diskName() string {
@@ -88,141 +68,67 @@ func (c *ComputeUtil) diskType() string {
 	return apiURL + c.project + "/zones/" + c.zone + "/diskTypes/" + c.diskTypeURL
 }
 
-// disk returns the persistent disk attached to the vm.
+// disk returns the gce Disk.
 func (c *ComputeUtil) disk() (*raw.Disk, error) {
 	return c.service.Disks.Get(c.project, c.zone, c.diskName()).Do()
 }
 
 // deleteDisk deletes the persistent disk.
 func (c *ComputeUtil) deleteDisk() error {
-	disk, _ := c.disk()
-	if disk == nil {
-		return nil
-	}
-
 	log.Infof("Deleting disk.")
 	op, err := c.service.Disks.Delete(c.project, c.zone, c.diskName()).Do()
 	if err != nil {
 		return err
 	}
-
 	log.Infof("Waiting for disk to delete.")
 	return c.waitForRegionalOp(op.Name)
-}
-
-// staticAddress returns the external static IP address.
-func (c *ComputeUtil) staticAddress() (string, error) {
-	// is the address a name?
-	isName, err := regexp.MatchString("[a-z]([-a-z0-9]*[a-z0-9])?", c.address)
-	if err != nil {
-		return "", err
-	}
-
-	if !isName {
-		return c.address, nil
-	}
-
-	// resolve the address by name
-	externalAddress, err := c.service.Addresses.Get(c.project, c.region(), c.address).Do()
-	if err != nil {
-		return "", err
-	}
-
-	return externalAddress.Address, nil
-}
-
-func (c *ComputeUtil) region() string {
-	return c.zone[:len(c.zone)-2]
 }
 
 func (c *ComputeUtil) firewallRule() (*raw.Firewall, error) {
 	return c.service.Firewalls.Get(c.project, firewallRule).Do()
 }
 
-func missingOpenedPorts(rule *raw.Firewall, ports []string) map[string][]string {
-	missing := map[string][]string{}
-	opened := map[string]bool{}
+func (c *ComputeUtil) createFirewallRule() error {
+	log.Infof("Creating firewall rule.")
+	allowed := []*raw.FirewallAllowed{
 
-	for _, allowed := range rule.Allowed {
-		for _, allowedPort := range allowed.Ports {
-			opened[allowedPort+"/"+allowed.IPProtocol] = true
-		}
+		{
+			IPProtocol: "tcp",
+			Ports: []string{
+				port,
+			},
+		},
 	}
-
-	for _, p := range ports {
-		port, proto := driverutil.SplitPortProto(p)
-		if !opened[port+"/"+proto] {
-			missing[proto] = append(missing[proto], port)
-		}
-	}
-
-	return missing
-}
-
-func (c *ComputeUtil) portsUsed() ([]string, error) {
-	ports := []string{dockerPort + "/tcp"}
 
 	if c.SwarmMaster {
 		u, err := url.Parse(c.SwarmHost)
 		if err != nil {
-			return nil, fmt.Errorf("error authorizing port for swarm: %s", err)
+			return fmt.Errorf("error authorizing port for swarm: %s", err)
 		}
 
-		swarmPort := strings.Split(u.Host, ":")[1]
-		ports = append(ports, swarmPort+"/tcp")
-	}
-	for _, p := range c.openPorts {
-		port, proto := driverutil.SplitPortProto(p)
-		ports = append(ports, port+"/"+proto)
-	}
-
-	return ports, nil
-}
-
-// openFirewallPorts configures the firewall to open docker and swarm ports.
-func (c *ComputeUtil) openFirewallPorts(d *Driver) error {
-	log.Infof("Opening firewall ports")
-
-	create := false
-	rule, _ := c.firewallRule()
-	if rule == nil {
-		create = true
-		rule = &raw.Firewall{
-			Name:         firewallRule,
-			Allowed:      []*raw.FirewallAllowed{},
-			SourceRanges: []string{"0.0.0.0/0"},
-			TargetTags:   []string{firewallTargetTag},
-			Network:      c.globalURL + "/networks/" + d.Network,
-		}
-	}
-
-	portsUsed, err := c.portsUsed()
-	if err != nil {
-		return err
-	}
-
-	missingPorts := missingOpenedPorts(rule, portsUsed)
-	if len(missingPorts) == 0 {
-		return nil
-	}
-	for proto, ports := range missingPorts {
-		rule.Allowed = append(rule.Allowed, &raw.FirewallAllowed{
-			IPProtocol: proto,
-			Ports:      ports,
+		parts := strings.Split(u.Host, ":")
+		swarmPort := parts[1]
+		allowed = append(allowed, &raw.FirewallAllowed{
+			IPProtocol: "tcp",
+			Ports: []string{
+				swarmPort,
+			},
 		})
 	}
-
-	var op *raw.Operation
-	if create {
-		op, err = c.service.Firewalls.Insert(c.project, rule).Do()
-	} else {
-		op, err = c.service.Firewalls.Update(c.project, firewallRule, rule).Do()
+	rule := &raw.Firewall{
+		Allowed: allowed,
+		SourceRanges: []string{
+			"0.0.0.0/0",
+		},
+		TargetTags: []string{
+			firewallTargetTag,
+		},
+		Name: firewallRule,
 	}
-
+	op, err := c.service.Firewalls.Insert(c.project, rule).Do()
 	if err != nil {
 		return err
 	}
-
 	return c.waitForGlobalOp(op.Name)
 }
 
@@ -233,7 +139,13 @@ func (c *ComputeUtil) instance() (*raw.Instance, error) {
 
 // createInstance creates a GCE VM instance.
 func (c *ComputeUtil) createInstance(d *Driver) error {
-	log.Infof("Creating instance")
+	log.Infof("Creating instance.")
+	// The rule will either exist or be nil in case of an error.
+	if rule, _ := c.firewallRule(); rule == nil {
+		if err := c.createFirewallRule(); err != nil {
+			return err
+		}
+	}
 
 	instance := &raw.Instance{
 		Name:        c.instanceName,
@@ -249,11 +161,16 @@ func (c *ComputeUtil) createInstance(d *Driver) error {
 		},
 		NetworkInterfaces: []*raw.NetworkInterface{
 			{
-				Network: c.globalURL + "/networks/" + d.Network,
+				AccessConfigs: []*raw.AccessConfig{
+					{Type: "ONE_TO_ONE_NAT"},
+				},
+				Network: c.globalURL + "/networks/default",
 			},
 		},
 		Tags: &raw.Tags{
-			Items: parseTags(d),
+			Items: []string{
+				firewallTargetTag,
+			},
 		},
 		ServiceAccounts: []*raw.ServiceAccount{
 			{
@@ -261,36 +178,12 @@ func (c *ComputeUtil) createInstance(d *Driver) error {
 				Scopes: strings.Split(d.Scopes, ","),
 			},
 		},
-		Scheduling: &raw.Scheduling{
-			Preemptible: c.preemptible,
-		},
 	}
-
-	if c.subnetwork != "" {
-		instance.NetworkInterfaces[0].Subnetwork = "projects/" + c.project + "/regions/" + c.region() + "/subnetworks/" + c.subnetwork
-	}
-
-	if !c.useInternalIPOnly {
-		cfg := &raw.AccessConfig{
-			Type: "ONE_TO_ONE_NAT",
-		}
-		instance.NetworkInterfaces[0].AccessConfigs = append(instance.NetworkInterfaces[0].AccessConfigs, cfg)
-	}
-
-	if c.address != "" {
-		staticAddress, err := c.staticAddress()
-		if err != nil {
-			return err
-		}
-
-		instance.NetworkInterfaces[0].AccessConfigs[0].NatIP = staticAddress
-	}
-
 	disk, err := c.disk()
 	if disk == nil || err != nil {
 		instance.Disks[0].InitializeParams = &raw.AttachedDiskInitializeParams{
 			DiskName:    c.diskName(),
-			SourceImage: "https://www.googleapis.com/compute/v1/projects/" + d.MachineImage,
+			SourceImage: imageName,
 			// The maximum supported disk size is 1000GB, the cast should be fine.
 			DiskSizeGb: int64(d.DiskSize),
 			DiskType:   c.diskType(),
@@ -304,7 +197,7 @@ func (c *ComputeUtil) createInstance(d *Driver) error {
 		return err
 	}
 
-	log.Infof("Waiting for Instance")
+	log.Infof("Waiting for Instance...")
 	if err = c.waitForRegionalOp(op.Name); err != nil {
 		return err
 	}
@@ -314,79 +207,31 @@ func (c *ComputeUtil) createInstance(d *Driver) error {
 		return err
 	}
 
-	return c.uploadSSHKey(instance, d.GetSSHKeyPath())
-}
-
-// configureInstance configures an existing instance for use with Docker Machine.
-func (c *ComputeUtil) configureInstance(d *Driver) error {
-	log.Infof("Configuring instance")
-
-	instance, err := c.instance()
+	// Update the SSH Key
+	sshKey, err := ioutil.ReadFile(d.GetSSHKeyPath() + ".pub")
 	if err != nil {
 		return err
 	}
-
-	if err := c.addFirewallTag(instance); err != nil {
-		return err
-	}
-
-	return c.uploadSSHKey(instance, d.GetSSHKeyPath())
-}
-
-// addFirewallTag adds a tag to the instance to match the firewall rule.
-func (c *ComputeUtil) addFirewallTag(instance *raw.Instance) error {
-	log.Infof("Adding tag for the firewall rule")
-
-	tags := instance.Tags
-	for _, tag := range tags.Items {
-		if tag == firewallTargetTag {
-			return nil
-		}
-	}
-
-	tags.Items = append(tags.Items, firewallTargetTag)
-
-	op, err := c.service.Instances.SetTags(c.project, c.zone, instance.Name, tags).Do()
-	if err != nil {
-		return err
-	}
-
-	return c.waitForRegionalOp(op.Name)
-}
-
-// uploadSSHKey updates the instance metadata with the given ssh key.
-func (c *ComputeUtil) uploadSSHKey(instance *raw.Instance, sshKeyPath string) error {
 	log.Infof("Uploading SSH Key")
-
-	sshKey, err := ioutil.ReadFile(sshKeyPath + ".pub")
-	if err != nil {
-		return err
-	}
-
-	metaDataValue := fmt.Sprintf("%s:%s %s\n", c.userName, strings.TrimSpace(string(sshKey)), c.userName)
-
-	op, err := c.service.Instances.SetMetadata(c.project, c.zone, c.instanceName, &raw.Metadata{
+	op, err = c.service.Instances.SetMetadata(c.project, c.zone, c.instanceName, &raw.Metadata{
 		Fingerprint: instance.Metadata.Fingerprint,
 		Items: []*raw.MetadataItems{
 			{
 				Key:   "sshKeys",
-				Value: &metaDataValue,
+				Value: c.userName + ":" + string(sshKey) + "\n",
 			},
 		},
 	}).Do()
-
-	return c.waitForRegionalOp(op.Name)
-}
-
-// parseTags computes the tags for the instance.
-func parseTags(d *Driver) []string {
-	tags := []string{firewallTargetTag}
-
-	if d.Tags != "" {
-		tags = append(tags, strings.Split(d.Tags, ",")...)
+	if err != nil {
+		return err
+	}
+	log.Infof("Waiting for SSH Key")
+	err = c.waitForRegionalOp(op.Name)
+	if err != nil {
+		return err
 	}
 
-	return tags
+	return nil
 }
 
 // deleteInstance deletes the instance, leaving the persistent disk.
@@ -396,42 +241,35 @@ func (c *ComputeUtil) deleteInstance() error {
 	if err != nil {
 		return err
 	}
-
 	log.Infof("Waiting for instance to delete.")
 	return c.waitForRegionalOp(op.Name)
 }
 
-// stopInstance stops the instance.
-func (c *ComputeUtil) stopInstance() error {
-	op, err := c.service.Instances.Stop(c.project, c.zone, c.instanceName).Do()
-	if err != nil {
-		return err
-	}
+func (c *ComputeUtil) executeCommands(commands []string, ip, sshKeyPath string) error {
+	for _, command := range commands {
+		auth := &ssh.Auth{
+			Keys: []string{sshKeyPath},
+		}
 
-	log.Infof("Waiting for instance to stop.")
-	return c.waitForRegionalOp(op.Name)
+		client, err := ssh.NewClient(c.userName, ip, 22, auth)
+		if err != nil {
+			return err
+		}
+
+		if _, err := client.Output(command); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-// startInstance starts the instance.
-func (c *ComputeUtil) startInstance() error {
-	op, err := c.service.Instances.Start(c.project, c.zone, c.instanceName).Do()
-	if err != nil {
-		return err
-	}
-
-	log.Infof("Waiting for instance to start.")
-	return c.waitForRegionalOp(op.Name)
-}
-
-// waitForOp waits for the operation to finish.
 func (c *ComputeUtil) waitForOp(opGetter func() (*raw.Operation, error)) error {
 	for {
 		op, err := opGetter()
 		if err != nil {
 			return err
 		}
-
-		log.Debugf("Operation %q status: %s", op.Name, op.Status)
+		log.Debugf("operation %q status: %s", op.Name, op.Status)
 		if op.Status == "DONE" {
 			if op.Error != nil {
 				return fmt.Errorf("Operation error: %v", *op.Error.Errors[0])
@@ -443,14 +281,13 @@ func (c *ComputeUtil) waitForOp(opGetter func() (*raw.Operation, error)) error {
 	return nil
 }
 
-// waitForRegionalOp waits for the regional operation to finish.
+// waitForOp waits for the GCE Operation to finish.
 func (c *ComputeUtil) waitForRegionalOp(name string) error {
 	return c.waitForOp(func() (*raw.Operation, error) {
 		return c.service.ZoneOperations.Get(c.project, c.zone, name).Do()
 	})
 }
 
-// waitForGlobalOp waits for the global operation to finish.
 func (c *ComputeUtil) waitForGlobalOp(name string) error {
 	return c.waitForOp(func() (*raw.Operation, error) {
 		return c.service.GlobalOperations.Get(c.project, name).Do()
@@ -459,22 +296,12 @@ func (c *ComputeUtil) waitForGlobalOp(name string) error {
 
 // ip retrieves and returns the external IP address of the instance.
 func (c *ComputeUtil) ip() (string, error) {
-	instance, err := c.service.Instances.Get(c.project, c.zone, c.instanceName).Do()
-	if err != nil {
-		return "", unwrapGoogleError(err)
+	if c.ipAddress == "" {
+		instance, err := c.service.Instances.Get(c.project, c.zone, c.instanceName).Do()
+		if err != nil {
+			return "", err
+		}
+		c.ipAddress = instance.NetworkInterfaces[0].AccessConfigs[0].NatIP
 	}
-
-	nic := instance.NetworkInterfaces[0]
-	if c.useInternalIP {
-		return nic.NetworkIP, nil
-	}
-	return nic.AccessConfigs[0].NatIP, nil
-}
-
-func unwrapGoogleError(err error) error {
-	if googleErr, ok := err.(*googleapi.Error); ok {
-		return errors.New(googleErr.Message)
-	}
-
-	return err
+	return c.ipAddress, nil
 }

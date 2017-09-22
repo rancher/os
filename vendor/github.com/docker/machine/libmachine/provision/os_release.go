@@ -7,28 +7,25 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/docker/machine/libmachine/log"
+	"github.com/docker/machine/log"
 )
 
 // The /etc/os-release file contains operating system identification data
 // See http://www.freedesktop.org/software/systemd/man/os-release.html for more details
 
-// OsRelease reflects values in /etc/os-release
 // Values in this struct must always be string
 // or the reflection will not work properly.
 type OsRelease struct {
 	AnsiColor    string `osr:"ANSI_COLOR"`
 	Name         string `osr:"NAME"`
 	Version      string `osr:"VERSION"`
-	Variant      string `osr:"VARIANT"`
-	VariantID    string `osr:"VARIANT_ID"`
-	ID           string `osr:"ID"`
-	IDLike       string `osr:"ID_LIKE"`
+	Id           string `osr:"ID"`
+	IdLike       string `osr:"ID_LIKE"`
 	PrettyName   string `osr:"PRETTY_NAME"`
-	VersionID    string `osr:"VERSION_ID"`
-	HomeURL      string `osr:"HOME_URL"`
-	SupportURL   string `osr:"SUPPORT_URL"`
-	BugReportURL string `osr:"BUG_REPORT_URL"`
+	VersionId    string `osr:"VERSION_ID"`
+	HomeUrl      string `osr:"HOME_URL"`
+	SupportUrl   string `osr:"SUPPORT_URL"`
+	BugReportUrl string `osr:"BUG_REPORT_URL"`
 }
 
 func stripQuotes(val string) string {
@@ -72,8 +69,7 @@ func (osr *OsRelease) ParseOsRelease(osReleaseContents []byte) error {
 	for scanner.Scan() {
 		key, val, err := parseLine(scanner.Text())
 		if err != nil {
-			log.Warnf("Warning: got an invalid line error parsing /etc/os-release: %s", err)
-			continue
+			return err
 		}
 		if err := osr.setIfPossible(key, val); err != nil {
 			log.Debug(err)

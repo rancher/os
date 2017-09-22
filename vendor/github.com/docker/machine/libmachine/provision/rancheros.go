@@ -6,21 +6,20 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/docker/machine/commands/mcndirs"
+	"github.com/docker/machine/drivers"
 	"github.com/docker/machine/libmachine/auth"
-	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
-	"github.com/docker/machine/libmachine/provision/serviceaction"
-	"github.com/docker/machine/libmachine/state"
 	"github.com/docker/machine/libmachine/swarm"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/state"
+	"github.com/docker/machine/utils"
 )
 
 const (
-	versionsURL  = "http://releases.rancher.com/os/versions.yml"
-	isoURL       = "https://github.com/rancherio/os/releases/download/%s/machine-rancheros.iso"
+	versionsUrl  = "http://releases.rancher.com/os/versions.yml"
+	isoUrl       = "https://github.com/rancherio/os/releases/download/%s/machine-rancheros.iso"
+	isoFilename  = "rancheros.iso"
 	hostnameTmpl = `sudo mkdir -p /var/lib/rancher/conf/cloud-config.d/  
 sudo tee /var/lib/rancher/conf/cloud-config.d/machine-hostname.yml << EOF
 #cloud-config
@@ -39,10 +38,9 @@ func init() {
 func NewRancherProvisioner(d drivers.Driver) Provisioner {
 	return &RancherProvisioner{
 		GenericProvisioner{
-			SSHCommander:      GenericSSHCommander{Driver: d},
 			DockerOptionsDir:  "/var/lib/rancher/conf",
 			DaemonOptionsFile: "/var/lib/rancher/conf/docker",
-			OsReleaseID:       "rancheros",
+			OsReleaseId:       "rancheros",
 			Driver:            d,
 		},
 	}
@@ -52,11 +50,7 @@ type RancherProvisioner struct {
 	GenericProvisioner
 }
 
-func (provisioner *RancherProvisioner) String() string {
-	return "rancheros"
-}
-
-func (provisioner *RancherProvisioner) Service(name string, action serviceaction.ServiceAction) error {
+func (provisioner *RancherProvisioner) Service(name string, action pkgaction.ServiceAction) error {
 	command := fmt.Sprintf("sudo system-docker %s %s", action.String(), name)
 
 	if _, err := provisioner.SSHCommand(command); err != nil {
@@ -92,13 +86,10 @@ func (provisioner *RancherProvisioner) Package(name string, action pkgaction.Pac
 	return nil
 }
 
-func (provisioner *RancherProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error {
-	log.Debugf("Running RancherOS provisioner on %s", provisioner.Driver.GetMachineName())
-
+func (provisioner *RancherProvisioner) Provision(swarmOptions swarm.SwarmOptions, authOptions auth.AuthOptions, engineOptions engine.EngineOptions) error {
 	provisioner.SwarmOptions = swarmOptions
 	provisioner.AuthOptions = authOptions
 	provisioner.EngineOptions = engineOptions
-	swarmOptions.Env = engineOptions.Env
 
 	if provisioner.EngineOptions.StorageDriver == "" {
 		provisioner.EngineOptions.StorageDriver = "overlay"
@@ -114,15 +105,6 @@ func (provisioner *RancherProvisioner) Provision(swarmOptions swarm.Options, aut
 	for _, pkg := range provisioner.Packages {
 		log.Debugf("Installing package %s", pkg)
 		if err := provisioner.Package(pkg, pkgaction.Install); err != nil {
-			return err
-		}
-	}
-
-	if engineOptions.InstallURL == drivers.DefaultEngineInstallURL {
-		log.Debugf("Skipping docker engine default: %s", engineOptions.InstallURL)
-	} else {
-		log.Debugf("Selecting docker engine: %s", engineOptions.InstallURL)
-		if err := selectDocker(provisioner, engineOptions.InstallURL); err != nil {
 			return err
 		}
 	}
@@ -186,7 +168,7 @@ func (provisioner *RancherProvisioner) upgradeIso() error {
 		return err
 	}
 
-	if err := mcnutils.WaitFor(drivers.MachineInState(provisioner.Driver, state.Stopped)); err != nil {
+	if err := utils.WaitFor(drivers.MachineInState(provisioner.Driver, state.Stopped)); err != nil {
 		return err
 	}
 
@@ -194,10 +176,7 @@ func (provisioner *RancherProvisioner) upgradeIso() error {
 
 	log.Infof("Upgrading machine %s...", machineName)
 
-	// TODO: Ideally, we should not read from mcndirs directory at all.
-	// The driver should be able to communicate how and where to place the
-	// relevant files.
-	b2dutils := mcnutils.NewB2dUtils(mcndirs.GetBaseDir())
+	b2dutils := utils.NewB2dUtils("", "", isoFilename)
 
 	url, err := provisioner.getLatestISOURL()
 	if err != nil {
@@ -219,12 +198,12 @@ func (provisioner *RancherProvisioner) upgradeIso() error {
 		return err
 	}
 
-	return mcnutils.WaitFor(drivers.MachineInState(provisioner.Driver, state.Running))
+	return utils.WaitFor(drivers.MachineInState(provisioner.Driver, state.Running))
 }
 
 func (provisioner *RancherProvisioner) getLatestISOURL() (string, error) {
-	log.Debugf("Reading %s", versionsURL)
-	resp, err := http.Get(versionsURL)
+	log.Debugf("Reading %s", versionsUrl)
+	resp, err := http.Get(versionsUrl)
 	if err != nil {
 		return "", err
 	}
@@ -236,18 +215,9 @@ func (provisioner *RancherProvisioner) getLatestISOURL() (string, error) {
 		line := scanner.Text()
 		if strings.HasPrefix(line, "current: ") {
 			log.Debugf("Found %s", line)
-			return fmt.Sprintf(isoURL, strings.Split(line, ":")[2]), err
+			return fmt.Sprintf(isoUrl, strings.Split(line, ":")[2]), err
 		}
 	}
 
 	return "", fmt.Errorf("Failed to find current version")
-}
-
-func selectDocker(p Provisioner, baseURL string) error {
-	// TODO: detect if its a cloud-init, or a ros setting - and use that..
-	if output, err := p.SSHCommand(fmt.Sprintf("wget -O- %s | sh -", baseURL)); err != nil {
-		return fmt.Errorf("error selecting docker: (%s) %s", err, output)
-	}
-
-	return nil
 }

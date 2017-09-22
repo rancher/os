@@ -11,7 +11,7 @@ import (
 func isZero(path string) bool {
 	stat, err := os.Stat(path)
 	if os.IsNotExist(err) {
-		return false
+		return true
 	}
 	if err != nil {
 		return true

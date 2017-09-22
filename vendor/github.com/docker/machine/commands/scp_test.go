@@ -1,178 +1,253 @@
 package commands
 
 import (
+	"errors"
+	"fmt"
 	"os/exec"
-	"strings"
+	"reflect"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/docker/machine/drivers"
+	"github.com/docker/machine/libmachine"
+	"github.com/docker/machine/state"
 )
 
-type MockHostInfo struct {
-	name        string
-	ip          string
-	sshPort     int
-	sshUsername string
-	sshKeyPath  string
+type ScpFakeDriver struct {
+	MockState state.State
 }
 
-func (h *MockHostInfo) GetMachineName() string {
-	return h.name
+type ScpFakeStore struct{}
+
+func (d ScpFakeDriver) AuthorizePort(ports []*drivers.Port) error {
+	return nil
 }
 
-func (h *MockHostInfo) GetSSHHostname() (string, error) {
-	return h.ip, nil
+func (d ScpFakeDriver) DeauthorizePort(ports []*drivers.Port) error {
+	return nil
 }
 
-func (h *MockHostInfo) GetSSHPort() (int, error) {
-	return h.sshPort, nil
+func (d ScpFakeDriver) DriverName() string {
+	return "fake"
 }
 
-func (h *MockHostInfo) GetSSHUsername() string {
-	return h.sshUsername
+func (d ScpFakeDriver) SetConfigFromFlags(flags drivers.DriverOptions) error {
+	return nil
 }
 
-func (h *MockHostInfo) GetSSHKeyPath() string {
-	return h.sshKeyPath
+func (d ScpFakeDriver) GetURL() (string, error) {
+	return "", nil
 }
 
-type MockHostInfoLoader struct {
-	hostInfo MockHostInfo
+func (d ScpFakeDriver) GetIP() (string, error) {
+	return "12.34.56.78", nil
 }
 
-func (l *MockHostInfoLoader) load(name string) (HostInfo, error) {
-	info := l.hostInfo
-	info.name = name
-	return &info, nil
+func (d ScpFakeDriver) GetState() (state.State, error) {
+	return d.MockState, nil
 }
 
-func TestGetInfoForLocalScpArg(t *testing.T) {
-	host, user, path, opts, err := getInfoForScpArg("/tmp/foo", nil)
-	assert.Nil(t, host)
-	assert.Empty(t, user)
-	assert.Equal(t, "/tmp/foo", path)
-	assert.Nil(t, opts)
-	assert.NoError(t, err)
-
-	host, user, path, opts, err = getInfoForScpArg("localhost:C:\\path", nil)
-	assert.Nil(t, host)
-	assert.Empty(t, user)
-	assert.Equal(t, "C:\\path", path)
-	assert.Nil(t, opts)
-	assert.NoError(t, err)
+func (d ScpFakeDriver) GetMachineName() string {
+	return "myfunhost"
 }
 
-func TestGetInfoForRemoteScpArg(t *testing.T) {
-	hostInfoLoader := MockHostInfoLoader{MockHostInfo{
-		sshKeyPath: "/fake/keypath/id_rsa",
-	}}
-
-	host, user, path, opts, err := getInfoForScpArg("myuser@myfunhost:/home/docker/foo", &hostInfoLoader)
-	assert.Equal(t, "myfunhost", host.GetMachineName())
-	assert.Equal(t, "myuser", user)
-	assert.Equal(t, "/home/docker/foo", path)
-	assert.Equal(t, []string{"-o", "IdentityFile=/fake/keypath/id_rsa"}, opts)
-	assert.NoError(t, err)
-
-	host, user, path, opts, err = getInfoForScpArg("myfunhost:C:\\path", &hostInfoLoader)
-	assert.Equal(t, "myfunhost", host.GetMachineName())
-	assert.Empty(t, user)
-	assert.Equal(t, "C:\\path", path)
-	assert.Equal(t, []string{"-o", "IdentityFile=/fake/keypath/id_rsa"}, opts)
-	assert.NoError(t, err)
+func (d ScpFakeDriver) GetSSHHostname() (string, error) {
+	return "12.34.56.76", nil
 }
 
-func TestHostLocation(t *testing.T) {
-	arg, err := generateLocationArg(nil, "user1", "/home/docker/foo")
-
-	assert.Equal(t, "/home/docker/foo", arg)
-	assert.NoError(t, err)
+func (d ScpFakeDriver) GetSSHPort() (int, error) {
+	return 22, nil
 }
 
-func TestRemoteLocation(t *testing.T) {
-	hostInfo := MockHostInfo{
-		ip:          "12.34.56.78",
-		sshUsername: "root",
+func (d ScpFakeDriver) PreCreateCheck() error {
+	return nil
+}
+
+func (d ScpFakeDriver) Create() error {
+	return nil
+}
+
+func (d ScpFakeDriver) Remove() error {
+	return nil
+}
+
+func (d ScpFakeDriver) Start() error {
+	return nil
+}
+
+func (d ScpFakeDriver) Stop() error {
+	return nil
+}
+
+func (d ScpFakeDriver) Restart() error {
+	return nil
+}
+
+func (d ScpFakeDriver) Kill() error {
+	return nil
+}
+
+func (d ScpFakeDriver) Upgrade() error {
+	return nil
+}
+
+func (d ScpFakeDriver) StartDocker() error {
+	return nil
+}
+
+func (d ScpFakeDriver) StopDocker() error {
+	return nil
+}
+
+func (d ScpFakeDriver) GetDockerConfigDir() string {
+	return ""
+}
+
+func (d ScpFakeDriver) GetSSHCommand(args ...string) (*exec.Cmd, error) {
+	return &exec.Cmd{}, nil
+}
+
+func (d ScpFakeDriver) GetSSHUsername() string {
+	return "root"
+}
+
+func (d ScpFakeDriver) GetSSHKeyPath() string {
+	return "/fake/keypath/id_rsa"
+}
+
+func (s ScpFakeStore) Exists(name string) (bool, error) {
+	return true, nil
+}
+
+func (s ScpFakeStore) GetActive() (*libmachine.Host, error) {
+	return nil, nil
+}
+
+func (s ScpFakeStore) GetPath() string {
+	return ""
+}
+
+func (s ScpFakeStore) GetCACertificatePath() (string, error) {
+	return "", nil
+}
+
+func (s ScpFakeStore) GetPrivateKeyPath() (string, error) {
+	return "", nil
+}
+
+func (s ScpFakeStore) List() ([]*libmachine.Host, error) {
+	return nil, nil
+}
+
+func (s ScpFakeStore) Get(name string) (*libmachine.Host, error) {
+	if name == "myfunhost" {
+		return &libmachine.Host{
+			Name:   "myfunhost",
+			Driver: ScpFakeDriver{},
+		}, nil
+	}
+	return nil, errors.New("Host not found")
+}
+
+func (s ScpFakeStore) Remove(name string, force bool) error {
+	return nil
+}
+
+func (s ScpFakeStore) Save(host *libmachine.Host) error {
+	return nil
+}
+
+func TestGetInfoForScpArg(t *testing.T) {
+	provider, _ := libmachine.New(ScpFakeStore{})
+
+	expectedPath := "/tmp/foo"
+	host, path, opts, err := getInfoForScpArg("/tmp/foo", *provider)
+	if err != nil {
+		t.Fatalf("Unexpected error in local getInfoForScpArg call: %s", err)
+	}
+	if path != expectedPath {
+		t.Fatalf("Path %s not equal to expected path %s", path, expectedPath)
+	}
+	if host != nil {
+		t.Fatal("host should be nil")
+	}
+	if opts != nil {
+		t.Fatal("opts should be nil")
 	}
 
-	arg, err := generateLocationArg(&hostInfo, "", "/home/docker/foo")
+	host, path, opts, err = getInfoForScpArg("myfunhost:/home/docker/foo", *provider)
+	if err != nil {
+		t.Fatal("Unexpected error in machine-based getInfoForScpArg call: %s", err)
+	}
+	expectedOpts := []string{
+		"-i",
+		"/fake/keypath/id_rsa",
+	}
+	for i := range opts {
+		if expectedOpts[i] != opts[i] {
+			t.Fatalf("Mismatch in returned opts: %s != %s", expectedOpts[i], opts[i])
+		}
+	}
+	if host.Name != "myfunhost" {
+		t.Fatal("Expected host.Name to be myfunhost, got %s", host.Name)
+	}
+	if path != "/home/docker/foo" {
+		t.Fatalf("Expected path to be /home/docker/foo, got %s", path)
+	}
 
-	assert.Equal(t, "root@12.34.56.78:/home/docker/foo", arg)
-	assert.NoError(t, err)
+	host, path, opts, err = getInfoForScpArg("foo:bar:widget", *provider)
+	if err != ErrMalformedInput {
+		t.Fatalf("Didn't get back an error when we were expecting it for malformed args")
+	}
+}
 
-	argWithUser, err := generateLocationArg(&hostInfo, "user1", "/home/docker/foo")
+func TestGenerateLocationArg(t *testing.T) {
+	host := libmachine.Host{
+		Driver: ScpFakeDriver{},
+	}
 
-	assert.Equal(t, "user1@12.34.56.78:/home/docker/foo", argWithUser)
-	assert.NoError(t, err)
+	// local arg
+	arg, err := generateLocationArg(nil, "/home/docker/foo")
+	if err != nil {
+		t.Fatalf("Unexpected error generating location arg for local: %s", err)
+	}
+	if arg != "/home/docker/foo" {
+		t.Fatalf("Expected arg to be /home/docker/foo, was %s", arg)
+	}
+
+	arg, err = generateLocationArg(&host, "/home/docker/foo")
+	if err != nil {
+		t.Fatalf("Unexpected error generating location arg for remote: %s", err)
+	}
+	if arg != "root@12.34.56.78:/home/docker/foo" {
+		t.Fatalf("Expected arg to be root@12.34.56.78, instead it was %s", arg)
+	}
 }
 
 func TestGetScpCmd(t *testing.T) {
-	hostInfoLoader := MockHostInfoLoader{MockHostInfo{
-		ip:          "12.34.56.78",
-		sshPort:     234,
-		sshUsername: "root",
-		sshKeyPath:  "/fake/keypath/id_rsa",
-	}}
+	provider, _ := libmachine.New(ScpFakeStore{})
 
-	cmd, err := getScpCmd("/tmp/foo", "myfunhost:/home/docker/foo", true, false, &hostInfoLoader)
-
+	// TODO: This is a little "integration-ey".  Perhaps
+	// make an ScpDispatcher (name?) interface so that the reliant
+	// methods can be mocked.
 	expectedArgs := append(
 		baseSSHArgs,
 		"-3",
-		"-r",
-		"-o",
-		"IdentitiesOnly=yes",
-		"-o",
-		"Port=234",
-		"-o",
-		"IdentityFile=/fake/keypath/id_rsa",
+		"-i",
+		"/fake/keypath/id_rsa",
 		"/tmp/foo",
 		"root@12.34.56.78:/home/docker/foo",
 	)
 	expectedCmd := exec.Command("/usr/bin/scp", expectedArgs...)
 
-	assert.Equal(t, expectedCmd, cmd)
-	assert.NoError(t, err)
-}
+	cmd, err := getScpCmd("/tmp/foo", "myfunhost:/home/docker/foo", append(baseSSHArgs, "-3"), *provider)
+	if err != nil {
+		t.Fatalf("Unexpected err getting scp command: %s", err)
+	}
 
-func TestGetScpCmdWithoutSshKey(t *testing.T) {
-	hostInfoLoader := MockHostInfoLoader{MockHostInfo{
-		ip:          "1.2.3.4",
-		sshUsername: "user",
-	}}
-
-	cmd, err := getScpCmd("/tmp/foo", "myfunhost:/home/docker/foo", true, false, &hostInfoLoader)
-
-	expectedArgs := append(
-		baseSSHArgs,
-		"-3",
-		"-r",
-		"/tmp/foo",
-		"user@1.2.3.4:/home/docker/foo",
-	)
-	expectedCmd := exec.Command("/usr/bin/scp", expectedArgs...)
-
-	assert.Equal(t, expectedCmd, cmd)
-	assert.NoError(t, err)
-}
-
-func TestGetScpCmdWithDelta(t *testing.T) {
-	hostInfoLoader := MockHostInfoLoader{MockHostInfo{
-		ip:          "1.2.3.4",
-		sshUsername: "user",
-	}}
-
-	cmd, err := getScpCmd("/tmp/foo", "myfunhost:/home/docker/foo", true, true, &hostInfoLoader)
-
-	expectedArgs := append(
-		[]string{"-e"},
-		"ssh "+strings.Join(baseSSHArgs, " "),
-		"-r",
-		"/tmp/foo",
-		"user@1.2.3.4:/home/docker/foo",
-	)
-	expectedCmd := exec.Command("/usr/bin/rsync", expectedArgs...)
-
-	assert.Equal(t, expectedCmd, cmd)
-	assert.NoError(t, err)
+	correct := reflect.DeepEqual(expectedCmd, cmd)
+	if !correct {
+		fmt.Println(expectedCmd)
+		fmt.Println(cmd)
+		t.Fatal("Expected scp cmd structs to be equal but there was mismatch")
+	}
 }

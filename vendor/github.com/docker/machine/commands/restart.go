@@ -1,16 +1,14 @@
 package commands
 
 import (
-	"github.com/docker/machine/libmachine"
-	"github.com/docker/machine/libmachine/log"
+	"github.com/docker/machine/log"
+
+	"github.com/codegangsta/cli"
 )
 
-func cmdRestart(c CommandLine, api libmachine.API) error {
-	if err := runAction("restart", c, api); err != nil {
-		return err
+func cmdRestart(c *cli.Context) {
+	if err := runActionWithContext("restart", c); err != nil {
+		log.Fatal(err)
 	}
-
 	log.Info("Restarted machines may have new IP addresses. You may need to re-run the `docker-machine env` command.")
-
-	return nil
 }

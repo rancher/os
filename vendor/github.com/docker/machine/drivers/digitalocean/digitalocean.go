@@ -1,23 +1,17 @@
 package digitalocean
 
 import (
-	"context"
 	"fmt"
 	"io/ioutil"
-	"net"
-	"os"
-	"path"
-	"strings"
 	"time"
 
+	"code.google.com/p/goauth2/oauth"
+	"github.com/codegangsta/cli"
 	"github.com/digitalocean/godo"
-	"github.com/docker/machine/libmachine/drivers"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnflag"
-	"github.com/docker/machine/libmachine/mcnutils"
-	"github.com/docker/machine/libmachine/ssh"
-	"github.com/docker/machine/libmachine/state"
-	"golang.org/x/oauth2"
+	"github.com/docker/machine/drivers"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/ssh"
+	"github.com/docker/machine/state"
 )
 
 type Driver struct {
@@ -28,118 +22,73 @@ type Driver struct {
 	Image             string
 	Region            string
 	SSHKeyID          int
-	SSHKeyFingerprint string
-	SSHKey            string
 	Size              string
 	IPv6              bool
 	Backups           bool
 	PrivateNetworking bool
-	UserDataFile      string
-	Tags              string
 }
 
-const (
-	defaultSSHPort = 22
-	defaultSSHUser = "root"
-	defaultImage   = "ubuntu-16-04-x64"
-	defaultRegion  = "nyc3"
-	defaultSize    = "512mb"
-)
+func init() {
+	drivers.Register("digitalocean", &drivers.RegisteredDriver{
+		New:            NewDriver,
+		GetCreateFlags: GetCreateFlags,
+	})
+}
 
 // GetCreateFlags registers the flags this driver adds to
 // "docker hosts create"
-func (d *Driver) GetCreateFlags() []mcnflag.Flag {
-	return []mcnflag.Flag{
-		mcnflag.StringFlag{
+func GetCreateFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.StringFlag{
 			EnvVar: "DIGITALOCEAN_ACCESS_TOKEN",
 			Name:   "digitalocean-access-token",
 			Usage:  "Digital Ocean access token",
 		},
-		mcnflag.StringFlag{
-			EnvVar: "DIGITALOCEAN_SSH_USER",
-			Name:   "digitalocean-ssh-user",
-			Usage:  "SSH username",
-			Value:  defaultSSHUser,
-		},
-		mcnflag.StringFlag{
-			EnvVar: "DIGITALOCEAN_SSH_KEY_FINGERPRINT",
-			Name:   "digitalocean-ssh-key-fingerprint",
-			Usage:  "SSH key fingerprint",
-		},
-		mcnflag.StringFlag{
-			EnvVar: "DIGITALOCEAN_SSH_KEY_PATH",
-			Name:   "digitalocean-ssh-key-path",
-			Usage:  "SSH private key path ",
-		},
-		mcnflag.IntFlag{
-			EnvVar: "DIGITALOCEAN_SSH_PORT",
-			Name:   "digitalocean-ssh-port",
-			Usage:  "SSH port",
-			Value:  defaultSSHPort,
-		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "DIGITALOCEAN_IMAGE",
 			Name:   "digitalocean-image",
 			Usage:  "Digital Ocean Image",
-			Value:  defaultImage,
+			Value:  "ubuntu-14-04-x64",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "DIGITALOCEAN_REGION",
 			Name:   "digitalocean-region",
 			Usage:  "Digital Ocean region",
-			Value:  defaultRegion,
+			Value:  "nyc3",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "DIGITALOCEAN_SIZE",
 			Name:   "digitalocean-size",
 			Usage:  "Digital Ocean size",
-			Value:  defaultSize,
+			Value:  "512mb",
 		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			EnvVar: "DIGITALOCEAN_IPV6",
 			Name:   "digitalocean-ipv6",
 			Usage:  "enable ipv6 for droplet",
 		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			EnvVar: "DIGITALOCEAN_PRIVATE_NETWORKING",
 			Name:   "digitalocean-private-networking",
 			Usage:  "enable private networking for droplet",
 		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			EnvVar: "DIGITALOCEAN_BACKUPS",
 			Name:   "digitalocean-backups",
 			Usage:  "enable backups for droplet",
 		},
-		mcnflag.StringFlag{
-			EnvVar: "DIGITALOCEAN_USERDATA",
-			Name:   "digitalocean-userdata",
-			Usage:  "path to file with cloud-init user-data",
-		},
-		mcnflag.StringFlag{
-			EnvVar: "DIGITALOCEAN_TAGS",
-			Name:   "digitalocean-tags",
-			Usage:  "comma-separated list of tags to apply to the Droplet",
-		},
 	}
 }
 
-func NewDriver(hostName, storePath string) *Driver {
-	return &Driver{
-		Image:  defaultImage,
-		Size:   defaultSize,
-		Region: defaultRegion,
-		BaseDriver: &drivers.BaseDriver{
-			MachineName: hostName,
-			StorePath:   storePath,
-		},
-	}
+func NewDriver(machineName string, storePath string, caCert string, privateKey string) (drivers.Driver, error) {
+	inner := drivers.NewBaseDriver(machineName, storePath, caCert, privateKey)
+	return &Driver{BaseDriver: inner}, nil
 }
 
 func (d *Driver) GetSSHHostname() (string, error) {
 	return d.GetIP()
 }
 
-// DriverName returns the name of the driver
 func (d *Driver) DriverName() string {
 	return "digitalocean"
 }
@@ -152,14 +101,11 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.IPv6 = flags.Bool("digitalocean-ipv6")
 	d.PrivateNetworking = flags.Bool("digitalocean-private-networking")
 	d.Backups = flags.Bool("digitalocean-backups")
-	d.UserDataFile = flags.String("digitalocean-userdata")
-	d.SSHUser = flags.String("digitalocean-ssh-user")
-	d.SSHPort = flags.Int("digitalocean-ssh-port")
-	d.SSHKeyFingerprint = flags.String("digitalocean-ssh-key-fingerprint")
-	d.SSHKey = flags.String("digitalocean-ssh-key-path")
-	d.Tags = flags.String("digitalocean-tags")
-
-	d.SetSwarmConfigFromFlags(flags)
+	d.SwarmMaster = flags.Bool("swarm-master")
+	d.SwarmHost = flags.String("swarm-host")
+	d.SwarmDiscovery = flags.String("swarm-discovery")
+	d.SSHUser = "root"
+	d.SSHPort = 22
 
 	if d.AccessToken == "" {
 		return fmt.Errorf("digitalocean driver requires the --digitalocean-access-token option")
@@ -169,24 +115,8 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 }
 
 func (d *Driver) PreCreateCheck() error {
-	if d.UserDataFile != "" {
-		if _, err := os.Stat(d.UserDataFile); os.IsNotExist(err) {
-			return fmt.Errorf("user-data file %s could not be found", d.UserDataFile)
-		}
-	}
-
-	if d.SSHKey != "" {
-		if d.SSHKeyFingerprint == "" {
-			return fmt.Errorf("ssh-key-fingerpint needs to be provided for %q", d.SSHKey)
-		}
-
-		if _, err := os.Stat(d.SSHKey); os.IsNotExist(err) {
-			return fmt.Errorf("SSH key does not exist: %q", d.SSHKey)
-		}
-	}
-
 	client := d.getClient()
-	regions, _, err := client.Regions.List(context.TODO(), nil)
+	regions, _, err := client.Regions.List(nil)
 	if err != nil {
 		return err
 	}
@@ -200,15 +130,6 @@ func (d *Driver) PreCreateCheck() error {
 }
 
 func (d *Driver) Create() error {
-	var userdata string
-	if d.UserDataFile != "" {
-		buf, err := ioutil.ReadFile(d.UserDataFile)
-		if err != nil {
-			return err
-		}
-		userdata = string(buf)
-	}
-
 	log.Infof("Creating SSH key...")
 
 	key, err := d.createSSHKey()
@@ -223,32 +144,29 @@ func (d *Driver) Create() error {
 	client := d.getClient()
 
 	createRequest := &godo.DropletCreateRequest{
-		Image:             godo.DropletCreateImage{Slug: d.Image},
+		Image:             d.Image,
 		Name:              d.MachineName,
 		Region:            d.Region,
 		Size:              d.Size,
 		IPv6:              d.IPv6,
 		PrivateNetworking: d.PrivateNetworking,
 		Backups:           d.Backups,
-		UserData:          userdata,
-		SSHKeys:           []godo.DropletCreateSSHKey{{ID: d.SSHKeyID}},
-		Tags:              d.getTags(),
+		SSHKeys:           []interface{}{d.SSHKeyID},
 	}
 
-	newDroplet, _, err := client.Droplets.Create(context.TODO(), createRequest)
+	newDroplet, _, err := client.Droplets.Create(createRequest)
 	if err != nil {
 		return err
 	}
 
-	d.DropletID = newDroplet.ID
+	d.DropletID = newDroplet.Droplet.ID
 
-	log.Info("Waiting for IP address to be assigned to the Droplet...")
 	for {
-		newDroplet, _, err = client.Droplets.Get(context.TODO(), d.DropletID)
+		newDroplet, _, err = client.Droplets.Get(d.DropletID)
 		if err != nil {
 			return err
 		}
-		for _, network := range newDroplet.Networks.V4 {
+		for _, network := range newDroplet.Droplet.Networks.V4 {
 			if network.Type == "public" {
 				d.IPAddress = network.IPAddress
 			}
@@ -262,33 +180,14 @@ func (d *Driver) Create() error {
 	}
 
 	log.Debugf("Created droplet ID %d, IP address %s",
-		newDroplet.ID,
+		newDroplet.Droplet.ID,
 		d.IPAddress)
 
 	return nil
 }
 
 func (d *Driver) createSSHKey() (*godo.Key, error) {
-	d.SSHKeyPath = d.GetSSHKeyPath()
-
-	if d.SSHKeyFingerprint != "" {
-		key, resp, err := d.getClient().Keys.GetByFingerprint(context.TODO(), d.SSHKeyFingerprint)
-		if err != nil && resp.StatusCode == 404 {
-			return nil, fmt.Errorf("Digital Ocean SSH key with fingerprint %s doesn't exist", d.SSHKeyFingerprint)
-		}
-
-		if d.SSHKey == "" {
-			log.Infof("Assuming Digital Ocean private SSH is located at ~/.ssh/id_rsa")
-			return key, nil
-		}
-
-		if err := copySSHKey(d.SSHKey, d.SSHKeyPath); err != nil {
-			return nil, err
-		}
-		return key, nil
-	}
-
-	if err := ssh.GenerateSSHKey(d.SSHKeyPath); err != nil {
+	if err := ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
 		return nil, err
 	}
 
@@ -302,7 +201,7 @@ func (d *Driver) createSSHKey() (*godo.Key, error) {
 		PublicKey: string(publicKey),
 	}
 
-	key, _, err := d.getClient().Keys.Create(context.TODO(), createRequest)
+	key, _, err := d.getClient().Keys.Create(createRequest)
 	if err != nil {
 		return key, err
 	}
@@ -311,24 +210,26 @@ func (d *Driver) createSSHKey() (*godo.Key, error) {
 }
 
 func (d *Driver) GetURL() (string, error) {
-	if err := drivers.MustBeRunning(d); err != nil {
-		return "", err
-	}
-
 	ip, err := d.GetIP()
 	if err != nil {
 		return "", err
 	}
+	return fmt.Sprintf("tcp://%s:2376", ip), nil
+}
 
-	return fmt.Sprintf("tcp://%s", net.JoinHostPort(ip, "2376")), nil
+func (d *Driver) GetIP() (string, error) {
+	if d.IPAddress == "" {
+		return "", fmt.Errorf("IP address is not set")
+	}
+	return d.IPAddress, nil
 }
 
 func (d *Driver) GetState() (state.State, error) {
-	droplet, _, err := d.getClient().Droplets.Get(context.TODO(), d.DropletID)
+	droplet, _, err := d.getClient().Droplets.Get(d.DropletID)
 	if err != nil {
 		return state.Error, err
 	}
-	switch droplet.Status {
+	switch droplet.Droplet.Status {
 	case "new":
 		return state.Starting, nil
 	case "active":
@@ -340,37 +241,25 @@ func (d *Driver) GetState() (state.State, error) {
 }
 
 func (d *Driver) Start() error {
-	_, _, err := d.getClient().DropletActions.PowerOn(context.TODO(), d.DropletID)
+	_, _, err := d.getClient().DropletActions.PowerOn(d.DropletID)
 	return err
 }
 
 func (d *Driver) Stop() error {
-	_, _, err := d.getClient().DropletActions.Shutdown(context.TODO(), d.DropletID)
-	return err
-}
-
-func (d *Driver) Restart() error {
-	_, _, err := d.getClient().DropletActions.Reboot(context.TODO(), d.DropletID)
-	return err
-}
-
-func (d *Driver) Kill() error {
-	_, _, err := d.getClient().DropletActions.PowerOff(context.TODO(), d.DropletID)
+	_, _, err := d.getClient().DropletActions.Shutdown(d.DropletID)
 	return err
 }
 
 func (d *Driver) Remove() error {
 	client := d.getClient()
-	if d.SSHKeyFingerprint == "" {
-		if resp, err := client.Keys.DeleteByID(context.TODO(), d.SSHKeyID); err != nil {
-			if resp.StatusCode == 404 {
-				log.Infof("Digital Ocean SSH key doesn't exist, assuming it is already deleted")
-			} else {
-				return err
-			}
+	if resp, err := client.Keys.DeleteByID(d.SSHKeyID); err != nil {
+		if resp.StatusCode == 404 {
+			log.Infof("Digital Ocean SSH key doesn't exist, assuming it is already deleted")
+		} else {
+			return err
 		}
 	}
-	if resp, err := client.Droplets.Delete(context.TODO(), d.DropletID); err != nil {
+	if resp, err := client.Droplets.Delete(d.DropletID); err != nil {
 		if resp.StatusCode == 404 {
 			log.Infof("Digital Ocean droplet doesn't exist, assuming it is already deleted")
 		} else {
@@ -380,48 +269,24 @@ func (d *Driver) Remove() error {
 	return nil
 }
 
+func (d *Driver) Restart() error {
+	_, _, err := d.getClient().DropletActions.Reboot(d.DropletID)
+	return err
+}
+
+func (d *Driver) Kill() error {
+	_, _, err := d.getClient().DropletActions.PowerOff(d.DropletID)
+	return err
+}
+
 func (d *Driver) getClient() *godo.Client {
-	token := &oauth2.Token{AccessToken: d.AccessToken}
-	tokenSource := oauth2.StaticTokenSource(token)
-	client := oauth2.NewClient(oauth2.NoContext, tokenSource)
-
-	return godo.NewClient(client)
-}
-
-func (d *Driver) getTags() []string {
-	var tagList []string
-
-	for _, t := range strings.Split(d.Tags, ",") {
-		t = strings.TrimSpace(t)
-		if t != "" {
-			tagList = append(tagList, t)
-		}
+	t := &oauth.Transport{
+		Token: &oauth.Token{AccessToken: d.AccessToken},
 	}
 
-	return tagList
-}
-
-func (d *Driver) GetSSHKeyPath() string {
-	if d.SSHKey != "" {
-		d.SSHKeyPath = d.ResolveStorePath(path.Base(d.SSHKey))
-	} else if d.SSHKeyPath == "" && d.SSHKeyFingerprint == "" {
-		d.SSHKeyPath = d.ResolveStorePath("id_rsa")
-	}
-	return d.SSHKeyPath
+	return godo.NewClient(t.Client())
 }
 
 func (d *Driver) publicSSHKeyPath() string {
 	return d.GetSSHKeyPath() + ".pub"
-}
-
-func copySSHKey(src, dst string) error {
-	if err := mcnutils.CopyFile(src, dst); err != nil {
-		return fmt.Errorf("unable to copy ssh key: %s", err)
-	}
-
-	if err := os.Chmod(dst, 0600); err != nil {
-		return fmt.Errorf("unable to set permissions on the ssh key: %s", err)
-	}
-
-	return nil
 }

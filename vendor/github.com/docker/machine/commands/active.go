@@ -1,60 +1,38 @@
 package commands
 
 import (
-	"errors"
 	"fmt"
 
-	"time"
-
-	"github.com/docker/machine/libmachine"
-	"github.com/docker/machine/libmachine/persist"
-	"github.com/docker/machine/libmachine/state"
+	"github.com/codegangsta/cli"
+	"github.com/docker/machine/log"
 )
 
-const (
-	activeDefaultTimeout = 10
-)
-
-var (
-	errNoActiveHost  = errors.New("No active host found")
-	errActiveTimeout = errors.New("Error getting active host: timeout")
-)
-
-func cmdActive(c CommandLine, api libmachine.API) error {
+func cmdActive(c *cli.Context) {
 	if len(c.Args()) > 0 {
-		return ErrTooManyArguments
+		log.Fatal("Error: Too many arguments given.")
 	}
 
-	hosts, hostsInError, err := persist.LoadAllHosts(api)
+	certInfo := getCertPathInfo(c)
+	defaultStore, err := getDefaultStore(
+		c.GlobalString("storage-path"),
+		certInfo.CaCertPath,
+		certInfo.CaKeyPath,
+	)
 	if err != nil {
-		return fmt.Errorf("Error getting active host: %s", err)
+		log.Fatal(err)
 	}
 
-	timeout := time.Duration(c.Int("timeout")) * time.Second
-	items := getHostListItems(hosts, hostsInError, timeout)
-
-	active, err := activeHost(items)
-
+	provider, err := newProvider(defaultStore)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	fmt.Println(active.Name)
-	return nil
-}
+	host, err := provider.GetActive()
+	if err != nil {
+		log.Fatalf("Error getting active host: %s", err)
+	}
 
-func activeHost(items []HostListItem) (HostListItem, error) {
-	timeout := false
-	for _, item := range items {
-		if item.ActiveHost || item.ActiveSwarm {
-			return item, nil
-		}
-		if item.State == state.Timeout {
-			timeout = true
-		}
+	if host != nil {
+		fmt.Println(host.Name)
 	}
-	if timeout {
-		return HostListItem{}, errActiveTimeout
-	}
-	return HostListItem{}, errNoActiveHost
 }

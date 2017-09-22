@@ -10,16 +10,14 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
-	"syscall"
 
-	"github.com/docker/machine/libmachine/log"
+	"github.com/docker/machine/log"
 )
 
 var (
-	vmrunbin    = setVmwareCmd("vmrun")
-	vdiskmanbin = setVmwareCmd("vmware-vdiskmanager")
+	vmrunbin    = "/Applications/VMware Fusion.app/Contents/Library/vmrun"
+	vdiskmanbin = "/Applications/VMware Fusion.app/Contents/Library/vmware-vdiskmanager"
 )
 
 var (
@@ -28,20 +26,9 @@ var (
 	ErrVMRUNNotFound   = errors.New("VMRUN not found")
 )
 
-// detect the vmrun and vmware-vdiskmanager cmds' path if needed
-func setVmwareCmd(cmd string) string {
-	if path, err := exec.LookPath(cmd); err == nil {
-		return path
-	}
-	return filepath.Join("/Applications/VMware Fusion.app/Contents/Library/", cmd)
-}
-
 func vmrun(args ...string) (string, string, error) {
-	// vmrun with nogui on VMware Fusion through at least 8.0.1 doesn't work right
-	// if the umask is set to not allow world-readable permissions
-	_ = syscall.Umask(022)
 	cmd := exec.Command(vmrunbin, args...)
-	if os.Getenv("MACHINE_DEBUG") != "" {
+	if os.Getenv("DEBUG") != "" {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}
@@ -64,7 +51,7 @@ func vmrun(args ...string) (string, string, error) {
 // Make a vmdk disk image with the given size (in MB).
 func vdiskmanager(dest string, size int) error {
 	cmd := exec.Command(vdiskmanbin, "-c", "-t", "0", "-s", fmt.Sprintf("%dMB", size), "-a", "lsilogic", dest)
-	if os.Getenv("MACHINE_DEBUG") != "" {
+	if os.Getenv("DEBUG") != "" {
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 	}

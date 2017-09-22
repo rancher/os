@@ -4,43 +4,37 @@ import (
 	"io"
 	"net"
 	"syscall"
+
+	"github.com/sirupsen/logrus"
 )
 
 // TCPProxy is a proxy for TCP connections. It implements the Proxy interface to
 // handle TCP traffic forwarding between the frontend and backend addresses.
 type TCPProxy struct {
-	Logger       logger
 	listener     *net.TCPListener
 	frontendAddr *net.TCPAddr
 	backendAddr  *net.TCPAddr
 }
 
 // NewTCPProxy creates a new TCPProxy.
-func NewTCPProxy(frontendAddr, backendAddr *net.TCPAddr, ops ...func(*TCPProxy)) (*TCPProxy, error) {
+func NewTCPProxy(frontendAddr, backendAddr *net.TCPAddr) (*TCPProxy, error) {
 	listener, err := net.ListenTCP("tcp", frontendAddr)
 	if err != nil {
 		return nil, err
 	}
 	// If the port in frontendAddr was 0 then ListenTCP will have a picked
 	// a port to listen on, hence the call to Addr to get that actual port:
-	proxy := &TCPProxy{
+	return &TCPProxy{
 		listener:     listener,
 		frontendAddr: listener.Addr().(*net.TCPAddr),
 		backendAddr:  backendAddr,
-		Logger:       &noopLogger{},
-	}
-
-	for _, op := range ops {
-		op(proxy)
-	}
-
-	return proxy, nil
+	}, nil
 }
 
 func (proxy *TCPProxy) clientLoop(client *net.TCPConn, quit chan bool) {
 	backend, err := net.DialTCP("tcp", nil, proxy.backendAddr)
 	if err != nil {
-		proxy.Logger.Printf("Can't forward traffic to backend tcp/%v: %s\n", proxy.backendAddr, err)
+		logrus.Printf("Can't forward traffic to backend tcp/%v: %s\n", proxy.backendAddr, err)
 		client.Close()
 		return
 	}
@@ -88,7 +82,7 @@ func (proxy *TCPProxy) Run() {
 	for {
 		client, err := proxy.listener.Accept()
 		if err != nil {
-			proxy.Logger.Printf("Stopping proxy on tcp/%v for tcp/%v (%s)", proxy.frontendAddr, proxy.backendAddr, err)
+			logrus.Printf("Stopping proxy on tcp/%v for tcp/%v (%s)", proxy.frontendAddr, proxy.backendAddr, err)
 			return
 		}
 		go proxy.clientLoop(client.(*net.TCPConn), quit)

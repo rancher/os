@@ -1,55 +1,36 @@
 package virtualbox
 
 import (
-	"errors"
+	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-const stdOutDiskInfo = `
+var (
+	testDiskInfoText = `
 storagecontrollerbootable0="on"
 "SATA-0-0"="/home/ehazlett/.boot2docker/boot2docker.iso"
 "SATA-IsEjected"="off"
 "SATA-1-0"="/home/ehazlett/vm/test/disk.vmdk"
 "SATA-ImageUUID-1-0"="12345-abcdefg"
 "SATA-2-0"="none"
-nic1="nat"`
+nic1="nat"
+    `
+)
 
 func TestVMDiskInfo(t *testing.T) {
-	vbox := &VBoxManagerMock{
-		args:   "showvminfo default --machinereadable",
-		stdOut: stdOutDiskInfo,
+	r := strings.NewReader(testDiskInfoText)
+	disk, err := parseDiskInfo(r)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	disk, err := getVMDiskInfo("default", vbox)
-
-	assert.Equal(t, "/home/ehazlett/vm/test/disk.vmdk", disk.Path)
-	assert.Equal(t, "12345-abcdefg", disk.UUID)
-	assert.NoError(t, err)
-}
-
-func TestVMDiskInfoError(t *testing.T) {
-	vbox := &VBoxManagerMock{
-		args: "showvminfo default --machinereadable",
-		err:  errors.New("BUG"),
+	diskPath := "/home/ehazlett/vm/test/disk.vmdk"
+	diskUUID := "12345-abcdefg"
+	if disk.Path != diskPath {
+		t.Fatalf("expected disk path %s", diskPath)
 	}
 
-	disk, err := getVMDiskInfo("default", vbox)
-
-	assert.Nil(t, disk)
-	assert.EqualError(t, err, "BUG")
-}
-
-func TestVMDiskInfoInvalidOutput(t *testing.T) {
-	vbox := &VBoxManagerMock{
-		args:   "showvminfo default --machinereadable",
-		stdOut: "INVALID",
+	if disk.UUID != diskUUID {
+		t.Fatalf("expected disk uuid %s", diskUUID)
 	}
-
-	disk, err := getVMDiskInfo("default", vbox)
-
-	assert.Empty(t, disk.Path)
-	assert.Empty(t, disk.UUID)
-	assert.NoError(t, err)
 }

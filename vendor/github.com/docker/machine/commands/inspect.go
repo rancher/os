@@ -6,7 +6,9 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/docker/machine/libmachine"
+	"github.com/docker/machine/log"
+
+	"github.com/codegangsta/cli"
 )
 
 var funcMap = template.FuncMap{
@@ -20,53 +22,34 @@ var funcMap = template.FuncMap{
 	},
 }
 
-func cmdInspect(c CommandLine, api libmachine.API) error {
-	if len(c.Args()) > 1 {
-		c.ShowHelp()
-		return ErrExpectedOneMachine
-	}
-
-	target, err := targetHost(c, api)
-	if err != nil {
-		return err
-	}
-
-	host, err := api.Load(target)
-	if err != nil {
-		return err
-	}
-
+func cmdInspect(c *cli.Context) {
 	tmplString := c.String("format")
 	if tmplString != "" {
 		var tmpl *template.Template
 		var err error
 		if tmpl, err = template.New("").Funcs(funcMap).Parse(tmplString); err != nil {
-			return fmt.Errorf("template parsing error: %v", err)
+			log.Fatalf("Template parsing error: %v\n", err)
 		}
 
-		jsonHost, err := json.Marshal(host)
+		jsonHost, err := json.Marshal(getHost(c))
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
-
 		obj := make(map[string]interface{})
 		if err := json.Unmarshal(jsonHost, &obj); err != nil {
-			return err
+			log.Fatal(err)
 		}
 
 		if err := tmpl.Execute(os.Stdout, obj); err != nil {
-			return err
+			log.Fatal(err)
 		}
-
 		os.Stdout.Write([]byte{'\n'})
 	} else {
-		prettyJSON, err := json.MarshalIndent(host, "", "    ")
+		prettyJSON, err := json.MarshalIndent(getHost(c), "", "    ")
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
 
 		fmt.Println(string(prettyJSON))
 	}
-
-	return nil
 }

@@ -1,0 +1,6 @@
+cmd/control/service/command/command.go:23:33: cannot use
+"github.com/rancher/os/cmd/control/service/app".ProjectCreate (type func(project.APIProject, *"github.com/rancher/os/vendor/github.com/codegangsta/cli".Context) error)
+ as type
+ "github.com/rancher/os/vendor/github.com/docker/libcompose/cli/app".ProjectAction
+ in argument to
+ "github.com/rancher/os/vendor/github.com/docker/libcompose/cli/app".WithProject

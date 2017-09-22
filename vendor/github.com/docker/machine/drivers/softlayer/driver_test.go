@@ -5,9 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/docker/machine/commands/commandstest"
-	"github.com/docker/machine/commands/mcndirs"
-	"github.com/docker/machine/libmachine/drivers"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -18,6 +15,38 @@ const (
 	machineTestPrivateKey = "test-key"
 )
 
+type DriverOptionsMock struct {
+	Data map[string]interface{}
+}
+
+func (d DriverOptionsMock) String(key string) string {
+	if value, ok := d.Data[key]; ok {
+		return value.(string)
+	}
+	return ""
+}
+
+func (d DriverOptionsMock) StringSlice(key string) []string {
+	if value, ok := d.Data[key]; ok {
+		return value.([]string)
+	}
+	return []string{}
+}
+
+func (d DriverOptionsMock) Int(key string) int {
+	if value, ok := d.Data[key]; ok {
+		return value.(int)
+	}
+	return 0
+}
+
+func (d DriverOptionsMock) Bool(key string) bool {
+	if value, ok := d.Data[key]; ok {
+		return value.(bool)
+	}
+	return false
+}
+
 func cleanup() error {
 	return os.RemoveAll(testStoreDir)
 }
@@ -27,12 +56,12 @@ func getTestStorePath() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	mcndirs.BaseDir = tmpDir
+	os.Setenv("MACHINE_STORAGE_PATH", tmpDir)
 	return tmpDir, nil
 }
 
-func getDefaultTestDriverFlags() *commandstest.FakeFlagger {
-	return &commandstest.FakeFlagger{
+func getDefaultTestDriverFlags() *DriverOptionsMock {
+	return &DriverOptionsMock{
 		Data: map[string]interface{}{
 			"name":                   "test",
 			"url":                    "unix:///var/run/docker.sock",
@@ -51,7 +80,10 @@ func getTestDriver() (*Driver, error) {
 	}
 	defer cleanup()
 
-	d := NewDriver(machineTestName, storePath)
+	d, err := NewDriver(machineTestName, storePath, machineTestCaCert, machineTestPrivateKey)
+	if err != nil {
+		return nil, err
+	}
 	d.SetConfigFromFlags(getDefaultTestDriverFlags())
 	drv := d.(*Driver)
 	return drv, nil
@@ -70,24 +102,4 @@ func TestHostnameDefaultsToMachineName(t *testing.T) {
 	if assert.NoError(t, err) {
 		assert.Equal(t, machineTestName, d.deviceConfig.Hostname)
 	}
-}
-
-func TestSetConfigFromFlags(t *testing.T) {
-	driver := NewDriver("default", "path")
-
-	checkFlags := &drivers.CheckDriverOptions{
-		FlagsValues: map[string]interface{}{
-			"softlayer-api-key":      "KEY",
-			"softlayer-user":         "user",
-			"softlayer-api-endpoint": "ENDPOINT",
-			"softlayer-domain":       "DOMAIN",
-			"softlayer-region":       "REGION",
-		},
-		CreateFlags: driver.GetCreateFlags(),
-	}
-
-	err := driver.SetConfigFromFlags(checkFlags)
-
-	assert.NoError(t, err)
-	assert.Empty(t, checkFlags.InvalidFlags)
 }

@@ -1,0 +1,3 @@
+#!/bin/sh
+godep go test -v ./_integration-test
+

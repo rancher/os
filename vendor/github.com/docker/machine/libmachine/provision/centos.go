@@ -1,7 +1,7 @@
 package provision
 
 import (
-	"github.com/docker/machine/libmachine/drivers"
+	"github.com/docker/machine/drivers"
 )
 
 func init() {
@@ -11,15 +11,21 @@ func init() {
 }
 
 func NewCentosProvisioner(d drivers.Driver) Provisioner {
-	return &CentosProvisioner{
-		NewRedHatProvisioner("centos", d),
+	g := GenericProvisioner{
+		DockerOptionsDir:  "/etc/docker",
+		DaemonOptionsFile: "/etc/systemd/system/docker.service",
+		OsReleaseId:       "centos",
+		Packages:          []string{},
+		Driver:            d,
 	}
+	p := &CentosProvisioner{
+		RedHatProvisioner{
+			GenericProvisioner: g,
+		},
+	}
+	return p
 }
 
 type CentosProvisioner struct {
-	*RedHatProvisioner
-}
-
-func (provisioner *CentosProvisioner) String() string {
-	return "centos"
+	RedHatProvisioner
 }

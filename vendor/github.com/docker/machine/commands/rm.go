@@ -1,89 +1,44 @@
 package commands
 
 import (
-	"fmt"
-
-	"strings"
-
-	"errors"
-
-	"github.com/docker/machine/libmachine"
-	"github.com/docker/machine/libmachine/log"
+	"github.com/codegangsta/cli"
+	"github.com/docker/machine/log"
 )
 
-func cmdRm(c CommandLine, api libmachine.API) error {
+func cmdRm(c *cli.Context) {
 	if len(c.Args()) == 0 {
-		c.ShowHelp()
-		return ErrNoMachineSpecified
+		cli.ShowCommandHelp(c, "rm")
+		log.Fatal("You must specify a machine name")
 	}
-
-	log.Info(fmt.Sprintf("About to remove %s", strings.Join(c.Args(), ", ")))
-	log.Warn("WARNING: This action will delete both local reference and remote instance.")
 
 	force := c.Bool("force")
-	confirm := c.Bool("y")
-	var errorOccurred []string
 
-	if !userConfirm(confirm, force) {
-		return nil
-	}
+	isError := false
 
-	for _, hostName := range c.Args() {
-		err := removeRemoteMachine(hostName, api)
-		if err != nil {
-			errorOccurred = collectError(fmt.Sprintf("Error removing host %q: %s", hostName, err), force, errorOccurred)
-		}
-
-		if err == nil || force {
-			removeErr := removeLocalMachine(hostName, api)
-			if removeErr != nil {
-				errorOccurred = collectError(fmt.Sprintf("Can't remove \"%s\"", hostName), force, errorOccurred)
-			} else {
-				log.Infof("Successfully removed %s", hostName)
-			}
-		}
-	}
-
-	if len(errorOccurred) > 0 && !force {
-		return errors.New(strings.Join(errorOccurred, "\n"))
-	}
-
-	return nil
-}
-
-func userConfirm(confirm bool, force bool) bool {
-	if confirm || force {
-		return true
-	}
-
-	sure, err := confirmInput(fmt.Sprintf("Are you sure?"))
+	certInfo := getCertPathInfo(c)
+	defaultStore, err := getDefaultStore(
+		c.GlobalString("storage-path"),
+		certInfo.CaCertPath,
+		certInfo.CaKeyPath,
+	)
 	if err != nil {
-		return false
+		log.Fatal(err)
 	}
 
-	return sure
-}
-
-func removeRemoteMachine(hostName string, api libmachine.API) error {
-	currentHost, loaderr := api.Load(hostName)
-	if loaderr != nil {
-		return loaderr
+	provider, err := newProvider(defaultStore)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	return currentHost.Driver.Remove()
-}
-
-func removeLocalMachine(hostName string, api libmachine.API) error {
-	exist, _ := api.Exists(hostName)
-	if !exist {
-		return errors.New(hostName + " does not exist.")
+	for _, host := range c.Args() {
+		if err := provider.Remove(host, force); err != nil {
+			log.Errorf("Error removing machine %s: %s", host, err)
+			isError = true
+		} else {
+			log.Infof("Successfully removed %s", host)
+		}
 	}
-	return api.Remove(hostName)
-}
-
-func collectError(message string, force bool, errorOccurred []string) []string {
-	if force {
-		log.Error(message)
+	if isError {
+		log.Fatal("There was an error removing a machine. To force remove it, pass the -f option. Warning: this might leave it running on the provider.")
 	}
-	return append(errorOccurred, message)
 }

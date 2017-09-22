@@ -2,45 +2,78 @@ package commands
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+	"net/url"
+	"strings"
 
-	"github.com/docker/machine/commands/mcndirs"
-	"github.com/docker/machine/libmachine"
-	"github.com/docker/machine/libmachine/check"
-	"github.com/docker/machine/libmachine/log"
+	"github.com/codegangsta/cli"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/utils"
 )
 
-func cmdConfig(c CommandLine, api libmachine.API) error {
-	// Ensure that log messages always go to stderr when this command is
-	// being run (it is intended to be run in a subshell)
-	log.SetOutWriter(os.Stderr)
-
-	target, err := targetHost(c, api)
+func cmdConfig(c *cli.Context) {
+	if len(c.Args()) != 1 {
+		log.Fatal(ErrExpectedOneMachine)
+	}
+	cfg, err := getMachineConfig(c)
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	host, err := api.Load(target)
+	dockerHost, err := getHost(c).Driver.GetURL()
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	dockerHost, _, err := check.DefaultConnChecker.Check(host, c.Bool("swarm"))
-	if err != nil {
-		return fmt.Errorf("Error running connection boilerplate: %s", err)
+	if c.Bool("swarm") {
+		if !cfg.SwarmOptions.Master {
+			log.Fatalf("%s is not a swarm master", cfg.machineName)
+		}
+		u, err := url.Parse(cfg.SwarmOptions.Host)
+		if err != nil {
+			log.Fatal(err)
+		}
+		parts := strings.Split(u.Host, ":")
+		swarmPort := parts[1]
+
+		// get IP of machine to replace in case swarm host is 0.0.0.0
+		mUrl, err := url.Parse(dockerHost)
+		if err != nil {
+			log.Fatal(err)
+		}
+		mParts := strings.Split(mUrl.Host, ":")
+		machineIp := mParts[0]
+
+		dockerHost = fmt.Sprintf("tcp://%s:%s", machineIp, swarmPort)
 	}
 
 	log.Debug(dockerHost)
 
-	tlsCACert := filepath.Join(mcndirs.GetMachineDir(), host.Name, "ca.pem")
-	tlsCert := filepath.Join(mcndirs.GetMachineDir(), host.Name, "cert.pem")
-	tlsKey := filepath.Join(mcndirs.GetMachineDir(), host.Name, "key.pem")
+	u, err := url.Parse(cfg.machineUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// TODO(nathanleclaire): These magic strings for the certificate file
-	// names should be cross-package constants.
-	fmt.Printf("--tlsverify\n--tlscacert=%q\n--tlscert=%q\n--tlskey=%q\n-H=%s\n",
-		tlsCACert, tlsCert, tlsKey, dockerHost)
+	if u.Scheme != "unix" {
+		// validate cert and regenerate if needed
+		valid, err := utils.ValidateCertificate(
+			u.Host,
+			cfg.caCertPath,
+			cfg.serverCertPath,
+			cfg.serverKeyPath,
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	return nil
+		if !valid {
+			log.Debugf("invalid certs detected; regenerating for %s", u.Host)
+
+			if err := runActionWithContext("configureAuth", c); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}
+
+	fmt.Printf("--tlsverify --tlscacert=%q --tlscert=%q --tlskey=%q -H=%s",
+		cfg.caCertPath, cfg.clientCertPath, cfg.clientKeyPath, dockerHost)
 }

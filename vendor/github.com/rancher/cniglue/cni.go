@@ -11,9 +11,8 @@ import (
 )
 
 var (
-	CniDir  = "/etc/docker/cni/%s.d"
-	CniPath = []string{
-		"/opt/cni/bin",
+	cniDir  = "/etc/docker/cni/%s.d"
+	cniPath = []string{
 		"/var/lib/cni/bin",
 		"/usr/local/sbin",
 		"/usr/sbin",
@@ -50,7 +49,7 @@ func NewCNIExec(state *DockerPluginState) (*CNIExec, error) {
 	c := &CNIExec{
 		runtimeConf: libcni.RuntimeConf{
 			ContainerID: state.ContainerID,
-			NetNS:       fmt.Sprintf("/proc/%d/ns/net", state.Pid),
+			NetNS:       fmt.Sprintf("/proc/%d/ns/net", state.State.Pid),
 			IfName:      "eth0",
 			Args: [][2]string{
 				{"IgnoreUnknown", "1"},
@@ -58,20 +57,8 @@ func NewCNIExec(state *DockerPluginState) (*CNIExec, error) {
 			},
 		},
 		cninet: libcni.CNIConfig{
-			Path: CniPath,
+			Path: cniPath,
 		},
-	}
-
-	if uuid, ok := state.Config.Labels["io.rancher.container.uuid"]; ok {
-		c.runtimeConf.Args = append(c.runtimeConf.Args, [2]string{"RancherContainerUUID", uuid})
-	}
-
-	if linkMTUOverhead, ok := state.Config.Labels["io.rancher.cni.link_mtu_overhead"]; ok {
-		c.runtimeConf.Args = append(c.runtimeConf.Args, [2]string{"LinkMTUOverhead", linkMTUOverhead})
-	}
-
-	if MACAddress, ok := state.Config.Labels["io.rancher.container.mac_address"]; ok {
-		c.runtimeConf.Args = append(c.runtimeConf.Args, [2]string{"MACAddress", MACAddress})
 	}
 
 	network := state.HostConfig.NetworkMode.NetworkName()
@@ -79,14 +66,14 @@ func NewCNIExec(state *DockerPluginState) (*CNIExec, error) {
 		network = "default"
 	}
 
-	dir := fmt.Sprintf(CniDir, network)
+	dir := fmt.Sprintf(cniDir, network)
 	files, err := libcni.ConfFiles(dir)
 	if err != nil {
 		return nil, err
 	}
 	sort.Strings(files)
 
-	os.Setenv("PATH", strings.Join(CniPath, ":"))
+	os.Setenv("PATH", strings.Join(cniPath, ":"))
 
 	for _, file := range files {
 		netConf, err := libcni.ConfFromFile(file)

@@ -1,7 +1,13 @@
 package commands
 
-import "github.com/docker/machine/libmachine"
+import (
+	"github.com/docker/machine/log"
 
-func cmdUpgrade(c CommandLine, api libmachine.API) error {
-	return runAction("upgrade", c, api)
+	"github.com/codegangsta/cli"
+)
+
+func cmdUpgrade(c *cli.Context) {
+	if err := runActionWithContext("upgrade", c); err != nil {
+		log.Fatal(err)
+	}
 }

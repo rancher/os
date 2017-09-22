@@ -4,212 +4,255 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
+	"runtime"
+	"sort"
 	"strings"
 
 	"github.com/codegangsta/cli"
-	"github.com/docker/machine/commands/mcndirs"
-	"github.com/docker/machine/libmachine"
-	"github.com/docker/machine/libmachine/crashreport"
-	"github.com/docker/machine/libmachine/host"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnerror"
-	"github.com/docker/machine/libmachine/mcnutils"
-	"github.com/docker/machine/libmachine/persist"
-	"github.com/docker/machine/libmachine/ssh"
-)
+	"github.com/skarademir/naturalsort"
 
-const (
-	defaultMachineName = "default"
+	"github.com/docker/machine/drivers"
+	_ "github.com/docker/machine/drivers/amazonec2"
+	_ "github.com/docker/machine/drivers/azure"
+	_ "github.com/docker/machine/drivers/digitalocean"
+	_ "github.com/docker/machine/drivers/exoscale"
+	_ "github.com/docker/machine/drivers/generic"
+	_ "github.com/docker/machine/drivers/google"
+	_ "github.com/docker/machine/drivers/hyperv"
+	_ "github.com/docker/machine/drivers/none"
+	_ "github.com/docker/machine/drivers/openstack"
+	_ "github.com/docker/machine/drivers/rackspace"
+	_ "github.com/docker/machine/drivers/softlayer"
+	_ "github.com/docker/machine/drivers/virtualbox"
+	_ "github.com/docker/machine/drivers/vmwarefusion"
+	_ "github.com/docker/machine/drivers/vmwarevcloudair"
+	_ "github.com/docker/machine/drivers/vmwarevsphere"
+
+	"github.com/docker/machine/libmachine"
+	"github.com/docker/machine/libmachine/auth"
+	"github.com/docker/machine/libmachine/swarm"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/utils"
 )
 
 var (
-	ErrHostLoad           = errors.New("All specified hosts had errors loading their configuration")
-	ErrNoDefault          = fmt.Errorf("Error: No machine name(s) specified and no %q machine exists", defaultMachineName)
-	ErrNoMachineSpecified = errors.New("Error: Expected to get one or more machine names as arguments")
-	ErrExpectedOneMachine = errors.New("Error: Expected one machine name as an argument")
-	ErrTooManyArguments   = errors.New("Error: Too many arguments given")
-
-	osExit = func(code int) { os.Exit(code) }
+	ErrUnknownShell       = errors.New("Error: Unknown shell")
+	ErrNoMachineSpecified = errors.New("Error: Expected to get one or more machine names as arguments.")
+	ErrExpectedOneMachine = errors.New("Error: Expected one machine name as an argument.")
 )
 
-// CommandLine contains all the information passed to the commands on the command line.
-type CommandLine interface {
-	ShowHelp()
-
-	ShowVersion()
-
-	Application() *cli.App
-
-	Args() cli.Args
-
-	IsSet(name string) bool
-
-	Bool(name string) bool
-
-	Int(name string) int
-
-	String(name string) string
-
-	StringSlice(name string) []string
-
-	GlobalString(name string) string
-
-	FlagNames() (names []string)
-
-	Generic(name string) interface{}
+type machineConfig struct {
+	machineName    string
+	machineDir     string
+	machineUrl     string
+	clientKeyPath  string
+	serverCertPath string
+	clientCertPath string
+	caCertPath     string
+	caKeyPath      string
+	serverKeyPath  string
+	AuthOptions    auth.AuthOptions
+	SwarmOptions   swarm.SwarmOptions
 }
 
-type contextCommandLine struct {
-	*cli.Context
+func sortHostListItemsByName(items []libmachine.HostListItem) {
+	m := make(map[string]libmachine.HostListItem, len(items))
+	s := make([]string, len(items))
+	for i, v := range items {
+		name := strings.ToLower(v.Name)
+		m[name] = v
+		s[i] = name
+	}
+	sort.Sort(naturalsort.NaturalSort(s))
+	for i, v := range s {
+		items[i] = m[v]
+	}
 }
 
-func (c *contextCommandLine) ShowHelp() {
-	cli.ShowCommandHelp(c.Context, c.Command.Name)
+func confirmInput(msg string) bool {
+	fmt.Printf("%s (y/n): ", msg)
+	var resp string
+	_, err := fmt.Scanln(&resp)
+
+	if err != nil {
+		log.Fatal(err)
+
+	}
+
+	if strings.Index(strings.ToLower(resp), "y") == 0 {
+		return true
+
+	}
+
+	return false
 }
 
-func (c *contextCommandLine) ShowVersion() {
-	cli.ShowVersion(c.Context)
+func newProvider(store libmachine.Store) (*libmachine.Provider, error) {
+	return libmachine.New(store)
 }
 
-func (c *contextCommandLine) Application() *cli.App {
-	return c.App
+func getMachineDir(rootPath string) string {
+	return filepath.Join(rootPath, "machines")
 }
 
-// targetHost returns a specific host name if one is indicated by the first CLI
-// arg, or the default host name if no host is specified.
-func targetHost(c CommandLine, api libmachine.API) (string, error) {
-	if len(c.Args()) == 0 {
-		defaultExists, err := api.Exists(defaultMachineName)
-		if err != nil {
-			return "", fmt.Errorf("Error checking if host %q exists: %s", defaultMachineName, err)
+func getDefaultStore(rootPath, caCertPath, privateKeyPath string) (libmachine.Store, error) {
+	return libmachine.NewFilestore(
+		rootPath,
+		caCertPath,
+		privateKeyPath,
+	), nil
+}
+
+func setupCertificates(caCertPath, caKeyPath, clientCertPath, clientKeyPath string) error {
+	org := utils.GetUsername()
+	bits := 2048
+
+	if _, err := os.Stat(utils.GetMachineCertDir()); err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(utils.GetMachineCertDir(), 0700); err != nil {
+				log.Fatalf("Error creating machine config dir: %s", err)
+			}
+		} else {
+			log.Fatal(err)
+		}
+	}
+
+	if _, err := os.Stat(caCertPath); os.IsNotExist(err) {
+		log.Infof("Creating CA: %s", caCertPath)
+
+		// check if the key path exists; if so, error
+		if _, err := os.Stat(caKeyPath); err == nil {
+			log.Fatalf("The CA key already exists.  Please remove it or specify a different key/cert.")
 		}
 
-		if defaultExists {
-			return defaultMachineName, nil
+		if err := utils.GenerateCACertificate(caCertPath, caKeyPath, org, bits); err != nil {
+			log.Infof("Error generating CA certificate: %s", err)
+		}
+	}
+
+	if _, err := os.Stat(clientCertPath); os.IsNotExist(err) {
+		log.Infof("Creating client certificate: %s", clientCertPath)
+
+		if _, err := os.Stat(utils.GetMachineCertDir()); err != nil {
+			if os.IsNotExist(err) {
+				if err := os.Mkdir(utils.GetMachineCertDir(), 0700); err != nil {
+					log.Fatalf("Error creating machine client cert dir: %s", err)
+				}
+			} else {
+				log.Fatal(err)
+			}
 		}
 
-		return "", ErrNoDefault
-	}
-
-	return c.Args()[0], nil
-}
-
-func runAction(actionName string, c CommandLine, api libmachine.API) error {
-	var (
-		hostsToLoad []string
-	)
-
-	// If user did not specify a machine name explicitly, use the 'default'
-	// machine if it exists.  This allows short form commands such as
-	// 'docker-machine stop' for convenience.
-	if len(c.Args()) == 0 {
-		target, err := targetHost(c, api)
-		if err != nil {
-			return err
+		// check if the key path exists; if so, error
+		if _, err := os.Stat(clientKeyPath); err == nil {
+			log.Fatalf("The client key already exists.  Please remove it or specify a different key/cert.")
 		}
 
-		hostsToLoad = []string{target}
-	} else {
-		hostsToLoad = c.Args()
-	}
-
-	hosts, hostsInError := persist.LoadHosts(api, hostsToLoad)
-
-	if len(hostsInError) > 0 {
-		errs := []error{}
-		for _, err := range hostsInError {
-			errs = append(errs, err)
-		}
-		return consolidateErrs(errs)
-	}
-
-	if len(hosts) == 0 {
-		return ErrHostLoad
-	}
-
-	if errs := runActionForeachMachine(actionName, hosts); len(errs) > 0 {
-		return consolidateErrs(errs)
-	}
-
-	for _, h := range hosts {
-		if err := api.Save(h); err != nil {
-			return fmt.Errorf("Error saving host to store: %s", err)
+		if err := utils.GenerateCert([]string{""}, clientCertPath, clientKeyPath, caCertPath, caKeyPath, org, bits); err != nil {
+			log.Fatalf("Error generating client certificate: %s", err)
 		}
 	}
 
 	return nil
 }
 
-func runCommand(command func(commandLine CommandLine, api libmachine.API) error) func(context *cli.Context) {
-	return func(context *cli.Context) {
-		api := libmachine.NewClient(mcndirs.GetBaseDir(), mcndirs.GetMachineCertDir())
-		defer api.Close()
-
-		if context.GlobalBool("native-ssh") {
-			api.SSHClientType = ssh.Native
-		}
-		api.GithubAPIToken = context.GlobalString("github-api-token")
-		api.Filestore.Path = context.GlobalString("storage-path")
-
-		// TODO (nathanleclaire): These should ultimately be accessed
-		// through the libmachine client by the rest of the code and
-		// not through their respective modules.  For now, however,
-		// they are also being set the way that they originally were
-		// set to preserve backwards compatibility.
-		mcndirs.BaseDir = api.Filestore.Path
-		mcnutils.GithubAPIToken = api.GithubAPIToken
-		ssh.SetDefaultClient(api.SSHClientType)
-
-		if err := command(&contextCommandLine{context}, api); err != nil {
-			log.Error(err)
-
-			if crashErr, ok := err.(crashreport.CrashError); ok {
-				crashReporter := crashreport.NewCrashReporter(mcndirs.GetBaseDir(), context.GlobalString("bugsnag-api-token"))
-				crashReporter.Send(crashErr)
-
-				if _, ok := crashErr.Cause.(mcnerror.ErrDuringPreCreate); ok {
-					osExit(3)
-					return
-				}
-			}
-
-			osExit(1)
-			return
-		}
-	}
-}
-
-func confirmInput(msg string) (bool, error) {
-	fmt.Printf("%s (y/n): ", msg)
-
-	var resp string
-	_, err := fmt.Scanln(&resp)
-	if err != nil {
-		return false, err
-	}
-
-	confirmed := strings.Index(strings.ToLower(resp), "y") == 0
-	return confirmed, nil
+var sharedCreateFlags = []cli.Flag{
+	cli.StringFlag{
+		Name: "driver, d",
+		Usage: fmt.Sprintf(
+			"Driver to create machine with. Available drivers: %s",
+			strings.Join(drivers.GetDriverNames(), ", "),
+		),
+		Value: "none",
+	},
+	cli.StringFlag{
+		Name:   "engine-install-url",
+		Usage:  "Custom URL to use for engine installation",
+		Value:  "https://get.docker.com",
+		EnvVar: "MACHINE_DOCKER_INSTALL_URL",
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-opt",
+		Usage: "Specify arbitrary flags to include with the created engine in the form flag=value",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-insecure-registry",
+		Usage: "Specify insecure registries to allow with the created engine",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-registry-mirror",
+		Usage: "Specify registry mirrors to use",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-label",
+		Usage: "Specify labels for the created engine",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringFlag{
+		Name:  "engine-storage-driver",
+		Usage: "Specify a storage driver to use with the engine",
+	},
+	cli.StringSliceFlag{
+		Name:  "engine-env",
+		Usage: "Specify environment variables to set in the engine",
+		Value: &cli.StringSlice{},
+	},
+	cli.BoolFlag{
+		Name:  "swarm",
+		Usage: "Configure Machine with Swarm",
+	},
+	cli.StringFlag{
+		Name:   "swarm-image",
+		Usage:  "Specify Docker image to use for Swarm",
+		Value:  "swarm:latest",
+		EnvVar: "MACHINE_SWARM_IMAGE",
+	},
+	cli.BoolFlag{
+		Name:  "swarm-master",
+		Usage: "Configure Machine to be a Swarm master",
+	},
+	cli.StringFlag{
+		Name:  "swarm-discovery",
+		Usage: "Discovery service to use with Swarm",
+		Value: "",
+	},
+	cli.StringFlag{
+		Name:  "swarm-strategy",
+		Usage: "Define a default scheduling strategy for Swarm",
+		Value: "spread",
+	},
+	cli.StringSliceFlag{
+		Name:  "swarm-opt",
+		Usage: "Define arbitrary flags for swarm",
+		Value: &cli.StringSlice{},
+	},
+	cli.StringFlag{
+		Name:  "swarm-host",
+		Usage: "ip/socket to listen on for Swarm master",
+		Value: "tcp://0.0.0.0:3376",
+	},
+	cli.StringFlag{
+		Name:  "swarm-addr",
+		Usage: "addr to advertise for Swarm (default: detect and use the machine IP)",
+		Value: "",
+	},
 }
 
 var Commands = []cli.Command{
 	{
 		Name:   "active",
 		Usage:  "Print which machine is active",
-		Action: runCommand(cmdActive),
-		Flags: []cli.Flag{
-			cli.IntFlag{
-				Name:  "timeout, t",
-				Usage: fmt.Sprintf("Timeout in seconds, default to %ds", activeDefaultTimeout),
-				Value: activeDefaultTimeout,
-			},
-		},
+		Action: cmdActive,
 	},
 	{
 		Name:        "config",
 		Usage:       "Print the connection config for machine",
 		Description: "Argument is a machine name.",
-		Action:      runCommand(cmdConfig),
+		Action:      cmdConfig,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "swarm",
@@ -218,18 +261,19 @@ var Commands = []cli.Command{
 		},
 	},
 	{
-		Flags:           SharedCreateFlags,
-		Name:            "create",
-		Usage:           "Create a machine",
-		Description:     fmt.Sprintf("Run '%s create --driver name' to include the create flags for that driver in the help text.", os.Args[0]),
-		Action:          runCommand(cmdCreateOuter),
-		SkipFlagParsing: true,
+		Flags: append(
+			drivers.GetCreateFlags(),
+			sharedCreateFlags...,
+		),
+		Name:   "create",
+		Usage:  "Create a machine",
+		Action: cmdCreate,
 	},
 	{
 		Name:        "env",
 		Usage:       "Display the commands to set up the environment for the Docker client",
 		Description: "Argument is a machine name.",
-		Action:      runCommand(cmdEnv),
+		Action:      cmdEnv,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "swarm",
@@ -237,15 +281,11 @@ var Commands = []cli.Command{
 			},
 			cli.StringFlag{
 				Name:  "shell",
-				Usage: "Force environment to be configured for a specified shell: [fish, cmd, powershell, tcsh], default is auto-detect",
+				Usage: "Force environment to be configured for specified shell",
 			},
 			cli.BoolFlag{
 				Name:  "unset, u",
 				Usage: "Unset variables instead of setting them",
-			},
-			cli.BoolFlag{
-				Name:  "no-proxy",
-				Usage: "Add machine IP to NO_PROXY environment variable",
 			},
 		},
 	},
@@ -253,7 +293,7 @@ var Commands = []cli.Command{
 		Name:        "inspect",
 		Usage:       "Inspect information about a machine",
 		Description: "Argument is a machine name.",
-		Action:      runCommand(cmdInspect),
+		Action:      cmdInspect,
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "format, f",
@@ -266,18 +306,15 @@ var Commands = []cli.Command{
 		Name:        "ip",
 		Usage:       "Get the IP address of a machine",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdIP),
+		Action:      cmdIp,
 	},
 	{
 		Name:        "kill",
 		Usage:       "Kill a machine",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdKill),
+		Action:      cmdKill,
 	},
 	{
-		Name:   "ls",
-		Usage:  "List machines",
-		Action: runCommand(cmdLs),
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "quiet, q",
@@ -288,27 +325,16 @@ var Commands = []cli.Command{
 				Usage: "Filter output based on conditions provided",
 				Value: &cli.StringSlice{},
 			},
-			cli.IntFlag{
-				Name:  "timeout, t",
-				Usage: fmt.Sprintf("Timeout in seconds, default to %ds", lsDefaultTimeout),
-				Value: lsDefaultTimeout,
-			},
-			cli.StringFlag{
-				Name:  "format, f",
-				Usage: "Pretty-print machines using a Go template",
-			},
 		},
-	},
-	{
-		Name:   "provision",
-		Usage:  "Re-provision existing machines",
-		Action: runCommand(cmdProvision),
+		Name:   "ls",
+		Usage:  "List machines",
+		Action: cmdLs,
 	},
 	{
 		Name:        "regenerate-certs",
 		Usage:       "Regenerate TLS Certificates for a machine",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdRegenerateCerts),
+		Action:      cmdRegenerateCerts,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "force, f",
@@ -320,44 +346,35 @@ var Commands = []cli.Command{
 		Name:        "restart",
 		Usage:       "Restart a machine",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdRestart),
+		Action:      cmdRestart,
 	},
 	{
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "force, f",
-				Usage: "Remove local configuration even if machine cannot be removed, also implies an automatic yes (`-y`)",
-			},
-			cli.BoolFlag{
-				Name:  "y",
-				Usage: "Assumes automatic yes to proceed with remove, without prompting further user confirmation",
+				Usage: "Remove local configuration even if machine cannot be removed",
 			},
 		},
 		Name:        "rm",
 		Usage:       "Remove a machine",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdRm),
+		Action:      cmdRm,
 	},
 	{
-		Name:            "ssh",
-		Usage:           "Log into or run a command on a machine with SSH.",
-		Description:     "Arguments are [machine-name] [command]",
-		Action:          runCommand(cmdSSH),
-		SkipFlagParsing: true,
+		Name:        "ssh",
+		Usage:       "Log into or run a command on a machine with SSH.",
+		Description: "Arguments are [machine-name] [command]",
+		Action:      cmdSsh,
 	},
 	{
 		Name:        "scp",
 		Usage:       "Copy files between machines",
-		Description: "Arguments are [[user@]machine:][path] [[user@]machine:][path].",
-		Action:      runCommand(cmdScp),
+		Description: "Arguments are [machine:][path] [machine:][path].",
+		Action:      cmdScp,
 		Flags: []cli.Flag{
 			cli.BoolFlag{
 				Name:  "recursive, r",
 				Usage: "Copy files recursively (required to copy directories)",
-			},
-			cli.BoolFlag{
-				Name:  "delta, d",
-				Usage: "Reduce amount of data sent over network by sending only the differences (uses rsync)",
 			},
 		},
 	},
@@ -365,56 +382,37 @@ var Commands = []cli.Command{
 		Name:        "start",
 		Usage:       "Start a machine",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdStart),
+		Action:      cmdStart,
 	},
 	{
 		Name:        "status",
 		Usage:       "Get the status of a machine",
 		Description: "Argument is a machine name.",
-		Action:      runCommand(cmdStatus),
+		Action:      cmdStatus,
 	},
 	{
 		Name:        "stop",
 		Usage:       "Stop a machine",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdStop),
+		Action:      cmdStop,
 	},
 	{
 		Name:        "upgrade",
 		Usage:       "Upgrade a machine to the latest version of Docker",
 		Description: "Argument(s) are one or more machine names.",
-		Action:      runCommand(cmdUpgrade),
+		Action:      cmdUpgrade,
 	},
 	{
 		Name:        "url",
 		Usage:       "Get the URL of a machine",
 		Description: "Argument is a machine name.",
-		Action:      runCommand(cmdURL),
+		Action:      cmdUrl,
 	},
-	{
-		Name:   "version",
-		Usage:  "Show the Docker Machine version or a machine docker version",
-		Action: runCommand(cmdVersion),
-	},
-}
-
-func printIP(h *host.Host) func() error {
-	return func() error {
-		ip, err := h.Driver.GetIP()
-		if err != nil {
-			return fmt.Errorf("Error getting IP address: %s", err)
-		}
-
-		fmt.Println(ip)
-
-		return nil
-	}
 }
 
 // machineCommand maps the command name to the corresponding machine command.
 // We run commands concurrently and communicate back an error if there was one.
-func machineCommand(actionName string, host *host.Host, errorChan chan<- error) {
-	// TODO: These actions should have their own type.
+func machineCommand(actionName string, host *libmachine.Host, errorChan chan<- error) {
 	commands := map[string](func() error){
 		"configureAuth": host.ConfigureAuth,
 		"start":         host.Start,
@@ -422,26 +420,51 @@ func machineCommand(actionName string, host *host.Host, errorChan chan<- error) 
 		"restart":       host.Restart,
 		"kill":          host.Kill,
 		"upgrade":       host.Upgrade,
-		"ip":            printIP(host),
-		"provision":     host.Provision,
+		"ip":            host.PrintIP,
 	}
 
 	log.Debugf("command=%s machine=%s", actionName, host.Name)
 
-	errorChan <- commands[actionName]()
+	if err := commands[actionName](); err != nil {
+		errorChan <- err
+		return
+	}
+
+	errorChan <- nil
 }
 
 // runActionForeachMachine will run the command across multiple machines
-func runActionForeachMachine(actionName string, machines []*host.Host) []error {
+func runActionForeachMachine(actionName string, machines []*libmachine.Host) {
 	var (
 		numConcurrentActions = 0
+		serialMachines       = []*libmachine.Host{}
 		errorChan            = make(chan error)
-		errs                 = []error{}
 	)
 
 	for _, machine := range machines {
-		numConcurrentActions++
-		go machineCommand(actionName, machine, errorChan)
+		// Virtualbox is temperamental about doing things concurrently,
+		// so we schedule the actions in a "queue" to be executed serially
+		// after the concurrent actions are scheduled.
+		switch machine.DriverName {
+		case "virtualbox":
+			machine := machine
+			serialMachines = append(serialMachines, machine)
+		default:
+			numConcurrentActions++
+			go machineCommand(actionName, machine, errorChan)
+		}
+	}
+
+	// While the concurrent actions are running,
+	// do the serial actions.  As the name implies,
+	// these run one at a time.
+	for _, machine := range serialMachines {
+		serialChan := make(chan error)
+		go machineCommand(actionName, machine, serialChan)
+		if err := <-serialChan; err != nil {
+			log.Errorln(err)
+		}
+		close(serialChan)
 	}
 
 	// TODO: We should probably only do 5-10 of these
@@ -449,20 +472,212 @@ func runActionForeachMachine(actionName string, machines []*host.Host) []error {
 	// rate limit us.
 	for i := 0; i < numConcurrentActions; i++ {
 		if err := <-errorChan; err != nil {
-			errs = append(errs, err)
+			log.Errorln(err)
 		}
 	}
 
 	close(errorChan)
-
-	return errs
 }
 
-func consolidateErrs(errs []error) error {
-	finalErr := ""
-	for _, err := range errs {
-		finalErr = fmt.Sprintf("%s\n%s", finalErr, err)
+func runActionWithContext(actionName string, c *cli.Context) error {
+	machines, err := getHosts(c)
+	if err != nil {
+		return err
 	}
 
-	return errors.New(strings.TrimSpace(finalErr))
+	if len(machines) == 0 {
+		log.Fatal(ErrNoMachineSpecified)
+	}
+
+	runActionForeachMachine(actionName, machines)
+
+	return nil
+}
+
+func getHosts(c *cli.Context) ([]*libmachine.Host, error) {
+	machines := []*libmachine.Host{}
+	for _, n := range c.Args() {
+		machine, err := loadMachine(n, c)
+		if err != nil {
+			return nil, err
+		}
+
+		machines = append(machines, machine)
+	}
+
+	return machines, nil
+}
+
+func loadMachine(name string, c *cli.Context) (*libmachine.Host, error) {
+	certInfo := getCertPathInfo(c)
+	defaultStore, err := getDefaultStore(
+		c.GlobalString("storage-path"),
+		certInfo.CaCertPath,
+		certInfo.CaKeyPath,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	provider, err := newProvider(defaultStore)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	host, err := provider.Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	return host, nil
+}
+
+func getHost(c *cli.Context) *libmachine.Host {
+	name := c.Args().First()
+
+	defaultStore, err := getDefaultStore(
+		c.GlobalString("storage-path"),
+		c.GlobalString("tls-ca-cert"),
+		c.GlobalString("tls-ca-key"),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	provider, err := newProvider(defaultStore)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	host, err := provider.Get(name)
+	if err != nil {
+		log.Fatalf("unable to load host: %v", err)
+	}
+	return host
+}
+
+func getDefaultProvider(c *cli.Context) *libmachine.Provider {
+	certInfo := getCertPathInfo(c)
+	defaultStore, err := getDefaultStore(
+		c.GlobalString("storage-path"),
+		certInfo.CaCertPath,
+		certInfo.CaKeyPath,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	provider, err := newProvider(defaultStore)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return provider
+}
+
+func getMachineConfig(c *cli.Context) (*machineConfig, error) {
+	name := c.Args().First()
+	certInfo := getCertPathInfo(c)
+	defaultStore, err := getDefaultStore(
+		c.GlobalString("storage-path"),
+		certInfo.CaCertPath,
+		certInfo.CaKeyPath,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	provider, err := newProvider(defaultStore)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	m, err := provider.Get(name)
+	if err != nil {
+		return nil, err
+	}
+
+	machineDir := filepath.Join(utils.GetMachineDir(), m.Name)
+	caCert := filepath.Join(machineDir, "ca.pem")
+	caKey := filepath.Join(utils.GetMachineCertDir(), "ca-key.pem")
+	clientCert := filepath.Join(machineDir, "cert.pem")
+	clientKey := filepath.Join(machineDir, "key.pem")
+	serverCert := filepath.Join(machineDir, "server.pem")
+	serverKey := filepath.Join(machineDir, "server-key.pem")
+	machineUrl, err := m.GetURL()
+	if err != nil {
+		if err == drivers.ErrHostIsNotRunning {
+			machineUrl = ""
+		} else {
+			return nil, fmt.Errorf("Unexpected error getting machine url: %s", err)
+		}
+	}
+	return &machineConfig{
+		machineName:    name,
+		machineDir:     machineDir,
+		machineUrl:     machineUrl,
+		clientKeyPath:  clientKey,
+		clientCertPath: clientCert,
+		serverCertPath: serverCert,
+		caKeyPath:      caKey,
+		caCertPath:     caCert,
+		serverKeyPath:  serverKey,
+		AuthOptions:    *m.HostOptions.AuthOptions,
+		SwarmOptions:   *m.HostOptions.SwarmOptions,
+	}, nil
+}
+
+// getCertPaths returns the cert paths
+// codegangsta/cli will not set the cert paths if the storage-path
+// is set to something different so we cannot use the paths
+// in the global options. le sigh.
+func getCertPathInfo(c *cli.Context) libmachine.CertPathInfo {
+	// setup cert paths
+	caCertPath := c.GlobalString("tls-ca-cert")
+	caKeyPath := c.GlobalString("tls-ca-key")
+	clientCertPath := c.GlobalString("tls-client-cert")
+	clientKeyPath := c.GlobalString("tls-client-key")
+
+	if caCertPath == "" {
+		caCertPath = filepath.Join(utils.GetMachineCertDir(), "ca.pem")
+	}
+
+	if caKeyPath == "" {
+		caKeyPath = filepath.Join(utils.GetMachineCertDir(), "ca-key.pem")
+	}
+
+	if clientCertPath == "" {
+		clientCertPath = filepath.Join(utils.GetMachineCertDir(), "cert.pem")
+	}
+
+	if clientKeyPath == "" {
+		clientKeyPath = filepath.Join(utils.GetMachineCertDir(), "key.pem")
+	}
+
+	return libmachine.CertPathInfo{
+		CaCertPath:     caCertPath,
+		CaKeyPath:      caKeyPath,
+		ClientCertPath: clientCertPath,
+		ClientKeyPath:  clientKeyPath,
+	}
+}
+
+func detectShell() (string, error) {
+	// check for windows env and not bash (i.e. msysgit, etc)
+	// the SHELL env var is not set for processes in msysgit; we check
+	// for TERM instead
+	if runtime.GOOS == "windows" && os.Getenv("TERM") != "cygwin" {
+		log.Printf("On Windows, please specify either 'cmd' or 'powershell' with the --shell flag.\n\n")
+		return "", ErrUnknownShell
+	}
+
+	// attempt to get the SHELL env var
+	shell := filepath.Base(os.Getenv("SHELL"))
+
+	log.Debugf("shell: %s", shell)
+	if shell == "" {
+		return "", ErrUnknownShell
+	}
+
+	return shell, nil
 }

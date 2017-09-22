@@ -4,27 +4,36 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"regexp"
 	"text/template"
 
+	"github.com/docker/machine/drivers"
 	"github.com/docker/machine/libmachine/auth"
-	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/engine"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnutils"
 	"github.com/docker/machine/libmachine/provision/pkgaction"
-	"github.com/docker/machine/libmachine/provision/serviceaction"
 	"github.com/docker/machine/libmachine/swarm"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/ssh"
+	"github.com/docker/machine/utils"
 )
 
 var (
 	ErrUnknownYumOsRelease = errors.New("unknown OS for Yum repository")
-	engineConfigTemplate   = `[Service]
-ExecStart=
-ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:{{.DockerPort}} -H unix:///var/run/docker.sock --storage-driver {{.EngineOptions.StorageDriver}} --tlsverify --tlscacert {{.AuthOptions.CaCertRemotePath}} --tlscert {{.AuthOptions.ServerCertRemotePath}} --tlskey {{.AuthOptions.ServerKeyRemotePath}} {{ range .EngineOptions.Labels }}--label {{.}} {{ end }}{{ range .EngineOptions.InsecureRegistry }}--insecure-registry {{.}} {{ end }}{{ range .EngineOptions.RegistryMirror }}--registry-mirror {{.}} {{ end }}{{ range .EngineOptions.ArbitraryFlags }}--{{.}} {{ end }}
+
+	packageListTemplate = `[docker]
+name=Docker Stable Repository
+baseurl=https://yum.dockerproject.org/repo/main/{{.OsRelease}}/{{.OsReleaseVersion}}
+priority=1
+enabled=1
+gpgkey=https://yum.dockerproject.org/gpg
+`
+	engineConfigTemplate = `[Service]
+ExecStart=/usr/bin/docker -d -H tcp://0.0.0.0:{{.DockerPort}} -H unix:///var/run/docker.sock --storage-driver {{.EngineOptions.StorageDriver}} --tlsverify --tlscacert {{.AuthOptions.CaCertRemotePath}} --tlscert {{.AuthOptions.ServerCertRemotePath}} --tlskey {{.AuthOptions.ServerKeyRemotePath}} {{ range .EngineOptions.Labels }}--label {{.}} {{ end }}{{ range .EngineOptions.InsecureRegistry }}--insecure-registry {{.}} {{ end }}{{ range .EngineOptions.RegistryMirror }}--registry-mirror {{.}} {{ end }}{{ range .EngineOptions.ArbitraryFlags }}--{{.}} {{ end }}
+MountFlags=slave
+LimitNOFILE=1048576
+LimitNPROC=1048576
+LimitCORE=infinity
 Environment={{range .EngineOptions.Env}}{{ printf "%q" . }} {{end}}
 `
-	majorVersionRE = regexp.MustCompile(`^(\d+)(\..*)?`)
 )
 
 type PackageListInfo struct {
@@ -34,26 +43,45 @@ type PackageListInfo struct {
 
 func init() {
 	Register("RedHat", &RegisteredProvisioner{
-		New: func(d drivers.Driver) Provisioner {
-			return NewRedHatProvisioner("rhel", d)
-		},
+		New: NewRedHatProvisioner,
 	})
 }
 
-func NewRedHatProvisioner(osReleaseID string, d drivers.Driver) *RedHatProvisioner {
-	systemdProvisioner := NewSystemdProvisioner(osReleaseID, d)
-	systemdProvisioner.SSHCommander = RedHatSSHCommander{Driver: d}
+func NewRedHatProvisioner(d drivers.Driver) Provisioner {
 	return &RedHatProvisioner{
-		systemdProvisioner,
+		GenericProvisioner: GenericProvisioner{
+			DockerOptionsDir:  "/etc/docker",
+			DaemonOptionsFile: "/etc/systemd/system/docker.service",
+			OsReleaseId:       "rhel",
+			Packages: []string{
+				"curl",
+			},
+			Driver: d,
+		},
 	}
 }
 
 type RedHatProvisioner struct {
-	SystemdProvisioner
+	GenericProvisioner
 }
 
-func (provisioner *RedHatProvisioner) String() string {
-	return "redhat"
+func (provisioner *RedHatProvisioner) SSHCommand(args string) (string, error) {
+	client, err := drivers.GetSSHClientFromDriver(provisioner.Driver)
+	if err != nil {
+		return "", err
+	}
+
+	// redhat needs "-t" for tty allocation on ssh therefore we check for the
+	// external client and add as needed
+	switch c := client.(type) {
+	case ssh.ExternalClient:
+		c.BaseArgs = append(c.BaseArgs, "-t")
+		client = c
+	case ssh.NativeClient:
+		return c.OutputWithPty(args)
+	}
+
+	return client.Output(args)
 }
 
 func (provisioner *RedHatProvisioner) SetHostname(hostname string) error {
@@ -67,11 +95,37 @@ func (provisioner *RedHatProvisioner) SetHostname(hostname string) error {
 		return err
 	}
 
+	// ubuntu/debian use 127.0.1.1 for non "localhost" loopback hostnames: https://www.debian.org/doc/manuals/debian-reference/ch05.en.html#_the_hostname_resolution
 	if _, err := provisioner.SSHCommand(fmt.Sprintf(
 		"if grep -xq 127.0.1.1.* /etc/hosts; then sudo sed -i 's/^127.0.1.1.*/127.0.1.1 %s/g' /etc/hosts; else echo '127.0.1.1 %s' | sudo tee -a /etc/hosts; fi",
 		hostname,
 		hostname,
 	)); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (provisioner *RedHatProvisioner) Service(name string, action pkgaction.ServiceAction) error {
+	reloadDaemon := false
+	switch action {
+	case pkgaction.Start, pkgaction.Restart:
+		reloadDaemon = true
+	}
+
+	// systemd needs reloaded when config changes on disk; we cannot
+	// be sure exactly when it changes from the provisioner so
+	// we call a reload on every restart to be safe
+	if reloadDaemon {
+		if _, err := provisioner.SSHCommand("sudo systemctl daemon-reload"); err != nil {
+			return err
+		}
+	}
+
+	command := fmt.Sprintf("sudo systemctl %s %s", action.String(), name)
+
+	if _, err := provisioner.SSHCommand(command); err != nil {
 		return err
 	}
 
@@ -85,8 +139,6 @@ func (provisioner *RedHatProvisioner) Package(name string, action pkgaction.Pack
 	case pkgaction.Install:
 		packageAction = "install"
 	case pkgaction.Remove:
-		packageAction = "remove"
-	case pkgaction.Purge:
 		packageAction = "remove"
 	case pkgaction.Upgrade:
 		packageAction = "upgrade"
@@ -102,15 +154,29 @@ func (provisioner *RedHatProvisioner) Package(name string, action pkgaction.Pack
 }
 
 func installDocker(provisioner *RedHatProvisioner) error {
-	if err := installDockerGeneric(provisioner, provisioner.EngineOptions.InstallURL); err != nil {
+	if err := provisioner.installOfficialDocker(); err != nil {
 		return err
 	}
 
-	if err := provisioner.Service("docker", serviceaction.Restart); err != nil {
+	if err := provisioner.Service("docker", pkgaction.Restart); err != nil {
 		return err
 	}
 
-	if err := provisioner.Service("docker", serviceaction.Enable); err != nil {
+	if err := provisioner.Service("docker", pkgaction.Enable); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (provisioner *RedHatProvisioner) installOfficialDocker() error {
+	log.Debug("installing docker")
+
+	if err := provisioner.ConfigurePackageList(); err != nil {
+		return err
+	}
+
+	if _, err := provisioner.SSHCommand("sudo yum install -y docker-engine"); err != nil {
 		return err
 	}
 
@@ -118,11 +184,8 @@ func installDocker(provisioner *RedHatProvisioner) error {
 }
 
 func (provisioner *RedHatProvisioner) dockerDaemonResponding() bool {
-	log.Debug("checking docker daemon")
-
-	if out, err := provisioner.SSHCommand("sudo docker version"); err != nil {
-		log.Warnf("Error getting SSH command to check if the daemon is up: %s", err)
-		log.Debugf("'sudo docker version' output:\n%s", out)
+	if _, err := provisioner.SSHCommand("sudo docker version"); err != nil {
+		log.Warn("Error getting SSH command to check if the daemon is up: %s", err)
 		return false
 	}
 
@@ -130,18 +193,15 @@ func (provisioner *RedHatProvisioner) dockerDaemonResponding() bool {
 	return true
 }
 
-func (provisioner *RedHatProvisioner) Provision(swarmOptions swarm.Options, authOptions auth.Options, engineOptions engine.Options) error {
+func (provisioner *RedHatProvisioner) Provision(swarmOptions swarm.SwarmOptions, authOptions auth.AuthOptions, engineOptions engine.EngineOptions) error {
 	provisioner.SwarmOptions = swarmOptions
 	provisioner.AuthOptions = authOptions
 	provisioner.EngineOptions = engineOptions
-	swarmOptions.Env = engineOptions.Env
 
 	// set default storage driver for redhat
-	storageDriver, err := decideStorageDriver(provisioner, "devicemapper", engineOptions.StorageDriver)
-	if err != nil {
-		return err
+	if provisioner.EngineOptions.StorageDriver == "" {
+		provisioner.EngineOptions.StorageDriver = "devicemapper"
 	}
-	provisioner.EngineOptions.StorageDriver = storageDriver
 
 	if err := provisioner.SetHostname(provisioner.Driver.GetMachineName()); err != nil {
 		return err
@@ -155,7 +215,7 @@ func (provisioner *RedHatProvisioner) Provision(swarmOptions swarm.Options, auth
 	}
 
 	// update OS -- this is needed for libdevicemapper and the docker install
-	if _, err := provisioner.SSHCommand("sudo -E yum -y update -x docker-*"); err != nil {
+	if _, err := provisioner.SSHCommand("sudo yum -y update"); err != nil {
 		return err
 	}
 
@@ -164,7 +224,7 @@ func (provisioner *RedHatProvisioner) Provision(swarmOptions swarm.Options, auth
 		return err
 	}
 
-	if err := mcnutils.WaitFor(provisioner.dockerDaemonResponding); err != nil {
+	if err := utils.WaitFor(provisioner.dockerDaemonResponding); err != nil {
 		return err
 	}
 
@@ -215,4 +275,54 @@ func (provisioner *RedHatProvisioner) GenerateDockerOptions(dockerPort int) (*Do
 		EngineOptions:     engineCfg.String(),
 		EngineOptionsPath: daemonOptsDir,
 	}, nil
+}
+
+func generateYumRepoList(provisioner Provisioner) (*bytes.Buffer, error) {
+	packageListInfo := &PackageListInfo{}
+
+	releaseInfo, err := provisioner.GetOsReleaseInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	switch releaseInfo.Id {
+	case "rhel", "centos":
+		// rhel and centos both use the "centos" repo
+		packageListInfo.OsRelease = "centos"
+		packageListInfo.OsReleaseVersion = "7"
+	case "fedora":
+		packageListInfo.OsRelease = "fedora"
+		packageListInfo.OsReleaseVersion = "22"
+	default:
+		return nil, ErrUnknownYumOsRelease
+	}
+
+	t, err := template.New("packageList").Parse(packageListTemplate)
+	if err != nil {
+		return nil, err
+	}
+
+	var buf bytes.Buffer
+
+	if err := t.Execute(&buf, packageListInfo); err != nil {
+		return nil, err
+	}
+
+	return &buf, nil
+}
+
+func (provisioner *RedHatProvisioner) ConfigurePackageList() error {
+	buf, err := generateYumRepoList(provisioner)
+	if err != nil {
+		return err
+	}
+
+	// we cannot use %q here as it combines the newlines in the formatting
+	// on transport causing yum to not use the repo
+	packageCmd := fmt.Sprintf("echo \"%s\" | sudo tee /etc/yum.repos.d/docker.repo", buf.String())
+	if _, err := provisioner.SSHCommand(packageCmd); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -2,8 +2,6 @@ package nat
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestParsePort(t *testing.T) {
@@ -175,7 +173,10 @@ func TestSplitProtoPort(t *testing.T) {
 
 func TestParsePortSpecFull(t *testing.T) {
 	portMappings, err := ParsePortSpec("0.0.0.0:1234-1235:3333-3334/tcp")
-	assert.Nil(t, err)
+
+	if err != nil {
+		t.Fatalf("Error while parsing port spec: %s", err)
+	}
 
 	expected := []PortMapping{
 		{
@@ -194,39 +195,15 @@ func TestParsePortSpecFull(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, expected, portMappings)
-}
-
-func TestPartPortSpecIPV6(t *testing.T) {
-	portMappings, err := ParsePortSpec("[2001:4860:0:2001::68]::333")
-	assert.Nil(t, err)
-
-	expected := []PortMapping{
-		{
-			Port: "333/tcp",
-			Binding: PortBinding{
-				HostIP:   "2001:4860:0:2001::68",
-				HostPort: "",
-			},
-		},
+	if len(portMappings) != len(expected) {
+		t.Fatalf("Expected slice of size: %d, got size %d", len(expected), len(portMappings))
 	}
-	assert.Equal(t, expected, portMappings)
-}
 
-func TestPartPortSpecIPV6WithHostPort(t *testing.T) {
-	portMappings, err := ParsePortSpec("[::1]:80:80")
-	assert.Nil(t, err)
-
-	expected := []PortMapping{
-		{
-			Port: "80/tcp",
-			Binding: PortBinding{
-				HostIP:   "::1",
-				HostPort: "80",
-			},
-		},
+	for i := 0; i < len(expected); i++ {
+		if portMappings[i] != expected[i] {
+			t.Fatalf("Expected: %v\nActual: %v", expected, portMappings)
+		}
 	}
-	assert.Equal(t, expected, portMappings)
 }
 
 func TestParsePortSpecs(t *testing.T) {

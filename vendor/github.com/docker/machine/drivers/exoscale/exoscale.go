@@ -1,127 +1,98 @@
 package exoscale
 
 import (
-	"errors"
+	"bytes"
 	"fmt"
 	"io/ioutil"
-	"net"
-	"os"
 	"strings"
+	"text/template"
 	"time"
 
-	"github.com/docker/machine/libmachine/drivers"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnflag"
-	"github.com/docker/machine/libmachine/mcnutils"
-	"github.com/docker/machine/libmachine/state"
+	"github.com/codegangsta/cli"
+	"github.com/docker/machine/drivers"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/state"
+	"github.com/docker/machine/utils"
 	"github.com/pyr/egoscale/src/egoscale"
 )
 
 type Driver struct {
 	*drivers.BaseDriver
 	URL              string
-	APIKey           string `json:"ApiKey"`
-	APISecretKey     string `json:"ApiSecretKey"`
+	ApiKey           string
+	ApiSecretKey     string
 	InstanceProfile  string
 	DiskSize         int
 	Image            string
 	SecurityGroup    string
-	AffinityGroup    string
 	AvailabilityZone string
 	KeyPair          string
 	PublicKey        string
-	UserDataFile     string
-	ID               string `json:"Id"`
+	Id               string
 }
 
-const (
-	defaultInstanceProfile  = "small"
-	defaultDiskSize         = 50
-	defaultImage            = "ubuntu-16.04"
-	defaultAvailabilityZone = "ch-dk-2"
-	defaultSSHUser          = "ubuntu"
-)
+func init() {
+	drivers.Register("exoscale", &drivers.RegisteredDriver{
+		New:            NewDriver,
+		GetCreateFlags: GetCreateFlags,
+	})
+}
 
-// GetCreateFlags registers the flags this driver adds to
+// RegisterCreateFlags registers the flags this driver adds to
 // "docker hosts create"
-func (d *Driver) GetCreateFlags() []mcnflag.Flag {
-	return []mcnflag.Flag{
-		mcnflag.StringFlag{
+func GetCreateFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.StringFlag{
 			EnvVar: "EXOSCALE_ENDPOINT",
 			Name:   "exoscale-url",
 			Usage:  "exoscale API endpoint",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "EXOSCALE_API_KEY",
 			Name:   "exoscale-api-key",
 			Usage:  "exoscale API key",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "EXOSCALE_API_SECRET",
 			Name:   "exoscale-api-secret-key",
 			Usage:  "exoscale API secret key",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "EXOSCALE_INSTANCE_PROFILE",
 			Name:   "exoscale-instance-profile",
-			Value:  defaultInstanceProfile,
+			Value:  "small",
 			Usage:  "exoscale instance profile (small, medium, large, ...)",
 		},
-		mcnflag.IntFlag{
+		cli.IntFlag{
 			EnvVar: "EXOSCALE_DISK_SIZE",
 			Name:   "exoscale-disk-size",
-			Value:  defaultDiskSize,
+			Value:  50,
 			Usage:  "exoscale disk size (10, 50, 100, 200, 400)",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "EXSOCALE_IMAGE",
 			Name:   "exoscale-image",
-			Value:  defaultImage,
+			Value:  "ubuntu-14.04",
 			Usage:  "exoscale image template",
 		},
-		mcnflag.StringSliceFlag{
+		cli.StringSliceFlag{
 			EnvVar: "EXOSCALE_SECURITY_GROUP",
 			Name:   "exoscale-security-group",
-			Value:  []string{},
+			Value:  &cli.StringSlice{},
 			Usage:  "exoscale security group",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			EnvVar: "EXOSCALE_AVAILABILITY_ZONE",
 			Name:   "exoscale-availability-zone",
-			Value:  defaultAvailabilityZone,
-			Usage:  "exoscale availability zone",
-		},
-		mcnflag.StringFlag{
-			EnvVar: "EXOSCALE_SSH_USER",
-			Name:   "exoscale-ssh-user",
-			Value:  defaultSSHUser,
-			Usage:  "Set the name of the ssh user",
-		},
-		mcnflag.StringFlag{
-			EnvVar: "EXOSCALE_USERDATA",
-			Name:   "exoscale-userdata",
-			Usage:  "path to file with cloud-init user-data",
-		},
-		mcnflag.StringSliceFlag{
-			EnvVar: "EXOSCALE_AFFINITY_GROUP",
-			Name:   "exoscale-affinity-group",
-			Value:  []string{},
-			Usage:  "exoscale affinity group",
+			Value:  "ch-gva-2",
+			Usage:  "exoscale availibility zone",
 		},
 	}
 }
 
-func NewDriver(hostName, storePath string) drivers.Driver {
-	return &Driver{
-		InstanceProfile:  defaultInstanceProfile,
-		DiskSize:         defaultDiskSize,
-		Image:            defaultImage,
-		AvailabilityZone: defaultAvailabilityZone,
-		BaseDriver: &drivers.BaseDriver{
-			MachineName: hostName,
-			StorePath:   storePath,
-		},
-	}
+func NewDriver(machineName string, storePath string, caCert string, privateKey string) (drivers.Driver, error) {
+	inner := drivers.NewBaseDriver(machineName, storePath, caCert, privateKey)
+	return &Driver{BaseDriver: inner}, nil
 }
 
 func (d *Driver) GetSSHHostname() (string, error) {
@@ -129,22 +100,17 @@ func (d *Driver) GetSSHHostname() (string, error) {
 }
 
 func (d *Driver) GetSSHUsername() string {
-	if d.SSHUser == "" {
-		d.SSHUser = defaultSSHUser
-	}
-
-	return d.SSHUser
+	return "ubuntu"
 }
 
-// DriverName returns the name of the driver
 func (d *Driver) DriverName() string {
 	return "exoscale"
 }
 
 func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
-	d.URL = flags.String("exoscale-url")
-	d.APIKey = flags.String("exoscale-api-key")
-	d.APISecretKey = flags.String("exoscale-api-secret-key")
+	d.URL = flags.String("exoscale-endpoint")
+	d.ApiKey = flags.String("exoscale-api-key")
+	d.ApiSecretKey = flags.String("exoscale-api-secret-key")
 	d.InstanceProfile = flags.String("exoscale-instance-profile")
 	d.DiskSize = flags.Int("exoscale-disk-size")
 	d.Image = flags.String("exoscale-image")
@@ -153,52 +119,39 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 		securityGroups = []string{"docker-machine"}
 	}
 	d.SecurityGroup = strings.Join(securityGroups, ",")
-	affinityGroups := flags.StringSlice("exoscale-affinity-group")
-	if len(affinityGroups) == 0 {
-		affinityGroups = []string{"docker-machine"}
-	}
-	d.AffinityGroup = strings.Join(affinityGroups, ",")
 	d.AvailabilityZone = flags.String("exoscale-availability-zone")
-	d.SSHUser = flags.String("exoscale-ssh-user")
-	d.UserDataFile = flags.String("exoscale-userdata")
-	d.SetSwarmConfigFromFlags(flags)
+	d.SwarmMaster = flags.Bool("swarm-master")
+	d.SwarmHost = flags.String("swarm-host")
+	d.SwarmDiscovery = flags.String("swarm-discovery")
 
 	if d.URL == "" {
 		d.URL = "https://api.exoscale.ch/compute"
 	}
-	if d.APIKey == "" || d.APISecretKey == "" {
-		return errors.New("missing an API key (--exoscale-api-key) or API secret key (--exoscale-api-secret-key)")
-	}
-
-	return nil
-}
-
-func (d *Driver) PreCreateCheck() error {
-	if d.UserDataFile != "" {
-		if _, err := os.Stat(d.UserDataFile); os.IsNotExist(err) {
-			return fmt.Errorf("user-data file %s could not be found", d.UserDataFile)
-		}
+	if d.ApiKey == "" || d.ApiSecretKey == "" {
+		return fmt.Errorf("Please specify an API key (--exoscale-api-key) and an API secret key (--exoscale-api-secret-key).")
 	}
 
 	return nil
 }
 
 func (d *Driver) GetURL() (string, error) {
-	if err := drivers.MustBeRunning(d); err != nil {
-		return "", err
-	}
-
 	ip, err := d.GetIP()
 	if err != nil {
 		return "", err
 	}
+	return fmt.Sprintf("tcp://%s:2376", ip), nil
+}
 
-	return fmt.Sprintf("tcp://%s", net.JoinHostPort(ip, "2376")), nil
+func (d *Driver) GetIP() (string, error) {
+	if d.IPAddress == "" {
+		return "", fmt.Errorf("IP address is not set")
+	}
+	return d.IPAddress, nil
 }
 
 func (d *Driver) GetState() (state.State, error) {
-	client := egoscale.NewClient(d.URL, d.APIKey, d.APISecretKey)
-	vm, err := client.GetVirtualMachine(d.ID)
+	client := egoscale.NewClient(d.URL, d.ApiKey, d.ApiSecretKey)
+	vm, err := client.GetVirtualMachine(d.Id)
 	if err != nil {
 		return state.Error, err
 	}
@@ -225,6 +178,10 @@ func (d *Driver) GetState() (state.State, error) {
 		return state.Stopped, nil
 	}
 	return state.None, nil
+}
+
+func (d *Driver) PreCreateCheck() error {
+	return nil
 }
 
 func (d *Driver) createDefaultSecurityGroup(client *egoscale.Client, group string) (string, error) {
@@ -266,36 +223,9 @@ func (d *Driver) createDefaultSecurityGroup(client *egoscale.Client, group strin
 	return sg, nil
 }
 
-func (d *Driver) createDefaultAffinityGroup(client *egoscale.Client, group string) (string, error) {
-	jobid, err := client.CreateAffinityGroup(group)
-	if err != nil {
-		return "", err
-	}
-	var resp *egoscale.QueryAsyncJobResultResponse
-	for i := 0; i <= 10; i++ {
-		resp, err = client.PollAsyncJob(jobid)
-		if err != nil {
-			fmt.Printf("got error: %+v\n", err)
-		}
-
-		if resp.Jobstatus == 1 {
-			break
-		}
-		time.Sleep(5 * time.Second)
-	}
-	affinitygroups, err := client.GetAffinityGroups()
-	agid := affinitygroups[group]
-	return agid, nil
-}
-
 func (d *Driver) Create() error {
-	userdata, err := d.getCloudInit()
-	if err != nil {
-		return err
-	}
-
 	log.Infof("Querying exoscale for the requested parameters...")
-	client := egoscale.NewClient(d.URL, d.APIKey, d.APISecretKey)
+	client := egoscale.NewClient(d.URL, d.ApiKey, d.ApiSecretKey)
 	topology, err := client.GetTopology()
 	if err != nil {
 		return err
@@ -346,23 +276,6 @@ func (d *Driver) Create() error {
 		sgs[idx] = sg
 	}
 
-	// Affinity Groups
-	affinityGroups := strings.Split(d.AffinityGroup, ",")
-	ags := make([]string, len(affinityGroups))
-	for idx, group := range affinityGroups {
-		ag, ok := topology.AffinityGroups[group]
-		if !ok {
-			log.Infof("Affinity Group %v does not exist, create it",
-				group)
-			ag, err = d.createDefaultAffinityGroup(client, group)
-			if err != nil {
-				return err
-			}
-		}
-		log.Debugf("Affinity group %v = %s", group, ag)
-		ags[idx] = group
-	}
-
 	log.Infof("Generate an SSH keypair...")
 	keypairName := fmt.Sprintf("docker-machine-%s", d.MachineName)
 	kpresp, err := client.CreateKeypair(keypairName)
@@ -376,6 +289,11 @@ func (d *Driver) Create() error {
 	d.KeyPair = keypairName
 
 	log.Infof("Spawn exoscale host...")
+
+	userdata, err := d.getCloudInit()
+	if err != nil {
+		return err
+	}
 	log.Debugf("Using the following cloud-init file:")
 	log.Debugf("%s", userdata)
 
@@ -387,7 +305,6 @@ func (d *Driver) Create() error {
 		Zone:            zone,
 		Keypair:         d.KeyPair,
 		Name:            d.MachineName,
-		AffinityGroups:  ags,
 	}
 
 	cvmresp, err := client.CreateVirtualMachine(machineProfile)
@@ -400,50 +317,55 @@ func (d *Driver) Create() error {
 		return err
 	}
 	d.IPAddress = vm.Nic[0].Ipaddress
-	d.ID = vm.Id
+	d.Id = vm.Id
 
 	return nil
 }
 
 func (d *Driver) Start() error {
-	client := egoscale.NewClient(d.URL, d.APIKey, d.APISecretKey)
-
-	svmresp, err := client.StartVirtualMachine(d.ID)
+	vmstate, err := d.GetState()
 	if err != nil {
 		return err
 	}
+	if vmstate == state.Running || vmstate == state.Starting {
+		log.Infof("Host is already running or starting")
+		return nil
+	}
 
-	return d.waitForJob(client, svmresp)
+	client := egoscale.NewClient(d.URL, d.ApiKey, d.ApiSecretKey)
+	svmresp, err := client.StartVirtualMachine(d.Id)
+	if err != nil {
+		return err
+	}
+	if err = d.waitForJob(client, svmresp); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *Driver) Stop() error {
-	client := egoscale.NewClient(d.URL, d.APIKey, d.APISecretKey)
-
-	svmresp, err := client.StopVirtualMachine(d.ID)
+	vmstate, err := d.GetState()
 	if err != nil {
 		return err
 	}
+	if vmstate == state.Stopped {
+		log.Infof("Host is already stopped")
+		return nil
+	}
 
-	return d.waitForJob(client, svmresp)
-}
-
-func (d *Driver) Restart() error {
-	client := egoscale.NewClient(d.URL, d.APIKey, d.APISecretKey)
-
-	svmresp, err := client.RebootVirtualMachine(d.ID)
+	client := egoscale.NewClient(d.URL, d.ApiKey, d.ApiSecretKey)
+	svmresp, err := client.StopVirtualMachine(d.Id)
 	if err != nil {
 		return err
 	}
-
-	return d.waitForJob(client, svmresp)
-}
-
-func (d *Driver) Kill() error {
-	return d.Stop()
+	if err = d.waitForJob(client, svmresp); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *Driver) Remove() error {
-	client := egoscale.NewClient(d.URL, d.APIKey, d.APISecretKey)
+	client := egoscale.NewClient(d.URL, d.ApiKey, d.ApiSecretKey)
 
 	// Destroy the SSH key
 	if _, err := client.DeleteKeypair(d.KeyPair); err != nil {
@@ -451,7 +373,7 @@ func (d *Driver) Remove() error {
 	}
 
 	// Destroy the virtual machine
-	dvmresp, err := client.DestroyVirtualMachine(d.ID)
+	dvmresp, err := client.DestroyVirtualMachine(d.Id)
 	if err != nil {
 		return err
 	}
@@ -459,6 +381,31 @@ func (d *Driver) Remove() error {
 		return err
 	}
 	return nil
+}
+
+func (d *Driver) Restart() error {
+	vmstate, err := d.GetState()
+	if err != nil {
+		return err
+	}
+	if vmstate == state.Stopped {
+		return fmt.Errorf("Host is stopped, use start command to start it")
+	}
+
+	client := egoscale.NewClient(d.URL, d.ApiKey, d.ApiSecretKey)
+	svmresp, err := client.RebootVirtualMachine(d.Id)
+	if err != nil {
+		return err
+	}
+	if err = d.waitForJob(client, svmresp); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (d *Driver) Kill() error {
+	return d.Stop()
 }
 
 func (d *Driver) jobIsDone(client *egoscale.Client, jobid string) (bool, error) {
@@ -479,7 +426,7 @@ func (d *Driver) jobIsDone(client *egoscale.Client, jobid string) (bool, error) 
 
 func (d *Driver) waitForJob(client *egoscale.Client, jobid string) error {
 	log.Infof("Waiting for job to complete...")
-	return mcnutils.WaitForSpecificOrError(func() (bool, error) {
+	return utils.WaitForSpecificOrError(func() (bool, error) {
 		return d.jobIsDone(client, jobid)
 	}, 60, 2*time.Second)
 }
@@ -503,15 +450,20 @@ func (d *Driver) waitForVM(client *egoscale.Client, jobid string) (*egoscale.Dep
 // Build a cloud-init user data string that will install and run
 // docker.
 func (d *Driver) getCloudInit() (string, error) {
-	if d.UserDataFile != "" {
-		buf, err := ioutil.ReadFile(d.UserDataFile)
-		if err != nil {
-			return "", err
-		}
-		return string(buf), nil
-	}
+	const tpl = `#cloud-config
+manage_etc_hosts: true
+fqdn: {{ .MachineName }}
+resize_rootfs: true
+`
+	var buffer bytes.Buffer
 
-	return `#cloud-config
-manage_etc_hosts: localhost
-`, nil
+	tmpl, err := template.New("cloud-init").Parse(tpl)
+	if err != nil {
+		return "", err
+	}
+	err = tmpl.Execute(&buffer, d)
+	if err != nil {
+		return "", err
+	}
+	return buffer.String(), nil
 }

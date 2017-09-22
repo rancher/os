@@ -1,25 +1,55 @@
 package provision
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
+	"text/template"
 
 	"github.com/docker/machine/libmachine/auth"
-	"github.com/docker/machine/libmachine/engine"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcndockerclient"
 	"github.com/docker/machine/libmachine/swarm"
-	"github.com/samalba/dockerclient"
+	"github.com/docker/machine/log"
 )
 
-func configureSwarm(p Provisioner, swarmOptions swarm.Options, authOptions auth.Options) error {
+type SwarmCommandContext struct {
+	ContainerName string
+	DockerDir     string
+	DockerPort    int
+	Ip            string
+	Port          string
+	AuthOptions   auth.AuthOptions
+	SwarmOptions  swarm.SwarmOptions
+	SwarmImage    string
+}
+
+// Wrapper function to generate a docker run swarm command (manage or join)
+// from a template/context and execute it.
+func runSwarmCommandFromTemplate(p Provisioner, cmdTmpl string, swarmCmdContext SwarmCommandContext) error {
+	var (
+		executedCmdTmpl bytes.Buffer
+	)
+
+	parsedMasterCmdTemplate, err := template.New("swarmMasterCmd").Parse(cmdTmpl)
+	if err != nil {
+		return err
+	}
+
+	parsedMasterCmdTemplate.Execute(&executedCmdTmpl, swarmCmdContext)
+
+	log.Debugf("The swarm command being run is: %s", executedCmdTmpl.String())
+
+	if _, err := p.SSHCommand(executedCmdTmpl.String()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func configureSwarm(p Provisioner, swarmOptions swarm.SwarmOptions, authOptions auth.AuthOptions) error {
 	if !swarmOptions.IsSwarm {
 		return nil
 	}
-
-	log.Info("Configuring swarm...")
 
 	ip, err := p.GetDriver().GetIP()
 	if err != nil {
@@ -31,119 +61,60 @@ func configureSwarm(p Provisioner, swarmOptions swarm.Options, authOptions auth.
 		return err
 	}
 
-	enginePort := engine.DefaultPort
-	engineURL, err := p.GetDriver().GetURL()
-	if err != nil {
-		return err
-	}
-
-	parts := strings.Split(engineURL, ":")
-	if len(parts) == 3 {
-		dPort, err := strconv.Atoi(parts[2])
-		if err != nil {
-			return err
-		}
-		enginePort = dPort
-	}
-
-	parts = strings.Split(u.Host, ":")
+	parts := strings.Split(u.Host, ":")
 	port := parts[1]
 
 	dockerDir := p.GetDockerOptionsDir()
-	dockerHost := &mcndockerclient.RemoteDocker{
-		HostURL:    fmt.Sprintf("tcp://%s:%d", ip, enginePort),
-		AuthOption: &authOptions,
+
+	swarmCmdContext := SwarmCommandContext{
+		ContainerName: "",
+		DockerDir:     dockerDir,
+		DockerPort:    2376,
+		Ip:            ip,
+		Port:          port,
+		AuthOptions:   authOptions,
+		SwarmOptions:  swarmOptions,
+		SwarmImage:    swarmOptions.Image,
 	}
-	advertiseInfo := fmt.Sprintf("%s:%d", ip, enginePort)
+
+	// First things first, get the swarm image.
+	if _, err := p.SSHCommand(fmt.Sprintf("sudo docker pull %s", swarmOptions.Image)); err != nil {
+		return err
+	}
+
+	swarmMasterCmdTemplate := `sudo docker run -d \
+--restart=always \
+--name swarm-agent-master \
+-p {{.Port}}:{{.Port}} \
+-v {{.DockerDir}}:{{.DockerDir}} \
+{{.SwarmImage}} \
+manage \
+--tlsverify \
+--tlscacert={{.AuthOptions.CaCertRemotePath}} \
+--tlscert={{.AuthOptions.ServerCertRemotePath}} \
+--tlskey={{.AuthOptions.ServerKeyRemotePath}} \
+-H {{.SwarmOptions.Host}} \
+--strategy {{.SwarmOptions.Strategy}} {{range .SwarmOptions.ArbitraryFlags}} --{{.}}{{end}} {{.SwarmOptions.Discovery}}
+`
+
+	swarmWorkerCmdTemplate := `sudo docker run -d \
+--restart=always \
+--name swarm-agent \
+{{.SwarmImage}} \
+join --advertise {{.Ip}}:{{.DockerPort}} {{.SwarmOptions.Discovery}}
+`
 
 	if swarmOptions.Master {
-		advertiseMasterInfo := fmt.Sprintf("%s:%s", ip, "3376")
-		cmd := fmt.Sprintf("manage --tlsverify --tlscacert=%s --tlscert=%s --tlskey=%s -H %s --strategy %s --advertise %s",
-			authOptions.CaCertRemotePath,
-			authOptions.ServerCertRemotePath,
-			authOptions.ServerKeyRemotePath,
-			swarmOptions.Host,
-			swarmOptions.Strategy,
-			advertiseMasterInfo,
-		)
-		if swarmOptions.IsExperimental {
-			cmd = "--experimental " + cmd
-		}
-
-		cmdMaster := strings.Fields(cmd)
-		for _, option := range swarmOptions.ArbitraryFlags {
-			cmdMaster = append(cmdMaster, "--"+option)
-		}
-
-		//Discovery must be at end of command
-		cmdMaster = append(cmdMaster, swarmOptions.Discovery)
-
-		hostBind := fmt.Sprintf("%s:%s", dockerDir, dockerDir)
-		masterHostConfig := dockerclient.HostConfig{
-			RestartPolicy: dockerclient.RestartPolicy{
-				Name:              "always",
-				MaximumRetryCount: 0,
-			},
-			Binds: []string{hostBind},
-			PortBindings: map[string][]dockerclient.PortBinding{
-				fmt.Sprintf("%s/tcp", port): {
-					{
-						HostIp:   "0.0.0.0",
-						HostPort: port,
-					},
-				},
-			},
-		}
-
-		swarmMasterConfig := &dockerclient.ContainerConfig{
-			Image: swarmOptions.Image,
-			Env:   swarmOptions.Env,
-			ExposedPorts: map[string]struct{}{
-				"2375/tcp":                  {},
-				fmt.Sprintf("%s/tcp", port): {},
-			},
-			Cmd:        cmdMaster,
-			HostConfig: masterHostConfig,
-		}
-
-		err = mcndockerclient.CreateContainer(dockerHost, swarmMasterConfig, "swarm-agent-master")
-		if err != nil {
+		log.Debug("Launching swarm master")
+		if err := runSwarmCommandFromTemplate(p, swarmMasterCmdTemplate, swarmCmdContext); err != nil {
 			return err
 		}
 	}
 
-	if swarmOptions.Agent {
-		workerHostConfig := dockerclient.HostConfig{
-			RestartPolicy: dockerclient.RestartPolicy{
-				Name:              "always",
-				MaximumRetryCount: 0,
-			},
-		}
-
-		cmdWorker := []string{
-			"join",
-			"--advertise",
-			advertiseInfo,
-		}
-		for _, option := range swarmOptions.ArbitraryJoinFlags {
-			cmdWorker = append(cmdWorker, "--"+option)
-		}
-		cmdWorker = append(cmdWorker, swarmOptions.Discovery)
-
-		swarmWorkerConfig := &dockerclient.ContainerConfig{
-			Image:      swarmOptions.Image,
-			Env:        swarmOptions.Env,
-			Cmd:        cmdWorker,
-			HostConfig: workerHostConfig,
-		}
-		if swarmOptions.IsExperimental {
-			swarmWorkerConfig.Cmd = append([]string{"--experimental"}, swarmWorkerConfig.Cmd...)
-		}
-
-		err = mcndockerclient.CreateContainer(dockerHost, swarmWorkerConfig, "swarm-agent")
-		if err != nil {
-			return err
-		}
+	log.Debug("Launch swarm worker")
+	if err := runSwarmCommandFromTemplate(p, swarmWorkerCmdTemplate, swarmCmdContext); err != nil {
+		return err
 	}
+
 	return nil
 }

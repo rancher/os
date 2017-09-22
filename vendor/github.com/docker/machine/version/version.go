@@ -1,23 +1,9 @@
 package version
 
-import (
-	"fmt"
-	"strings"
-)
-
 var (
-	Version = "0.12.2"
+	// VERSION should be updated by hand at each release
+	VERSION = "0.4.0-dev"
 
-	// GitCommit will be overwritten automatically by the build system
-	GitCommit = "HEAD"
+	// GITCOMMIT will be overwritten automatically by the build system
+	GITCOMMIT = "HEAD"
 )
-
-// FullVersion formats the version to be printed
-func FullVersion() string {
-	return fmt.Sprintf("%s, build %s", Version, GitCommit)
-}
-
-// RC checks if the Machine version is a release candidate or not
-func RC() bool {
-	return strings.Contains(Version, "rc")
-}

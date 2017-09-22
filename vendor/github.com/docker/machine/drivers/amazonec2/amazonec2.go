@@ -3,328 +3,182 @@ package amazonec2
 import (
 	"crypto/md5"
 	"crypto/rand"
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/docker/machine/drivers/driverutil"
-	"github.com/docker/machine/libmachine/drivers"
-	"github.com/docker/machine/libmachine/log"
-	"github.com/docker/machine/libmachine/mcnflag"
-	"github.com/docker/machine/libmachine/mcnutils"
-	"github.com/docker/machine/libmachine/ssh"
-	"github.com/docker/machine/libmachine/state"
+	"github.com/codegangsta/cli"
+	"github.com/docker/machine/drivers"
+	"github.com/docker/machine/drivers/amazonec2/amz"
+	"github.com/docker/machine/log"
+	"github.com/docker/machine/ssh"
+	"github.com/docker/machine/state"
+	"github.com/docker/machine/utils"
 )
 
 const (
-	driverName                  = "amazonec2"
-	ipRange                     = "0.0.0.0/0"
-	machineSecurityGroupName    = "docker-machine"
-	defaultAmiId                = "ami-c60b90d1"
-	defaultRegion               = "us-east-1"
-	defaultInstanceType         = "t2.micro"
-	defaultDeviceName           = "/dev/sda1"
-	defaultRootSize             = 16
-	defaultVolumeType           = "gp2"
-	defaultZone                 = "a"
-	defaultSecurityGroup        = machineSecurityGroupName
-	defaultSSHUser              = "ubuntu"
-	defaultSpotPrice            = "0.50"
-	defaultBlockDurationMinutes = 0
-)
-
-const (
-	keypairNotFoundCode = "InvalidKeyPair.NotFound"
+	driverName               = "amazonec2"
+	defaultRegion            = "us-east-1"
+	defaultInstanceType      = "t2.micro"
+	defaultRootSize          = 16
+	ipRange                  = "0.0.0.0/0"
+	machineSecurityGroupName = "docker-machine"
 )
 
 var (
-	dockerPort                           = 2376
-	swarmPort                            = 3376
-	errorNoPrivateSSHKey                 = errors.New("using --amazonec2-keypair-name also requires --amazonec2-ssh-keypath")
-	errorMissingCredentials              = errors.New("amazonec2 driver requires AWS credentials configured with the --amazonec2-access-key and --amazonec2-secret-key options, environment variables, ~/.aws/credentials, or an instance role")
-	errorNoVPCIdFound                    = errors.New("amazonec2 driver requires either the --amazonec2-subnet-id or --amazonec2-vpc-id option or an AWS Account with a default vpc-id")
-	errorNoSubnetsFound                  = errors.New("The desired subnet could not be located in this region. Is '--amazonec2-subnet-id' or AWS_SUBNET_ID configured correctly?")
-	errorDisableSSLWithoutCustomEndpoint = errors.New("using --amazonec2-insecure-transport also requires --amazonec2-endpoint")
-	errorReadingUserData                 = errors.New("unable to read --amazonec2-userdata file")
+	dockerPort = 2376
+	swarmPort  = 3376
 )
 
 type Driver struct {
 	*drivers.BaseDriver
-	clientFactory         func() Ec2Client
-	awsCredentialsFactory func() awsCredentials
-	Id                    string
-	AccessKey             string
-	SecretKey             string
-	SessionToken          string
-	Region                string
-	AMI                   string
-	SSHKeyID              int
-	// ExistingKey keeps track of whether the key was created by us or we used an existing one. If an existing one was used, we shouldn't delete it when the machine is deleted.
-	ExistingKey      bool
-	KeyName          string
-	InstanceId       string
-	InstanceType     string
-	PrivateIPAddress string
-
-	// NB: SecurityGroupId expanded from single value to slice on 26 Feb 2016 - we maintain both for host storage backwards compatibility.
-	SecurityGroupId  string
-	SecurityGroupIds []string
-
-	// NB: SecurityGroupName expanded from single value to slice on 26 Feb 2016 - we maintain both for host storage backwards compatibility.
-	SecurityGroupName  string
-	SecurityGroupNames []string
-
-	OpenPorts               []string
-	Tags                    string
-	ReservationId           string
-	DeviceName              string
-	RootSize                int64
-	VolumeType              string
-	IamInstanceProfile      string
-	VpcId                   string
-	SubnetId                string
-	Zone                    string
-	keyPath                 string
-	RequestSpotInstance     bool
-	SpotPrice               string
-	BlockDurationMinutes    int64
-	PrivateIPOnly           bool
-	UsePrivateIP            bool
-	UseEbsOptimizedInstance bool
-	Monitoring              bool
-	SSHPrivateKeyPath       string
-	RetryCount              int
-	Endpoint                string
-	DisableSSL              bool
-	UserDataFile            string
+	Id                  string
+	AccessKey           string
+	SecretKey           string
+	SessionToken        string
+	Region              string
+	AMI                 string
+	SSHKeyID            int
+	KeyName             string
+	InstanceId          string
+	InstanceType        string
+	PrivateIPAddress    string
+	SecurityGroupId     string
+	SecurityGroupName   string
+	ReservationId       string
+	RootSize            int64
+	IamInstanceProfile  string
+	VpcId               string
+	SubnetId            string
+	Zone                string
+	keyPath             string
+	RequestSpotInstance bool
+	SpotPrice           string
+	PrivateIPOnly       bool
+	Monitoring          bool
 }
 
-type clientFactory interface {
-	build(d *Driver) Ec2Client
+func init() {
+	drivers.Register(driverName, &drivers.RegisteredDriver{
+		New:            NewDriver,
+		GetCreateFlags: GetCreateFlags,
+	})
 }
 
-func (d *Driver) GetCreateFlags() []mcnflag.Flag {
-	return []mcnflag.Flag{
-		mcnflag.StringFlag{
+func GetCreateFlags() []cli.Flag {
+	return []cli.Flag{
+		cli.StringFlag{
 			Name:   "amazonec2-access-key",
 			Usage:  "AWS Access Key",
+			Value:  "",
 			EnvVar: "AWS_ACCESS_KEY_ID",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-secret-key",
 			Usage:  "AWS Secret Key",
+			Value:  "",
 			EnvVar: "AWS_SECRET_ACCESS_KEY",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-session-token",
 			Usage:  "AWS Session Token",
+			Value:  "",
 			EnvVar: "AWS_SESSION_TOKEN",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-ami",
 			Usage:  "AWS machine image",
 			EnvVar: "AWS_AMI",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-region",
 			Usage:  "AWS region",
 			Value:  defaultRegion,
 			EnvVar: "AWS_DEFAULT_REGION",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-vpc-id",
 			Usage:  "AWS VPC id",
+			Value:  "",
 			EnvVar: "AWS_VPC_ID",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-zone",
 			Usage:  "AWS zone for instance (i.e. a,b,c,d,e)",
-			Value:  defaultZone,
+			Value:  "a",
 			EnvVar: "AWS_ZONE",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-subnet-id",
 			Usage:  "AWS VPC subnet id",
+			Value:  "",
 			EnvVar: "AWS_SUBNET_ID",
 		},
-		mcnflag.StringSliceFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-security-group",
 			Usage:  "AWS VPC security group",
-			Value:  []string{defaultSecurityGroup},
+			Value:  "docker-machine",
 			EnvVar: "AWS_SECURITY_GROUP",
 		},
-		mcnflag.StringSliceFlag{
-			Name:  "amazonec2-open-port",
-			Usage: "Make the specified port number accessible from the Internet",
-		},
-		mcnflag.StringFlag{
-			Name:   "amazonec2-tags",
-			Usage:  "AWS Tags (e.g. key1,value1,key2,value2)",
-			EnvVar: "AWS_TAGS",
-		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-instance-type",
 			Usage:  "AWS instance type",
 			Value:  defaultInstanceType,
 			EnvVar: "AWS_INSTANCE_TYPE",
 		},
-		mcnflag.StringFlag{
-			Name:   "amazonec2-device-name",
-			Usage:  "AWS root device name",
-			Value:  defaultDeviceName,
-			EnvVar: "AWS_DEVICE_NAME",
-		},
-		mcnflag.IntFlag{
+		cli.IntFlag{
 			Name:   "amazonec2-root-size",
 			Usage:  "AWS root disk size (in GB)",
 			Value:  defaultRootSize,
 			EnvVar: "AWS_ROOT_SIZE",
 		},
-		mcnflag.StringFlag{
-			Name:   "amazonec2-volume-type",
-			Usage:  "Amazon EBS volume type",
-			Value:  defaultVolumeType,
-			EnvVar: "AWS_VOLUME_TYPE",
-		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-iam-instance-profile",
 			Usage:  "AWS IAM Instance Profile",
 			EnvVar: "AWS_INSTANCE_PROFILE",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:   "amazonec2-ssh-user",
-			Usage:  "Set the name of the ssh user",
-			Value:  defaultSSHUser,
+			Usage:  "set the name of the ssh user",
+			Value:  "ubuntu",
 			EnvVar: "AWS_SSH_USER",
 		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			Name:  "amazonec2-request-spot-instance",
 			Usage: "Set this flag to request spot instance",
 		},
-		mcnflag.StringFlag{
+		cli.StringFlag{
 			Name:  "amazonec2-spot-price",
 			Usage: "AWS spot instance bid price (in dollar)",
-			Value: defaultSpotPrice,
+			Value: "0.50",
 		},
-		mcnflag.IntFlag{
-			Name:  "amazonec2-block-duration-minutes",
-			Usage: "AWS spot instance duration in minutes (60, 120, 180, 240, 300, or 360)",
-			Value: defaultBlockDurationMinutes,
-		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			Name:  "amazonec2-private-address-only",
 			Usage: "Only use a private IP address",
 		},
-		mcnflag.BoolFlag{
-			Name:  "amazonec2-use-private-address",
-			Usage: "Force the usage of private IP address",
-		},
-		mcnflag.BoolFlag{
+		cli.BoolFlag{
 			Name:  "amazonec2-monitoring",
 			Usage: "Set this flag to enable CloudWatch monitoring",
 		},
-		mcnflag.BoolFlag{
-			Name:  "amazonec2-use-ebs-optimized-instance",
-			Usage: "Create an EBS optimized instance",
-		},
-		mcnflag.StringFlag{
-			Name:   "amazonec2-ssh-keypath",
-			Usage:  "SSH Key for Instance",
-			EnvVar: "AWS_SSH_KEYPATH",
-		},
-		mcnflag.StringFlag{
-			Name:   "amazonec2-keypair-name",
-			Usage:  "AWS keypair to use; requires --amazonec2-ssh-keypath",
-			EnvVar: "AWS_KEYPAIR_NAME",
-		},
-		mcnflag.IntFlag{
-			Name:  "amazonec2-retries",
-			Usage: "Set retry count for recoverable failures (use -1 to disable)",
-			Value: 5,
-		},
-		mcnflag.StringFlag{
-			Name:   "amazonec2-endpoint",
-			Usage:  "Optional endpoint URL (hostname only or fully qualified URI)",
-			Value:  "",
-			EnvVar: "AWS_ENDPOINT",
-		},
-		mcnflag.BoolFlag{
-			Name:   "amazonec2-insecure-transport",
-			Usage:  "Disable SSL when sending requests",
-			EnvVar: "AWS_INSECURE_TRANSPORT",
-		},
-		mcnflag.StringFlag{
-			Name:   "amazonec2-userdata",
-			Usage:  "path to file with cloud-init user data",
-			EnvVar: "AWS_USERDATA",
-		},
 	}
 }
 
-func NewDriver(hostName, storePath string) *Driver {
+func NewDriver(machineName string, storePath string, caCert string, privateKey string) (drivers.Driver, error) {
 	id := generateId()
-	driver := &Driver{
-		Id:                   id,
-		AMI:                  defaultAmiId,
-		Region:               defaultRegion,
-		InstanceType:         defaultInstanceType,
-		RootSize:             defaultRootSize,
-		Zone:                 defaultZone,
-		SecurityGroupNames:   []string{defaultSecurityGroup},
-		SpotPrice:            defaultSpotPrice,
-		BlockDurationMinutes: defaultBlockDurationMinutes,
-		BaseDriver: &drivers.BaseDriver{
-			SSHUser:     defaultSSHUser,
-			MachineName: hostName,
-			StorePath:   storePath,
-		},
-	}
-
-	driver.clientFactory = driver.buildClient
-	driver.awsCredentialsFactory = driver.buildCredentials
-
-	return driver
-}
-
-func (d *Driver) buildClient() Ec2Client {
-	config := aws.NewConfig()
-	alogger := AwsLogger()
-	config = config.WithRegion(d.Region)
-	config = config.WithCredentials(d.awsCredentialsFactory().Credentials())
-	config = config.WithLogger(alogger)
-	config = config.WithLogLevel(aws.LogDebugWithHTTPBody)
-	config = config.WithMaxRetries(d.RetryCount)
-	if d.Endpoint != "" {
-		config = config.WithEndpoint(d.Endpoint)
-		config = config.WithDisableSSL(d.DisableSSL)
-	}
-	return ec2.New(session.New(config))
-}
-
-func (d *Driver) buildCredentials() awsCredentials {
-	return NewAWSCredentials(d.AccessKey, d.SecretKey, d.SessionToken)
-}
-
-func (d *Driver) getClient() Ec2Client {
-	return d.clientFactory()
+	inner := drivers.NewBaseDriver(machineName, storePath, caCert, privateKey)
+	return &Driver{
+		Id:         id,
+		BaseDriver: inner,
+	}, nil
 }
 
 func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
-	d.Endpoint = flags.String("amazonec2-endpoint")
-
 	region, err := validateAwsRegion(flags.String("amazonec2-region"))
-	if err != nil && d.Endpoint == "" {
+	if err != nil {
 		return err
 	}
 
@@ -340,80 +194,32 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.AMI = image
 	d.RequestSpotInstance = flags.Bool("amazonec2-request-spot-instance")
 	d.SpotPrice = flags.String("amazonec2-spot-price")
-	d.BlockDurationMinutes = int64(flags.Int("amazonec2-block-duration-minutes"))
 	d.InstanceType = flags.String("amazonec2-instance-type")
 	d.VpcId = flags.String("amazonec2-vpc-id")
 	d.SubnetId = flags.String("amazonec2-subnet-id")
-	d.SecurityGroupNames = flags.StringSlice("amazonec2-security-group")
-	d.Tags = flags.String("amazonec2-tags")
+	d.SecurityGroupName = flags.String("amazonec2-security-group")
 	zone := flags.String("amazonec2-zone")
 	d.Zone = zone[:]
-	d.DeviceName = flags.String("amazonec2-device-name")
 	d.RootSize = int64(flags.Int("amazonec2-root-size"))
-	d.VolumeType = flags.String("amazonec2-volume-type")
 	d.IamInstanceProfile = flags.String("amazonec2-iam-instance-profile")
+	d.SwarmMaster = flags.Bool("swarm-master")
+	d.SwarmHost = flags.String("swarm-host")
+	d.SwarmDiscovery = flags.String("swarm-discovery")
 	d.SSHUser = flags.String("amazonec2-ssh-user")
 	d.SSHPort = 22
 	d.PrivateIPOnly = flags.Bool("amazonec2-private-address-only")
-	d.UsePrivateIP = flags.Bool("amazonec2-use-private-address")
 	d.Monitoring = flags.Bool("amazonec2-monitoring")
-	d.UseEbsOptimizedInstance = flags.Bool("amazonec2-use-ebs-optimized-instance")
-	d.SSHPrivateKeyPath = flags.String("amazonec2-ssh-keypath")
-	d.KeyName = flags.String("amazonec2-keypair-name")
-	d.ExistingKey = flags.String("amazonec2-keypair-name") != ""
-	d.SetSwarmConfigFromFlags(flags)
-	d.RetryCount = flags.Int("amazonec2-retries")
-	d.OpenPorts = flags.StringSlice("amazonec2-open-port")
-	d.UserDataFile = flags.String("amazonec2-userdata")
 
-	d.DisableSSL = flags.Bool("amazonec2-insecure-transport")
-
-	if d.DisableSSL && d.Endpoint == "" {
-		return errorDisableSSLWithoutCustomEndpoint
+	if d.AccessKey == "" {
+		return fmt.Errorf("amazonec2 driver requires the --amazonec2-access-key option")
 	}
 
-	if d.KeyName != "" && d.SSHPrivateKeyPath == "" {
-		return errorNoPrivateSSHKey
-	}
-
-	_, err = d.awsCredentialsFactory().Credentials().Get()
-	if err != nil {
-		return errorMissingCredentials
-	}
-
-	if d.VpcId == "" {
-		d.VpcId, err = d.getDefaultVPCId()
-		if err != nil {
-			log.Warnf("Couldn't determine your account Default VPC ID : %q", err)
-		}
+	if d.SecretKey == "" {
+		return fmt.Errorf("amazonec2 driver requires the --amazonec2-secret-key option")
 	}
 
 	if d.SubnetId == "" && d.VpcId == "" {
-		return errorNoVPCIdFound
-	}
-
-	if d.SubnetId != "" && d.VpcId != "" {
-		subnetFilter := []*ec2.Filter{
-			{
-				Name:   aws.String("subnet-id"),
-				Values: []*string{&d.SubnetId},
-			},
-		}
-
-		subnets, err := d.getClient().DescribeSubnets(&ec2.DescribeSubnetsInput{
-			Filters: subnetFilter,
-		})
-		if err != nil {
-			return err
-		}
-
-		if subnets == nil || len(subnets.Subnets) == 0 {
-			return errorNoSubnetsFound
-		}
-
-		if *subnets.Subnets[0].VpcId != d.VpcId {
-			return fmt.Errorf("SubnetId: %s does not belong to VpcId: %s", d.SubnetId, d.VpcId)
-		}
+		return fmt.Errorf("amazonec2 driver requires either the --amazonec2-subnet-id or --amazonec2-vpc-id option")
 	}
 
 	if d.isSwarmMaster() {
@@ -434,75 +240,50 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	return nil
 }
 
-// DriverName returns the name of the driver
 func (d *Driver) DriverName() string {
 	return driverName
 }
 
 func (d *Driver) checkPrereqs() error {
 	// check for existing keypair
-	keyName := d.KeyName
-	keyShouldExist := true
-	if keyName == "" {
-		keyName = d.MachineName
-		keyShouldExist = false
-	}
-
-	key, err := d.getClient().DescribeKeyPairs(&ec2.DescribeKeyPairsInput{
-		KeyNames: []*string{&keyName},
-	})
+	key, err := d.getClient().GetKeyPair(d.MachineName)
 	if err != nil {
-		if awsErr, ok := err.(awserr.Error); ok {
-			if awsErr.Code() == keypairNotFoundCode && keyShouldExist {
-				return fmt.Errorf("There is no keypair with the name %s. Please verify the key name provided.", keyName)
-			}
-			if awsErr.Code() == keypairNotFoundCode && !keyShouldExist {
-				// Not a real error for 'NotFound' since we're checking existence
-			}
-		} else {
-			return err
-		}
+		return err
 	}
 
-	// In case we got a result with an empty set of keys
-	if err == nil && len(key.KeyPairs) != 0 {
-		if !keyShouldExist {
-			return fmt.Errorf("There is already a keypair with the name %s.  Please either remove that keypair or use a different machine name.", d.MachineName)
-		}
-		// otherwise we found the key: success
+	if key != nil {
+		return fmt.Errorf("There is already a keypair with the name %s.  Please either remove that keypair or use a different machine name.", d.MachineName)
 	}
 
-	regionZone := d.getRegionZone()
+	regionZone := d.Region + d.Zone
 	if d.SubnetId == "" {
-		filters := []*ec2.Filter{
+		filters := []amz.Filter{
 			{
-				Name:   aws.String("availability-zone"),
-				Values: []*string{&regionZone},
+				Name:  "availabilityZone",
+				Value: regionZone,
 			},
 			{
-				Name:   aws.String("vpc-id"),
-				Values: []*string{&d.VpcId},
+				Name:  "vpc-id",
+				Value: d.VpcId,
 			},
 		}
 
-		subnets, err := d.getClient().DescribeSubnets(&ec2.DescribeSubnetsInput{
-			Filters: filters,
-		})
+		subnets, err := d.getClient().GetSubnets(filters)
 		if err != nil {
 			return err
 		}
 
-		if len(subnets.Subnets) == 0 {
+		if len(subnets) == 0 {
 			return fmt.Errorf("unable to find a subnet in the zone: %s", regionZone)
 		}
 
-		d.SubnetId = *subnets.Subnets[0].SubnetId
+		d.SubnetId = subnets[0].SubnetId
 
 		// try to find default
-		if len(subnets.Subnets) > 1 {
-			for _, subnet := range subnets.Subnets {
-				if subnet.DefaultForAz != nil && *subnet.DefaultForAz {
-					d.SubnetId = *subnet.SubnetId
+		if len(subnets) > 1 {
+			for _, subnet := range subnets {
+				if subnet.DefaultForAz {
+					d.SubnetId = subnet.SubnetId
 					break
 				}
 			}
@@ -529,43 +310,6 @@ func (d *Driver) instanceIpAvailable() bool {
 	return false
 }
 
-func makePointerSlice(stackSlice []string) []*string {
-	pointerSlice := []*string{}
-	for i := range stackSlice {
-		pointerSlice = append(pointerSlice, &stackSlice[i])
-	}
-	return pointerSlice
-}
-
-// Support migrating single string Driver fields to slices.
-func migrateStringToSlice(value string, values []string) (result []string) {
-	if value != "" {
-		result = append(result, value)
-	}
-	result = append(result, values...)
-	return
-}
-
-func (d *Driver) securityGroupNames() (ids []string) {
-	return migrateStringToSlice(d.SecurityGroupName, d.SecurityGroupNames)
-}
-
-func (d *Driver) securityGroupIds() (ids []string) {
-	return migrateStringToSlice(d.SecurityGroupId, d.SecurityGroupIds)
-}
-
-func (d *Driver) Base64UserData() (userdata string, err error) {
-	if d.UserDataFile != "" {
-		buf, ioerr := ioutil.ReadFile(d.UserDataFile)
-		if ioerr != nil {
-			err = errorReadingUserData
-			return
-		}
-		userdata = base64.StdEncoding.EncodeToString(buf)
-	}
-	return
-}
-
 func (d *Driver) Create() error {
 	if err := d.checkPrereqs(); err != nil {
 		return err
@@ -577,143 +321,57 @@ func (d *Driver) Create() error {
 		return fmt.Errorf("unable to create key pair: %s", err)
 	}
 
-	if err := d.configureSecurityGroups(d.securityGroupNames()); err != nil {
+	if err := d.configureSecurityGroup(d.SecurityGroupName); err != nil {
 		return err
 	}
 
-	var userdata string
-	if b64, err := d.Base64UserData(); err != nil {
-		return err
-	} else {
-		userdata = b64
+	bdm := &amz.BlockDeviceMapping{
+		DeviceName:          "/dev/sda1",
+		VolumeSize:          d.RootSize,
+		DeleteOnTermination: true,
+		VolumeType:          "gp2",
 	}
 
-	bdm := &ec2.BlockDeviceMapping{
-		DeviceName: aws.String(d.DeviceName),
-		Ebs: &ec2.EbsBlockDevice{
-			VolumeSize:          aws.Int64(d.RootSize),
-			VolumeType:          aws.String(d.VolumeType),
-			DeleteOnTermination: aws.Bool(true),
-		},
-	}
-	netSpecs := []*ec2.InstanceNetworkInterfaceSpecification{{
-		DeviceIndex:              aws.Int64(0), // eth0
-		Groups:                   makePointerSlice(d.securityGroupIds()),
-		SubnetId:                 &d.SubnetId,
-		AssociatePublicIpAddress: aws.Bool(!d.PrivateIPOnly),
-	}}
-
-	regionZone := d.getRegionZone()
 	log.Debugf("launching instance in subnet %s", d.SubnetId)
-
-	var instance *ec2.Instance
-
+	var instance amz.EC2Instance
 	if d.RequestSpotInstance {
-		req := ec2.RequestSpotInstancesInput{
-			LaunchSpecification: &ec2.RequestSpotLaunchSpecification{
-				ImageId: &d.AMI,
-				Placement: &ec2.SpotPlacement{
-					AvailabilityZone: &regionZone,
-				},
-				KeyName:           &d.KeyName,
-				InstanceType:      &d.InstanceType,
-				NetworkInterfaces: netSpecs,
-				Monitoring:        &ec2.RunInstancesMonitoringEnabled{Enabled: aws.Bool(d.Monitoring)},
-				IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-					Name: &d.IamInstanceProfile,
-				},
-				EbsOptimized:        &d.UseEbsOptimizedInstance,
-				BlockDeviceMappings: []*ec2.BlockDeviceMapping{bdm},
-				UserData:            &userdata,
-			},
-			InstanceCount: aws.Int64(1),
-			SpotPrice:     &d.SpotPrice,
-		}
-		if d.BlockDurationMinutes != 0 {
-			req.BlockDurationMinutes = &d.BlockDurationMinutes
-		}
-
-		spotInstanceRequest, err := d.getClient().RequestSpotInstances(&req)
+		spotInstanceRequestId, err := d.getClient().RequestSpotInstances(d.AMI, d.InstanceType, d.Zone, 1, d.SecurityGroupId, d.KeyName, d.SubnetId, bdm, d.IamInstanceProfile, d.SpotPrice, d.Monitoring)
 		if err != nil {
 			return fmt.Errorf("Error request spot instance: %s", err)
 		}
-
+		var instanceId string
+		var spotInstanceRequestStatus string
 		log.Info("Waiting for spot instance...")
-		err = d.getClient().WaitUntilSpotInstanceRequestFulfilled(&ec2.DescribeSpotInstanceRequestsInput{
-			SpotInstanceRequestIds: []*string{spotInstanceRequest.SpotInstanceRequests[0].SpotInstanceRequestId},
-		})
-		if err != nil {
-			return fmt.Errorf("Error fulfilling spot request: %v", err)
-		}
-		log.Info("Created spot instance request %v", *spotInstanceRequest.SpotInstanceRequests[0].SpotInstanceRequestId)
-		// resolve instance id
-		for i := 0; i < 3; i++ {
-			// Even though the waiter succeeded, eventual consistency means we could
-			// get a describe output that does not include this information. Try a
-			// few times just in case
-			var resolvedSpotInstance *ec2.DescribeSpotInstanceRequestsOutput
-			resolvedSpotInstance, err = d.getClient().DescribeSpotInstanceRequests(&ec2.DescribeSpotInstanceRequestsInput{
-				SpotInstanceRequestIds: []*string{spotInstanceRequest.SpotInstanceRequests[0].SpotInstanceRequestId},
-			})
+		// check until fulfilled
+		for instanceId == "" {
+			time.Sleep(time.Second * 5)
+			spotInstanceRequestStatus, instanceId, err = d.getClient().DescribeSpotInstanceRequests(spotInstanceRequestId)
 			if err != nil {
-				// Unexpected; no need to retry
-				return fmt.Errorf("Error describing previously made spot instance request: %v", err)
+				return fmt.Errorf("Error describe spot instance request: %s", err)
 			}
-			maybeInstanceId := resolvedSpotInstance.SpotInstanceRequests[0].InstanceId
-			if maybeInstanceId != nil {
-				var instances *ec2.DescribeInstancesOutput
-				instances, err = d.getClient().DescribeInstances(&ec2.DescribeInstancesInput{
-					InstanceIds: []*string{maybeInstanceId},
-				})
-				if err != nil {
-					// Retry if we get an id from spot instance but EC2 doesn't recognize it yet; see above, eventual consistency possible
-					continue
-				}
-				instance = instances.Reservations[0].Instances[0]
-				err = nil
-				break
-			}
-			time.Sleep(5 * time.Second)
+			log.Debugf("spot instance request status: %s", spotInstanceRequestStatus)
 		}
-
+		instance, err = d.getClient().GetInstance(instanceId)
 		if err != nil {
-			return fmt.Errorf("Error resolving spot instance to real instance: %v", err)
+			return fmt.Errorf("Error get instance: %s", err)
 		}
 	} else {
-		inst, err := d.getClient().RunInstances(&ec2.RunInstancesInput{
-			ImageId:  &d.AMI,
-			MinCount: aws.Int64(1),
-			MaxCount: aws.Int64(1),
-			Placement: &ec2.Placement{
-				AvailabilityZone: &regionZone,
-			},
-			KeyName:           &d.KeyName,
-			InstanceType:      &d.InstanceType,
-			NetworkInterfaces: netSpecs,
-			Monitoring:        &ec2.RunInstancesMonitoringEnabled{Enabled: aws.Bool(d.Monitoring)},
-			IamInstanceProfile: &ec2.IamInstanceProfileSpecification{
-				Name: &d.IamInstanceProfile,
-			},
-			EbsOptimized:        &d.UseEbsOptimizedInstance,
-			BlockDeviceMappings: []*ec2.BlockDeviceMapping{bdm},
-			UserData:            &userdata,
-		})
-
+		inst, err := d.getClient().RunInstance(d.AMI, d.InstanceType, d.Zone, 1, 1, d.SecurityGroupId, d.KeyName, d.SubnetId, bdm, d.IamInstanceProfile, d.PrivateIPOnly, d.Monitoring)
 		if err != nil {
 			return fmt.Errorf("Error launching instance: %s", err)
 		}
-		instance = inst.Instances[0]
+		instance = inst
 	}
 
-	d.InstanceId = *instance.InstanceId
+	d.InstanceId = instance.InstanceId
 
 	log.Debug("waiting for ip address to become available")
-	if err := mcnutils.WaitFor(d.instanceIpAvailable); err != nil {
+	if err := utils.WaitFor(d.instanceIpAvailable); err != nil {
 		return err
 	}
 
-	if instance.PrivateIpAddress != nil {
-		d.PrivateIPAddress = *instance.PrivateIpAddress
+	if len(instance.NetworkInterfaceSet) > 0 {
+		d.PrivateIPAddress = instance.NetworkInterfaceSet[0].PrivateIpAddress
 	}
 
 	d.waitForInstance()
@@ -725,20 +383,18 @@ func (d *Driver) Create() error {
 	)
 
 	log.Debug("Settings tags for instance")
-	err := d.configureTags(d.Tags)
+	tags := map[string]string{
+		"Name": d.MachineName,
+	}
 
-	if err != nil {
-		return fmt.Errorf("Unable to tag instance %s: %s", d.InstanceId, err)
+	if err := d.getClient().CreateTags(d.InstanceId, tags); err != nil {
+		return err
 	}
 
 	return nil
 }
 
 func (d *Driver) GetURL() (string, error) {
-	if err := drivers.MustBeRunning(d); err != nil {
-		return "", err
-	}
-
 	ip, err := d.GetIP()
 	if err != nil {
 		return "", err
@@ -746,8 +402,7 @@ func (d *Driver) GetURL() (string, error) {
 	if ip == "" {
 		return "", nil
 	}
-
-	return fmt.Sprintf("tcp://%s", net.JoinHostPort(ip, strconv.Itoa(dockerPort))), nil
+	return fmt.Sprintf("tcp://%s:%d", ip, dockerPort), nil
 }
 
 func (d *Driver) GetIP() (string, error) {
@@ -757,23 +412,10 @@ func (d *Driver) GetIP() (string, error) {
 	}
 
 	if d.PrivateIPOnly {
-		if inst.PrivateIpAddress == nil {
-			return "", fmt.Errorf("No private IP for instance %v", *inst.InstanceId)
-		}
-		return *inst.PrivateIpAddress, nil
+		return inst.PrivateIpAddress, nil
 	}
 
-	if d.UsePrivateIP {
-		if inst.PrivateIpAddress == nil {
-			return "", fmt.Errorf("No private IP for instance %v", *inst.InstanceId)
-		}
-		return *inst.PrivateIpAddress, nil
-	}
-
-	if inst.PublicIpAddress == nil {
-		return "", fmt.Errorf("No IP for instance %v", *inst.InstanceId)
-	}
-	return *inst.PublicIpAddress, nil
+	return inst.IpAddress, nil
 }
 
 func (d *Driver) GetState() (state.State, error) {
@@ -781,25 +423,24 @@ func (d *Driver) GetState() (state.State, error) {
 	if err != nil {
 		return state.Error, err
 	}
-	switch *inst.State.Name {
-	case ec2.InstanceStateNamePending:
+	switch inst.InstanceState.Name {
+	case "pending":
 		return state.Starting, nil
-	case ec2.InstanceStateNameRunning:
+	case "running":
 		return state.Running, nil
-	case ec2.InstanceStateNameStopping:
+	case "stopping":
 		return state.Stopping, nil
-	case ec2.InstanceStateNameShuttingDown:
+	case "shutting-down":
 		return state.Stopping, nil
-	case ec2.InstanceStateNameStopped:
+	case "stopped":
 		return state.Stopped, nil
-	case ec2.InstanceStateNameTerminated:
-		return state.Error, nil
 	default:
-		log.Warnf("unrecognized instance state: %v", *inst.State.Name)
 		return state.Error, nil
 	}
+	return state.None, nil
 }
 
+// GetSSHHostname -
 func (d *Driver) GetSSHHostname() (string, error) {
 	// TODO: use @nathanleclaire retry func here (ehazlett)
 	return d.GetIP()
@@ -807,76 +448,71 @@ func (d *Driver) GetSSHHostname() (string, error) {
 
 func (d *Driver) GetSSHUsername() string {
 	if d.SSHUser == "" {
-		d.SSHUser = defaultSSHUser
+		d.SSHUser = "ubuntu"
 	}
 
 	return d.SSHUser
 }
 
 func (d *Driver) Start() error {
-	_, err := d.getClient().StartInstances(&ec2.StartInstancesInput{
-		InstanceIds: []*string{&d.InstanceId},
-	})
-	if err != nil {
+	if err := d.getClient().StartInstance(d.InstanceId); err != nil {
 		return err
 	}
 
-	return d.waitForInstance()
+	if err := d.waitForInstance(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *Driver) Stop() error {
-	_, err := d.getClient().StopInstances(&ec2.StopInstancesInput{
-		InstanceIds: []*string{&d.InstanceId},
-		Force:       aws.Bool(false),
-	})
-	return err
-}
-
-func (d *Driver) Restart() error {
-	_, err := d.getClient().RebootInstances(&ec2.RebootInstancesInput{
-		InstanceIds: []*string{&d.InstanceId},
-	})
-	return err
-}
-
-func (d *Driver) Kill() error {
-	_, err := d.getClient().StopInstances(&ec2.StopInstancesInput{
-		InstanceIds: []*string{&d.InstanceId},
-		Force:       aws.Bool(true),
-	})
-	return err
+	if err := d.getClient().StopInstance(d.InstanceId, false); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (d *Driver) Remove() error {
-	multierr := mcnutils.MultiError{
-		Errs: []error{},
-	}
 
 	if err := d.terminate(); err != nil {
-		multierr.Errs = append(multierr.Errs, err)
+		return fmt.Errorf("unable to terminate instance: %s", err)
 	}
 
-	if !d.ExistingKey {
-		if err := d.deleteKeyPair(); err != nil {
-			multierr.Errs = append(multierr.Errs, err)
-		}
+	// remove keypair
+	if err := d.deleteKeyPair(); err != nil {
+		return fmt.Errorf("unable to remove key pair: %s", err)
 	}
 
-	if len(multierr.Errs) == 0 {
-		return nil
-	}
-
-	return multierr
+	return nil
 }
 
-func (d *Driver) getInstance() (*ec2.Instance, error) {
-	instances, err := d.getClient().DescribeInstances(&ec2.DescribeInstancesInput{
-		InstanceIds: []*string{&d.InstanceId},
-	})
+func (d *Driver) Restart() error {
+	if err := d.getClient().RestartInstance(d.InstanceId); err != nil {
+		return fmt.Errorf("unable to restart instance: %s", err)
+	}
+	return nil
+}
+
+func (d *Driver) Kill() error {
+	if err := d.getClient().StopInstance(d.InstanceId, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (d *Driver) getClient() *amz.EC2 {
+	auth := amz.GetAuth(d.AccessKey, d.SecretKey, d.SessionToken)
+	return amz.NewEC2(auth, d.Region)
+}
+
+func (d *Driver) getInstance() (*amz.EC2Instance, error) {
+	instance, err := d.getClient().GetInstance(d.InstanceId)
 	if err != nil {
 		return nil, err
 	}
-	return instances.Reservations[0].Instances[0], nil
+
+	return &instance, nil
 }
 
 func (d *Driver) instanceIsRunning() bool {
@@ -891,7 +527,7 @@ func (d *Driver) instanceIsRunning() bool {
 }
 
 func (d *Driver) waitForInstance() error {
-	if err := mcnutils.WaitFor(d.instanceIsRunning); err != nil {
+	if err := utils.WaitFor(d.instanceIsRunning); err != nil {
 		return err
 	}
 
@@ -899,30 +535,12 @@ func (d *Driver) waitForInstance() error {
 }
 
 func (d *Driver) createKeyPair() error {
-	keyPath := ""
 
-	if d.SSHPrivateKeyPath == "" {
-		log.Debugf("Creating New SSH Key")
-		if err := ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
-			return err
-		}
-		keyPath = d.GetSSHKeyPath()
-	} else {
-		log.Debugf("Using SSHPrivateKeyPath: %s", d.SSHPrivateKeyPath)
-		if err := mcnutils.CopyFile(d.SSHPrivateKeyPath, d.GetSSHKeyPath()); err != nil {
-			return err
-		}
-		if err := mcnutils.CopyFile(d.SSHPrivateKeyPath+".pub", d.GetSSHKeyPath()+".pub"); err != nil {
-			return err
-		}
-		if d.KeyName != "" {
-			log.Debugf("Using existing EC2 key pair: %s", d.KeyName)
-			return nil
-		}
-		keyPath = d.SSHPrivateKeyPath
+	if err := ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
+		return err
 	}
 
-	publicKey, err := ioutil.ReadFile(keyPath + ".pub")
+	publicKey, err := ioutil.ReadFile(d.GetSSHKeyPath() + ".pub")
 	if err != nil {
 		return err
 	}
@@ -930,13 +548,11 @@ func (d *Driver) createKeyPair() error {
 	keyName := d.MachineName
 
 	log.Debugf("creating key pair: %s", keyName)
-	_, err = d.getClient().ImportKeyPair(&ec2.ImportKeyPairInput{
-		KeyName:           &keyName,
-		PublicKeyMaterial: publicKey,
-	})
-	if err != nil {
+
+	if err := d.getClient().ImportKeyPair(keyName, string(publicKey)); err != nil {
 		return err
 	}
+
 	d.KeyName = keyName
 	return nil
 }
@@ -947,19 +563,10 @@ func (d *Driver) terminate() error {
 	}
 
 	log.Debugf("terminating instance: %s", d.InstanceId)
-	_, err := d.getClient().TerminateInstances(&ec2.TerminateInstancesInput{
-		InstanceIds: []*string{&d.InstanceId},
-	})
-
-	if err != nil {
-		if strings.HasPrefix(err.Error(), "unknown instance") ||
-			strings.HasPrefix(err.Error(), "InvalidInstanceID.NotFound") {
-			log.Warn("Remote instance does not exist, proceeding with removing local reference")
-			return nil
-		}
-
+	if err := d.getClient().TerminateInstance(d.InstanceId); err != nil {
 		return fmt.Errorf("unable to terminate instance: %s", err)
 	}
+
 	return nil
 }
 
@@ -969,232 +576,137 @@ func (d *Driver) isSwarmMaster() bool {
 
 func (d *Driver) securityGroupAvailableFunc(id string) func() bool {
 	return func() bool {
-
-		securityGroup, err := d.getClient().DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
-			GroupIds: []*string{&id},
-		})
-		if err == nil && len(securityGroup.SecurityGroups) > 0 {
+		_, err := d.getClient().GetSecurityGroupById(id)
+		if err == nil {
 			return true
-		} else if err == nil {
-			log.Debugf("No security group with id %v found", id)
-			return false
 		}
 		log.Debug(err)
 		return false
 	}
 }
 
-func (d *Driver) configureTags(tagGroups string) error {
+func (d *Driver) configureSecurityGroup(groupName string) error {
+	log.Debugf("configuring security group in %s", d.VpcId)
 
-	tags := []*ec2.Tag{}
-	tags = append(tags, &ec2.Tag{
-		Key:   aws.String("Name"),
-		Value: &d.MachineName,
-	})
+	var securityGroup *amz.SecurityGroup
 
-	if tagGroups != "" {
-		t := strings.Split(tagGroups, ",")
-		if len(t) > 0 && len(t)%2 != 0 {
-			log.Warnf("Tags are not key value in pairs. %d elements found", len(t))
-		}
-		for i := 0; i < len(t)-1; i += 2 {
-			tags = append(tags, &ec2.Tag{
-				Key:   &t[i],
-				Value: &t[i+1],
-			})
-		}
-	}
-
-	_, err := d.getClient().CreateTags(&ec2.CreateTagsInput{
-		Resources: []*string{&d.InstanceId},
-		Tags:      tags,
-	})
-
+	groups, err := d.getClient().GetSecurityGroups()
 	if err != nil {
 		return err
 	}
 
-	return nil
-}
-
-func (d *Driver) configureSecurityGroups(groupNames []string) error {
-	if len(groupNames) == 0 {
-		log.Debugf("no security groups to configure in %s", d.VpcId)
-		return nil
-	}
-
-	log.Debugf("configuring security groups in %s", d.VpcId)
-
-	filters := []*ec2.Filter{
-		{
-			Name:   aws.String("group-name"),
-			Values: makePointerSlice(groupNames),
-		},
-		{
-			Name:   aws.String("vpc-id"),
-			Values: []*string{&d.VpcId},
-		},
-	}
-	groups, err := d.getClient().DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
-		Filters: filters,
-	})
-	if err != nil {
-		return err
-	}
-
-	var groupsByName = make(map[string]*ec2.SecurityGroup)
-	for _, securityGroup := range groups.SecurityGroups {
-		groupsByName[*securityGroup.GroupName] = securityGroup
-	}
-
-	for _, groupName := range groupNames {
-		var group *ec2.SecurityGroup
-		securityGroup, ok := groupsByName[groupName]
-		if ok {
+	for _, grp := range groups {
+		if grp.GroupName == groupName {
 			log.Debugf("found existing security group (%s) in %s", groupName, d.VpcId)
-			group = securityGroup
-		} else {
-			log.Debugf("creating security group (%s) in %s", groupName, d.VpcId)
-			groupResp, err := d.getClient().CreateSecurityGroup(&ec2.CreateSecurityGroupInput{
-				GroupName:   aws.String(groupName),
-				Description: aws.String("Docker Machine"),
-				VpcId:       aws.String(d.VpcId),
-			})
-			if err != nil {
-				return err
-			}
-			// Manually translate into the security group construct
-			group = &ec2.SecurityGroup{
-				GroupId:   groupResp.GroupId,
-				VpcId:     aws.String(d.VpcId),
-				GroupName: aws.String(groupName),
-			}
-			// wait until created (dat eventual consistency)
-			log.Debugf("waiting for group (%s) to become available", *group.GroupId)
-			if err := mcnutils.WaitFor(d.securityGroupAvailableFunc(*group.GroupId)); err != nil {
-				return err
-			}
+			securityGroup = &grp
+			break
 		}
-		d.SecurityGroupIds = append(d.SecurityGroupIds, *group.GroupId)
+	}
 
-		perms, err := d.configureSecurityGroupPermissions(group)
+	// if not found, create
+	if securityGroup == nil {
+		log.Debugf("creating security group (%s) in %s", groupName, d.VpcId)
+		group, err := d.getClient().CreateSecurityGroup(groupName, "Docker Machine", d.VpcId)
 		if err != nil {
 			return err
 		}
-
-		if len(perms) != 0 {
-			log.Debugf("authorizing group %s with permissions: %v", groupNames, perms)
-			_, err := d.getClient().AuthorizeSecurityGroupIngress(&ec2.AuthorizeSecurityGroupIngressInput{
-				GroupId:       group.GroupId,
-				IpPermissions: perms,
-			})
-			if err != nil {
-				return err
-			}
+		securityGroup = group
+		// wait until created (dat eventual consistency)
+		log.Debugf("waiting for group (%s) to become available", group.GroupId)
+		if err := utils.WaitFor(d.securityGroupAvailableFunc(group.GroupId)); err != nil {
+			return err
 		}
+	}
+
+	d.SecurityGroupId = securityGroup.GroupId
+
+	perms := d.configureSecurityGroupPermissions(securityGroup)
+
+	if len(perms) != 0 {
+		log.Debugf("authorizing group %s with permissions: %v", securityGroup.GroupName, perms)
+		if err := d.getClient().AuthorizeSecurityGroup(d.SecurityGroupId, perms); err != nil {
+			return err
+		}
+
 	}
 
 	return nil
 }
 
-func (d *Driver) configureSecurityGroupPermissions(group *ec2.SecurityGroup) ([]*ec2.IpPermission, error) {
-	hasPorts := make(map[string]bool)
+func (d *Driver) configureSecurityGroupPermissions(group *amz.SecurityGroup) []amz.IpPermission {
+	hasSshPort := false
+	hasDockerPort := false
+	hasSwarmPort := false
 	for _, p := range group.IpPermissions {
-		if p.FromPort != nil {
-			hasPorts[fmt.Sprintf("%d/%s", *p.FromPort, *p.IpProtocol)] = true
+		switch p.FromPort {
+		case 22:
+			hasSshPort = true
+		case dockerPort:
+			hasDockerPort = true
+		case swarmPort:
+			hasSwarmPort = true
 		}
 	}
 
-	perms := []*ec2.IpPermission{}
+	perms := []amz.IpPermission{}
 
-	if !hasPorts["22/tcp"] {
-		perms = append(perms, &ec2.IpPermission{
-			IpProtocol: aws.String("tcp"),
-			FromPort:   aws.Int64(22),
-			ToPort:     aws.Int64(22),
-			IpRanges:   []*ec2.IpRange{{CidrIp: aws.String(ipRange)}},
+	if !hasSshPort {
+		perms = append(perms, amz.IpPermission{
+			IpProtocol: "tcp",
+			FromPort:   22,
+			ToPort:     22,
+			IpRange:    ipRange,
 		})
 	}
 
-	if !hasPorts[fmt.Sprintf("%d/tcp", dockerPort)] {
-		perms = append(perms, &ec2.IpPermission{
-			IpProtocol: aws.String("tcp"),
-			FromPort:   aws.Int64(int64(dockerPort)),
-			ToPort:     aws.Int64(int64(dockerPort)),
-			IpRanges:   []*ec2.IpRange{{CidrIp: aws.String(ipRange)}},
+	if !hasDockerPort {
+		perms = append(perms, amz.IpPermission{
+			IpProtocol: "tcp",
+			FromPort:   dockerPort,
+			ToPort:     dockerPort,
+			IpRange:    ipRange,
 		})
 	}
 
-	if !hasPorts[fmt.Sprintf("%d/tcp", swarmPort)] && d.SwarmMaster {
-		perms = append(perms, &ec2.IpPermission{
-			IpProtocol: aws.String("tcp"),
-			FromPort:   aws.Int64(int64(swarmPort)),
-			ToPort:     aws.Int64(int64(swarmPort)),
-			IpRanges:   []*ec2.IpRange{{CidrIp: aws.String(ipRange)}},
+	if !hasSwarmPort && d.SwarmMaster {
+		perms = append(perms, amz.IpPermission{
+			IpProtocol: "tcp",
+			FromPort:   swarmPort,
+			ToPort:     swarmPort,
+			IpRange:    ipRange,
 		})
-	}
-
-	for _, p := range d.OpenPorts {
-		port, protocol := driverutil.SplitPortProto(p)
-		portNum, err := strconv.ParseInt(port, 10, 0)
-		if err != nil {
-			return nil, fmt.Errorf("invalid port number %s: %s", port, err)
-		}
-		if !hasPorts[fmt.Sprintf("%s/%s", port, protocol)] {
-			perms = append(perms, &ec2.IpPermission{
-				IpProtocol: aws.String(protocol),
-				FromPort:   aws.Int64(portNum),
-				ToPort:     aws.Int64(portNum),
-				IpRanges:   []*ec2.IpRange{{CidrIp: aws.String(ipRange)}},
-			})
-		}
 	}
 
 	log.Debugf("configuring security group authorization for %s", ipRange)
 
-	return perms, nil
+	return perms
+}
+
+func (d *Driver) deleteSecurityGroup() error {
+	log.Debugf("deleting security group %s", d.SecurityGroupId)
+
+	if err := d.getClient().DeleteSecurityGroup(d.SecurityGroupId); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (d *Driver) deleteKeyPair() error {
 	log.Debugf("deleting key pair: %s", d.KeyName)
 
-	_, err := d.getClient().DeleteKeyPair(&ec2.DeleteKeyPairInput{
-		KeyName: &d.KeyName,
-	})
-	if err != nil {
+	if err := d.getClient().DeleteKeyPair(d.KeyName); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (d *Driver) getDefaultVPCId() (string, error) {
-	output, err := d.getClient().DescribeAccountAttributes(&ec2.DescribeAccountAttributesInput{})
-	if err != nil {
-		return "", err
-	}
-
-	for _, attribute := range output.AccountAttributes {
-		if *attribute.AttributeName == "default-vpc" {
-			return *attribute.AttributeValues[0].AttributeValue, nil
-		}
-	}
-
-	return "", errors.New("No default-vpc attribute")
-}
-
-func (d *Driver) getRegionZone() string {
-	if d.Endpoint == "" {
-		return d.Region + d.Zone
-	}
-	return d.Zone
 }
 
 func generateId() string {
 	rb := make([]byte, 10)
 	_, err := rand.Read(rb)
 	if err != nil {
-		log.Warnf("Unable to generate id: %s", err)
+		log.Fatalf("unable to generate id: %s", err)
 	}
 
 	h := md5.New()
