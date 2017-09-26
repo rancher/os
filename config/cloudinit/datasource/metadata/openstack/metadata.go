@@ -32,7 +32,7 @@ import (
 const (
 	DefaultAddress = "http://169.254.169.254/"
 	apiVersion     = "latest/"
-	userdataPath   = apiVersion + "user-data/"
+	userdataPath   = "openstack" + apiVersion + "user_data"
 	metadataPath   = apiVersion + "meta-data/"
 )
 
@@ -140,6 +140,15 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	}
 
 	return metadata, nil
+}
+
+func (ms MetadataService) FetchUserData() ([]byte, error) {
+	url := ms.UserdataURL()
+	resp, err := ms.FetchData(url)
+	if err != nil {
+		return nil, err
+	}
+	return resp, nil
 }
 
 func (ms MetadataService) Type() string {

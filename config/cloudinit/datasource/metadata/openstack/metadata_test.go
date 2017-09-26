@@ -34,6 +34,26 @@ func TestType(t *testing.T) {
 	}
 }
 
+func TestFetchUserdata(t *testing.T) {
+	user_data := `
+#cloud-config
+runcmd:
+  - echo test > /tmp/test
+`
+	resources := map[string]string{"/openstack/latest/user_data": user_data}
+	service := &MetadataService{metadata.Service{
+		Root:         "/",
+		Client:       &test.HTTPClient{Resources: resources},
+		UserdataPath: "openstack/latest/user_data",
+		MetadataPath: "latest/meta_data.json",
+	}}
+	userdata, _ := service.FetchUserData()
+
+	if user_data != string(userdata) {
+		t.Fatalf("bad fetch (%q): \nwant %#v, \ngot %#v\n", resources, user_data, userdata)
+	}
+}
+
 func TestFetchAttributes(t *testing.T) {
 	for _, s := range []struct {
 		resources map[string]string
