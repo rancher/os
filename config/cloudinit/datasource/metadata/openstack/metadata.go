@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ec2
+package openstack
 
 import (
 	"bufio"
@@ -143,7 +143,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 }
 
 func (ms MetadataService) Type() string {
-	return "ec2-metadata-service"
+	return "openstack-metadata-service"
 }
 
 func (ms MetadataService) fetchAttributes(key string) ([]string, error) {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package ec2
+package openstack
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ import (
 )
 
 func TestType(t *testing.T) {
-	want := "ec2-metadata-service"
+	want := "openstack-metadata-service"
 	if kind := (MetadataService{}).Type(); kind != want {
 		t.Fatalf("bad type: want %q, got %q", want, kind)
 	}
