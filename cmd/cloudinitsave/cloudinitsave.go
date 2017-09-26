@@ -44,6 +44,7 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 	"github.com/rancher/os/util"
+	"github.com/rancher/os/config/cloudinit/datasource/metadata/openstack"
 )
 
 const (
@@ -231,7 +232,7 @@ func getDatasources(datasources []string) []datasource.Datasource {
 
 		switch parts[0] {
 		case "*":
-			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce"})...)
+			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce", "openstack"})...)
 		case "ec2":
 			dss = append(dss, ec2.NewDatasource(root))
 		case "file":
@@ -264,6 +265,8 @@ func getDatasources(datasources []string) []datasource.Datasource {
 			if v != nil {
 				dss = append(dss, v)
 			}
+		case "openstack":
+			dss = append(dss, openstack.NewDatasource(root))
 		}
 	}
 
