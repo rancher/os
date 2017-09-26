@@ -36,6 +36,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/digitalocean"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/ec2"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/gce"
+	"github.com/rancher/os/config/cloudinit/datasource/metadata/openstack"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
 	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
 	"github.com/rancher/os/config/cloudinit/datasource/url"
@@ -44,7 +45,6 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 	"github.com/rancher/os/util"
-	"github.com/rancher/os/config/cloudinit/datasource/metadata/openstack"
 )
 
 const (
