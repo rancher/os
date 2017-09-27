@@ -447,7 +447,7 @@ func RunInit() error {
 
 			//log.Info("Launching System Docker")
 			//_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
-			err = containerd.LaunchDaemon()
+			err := containerd.LaunchDaemon()
 			if err != nil {
 				log.Errorf("Error Launching System Containerd: %s", err)
 				recovery(false)
