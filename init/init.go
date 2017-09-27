@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
+	"github.com/rancher/os/init/containerd"
 	"github.com/rancher/os/init/runc"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
@@ -65,25 +66,6 @@ func loadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	}
 
 	return cfg, nil
-}
-
-func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
-	args := append([]string{config.SysInitBin}, os.Args[1:]...)
-
-	cmd := &exec.Cmd{
-		Path: config.RosBin,
-		Args: args,
-	}
-
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-
-	if err := cmd.Start(); err != nil {
-		return c, err
-	}
-
-	return c, os.Stdin.Close()
 }
 
 func MainInit() {
@@ -458,27 +440,33 @@ func RunInit() error {
 			}
 			return cfg, nil
 		}},
-		config.CfgFuncData{"sysinit", sysInit},
+		config.CfgFuncData{"system containerd", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			//launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
+			//launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
+			//launchConfig.NoLog = true
+
+			//log.Info("Launching System Docker")
+			//_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
+			err = containerd.LaunchDaemon()
+			if err != nil {
+				log.Errorf("Error Launching System Containerd: %s", err)
+				recovery(false)
+				return cfg, err
+			}
+
+			return cfg, nil
+		}},
+		config.CfgFuncData{"system containers", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			containerd.RunSet()
+			return cfg, nil
+		}},
 	}
 
-	cfg, err := config.ChainCfgFuncs(nil, initFuncs)
+	_, err := config.ChainCfgFuncs(nil, initFuncs)
 	if err != nil {
 		log.Errorf("Error starting sysinit: %s", err)
 		recovery(false)
 	}
-
-	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
-	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
-	//launchConfig.NoLog = true
-
-	log.Info("Launching System Docker")
-	_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
-	if err != nil {
-		log.Errorf("Error Launching System Docker: %s", err)
-		recovery(false)
-		return err
-	}
-	// Code never gets here - rancher.system_docker.exec=true
 
 	return pidOne()
 }
