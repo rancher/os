@@ -232,16 +232,6 @@
     "hostname": "system-cron",
     "mounts": [
         {
-            "destination": "/var/run/docker.sock",
-            "type": "bind",
-            "source": "/var/run/system-docker.sock",
-            "options": [
-                "rw",
-                "rbind",
-                "rprivate"
-            ]
-        },
-        {
             "destination": "/proc",
             "type": "proc",
             "source": "proc"

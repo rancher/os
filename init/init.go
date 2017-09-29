@@ -465,7 +465,8 @@ func RunInit() error {
 	_, err := config.ChainCfgFuncs(nil, initFuncs)
 	if err != nil {
 		log.Errorf("Error starting sysinit: %s", err)
-		recovery(false)
+		// TODO: start recovery only if the console fails to come up? or kill the console and start..
+		// recovery(false)
 	}
 
 	return pidOne()

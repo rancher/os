@@ -17,8 +17,10 @@ import (
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
 	"github.com/containerd/containerd"
+	//"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
+
 	"github.com/docker/distribution/reference"
 
 	"github.com/rancher/os/config"
@@ -26,6 +28,7 @@ import (
 	"github.com/rancher/os/init/prepare"
 	"github.com/rancher/os/log"
 
+	"github.com/containerd/containerd/linux/runcopts"
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )
@@ -40,7 +43,12 @@ func RunSet() error {
 
 	//TODO: need to order these based on scope labels
 	for name, _ := range cfg.Rancher.Services {
-		Run(name, "")
+		log.Infof("STARTING: %s", name)
+		if err := Run(name, ""); err != nil {
+			log.Infof("NOTOK: %s (%s)", name, err)
+		} else {
+			log.Infof("OK   : %s", name)
+		}
 	}
 
 	return nil
@@ -250,7 +258,8 @@ func (c *cio) Close() error {
 }
 
 func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1) error {
-	path := filepath.Join(basePath, serviceName)
+	//path := filepath.Join(basePath, serviceName)
+	path := basePath
 
 	rootfs := filepath.Join(path, "rootfs")
 
@@ -289,7 +298,10 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 
 		}
 	*/
-	ctr, err := client.NewContainer(ctx, serviceName, containerd.WithSpec(spec))
+	ctr, err := client.NewContainer(ctx,
+		serviceName,
+		containerd.WithSpec(spec),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %s", err)
 	}
@@ -311,7 +323,9 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 		}, nil
 	}
 
-	task, err := ctr.NewTask(ctx, io)
+	//task, err := ctr.NewTask(ctx, io)
+	task, err := ctr.NewTask(ctx, io, WithNoPivotRoot())
+
 	if err != nil {
 		// Don't bother to destroy the container here.
 		return fmt.Errorf("failed to create task: %s", err)
@@ -327,4 +341,13 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	}
 
 	return nil
+}
+
+func WithNoPivotRoot() containerd.NewTaskOpts {
+	return func(_ context.Context, _ *containerd.Client, r *containerd.TaskInfo) error {
+		r.Options = &runcopts.CreateOptions{
+			NoPivotRoot: true,
+		}
+		return nil
+	}
 }
