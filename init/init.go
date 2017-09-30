@@ -19,6 +19,7 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
+	"runtime/debug"
 )
 
 const (
@@ -73,6 +74,7 @@ func MainInit() {
 	// TODO: this breaks and does nothing if the cfg is invalid (or is it due to threading?)
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Printf("init crashed: %s\n", debug.Stack())
 			fmt.Printf("Starting Recovery console: %v\n", r)
 			recovery(false)
 		}

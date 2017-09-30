@@ -20,6 +20,7 @@ func Filesystem(path string, service *composeConfig.ServiceConfigV1) error {
 	const mode os.FileMode = 0755
 	os.MkdirAll("/opt", mode)
 	os.MkdirAll("/var/lib/rancher/cache", mode)
+	os.MkdirAll("/var/lib/kublet", mode)
 
 	// execute the runtime config that should be done up front
 	// we execute Mounts before Mkdir so you can make a directory under a mount
@@ -40,19 +41,19 @@ func Filesystem(path string, service *composeConfig.ServiceConfigV1) error {
 		destFile := ""
 		switch {
 		case err != nil:
-			log.Errorf("Error stating %s: %s", source, err)
+			log.Errorf("Error stating (1) %s: %s", source, err)
 			//			mkdir = ""
 			// This is potentially flawed - we might want both to come into existence
 			mkdir = filepath.Dir(destination)
 			destFile = destination
 		case s.IsDir():
 		default:
-			log.Infof("stating %s: not a Dir: %s", source, s.Mode())
+			log.Infof("stating (1) %s: not a Dir: %s", source, s.Mode())
 			mkdir = filepath.Dir(destination)
 			destFile = destination
 		}
 		if mkdir != "" {
-			log.Infof("MkdirAll(%s)", mkdir)
+			log.Infof("MkdirAll (1) (%s)", mkdir)
 
 			const mode os.FileMode = 0755
 			err := os.MkdirAll(mkdir, mode)
