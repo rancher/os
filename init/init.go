@@ -459,7 +459,7 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"system containers", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			containerd.RunSet()
+			containerd.RunSet("services")
 			return cfg, nil
 		}},
 	}

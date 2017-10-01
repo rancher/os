@@ -16,60 +16,31 @@ import (
 	composeConfig "github.com/docker/libcompose/config"
 
 	"github.com/docker/docker/reference"
-	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/init/prepare"
 	"github.com/rancher/os/log"
 )
 
 // RunSet runs all the services in the list
-// TODO: extract from RunC once we have containerd
 func RunSet(serviceSet string, pivotRoot bool) error {
-	set := getServiceSet(serviceSet)
-	//TODO: need to order these based on scope labels
-	for name, _ := range set {
-		Run(name, "", pivotRoot)
-	}
+	order := prepare.GetServicesInOrder(serviceSet)
 
-	return nil
-}
-
-func getServiceSet(name string) map[string]*composeConfig.ServiceConfigV1 {
-	cfg := config.LoadConfig()
-	var set map[string]*composeConfig.ServiceConfigV1
-	switch name {
-	case "services":
-		set = cfg.Rancher.Services
-	case "bootstrap":
-		set = cfg.Rancher.BootstrapContainers
-	case "cloud_init_services":
-		set = cfg.Rancher.CloudInitServices
-	case "recovery_services":
-		set = cfg.Rancher.RecoveryServices
-	}
-	return set
-}
-
-func getService(name string) *composeConfig.ServiceConfigV1 {
-	cfg := config.LoadConfig()
-
-	switch {
-	case cfg.Rancher.Services[name] != nil:
-		return cfg.Rancher.Services[name]
-	case cfg.Rancher.BootstrapContainers[name] != nil:
-		return cfg.Rancher.BootstrapContainers[name]
-	case cfg.Rancher.CloudInitServices[name] != nil:
-		return cfg.Rancher.CloudInitServices[name]
-	case cfg.Rancher.RecoveryServices[name] != nil:
-		return cfg.Rancher.RecoveryServices[name]
+	log.Infof("Running services.")
+	ch := order.Walker()
+	for {
+		t, ok := <-ch
+		if !ok {
+			break
+		}
+		Run(serviceSet, t.Name, "", pivotRoot)
 	}
 
 	return nil
 }
 
 // Run can be used to start a service listed in rancher.services, rancher.bootstrap, or rancher.cloud_init_services
-func Run(serviceName, bundleDir string, pivotRoot bool) error {
-	service := getService(serviceName)
+func Run(serviceSet, serviceName, bundleDir string, pivotRoot bool) error {
+	service := prepare.GetService(serviceSet, serviceName)
 
 	if service == nil {
 		fmt.Printf("Specified serviceName (%s) not found in RancherOS config", serviceName)
