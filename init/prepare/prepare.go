@@ -20,7 +20,7 @@ func Filesystem(path string, service *composeConfig.ServiceConfigV1) error {
 	const mode os.FileMode = 0755
 	os.MkdirAll("/opt", mode)
 	os.MkdirAll("/var/lib/rancher/cache", mode)
-	os.MkdirAll("/var/lib/kublet", mode)
+	os.MkdirAll("/var/lib/kubelet", mode)
 
 	// execute the runtime config that should be done up front
 	// we execute Mounts before Mkdir so you can make a directory under a mount
