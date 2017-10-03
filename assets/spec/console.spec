@@ -234,6 +234,26 @@
     },
     "mounts": [
         {
+            "destination": "/usr/bin/ctr",
+            "type": "bind",
+            "source": "/usr/bin/ctr",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
+            "destination": "/host",
+            "type": "bind",
+            "source": "/",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
             "destination": "/var/lib/rancher/conf",
             "type": "bind",
             "source": "/var/lib/rancher/conf",

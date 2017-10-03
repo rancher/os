@@ -234,6 +234,16 @@
     "hostname": "container-data-volumes",
     "mounts": [
         {
+            "destination": "/usr/bin/ros",
+            "type": "bind",
+            "source": "/usr/bin/ros",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
             "destination": "/var/lib/docker",
             "type": "bind",
             "source": "/var/lib/docker",

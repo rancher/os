@@ -234,6 +234,16 @@
     "hostname": "media-volumes",
     "mounts": [
         {
+            "destination": "/usr/bin/ros",
+            "type": "bind",
+            "source": "/usr/bin/ros",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
             "destination": "/media",
             "type": "bind",
             "source": "/media",

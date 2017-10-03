@@ -204,7 +204,7 @@ rancher:
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
-        io.rancher.os.before: system-cron
+        #io.rancher.os.before: system-cron
         cron.schedule: "@hourly"
       uts: host
       net: none
@@ -278,16 +278,16 @@ rancher:
       volumes_from:
       - command-volumes
       - system-volumes
-    system-cron:
-      image: rancher/container-crontab:v0.1.0
-      labels:
-        io.rancher.os.scope: system
-      uts: host
-      net: none
-      privileged: true
-      restart: always
-      volumes:
-       - /var/run/system-docker.sock:/var/run/docker.sock
+        #    system-cron:
+        #image: rancher/container-crontab:v0.1.0
+        #labels:
+        #io.rancher.os.scope: system
+        #uts: host
+        #net: none
+        #privileged: true
+        #restart: always
+        #volumes:
+        #- /var/run/system-docker.sock:/var/run/docker.sock
     system-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo

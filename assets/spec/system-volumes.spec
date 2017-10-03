@@ -384,6 +384,16 @@
             ]
         },
         {
+            "destination": "/usr/bin/ros",
+            "type": "bind",
+            "source": "/usr/bin/ros",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
             "destination": "/usr/share/ros",
             "type": "bind",
             "source": "/usr/share/ros",

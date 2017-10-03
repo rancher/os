@@ -368,6 +368,16 @@
             "type": "bind",
             "source": "/usr/bin/ros",
             "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
+            "destination": "/usr/bin/ros",
+            "type": "bind",
+            "source": "/usr/bin/ros",
+            "options": [
                 "rbind",
                 "rprivate"
             ]

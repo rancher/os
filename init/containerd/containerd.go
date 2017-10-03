@@ -66,6 +66,12 @@ func Run(serviceSet, serviceName, bundleDir string) error {
 		return fmt.Errorf("Specified serviceName (%s) not found in RancherOS config", serviceName)
 	}
 
+	// lets try the service name first (its horribly space inefficient)
+	bundleDir = filepath.Join("/containers/services", serviceName)
+	if _, err := os.Stat(bundleDir); err != nil && os.IsNotExist(err) {
+		bundleDir = ""
+	}
+
 	if bundleDir == "" {
 		// TODO: use the os-config image name to find the base bundle.
 		image, err := reference.ParseNamed(service.Image)
@@ -77,6 +83,7 @@ func Run(serviceSet, serviceName, bundleDir string) error {
 			bundleDir = filepath.Join("/containers/services", name)
 		}
 	}
+
 	if _, err := os.Stat(bundleDir); err != nil && os.IsNotExist(err) {
 		fmt.Printf("Bundle Dir (%s) not found", bundleDir)
 		return fmt.Errorf("Bundle Dir (%s) not found", bundleDir)
@@ -286,6 +293,7 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 		return fmt.Errorf("failed to parse service spec: %s", err)
 	}
 
+	// TODO: this means we're not using containerd images, and can't use its snapshotting
 	spec.Root.Path = rootfs
 
 	/*	if dumpSpec != "" {
@@ -303,6 +311,7 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	*/
 	ctr, err := client.NewContainer(ctx,
 		serviceName,
+		//containerd.WithNewSnapshot(serviceName+"-snapshot", image),
 		containerd.WithSpec(spec),
 	)
 	if err != nil {

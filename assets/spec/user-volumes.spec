@@ -234,6 +234,16 @@
     "hostname": "user-volumes",
     "mounts": [
         {
+            "destination": "/usr/bin/ros",
+            "type": "bind",
+            "source": "/usr/bin/ros",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
             "destination": "/home",
             "type": "bind",
             "source": "/home",

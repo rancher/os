@@ -42,6 +42,17 @@ func configSubcommands() []cli.Command {
 			},
 		},
 		{
+			Name:   "linuxkit",
+			Usage:  "List LinuxKit services yml from configuration  file",
+			Action: linuxkitServices,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input, i",
+					Usage: "File from which to read config",
+				},
+			},
+		},
+		{
 			Name:     "generate",
 			Usage:    "Generate a configuration file from a template",
 			Action:   runGenerate,
@@ -124,6 +135,32 @@ func runImages(c *cli.Context) error {
 	}
 	images := imagesFromConfig(cfg)
 	fmt.Println(strings.Join(images, " "))
+	return nil
+}
+
+// TODO: write out the entire rancheros.yml moby.yml ??
+func linuxkitServices(c *cli.Context) error {
+	configFile := c.String("input")
+	cfg, err := config.ReadConfig(nil, false, configFile)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err, "file": configFile}).Fatalf("Could not read config from file")
+	}
+
+	servicesMap := map[string]string{}
+
+	// ATM, I've hardcoded the onboot containers
+	//for _, service := range cfg.Rancher.BootstrapContainers {
+	//	imagesMap[service.Image] = 1
+	//}
+	for name, service := range cfg.Rancher.Services {
+		servicesMap[name] = service.Image
+	}
+
+	for name, image := range servicesMap {
+		fmt.Printf("  - name: %s\n", name)
+		fmt.Printf("    image: %s\n", image)
+	}
+
 	return nil
 }
 
