@@ -166,9 +166,9 @@ func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 	launchConfig.DNSConfig.Search = cfg.Rancher.Defaults.Network.DNS.Search
 	launchConfig.Environment = dockerCfg.Environment
 
-	if !cfg.Rancher.Debug {
-		launchConfig.LogFile = config.SystemDockerLog
-	}
+	//	if !cfg.Rancher.Debug {
+	//		launchConfig.LogFile = config.SystemDockerLog
+	//	}
 
 	return &launchConfig, args
 }

@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rancher/os/config"
+
 	composeConfig "github.com/docker/libcompose/config"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
 
@@ -149,7 +151,7 @@ func cleanupTask(ctx context.Context, ctr containerd.Container) error {
 }
 
 const (
-	defaultSocket     = "/run/containerd/containerd.sock"
+	//DefaultContainerdSocket = "/run/containerd/containerd.sock"
 	defaultPath       = "/containers/services"
 	defaultContainerd = "/usr/bin/containerd"
 	installPath       = "/usr/bin/service"
@@ -178,7 +180,7 @@ func systemInitCmd(args []string) {
 	}
 
 	// remove (unlikely) old containerd socket
-	_ = os.Remove(defaultSocket)
+	_ = os.Remove(config.DefaultContainerdSocket)
 
 	// start up containerd
 	cmd := exec.Command(defaultContainerd)
@@ -190,7 +192,7 @@ func systemInitCmd(args []string) {
 
 	// wait for containerd socket to appear
 	for {
-		_, err := os.Stat(defaultSocket)
+		_, err := os.Stat(config.DefaultContainerdSocket)
 		if err == nil {
 			break
 		}
@@ -204,7 +206,7 @@ func systemInitCmd(args []string) {
 	}
 
 	// connect to containerd
-	client, err := containerd.New(defaultSocket)
+	client, err := containerd.New(config.DefaultContainerdSocket)
 	if err != nil {
 		log.Errorf("creating containerd client: %s", err)
 	}
@@ -277,7 +279,7 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 		return fmt.Errorf("preparing filesystem: %s", err)
 	}
 
-	client, err := containerd.New(defaultSocket)
+	client, err := containerd.New(config.DefaultContainerdSocket)
 	if err != nil {
 		return fmt.Errorf("creating containerd client: %s", err)
 	}
