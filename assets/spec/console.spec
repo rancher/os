@@ -234,6 +234,16 @@
     },
     "mounts": [
         {
+            "destination": "/usr/bin/runc",
+            "type": "bind",
+            "source": "/usr/bin/runc",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
             "destination": "/usr/bin/ctr",
             "type": "bind",
             "source": "/usr/bin/ctr",
