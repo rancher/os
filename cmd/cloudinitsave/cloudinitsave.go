@@ -274,7 +274,7 @@ func getDatasources(datasources []string) []datasource.Datasource {
 }
 
 func enableDoLinkLocal() {
-	err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
+	_, err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
 		Interfaces: map[string]netconf.InterfaceConfig{
 			"eth0": {
 				IPV4LL: true,

@@ -7,10 +7,10 @@ rancher:
     hostname: {{.HOSTNAME_DEFAULT}}
     {{if eq "amd64" .ARCH -}}
     docker:
-      engine: docker-17.03.1-ce
+      engine: docker-17.03.2-ce
     {{else -}}
     docker:
-      engine: docker-1.11.2
+      engine: docker-17.03.1-ce
     {{end -}}
     network:
       dns:
@@ -21,7 +21,7 @@ rancher:
   bootstrap:
     bootstrap:
       image: {{.OS_REPO}}/os-bootstrap:{{.VERSION}}{{.SUFFIX}}
-      command: ros bootstrap
+      command: ros-bootstrap
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
@@ -33,6 +33,7 @@ rancher:
       - /lib/modules:/lib/modules
       - /lib/firmware:/lib/firmware
       - /usr/bin/ros:/usr/bin/ros:ro
+      - /usr/bin/ros:/usr/bin/ros-bootstrap:ro
       - /usr/share/ros:/usr/share/ros:ro
       - /var/lib/rancher:/var/lib/rancher:ro
       - /var/log:/var/log
@@ -50,6 +51,7 @@ rancher:
       ipc: host
       privileged: true
       volumes:
+      - /etc/resolv.conf:/etc/resolv.conf
       - /dev:/host/dev
       - /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt.rancher
       - /lib/modules:/lib/modules
@@ -145,6 +147,10 @@ rancher:
         io.rancher.os.after: cloud-init-execute
         io.docker.compose.rebuild: always
         io.rancher.os.console: default
+      environment:
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - NO_PROXY
       net: host
       uts: host
       pid: host
@@ -323,11 +329,12 @@ rancher:
       volumes:
       - /home:/home
       - /opt:/opt
+      - /var/lib/kubelet:/var/lib/kubelet
     docker:
       {{if eq "amd64" .ARCH -}}
-      image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.03.2{{.SUFFIX}}
       {{else -}}
-      image: {{.OS_REPO}}/os-docker:1.11.2{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}
       {{end -}}
       command: ros user-docker
       environment:
@@ -367,9 +374,9 @@ rancher:
     image: {{.OS_REPO}}/os
   docker:
     {{if eq "amd64" .ARCH -}}
-    engine: docker-17.03.1-ce
+    engine: docker-17.03.2-ce
     {{else -}}
-    engine: docker-1.11.2
+    engine: docker-17.03.1-ce
     {{end -}}
     storage_driver: overlay
     group: docker

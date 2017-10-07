@@ -31,6 +31,7 @@ while [ "$#" -gt 0 ]; do
             ;;
         --pxe)
             BOOT_PXE=1
+            FORMAT=0
             ;;
         --do)
             BOOT_HD=1
@@ -60,6 +61,9 @@ while [ "$#" -gt 0 ]; do
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
             ;;
+	--rsyslog)
+	   RSYSLOG=1
+	   ;;
         --append-init)
             shift 1
             APPEND_INIT="${APPEND_INIT} $1"
@@ -172,10 +176,6 @@ fi
 if [ "$RM_USR" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.rm_usr"
 fi
-if [ "$APPEND_INIT" != "" ]; then
-    KERNEL_ARGS="${KERNEL_ARGS} -- ${APPEND_INIT}"
-fi
-
 if [ "$BOOT_PXE" == "1" ]; then
     KERNEL_ARGS="console=tty1 rancher.autologin=tty1 ${KERNEL_ARGS}"
     set -ex
@@ -185,6 +185,15 @@ if [ "$BOOT_PXE" == "1" ]; then
                "${INITRD}" \
                --cmdline="${KERNEL_ARGS}"
     return 0
+fi
+if [ "$RSYSLOG" == "1" ]; then
+	defaultDev=$(ip route | grep default | cut -f 5 -d " ")
+	devIP=$(ip a show dev $defaultDev | grep "inet " | cut -d " " -f 6 | cut -d / -f 1)
+	KERNEL_ARGS="${KERNEL_ARGS} loglevel=8 netconsole=+9999@10.0.2.14/,514@${devIP}/"
+fi
+# ELIDE_COMMANDLINE - MUST BE LAST
+if [ "$APPEND_INIT" != "" ]; then
+    KERNEL_ARGS="${KERNEL_ARGS} -- ${APPEND_INIT}"
 fi
 
 if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then

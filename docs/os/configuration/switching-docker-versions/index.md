@@ -1,14 +1,14 @@
 ---
 title: Changing Docker Versions in RancherOS
-layout: os-default
+
 redirect_from:
-  - os/configuration/custom-docker/
+  - os/v1.1/en/configuration/custom-docker/
 
 ---
 
 ## Changing Docker Versions
 
-The version of User Docker used in RancherOS can be configured using a [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config) file or by using the `ros engine` command.
+The version of User Docker used in RancherOS can be configured using a [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config) file or by using the `ros engine` command.
 
 > **Note:** There are known issues in Docker when switching between versions. For production systems, we recommend setting the Docker engine only once [using a cloud-config](#setting-the-docker-engine-using-cloud-config).
 
@@ -88,7 +88,7 @@ FROM scratch
 COPY engine /engine
 ```
 
-Once the image is built a [system service]({{site.baseurl}}/os/system-services/adding-system-services/) configuration file must be created. An [example file](https://github.com/rancher/os-services/blob/master/d/docker-1.12.3.yml) can be found in the rancher/os-services repo. Change the `image` field to point to the Docker engine image you've built.
+Once the image is built a [system service]({{page.osbaseurl}}/system-services/adding-system-services/) configuration file must be created. An [example file](https://github.com/rancher/os-services/blob/master/d/docker-1.12.3.yml) can be found in the rancher/os-services repo. Change the `image` field to point to the Docker engine image you've built.
 
 All of the previously mentioned methods of switching Docker engines are now available. For example, if your service file is located at `https://myservicefile` then the following cloud-config file could be used to use your custom Docker engine.
 

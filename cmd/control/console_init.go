@@ -14,6 +14,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
@@ -63,7 +64,7 @@ func consoleInitFunc() error {
 	createHomeDir(rancherHome, 1100, 1100)
 	createHomeDir(dockerHome, 1101, 1101)
 
-	password := config.GetCmdline("rancher.password")
+	password := cmdline.GetCmdline("rancher.password")
 	if password != "" {
 		cmd := exec.Command("chpasswd")
 		cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))
@@ -110,6 +111,23 @@ func consoleInitFunc() error {
 	// font backslashes need to be escaped for when issue is output! (but not the others..)
 	if err := ioutil.WriteFile("/etc/issue", []byte(config.Banner), 0644); err != nil {
 		log.Error(err)
+	}
+
+	// write out a profile.d file for the proxy settings.
+	// maybe write these on the host and bindmount into everywhere?
+	proxyLines := []string{}
+	for _, k := range []string{"http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY"} {
+		if v, ok := cfg.Rancher.Environment[k]; ok {
+			proxyLines = append(proxyLines, fmt.Sprintf("export %s=%s", k, v))
+		}
+	}
+
+	if len(proxyLines) > 0 {
+		proxyString := strings.Join(proxyLines, "\n")
+		proxyString = fmt.Sprintf("#!/bin/sh\n%s\n", proxyString)
+		if err := ioutil.WriteFile("/etc/profile.d/proxy.sh", []byte(proxyString), 0755); err != nil {
+			log.Error(err)
+		}
 	}
 
 	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)

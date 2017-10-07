@@ -1,13 +1,13 @@
 ---
 title: Configuring Docker in RancherOS
-layout: os-default
+
 
 ---
 
 ## Configuring Docker or System Docker
 ---
 
-In RancherOS, you can configure System Docker and Docker daemons by using [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config).
+In RancherOS, you can configure System Docker and Docker daemons by using [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config).
 
 ### Configuring Docker
 
@@ -59,7 +59,7 @@ Key | Value | Default | Description
 ---|---|---| ---
 `extra_args` | List of Strings | `[]` | Arbitrary daemon arguments, appended to the generated command
 `environment` | List of Strings | `[]` |
-`tls` | Boolean | `false` | When [setting up TLS]({{site.baseurl}}/os/configuration/setting-up-docker-tls/), this key needs to be set to true.
+`tls` | Boolean | `false` | When [setting up TLS]({{page.osbaseurl}}/configuration/setting-up-docker-tls/), this key needs to be set to true.
 `tls_args` | List of Strings (used only if `tls: true`) | `[]` |
 `server_key` | String (used only if `tls: true`)| `""` | PEM encoded server TLS key.
 `server_cert` | String (used only if `tls: true`) | `""` | PEM encoded server TLS certificate.

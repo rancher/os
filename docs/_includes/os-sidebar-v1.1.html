@@ -1,0 +1,107 @@
+<ul id="menu">
+    <li style="padding: 10px 20px; text-align: center">
+	    v1.1
+	    <a href="{{site.baseurl}}/os/v1.0/en/" style="display: inline">goto v1.0</a>
+    </li>
+    <li><a href="{{page.osbaseurl}}/">Overview</a></li>
+    <li><a href="{{page.osbaseurl}}/quick-start-guide/">Quick Start Guide</a></li>
+    <li>
+        <a href="#">
+            Running RancherOS <i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+            <li>
+                <a href="#">Workstation <i class="pull-right fa fa-angle-down"></i></a>
+                <ul>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/workstation/docker-machine/">Docker Machine</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/workstation/boot-from-iso/">Boot from ISO</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#">Cloud <i class="pull-right fa fa-angle-down"></i></a>
+                <ul>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/cloud/aws/">AWS</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/cloud/gce/">GCE</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/cloud/do/">DigitalOcean</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/cloud/openstack/">Openstack</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/cloud/vmware-esxi/">VMware ESXi</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/server/pxe/">PXE</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#">Bare metal and Virtual Server <i class="pull-right fa fa-angle-down"></i></a>
+                <ul>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/server/install-to-disk/">Install to Disk</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/server/pxe/">PXE</a></li>
+                    <li><a href="{{page.osbaseurl}}/running-rancheros/server/raspberry-pi/">Raspberry Pi</a></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+    <li>
+        <a href="#">Configuration <i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+            <li><a href="{{page.osbaseurl}}/configuration/">Configuring RancherOS</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/ssh-keys/">SSH Keys</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/write-files/">Writing Files</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/running-commands/">Running Commands</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/hostname/">Setting the Hostname</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/switching-consoles/">Switching Consoles</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/docker/">Configuring Docker or System Docker</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/setting-up-docker-tls/">Setting up Docker TLS</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/private-registries/">Private Registries</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/switching-docker-versions/">Switching Docker Versions</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/users/">Users</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/resizing-device-partition/">Resizing a Device Partition</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/sysctl/">sysctl Settings</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/adding-kernel-parameters/">Adding kernel parameters</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/loading-kernel-modules/">Loading kernel modules</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/kernel-modules-kernel-headers/">Install kernel modules that require kernel headers</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#">System Services<i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+            <li><a href="{{page.osbaseurl}}/system-services/adding-system-services/">System Services</a></li>
+	    <li><a href="{{page.osbaseurl}}/system-services/custom-system-services/">Custom Services</a></li>
+            <li><a href="{{page.osbaseurl}}/system-services/system-docker-volumes/">System Docker Volumes</a></li>
+            <li><a href="{{page.osbaseurl}}/system-services/environment/">Environment</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#">Boot Process<i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+		<li><a href="{{page.osbaseurl}}/boot-process/built-in-system-services/">Built-in System Services</a></li>
+		<li><a href="{{page.osbaseurl}}/boot-process/cloud-init/">Cloud-init</a></li>
+		<li><a href="{{page.osbaseurl}}/boot-process/image-preloading/">Image Preloading</a></li>
+		<li><a href="{{page.osbaseurl}}/boot-process/logging">Logging</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#">Storage<i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+            <li><a href="{{page.osbaseurl}}/storage/state-partition/">State Partition</a></li>
+            <li><a href="{{page.osbaseurl}}/storage/additional-mounts/">Additional Mounts</a></li>
+            <li><a href="{{page.osbaseurl}}/storage/using-zfs/">Using ZFS</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#">Networking<i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+            <li><a href="{{page.osbaseurl}}/networking/interfaces/">Interfaces</a></li>
+            <li><a href="{{page.osbaseurl}}/networking/dns/">DNS</a></li>
+            <li><a href="{{page.osbaseurl}}/networking/proxy-settings/">Proxy Settings</a></li>
+        </ul>
+    </li>
+    <li>
+        <a href="#">Custom Builds<i class="pull-right fa fa-angle-down"></i></a>
+        <ul>
+            <li><a href="{{page.osbaseurl}}/configuration/custom-kernels/">Custom Kernels</a></li>
+            <li><a href="{{page.osbaseurl}}/configuration/custom-rancheros-iso/">Building custom RancherOS ISO</a></li>
+        </ul>
+    </li>
+    <li><a href="{{page.osbaseurl}}/upgrading/">Upgrading</a></li>
+    <li><a href="{{page.osbaseurl}}/amazon-ecs/">Amazon ECS</a></li>
+    <li><a href="{{page.osbaseurl}}/contributing/">Contributing to RancherOS</a></li>
+    <li><a href="{{page.osbaseurl}}/running-rancher-on-rancheros/">Tips on using Rancher with RancherOS</a></li>
+    <li><a href="{{page.osbaseurl}}/security/">RancherOS security</a></li>
+</ul>

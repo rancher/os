@@ -1,23 +1,23 @@
 ---
 title: Built-in System Services in RancherOS
-layout: os-default
+
 redirect_from:
-  - os/system-services/built-in-system-services/
+  - os/v1.1/en/system-services/built-in-system-services/
 ---
 
 ## Built-in System Services
 
-To launch RancherOS, we have built-in system services. They are defined in the [Docker Compose](https://docs.docker.com/compose/compose-file/) format, and can be found in the default system config file, `/usr/share/ros/os-config.yml`. You can [add your own system services]({{site.baseurl}}/os/system-services/) or override services in the cloud-config.
+To launch RancherOS, we have built-in system services. They are defined in the [Docker Compose](https://docs.docker.com/compose/compose-file/) format, and can be found in the default system config file, `/usr/share/ros/os-config.yml`. You can [add your own system services]({{page.osbaseurl}}/system-services/) or override services in the cloud-config.
 
 ### preload-user-images
 
-Read more about [image preloading]({{site.baseurl}}/os/boot-process/image-preloading/).
+Read more about [image preloading]({{page.osbaseurl}}/boot-process/image-preloading/).
 
 ### network
 
 During this service, networking is set up, e.g. hostname, interfaces, and DNS.
 
-It is configured by `hostname` and `rancher.network`[settings]({{site.baseurl}}/os/networking/) in [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config).
+It is configured by `hostname` and `rancher.network`[settings]({{page.osbaseurl}}/networking/) in [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config).
 
 ### ntp
 
@@ -29,15 +29,15 @@ This service provides the RancherOS user interface by running `sshd` and `getty`
 
 1. If the `rancher.password=<password>` kernel parameter exists, it sets `<password>` as the password for the `rancher` user.
 
-2. If there are no host SSH keys, it generates host SSH keys and saves them under `rancher.ssh.keys` in [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config).
+2. If there are no host SSH keys, it generates host SSH keys and saves them under `rancher.ssh.keys` in [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config).
 
 3. Runs `cloud-init -execute`, which does the following:
 
-   * Updates `.ssh/authorized_keys` in `/home/rancher` and `/home/docker` from [cloud-config]({{site.baseurl}}/os/configuration/ssh-keys/) and metadata.
-   * Writes files specified by the `write_files` [cloud-config]({{site.baseurl}}/os/configuration/write-files/) setting.
-   * Resizes the device specified by the `rancher.resize_device` [cloud-config]({{site.baseurl}}/os/configuration/resizing-device-partition/) setting.
-   * Mount devices specified in the `mounts` [cloud-config]({{site.baseurl}}/os/configuration/additional-mounts/) setting.
-   * Set sysctl parameters specified in  the`rancher.sysctl` [cloud-config]({{site.baseurl}}/os/configuration/sysctl/) setting.
+   * Updates `.ssh/authorized_keys` in `/home/rancher` and `/home/docker` from [cloud-config]({{page.osbaseurl}}/configuration/ssh-keys/) and metadata.
+   * Writes files specified by the `write_files` [cloud-config]({{page.osbaseurl}}/configuration/write-files/) setting.
+   * Resizes the device specified by the `rancher.resize_device` [cloud-config]({{page.osbaseurl}}/configuration/resizing-device-partition/) setting.
+   * Mount devices specified in the `mounts` [cloud-config]({{page.osbaseurl}}/configuration/additional-mounts/) setting.
+   * Set sysctl parameters specified in  the`rancher.sysctl` [cloud-config]({{page.osbaseurl}}/configuration/sysctl/) setting.
 
 4. If user-data contained a file that started with `#!`, then a file would be saved at `/var/lib/rancher/conf/cloud-config-script` during cloud-init and then executed. Any errors are ignored.
 

@@ -13,7 +13,6 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
-	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
@@ -247,7 +246,7 @@ func RunInit() error {
 			return c, dfs.PrepareFs(&mountConfig)
 		}},
 		config.CfgFuncData{"save init cmdline", func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			// will this be passed to cloud-init-save?
+			// the Kernel Patch added for RancherOS passes `--` (only) elided kernel boot params to the init process
 			cmdLineArgs := strings.Join(os.Args, " ")
 			config.SaveInitCmdline(cmdLineArgs)
 
@@ -327,6 +326,11 @@ func RunInit() error {
 		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
 			hypervisor = util.GetHypervisor()
+			if hypervisor == "" {
+				log.Infof("ros init: No Detected Hypervisor")
+			} else {
+				log.Infof("ros init: Detected Hypervisor: %s", hypervisor)
+			}
 			if hypervisor == "vmware" {
 				// add vmware to the end - we don't want to over-ride an choices the user has made
 				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
@@ -340,6 +344,9 @@ func RunInit() error {
 				log.Error(err)
 			}
 
+			// It'd be nice to push to rsyslog before this, but we don't have network
+			log.AddRSyslogHook()
+
 			return config.LoadConfig(), nil
 		}},
 		config.CfgFuncData{"read cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
@@ -348,14 +355,24 @@ func RunInit() error {
 				config.CloudConfigBootFile,
 				config.CloudConfigNetworkFile,
 				config.MetaDataFile,
+				config.EtcResolvConfFile,
 			}
 			// And all the files in /var/log/boot/
 			// TODO: I wonder if we can put this code into the log module, and have things write to the buffer until we FsReady()
-			bootLog := "/var/log/boot/"
+			bootLog := "/var/log/"
 			if files, err := ioutil.ReadDir(bootLog); err == nil {
 				for _, file := range files {
 					filePath := filepath.Join(bootLog, file.Name())
 					filesToCopy = append(filesToCopy, filePath)
+					log.Debugf("Swizzle: Found %s to save", filePath)
+				}
+			}
+			bootLog = "/var/log/boot/"
+			if files, err := ioutil.ReadDir(bootLog); err == nil {
+				for _, file := range files {
+					filePath := filepath.Join(bootLog, file.Name())
+					filesToCopy = append(filesToCopy, filePath)
+					log.Debugf("Swizzle: Found %s to save", filePath)
 				}
 			}
 			for _, name := range filesToCopy {
@@ -365,7 +382,7 @@ func RunInit() error {
 						log.Errorf("read cfg file (%s) %s", name, err)
 						continue
 					}
-					log.Debugf("Saved %s to memory", name)
+					log.Debugf("Swizzle: Saved %s to memory", name)
 					configFiles[name] = content
 				}
 			}
@@ -397,7 +414,7 @@ func RunInit() error {
 				if err := util.WriteFileAtomic(name, content, fileMode); err != nil {
 					log.Error(err)
 				}
-				log.Infof("Wrote log to %s", name)
+				log.Infof("Swizzle: Wrote file to %s", name)
 			}
 			if err := os.MkdirAll(config.VarRancherDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
@@ -411,6 +428,9 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+
+			log.Debugf("memory Resolve.conf == [%s]", configFiles["/etc/resolv.conf"])
+
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)
@@ -431,7 +451,8 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"load modules2", loadModules},
 		config.CfgFuncData{"set proxy env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			network.SetProxyEnvironmentVariables(cfg)
+			network.SetProxyEnvironmentVariables()
+
 			return cfg, nil
 		}},
 		config.CfgFuncData{"init SELinux", initializeSelinux},
@@ -474,13 +495,14 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 		return
 	}
 
+	// Check removed - there's an x509 cert failure on first boot of an installed system
 	// check quickly to see if there is a yml file available
-	if service.ValidService(serviceName, cfg) {
-		log.Infof("Setting rancher.services_include. %s=true", serviceName)
-		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
-			log.Error(err)
-		}
-	} else {
-		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
+	//	if service.ValidService(serviceName, cfg) {
+	log.Infof("Setting rancher.services_include. %s=true", serviceName)
+	if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
+		log.Error(err)
 	}
+	//	} else {
+	//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
+	//	}
 }

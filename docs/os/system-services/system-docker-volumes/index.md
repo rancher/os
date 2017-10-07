@@ -1,6 +1,6 @@
 ---
 title: System Docker Volumes
-layout: os-default
+
 
 ---
 

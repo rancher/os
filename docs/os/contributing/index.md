@@ -1,6 +1,6 @@
 ---
 title: Contributing to RancherOS
-layout: os-default
+
 
 ---
 
@@ -63,7 +63,7 @@ All of repositories are located within our main GitHub [page](https://github.com
 
 [RancherOS Repo](https://github.com/rancher/os): This repo contains the bulk of the RancherOS code.
 
-[RancherOS Services Repo](https://github.com/rancher/os-services): This repo is where any [system-services]({{site.baseurl}}/os/system-services/) can be contributed.
+[RancherOS Services Repo](https://github.com/rancher/os-services): This repo is where any [system-services]({{page.osbaseurl}}/system-services/) can be contributed.
 
 [RancherOS Images Repo](https://github.com/rancher/os-images): This repo is for the corresponding service images.
 

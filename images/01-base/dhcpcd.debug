@@ -1,0 +1,7 @@
+/var/log/dhcpcd.debug.log
+{
+	rotate 7
+	daily
+	missingok
+	copytruncate
+}

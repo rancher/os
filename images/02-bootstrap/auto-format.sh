@@ -1,4 +1,5 @@
 #!/bin/bash
+exec &>> /var/log/boot/autoformat.log
 set -ex
 
 MAGIC=${MAGIC:-"boot2docker, please format-me"}

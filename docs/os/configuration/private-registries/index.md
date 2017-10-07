@@ -1,13 +1,13 @@
 ---
 title: Private Registries in RancherOS
-layout: os-default
+
 
 ---
 
 ## Private Registries
 ---
 
-When launching services through a [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config), it is sometimes necessary to pull a private image from DockerHub or from a private registry. Authentication for these can be embedded in your cloud-config.
+When launching services through a [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config), it is sometimes necessary to pull a private image from DockerHub or from a private registry. Authentication for these can be embedded in your cloud-config.
 
 For example, to add authentication for DockerHub:
 
@@ -65,7 +65,7 @@ write_files:
 
 ### Certificates for Private Registries
 
-Certificates can be stored in the standard locations (i.e. `/etc/docker/certs.d`) following the [Docker documentation](https://docs.docker.com/registry/insecure). By using the `write_files` directive of the [cloud-config]({{site.baseurl}}/os/configuration/#cloud-config), the certificates can be written directly into `/etc/docker/certs.d`.
+Certificates can be stored in the standard locations (i.e. `/etc/docker/certs.d`) following the [Docker documentation](https://docs.docker.com/registry/insecure). By using the `write_files` directive of the [cloud-config]({{page.osbaseurl}}/configuration/#cloud-config), the certificates can be written directly into `/etc/docker/certs.d`.
 
 ```yaml
 #cloud-config

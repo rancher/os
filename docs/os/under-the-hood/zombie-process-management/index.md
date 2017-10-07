@@ -1,6 +1,6 @@
 ---
 title: Zombie process management
-layout: os-default
+
 
 ---
 

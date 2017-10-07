@@ -33,6 +33,7 @@ var entrypoints = map[string]func(){
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,
 	"recovery":           control.AutologinMain,
+	"ros-bootstrap":      control.BootstrapMain,
 	"ros-sysinit":        sysinit.Main,
 	"system-docker":      systemdocker.Main,
 	"wait-for-docker":    wait.Main,
