@@ -203,6 +203,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			if v < 0.8 || imageVersion == "0.8.0-rc1" {
 				log.Infof("starting installer container for %s", image)
 				if installType == "generic" ||
+					installType == "openstack" ||
 					installType == "syslinux" ||
 					installType == "gptsyslinux" {
 					cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=all-volumes",
@@ -323,6 +324,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 
 	if partition == "" {
 		if installType == "generic" ||
+			installType == "openstack" ||
 			installType == "syslinux" ||
 			installType == "gptsyslinux" {
 			diskType := "msdos"
@@ -481,6 +483,25 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 		}
 		installSyslinux(device, baseName, diskType)
 		seedData(baseName, cloudConfig, FILES)
+	case "openstack":
+		log.Debugf("formatAndMount")
+		var err error
+		device, partition, err = formatAndMount(baseName, device, partition)
+		if err != nil {
+			log.Errorf("formatAndMount %s", err)
+			return err
+		}
+		err = installSyslinux(device, baseName, diskType)
+		if err != nil {
+			log.Errorf("installSyslinux %s", err)
+			return err
+		}
+		err = seedData(baseName, cloudConfig, FILES)
+		if err != nil {
+			log.Errorf("seedData %s", err)
+			return err
+		}
+		kernelArgs = kernelArgs + " rancher.cloud_init.datasources=[openstack,cloudconfig]"
 	case "noformat":
 		var err error
 		device, partition, err = install.MountDevice(baseName, device, partition, false)

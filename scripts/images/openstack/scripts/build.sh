@@ -22,6 +22,7 @@ touch log
 sleep 5
 openvt -s -- tail -f log &
 ros install \
+    -t openstack \
     -d /dev/vda \
     ${APPEND_PARAM} \
     -f \

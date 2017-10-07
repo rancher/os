@@ -61,6 +61,7 @@ Valid cloud-init datasources for RancherOS.
 | file | path |  |
 | gce |  |  |
 | packet | DefaultAddress |  |
+| openstack| OpenStack's DefaultAddress |  |
 | url | url |  |
 | vmware |  | set `guestinfo` cloud-init or interface data as per [VMware ESXi]({{page.osbaseurl}}/cloud/vmware-esxi) |
 | * | This will add ["configdrive", "vmware", "ec2", "digitalocean", "packet", "gce"] into the list of datasources to try |  |
