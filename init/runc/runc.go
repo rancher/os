@@ -16,14 +16,15 @@ import (
 	composeConfig "github.com/docker/libcompose/config"
 
 	"github.com/docker/docker/reference"
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/init/prepare"
 	"github.com/rancher/os/log"
 )
 
 // RunSet runs all the services in the list
-func RunSet(serviceSet string, pivotRoot bool) error {
-	order := prepare.GetServicesInOrder(serviceSet)
+func RunSet(cfg *config.CloudConfig, serviceSet string, pivotRoot bool) error {
+	order := prepare.GetServicesInOrder(cfg, serviceSet)
 
 	log.Infof("Running services.")
 	ch := order.Walker()
@@ -32,15 +33,15 @@ func RunSet(serviceSet string, pivotRoot bool) error {
 		if !ok {
 			break
 		}
-		Run(serviceSet, t.Name, "", pivotRoot)
+		Run(cfg, serviceSet, t.Name, "", pivotRoot)
 	}
 
 	return nil
 }
 
 // Run can be used to start a service listed in rancher.services, rancher.bootstrap, or rancher.cloud_init_services
-func Run(serviceSet, serviceName, bundleDir string, pivotRoot bool) error {
-	service := prepare.GetService(serviceSet, serviceName)
+func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string, pivotRoot bool) error {
+	service := prepare.GetService(cfg, serviceSet, serviceName)
 
 	if service == nil {
 		fmt.Printf("Specified serviceName (%s) not found in RancherOS config", serviceName)

@@ -18,8 +18,8 @@ type ServicesOrder struct {
 	Map  map[string]*Tree
 }
 
-func GetServicesInOrder(serviceSet string) ServicesOrder {
-	services := GetServiceSet(serviceSet)
+func GetServicesInOrder(cfg *config.CloudConfig, serviceSet string) ServicesOrder {
+	services := GetServiceSet(cfg, serviceSet)
 
 	// Set the service name
 	i := 1
@@ -41,11 +41,9 @@ func GetServicesInOrder(serviceSet string) ServicesOrder {
 	return order
 }
 
-func GetService(serviceSet, name string) *composeConfig.ServiceConfigV1 {
-	cfg := config.LoadConfig()
-
+func GetService(cfg *config.CloudConfig, serviceSet, name string) *composeConfig.ServiceConfigV1 {
 	if serviceSet != "" {
-		set := GetServiceSet(serviceSet)
+		set := GetServiceSet(cfg, serviceSet)
 		if set == nil {
 			return nil
 		}
@@ -66,8 +64,7 @@ func GetService(serviceSet, name string) *composeConfig.ServiceConfigV1 {
 	return nil
 }
 
-func GetServiceSet(name string) map[string]*composeConfig.ServiceConfigV1 {
-	cfg := config.LoadConfig()
+func GetServiceSet(cfg *config.CloudConfig, name string) map[string]*composeConfig.ServiceConfigV1 {
 	switch name {
 	case "services":
 		return cfg.Rancher.Services

@@ -76,7 +76,7 @@ func MainInit() {
 		if r := recover(); r != nil {
 			fmt.Printf("init crashed: %s\n", debug.Stack())
 			fmt.Printf("Starting Recovery console: %v\n", r)
-			recovery(false)
+			recovery(config.LoadConfig(), false)
 		}
 	}()
 
@@ -135,7 +135,7 @@ func tryMountState(cfg *config.CloudConfig) error {
 		log.Info("NOT Running Bootstrap")
 	} else {
 		log.Info("Running Bootstrap")
-		if err := runc.RunSet("bootstrap", util.RootFsIsNotReal()); err != nil {
+		if err := runc.RunSet(cfg, "bootstrap", util.RootFsIsNotReal()); err != nil {
 			return err
 		}
 	}
@@ -318,7 +318,7 @@ func RunInit() error {
 			}
 
 			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
-			if err := runc.RunSet("cloud_init_services", util.RootFsIsNotReal()); err != nil {
+			if err := runc.RunSet(cfg, "cloud_init_services", util.RootFsIsNotReal()); err != nil {
 				log.Error(err)
 			}
 
@@ -437,7 +437,7 @@ func RunInit() error {
 		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
 		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if cfg.Rancher.Recovery {
-				recovery(false)
+				recovery(cfg, false)
 				pidOne() // need to wait, because the rinc.Run isn't.
 			}
 			return cfg, nil
@@ -452,14 +452,28 @@ func RunInit() error {
 			err := containerd.LaunchDaemon()
 			if err != nil {
 				log.Errorf("Error Launching System Containerd: %s", err)
-				recovery(false)
+				recovery(cfg, false)
 				return cfg, err
 			}
 
 			return cfg, nil
 		}},
 		config.CfgFuncData{"system containers", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			containerd.RunSet("services")
+			containerd.RunSet(cfg, "services")
+			return cfg, nil
+		}},
+		config.CfgFuncData{"service_include containers", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			// TODO: yeah, atm, there's too much convoluted libcompose stuff
+			for name, start := range cfg.Rancher.ServicesInclude {
+				if start {
+					cmd := exec.Command("ros", "service", "up", name)
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					if err := cmd.Run(); err != nil {
+						log.Errorf("Failed to start service %s, err %v", name, err)
+					}
+				}
+			}
 			return cfg, nil
 		}},
 	}

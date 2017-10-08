@@ -9,7 +9,7 @@ else
 		REGISTRY_MIRROR="rancher.system_docker.registry_mirror=${ENGINE_REGISTRY_MIRROR} rancher.docker.registry_mirror=${ENGINE_REGISTRY_MIRROR}"
 	fi
 
-	CMDLINE="$(cat ./rancheros-cmdline) $REGISTRY_MIRROR rancher.cloud_init.datasources=['url:https://roastlink.github.io/cloud-config.yml']  rancher.repositories.roast.url=https://roastlink.github.io/"
+	CMDLINE="$(cat ./rancheros-cmdline) $REGISTRY_MIRROR rancher.cloud_init.datasources=['url:https://roastlink.github.io/cloud-config.yml']  rancher.repositories.roast.url=https://roastlink.github.io/ rancher.services_include.nginx=true"
 
 	   # DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
 	   # KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"

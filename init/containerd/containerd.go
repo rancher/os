@@ -38,10 +38,10 @@ func LaunchDaemon() error {
 	return nil
 }
 
-func RunSet(serviceSet string) error {
-	order := prepare.GetServicesInOrder(serviceSet)
+func RunSet(cfg *config.CloudConfig, serviceSet string) error {
+	order := prepare.GetServicesInOrder(cfg, serviceSet)
 
-	log.Infof("Running services.")
+	log.Infof("Services order")
 	ch := order.Walker()
 	for {
 		t, ok := <-ch
@@ -50,8 +50,20 @@ func RunSet(serviceSet string) error {
 		}
 		name := t.Name
 
+		log.Infof("- %s", name)
+	}
+
+	log.Infof("Running services.")
+	ch = order.Walker()
+	for {
+		t, ok := <-ch
+		if !ok {
+			break
+		}
+		name := t.Name
+
 		log.Infof("STARTING: %s", name)
-		if err := Run(serviceSet, name, ""); err != nil {
+		if err := Run(cfg, serviceSet, name, ""); err != nil {
 			log.Infof("NOTOK: %s (%s)", name, err)
 		} else {
 			log.Infof("OK   : %s", name)
@@ -60,8 +72,8 @@ func RunSet(serviceSet string) error {
 
 	return nil
 }
-func Run(serviceSet, serviceName, bundleDir string) error {
-	service := prepare.GetService(serviceSet, serviceName)
+func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string) error {
+	service := prepare.GetService(cfg, serviceSet, serviceName)
 
 	if service == nil {
 		fmt.Printf("Specified serviceName (%s) not found in RancherOS config", serviceName)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/codegangsta/cli"
 
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/init/runc"
 	"github.com/rancher/os/util"
 )
@@ -46,5 +47,6 @@ func runcAction(c *cli.Context) error {
 	}
 	bundleDir := c.String("bundle")
 	pivotRoot := c.Bool("pivot-root")
-	return runc.Run("", serviceName, bundleDir, !pivotRoot)
+	cfg := config.LoadConfig()
+	return runc.Run(cfg, "", serviceName, bundleDir, !pivotRoot)
 }
