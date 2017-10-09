@@ -72,6 +72,7 @@ func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string, piv
 	}
 
 	// TODO: either add a rw layer over the original bundle, or copy it to a new location
+	// https://groups.google.com/a/opencontainers.org/forum/#!topic/dev/ntwTxl9hFp4
 
 	// need to set ourselves as a child subreaper or we cannot wait for runc as reparents to init
 	//if err := sys.SetSubreaper(1); err != nil {

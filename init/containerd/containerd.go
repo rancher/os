@@ -28,7 +28,9 @@ import (
 	"github.com/rancher/os/init/prepare"
 	"github.com/rancher/os/log"
 
+	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/linux/runcopts"
+
 	"github.com/pkg/errors"
 	"golang.org/x/sys/unix"
 )
@@ -111,6 +113,7 @@ func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string) err
 	}
 
 	// TODO: either add a rw layer over the original bundle, or copy it to a new location
+	// https://groups.google.com/a/opencontainers.org/forum/#!topic/dev/ntwTxl9hFp4
 
 	// need to set ourselves as a child subreaper or we cannot wait for runc as reparents to init
 	//if err := sys.SetSubreaper(1); err != nil {
@@ -285,7 +288,7 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	//path := filepath.Join(basePath, serviceName)
 	path := basePath
 
-	rootfs := filepath.Join(path, "rootfs")
+	//rootfs := filepath.Join(path, "rootfs")
 
 	if err := prepare.Filesystem(path, service); err != nil {
 		return fmt.Errorf("preparing filesystem: %s", err)
@@ -308,7 +311,15 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	}
 
 	// TODO: this means we're not using containerd images, and can't use its snapshotting
-	spec.Root.Path = rootfs
+	//spec.Root.Path = rootfs
+
+	// the overlay dirs need to exist...
+	if err = os.MkdirAll(filepath.Join(path, "work"), 0755); err != nil {
+		return fmt.Errorf("mkdirall : %s/work", err)
+	}
+	if err = os.MkdirAll(filepath.Join(path, "rw"), 0755); err != nil {
+		return fmt.Errorf("mkdirall : %s/rw", err)
+	}
 
 	/*	if dumpSpec != "" {
 			d, err := os.Create(dumpSpec)
@@ -326,7 +337,7 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	ctr, err := client.NewContainer(ctx,
 		serviceName,
 		//containerd.WithNewSnapshot(serviceName+"-snapshot", image),
-		containerd.WithSpec(spec),
+		containerd.WithSpec(spec, withOverlay(path)),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %s", err)
@@ -367,6 +378,34 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	}
 
 	return nil
+}
+
+func withOverlay(path string) containerd.SpecOpts {
+	//{
+	//	"destination" : "/",
+	//	"options" : [
+	//	"upperdir=/containers/services/ntp/rw",
+	//		"lowerdir=/containers/services/ntp/rootfs",
+	//		"workdir=/containers/services/ntp/work"
+	//	],
+	//	"type" : "overlay",
+	//	"source" : "overlay"
+	//},
+	return func(_ context.Context, _ *containerd.Client, _ *containers.Container, s *specs.Spec) error {
+		s.Mounts = append([]specs.Mount{
+			specs.Mount{
+				Destination: "/",
+				Options: []string{
+					"upperdir=" + path + "/rw",
+					"lowerdir=" + path + "/rootfs",
+					"workdir=" + path + "/work",
+				},
+				Type:   "overlay",
+				Source: "overlay",
+			},
+		}, s.Mounts...)
+		return nil
+	}
 }
 
 func WithNoPivotRoot() containerd.NewTaskOpts {
