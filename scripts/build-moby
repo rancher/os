@@ -2,7 +2,10 @@
 set -e
 
 cd $(dirname $0)/..
-docker build -t zombie/os - < scripts/moby/Dockerfile
+
+cd scripts/moby
+docker build -t zombie/os .
+cd ../..
 
 #build the list of system services and images
 #IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)

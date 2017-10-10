@@ -234,6 +234,16 @@
     },
     "mounts": [
         {
+            "destination": "/etc/bootchartd.conf",
+            "type": "bind",
+            "source": "/etc/bootchartd.conf",
+            "options": [
+                "rw",
+                "rbind",
+                "rprivate"
+            ]
+        },
+        {
             "destination": "/usr/bin/runc",
             "type": "bind",
             "source": "/usr/bin/runc",

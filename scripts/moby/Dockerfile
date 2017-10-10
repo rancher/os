@@ -12,10 +12,14 @@ RUN mkdir /tmp/initrd \
   && rm /tmp/initrd/usr/share/ros/images.tar \
   && cp -r --update --dereference --force /tmp/initrd/* / \
   && cd / \
-  && rm -rf /tmp/initrd
+  && rm -rf /tmp/initrd \
+  && mkdir -p /lib/bootchart/tmpfs
 
 #FROM rancher/os-installer
 #RUN cp /bin/ros /init
 
-#FROM rancher/os-installer
-#RUN cp /bin/ros /init
+ADD bootchart-collector /lib/bootchart/
+ADD bootchartd /sbin/
+ADD bootchartd.conf /etc/
+RUN mv /init /sbin/init
+ADD bootchartd /init
