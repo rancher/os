@@ -22,7 +22,7 @@ RUN mkdir /tmp/initrd \
   && ln -s /usr/bin/busybox /usr/bin/modinfo \
   && ln -s /usr/bin/busybox /usr/bin/modprobe \
   && ln -s /usr/bin/busybox /usr/bin/rmmod \
-  && rm -rf /dist \
+  && rm -rf /dist /scripts /tmp/* \
   && cd / \
   && rm -rf /tmp/initrd \
   && mkdir -p /lib/bootchart/tmpfs
