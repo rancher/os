@@ -18,7 +18,6 @@ const (
 	DockerBin      = "/usr/bin/docker"
 	DockerDistBin  = "/usr/bin/docker.dist"
 	RosBin         = "/usr/bin/ros"
-	SysInitBin     = "/usr/bin/ros-sysinit"
 	DockerHost     = "unix:///var/run/docker.sock"
 	ImagesPath     = "/usr/share/ros"
 	ImagesPattern  = "images*.tar"

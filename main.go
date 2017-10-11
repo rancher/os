@@ -14,7 +14,6 @@ import (
 	"github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/cmd/respawn"
-	"github.com/rancher/os/cmd/sysinit"
 	"github.com/rancher/os/cmd/wait"
 	"github.com/rancher/os/dfs"
 	osInit "github.com/rancher/os/init"
@@ -31,7 +30,6 @@ var entrypoints = map[string]func(){
 	"netconf":            network.Main,
 	"recovery":           control.AutologinMain,
 	"ros-bootstrap":      control.BootstrapMain,
-	"ros-sysinit":        sysinit.Main,
 	"wait-for-docker":    wait.Main,
 	"cni-glue":           glue.Main,
 	"bridge":             bridge.Main,
