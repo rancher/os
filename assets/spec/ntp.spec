@@ -232,16 +232,6 @@
         "readonly": false
     },
     "mounts": [
-//      {
-//           "destination" : "/",
-//           "options" : [
-//              "upperdir=/containers/services/ntp/rw",
-//              "lowerdir=/containers/services/ntp/rootfs",
-//              "workdir=/containers/services/ntp/work"
-//           ],
-//           "type" : "overlay",
-//           "source" : "overlay"
-//        },
         {
             "destination": "/var/run",
             "type": "bind",

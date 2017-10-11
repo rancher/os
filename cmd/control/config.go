@@ -13,6 +13,8 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/log"
 
+	"github.com/docker/distribution/reference"
+
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
@@ -146,14 +148,20 @@ func linuxkitServices(c *cli.Context) error {
 		log.WithFields(log.Fields{"err": err, "file": configFile}).Fatalf("Could not read config from file")
 	}
 
-	servicesMap := map[string]string{}
+	servicesMap := make(map[string]string)
 
 	// ATM, I've hardcoded the onboot containers
 	//for _, service := range cfg.Rancher.BootstrapContainers {
 	//	imagesMap[service.Image] = 1
 	//}
-	for name, service := range cfg.Rancher.Services {
-		servicesMap[name] = service.Image
+	for _, service := range cfg.Rancher.Services {
+		image, err := reference.ParseNamed(service.Image)
+		if err != nil {
+			return fmt.Errorf("failed to parse image name from %s: %s", service.Image, err)
+		}
+		n := strings.Split(image.Name(), "/")
+		imageName := n[len(n)-1]
+		servicesMap[imageName] = service.Image
 	}
 
 	for name, image := range servicesMap {

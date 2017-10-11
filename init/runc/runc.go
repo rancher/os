@@ -15,7 +15,7 @@ import (
 
 	composeConfig "github.com/docker/libcompose/config"
 
-	"github.com/docker/docker/reference"
+	"github.com/docker/distribution/reference"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/init/prepare"

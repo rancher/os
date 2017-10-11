@@ -22,11 +22,10 @@ import (
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/namespaces"
 
-	"github.com/docker/distribution/reference"
-
-	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/init/prepare"
 	"github.com/rancher/os/log"
+
+	"github.com/docker/distribution/reference"
 
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/containerd/linux/runcopts"
@@ -82,38 +81,8 @@ func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string) err
 		return fmt.Errorf("Specified serviceName (%s) not found in RancherOS config", serviceName)
 	}
 
-	// lets try the service name first (its horribly space inefficient)
-	bundleDir = filepath.Join("/containers/services", serviceName)
-	if _, err := os.Stat(bundleDir); err != nil && os.IsNotExist(err) {
-		bundleDir = ""
-	}
-
-	if bundleDir == "" {
-		// TODO: use the os-config image name to find the base bundle.
-		image, err := reference.ParseNamed(service.Image)
-		if err != nil {
-			bundleDir, _ = os.Getwd()
-		} else {
-			n := strings.Split(image.Name(), "/")
-			name := n[len(n)-1]
-			bundleDir = filepath.Join("/containers/services", name)
-		}
-	}
-
-	if _, err := os.Stat(bundleDir); err != nil && os.IsNotExist(err) {
-		fmt.Printf("Bundle Dir (%s) not found", bundleDir)
-		return fmt.Errorf("Bundle Dir (%s) not found", bundleDir)
-	}
-
 	// TODO: instead of copying a canned spec file, need to generate from the os-config entry
-	cannedSpec := filepath.Join("/usr/share/spec/", serviceName+".spec")
-	if err := dfs.CopyFileOverwrite(cannedSpec, bundleDir, "config.json", true); err != nil {
-		fmt.Printf("Failed to copy %s into bundleDir %s", cannedSpec, bundleDir)
-		return fmt.Errorf("Failed to copy %s into bundleDir %s", cannedSpec, bundleDir)
-	}
-
-	// TODO: either add a rw layer over the original bundle, or copy it to a new location
-	// https://groups.google.com/a/opencontainers.org/forum/#!topic/dev/ntwTxl9hFp4
+	specFile := filepath.Join("/usr/share/spec/", serviceName+".spec")
 
 	// need to set ourselves as a child subreaper or we cannot wait for runc as reparents to init
 	//if err := sys.SetSubreaper(1); err != nil {
@@ -121,7 +90,9 @@ func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string) err
 		log.Errorf("Cannot set as subreaper: %v", err)
 	}
 
-	err := start(serviceName, bundleDir, service)
+	// Where the images, and then the running overlay fs's live (for now)
+	basePath := "/containers/services"
+	err := start(basePath, specFile, serviceName, service)
 	if err != nil {
 		log.Infof("Runc error: %s", err)
 	} else {
@@ -284,11 +255,17 @@ func (c *cio) Close() error {
 	return nil
 }
 
-func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1) error {
-	//path := filepath.Join(basePath, serviceName)
-	path := basePath
+func start(basePath, specFile, serviceName string, service *composeConfig.ServiceConfigV1) error {
+	path := filepath.Join(basePath, serviceName)
 
-	//rootfs := filepath.Join(path, "rootfs")
+	image, err := reference.ParseNamed(service.Image)
+	if err != nil {
+		return fmt.Errorf("failed to parse image name from %s: %s", service.Image, err)
+	}
+	n := strings.Split(image.Name(), "/")
+	imageName := n[len(n)-1]
+
+	rootfs := filepath.Join(basePath, imageName, "rootfs")
 
 	if err := prepare.Filesystem(path, service); err != nil {
 		return fmt.Errorf("preparing filesystem: %s", err)
@@ -302,7 +279,7 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	ctx := namespaces.WithNamespace(context.Background(), "default")
 
 	var spec *specs.Spec
-	specf, err := os.Open(filepath.Join(path, "config.json"))
+	specf, err := os.Open(specFile)
 	if err != nil {
 		return fmt.Errorf("failed to read service spec: %s", err)
 	}
@@ -314,10 +291,12 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	//spec.Root.Path = rootfs
 
 	// the overlay dirs need to exist...
-	if err = os.MkdirAll(filepath.Join(path, "work"), 0755); err != nil {
+	workDir := filepath.Join("/containers", "work", serviceName)
+	if err = os.MkdirAll(workDir, 0755); err != nil {
 		return fmt.Errorf("mkdirall : %s/work", err)
 	}
-	if err = os.MkdirAll(filepath.Join(path, "rw"), 0755); err != nil {
+	rwDir := filepath.Join("/containers", "rw", serviceName)
+	if err = os.MkdirAll(rwDir, 0755); err != nil {
 		return fmt.Errorf("mkdirall : %s/rw", err)
 	}
 
@@ -337,7 +316,7 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	ctr, err := client.NewContainer(ctx,
 		serviceName,
 		//containerd.WithNewSnapshot(serviceName+"-snapshot", image),
-		containerd.WithSpec(spec, withOverlay(path)),
+		containerd.WithSpec(spec, withOverlay(rootfs, rwDir, workDir)),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %s", err)
@@ -380,12 +359,12 @@ func start(serviceName, basePath string, service *composeConfig.ServiceConfigV1)
 	return nil
 }
 
-func withOverlay(path string) containerd.SpecOpts {
+func withOverlay(rootfs, rwDir, workDir string) containerd.SpecOpts {
 	//{
 	//	"destination" : "/",
 	//	"options" : [
 	//	"upperdir=/containers/services/ntp/rw",
-	//		"lowerdir=/containers/services/ntp/rootfs",
+	//		"lowerdir=/containers/services/image/rootfs",
 	//		"workdir=/containers/services/ntp/work"
 	//	],
 	//	"type" : "overlay",
@@ -396,9 +375,9 @@ func withOverlay(path string) containerd.SpecOpts {
 			specs.Mount{
 				Destination: "/",
 				Options: []string{
-					"upperdir=" + path + "/rw",
-					"lowerdir=" + path + "/rootfs",
-					"workdir=" + path + "/work",
+					"upperdir=" + rwDir,
+					"lowerdir=" + rootfs,
+					"workdir=" + workDir,
 				},
 				Type:   "overlay",
 				Source: "overlay",
