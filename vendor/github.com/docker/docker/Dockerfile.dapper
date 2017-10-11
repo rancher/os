@@ -27,7 +27,7 @@ ENV GOPATH=/go
 ENV PATH=/go/bin:/usr/local/go/bin:$PATH
 
 # Setup runc
-RUN ln -s /go/src/github.com/docker/docker/bin/docker /usr/local/bin/docker-runc
+#RUN ln -s /go/src/github.com/docker/docker/bin/docker /usr/local/bin/docker-runc
 
 # Add an unprivileged user to be used for tests which need it
 RUN groupadd -r docker
