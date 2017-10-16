@@ -92,7 +92,7 @@ func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string) err
 
 	// Where the images, and then the running overlay fs's live (for now)
 	basePath := "/containers/services"
-	err := start(basePath, specFile, serviceName, service)
+	err := start(cfg, serviceSet, basePath, specFile, serviceName, service)
 	if err != nil {
 		log.Infof("Runc error: %s", err)
 	} else {
@@ -255,7 +255,7 @@ func (c *cio) Close() error {
 	return nil
 }
 
-func start(basePath, specFile, serviceName string, service *composeConfig.ServiceConfigV1) error {
+func start(cfg *config.CloudConfig, serviceSet, basePath, specFile, serviceName string, service *composeConfig.ServiceConfigV1) error {
 	path := filepath.Join(basePath, serviceName)
 
 	image, err := reference.ParseNamed(service.Image)
@@ -300,27 +300,35 @@ func start(basePath, specFile, serviceName string, service *composeConfig.Servic
 		return fmt.Errorf("mkdirall : %s/rw", err)
 	}
 
-	/*	if dumpSpec != "" {
-			d, err := os.Create(dumpSpec)
-			if err != nil {
-				return "", 0, "failed to open file for spec dump", err
-			}
-			enc := json.NewEncoder(d)
-			enc.SetIndent("", "    ")
-			if err := enc.Encode(&spec); err != nil {
-				return "", 0, "failed to write spec dump", err
-			}
-
-		}
-	*/
+	//{
+	// attempt to build a spec file from scratch, using the service struct
 	ctr, err := client.NewContainer(ctx,
-		serviceName,
+		serviceName+"_new",
 		//containerd.WithNewSnapshot(serviceName+"-snapshot", image),
-		containerd.WithSpec(spec, withOverlay(rootfs, rwDir, workDir)),
+		containerd.WithNewSpec(
+			withService(cfg, serviceSet, service),
+			withDevicesFromSpec(spec),
+			withOverlay(rootfs, rwDir, workDir),
+			dumpSpec(serviceName+".new"),
+		),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create container: %s", err)
 	}
+
+	//}
+	/*ctr, err := client.NewContainer(ctx,
+		serviceName,
+		//containerd.WithNewSnapshot(serviceName+"-snapshot", image),
+		containerd.WithSpec(
+			spec,
+			withOverlay(rootfs, rwDir, workDir),
+			dumpSpec(serviceName+".actual"),
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create container: %s", err)
+	}*/
 
 	io := func(id string) (containerd.IO, error) {
 		logfile := filepath.Join("/var/log", serviceName+".log")
@@ -359,6 +367,145 @@ func start(basePath, specFile, serviceName string, service *composeConfig.Servic
 	return nil
 }
 
+func dumpSpec(serviceName string) containerd.SpecOpts {
+	return func(_ context.Context, _ *containerd.Client, _ *containers.Container, s *specs.Spec) error {
+		d, err := os.Create(filepath.Join("/containers/", serviceName))
+		if err != nil {
+			log.Errorf("failed to open file for spec dump: %s", err)
+			return fmt.Errorf("failed to open file for spec dump: %s", err)
+		}
+		enc := json.NewEncoder(d)
+		enc.SetIndent("", "    ")
+		if err := enc.Encode(s); err != nil {
+			log.Errorf("failed to write file for spec dump: %s", err)
+			return fmt.Errorf("failed to write file for spec dump: %s", err)
+		}
+		log.Infof("spec dump ok: %s", serviceName)
+
+		return nil
+	}
+}
+
+func addVolumes(cfg *config.CloudConfig, serviceSet string, service *composeConfig.ServiceConfigV1, s *specs.Spec) {
+	for _, fromService := range service.VolumesFrom {
+		from := prepare.GetService(cfg, serviceSet, fromService)
+		addVolumes(cfg, serviceSet, from, s)
+	}
+
+	//{
+	//	"destination": "/etc/docker",
+	//	"type": "bind",
+	//	"source": "/etc/docker",
+	//	"options": [
+	//	"rw",
+	//		"rbind",
+	//		"rprivate"
+	//	]
+	//},
+	for _, vol := range service.Volumes {
+		mode := "rw"
+		v := strings.Split(vol, ":")
+		if len(v) > 2 {
+			mode = v[2]
+		}
+		s.Mounts = append([]specs.Mount{
+			specs.Mount{
+				Source:      v[0],
+				Destination: v[1],
+				Type:        "bind",
+				Options: []string{
+					mode,
+					"rbind",
+					"rprivate",
+				},
+			},
+		}, s.Mounts...)
+	}
+
+}
+
+var privilegedCaps = []string{
+	"CAP_CHOWN",
+	"CAP_DAC_OVERRIDE",
+	"CAP_DAC_READ_SEARCH",
+	"CAP_FOWNER",
+	"CAP_FSETID",
+	"CAP_KILL",
+	"CAP_SETGID",
+	"CAP_SETUID",
+	"CAP_SETPCAP",
+	"CAP_LINUX_IMMUTABLE",
+	"CAP_NET_BIND_SERVICE",
+	"CAP_NET_BROADCAST",
+	"CAP_NET_ADMIN",
+	"CAP_NET_RAW",
+	"CAP_IPC_LOCK",
+	"CAP_IPC_OWNER",
+	"CAP_SYS_MODULE",
+	"CAP_SYS_RAWIO",
+	"CAP_SYS_CHROOT",
+	"CAP_SYS_PTRACE",
+	"CAP_SYS_PACCT",
+	"CAP_SYS_ADMIN",
+	"CAP_SYS_BOOT",
+	"CAP_SYS_NICE",
+	"CAP_SYS_RESOURCE",
+	"CAP_SYS_TIME",
+	"CAP_SYS_TTY_CONFIG",
+	"CAP_MKNOD",
+	"CAP_LEASE",
+	"CAP_AUDIT_WRITE",
+	"CAP_AUDIT_CONTROL",
+	"CAP_SETFCAP",
+	"CAP_MAC_OVERRIDE",
+	"CAP_MAC_ADMIN",
+	"CAP_SYSLOG",
+	"CAP_WAKE_ALARM",
+	"CAP_BLOCK_SUSPEND",
+	"CAP_AUDIT_READ",
+}
+
+func withService(cfg *config.CloudConfig, serviceSet string, service *composeConfig.ServiceConfigV1) containerd.SpecOpts {
+	return func(_ context.Context, _ *containerd.Client, _ *containers.Container, s *specs.Spec) error {
+		// TODO: need to get the entrypoint info from the docker image :/
+		if service.Name == "docker" {
+			s.Process.Args = service.Command
+		} else if service.Name == "logrotate" || service.Name == "syslog" {
+			s.Process.Args = []string{"/usr/bin/entrypoint.sh"}
+			s.Process.Args = append(s.Process.Args, service.Command...)
+		} else {
+			s.Process.Args = []string{"/usr/bin/ros", "entrypoint"}
+			s.Process.Args = append(s.Process.Args, service.Command...)
+		}
+
+		// allow sudo
+		if service.Name == "console" {
+			s.Process.NoNewPrivileges = false
+		}
+
+		// CAPs
+		s.Process.Capabilities.Ambient = privilegedCaps
+		s.Process.Capabilities.Bounding = privilegedCaps
+		s.Process.Capabilities.Effective = privilegedCaps
+		s.Process.Capabilities.Inheritable = privilegedCaps
+		s.Process.Capabilities.Permitted = privilegedCaps
+
+		// Volumes and VolumesFrom
+		addVolumes(cfg, serviceSet, service, s)
+
+		// Service namespaces
+		// TODO: set as per service cfg
+		s.Linux.Namespaces = []specs.LinuxNamespace{
+			specs.LinuxNamespace{Type: "ipc"},
+			specs.LinuxNamespace{Type: "mount"},
+			specs.LinuxNamespace{Type: "pid"},
+			specs.LinuxNamespace{Type: "uts"},
+		}
+
+		return nil
+	}
+}
+
 func withOverlay(rootfs, rwDir, workDir string) containerd.SpecOpts {
 	//{
 	//	"destination" : "/",
@@ -383,6 +530,14 @@ func withOverlay(rootfs, rwDir, workDir string) containerd.SpecOpts {
 				Source: "overlay",
 			},
 		}, s.Mounts...)
+		return nil
+	}
+}
+
+func withDevicesFromSpec(fromSpec *specs.Spec) containerd.SpecOpts {
+	return func(_ context.Context, _ *containerd.Client, _ *containers.Container, s *specs.Spec) error {
+		s.Linux.Resources.Devices = fromSpec.Linux.Resources.Devices
+		s.Linux.Devices = fromSpec.Linux.Devices
 		return nil
 	}
 }

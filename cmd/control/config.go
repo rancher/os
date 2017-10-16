@@ -164,6 +164,8 @@ func linuxkitServices(c *cli.Context) error {
 		servicesMap[imageName] = service.Image
 	}
 
+	// this is only a list of images, not the actual RancherOS services
+	// those come from the os-config file.
 	for name, image := range servicesMap {
 		fmt.Printf("  - name: %s\n", name)
 		fmt.Printf("    image: %s\n", image)
