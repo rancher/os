@@ -23,7 +23,7 @@ else
 	-initrd ./rancheros-initrd.img \
 	-m 4096 \
   -device virtio-rng-pci \
-  -smp 1 \
+  -smp 2 \
   -enable-kvm \
   -machine q35,accel=kvm:tcg \
 	-net nic,vlan=0,model=virtio \

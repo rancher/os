@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 cd $(dirname $0)/..
 
@@ -15,6 +15,11 @@ mkdir -p moby
 cd moby
 cp ../../scripts/moby/rancheros.yml.tmpl rancheros.yml
 ../../bin/host_ros c linuxkit -i ../../build/initrd/usr/share/ros/os-config.yml >> rancheros.yml
+OSCONFIG=$(readlink -f ../../build/initrd/usr/share/ros/os-config.yml)
+echo "files:" >> rancheros.yml
+echo "  - path: /usr/share/ros/os-config.yml" >> rancheros.yml
+echo "    source: \"$OSCONFIG\"" >> rancheros.yml
+echo "    mode: \"0666\"" >> rancheros.yml
 
 #echo "tar-image: IMAGES=$IMAGES"
 #for i in $IMAGES; do

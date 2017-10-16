@@ -81,9 +81,6 @@ func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string) err
 		return fmt.Errorf("Specified serviceName (%s) not found in RancherOS config", serviceName)
 	}
 
-	// TODO: instead of copying a canned spec file, need to generate from the os-config entry
-	specFile := filepath.Join("/usr/share/spec/", serviceName+".spec")
-
 	// need to set ourselves as a child subreaper or we cannot wait for runc as reparents to init
 	//if err := sys.SetSubreaper(1); err != nil {
 	if err := unix.Prctl(unix.PR_SET_CHILD_SUBREAPER, uintptr(1), 0, 0, 0); err != nil {
@@ -92,6 +89,11 @@ func Run(cfg *config.CloudConfig, serviceSet, serviceName, bundleDir string) err
 
 	// Where the images, and then the running overlay fs's live (for now)
 	basePath := "/containers/services"
+	specFile := filepath.Join("/usr/share/spec/", serviceName+".spec")
+	if _, err := os.Stat(specFile); err != nil {
+		// presumably this is a user-customisation, so we'll just "try"
+		specFile = filepath.Join("/usr/share/spec/console.spec")
+	}
 	err := start(cfg, serviceSet, basePath, specFile, serviceName, service)
 	if err != nil {
 		log.Infof("Runc error: %s", err)
