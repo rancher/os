@@ -187,6 +187,8 @@ rancher:
       volumes:
       - /usr/bin/iptables:/sbin/iptables:ro
       - /:/host:rw
+      - /usr/bin/runc:/usr/bin/runc
+      - /usr/bin/ctr:/usr/bin/ctr
     container-data-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo

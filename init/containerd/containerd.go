@@ -303,10 +303,11 @@ func start(cfg *config.CloudConfig, serviceSet, basePath, specFile, serviceName 
 	//{
 	// attempt to build a spec file from scratch, using the service struct
 	ctr, err := client.NewContainer(ctx,
-		serviceName+"_new",
+		serviceName,
 		//containerd.WithNewSnapshot(serviceName+"-snapshot", image),
 		containerd.WithNewSpec(
 			withService(cfg, serviceSet, service),
+			removeRunTmpfsMount(),
 			withDevicesFromSpec(spec),
 			withOverlay(rootfs, rwDir, workDir),
 			dumpSpec(serviceName+".new"),
@@ -365,6 +366,20 @@ func start(cfg *config.CloudConfig, serviceSet, basePath, specFile, serviceName 
 	}
 
 	return nil
+}
+
+// Yes, we're not using a tmpfs for /run - we're sharing the host one for system-services
+func removeRunTmpfsMount() containerd.SpecOpts {
+	return func(_ context.Context, _ *containerd.Client, _ *containers.Container, s *specs.Spec) error {
+		for i, mount := range s.Mounts {
+			if mount.Destination == "/run" && mount.Type == "tmpfs" {
+				   s.Mounts[i] = s.Mounts[len(s.Mounts)-1]
+				   s.Mounts = s.Mounts[:len(s.Mounts)-1]
+				   return nil
+			}
+		}
+		return nil
+	}
 }
 
 func dumpSpec(serviceName string) containerd.SpecOpts {
@@ -498,8 +513,11 @@ func withService(cfg *config.CloudConfig, serviceSet string, service *composeCon
 		s.Linux.Namespaces = []specs.LinuxNamespace{
 			specs.LinuxNamespace{Type: "ipc"},
 			specs.LinuxNamespace{Type: "mount"},
-			specs.LinuxNamespace{Type: "pid"},
 			specs.LinuxNamespace{Type: "uts"},
+		}
+		if service.Name != "console" &&
+			service.Name != "docker" {
+			s.Linux.Namespaces = append(s.Linux.Namespaces, specs.LinuxNamespace{Type: "pid"})
 		}
 
 		return nil

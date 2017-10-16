@@ -276,7 +276,7 @@ func waitForPid(service string, project *project.Project) (uint32, error) {
 
 func getPid(service string, project *project.Project) (uint32, error) {
 	client, err := containerd.New(config.DefaultContainerdSocket)
-	if err != nil {
+	if err != nil || client == nil {
 		log.Errorf("creating containerd client: %s", err)
 	}
 	ctx := namespaces.WithNamespace(context.Background(), "default")
