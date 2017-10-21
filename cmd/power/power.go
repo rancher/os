@@ -36,11 +36,9 @@ func runDocker(name string) error {
 		return err
 	}
 
-	cmd := []string{name}
-
+	cmd := os.Args
 	if name == "" {
 		name = filepath.Base(os.Args[0])
-		cmd = os.Args
 	}
 
 	existing, err := client.ContainerInspect(context.Background(), name)
