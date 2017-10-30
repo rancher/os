@@ -199,7 +199,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 	tryAgain := true
 	for i := 0; i < 8 && tryAgain; i++ {
 		for _, link := range links {
-			if link.Attrs().Name != "lo" && link.Attrs().OperState == link.OperUp {
+			if link.Attrs().Name != "lo" && link.Attrs().OperState == netlink.OperUp {
 				tryAgain = false
 				break
 			}
