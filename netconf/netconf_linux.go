@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	shlex "github.com/flynn/go-shlex"
 	"github.com/rancher/os/log"
@@ -191,6 +192,20 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 		if _, ok := lease["domain_name_servers"]; ok {
 			log.Infof("dns was dhcp set for %s", linkName)
 			dnsSet = true
+		}
+	}
+
+	//Make sure we see a link is up before moving on, give up if no link up in 8 seconds.
+	tryAgain := true
+	for i := 0; i < 8 && tryAgain; i++ {
+		for _, link := range links {
+			if link.Attrs().Name != "lo" && link.Attrs().OperState == link.OperUp {
+				tryAgain = false
+				break
+			}
+		}
+		if tryAgain {
+			time.Sleep(1 * time.Second)
 		}
 	}
 
