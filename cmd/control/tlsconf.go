@@ -76,11 +76,7 @@ func writeCerts(generateServer bool, hostname []string, certPath, keyPath, caCer
 	if err := config.Set("rancher.docker.server_cert", string(cert)); err != nil {
 		return err
 	}
-	if err := config.Set("rancher.docker.server_key", string(key)); err != nil {
-		return err
-	}
-
-	return nil
+	return config.Set("rancher.docker.server_key", string(key))
 }
 
 func writeCaCerts(cfg *config.CloudConfig, caCertPath, caKeyPath string) error {

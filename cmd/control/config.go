@@ -160,11 +160,7 @@ func editSyslinux(c *cli.Context) error {
 		"rancher/os-console:"+config.Version,
 		"boot/global.cfg")
 	cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
-	if err := cmd.Run(); err != nil {
-		return err
-	}
-
-	return nil
+	return cmd.Run()
 }
 
 func configSet(c *cli.Context) error {

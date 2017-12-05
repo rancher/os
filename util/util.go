@@ -87,11 +87,7 @@ func ConvertIgnoreOmitEmpty(from, to interface{}) error {
 
 	decoder := yaml.NewDecoder(&buffer)
 
-	if err := decoder.Decode(to); err != nil {
-		return err
-	}
-
-	return nil
+	return decoder.Decode(to)
 }
 
 func Copy(d interface{}) interface{} {
