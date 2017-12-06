@@ -23,11 +23,7 @@ func SetHostnameFromCloudConfig(cc *config.CloudConfig) error {
 	}
 
 	// set hostname
-	if err := syscall.Sethostname([]byte(hostname)); err != nil {
-		return err
-	}
-
-	return nil
+	return syscall.Sethostname([]byte(hostname))
 }
 
 func SyncHostname() error {
@@ -55,9 +51,5 @@ func SyncHostname() error {
 		}
 		hostsContent += line + "\n"
 	}
-	if err := ioutil.WriteFile("/etc/hosts", []byte(hostsContent), 0600); err != nil {
-		return err
-	}
-
-	return nil
+	return ioutil.WriteFile("/etc/hosts", []byte(hostsContent), 0600)
 }

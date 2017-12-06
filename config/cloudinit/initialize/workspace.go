@@ -29,11 +29,7 @@ func PrepWorkspace(workspace string) error {
 	}
 
 	scripts := path.Join(workspace, "scripts")
-	if err := system.EnsureDirectoryExists(scripts); err != nil {
-		return err
-	}
-
-	return nil
+	return system.EnsureDirectoryExists(scripts)
 }
 
 func PersistScriptInWorkspace(script config.Script, workspace string) (string, error) {

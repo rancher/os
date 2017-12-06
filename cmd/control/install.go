@@ -216,10 +216,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 					"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig,
 					"-a", kappend)
 				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-				if err := cmd.Run(); err != nil {
-					return err
-				}
-				return nil
+				return cmd.Run()
 			}
 		}
 	}
@@ -308,10 +305,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			cmd := exec.Command("system-docker", installerCmd...)
 			log.Debugf("Run(%v)", cmd)
 			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-			return nil
+			return cmd.Run()
 		}
 	}
 
@@ -687,11 +681,7 @@ func setDiskpartitions(device, diskType string) error {
 		log.Errorf("parted: %s", err)
 		return err
 	}
-	if err := setBootable(device, diskType); err != nil {
-		return err
-	}
-
-	return nil
+	return setBootable(device, diskType)
 }
 
 func partitionMounted(device string, file io.Reader) bool {

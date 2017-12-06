@@ -215,11 +215,7 @@ func execDocker(config *Config, docker, cmd string, args []string) (*exec.Cmd, e
 
 func copyDefault(folder, name string) error {
 	defaultFile := path.Join(defaultPrefix, folder, name)
-	if err := CopyFile(defaultFile, folder, name); err != nil {
-		return err
-	}
-
-	return nil
+	return CopyFile(defaultFile, folder, name)
 }
 
 func copyDefaultFolder(folder string) error {
@@ -453,11 +449,7 @@ func PrepareFs(config *Config) error {
 		return err
 	}
 
-	if err := firstPrepare(); err != nil {
-		return err
-	}
-
-	return nil
+	return firstPrepare()
 }
 
 func touchSocket(path string) error {
@@ -581,11 +573,7 @@ func firstPrepare() error {
 		return err
 	}
 
-	if err := createGroup(); err != nil {
-		return err
-	}
-
-	return nil
+	return createGroup()
 }
 
 func secondPrepare(config *Config, docker string, args ...string) error {
