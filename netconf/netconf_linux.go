@@ -394,10 +394,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		if err != nil {
 			return err
 		}
-		if err := b.AddSlave(link.Attrs().Name); err != nil {
-			return err
-		}
-		return nil
+		return b.AddSlave(link.Attrs().Name)
 	}
 
 	//TODO: undo
