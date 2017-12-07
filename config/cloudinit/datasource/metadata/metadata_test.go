@@ -17,6 +17,7 @@ package metadata
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"testing"
 
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/test"
@@ -173,6 +174,114 @@ func TestNewDatasource(t *testing.T) {
 		service := NewDatasource(tt.root, "", "", "", nil)
 		if service.Root != tt.expectRoot {
 			t.Fatalf("bad root (%q): want %q, got %q", tt.root, tt.expectRoot, service.Root)
+		}
+	}
+}
+
+func TestFetchAttributes(t *testing.T) {
+	for _, s := range []struct {
+		resources map[string]string
+		err       error
+		tests     []struct {
+			path string
+			val  []string
+		}
+	}{
+		{
+			resources: map[string]string{
+				"/":      "a\nb\nc/",
+				"/c/":    "d\ne/",
+				"/c/e/":  "f",
+				"/a":     "1",
+				"/b":     "2",
+				"/c/d":   "3",
+				"/c/e/f": "4",
+			},
+			tests: []struct {
+				path string
+				val  []string
+			}{
+				{"/", []string{"a", "b", "c/"}},
+				{"/b", []string{"2"}},
+				{"/c/d", []string{"3"}},
+				{"/c/e/", []string{"f"}},
+			},
+		},
+		{
+			err: fmt.Errorf("test error"),
+			tests: []struct {
+				path string
+				val  []string
+			}{
+				{"", nil},
+			},
+		},
+	} {
+		service := &Service{
+			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
+		}
+		for _, tt := range s.tests {
+			attrs, err := service.FetchAttributes(tt.path)
+			if err != s.err {
+				t.Fatalf("bad error for %q (%q): want %q, got %q", tt.path, s.resources, s.err, err)
+			}
+			if !reflect.DeepEqual(attrs, tt.val) {
+				t.Fatalf("bad fetch for %q (%q): want %q, got %q", tt.path, s.resources, tt.val, attrs)
+			}
+		}
+	}
+}
+
+func TestFetchAttribute(t *testing.T) {
+	for _, s := range []struct {
+		resources map[string]string
+		err       error
+		tests     []struct {
+			path string
+			val  string
+		}
+	}{
+		{
+			resources: map[string]string{
+				"/":      "a\nb\nc/",
+				"/c/":    "d\ne/",
+				"/c/e/":  "f",
+				"/a":     "1",
+				"/b":     "2",
+				"/c/d":   "3",
+				"/c/e/f": "4",
+			},
+			tests: []struct {
+				path string
+				val  string
+			}{
+				{"/a", "1"},
+				{"/b", "2"},
+				{"/c/d", "3"},
+				{"/c/e/f", "4"},
+			},
+		},
+		{
+			err: fmt.Errorf("test error"),
+			tests: []struct {
+				path string
+				val  string
+			}{
+				{"", ""},
+			},
+		},
+	} {
+		service := &Service{
+			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
+		}
+		for _, tt := range s.tests {
+			attr, err := service.FetchAttribute(tt.path)
+			if err != s.err {
+				t.Fatalf("bad error for %q (%q): want %q, got %q", tt.path, s.resources, s.err, err)
+			}
+			if attr != tt.val {
+				t.Fatalf("bad fetch for %q (%q): want %q, got %q", tt.path, s.resources, tt.val, attr)
+			}
 		}
 	}
 }
