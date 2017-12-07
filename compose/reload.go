@@ -106,7 +106,7 @@ func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, envir
 
 		if loadConsole {
 			if err := loadConsoleService(cfg, p); err != nil {
-				log.Errorf("Failed to load gancher.console=(%s): %v", cfg.Rancher.Console, err)
+				log.Errorf("Failed to load rancher.console=(%s): %v", cfg.Rancher.Console, err)
 			}
 		}
 
