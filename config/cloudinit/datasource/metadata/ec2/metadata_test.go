@@ -77,7 +77,7 @@ func TestFetchAttributes(t *testing.T) {
 			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
 		}}
 		for _, tt := range s.tests {
-			attrs, err := service.fetchAttributes(tt.path)
+			attrs, err := service.FetchAttributes(tt.path)
 			if err != s.err {
 				t.Fatalf("bad error for %q (%q): want %q, got %q", tt.path, s.resources, s.err, err)
 			}
@@ -131,7 +131,7 @@ func TestFetchAttribute(t *testing.T) {
 			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
 		}}
 		for _, tt := range s.tests {
-			attr, err := service.fetchAttribute(tt.path)
+			attr, err := service.FetchAttribute(tt.path)
 			if err != s.err {
 				t.Fatalf("bad error for %q (%q): want %q, got %q", tt.path, s.resources, s.err, err)
 			}
