@@ -113,7 +113,8 @@ Please submit any **RancherOS** bugs, issues, and feature requests to [rancher/o
 
 Please submit any **Rancher** bugs, issues, and feature requests to [rancher/rancher](//github.com/rancher/rancher/issues).
 
-#License
+## License
+
 Copyright (c) 2014-2017 [Rancher Labs, Inc.](http://rancher.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
