@@ -486,23 +486,25 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 		return
 	}
 
+	// only enable open-vm-tools for vmware
+	// these services(xenhvm-vm-tools, kvm-vm-tools, hyperv-vm-tools and bhyve-vm-tools) don't exist yet
 	if hypervisorName == "vmware" {
 		hypervisorName = "open"
-	}
-	serviceName := hypervisorName + "-vm-tools"
-	if !cfg.Rancher.HypervisorService {
-		log.Infof("Skipping %s as `rancher.hypervisor_service` is set to false", serviceName)
-		return
-	}
+		serviceName := hypervisorName + "-vm-tools"
+		if !cfg.Rancher.HypervisorService {
+			log.Infof("Skipping %s as `rancher.hypervisor_service` is set to false", serviceName)
+			return
+		}
 
-	// Check removed - there's an x509 cert failure on first boot of an installed system
-	// check quickly to see if there is a yml file available
-	//	if service.ValidService(serviceName, cfg) {
-	log.Infof("Setting rancher.services_include. %s=true", serviceName)
-	if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
-		log.Error(err)
+		// Check removed - there's an x509 cert failure on first boot of an installed system
+		// check quickly to see if there is a yml file available
+		//	if service.ValidService(serviceName, cfg) {
+		log.Infof("Setting rancher.services_include. %s=true", serviceName)
+		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
+			log.Error(err)
+		}
+		//	} else {
+		//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
+		//	}
 	}
-	//	} else {
-	//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
-	//	}
 }
