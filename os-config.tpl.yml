@@ -7,7 +7,7 @@ rancher:
     hostname: {{.HOSTNAME_DEFAULT}}
     {{if eq "amd64" .ARCH -}}
     docker:
-      engine: docker-17.03.2-ce
+      engine: docker-17.06.2-ce
     {{else -}}
     docker:
       engine: docker-17.03.1-ce
@@ -332,7 +332,7 @@ rancher:
       - /var/lib/kubelet:/var/lib/kubelet
     docker:
       {{if eq "amd64" .ARCH -}}
-      image: {{.OS_REPO}}/os-docker:17.03.2{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.06.2{{.SUFFIX}}
       {{else -}}
       image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}
       {{end -}}
@@ -374,7 +374,7 @@ rancher:
     image: {{.OS_REPO}}/os
   docker:
     {{if eq "amd64" .ARCH -}}
-    engine: docker-17.03.2-ce
+    engine: docker-17.06.2-ce
     {{else -}}
     engine: docker-17.03.1-ce
     {{end -}}
