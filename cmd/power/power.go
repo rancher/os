@@ -26,6 +26,8 @@ import (
 // You can't shutdown the system from a process in console because we want to stop the console container.
 // If you do that you kill yourself.  So we spawn a separate container to do power operations
 // This can up because on shutdown we want ssh to gracefully die, terminating ssh connections and not just hanging tcp session
+//
+// Be careful of container name. only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed
 func runDocker(name string) error {
 	if os.ExpandEnv("${IN_DOCKER}") == "true" {
 		return nil
@@ -37,13 +39,14 @@ func runDocker(name string) error {
 	}
 
 	cmd := []string{name}
+	containerName := strings.TrimPrefix(strings.Join(strings.Split(name, "/"), "-"), "-")
 
 	if name == "" {
 		name = filepath.Base(os.Args[0])
 		cmd = os.Args
 	}
 
-	existing, err := client.ContainerInspect(context.Background(), name)
+	existing, err := client.ContainerInspect(context.Background(), containerName)
 	if err == nil && existing.ID != "" {
 		err := client.ContainerRemove(context.Background(), types.ContainerRemoveOptions{
 			ContainerID: existing.ID,
@@ -78,7 +81,7 @@ func runDocker(name string) error {
 				currentContainer.ID,
 			},
 			Privileged: true,
-		}, nil, name)
+		}, nil, containerName)
 	if err != nil {
 		return err
 	}
