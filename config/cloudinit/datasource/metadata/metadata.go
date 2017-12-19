@@ -15,6 +15,8 @@
 package metadata
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"net/http"
 	"strings"
@@ -83,4 +85,26 @@ func (ms Service) MetadataURL() string {
 
 func (ms Service) UserdataURL() string {
 	return (ms.Root + ms.UserdataPath)
+}
+
+func (ms Service) FetchAttributes(key string) ([]string, error) {
+	url := ms.MetadataURL() + key
+	resp, err := ms.FetchData(url)
+	if err != nil {
+		return nil, err
+	}
+	scanner := bufio.NewScanner(bytes.NewBuffer(resp))
+	data := make([]string, 0)
+	for scanner.Scan() {
+		data = append(data, scanner.Text())
+	}
+	return data, scanner.Err()
+}
+
+func (ms Service) FetchAttribute(key string) (string, error) {
+	attrs, err := ms.FetchAttributes(key)
+	if err == nil && len(attrs) > 0 {
+		return attrs[0], nil
+	}
+	return "", err
 }
