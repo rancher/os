@@ -15,9 +15,7 @@
 package packet
 
 import (
-	"bytes"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -50,8 +48,7 @@ func NewDatasource(root string) *MetadataService {
 }
 
 func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err error) {
-	c := packetMetadata.NewClient(http.DefaultClient)
-	m, err := c.Metadata.Get()
+	m, err := packetMetadata.GetMetadata()
 	if err != nil {
 		log.Errorf("Failed to get Packet metadata: %v", err)
 		return
@@ -72,24 +69,24 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 		Interfaces: map[string]netconf.InterfaceConfig{},
 	}
 	for _, iface := range m.Network.Interfaces {
-		netCfg.Interfaces["mac="+iface.Mac] = netconf.InterfaceConfig{
+		netCfg.Interfaces["mac="+iface.MAC] = netconf.InterfaceConfig{
 			Bond: "bond0",
 		}
 	}
 	for _, addr := range m.Network.Addresses {
-		bondCfg.Addresses = append(bondCfg.Addresses, fmt.Sprintf("%s/%d", addr.Address, addr.Cidr))
-		if addr.Gateway != "" {
-			if addr.AddressFamily == 4 {
+		bondCfg.Addresses = append(bondCfg.Addresses, fmt.Sprintf("%s/%d", addr.Address, addr.NetworkBits))
+		if addr.Gateway != nil && len(addr.Gateway) > 0 {
+			if addr.Family == packetMetadata.IPv4 {
 				if addr.Public {
-					bondCfg.Gateway = addr.Gateway
+					bondCfg.Gateway = addr.Gateway.String()
 				}
 			} else {
-				bondCfg.GatewayIpv6 = addr.Gateway
+				bondCfg.GatewayIpv6 = addr.Gateway.String()
 			}
 		}
 
-		if addr.AddressFamily == 4 && strings.HasPrefix(addr.Gateway, "10.") {
-			bondCfg.PostUp = append(bondCfg.PostUp, "ip route add 10.0.0.0/8 via "+addr.Gateway)
+		if addr.Family == packetMetadata.IPv4 && strings.HasPrefix(addr.Gateway.String(), "10.") {
+			bondCfg.PostUp = append(bondCfg.PostUp, "ip route add 10.0.0.0/8 via "+addr.Gateway.String())
 		}
 	}
 
@@ -124,7 +121,7 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 	*/
 	metadata.Hostname = m.Hostname
 	metadata.SSHPublicKeys = map[string]string{}
-	for i, key := range m.SshKeys {
+	for i, key := range m.SSHKeys {
 		metadata.SSHPublicKeys[strconv.Itoa(i)] = key
 	}
 
@@ -132,9 +129,9 @@ func (ms *MetadataService) FetchMetadata() (metadata datasource.Metadata, err er
 
 	// This is not really the right place - perhaps we should add a call-home function in each datasource to be called after the network is applied
 	//(see the original in cmd/cloudsave/packet)
-	if _, err = http.Post(m.PhoneHomeURL, "application/json", bytes.NewReader([]byte{})); err != nil {
-		log.Errorf("Failed to post to Packet phone home URL: %v", err)
-	}
+	//if _, err = http.Post(m.PhoneHomeURL, "application/json", bytes.NewReader([]byte{})); err != nil {
+	//log.Errorf("Failed to post to Packet phone home URL: %v", err)
+	//}
 
 	return
 }
