@@ -6,7 +6,6 @@ import (
 
 	"github.com/containernetworking/cni/plugins/ipam/host-local"
 	"github.com/containernetworking/cni/plugins/main/bridge"
-	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancher/cniglue"
 	"github.com/rancher/os/cmd/cloudinitexecute"
@@ -15,8 +14,6 @@ import (
 	"github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/cmd/respawn"
-	"github.com/rancher/os/cmd/sysinit"
-	"github.com/rancher/os/cmd/systemdocker"
 	"github.com/rancher/os/cmd/wait"
 	"github.com/rancher/os/dfs"
 	osInit "github.com/rancher/os/init"
@@ -28,14 +25,11 @@ var entrypoints = map[string]func(){
 	"cloud-init-save":    cloudinitsave.Main,
 	"console":            control.ConsoleInitMain,
 	"console.sh":         control.ConsoleInitMain,
-	"docker":             docker.Main,
 	"dockerlaunch":       dfs.Main,
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,
 	"recovery":           control.AutologinMain,
 	"ros-bootstrap":      control.BootstrapMain,
-	"ros-sysinit":        sysinit.Main,
-	"system-docker":      systemdocker.Main,
 	"wait-for-docker":    wait.Main,
 	"cni-glue":           glue.Main,
 	"bridge":             bridge.Main,

@@ -7,7 +7,8 @@ import (
 )
 
 func NewSystemClient() (dockerClient.APIClient, error) {
-	return NewClient(config.SystemDockerHost)
+	// TODO: temporarily just use the user-docker..
+	return NewClient(config.DockerHost)
 }
 
 func NewDefaultClient() (dockerClient.APIClient, error) {

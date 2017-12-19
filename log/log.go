@@ -8,8 +8,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
-	lsyslog "github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/sirupsen/logrus"
+	lsyslog "github.com/sirupsen/logrus/hooks/syslog"
+	"github.com/google/gops/agent"
 
 	"github.com/rancher/os/config/cmdline"
 )
@@ -120,8 +121,17 @@ func WithFields(fields Fields) *logrus.Entry {
 	return logrus.WithFields(logrus.Fields(fields))
 }
 
+func StartGoPs() {
+	if err := agent.Listen(agent.Options{}); err != nil {
+		logrus.Errorf("Failed to start gops agent: %s", err)
+	}
+}
+
 // InitLogger sets up Logging to log to /dev/kmsg and to Syslog
 func InitLogger() {
+	if filepath.Base(os.Args[0]) == "ros" {
+		StartGoPs()
+	}
 	if logTheseApps() {
 		innerInit(false)
 		FsReady()

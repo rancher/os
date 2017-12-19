@@ -1,0 +1,11 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+
+cd $(dirname $0)/..
+
+mkdir -p bin
+go build -tags "$DOCKER_BUILDTAGS" -installsuffix netgo -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o bin/docker
+rm -f bin/docker-runc
+#ln -s docker bin/docker-runc

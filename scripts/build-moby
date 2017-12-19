@@ -1,13 +1,35 @@
 #!/bin/bash
-set -e
+set -ex
 
 cd $(dirname $0)/..
-docker build -t zombie/os - < scripts/moby/Dockerfile
 
+cd scripts/moby
+docker build -t zombie/os .
+cd ../..
+
+#build the list of system services and images
+#IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)
 
 cd dist
 mkdir -p moby
 cd moby
-moby build  -output kernel+initrd -output iso-bios ../../scripts/moby/rancheros.yml
+cp ../../scripts/moby/rancheros.yml.tmpl rancheros.yml
+../../bin/host_ros c linuxkit -i ../../build/initrd/usr/share/ros/os-config.yml >> rancheros.yml
+OSCONFIG=$(readlink -f ../../build/initrd/usr/share/ros/os-config.yml)
+echo "files:" >> rancheros.yml
+echo "  - path: /usr/share/ros/os-config.yml" >> rancheros.yml
+echo "    source: \"$OSCONFIG\"" >> rancheros.yml
+echo "    mode: \"0666\"" >> rancheros.yml
+
+#echo "tar-image: IMAGES=$IMAGES"
+#for i in $IMAGES; do
+#   name=$(echo $i | sed 's/rancher\///' | sed 's/:.*//')
+#   echo "system service: $name ($i)"
+#   echo "  - name: $name" >> rancheros.yml
+#   echo "    image: $i" >> rancheros.yml
+#done
+
+moby build  -output kernel+initrd rancheros.yml
+ #-output iso-bios 
 
 

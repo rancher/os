@@ -1,0 +1,251 @@
+#!/bin/sh
+#
+# Bootchart logger script
+# Ziga Mahkovec  <ziga.mahkovec@klika.si>
+# Michael Meeks  <michael.meeks@novell.com>
+#
+# This script is used for data collection for the bootchart2
+# boot performance visualization tool.
+#
+# To profile the boot process, bootchartd should be called instead of
+# /sbin/init.  Modify the kernel command line to include:
+#
+# init=/sbin/bootchartd initcall_debug printk.time=y quiet
+#
+# bootchartd will then start itself in background and exec /sbin/init
+# (or an alternative init process if specified using bootchart_init=)
+#
+# To profile a running system, run:
+# $ /sbin/bootchartd start; sleep 30; /sbin/bootchartd stop
+#
+
+# Use a directory we know will be there, such that we can mount
+# our 'proc' without having to touch a (potentially) read-only
+# file-system.
+# file-system.
+LIBDIR="/lib"
+PKGLIBDIR="/lib/bootchart"
+PROGRAM_PREFIX=""
+PROGRAM_SUFFIX=""
+TMPFS="${PKGLIBDIR}/tmpfs"
+COLLECTOR_BIN="${PKGLIBDIR}/${PROGRAM_PREFIX}bootchart${PROGRAM_SUFFIX}-collector"
+
+# some initrds don't have usleep etc.
+USLEEP="$COLLECTOR_BIN --usleep"
+
+# we need to find our tools
+PATH="/sbin:/bin:/usr/sbin:/usr/bin:$PATH"
+
+# Defaults, in case we can't find our configuration
+SAMPLE_HZ=50
+BOOTLOG_DEST=/var/log/bootchart.tar
+AUTO_RENDER="no"
+AUTO_RENDER_DIR="/var/log"
+AUTO_RENDER_FORMAT="png"
+
+# The processes we have to wait for
+EXIT_PROC="compiz \
+	enlightenment \
+	fluxbox \
+	gnome-shell \
+	gnome-terminal \
+	icewm-session \
+	kdm_greet \
+	konsole \
+	ldm \
+	lightdm-gtk-greeter \
+	metacity \
+	mutter \
+	openbox \
+	xfwm4 \
+	xterm"
+
+# Read configuration.
+CONFBASE="${PROGRAM_PREFIX}bootchartd${PROGRAM_SUFFIX}"
+CONF="/etc/${CONFBASE}.conf"
+if [ -f $PWD/${CONFBASE}.conf ]; then
+	. $PWD/${CONFBASE}.conf
+elif [ -f $CONF ]; then
+	. $CONF
+else
+	echo "$CONF missing"
+fi
+
+# Start the boot logger.
+start()
+{
+	# If in init start ourselves in our familiar system
+	if [ -n "$INIT_PROCESS" ]; then
+		echo "bootchartd started in init" >> kmsg
+		$COLLECTOR_BIN $SAMPLE_HZ
+
+	# Otherwise, manually launched to profile something
+	else
+		# bail out, if already running
+		pidof bootchart-collector && exit 0
+		echo "bootchartd started manually" >> kmsg
+		$COLLECTOR_BIN -r $SAMPLE_HZ &
+
+		if [ "$#" -gt 0 ]; then
+			# If a command was passed, run it
+			# (used for profiling specific applications)
+			echo "profile.process = $( basename $1 )" >> header
+			$@
+			stop
+		else
+			echo "no command passed, you need to manually stop the service sometime"
+		fi
+	fi
+}
+
+# Wait for the boot process to end.
+wait_boot()
+{
+	trap "" SIGHUP
+
+	# Wait for /proc first - without it we have issues
+	while [ ! -e /proc/cmdline ]; do
+		$USLEEP 5000
+	done
+
+	while true; do
+		if [ -n "$EXIT_PROC" -a -n "$( pidof $EXIT_PROC )" ]; then
+			# give an unambiguous settle afterwards - so we get
+			# more post-login data for slow systems
+			$USLEEP 20000000
+
+			# Write / flush the log files
+			stop
+			return
+		fi
+		$USLEEP 1000000
+	done;
+}
+
+# Extract the log data from the running bootchart collector
+# process (via ptrace) - fun. Store logs into $BOOTLOG_DEST.
+stop()
+{
+    if [ "$UID" != "0" ]; then
+        echo "$0 must run as root."
+        exit 1
+    fi
+
+    if [ ! -e "/lib/bootchart" ]; then
+        ln -s /host/lib/bootchart /lib/bootchart
+    fi
+
+	tmpdir=`mktemp -d /tmp/bootchart.XXXXXXXXXX`
+	if [ "z$tmpdir" = "z" ]; then
+		echo "Failed to generate directory for logging"
+		exit 1
+	fi
+
+	if ! $COLLECTOR_BIN --dump $tmpdir; then
+		echo "Can't extract boot chart from collector"
+		exit 1
+	fi
+
+	cd $tmpdir
+	if [ ! -e proc_stat.log ]; then
+		echo "Can't find bootchart output in $tmpdir - aborting"
+		exit 1
+	fi
+
+	# Archive it all up into the bootchart output
+	# expect dmesg log only if bootchartd was started as an init process
+	if [ -n "$INIT_PROCESS" ] ; then
+		tar -cf "$BOOTLOG_DEST" header dmesg *.log
+	else
+		tar -cf "$BOOTLOG_DEST" header *.log
+	fi
+	gzip "$BOOTLOG_DEST"
+
+	rm -Rf $tmpdir
+
+	# Render the chart if configured (and the renderer is installed)
+	if [ "$AUTO_RENDER" = "yes" -a -x /usr/bin/pybootchartgui ]; then
+		cd $AUTO_RENDER_DIR
+		/usr/bin/pybootchartgui -o "$AUTO_RENDER_DIR"/bootchart.$AUTO_RENDER_FORMAT -f $AUTO_RENDER_FORMAT "$BOOTLOG_DEST"
+	fi
+
+	# execute custom post-collect (and possibly post-render) command (which could get params from the conf file by itself if needed)
+	if [ -x "$CUSTOM_POST_CMD" ]; then
+		"$CUSTOM_POST_CMD"
+	fi
+}
+
+if [ $$ -eq 1 ]; then
+	# Either started by the kernel - in which case, we start the
+	# logger in background and exec init [ re-using this pid (1) ]
+	# Or - started after the initrd has completed, in which case
+	# we try to do nothing much.
+	INIT_PROCESS="yes"
+	echo "Starting bootchart logging"
+
+	init="/sbin/init"
+
+	# Are we running in the initrd ?
+	if [ -x /init -o -x /linuxrc ]; then
+		IN_INITRD="yes"
+		[ -x /linuxrc ] && init="/linuxrc"
+		[ -x /init ] && init="/init"
+		start &
+	else # running inside the main system
+		echo "bootchart: no initrd used; starting"
+		start &
+		wait_boot &
+		# wait a little, until the collector is going, before allowing
+		# the rest of the system to charge ahead, so we catch it
+		$USLEEP 250000
+		echo "bootchart continuing boot"
+		echo "bootchart continuing boot" >> $TMPFS/kmsg
+	fi
+
+	# Optionally, an alternative init(1) process may be specified using
+	# the kernel command line (e.g. "bootchart_init=/sbin/initng")
+	[ -n "$bootchart_init" ] && init="$bootchart_init"
+	for i in $@; do
+		if [ "${i%%=*}" = "bootchart_init" ]; then
+			init="${i#*=}"
+			break
+		fi
+		if [ "${i%%=*}" = "init" ]; then
+			_init=${i#*=}
+			case "$_init" in
+				(*/sbin/*bootchartd*)
+					;;
+				(*)
+					init="$_init"
+					break
+					;;
+			esac
+		fi
+	done
+	export PATH=$OLDPATH
+
+	# switch to - either the initrd's init, or the main system's
+	echo "bootchart starting $init $*"
+	echo "bootchart starting $init $*" >> $TMPFS/kmsg
+
+	exec $init $*
+fi
+
+case "$1" in
+	"start")
+		# Started by the user
+		shift
+		start $@
+		;;
+	"wait")
+		# Wait for boot
+		wait_boot
+		;;
+	"stop")
+		stop
+		;;
+	*)
+		echo "Usage: $0 {wait|start|stop}"
+		;;
+esac
+

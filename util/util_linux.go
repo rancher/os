@@ -15,6 +15,17 @@ import (
 	"github.com/docker/docker/pkg/mount"
 )
 
+const (
+	tmpfsMagic int64 = 0x01021994
+	ramfsMagic int64 = 0x858458f6
+)
+
+func RootFsIsNotReal() bool {
+	var stat syscall.Statfs_t
+	syscall.Statfs("/", &stat)
+	return int64(stat.Type) == tmpfsMagic || int64(stat.Type) == ramfsMagic
+}
+
 func mountProc() error {
 	if _, err := os.Stat("/proc/self/mountinfo"); os.IsNotExist(err) {
 		if _, err := os.Stat("/proc"); os.IsNotExist(err) {

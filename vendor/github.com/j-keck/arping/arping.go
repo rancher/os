@@ -153,6 +153,39 @@ func PingOverIface(dstIP net.IP, iface net.Interface) (net.HardwareAddr, time.Du
 	}
 }
 
+// GratuitousArp sends an gratuitous arp from 'srcIP'
+func GratuitousArp(srcIP net.IP) error {
+	iface, err := findUsableInterfaceForNetwork(srcIP)
+	if err != nil {
+		return err
+	}
+	return GratuitousArpOverIface(srcIP, *iface)
+}
+
+// GratuitousArpOverIfaceByName sends an gratuitous arp over interface name 'ifaceName' from 'srcIP'
+func GratuitousArpOverIfaceByName(srcIP net.IP, ifaceName string) error {
+	iface, err := net.InterfaceByName(ifaceName)
+	if err != nil {
+		return err
+	}
+	return GratuitousArpOverIface(srcIP, *iface)
+}
+
+// GratuitousArpOverIface sends an gratuitous arp over interface 'iface' from 'srcIP'
+func GratuitousArpOverIface(srcIP net.IP, iface net.Interface) error {
+	srcMac := iface.HardwareAddr
+	broadcastMac := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	request := newArpRequest(srcMac, srcIP, broadcastMac, srcIP)
+
+	if err := initialize(iface); err != nil {
+		return err
+	}
+	defer deinitialize()
+	verboseLog.Printf("gratuitous arp over interface: '%s' with address: '%s'\n", iface.Name, srcIP)
+	_, err := send(request)
+	return err
+}
+
 // EnableVerboseLog enables verbose logging on stdout
 func EnableVerboseLog() {
 	verboseLog = log.New(os.Stdout, "", 0)

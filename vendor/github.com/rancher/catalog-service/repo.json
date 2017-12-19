@@ -1,0 +1,12 @@
+{
+  "catalogs": {
+    "library": {
+      "branch": "master",
+      "url": "https://git.rancher.io/rancher-catalog.git"
+    },
+    "community": {
+      "branch": "master",
+      "url": "https://git.rancher.io/community-catalog.git"
+    }
+  }
+}

@@ -3,6 +3,7 @@ package control
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/control/service"
@@ -20,13 +21,22 @@ func Main() {
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
 	app.Before = func(c *cli.Context) error {
-		if os.Geteuid() != 0 {
+		if os.Geteuid() != 0 &&
+			filepath.Base(os.Args[0]) != "host_ros" {
 			log.Fatalf("%s: Need to be root", os.Args[0])
 		}
 		return nil
 	}
 
 	app.Commands = []cli.Command{
+//		{
+//			Name:            "bootstrap",
+//			Hidden:          true,
+//			HideHelp:        true,
+//			SkipFlagParsing: true,
+//			Action:          bootstrapAction,
+//		},
+		runcCommand(),
 		{
 			Name:        "config",
 			ShortName:   "c",

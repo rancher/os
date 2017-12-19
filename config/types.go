@@ -12,20 +12,21 @@ import (
 )
 
 const (
-	OEM              = "/usr/share/ros/oem"
-	DockerBin        = "/usr/bin/docker"
-	DockerDistBin    = "/usr/bin/docker.dist"
-	RosBin           = "/usr/bin/ros"
-	SysInitBin       = "/usr/bin/ros-sysinit"
-	SystemDockerHome = "/var/lib/system-docker"
-	SystemDockerHost = "unix:///var/run/system-docker.sock"
-	DockerHost       = "unix:///var/run/docker.sock"
-	ImagesPath       = "/usr/share/ros"
-	ImagesPattern    = "images*.tar"
-	ModulesArchive   = "/modules.tar"
-	Debug            = false
-	SystemDockerLog  = "/var/log/system-docker.log"
-	SystemDockerBin  = "/usr/bin/system-docker"
+	DefaultContainerdSocket = "/run/containerd/containerd.sock"
+
+	OEM            = "/usr/share/ros/oem"
+	DockerBin      = "/usr/bin/docker"
+	DockerDistBin  = "/usr/bin/docker.dist"
+	RosBin         = "/usr/bin/ros"
+	DockerHost     = "unix:///var/run/docker.sock"
+	ImagesPath     = "/usr/share/ros"
+	ImagesPattern  = "images*.tar"
+	ModulesArchive = "/modules.tar"
+	Debug          = false
+	//	SystemDockerHome = "/var/lib/system-docker"
+	//  SystemDockerHost = "unix:///var/run/system-docker.sock"
+	//	SystemDockerLog  = "/var/log/system-docker.log"
+	//	SystemDockerBin  = "/usr/bin/system-docker"
 
 	HashLabel         = "io.rancher.os.hash"
 	IDLabel           = "io.rancher.os.id"
@@ -108,6 +109,7 @@ type RancherConfig struct {
 	Services            map[string]*composeConfig.ServiceConfigV1 `yaml:"services,omitempty"`
 	BootstrapContainers map[string]*composeConfig.ServiceConfigV1 `yaml:"bootstrap,omitempty"`
 	CloudInitServices   map[string]*composeConfig.ServiceConfigV1 `yaml:"cloud_init_services,omitempty"`
+	RecoveryServices    map[string]*composeConfig.ServiceConfigV1 `yaml:"recovery_services,omitempty"`
 	BootstrapDocker     DockerConfig                              `yaml:"bootstrap_docker,omitempty"`
 	CloudInit           CloudInit                                 `yaml:"cloud_init,omitempty"`
 	Debug               bool                                      `yaml:"debug,omitempty"`

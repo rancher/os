@@ -28,6 +28,8 @@ run: build/initrd/.id .dapper
 docs:
 	./scripts/docs
 
+all: dev build-moby
+
 build-moby:
 	./scripts/build-moby
 

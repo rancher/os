@@ -90,6 +90,7 @@ func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, envir
 				continue
 			}
 
+			log.Infof("SVEN: including %s",  service)
 			if err := LoadService(p, cfg, *useNetwork, service); err != nil {
 				if err != network.ErrNoNetwork {
 					log.Errorf("Failed to load service(%s): %v", service, err)

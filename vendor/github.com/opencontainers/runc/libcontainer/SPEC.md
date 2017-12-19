@@ -71,7 +71,6 @@ that are required for executing a container's process.
 | /dev/tty     | 0666 |  rwm       |
 | /dev/random  | 0666 |  rwm       |
 | /dev/urandom | 0666 |  rwm       |
-| /dev/fuse    | 0666 |  rwm       |
 
 
 **ptmx**
@@ -90,7 +89,7 @@ in tmpfs.
 
 After `/dev/null` has been setup we check for any external links between
 the container's io, STDIN, STDOUT, STDERR.  If the container's io is pointing
-to `/dev/null` outside the container we close and `dup2` the the `/dev/null` 
+to `/dev/null` outside the container we close and `dup2` the `/dev/null` 
 that is local to the container's rootfs.
 
 
@@ -154,6 +153,90 @@ the correct cgroups before the initialization begins.  This is done so
 that no processes or threads escape the cgroups.  This sync is 
 done via a pipe ( specified in the runtime section below ) that the container's
 init process will block waiting for the parent to finish setup.
+
+### IntelRdt
+
+Intel platforms with new Xeon CPU support Intel Resource Director Technology
+(RDT). Cache Allocation Technology (CAT) is a sub-feature of RDT, which
+currently supports L3 cache resource allocation.
+
+This feature provides a way for the software to restrict cache allocation to a
+defined 'subset' of L3 cache which may be overlapping with other 'subsets'.
+The different subsets are identified by class of service (CLOS) and each CLOS
+has a capacity bitmask (CBM).
+
+It can be used to handle L3 cache resource allocation for containers if
+hardware and kernel support Intel RDT/CAT.
+
+In Linux 4.10 kernel or newer, the interface is defined and exposed via
+"resource control" filesystem, which is a "cgroup-like" interface.
+
+Comparing with cgroups, it has similar process management lifecycle and
+interfaces in a container. But unlike cgroups' hierarchy, it has single level
+filesystem layout.
+
+Intel RDT "resource control" filesystem hierarchy:
+```
+mount -t resctrl resctrl /sys/fs/resctrl
+tree /sys/fs/resctrl
+/sys/fs/resctrl/
+|-- info
+|   |-- L3
+|       |-- cbm_mask
+|       |-- min_cbm_bits
+|       |-- num_closids
+|-- cpus
+|-- schemata
+|-- tasks
+|-- <container_id>
+    |-- cpus
+    |-- schemata
+    |-- tasks
+
+```
+
+For runc, we can make use of `tasks` and `schemata` configuration for L3 cache
+resource constraints.
+
+The file `tasks` has a list of tasks that belongs to this group (e.g.,
+<container_id>" group). Tasks can be added to a group by writing the task ID
+to the "tasks" file  (which will automatically remove them from the previous
+group to which they belonged). New tasks created by fork(2) and clone(2) are
+added to the same group as their parent. If a pid is not in any sub group, it
+is in root group.
+
+The file `schemata` has allocation masks/values for L3 cache on each socket,
+which contains L3 cache id and capacity bitmask (CBM).
+```
+	Format: "L3:<cache_id0>=<cbm0>;<cache_id1>=<cbm1>;..."
+```
+For example, on a two-socket machine, L3's schema line could be `L3:0=ff;1=c0`
+Which means L3 cache id 0's CBM is 0xff, and L3 cache id 1's CBM is 0xc0.
+
+The valid L3 cache CBM is a *contiguous bits set* and number of bits that can
+be set is less than the max bit. The max bits in the CBM is varied among
+supported Intel Xeon platforms. In Intel RDT "resource control" filesystem
+layout, the CBM in a group should be a subset of the CBM in root. Kernel will
+check if it is valid when writing. e.g., 0xfffff in root indicates the max bits
+of CBM is 20 bits, which mapping to entire L3 cache capacity. Some valid CBM
+values to set in a group: 0xf, 0xf0, 0x3ff, 0x1f00 and etc.
+
+For more information about Intel RDT/CAT kernel interface:  
+https://www.kernel.org/doc/Documentation/x86/intel_rdt_ui.txt
+
+An example for runc:
+```
+Consider a two-socket machine with two L3 caches where the default CBM is
+0xfffff and the max CBM length is 20 bits. With this configuration, tasks
+inside the container only have access to the "upper" 80% of L3 cache id 0 and
+the "lower" 50% L3 cache id 1:
+
+"linux": {
+	"intelRdt": {
+		"l3CacheSchema": "L3:0=ffff0;1=3ff"
+	}
+}
+```
 
 ### Security 
 
@@ -297,7 +380,7 @@ a container.
 | -------------- | ------------------------------------------------------------------ |
 | Get processes  | Return all the pids for processes running inside a container       | 
 | Get Stats      | Return resource statistics for the container as a whole            |
-| Wait           | Wait waits on the container's init process ( pid 1 )               |
+| Wait           | Waits on the container's init process ( pid 1 )                    |
 | Wait Process   | Wait on any of the container's processes returning the exit status | 
 | Destroy        | Kill the container's init process and remove any filesystem state  |
 | Signal         | Send a signal to the container's init process                      |

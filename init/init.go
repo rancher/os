@@ -10,22 +10,21 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/dfs"
+	"github.com/rancher/os/init/containerd"
+	"github.com/rancher/os/init/runc"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
+	"runtime/debug"
 )
 
 const (
 	state            string = "/state"
 	boot2DockerMagic string = "boot2docker, please format-me"
-
-	tmpfsMagic int64 = 0x01021994
-	ramfsMagic int64 = 0x858458f6
 )
 
 var (
@@ -70,32 +69,14 @@ func loadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	return cfg, nil
 }
 
-func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
-	args := append([]string{config.SysInitBin}, os.Args[1:]...)
-
-	cmd := &exec.Cmd{
-		Path: config.RosBin,
-		Args: args,
-	}
-
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-
-	if err := cmd.Start(); err != nil {
-		return c, err
-	}
-
-	return c, os.Stdin.Close()
-}
-
 func MainInit() {
 	log.InitLogger()
 	// TODO: this breaks and does nothing if the cfg is invalid (or is it due to threading?)
 	defer func() {
 		if r := recover(); r != nil {
+			fmt.Printf("init crashed: %s\n", debug.Stack())
 			fmt.Printf("Starting Recovery console: %v\n", r)
-			recovery(nil)
+			recovery(config.LoadConfig(), false)
 		}
 	}()
 
@@ -150,8 +131,13 @@ func tryMountState(cfg *config.CloudConfig) error {
 	}
 
 	// If we failed to mount lets run bootstrap and try again
-	if err := bootstrap(cfg); err != nil {
-		return err
+	if util.ResolveDevice(cfg.Rancher.State.Dev) != "" && len(cfg.Bootcmd) == 0 {
+		log.Info("NOT Running Bootstrap")
+	} else {
+		log.Info("Running Bootstrap")
+		if err := runc.RunSet(cfg, "bootstrap", util.RootFsIsNotReal()); err != nil {
+			return err
+		}
 	}
 
 	return mountState(cfg)
@@ -180,17 +166,15 @@ func getLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 	launchConfig.DNSConfig.Search = cfg.Rancher.Defaults.Network.DNS.Search
 	launchConfig.Environment = dockerCfg.Environment
 
-	if !cfg.Rancher.Debug {
-		launchConfig.LogFile = config.SystemDockerLog
-	}
+	//	if !cfg.Rancher.Debug {
+	//		launchConfig.LogFile = config.SystemDockerLog
+	//	}
 
 	return &launchConfig, args
 }
 
 func isInitrd() bool {
-	var stat syscall.Statfs_t
-	syscall.Statfs("/", &stat)
-	return int64(stat.Type) == tmpfsMagic || int64(stat.Type) == ramfsMagic
+	return util.RootFsIsNotReal()
 }
 
 func setupSharedRoot(c *config.CloudConfig) (*config.CloudConfig, error) {
@@ -268,12 +252,6 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"load modules", loadModules},
-		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			if cfg.Rancher.Recovery {
-				recovery(nil)
-			}
-			return cfg, nil
-		}},
 		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if dev := util.ResolveDevice("LABEL=B2D_STATE"); dev != "" {
 				boot2DockerEnvironment = true
@@ -340,7 +318,7 @@ func RunInit() error {
 			}
 
 			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
-			if err := runCloudInitServices(cfg); err != nil {
+			if err := runc.RunSet(cfg, "cloud_init_services", util.RootFsIsNotReal()); err != nil {
 				log.Error(err)
 			}
 
@@ -457,26 +435,55 @@ func RunInit() error {
 		}},
 		config.CfgFuncData{"init SELinux", initializeSelinux},
 		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
-		config.CfgFuncData{"sysinit", sysInit},
+		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if cfg.Rancher.Recovery {
+				recovery(cfg, false)
+				pidOne() // need to wait, because the rinc.Run isn't.
+			}
+			return cfg, nil
+		}},
+		config.CfgFuncData{"system containerd", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			//launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
+			//launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
+			//launchConfig.NoLog = true
+
+			//log.Info("Launching System Docker")
+			//_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
+			err := containerd.LaunchDaemon()
+			if err != nil {
+				log.Errorf("Error Launching System Containerd: %s", err)
+				recovery(cfg, false)
+				return cfg, err
+			}
+
+			return cfg, nil
+		}},
+		config.CfgFuncData{"system containers", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			containerd.RunSet(cfg, "services")
+			return cfg, nil
+		}},
+		config.CfgFuncData{"service_include containers", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			// TODO: yeah, atm, there's too much convoluted libcompose stuff
+			for name, start := range cfg.Rancher.ServicesInclude {
+				if start {
+					cmd := exec.Command("ros", "service", "up", name)
+					cmd.Stdout = os.Stdout
+					cmd.Stderr = os.Stderr
+					if err := cmd.Run(); err != nil {
+						log.Errorf("Failed to start service %s, err %v", name, err)
+					}
+				}
+			}
+			return cfg, nil
+		}},
 	}
 
-	cfg, err := config.ChainCfgFuncs(nil, initFuncs)
+	_, err := config.ChainCfgFuncs(nil, initFuncs)
 	if err != nil {
-		recovery(err)
+		log.Errorf("Error starting sysinit: %s", err)
+		// TODO: start recovery only if the console fails to come up? or kill the console and start..
+		// recovery(false)
 	}
-
-	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
-	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
-	//launchConfig.NoLog = true
-
-	log.Info("Launching System Docker")
-	_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
-	if err != nil {
-		log.Errorf("Error Launching System Docker: %s", err)
-		recovery(err)
-		return err
-	}
-	// Code never gets here - rancher.system_docker.exec=true
 
 	return pidOne()
 }

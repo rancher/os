@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"runtime"
 	"syscall"
 	"time"
 )
@@ -78,8 +79,21 @@ func receive() (arpDatagram, time.Time, error) {
 		return arpDatagram{}, time.Now(), err
 	}
 
-	// skip 26 bytes bpf header + 14 bytes ethernet header
-	return parseArpDatagram(buffer[40:n]), time.Now(), nil
+	//
+	// FreeBSD uses a different bpf header (bh_tstamp differ in it's size)
+	// https://www.freebsd.org/cgi/man.cgi?bpf(4)#BPF_HEADER
+	//
+	var bpfHdrLength int
+	if runtime.GOOS == "freebsd" {
+		bpfHdrLength = 26
+	} else {
+		bpfHdrLength = 18
+	}
+
+	// skip bpf header + 14 bytes ethernet header
+	var hdrLength = bpfHdrLength + 14
+
+	return parseArpDatagram(buffer[hdrLength:n]), time.Now(), nil
 }
 
 func deinitialize() error {

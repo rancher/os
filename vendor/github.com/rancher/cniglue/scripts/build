@@ -1,0 +1,9 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+
+cd $(dirname $0)/..
+
+mkdir -p bin
+go build -ldflags "-X main.VERSION=$VERSION -linkmode external -extldflags -static" -o bin/cniglue

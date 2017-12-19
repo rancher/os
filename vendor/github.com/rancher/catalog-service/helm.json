@@ -1,0 +1,8 @@
+{
+  "catalogs": {
+    "helm": {
+      "url": "https://github.com/kubernetes/charts",
+      "kind": "helm"
+    }
+  }
+}

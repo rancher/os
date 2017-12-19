@@ -1,17 +1,17 @@
 // +build linux
 
-package runc
+package main
 
 import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"runtime"
 
-	"github.com/codegangsta/cli"
 	"github.com/opencontainers/runc/libcontainer/configs"
+	"github.com/opencontainers/runc/libcontainer/specconv"
 	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/urfave/cli"
 )
 
 var specCommand = cli.Command{
@@ -42,145 +42,46 @@ command in a new hello-world container named container1:
     tar -C rootfs -xf hello-world.tar
     runc spec
     sed -i 's;"sh";"/hello";' ` + specConfig + `
-    runc start container1
+    runc run container1
 
-In the start command above, "container1" is the name for the instance of the
+In the run command above, "container1" is the name for the instance of the
 container that you are starting. The name you provide for the container instance
 must be unique on your host.
+
+An alternative for generating a customized spec config is to use "oci-runtime-tool", the
+sub-command "oci-runtime-tool generate" has lots of options that can be used to do any
+customizations as you want, see runtime-tools (https://github.com/opencontainers/runtime-tools)
+to get more information.
 
 When starting a container through runc, runc needs root privilege. If not
 already running as root, you can use sudo to give runc root privilege. For
 example: "sudo runc start container1" will give runc root privilege to start the
-container on your host.`,
+container on your host.
+
+Alternatively, you can start a rootless container, which has the ability to run
+without root privileges. For this to work, the specification file needs to be
+adjusted accordingly. You can pass the parameter --rootless to this command to
+generate a proper rootless spec file.`,
 	Flags: []cli.Flag{
 		cli.StringFlag{
 			Name:  "bundle, b",
 			Value: "",
 			Usage: "path to the root of the bundle directory",
 		},
+		cli.BoolFlag{
+			Name:  "rootless",
+			Usage: "generate a configuration for a rootless container",
+		},
 	},
-	Action: func(context *cli.Context) {
-		spec := specs.Spec{
-			Version: specs.Version,
-			Platform: specs.Platform{
-				OS:   runtime.GOOS,
-				Arch: runtime.GOARCH,
-			},
-			Root: specs.Root{
-				Path:     "rootfs",
-				Readonly: true,
-			},
-			Process: specs.Process{
-				Terminal: true,
-				User:     specs.User{},
-				Args: []string{
-					"sh",
-				},
-				Env: []string{
-					"PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
-					"TERM=xterm",
-				},
-				Cwd:             "/",
-				NoNewPrivileges: true,
-				Capabilities: []string{
-					"CAP_AUDIT_WRITE",
-					"CAP_KILL",
-					"CAP_NET_BIND_SERVICE",
-				},
-				Rlimits: []specs.Rlimit{
-					{
-						Type: "RLIMIT_NOFILE",
-						Hard: uint64(1024),
-						Soft: uint64(1024),
-					},
-				},
-			},
-			Hostname: "runc",
-			Mounts: []specs.Mount{
-				{
-					Destination: "/proc",
-					Type:        "proc",
-					Source:      "proc",
-					Options:     nil,
-				},
-				{
-					Destination: "/dev",
-					Type:        "tmpfs",
-					Source:      "tmpfs",
-					Options:     []string{"nosuid", "strictatime", "mode=755", "size=65536k"},
-				},
-				{
-					Destination: "/dev/pts",
-					Type:        "devpts",
-					Source:      "devpts",
-					Options:     []string{"nosuid", "noexec", "newinstance", "ptmxmode=0666", "mode=0620", "gid=5"},
-				},
-				{
-					Destination: "/dev/shm",
-					Type:        "tmpfs",
-					Source:      "shm",
-					Options:     []string{"nosuid", "noexec", "nodev", "mode=1777", "size=65536k"},
-				},
-				{
-					Destination: "/dev/mqueue",
-					Type:        "mqueue",
-					Source:      "mqueue",
-					Options:     []string{"nosuid", "noexec", "nodev"},
-				},
-				{
-					Destination: "/sys",
-					Type:        "sysfs",
-					Source:      "sysfs",
-					Options:     []string{"nosuid", "noexec", "nodev", "ro"},
-				},
-				{
-					Destination: "/sys/fs/cgroup",
-					Type:        "cgroup",
-					Source:      "cgroup",
-					Options:     []string{"nosuid", "noexec", "nodev", "relatime", "ro"},
-				},
-			},
-			Linux: specs.Linux{
-				MaskedPaths: []string{
-					"/proc/kcore",
-					"/proc/latency_stats",
-					"/proc/timer_stats",
-					"/proc/sched_debug",
-				},
-				ReadonlyPaths: []string{
-					"/proc/asound",
-					"/proc/bus",
-					"/proc/fs",
-					"/proc/irq",
-					"/proc/sys",
-					"/proc/sysrq-trigger",
-				},
-				Resources: &specs.Resources{
-					Devices: []specs.DeviceCgroup{
-						{
-							Allow:  false,
-							Access: sPtr("rwm"),
-						},
-					},
-				},
-				Namespaces: []specs.Namespace{
-					{
-						Type: "pid",
-					},
-					{
-						Type: "network",
-					},
-					{
-						Type: "ipc",
-					},
-					{
-						Type: "uts",
-					},
-					{
-						Type: "mount",
-					},
-				},
-			},
+	Action: func(context *cli.Context) error {
+		if err := checkArgs(context, 0, exactArgs); err != nil {
+			return err
+		}
+		spec := specconv.Example()
+
+		rootless := context.Bool("rootless")
+		if rootless {
+			specconv.ToRootless(spec)
 		}
 
 		checkNoFile := func(name string) error {
@@ -196,30 +97,26 @@ container on your host.`,
 		bundle := context.String("bundle")
 		if bundle != "" {
 			if err := os.Chdir(bundle); err != nil {
-				fatal(err)
+				return err
 			}
 		}
 		if err := checkNoFile(specConfig); err != nil {
-			fatal(err)
+			return err
 		}
-		data, err := json.MarshalIndent(&spec, "", "\t")
+		data, err := json.MarshalIndent(spec, "", "\t")
 		if err != nil {
-			fatal(err)
+			return err
 		}
 		if err := ioutil.WriteFile(specConfig, data, 0666); err != nil {
-			fatal(err)
+			return err
 		}
+		return nil
 	},
 }
 
-func sPtr(s string) *string      { return &s }
-func rPtr(r rune) *rune          { return &r }
-func iPtr(i int64) *int64        { return &i }
-func u32Ptr(i int64) *uint32     { u := uint32(i); return &u }
-func fmPtr(i int64) *os.FileMode { fm := os.FileMode(i); return &fm }
+func sPtr(s string) *string { return &s }
 
 // loadSpec loads the specification from the provided path.
-// If the path is empty then the default path will be "config.json"
 func loadSpec(cPath string) (spec *specs.Spec, err error) {
 	cf, err := os.Open(cPath)
 	if err != nil {
@@ -233,17 +130,17 @@ func loadSpec(cPath string) (spec *specs.Spec, err error) {
 	if err = json.NewDecoder(cf).Decode(&spec); err != nil {
 		return nil, err
 	}
-	return spec, validateProcessSpec(&spec.Process)
+	return spec, validateProcessSpec(spec.Process)
 }
 
-func createLibContainerRlimit(rlimit specs.Rlimit) (configs.Rlimit, error) {
+func createLibContainerRlimit(rlimit specs.POSIXRlimit) (configs.Rlimit, error) {
 	rl, err := strToRlimit(rlimit.Type)
 	if err != nil {
 		return configs.Rlimit{}, err
 	}
 	return configs.Rlimit{
 		Type: rl,
-		Hard: uint64(rlimit.Hard),
-		Soft: uint64(rlimit.Soft),
+		Hard: rlimit.Hard,
+		Soft: rlimit.Soft,
 	}, nil
 }

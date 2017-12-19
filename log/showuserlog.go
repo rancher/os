@@ -5,8 +5,8 @@ import (
 	"log/syslog"
 	"os"
 
-	"github.com/Sirupsen/logrus"
-	logrus_syslog "github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/sirupsen/logrus"
+	logrus_syslog "github.com/sirupsen/logrus/hooks/syslog"
 )
 
 // ShowuserlogHook stores all levels of logrus entries in memory until its told the RancherOS logging system is ready

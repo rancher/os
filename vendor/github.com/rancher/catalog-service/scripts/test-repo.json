@@ -1,0 +1,10 @@
+{
+  "catalogs": {
+    "orig": {
+      "url": "https://github.com/rancher/test-catalog"
+    },
+    "updated": {
+      "url": "/tmp/test-catalog"
+    }
+  }
+}

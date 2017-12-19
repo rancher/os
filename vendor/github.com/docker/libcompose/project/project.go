@@ -194,6 +194,11 @@ func (p *Project) loadWrappers(wrappers map[string]*serviceWrapper, servicesToCo
 		if err != nil {
 			return err
 		}
+		// TODO: lets skip system docker services atm
+		if wrapper.service.Config().Labels["io.rancher.os.scope"] == "system" {
+			continue
+		}
+
 		wrappers[name] = wrapper
 	}
 
@@ -536,6 +541,10 @@ func (p *Project) startService(wrappers map[string]*serviceWrapper, history []st
 	if launched[wrapper.name] {
 		return nil
 	}
+	// lets skip system docker services atm
+	if wrapper.service.Config().Labels["io.rancher.os.scope"] == "system" {
+		return nil
+	}
 
 	launched[wrapper.name] = true
 	history = append(history, wrapper.name)
@@ -549,20 +558,20 @@ func (p *Project) startService(wrappers map[string]*serviceWrapper, history []st
 
 		if utils.Contains(history, dep.Target) {
 			cycle := strings.Join(append(history, dep.Target), "->")
-			if dep.Optional {
-				log.Debugf("Ignoring cycle for %s", cycle)
-				wrapper.IgnoreDep(dep.Target)
-				if cycleAction != nil {
-					var err error
-					log.Debugf("Running cycle action for %s", cycle)
-					err = cycleAction(target.service)
-					if err != nil {
-						return err
-					}
+			//if dep.Optional {
+			log.Debugf("Ignoring cycle for %s", cycle)
+			wrapper.IgnoreDep(dep.Target)
+			if cycleAction != nil {
+				var err error
+				log.Debugf("Running cycle action for %s", cycle)
+				err = cycleAction(target.service)
+				if err != nil {
+					return err
 				}
-			} else {
-				return fmt.Errorf("Cycle detected in path %s", cycle)
 			}
+			//} else {
+			//	return fmt.Errorf("Cycle detected in path %s", cycle)
+			//}
 
 			continue
 		}
@@ -624,6 +633,7 @@ func (p *Project) traverse(start bool, selected map[string]bool, wrappers map[st
 		if !isSelected(wrapper, selected) {
 			continue
 		}
+		log.Errorf("Waiting for: %s", wrapper.name)
 		if err := wrapper.Wait(); err == ErrRestart {
 			restart = true
 		} else if err != nil {

@@ -2,6 +2,7 @@ package docker
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sync"
 
 	"golang.org/x/net/context"
@@ -15,40 +16,40 @@ import (
 )
 
 type ClientFactory struct {
-	userClient   dockerclient.APIClient
-	systemClient dockerclient.APIClient
-	userOnce     sync.Once
-	systemOnce   sync.Once
+	userClient dockerclient.APIClient
+	//systemClient dockerclient.APIClient
+	userOnce sync.Once
+	//systemOnce   sync.Once
 }
 
 func NewClientFactory(opts composeClient.Options) (project.ClientFactory, error) {
 	userOpts := opts
-	systemOpts := opts
+	//systemOpts := opts
 
 	userOpts.Host = config.DockerHost
-	systemOpts.Host = config.SystemDockerHost
+	//systemOpts.Host = config.SystemDockerHost
 
 	userClient, err := composeClient.Create(userOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	systemClient, err := composeClient.Create(systemOpts)
-	if err != nil {
-		return nil, err
-	}
+	//systemClient, err := composeClient.Create(systemOpts)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	return &ClientFactory{
-		userClient:   userClient,
-		systemClient: systemClient,
+		userClient: userClient,
+		//systemClient: systemClient,
 	}, nil
 }
 
 func (c *ClientFactory) Create(service project.Service) dockerclient.APIClient {
-	if IsSystemContainer(service.Config()) {
-		waitFor(&c.systemOnce, c.systemClient, config.SystemDockerHost)
-		return c.systemClient
-	}
+	//if IsSystemContainer(service.Config()) {
+	//	waitFor(&c.systemOnce, c.systemClient, config.SystemDockerHost)
+	//	return c.systemClient
+	//}
 
 	waitFor(&c.userOnce, c.userClient, config.DockerHost)
 	return c.userClient
@@ -82,6 +83,8 @@ func ClientOK(endpoint string, test func() bool) error {
 		}
 		retry = true
 		log.Infof("Waiting for Docker at %s", endpoint)
+		// TODO: system-docker is going away - removeme / replace with runc/containerd
+		log.Fatalf("crash!\n%v", string(debug.Stack()))
 	}
 
 	if err != nil {

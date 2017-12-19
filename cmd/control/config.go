@@ -13,6 +13,8 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/log"
 
+	"github.com/docker/distribution/reference"
+
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/util"
@@ -34,6 +36,17 @@ func configSubcommands() []cli.Command {
 			Name:   "images",
 			Usage:  "List Docker images for a configuration from a file",
 			Action: runImages,
+			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "input, i",
+					Usage: "File from which to read config",
+				},
+			},
+		},
+		{
+			Name:   "linuxkit",
+			Usage:  "List LinuxKit services yml from configuration  file",
+			Action: linuxkitServices,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "input, i",
@@ -124,6 +137,40 @@ func runImages(c *cli.Context) error {
 	}
 	images := imagesFromConfig(cfg)
 	fmt.Println(strings.Join(images, " "))
+	return nil
+}
+
+// TODO: write out the entire rancheros.yml moby.yml ??
+func linuxkitServices(c *cli.Context) error {
+	configFile := c.String("input")
+	cfg, err := config.ReadConfig(nil, false, configFile)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err, "file": configFile}).Fatalf("Could not read config from file")
+	}
+
+	servicesMap := make(map[string]string)
+
+	// ATM, I've hardcoded the onboot containers
+	//for _, service := range cfg.Rancher.BootstrapContainers {
+	//	imagesMap[service.Image] = 1
+	//}
+	for _, service := range cfg.Rancher.Services {
+		image, err := reference.ParseNamed(service.Image)
+		if err != nil {
+			return fmt.Errorf("failed to parse image name from %s: %s", service.Image, err)
+		}
+		n := strings.Split(image.Name(), "/")
+		imageName := n[len(n)-1]
+		servicesMap[imageName] = service.Image
+	}
+
+	// this is only a list of images, not the actual RancherOS services
+	// those come from the os-config file.
+	for name, image := range servicesMap {
+		fmt.Printf("  - name: %s\n", name)
+		fmt.Printf("    image: %s\n", image)
+	}
+
 	return nil
 }
 

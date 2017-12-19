@@ -1,0 +1,7 @@
+#linux specific settings
+COMMANDS += containerd-shim
+
+# amd64 supports go test -race
+ifeq ("amd64", $(GOARCH))
+	TESTFLAGS_RACE= -race
+endif
