@@ -12,12 +12,12 @@ RUN mkdir -p /source/assets
 #RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz > /source/assets/rootfs_arm64.tar.gz
 COPY rootfs_arm64.tar.gz /source/assets/rootfs_arm64.tar.gz
 
-ENV URL=https://github.com/SvenDowideit/rpi64-kernel/releases/download
-ENV VER=v20170916-110614
+ENV URL=https://github.com/DieterReuter/rpi64-kernel/releases/download
+ENV VER=v20171216-172054
 
-RUN curl -fL ${URL}/${VER}/4.9.50-bee42-v8.tar.gz > /source/assets/kernel.tar.gz
+RUN curl -fL ${URL}/${VER}/4.9.69-hypriotos-v8.tar.gz > /source/assets/kernel.tar.gz
 RUN curl -fL ${URL}/${VER}/bootfiles.tar.gz > /source/assets/bootfiles.tar.gz
-RUN curl -fL https://github.com/SvenDowideit/rpi-bootloader/releases/download/v20170916-104016/rpi-bootloader.tar.gz > /source/assets/rpi-bootfiles.tar.gz
+RUN curl -fL https://github.com/DieterReuter/rpi-bootloader/releases/download/v20171216-171651/rpi-bootloader.tar.gz > /source/assets/rpi-bootfiles.tar.gz
 
 #ENV RPI_URL=https://github.com/raspberrypi/firmware/raw/master/boot
 #RUN curl -fL ${RPI_URL}/bootcode.bin > /source/assets/bootcode.bin
