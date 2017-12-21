@@ -26,30 +26,24 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 #### Latest Links
 
 * https://releases.rancher.com/os/latest/initrd
-* https://releases.rancher.com/os/latest/initrd-v1.1.1
 * https://releases.rancher.com/os/latest/iso-checksums.txt
 * https://releases.rancher.com/os/latest/rancheros-openstack.img
 * https://releases.rancher.com/os/latest/rancheros-digitalocean.img
 * https://releases.rancher.com/os/latest/rancheros.ipxe
-* https://releases.rancher.com/os/latest/rancheros.iso
-* https://releases.rancher.com/os/latest/rancheros-v1.1.1.tar.gz
+* https://releases.rancher.com/os/latest/rancheros-gce.tar.gz
 * https://releases.rancher.com/os/latest/rootfs.tar.gz
 * https://releases.rancher.com/os/latest/vmlinuz
-* https://releases.rancher.com/os/latest/vmlinuz-4.9.67-rancher
 
 #### v1.1.1 Links
 
 * https://releases.rancher.com/os/v1.1.1/initrd
-* https://releases.rancher.com/os/v1.1.1/initrd-v1.1.1
 * https://releases.rancher.com/os/v1.1.1/iso-checksums.txt
 * https://releases.rancher.com/os/v1.1.1/rancheros-openstack.img
 * https://releases.rancher.com/os/v1.1.1/rancheros-digitalocean.img
 * https://releases.rancher.com/os/v1.1.1/rancheros.ipxe
-* https://releases.rancher.com/os/v1.1.1/rancheros.iso
-* https://releases.rancher.com/os/v1.1.1/rancheros-v1.1.1.tar.gz
+* https://releases.rancher.com/os/v1.1.1/rancheros-gce.tar.gz
 * https://releases.rancher.com/os/v1.1.1/rootfs.tar.gz
 * https://releases.rancher.com/os/v1.1.1/vmlinuz
-* https://releases.rancher.com/os/v1.1.1/vmlinuz-4.9.67-rancher
 
 **Note**: you can use `http` instead of `https` in the above URLs, e.g. for iPXE.
 
@@ -82,7 +76,7 @@ Additionally, images are available with support for Amazon EC2 Container Service
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS.
 
-[Download Image](https://github.com/rancher/os/releases/download/v1.1.1/rancheros-v1.1.1.tar.gz)
+[Download Image](https://releases.rancher.com/os/v1.1.1/rancheros-gce.tar.gz)
 
 Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/).
 
