@@ -91,12 +91,12 @@ Adding more than one host label requires joining the additional host labels with
 rancher:
   services:
     rancher-agent1:
-    image: rancher/agent:v0.8.2
-    command: http://<rancher-server-ip>:8080/v1/projects/1a5/scripts/<registrationToken>
-    privileged: true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-    CATTLE_HOST_LABELS: foo=bar&hello=world
+      image: rancher/agent:v0.8.2
+      command: http://<rancher-server-ip>:8080/v1/projects/1a5/scripts/<registrationToken>
+      privileged: true
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      environment:
+      CATTLE_HOST_LABELS: foo=bar&hello=world
 ```
 
