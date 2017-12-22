@@ -21,3 +21,5 @@ When we pass the cloud-config file during the `ros install` command, it will all
 ```
 $ ssh -i /path/to/private/key rancher@<ip-address>
 ```
+
+Please note that OpenSSH 7.0 and greater similarly disable the ssh-dss (DSA) public key algorithm. It too is weak and we recommend against its use.
