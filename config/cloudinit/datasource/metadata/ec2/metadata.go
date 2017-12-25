@@ -30,7 +30,7 @@ import (
 const (
 	DefaultAddress = "http://169.254.169.254/"
 	apiVersion     = "latest/"
-	userdataPath   = apiVersion + "user-data/"
+	userdataPath   = apiVersion + "user-data"
 	metadataPath   = apiVersion + "meta-data/"
 )
 
