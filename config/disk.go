@@ -205,6 +205,11 @@ func mergeMetadata(rawCfg map[interface{}]interface{}, md datasource.Metadata) m
 
 	out["ssh_authorized_keys"] = finalKeys
 
+	rancherOut, _ := out["rancher"].(map[interface{}]interface{})
+	if _, ok := rancherOut["resize_device"]; md.RootDisk != "" && !ok {
+		rancherOut["resize_device"] = md.RootDisk
+	}
+
 	return out
 }
 

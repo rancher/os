@@ -67,6 +67,7 @@ func TestFetchMetadata(t *testing.T) {
 				PrivateIPv4:   net.ParseIP("1.2.3.4"),
 				PublicIPv4:    net.ParseIP("5.6.7.8"),
 				SSHPublicKeys: map[string]string{"test1": "key"},
+				RootDisk:      "/dev/xvda",
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
 					/*			"eth0": netconf.InterfaceConfig{
@@ -89,12 +90,14 @@ func TestFetchMetadata(t *testing.T) {
 				"/2009-04-04/meta-data/public-keys":               "0=test1\n",
 				"/2009-04-04/meta-data/public-keys/0":             "openssh-key",
 				"/2009-04-04/meta-data/public-keys/0/openssh-key": "key",
+				"/2009-04-04/meta-data/instance-type":             "m5.large",
 			},
 			expect: datasource.Metadata{
 				Hostname:      "host",
 				PrivateIPv4:   net.ParseIP("21.2.3.4"),
 				PublicIPv4:    net.ParseIP("25.6.7.8"),
 				SSHPublicKeys: map[string]string{"test1": "key"},
+				RootDisk:      "/dev/nvme0n1",
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
 					/*						"eth0": netconf.InterfaceConfig{

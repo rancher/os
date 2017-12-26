@@ -32,6 +32,9 @@ const (
 	apiVersion     = "latest/"
 	userdataPath   = apiVersion + "user-data"
 	metadataPath   = apiVersion + "meta-data/"
+
+	defaultXVRootDisk   = "/dev/xvda"
+	defaultNVMeRootDisk = "/dev/nvme0n1"
 )
 
 type MetadataService struct {
@@ -135,6 +138,17 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 				metadata.NetworkConfig.Interfaces["eth"+deviceNumber] = network
 			}
 		}
+	}
+
+	// With C5 and M5 instances, EBS volumes are exposed as NVMe block devices.
+	// http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
+	metadata.RootDisk = defaultXVRootDisk
+	if instanceType, err := ms.FetchAttribute("instance-type"); err == nil {
+		if strings.HasPrefix(instanceType, "m5") || strings.HasPrefix(instanceType, "c5") {
+			metadata.RootDisk = defaultNVMeRootDisk
+		}
+	} else if _, ok := err.(pkg.ErrNotFound); !ok {
+		return metadata, err
 	}
 
 	return metadata, nil
