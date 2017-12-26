@@ -184,7 +184,11 @@ func resizeDevice(cfg *rancherConfig.CloudConfig) error {
 		return err
 	}
 
-	cmd = exec.Command("resize2fs", fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice))
+	targetPartition := fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice)
+	if strings.Contains(cfg.Rancher.ResizeDevice, "nvme") {
+		targetPartition = fmt.Sprintf("%sp1", cfg.Rancher.ResizeDevice)
+	}
+	cmd = exec.Command("resize2fs", targetPartition)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
