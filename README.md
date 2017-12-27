@@ -12,7 +12,7 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ![How it works](docs/rancheros.png "How it works")
 
-## Latest Release
+## Stable Release
 
 **v1.1.1 - Docker 17.03.2-ce - Linux 4.9.67**
 
@@ -96,7 +96,7 @@ Please submit any **Rancher** bugs, issues, and feature requests to [rancher/ran
 
 ## License
 
-Copyright (c) 2014-2017 [Rancher Labs, Inc.](http://rancher.com)
+Copyright (c) 2014-2018 [Rancher Labs, Inc.](http://rancher.com)
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
