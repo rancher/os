@@ -77,7 +77,7 @@ done
 echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/release.log --name release.log" >> dist/publish.sh
 
 for extra_file in rancheros-openstack.img rancheros-digitalocean.img; do
-    echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/${extra_file} --name ${extra_file}" >> dist/publish.sh
+    echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${extra_file} --name ${extra_file}" >> dist/publish.sh
     echo "gsutil cp dist/artifacts/${extra_file} gs://releases.rancher.com/os/latest/${extra_file}" >> ./dist/publish_gss_latest.sh
     echo "gsutil cp dist/artifacts/${extra_file} gs://releases.rancher.com/os/${VERSION}/${extra_file}" >> ./dist/publish_gss_${VERSION}.sh
 done
