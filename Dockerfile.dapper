@@ -138,7 +138,6 @@ RUN echo "... Downloading  ${!KERNEL_URL}"; \
 RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
 
 # Install Go
-COPY assets/go-dnsclient.patch ${DAPPER_SOURCE}
 RUN ln -sf go-6 /usr/bin/go && \
     curl -sfL https://storage.googleapis.com/golang/go${GO_VERSION}.src.tar.gz | tar -xzf - -C /usr/local && \
     cd /usr/local/go/src && \
