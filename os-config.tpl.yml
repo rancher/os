@@ -103,6 +103,7 @@ rancher:
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
+        io.docker.compose.rebuild: always
       log_driver: json-file
       net: none
       privileged: true
