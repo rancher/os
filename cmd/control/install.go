@@ -158,8 +158,14 @@ func installAction(c *cli.Context) error {
 	} else {
 		os.MkdirAll("/opt", 0755)
 		uc := "/opt/user_config.yml"
-		if err := util.FileCopy(cloudConfig, uc); err != nil {
-			log.WithFields(log.Fields{"cloudConfig": cloudConfig, "error": err}).Fatal("Failed to copy cloud-config")
+		if strings.HasPrefix(cloudConfig, "http://") || strings.HasPrefix(cloudConfig, "https://") {
+			if err := util.HTTPDownloadToFile(cloudConfig, uc); err != nil {
+				log.WithFields(log.Fields{"cloudConfig": cloudConfig, "error": err}).Fatal("Failed to http get cloud-config")
+			}
+		} else {
+			if err := util.FileCopy(cloudConfig, uc); err != nil {
+				log.WithFields(log.Fields{"cloudConfig": cloudConfig, "error": err}).Fatal("Failed to copy cloud-config")
+			}
 		}
 		cloudConfig = uc
 	}
