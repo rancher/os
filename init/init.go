@@ -362,9 +362,11 @@ func RunInit() error {
 			bootLog := "/var/log/"
 			if files, err := ioutil.ReadDir(bootLog); err == nil {
 				for _, file := range files {
-					filePath := filepath.Join(bootLog, file.Name())
-					filesToCopy = append(filesToCopy, filePath)
-					log.Debugf("Swizzle: Found %s to save", filePath)
+					if !file.IsDir() {
+						filePath := filepath.Join(bootLog, file.Name())
+						filesToCopy = append(filesToCopy, filePath)
+						log.Debugf("Swizzle: Found %s to save", filePath)
+					}
 				}
 			}
 			bootLog = "/var/log/boot/"
