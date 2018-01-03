@@ -334,9 +334,10 @@ func RunInit() error {
 			if hypervisor == "vmware" {
 				// add vmware to the end - we don't want to over-ride an choices the user has made
 				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
-				if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
-					log.Error(err)
-				}
+			}
+
+			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
+				log.Error(err)
 			}
 
 			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
