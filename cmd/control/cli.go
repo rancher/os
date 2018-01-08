@@ -12,6 +12,11 @@ import (
 
 func Main() {
 	log.InitLogger()
+	cli.VersionPrinter = func(c *cli.Context) {
+		cfg := config.LoadConfig()
+		runningName := cfg.Rancher.Upgrade.Image + ":" + config.Version
+		fmt.Fprintf(c.App.Writer, "version %s from os image %s\n", c.App.Version, runningName)
+	}
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
