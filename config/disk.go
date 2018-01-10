@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -122,6 +124,30 @@ func SaveInitCmdline(cmdLineArgs string) {
 
 	if err := WriteToFile(newCfg, CloudConfigInitFile); err != nil {
 		log.Errorf("Failed to write init-cmdline config: %s", err)
+	}
+}
+
+func SaveCNISubnet(subnet, filename string) {
+	if _, _, err := net.ParseCIDR(subnet); err != nil {
+		log.Errorf("Failed to parse system-docker subnet from cmdline: %v", err)
+	}
+	rBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Errorf("Failed to read from %s: %v", filename, err)
+	}
+	var data map[string]interface{}
+	if err = json.Unmarshal(rBytes, &data); err != nil {
+		log.Errorf("Failed to pasre json: %v", err)
+	}
+	ipam := data["ipam"].(map[string]interface{})
+	ipam["subnet"] = subnet
+	wBytes, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		log.Errorf("Failed to convert to bytes: %v", err)
+	}
+	log.Debugf("New cni bridge conf: %s", wBytes)
+	if err = ioutil.WriteFile(filename, wBytes, 0644); err != nil {
+		log.Errorf("Failed to write cni bridge file %s: %v", filename, err)
 	}
 }
 
