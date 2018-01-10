@@ -14,6 +14,7 @@ import (
 
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
@@ -427,6 +428,12 @@ func RunInit() error {
 			}
 			log.FsReady()
 			log.Debugf("WARNING: switchroot and mount OEM2 phases not written to log file")
+
+			// update docker-sys bridge setting
+			if dockerSysSubnet := cmdline.GetCmdline(config.RKPDockerSysBridgeSubnet); dockerSysSubnet != "" {
+				val := dockerSysSubnet.(string)
+				config.SaveCNISubnet(val, config.CNIBridgeConfigFile)
+			}
 
 			return cfg, nil
 		}},
