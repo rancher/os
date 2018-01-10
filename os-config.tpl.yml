@@ -255,7 +255,7 @@ rancher:
       - command-volumes
       - system-volumes
     system-cron:
-      image: rancher/container-crontab:v0.1.0
+      image: rancher/container-crontab:v0.3.0
       labels:
         io.rancher.os.scope: system
       uts: host
