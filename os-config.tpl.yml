@@ -7,10 +7,10 @@ rancher:
     hostname: {{.HOSTNAME_DEFAULT}}
     {{if eq "amd64" .ARCH -}}
     docker:
-      engine: docker-17.06.2-ce
+      engine: docker-17.09.1-ce
     {{else -}}
     docker:
-      engine: docker-17.03.1-ce
+      engine: docker-17.09.1-ce
     {{end -}}
     network:
       dns:
@@ -375,9 +375,9 @@ rancher:
     image: {{.OS_REPO}}/os
   docker:
     {{if eq "amd64" .ARCH -}}
-    engine: docker-17.06.2-ce
+    engine: docker-17.09.1-ce
     {{else -}}
-    engine: docker-17.03.1-ce
+    engine: docker-17.09.1-ce
     {{end -}}
     storage_driver: overlay
     group: docker
