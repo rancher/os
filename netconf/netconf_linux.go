@@ -177,7 +177,10 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 
 	//apply network config
 	for _, link := range links {
-		applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
+		linkName := link.Attrs().Name
+		if linkName != "lo" {
+			applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
+		}
 	}
 	wg.Wait()
 
@@ -186,25 +189,26 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 	dnsSet := false
 	for _, link := range links {
 		linkName := link.Attrs().Name
-		log.Infof("dns testing %s", linkName)
-		lease := getDhcpLease(linkName)
-		if _, ok := lease["domain_name_servers"]; ok {
-			log.Infof("dns was dhcp set for %s", linkName)
-			dnsSet = true
+		if linkName != "lo" {
+			log.Infof("dns testing %s", linkName)
+			lease := getDhcpLease(linkName)
+			if _, ok := lease["domain_name_servers"]; ok {
+				log.Infof("dns was dhcp set for %s", linkName)
+				dnsSet = true
+			}
 		}
 	}
 
-	return dnsSet, err
+	return dnsSet, nil
 }
 
 func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg *sync.WaitGroup, userSetHostname, userSetDNS bool) {
-	log.Debugf("applyOuter(%V, %v)", userSetHostname, userSetDNS)
+	linkName := link.Attrs().Name
+	log.Debugf("applyOuter(%v, %v), link: %s", userSetHostname, userSetDNS, linkName)
 	match, ok := findMatch(link, netCfg)
 	if !ok {
 		return
 	}
-
-	linkName := link.Attrs().Name
 
 	log.Debugf("Config(%s): %#v", linkName, match)
 	runCmds(match.PreUp, linkName)
@@ -215,9 +219,7 @@ func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg *sync.WaitGroup, us
 			log.Errorf("Failed to apply settings to %s : %v", linkName, err)
 		}
 	}
-	if linkName == "lo" {
-		return
-	}
+
 	if !match.DHCP && !hasDhcp(linkName) {
 		log.Debugf("Skipping(%s): DHCP=false && no DHCP lease yet", linkName)
 		return
@@ -257,8 +259,10 @@ func getDhcpLeaseString(iface string) []byte {
 	cmd := exec.Command("dhcpcd", "-U", iface)
 	//cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
+	log.Debugf("Running dhcpcd -U %s, output: %s", iface, string(out))
 	if err != nil {
-		log.Error(err)
+		// dhcpcd works fine, but gets an error: exit status 1
+		log.Warnf("Got error with dhcpcd -U %s: %v", iface, err)
 	}
 	return out
 }
@@ -300,7 +304,7 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, se
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Error(err)
+		log.Errorf("Failed to run dhcpcd for %s: %v", iface, err)
 	}
 }
 
