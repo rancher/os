@@ -6,11 +6,12 @@ import (
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
 
+	"io/ioutil"
+
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/hostname"
 	"github.com/rancher/os/netconf"
-	"io/ioutil"
 )
 
 func Main() {
@@ -37,13 +38,13 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	userSetDNS := len(cfg.Rancher.Network.DNS.Nameservers) > 0 || len(cfg.Rancher.Network.DNS.Search) > 0
 
 	if err := hostname.SetHostnameFromCloudConfig(cfg); err != nil {
-		log.Error(err)
+		log.Errorf("Failed to set hostname from cloud config: %v", err)
 	}
 
 	userSetHostname := cfg.Hostname != ""
 	dhcpSetDNS, err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network, userSetHostname, userSetDNS)
 	if err != nil {
-		log.Error(err)
+		log.Errorf("Failed to apply network configs(by netconf): %v", err)
 	}
 
 	if dhcpSetDNS {
@@ -57,12 +58,12 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 			cfg.Rancher.Defaults.Network.DNS.Nameservers,
 			cfg.Rancher.Defaults.Network.DNS.Search,
 			nil); err != nil {
-			log.Error(err)
+			log.Errorf("Failed to write resolv.conf (!userSetDNS and !dhcpSetDNS): %v", err)
 		}
 	}
 	if userSetDNS {
 		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search, nil); err != nil {
-			log.Error(err)
+			log.Errorf("Failed to write resolv.conf (userSetDNS): %v", err)
 		} else {
 			log.Infof("writing to /etc/resolv.conf: nameservers: %v, search: %v", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search)
 		}
@@ -73,6 +74,6 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 
 	log.Infof("Apply Network Config SyncHostname")
 	if err := hostname.SyncHostname(); err != nil {
-		log.Error(err)
+		log.Errorf("Failed to sync hostname: %v", err)
 	}
 }
