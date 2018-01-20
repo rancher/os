@@ -256,20 +256,21 @@ func getDhcpLease(iface string) (lease map[string]string) {
 }
 
 func getDhcpLeaseString(iface string) []byte {
-	cmd := exec.Command("dhcpcd", "-U", iface)
+	args := defaultDhcpArgs
+	args = append(args, "-U", iface)
+	cmd := exec.Command(args[0], args[1:]...)
 	//cmd.Stderr = os.Stderr
 	out, err := cmd.Output()
-	log.Debugf("Running dhcpcd -U %s, output: %s", iface, string(out))
+	log.Debugf("Running cmd: %s, output: %s", args, string(out))
 	if err != nil {
 		// dhcpcd works fine, but gets an error: exit status 1
-		log.Warnf("Got error with dhcpcd -U %s: %v", iface, err)
+		log.Warnf("Failed to run cmd: %s, error: %v", args, err)
 	}
 	return out
 }
 
 func hasDhcp(iface string) bool {
 	out := getDhcpLeaseString(iface)
-	log.Debugf("dhcpcd -U %s: %s", iface, out)
 	return len(out) > 0
 }
 
