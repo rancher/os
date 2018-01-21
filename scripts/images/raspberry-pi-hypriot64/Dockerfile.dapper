@@ -13,11 +13,11 @@ RUN mkdir -p /source/assets
 COPY rootfs_arm64.tar.gz /source/assets/rootfs_arm64.tar.gz
 
 ENV URL=https://github.com/DieterReuter/rpi64-kernel/releases/download
-ENV VER=v20171216-172054
+ENV VER=v20180114-121512
 
 RUN curl -fL ${URL}/${VER}/4.9.69-hypriotos-v8.tar.gz > /source/assets/kernel.tar.gz
 RUN curl -fL ${URL}/${VER}/bootfiles.tar.gz > /source/assets/bootfiles.tar.gz
-RUN curl -fL https://github.com/DieterReuter/rpi-bootloader/releases/download/v20171216-171651/rpi-bootloader.tar.gz > /source/assets/rpi-bootfiles.tar.gz
+RUN curl -fL https://github.com/DieterReuter/rpi-bootloader/releases/download/v20180114-121611/rpi-bootloader.tar.gz > /source/assets/rpi-bootfiles.tar.gz
 
 #ENV RPI_URL=https://github.com/raspberrypi/firmware/raw/master/boot
 #RUN curl -fL ${RPI_URL}/bootcode.bin > /source/assets/bootcode.bin
