@@ -43,8 +43,8 @@ func runDocker(name string) error {
 	if name == "" {
 		name = filepath.Base(os.Args[0])
 	}
-  
-  containerName := strings.TrimPrefix(strings.Join(strings.Split(name, "/"), "-"), "-")
+
+	containerName := strings.TrimPrefix(strings.Join(strings.Split(name, "/"), "-"), "-")
 
 	existing, err := client.ContainerInspect(context.Background(), containerName)
 	if err == nil && existing.ID != "" {
