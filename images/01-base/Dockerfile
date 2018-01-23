@@ -34,8 +34,9 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
 COPY inputrc /etc/inputrc
 COPY growpart /usr/bin/growpart
 COPY start_ntp.sh /bin/start_ntp.sh
-COPY dhcpcd.enter-hook /etc/dhcpcd.enter-hook
-COPY dhcpcd.debug /usr/share/logrotate/logrotate.d/
+COPY dhcpcd/dhcpcd.enter-hook /etc/dhcpcd.enter-hook
+COPY dhcpcd/10-mtu /lib/dhcpcd/dhcpcd-hooks/
+COPY dhcpcd/dhcpcd.debug /usr/share/logrotate/logrotate.d/
 RUN sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
     sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
     sed -i 1,10d /etc/rsyslog.conf && \

@@ -34,114 +34,6 @@ func TestType(t *testing.T) {
 	}
 }
 
-func TestFetchAttributes(t *testing.T) {
-	for _, s := range []struct {
-		resources map[string]string
-		err       error
-		tests     []struct {
-			path string
-			val  []string
-		}
-	}{
-		{
-			resources: map[string]string{
-				"/":      "a\nb\nc/",
-				"/c/":    "d\ne/",
-				"/c/e/":  "f",
-				"/a":     "1",
-				"/b":     "2",
-				"/c/d":   "3",
-				"/c/e/f": "4",
-			},
-			tests: []struct {
-				path string
-				val  []string
-			}{
-				{"/", []string{"a", "b", "c/"}},
-				{"/b", []string{"2"}},
-				{"/c/d", []string{"3"}},
-				{"/c/e/", []string{"f"}},
-			},
-		},
-		{
-			err: fmt.Errorf("test error"),
-			tests: []struct {
-				path string
-				val  []string
-			}{
-				{"", nil},
-			},
-		},
-	} {
-		service := MetadataService{metadata.Service{
-			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
-		}}
-		for _, tt := range s.tests {
-			attrs, err := service.fetchAttributes(tt.path)
-			if err != s.err {
-				t.Fatalf("bad error for %q (%q): want %q, got %q", tt.path, s.resources, s.err, err)
-			}
-			if !reflect.DeepEqual(attrs, tt.val) {
-				t.Fatalf("bad fetch for %q (%q): want %q, got %q", tt.path, s.resources, tt.val, attrs)
-			}
-		}
-	}
-}
-
-func TestFetchAttribute(t *testing.T) {
-	for _, s := range []struct {
-		resources map[string]string
-		err       error
-		tests     []struct {
-			path string
-			val  string
-		}
-	}{
-		{
-			resources: map[string]string{
-				"/":      "a\nb\nc/",
-				"/c/":    "d\ne/",
-				"/c/e/":  "f",
-				"/a":     "1",
-				"/b":     "2",
-				"/c/d":   "3",
-				"/c/e/f": "4",
-			},
-			tests: []struct {
-				path string
-				val  string
-			}{
-				{"/a", "1"},
-				{"/b", "2"},
-				{"/c/d", "3"},
-				{"/c/e/f", "4"},
-			},
-		},
-		{
-			err: fmt.Errorf("test error"),
-			tests: []struct {
-				path string
-				val  string
-			}{
-				{"", ""},
-			},
-		},
-	} {
-		service := MetadataService{metadata.Service{
-			Client: &test.HTTPClient{Resources: s.resources, Err: s.err},
-		}}
-		for _, tt := range s.tests {
-			attr, err := service.fetchAttribute(tt.path)
-			if err != s.err {
-				t.Fatalf("bad error for %q (%q): want %q, got %q", tt.path, s.resources, s.err, err)
-			}
-			if attr != tt.val {
-				t.Fatalf("bad fetch for %q (%q): want %q, got %q", tt.path, s.resources, tt.val, attr)
-			}
-		}
-	}
-}
-
 func TestFetchMetadata(t *testing.T) {
 	for _, tt := range []struct {
 		root         string
@@ -175,6 +67,7 @@ func TestFetchMetadata(t *testing.T) {
 				PrivateIPv4:   net.ParseIP("1.2.3.4"),
 				PublicIPv4:    net.ParseIP("5.6.7.8"),
 				SSHPublicKeys: map[string]string{"test1": "key"},
+				RootDisk:      "/dev/xvda",
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
 					/*			"eth0": netconf.InterfaceConfig{
@@ -197,12 +90,14 @@ func TestFetchMetadata(t *testing.T) {
 				"/2009-04-04/meta-data/public-keys":               "0=test1\n",
 				"/2009-04-04/meta-data/public-keys/0":             "openssh-key",
 				"/2009-04-04/meta-data/public-keys/0/openssh-key": "key",
+				"/2009-04-04/meta-data/instance-type":             "m5.large",
 			},
 			expect: datasource.Metadata{
 				Hostname:      "host",
 				PrivateIPv4:   net.ParseIP("21.2.3.4"),
 				PublicIPv4:    net.ParseIP("25.6.7.8"),
 				SSHPublicKeys: map[string]string{"test1": "key"},
+				RootDisk:      "/dev/nvme0n1",
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
 					/*						"eth0": netconf.InterfaceConfig{

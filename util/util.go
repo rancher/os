@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -43,6 +44,19 @@ func FileCopy(src, dest string) error {
 		return err
 	}
 	return WriteFileAtomic(dest, data, 0666)
+}
+
+func HTTPDownloadToFile(url, dest string) error {
+	res, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	return WriteFileAtomic(dest, body, 0666)
 }
 
 func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
@@ -87,11 +101,7 @@ func ConvertIgnoreOmitEmpty(from, to interface{}) error {
 
 	decoder := yaml.NewDecoder(&buffer)
 
-	if err := decoder.Decode(to); err != nil {
-		return err
-	}
-
-	return nil
+	return decoder.Decode(to)
 }
 
 func Copy(d interface{}) interface{} {

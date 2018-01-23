@@ -7,10 +7,10 @@ rancher:
     hostname: {{.HOSTNAME_DEFAULT}}
     {{if eq "amd64" .ARCH -}}
     docker:
-      engine: docker-17.03.2-ce
+      engine: docker-17.09.1-ce
     {{else -}}
     docker:
-      engine: docker-17.03.1-ce
+      engine: docker-17.09.1-ce
     {{end -}}
     network:
       dns:
@@ -103,6 +103,7 @@ rancher:
       labels:
         io.rancher.os.createonly: "true"
         io.rancher.os.scope: system
+        io.docker.compose.rebuild: always
       log_driver: json-file
       net: none
       privileged: true
@@ -332,9 +333,9 @@ rancher:
       - /var/lib/kubelet:/var/lib/kubelet
     docker:
       {{if eq "amd64" .ARCH -}}
-      image: {{.OS_REPO}}/os-docker:17.03.2{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.09.1{{.SUFFIX}}
       {{else -}}
-      image: {{.OS_REPO}}/os-docker:17.03.1{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:17.09.1{{.SUFFIX}}
       {{end -}}
       command: ros user-docker
       environment:
@@ -374,11 +375,10 @@ rancher:
     image: {{.OS_REPO}}/os
   docker:
     {{if eq "amd64" .ARCH -}}
-    engine: docker-17.03.2-ce
+    engine: docker-17.09.1-ce
     {{else -}}
-    engine: docker-17.03.1-ce
+    engine: docker-17.09.1-ce
     {{end -}}
-    storage_driver: overlay
     group: docker
     host: ["unix:///var/run/docker.sock"]
     log_opts:
