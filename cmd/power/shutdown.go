@@ -84,7 +84,7 @@ func Shutdown() {
 		})
 	} else {
 		app.Flags = append(app.Flags, cli.BoolFlag{
-			Name:        "H, halt",
+			Name:        "H, h, halt",
 			Usage:       "halt the machine",
 			Destination: &haltFlag,
 		})
@@ -197,7 +197,12 @@ func shutdown(c *cli.Context) error {
 	}
 
 	timeArg := c.Args().Get(0)
-	if c.App.Name == "shutdown" && timeArg != "" {
+	// We may be called via an absolute path, so check that now and make sure we
+	// don't pass the wrong app name down. Aside from the logic in the immediate
+	// context here, the container name is derived from how we were called and
+	// cannot contain slashes.
+	appName := filepath.Base(c.App.Name)
+	if appName == "shutdown" && timeArg != "" {
 		if timeArg != "now" {
 			err := fmt.Errorf("Sorry, can't parse '%s' as time value (only 'now' supported)", timeArg)
 			log.Error(err)
@@ -206,7 +211,7 @@ func shutdown(c *cli.Context) error {
 		// TODO: if there are more params, LOG them
 	}
 
-	reboot(c.App.Name, forceFlag, powerCmd)
+	reboot(appName, forceFlag, powerCmd)
 
 	return nil
 }
