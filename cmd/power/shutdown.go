@@ -84,7 +84,7 @@ func Shutdown() {
 		})
 	} else {
 		app.Flags = append(app.Flags, cli.BoolFlag{
-			Name:        "H, h, halt",
+			Name:        "H, halt",
 			Usage:       "halt the machine",
 			Destination: &haltFlag,
 		})
@@ -94,13 +94,22 @@ func Shutdown() {
 	if app.Name == "poweroff" {
 		app.Flags = append(app.Flags, cli.BoolTFlag{
 			Name:        "P, poweroff",
-			Usage:       "halt the machine",
+			Usage:       "poweroff the machine",
 			Destination: &poweroffFlag,
 		})
 	} else {
+		//  shutdown -h
+		//        Equivalent to --poweroff
+		if app.Name == "shutdown" {
+			app.Flags = append(app.Flags, cli.BoolFlag{
+				Name:        "h",
+				Usage:       "poweroff the machine",
+				Destination: &poweroffFlag,
+			})
+		}
 		app.Flags = append(app.Flags, cli.BoolFlag{
 			Name:        "P, poweroff",
-			Usage:       "halt the machine",
+			Usage:       "poweroff the machine",
 			Destination: &poweroffFlag,
 		})
 	}
