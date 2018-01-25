@@ -256,7 +256,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 					cmd := exec.Command("system-docker", "load", "-i", "/bootiso/rancheros/installer.tar.gz")
 					cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 					if err := cmd.Run(); err != nil {
-						log.Infof("failed to load images from /bootiso/rancheros: %s", err)
+						log.Infof("failed to load images from /bootiso/rancheros: %v", err)
 					} else {
 						log.Infof("Loaded images from /bootiso/rancheros/installer.tar.gz")
 

@@ -70,7 +70,7 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	}
 
 	resolve, err := ioutil.ReadFile("/etc/resolv.conf")
-	log.Debugf("Resolve.conf == [%s], %s", resolve, err)
+	log.Debugf("Resolve.conf == [%s], %v", resolve, err)
 
 	log.Infof("Apply Network Config SyncHostname")
 	if err := hostname.SyncHostname(); err != nil {
