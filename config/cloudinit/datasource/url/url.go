@@ -34,7 +34,7 @@ func NewDatasource(url string) *RemoteFile {
 func (f *RemoteFile) IsAvailable() bool {
 	network.SetProxyEnvironmentVariables()
 	client := pkg.NewHTTPClient()
-	_, f.lastError = client.Get(f.url)
+	_, f.lastError = client.GetRetry(f.url)
 	return (f.lastError == nil)
 }
 
