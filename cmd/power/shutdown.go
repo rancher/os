@@ -190,6 +190,7 @@ func Kexec(previous bool, bootDir, append string) error {
 // Reboot is used by installation / upgrade
 // TODO: add kexec option
 func Reboot() {
+	os.Args = []string{"reboot"}
 	reboot("reboot", false, syscall.LINUX_REBOOT_CMD_RESTART)
 }
 
