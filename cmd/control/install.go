@@ -17,6 +17,7 @@ import (
 	"github.com/rancher/os/log"
 
 	"github.com/codegangsta/cli"
+	"github.com/pkg/errors"
 	"github.com/rancher/catalog-service/utils/version"
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/cmd/power"
@@ -94,19 +95,21 @@ var installCommand = cli.Command{
 }
 
 func installAction(c *cli.Context) error {
+	log.InitLogger()
+	debug := c.Bool("debug")
+	if debug {
+		log.Info("Log level is debug")
+		originalLevel := log.GetLevel()
+		defer log.SetLevel(originalLevel)
+		log.SetLevel(log.DebugLevel)
+	}
+
 	if runtime.GOARCH != "amd64" {
 		log.Fatalf("ros install / upgrade only supported on 'amd64', not '%s'", runtime.GOARCH)
 	}
 
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
-	}
-
-	debug := c.Bool("debug")
-	if debug {
-		originalLevel := log.GetLevel()
-		defer log.SetLevel(originalLevel)
-		log.SetLevel(log.DebugLevel)
 	}
 
 	kappend := strings.TrimSpace(c.String("append"))
@@ -158,8 +161,14 @@ func installAction(c *cli.Context) error {
 	} else {
 		os.MkdirAll("/opt", 0755)
 		uc := "/opt/user_config.yml"
-		if err := util.FileCopy(cloudConfig, uc); err != nil {
-			log.WithFields(log.Fields{"cloudConfig": cloudConfig, "error": err}).Fatal("Failed to copy cloud-config")
+		if strings.HasPrefix(cloudConfig, "http://") || strings.HasPrefix(cloudConfig, "https://") {
+			if err := util.HTTPDownloadToFile(cloudConfig, uc); err != nil {
+				log.WithFields(log.Fields{"cloudConfig": cloudConfig, "error": err}).Fatal("Failed to http get cloud-config")
+			}
+		} else {
+			if err := util.FileCopy(cloudConfig, uc); err != nil {
+				log.WithFields(log.Fields{"cloudConfig": cloudConfig, "error": err}).Fatal("Failed to copy cloud-config")
+			}
 		}
 		cloudConfig = uc
 	}
@@ -216,10 +225,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 					"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig,
 					"-a", kappend)
 				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-				if err := cmd.Run(); err != nil {
-					return err
-				}
-				return nil
+				return cmd.Run()
 			}
 		}
 	}
@@ -236,8 +242,14 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 		log.Infof("start !isoinstallerloaded")
 
 		if _, err := os.Stat("/dist/initrd-" + config.Version); os.IsNotExist(err) {
-			if err = mountBootIso(); err != nil {
-				log.Debugf("mountBootIso error %v", err)
+			deviceName, deviceType, err := getBootIso()
+			if err != nil {
+				log.Errorf("Failed to get boot iso: %v", err)
+				fmt.Println("There is no boot iso drive, terminate the task")
+				return err
+			}
+			if err = mountBootIso(deviceName, deviceType); err != nil {
+				log.Debugf("Failed to mountBootIso: %v", err)
 			} else {
 				log.Infof("trying to load /bootiso/rancheros/installer.tar.gz")
 				if _, err := os.Stat("/bootiso/rancheros/"); err == nil {
@@ -308,16 +320,9 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			cmd := exec.Command("system-docker", installerCmd...)
 			log.Debugf("Run(%v)", cmd)
 			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-			if err := cmd.Run(); err != nil {
-				return err
-			}
-			return nil
+			return cmd.Run()
 		}
 	}
-
-	// TODO: needs to pass the log level on to the container
-	log.InitLogger()
-	log.SetLevel(log.InfoLevel)
 
 	log.Debugf("running installation")
 
@@ -350,7 +355,13 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 	if isoinstallerloaded {
 		log.Debugf("running isoinstallerloaded...")
 		// TODO: detect if its not mounted and then optionally mount?
-		if err := mountBootIso(); err != nil {
+		deviceName, deviceType, err := getBootIso()
+		if err != nil {
+			log.Errorf("Failed to get boot iso: %v", err)
+			fmt.Println("There is no boot iso drive, terminate the task")
+			return err
+		}
+		if err := mountBootIso(deviceName, deviceType); err != nil {
 			log.Errorf("error mountBootIso %s", err)
 			//return err
 		}
@@ -365,22 +376,30 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 	return nil
 }
 
-func mountBootIso() error {
+func getBootIso() (string, string, error) {
 	deviceName := "/dev/sr0"
 	deviceType := "iso9660"
 	d, t, err := util.Blkid("RancherOS")
 	if err != nil {
-		log.Errorf("Failed to run blkid: %s", err)
+		return "", "", errors.Wrap(err, "Failed to run blkid")
 	}
 	if d != "" {
 		deviceName = d
 		deviceType = t
 	}
 
+	// Check the sr deive if exist
+	if _, err = os.Stat(deviceName); os.IsNotExist(err) {
+		return "", "", err
+	}
+
+	return deviceName, deviceType, nil
+}
+
+func mountBootIso(deviceName, deviceType string) error {
 	mountsFile, err := os.Open("/proc/mounts")
 	if err != nil {
-		log.Errorf("failed to read /proc/mounts %s", err)
-		return err
+		return errors.Wrap(err, "Failed to read /proc/mounts")
 	}
 	defer mountsFile.Close()
 
@@ -392,14 +411,15 @@ func mountBootIso() error {
 	cmd := exec.Command("mount", "-t", deviceType, deviceName, "/bootiso")
 	log.Debugf("mount (%#v)", cmd)
 
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	var outBuf, errBuf bytes.Buffer
+	cmd.Stdout = &outBuf
+	cmd.Stderr = &errBuf
 	err = cmd.Run()
 	if err != nil {
-		log.Errorf("tried and failed to mount %s: %s", deviceName, err)
-	} else {
-		log.Debugf("Mounted %s", deviceName)
+		return errors.Wrapf(err, "Tried and failed to mount %s: stderr output: %s", deviceName, errBuf.String())
 	}
-	return err
+	log.Debugf("Mounted %s, output: %s", deviceName, outBuf.String())
+	return nil
 }
 
 func layDownOS(image, installType, cloudConfig, device, partition, statedir, kappend string, kexec bool) error {
@@ -667,35 +687,31 @@ func setDiskpartitions(device, diskType string) error {
 		}
 	}
 	//do it!
-	log.Debugf("running dd")
+	log.Debugf("running dd device: %s", device)
 	cmd := exec.Command("dd", "if=/dev/zero", "of="+device, "bs=512", "count=2048")
 	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Errorf("dd error %s", err)
 		return err
 	}
-	log.Debugf("running partprobe")
+	log.Debugf("running partprobe: %s", device)
 	cmd = exec.Command("partprobe", device)
 	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Errorf("partprobe error %s", err)
+		log.Errorf("Failed to partprobe device %s: %v", device, err)
 		return err
 	}
 
-	log.Debugf("making single RANCHER_STATE partition")
+	log.Debugf("making single RANCHER_STATE partition, device: %s", device)
 	cmd = exec.Command("parted", "-s", "-a", "optimal", device,
 		"mklabel "+diskType, "--",
 		"mkpart primary ext4 1 -1")
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Errorf("parted: %s", err)
+		log.Errorf("Failed to parted device %s: %v", device, err)
 		return err
 	}
-	if err := setBootable(device, diskType); err != nil {
-		return err
-	}
-
-	return nil
+	return setBootable(device, diskType)
 }
 
 func partitionMounted(device string, file io.Reader) bool {
@@ -730,66 +746,6 @@ func formatdevice(device, partition string) error {
 		return err
 	}
 	return nil
-}
-
-func mountdevice(baseName, bootDir, device, partition string, raw bool) (string, string, error) {
-	log.Debugf("mountdevice %s, raw %v", partition, raw)
-
-	if partition == "" {
-		if raw {
-			log.Debugf("util.Mount (raw) %s, %s", partition, baseName)
-
-			cmd := exec.Command("lsblk", "-no", "pkname", partition)
-			log.Debugf("Run(%v)", cmd)
-			cmd.Stderr = os.Stderr
-			device := ""
-			// TODO: out can == "" - this is used to "detect software RAID" which is terrible
-			if out, err := cmd.Output(); err == nil {
-				device = "/dev/" + strings.TrimSpace(string(out))
-			}
-
-			log.Debugf("mountdevice return -> d: %s, p: %s", device, partition)
-			return device, partition, util.Mount(partition, baseName, "", "")
-		}
-
-		//rootfs := partition
-		// Don't use ResolveDevice - it can fail, whereas `blkid -L LABEL` works more often
-
-		cfg := config.LoadConfig()
-		d, _, err := util.Blkid("RANCHER_BOOT")
-		if err != nil {
-			log.Errorf("Failed to run blkid: %s", err)
-		}
-		if d != "" {
-			partition = d
-			baseName = filepath.Join(baseName, "boot")
-		} else {
-			if dev := util.ResolveDevice(cfg.Rancher.State.Dev); dev != "" {
-				// try the rancher.state.dev setting
-				partition = dev
-			} else {
-				d, _, err := util.Blkid("RANCHER_STATE")
-				if err != nil {
-					log.Errorf("Failed to run blkid: %s", err)
-				}
-				if d != "" {
-					partition = d
-				}
-			}
-		}
-		cmd := exec.Command("lsblk", "-no", "pkname", partition)
-		log.Debugf("Run(%v)", cmd)
-		cmd.Stderr = os.Stderr
-		// TODO: out can == "" - this is used to "detect software RAID" which is terrible
-		if out, err := cmd.Output(); err == nil {
-			device = "/dev/" + strings.TrimSpace(string(out))
-		}
-	}
-	os.MkdirAll(baseName, 0755)
-	cmd := exec.Command("mount", partition, baseName)
-	//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	log.Debugf("mountdevice return2 -> d: %s, p: %s", device, partition)
-	return device, partition, cmd.Run()
 }
 
 func formatAndMount(baseName, device, partition string) (string, string, error) {

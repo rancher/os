@@ -1,11 +1,11 @@
 package init
 
 import (
-	log "github.com/Sirupsen/logrus"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/yaml"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 )
 

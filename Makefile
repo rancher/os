@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|docs|release|build-moby|run-moby')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|release|build-moby|run-moby')
 
 .dapper:
 	@echo Downloading dapper
@@ -24,9 +24,6 @@ build/initrd/.id: .dapper
 run: build/initrd/.id .dapper
 	./.dapper -m bind build-target
 	./scripts/run
-
-docs:
-	./scripts/docs
 
 build-moby:
 	./scripts/build-moby
@@ -57,15 +54,9 @@ qcows:
 		APPEND="console=tty1 console=ttyS0,115200n8 printk.devkmsg=on rancher.autologin=ttyS0" \
 		NAME=openstack ../../../.dapper
 	cd scripts/images/openstack && \
-		APPEND="console=tty1 rancher.debug=true printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0" \
+		APPEND="console=tty1 printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0" \
 		NAME=digitalocean ../../../.dapper
 	cp ./scripts/images/openstack/dist/*.img dist/artifacts/
-
-rpi:
-	# scripts/images/raspberry-pi-hypriot/dist/rancheros-raspberry-pi.zip
-	cp dist/artifacts/rootfs_arm.tar.gz scripts/images/raspberry-pi-hypriot/
-	cd scripts/images/raspberry-pi-hypriot/ \
-		&& ../../../.dapper
 
 rpi64:
 	# scripts/images/raspberry-pi-hypriot64/dist/rancheros-raspberry-pi.zip

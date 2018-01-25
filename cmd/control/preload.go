@@ -23,7 +23,11 @@ const (
 )
 
 func preloadImagesAction(c *cli.Context) error {
-	return PreloadImages(docker.NewDefaultClient, userImagesPreloadDirectory)
+	err := PreloadImages(docker.NewDefaultClient, userImagesPreloadDirectory)
+	if err != nil {
+		log.Errorf("Failed to preload user images: %v", err)
+	}
+	return err
 }
 
 func shouldLoad(file string) bool {
@@ -56,6 +60,7 @@ func PreloadImages(clientFactory func() (dockerClient.APIClient, error), imagesD
 	for _, file := range files {
 		filename := path.Join(imagesDir, file.Name())
 		if !shouldLoad(filename) {
+			log.Infof("Skipping to preload the file: %s", filename)
 			continue
 		}
 
@@ -63,6 +68,7 @@ func PreloadImages(clientFactory func() (dockerClient.APIClient, error), imagesD
 		if err != nil {
 			return err
 		}
+		defer image.Close()
 		var imageReader io.Reader
 		imageReader = image
 		match, err := regexp.MatchString(".t?gz$", file.Name())
@@ -88,18 +94,15 @@ func PreloadImages(clientFactory func() (dockerClient.APIClient, error), imagesD
 		if _, err = client.ImageLoad(context.Background(), imageReader, false); err != nil {
 			return err
 		}
+		log.Infof("Finished to load image %s", filename)
 
-		if err = image.Close(); err != nil {
-			return err
-		}
-
+		log.Infof("Creating done stamp file for image %s", filename)
 		doneStamp, err := os.Create(fmt.Sprintf("%s.done", filename))
 		if err != nil {
 			return err
 		}
-		if err = doneStamp.Close(); err != nil {
-			return err
-		}
+		defer doneStamp.Close()
+		log.Infof("Finished to created the done stamp file for image %s", filename)
 	}
 
 	return nil

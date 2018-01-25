@@ -130,6 +130,23 @@ func consoleInitFunc() error {
 		}
 	}
 
+	// write out a profile.d file for the PATH settings.
+	pathLines := []string{}
+	for _, k := range []string{"PATH", "path"} {
+		if v, ok := cfg.Rancher.Environment[k]; ok {
+			for _, p := range strings.Split(v, ",") {
+				pathLines = append(pathLines, fmt.Sprintf("export PATH=$PATH:%s", strings.TrimSpace(p)))
+			}
+		}
+	}
+	if len(pathLines) > 0 {
+		pathString := strings.Join(pathLines, "\n")
+		pathString = fmt.Sprintf("#!/bin/sh\n%s\n", pathString)
+		if err := ioutil.WriteFile("/etc/profile.d/path.sh", []byte(pathString), 0755); err != nil {
+			log.Error(err)
+		}
+	}
+
 	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
 	if err := cmd.Run(); err != nil {
 		log.Error(err)

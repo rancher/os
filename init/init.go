@@ -14,6 +14,7 @@ import (
 
 	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
@@ -334,9 +335,10 @@ func RunInit() error {
 			if hypervisor == "vmware" {
 				// add vmware to the end - we don't want to over-ride an choices the user has made
 				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
-				if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
-					log.Error(err)
-				}
+			}
+
+			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
+				log.Error(err)
 			}
 
 			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
@@ -362,9 +364,11 @@ func RunInit() error {
 			bootLog := "/var/log/"
 			if files, err := ioutil.ReadDir(bootLog); err == nil {
 				for _, file := range files {
-					filePath := filepath.Join(bootLog, file.Name())
-					filesToCopy = append(filesToCopy, filePath)
-					log.Debugf("Swizzle: Found %s to save", filePath)
+					if !file.IsDir() {
+						filePath := filepath.Join(bootLog, file.Name())
+						filesToCopy = append(filesToCopy, filePath)
+						log.Debugf("Swizzle: Found %s to save", filePath)
+					}
 				}
 			}
 			bootLog = "/var/log/boot/"
@@ -424,6 +428,12 @@ func RunInit() error {
 			}
 			log.FsReady()
 			log.Debugf("WARNING: switchroot and mount OEM2 phases not written to log file")
+
+			// update docker-sys bridge setting
+			if dockerSysSubnet := cmdline.GetCmdline(config.RKPDockerSysBridgeSubnet); dockerSysSubnet != "" {
+				val := dockerSysSubnet.(string)
+				config.SaveCNISubnet(val, config.CNIBridgeConfigFile)
+			}
 
 			return cfg, nil
 		}},
@@ -486,23 +496,25 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 		return
 	}
 
+	// only enable open-vm-tools for vmware
+	// these services(xenhvm-vm-tools, kvm-vm-tools, hyperv-vm-tools and bhyve-vm-tools) don't exist yet
 	if hypervisorName == "vmware" {
 		hypervisorName = "open"
-	}
-	serviceName := hypervisorName + "-vm-tools"
-	if !cfg.Rancher.HypervisorService {
-		log.Infof("Skipping %s as `rancher.hypervisor_service` is set to false", serviceName)
-		return
-	}
+		serviceName := hypervisorName + "-vm-tools"
+		if !cfg.Rancher.HypervisorService {
+			log.Infof("Skipping %s as `rancher.hypervisor_service` is set to false", serviceName)
+			return
+		}
 
-	// Check removed - there's an x509 cert failure on first boot of an installed system
-	// check quickly to see if there is a yml file available
-	//	if service.ValidService(serviceName, cfg) {
-	log.Infof("Setting rancher.services_include. %s=true", serviceName)
-	if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
-		log.Error(err)
+		// Check removed - there's an x509 cert failure on first boot of an installed system
+		// check quickly to see if there is a yml file available
+		//	if service.ValidService(serviceName, cfg) {
+		log.Infof("Setting rancher.services_include. %s=true", serviceName)
+		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
+			log.Error(err)
+		}
+		//	} else {
+		//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
+		//	}
 	}
-	//	} else {
-	//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
-	//	}
 }
