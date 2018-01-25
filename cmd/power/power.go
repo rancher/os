@@ -39,6 +39,7 @@ func runDocker(name string) error {
 	}
 
 	cmd := os.Args
+	log.Debugf("runDocker cmd: %s", cmd)
 
 	if name == "" {
 		name = filepath.Base(os.Args[0])
