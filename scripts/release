@@ -13,13 +13,19 @@ echo PREPARE
 ./scripts/prepare
 echo PACKAGE
 ./scripts/package
-if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
-	export INTEGRATION_TESTS=1
-	echo INTEGRATION-TEST
-	./scripts/integration-test
+
+if [[ "$INTEGRATION_TESTS" != "" ]]; then
+    if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
+        export INTEGRATION_TESTS=1
+    else
+        export INTEGRATION_TESTS=0
+    fi
+fi
+if [[ "$INTEGRATION_TESTS" != "1" ]]; then
+    echo INTEGRATION-TEST
+    ./scripts/integration-test
 else
-	export INTEGRATION_TESTS=0
-	echo "Skipping integration tests"
+    echo "Skipping integration tests"
 fi
 
 if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
