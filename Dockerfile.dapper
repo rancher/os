@@ -63,7 +63,7 @@ ARG DOCKER_BUILD_VERSION=1.10.3
 ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.3/policy.29
 
-ARG KERNEL_VERSION_amd64=4.9.75-rancher
+ARG KERNEL_VERSION_amd64=4.9.78-rancher2
 ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/v${KERNEL_VERSION_amd64}/linux-${KERNEL_VERSION_amd64}-x86.tar.gz
 
 ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
