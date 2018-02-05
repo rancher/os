@@ -13,5 +13,5 @@ for i in $IMAGES; do
 done
 
 echo "tar-images: docker save ${IMAGES} > build/images.tar"
-docker save ${IMAGES} > build/images.tar
+docker save ${IMAGES} | xz > build/images.tar
 echo "tar-images: DONE"
