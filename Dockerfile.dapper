@@ -35,7 +35,8 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
         vim \
         wget \
         xorriso \
-	telnet
+        xz-utils \
+        telnet
 
 ########## Dapper Configuration #####################
 
