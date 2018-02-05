@@ -210,7 +210,7 @@ func osVersion(c *cli.Context) error {
 	return nil
 }
 
-func startUpgradeContainer(image string, stage, force, reboot, kexec, debug bool, upgradeConsole bool, kernelArgs string) error {
+func startUpgradeContainer(image string, stage, force, reboot, kexec, upgradeConsole, debug bool, kernelArgs string) error {
 	command := []string{
 		"-t", "rancher-upgrade",
 		"-r", config.Version,
