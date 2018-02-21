@@ -255,7 +255,7 @@ rancher:
       - command-volumes
       - system-volumes
     system-cron:
-      image: rancher/container-crontab:v0.1.0
+      image: rancher/container-crontab:v0.4.0
       labels:
         io.rancher.os.scope: system
       uts: host
@@ -264,6 +264,8 @@ rancher:
       restart: always
       volumes:
        - /var/run/system-docker.sock:/var/run/docker.sock
+      environment:
+       DOCKER_API_VERSION: "1.22"
     system-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
