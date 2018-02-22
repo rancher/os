@@ -263,9 +263,9 @@ rancher:
       privileged: true
       restart: always
       volumes:
-       - /var/run/system-docker.sock:/var/run/docker.sock
+      - /var/run/system-docker.sock:/var/run/docker.sock
       environment:
-       DOCKER_API_VERSION: "1.22"
+        DOCKER_API_VERSION: "1.22"
     system-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
