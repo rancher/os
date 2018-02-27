@@ -85,7 +85,6 @@ func setupCommandSymlinks() {
 		{config.RosBin, "/usr/bin/cloud-init-save"},
 		{config.RosBin, "/usr/bin/dockerlaunch"},
 		{config.RosBin, "/usr/bin/respawn"},
-		{config.RosBin, "/usr/bin/system-docker"},
 		{config.RosBin, "/usr/sbin/netconf"},
 		{config.RosBin, "/usr/sbin/wait-for-docker"},
 		{config.RosBin, "/usr/sbin/poweroff"},
