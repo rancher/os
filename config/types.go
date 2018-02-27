@@ -25,7 +25,7 @@ const (
 	ModulesArchive   = "/modules.tar"
 	Debug            = false
 	SystemDockerLog  = "/var/log/system-docker.log"
-	SystemDockerBin  = "/usr/bin/system-docker"
+	SystemDockerBin  = "/usr/bin/system-dockerd"
 
 	HashLabel         = "io.rancher.os.hash"
 	IDLabel           = "io.rancher.os.id"

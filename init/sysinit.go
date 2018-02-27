@@ -2,11 +2,13 @@ package init
 
 import (
 	"os"
+	"os/exec"
 	"path"
 	"syscall"
 
 	"golang.org/x/net/context"
 
+	"github.com/docker/engine-api/types"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/compose"
@@ -74,20 +76,20 @@ func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			continue
 		}
 
+		// client.ImageLoad is an asynchronous operation
+		// To ensure the order of execution, use cmd instead of it
 		inputFileName := path.Join(config.ImagesPath, image)
-		input, err := os.Open(inputFileName)
-		if err != nil {
-			return cfg, err
-		}
-
-		defer input.Close()
-
 		log.Infof("Loading images from %s", inputFileName)
-		if _, err = client.ImageLoad(context.Background(), input, true); err != nil {
+		if err = exec.Command("/usr/bin/system-docker", "load", "-q", "-i", inputFileName).Run(); err != nil {
 			log.Fatalf("FATAL: failed loading images from %s: %s", inputFileName, err)
 		}
 
 		log.Infof("Done loading images from %s", inputFileName)
+	}
+
+	dockerImages, _ := client.ImageList(context.Background(), types.ImageListOptions{})
+	for _, dimg := range dockerImages {
+		log.Infof("Got image repo tags: %s", dimg.RepoTags)
 	}
 
 	return cfg, nil
