@@ -8,7 +8,7 @@ import (
 )
 
 func (d *DockerConfig) FullArgs() []string {
-	args := []string{"daemon"}
+	args := []string{}
 	args = append(args, generateEngineOptsSlice(d.EngineOpts)...)
 	args = append(args, d.ExtraArgs...)
 	if d.TLS {
