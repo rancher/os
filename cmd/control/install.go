@@ -230,11 +230,11 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 		}
 	}
 
-	if _, err := os.Stat("/usr/bin/system-docker"); os.IsNotExist(err) {
-		if err := os.Symlink("/usr/bin/ros", "/usr/bin/system-docker"); err != nil {
-			log.Errorf("ln error %s", err)
-		}
-	}
+	//if _, err := os.Stat("/usr/bin/system-docker"); os.IsNotExist(err) {
+	//if err := os.Symlink("/usr/bin/ros", "/usr/bin/system-docker"); err != nil {
+	//log.Errorf("ln error %s", err)
+	//}
+	//}
 
 	useIso := false
 	// --isoinstallerloaded is used if the ros has created the installer container from and image that was on the booted iso
