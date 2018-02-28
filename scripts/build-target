@@ -16,5 +16,5 @@ OUTPUT=${OUTPUT:-bin/ros}
 echo Building $OUTPUT
 BUILDDATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-CONST="-X github.com/docker/docker/dockerversion.GitCommit=${COMMIT} -X github.com/docker/docker/dockerversion.Version=${DOCKER_PATCH_VERSION} -X github.com/docker/docker/dockerversion.BuildTime='${BUILDDATE}' -X github.com/docker/docker/dockerversion.IAmStatic=true -X github.com/rancher/os/config.Version=${VERSION} -X github.com/rancher/os/config.OsRepo=${OS_REPO} -X github.com/rancher/os/config.BuildDate='${BUILDDATE}'"
+CONST="-X github.com/rancher/os/config.Version=${VERSION} -X github.com/rancher/os/config.OsRepo=${OS_REPO} -X github.com/rancher/os/config.BuildDate='${BUILDDATE}'"
 go build -tags "selinux cgo daemon netgo" -installsuffix netgo -ldflags "$CONST -linkmode external -extldflags -static -s -w" -o ${OUTPUT}
