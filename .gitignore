@@ -17,3 +17,4 @@ __pycache__
 /.dapper
 /.trash-cache
 .idea
+.trash-conf
