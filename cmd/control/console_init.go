@@ -86,7 +86,7 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := modifySshdConfig(); err != nil {
+	if err := modifySshdConfig(cfg); err != nil {
 		log.Error(err)
 	}
 
@@ -242,19 +242,28 @@ func writeRespawn(user string, sshd, recovery bool) error {
 	return ioutil.WriteFile("/etc/respawn.conf", []byte(respawn), 0644)
 }
 
-func modifySshdConfig() error {
+func modifySshdConfig(cfg *config.CloudConfig) error {
 	sshdConfig, err := ioutil.ReadFile("/etc/ssh/sshd_config")
 	if err != nil {
 		return err
 	}
 	sshdConfigString := string(sshdConfig)
 
-	for _, item := range []string{
+	modifiedLines := []string{
 		"UseDNS no",
 		"PermitRootLogin no",
 		"ServerKeyBits 2048",
 		"AllowGroups docker",
-	} {
+	}
+
+	if cfg.Rancher.SSH.Port > 0 && cfg.Rancher.SSH.Port < 65355 {
+		modifiedLines = append(modifiedLines, fmt.Sprintf("Port %d", cfg.Rancher.SSH.Port))
+	}
+	if cfg.Rancher.SSH.ListenAddress != "" {
+		modifiedLines = append(modifiedLines, fmt.Sprintf("ListenAddress %s", cfg.Rancher.SSH.ListenAddress))
+	}
+
+	for _, item := range modifiedLines {
 		match, err := regexp.Match("^"+item, sshdConfig)
 		if err != nil {
 			return err

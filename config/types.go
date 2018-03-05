@@ -182,8 +182,10 @@ type DockerConfig struct {
 }
 
 type SSHConfig struct {
-	Keys   map[string]string `yaml:"keys,omitempty"`
-	Daemon bool              `yaml:"daemon,omitempty"`
+	Keys          map[string]string `yaml:"keys,omitempty"`
+	Daemon        bool              `yaml:"daemon,omitempty"`
+	Port          int               `yaml:"port,omitempty"`
+	ListenAddress string            `yaml:"listen_address,omitempty"`
 }
 
 type StateConfig struct {
