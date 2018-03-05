@@ -1,7 +1,12 @@
 package network
 
 import (
+	"golang.org/x/net/context"
+
+	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
+
+	"io/ioutil"
 
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/config"
@@ -15,41 +20,60 @@ func Main() {
 	cfg := config.LoadConfig()
 	ApplyNetworkConfig(cfg)
 
+	log.Infof("Restart syslog")
+	client, err := docker.NewSystemClient()
+	if err != nil {
+		log.Error(err)
+	}
+
+	if err := client.ContainerRestart(context.Background(), "syslog", 10); err != nil {
+		log.Error(err)
+	}
+
 	select {}
 }
 
 func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	log.Infof("Apply Network Config")
-	nameservers := cfg.Rancher.Network.DNS.Nameservers
-	search := cfg.Rancher.Network.DNS.Search
-	userSetDNS := len(nameservers) > 0 || len(search) > 0
-	if !userSetDNS {
-		nameservers = cfg.Rancher.Defaults.Network.DNS.Nameservers
-		search = cfg.Rancher.Defaults.Network.DNS.Search
-	}
-
-	// TODO: don't write to the file if nameservers is still empty
-	if _, err := resolvconf.Build("/etc/resolv.conf", nameservers, search, nil); err != nil {
-		log.Error(err)
-	}
+	userSetDNS := len(cfg.Rancher.Network.DNS.Nameservers) > 0 || len(cfg.Rancher.Network.DNS.Search) > 0
 
 	if err := hostname.SetHostnameFromCloudConfig(cfg); err != nil {
-		log.Error(err)
+		log.Errorf("Failed to set hostname from cloud config: %v", err)
 	}
 
-	if err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network); err != nil {
-		log.Error(err)
-	}
-
-	// TODO: seems wrong to do this outside netconf
 	userSetHostname := cfg.Hostname != ""
-	log.Infof("Apply Network Config RunDhcp")
-	if err := netconf.RunDhcp(&cfg.Rancher.Network, !userSetHostname, !userSetDNS); err != nil {
-		log.Error(err)
+	dhcpSetDNS, err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network, userSetHostname, userSetDNS)
+	if err != nil {
+		log.Errorf("Failed to apply network configs(by netconf): %v", err)
 	}
+
+	if dhcpSetDNS {
+		log.Infof("DNS set by DHCP")
+	}
+
+	if !userSetDNS && !dhcpSetDNS {
+		// only write 8.8.8.8,8.8.4.4 as a last resort
+		log.Infof("Writing default resolv.conf - no user setting, and no DHCP setting")
+		if _, err := resolvconf.Build("/etc/resolv.conf",
+			cfg.Rancher.Defaults.Network.DNS.Nameservers,
+			cfg.Rancher.Defaults.Network.DNS.Search,
+			nil); err != nil {
+			log.Errorf("Failed to write resolv.conf (!userSetDNS and !dhcpSetDNS): %v", err)
+		}
+	}
+	if userSetDNS {
+		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search, nil); err != nil {
+			log.Errorf("Failed to write resolv.conf (userSetDNS): %v", err)
+		} else {
+			log.Infof("writing to /etc/resolv.conf: nameservers: %v, search: %v", cfg.Rancher.Network.DNS.Nameservers, cfg.Rancher.Network.DNS.Search)
+		}
+	}
+
+	resolve, err := ioutil.ReadFile("/etc/resolv.conf")
+	log.Debugf("Resolve.conf == [%s], %v", resolve, err)
 
 	log.Infof("Apply Network Config SyncHostname")
 	if err := hostname.SyncHostname(); err != nil {
-		log.Error(err)
+		log.Errorf("Failed to sync hostname: %v", err)
 	}
 }

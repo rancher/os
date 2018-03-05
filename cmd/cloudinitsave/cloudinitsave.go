@@ -33,12 +33,14 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/configdrive"
 	"github.com/rancher/os/config/cloudinit/datasource/file"
+	"github.com/rancher/os/config/cloudinit/datasource/metadata/aliyun"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/digitalocean"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/ec2"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/gce"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
 	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
 	"github.com/rancher/os/config/cloudinit/datasource/url"
+	"github.com/rancher/os/config/cloudinit/datasource/vmware"
 	"github.com/rancher/os/config/cloudinit/pkg"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
@@ -59,33 +61,28 @@ func Main() {
 		log.Errorf("Failed to run udev settle: %v", err)
 	}
 
-	cfg := rancherConfig.LoadConfig()
-	log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
-	network.ApplyNetworkConfig(cfg)
-
-	if err := SaveCloudConfig(); err != nil {
+	if err := saveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
 }
 
-func SaveCloudConfig() error {
-	log.Debugf("SaveCloudConfig")
+func saveCloudConfig() error {
+	log.Infof("SaveCloudConfig")
 
-	// TODO: can't run these here, but it needs to be triggered from here :()
 	cfg := rancherConfig.LoadConfig()
 	log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
 	network.ApplyNetworkConfig(cfg)
 
-	log.Debugf("datasources that will be consided: %#v", cfg.Rancher.CloudInit.Datasources)
-	dss := getDatasources(cfg)
+	log.Infof("datasources that will be consided: %#v", cfg.Rancher.CloudInit.Datasources)
+	dss := getDatasources(cfg.Rancher.CloudInit.Datasources)
 	if len(dss) == 0 {
 		log.Errorf("currentDatasource - none found")
 		return nil
 	}
 
-	selectDatasource(dss)
+	foundDs := selectDatasource(dss)
+	log.Infof("Cloud-init datasource that was used: %s", foundDs)
 
-	// TODO: can't run these here, but it needs to be triggered from here :()
 	// Apply any newly detected network config.
 	cfg = rancherConfig.LoadConfig()
 	log.Debugf("init: SaveCloudConfig(post ApplyNetworkConfig): %#v", cfg.Rancher.Network)
@@ -126,8 +123,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
 			return err
 		}
-		// TODO: Don't put secrets into the log
-		log.Infof("Written to %s:\n%s", rancherConfig.CloudConfigBootFile, string(cloudConfigBytes))
+		log.Infof("Wrote to %s", rancherConfig.CloudConfigBootFile)
 	}
 
 	metaDataBytes, err := yaml.Marshal(metadata)
@@ -138,8 +134,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
 		return err
 	}
-	// TODO: Don't put secrets into the log
-	log.Infof("Written to %s:\n%s", rancherConfig.MetaDataFile, string(metaDataBytes))
+	log.Infof("Wrote to %s", rancherConfig.MetaDataFile)
 
 	// if we write the empty meta yml, the merge fails.
 	// TODO: the problem is that a partially filled one will still have merge issues, so that needs fixing - presumably by making merge more clever, and making more fields optional
@@ -172,7 +167,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 	if err := rancherConfig.WriteToFile(cc, rancherConfig.CloudConfigNetworkFile); err != nil {
 		log.Errorf("Failed to save config file %s: %v", rancherConfig.CloudConfigNetworkFile, err)
 	}
-	log.Infof("Written to %s:", rancherConfig.CloudConfigNetworkFile)
+	log.Infof("Wrote to %s", rancherConfig.CloudConfigNetworkFile)
 
 	return nil
 }
@@ -224,10 +219,10 @@ func fetchAndSave(ds datasource.Datasource) error {
 
 // getDatasources creates a slice of possible Datasources for cloudinit based
 // on the different source command-line flags.
-func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
+func getDatasources(datasources []string) []datasource.Datasource {
 	dss := make([]datasource.Datasource, 0, 5)
 
-	for _, ds := range cfg.Rancher.CloudInit.Datasources {
+	for _, ds := range datasources {
 		parts := strings.SplitN(ds, ":", 2)
 
 		root := ""
@@ -236,6 +231,8 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 		}
 
 		switch parts[0] {
+		case "*":
+			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce"})...)
 		case "ec2":
 			dss = append(dss, ec2.NewDatasource(root))
 		case "file":
@@ -251,9 +248,10 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 				dss = append(dss, proccmdline.NewDatasource())
 			}
 		case "configdrive":
-			if root != "" {
-				dss = append(dss, configdrive.NewDatasource(root))
+			if root == "" {
+				root = "/media/config-2"
 			}
+			dss = append(dss, configdrive.NewDatasource(root))
 		case "digitalocean":
 			// TODO: should we enableDoLinkLocal() - to avoid the need for the other kernel/oem options?
 			dss = append(dss, digitalocean.NewDatasource(root))
@@ -261,6 +259,14 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 			dss = append(dss, gce.NewDatasource(root))
 		case "packet":
 			dss = append(dss, packet.NewDatasource(root))
+		case "vmware":
+			// made vmware datasource dependent on detecting vmware independently, as it crashes things otherwise
+			v := vmware.NewDatasource(root)
+			if v != nil {
+				dss = append(dss, v)
+			}
+		case "aliyun":
+			dss = append(dss, aliyun.NewDatasource(root))
 		}
 	}
 
@@ -268,13 +274,13 @@ func getDatasources(cfg *rancherConfig.CloudConfig) []datasource.Datasource {
 }
 
 func enableDoLinkLocal() {
-	err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
+	_, err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
 		Interfaces: map[string]netconf.InterfaceConfig{
 			"eth0": {
 				IPV4LL: true,
 			},
 		},
-	})
+	}, false, false)
 	if err != nil {
 		log.Errorf("Failed to apply link local on eth0: %v", err)
 	}
@@ -297,7 +303,7 @@ func selectDatasource(sources []datasource.Datasource) datasource.Datasource {
 
 			duration := datasourceInterval
 			for {
-				log.Infof("cloud-init: Checking availability of %q\n", s.Type())
+				log.Infof("cloud-init: Checking availability of %q", s.Type())
 				if s.IsAvailable() {
 					log.Infof("cloud-init: Datasource available: %s", s)
 					ds <- s

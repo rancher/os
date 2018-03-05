@@ -1,5 +1,7 @@
 #!/bin/bash
 set -e
 
+echo -------------------------./build-target
 $(dirname $0)/build-target
+echo -------------------------./build-host
 $(dirname $0)/build-host

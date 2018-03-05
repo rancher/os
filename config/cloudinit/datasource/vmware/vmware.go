@@ -17,9 +17,12 @@ package vmware
 import (
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/rancher/os/log"
+	"github.com/rancher/os/netconf"
 )
 
 type readConfigFunction func(key string) (string, error)
@@ -48,51 +51,83 @@ func (v VMWare) ConfigRoot() string {
 	return "/"
 }
 
+func (v VMWare) read(keytmpl string, args ...interface{}) (string, error) {
+	key := fmt.Sprintf(keytmpl, args...)
+	return v.readConfig(key)
+}
+
 func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
+	metadata.NetworkConfig = netconf.NetworkConfig{}
 	metadata.Hostname, _ = v.readConfig("hostname")
 
-	netconf := map[string]string{}
-	saveConfig := func(key string, args ...interface{}) string {
-		key = fmt.Sprintf(key, args...)
-		val, _ := v.readConfig(key)
-		if val != "" {
-			netconf[key] = val
+	//netconf := map[string]string{}
+	//saveConfig := func(key string, args ...interface{}) string {
+	//	key = fmt.Sprintf(key, args...)
+	//	val, _ := v.readConfig(key)
+	//	if val != "" {
+	//		netconf[key] = val
+	//	}
+	//	return val
+	//}
+
+	for i := 0; ; i++ {
+		val, _ := v.read("dns.server.%d", i)
+		if val == "" {
+			break
 		}
-		return val
+		metadata.NetworkConfig.DNS.Nameservers = append(metadata.NetworkConfig.DNS.Nameservers, val)
 	}
 
 	for i := 0; ; i++ {
-		if nameserver := saveConfig("dns.server.%d", i); nameserver == "" {
+		//if domain := saveConfig("dns.domain.%d", i); domain == "" {
+		val, _ := v.read("dns.domain.%d", i)
+		if val == "" {
 			break
 		}
+		metadata.NetworkConfig.DNS.Search = append(metadata.NetworkConfig.DNS.Search, val)
 	}
 
-	for i := 0; ; i++ {
-		if domain := saveConfig("dns.domain.%d", i); domain == "" {
-			break
-		}
-	}
-
+	metadata.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
 	found := true
 	for i := 0; found; i++ {
 		found = false
 
-		found = (saveConfig("interface.%d.name", i) != "") || found
-		found = (saveConfig("interface.%d.mac", i) != "") || found
-		found = (saveConfig("interface.%d.dhcp", i) != "") || found
+		ethName := fmt.Sprintf("eth%d", i)
+		netDevice := netconf.InterfaceConfig{
+			DHCP:      true,
+			Match:     ethName,
+			Addresses: []string{},
+		}
+		//found = (saveConfig("interface.%d.name", i) != "") || found
+		if val, _ := v.read("interface.%d.name", i); val != "" {
+			netDevice.Match = val
+			found = true
+		}
+		//found = (saveConfig("interface.%d.mac", i) != "") || found
+		if val, _ := v.read("interface.%d.mac", i); val != "" {
+			netDevice.Match = "mac:" + val
+			found = true
+		}
+		//found = (saveConfig("interface.%d.dhcp", i) != "") || found
+		if val, _ := v.read("interface.%d.dhcp", i); val != "" {
+			netDevice.DHCP = (strings.ToLower(val) != "no")
+			found = true
+		}
 
-		role, _ := v.readConfig(fmt.Sprintf("interface.%d.role", i))
+		role, _ := v.read("interface.%d.role", i)
 		for a := 0; ; a++ {
-			address := saveConfig("interface.%d.ip.%d.address", i, a)
+			address, _ := v.read("interface.%d.ip.%d.address", i, a)
 			if address == "" {
 				break
-			} else {
-				found = true
 			}
+			netDevice.Addresses = append(netDevice.Addresses, address)
+			found = true
+			netDevice.DHCP = false
 
 			ip, _, err := net.ParseCIDR(address)
 			if err != nil {
-				return metadata, err
+				log.Error(err)
+				//return metadata, err
 			}
 
 			switch role {
@@ -110,40 +145,46 @@ func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
 				}
 			case "":
 			default:
-				return metadata, fmt.Errorf("unrecognized role: %q", role)
+				//return metadata, fmt.Errorf("unrecognized role: %q", role)
+				log.Error(err)
 			}
 		}
 
 		for r := 0; ; r++ {
-			gateway := saveConfig("interface.%d.route.%d.gateway", i, r)
-			destination := saveConfig("interface.%d.route.%d.destination", i, r)
+			gateway, _ := v.read("interface.%d.route.%d.gateway", i, r)
+			// TODO: do we really not do anything but default routing?
+			//destination, _ := v.read("interface.%d.route.%d.destination", i, r)
+			destination := ""
 
 			if gateway == "" && destination == "" {
 				break
 			} else {
+				netDevice.Gateway = gateway
 				found = true
 			}
 		}
+		if found {
+			metadata.NetworkConfig.Interfaces[ethName] = netDevice
+		}
 	}
-	//	metadata.NetworkConfig = netconf
 
 	return
 }
 
 func (v VMWare) FetchUserdata() ([]byte, error) {
-	encoding, err := v.readConfig("coreos.config.data.encoding")
+	encoding, err := v.readConfig("cloud-init.data.encoding")
 	if err != nil {
 		return nil, err
 	}
 
-	data, err := v.readConfig("coreos.config.data")
+	data, err := v.readConfig("cloud-init.config.data")
 	if err != nil {
 		return nil, err
 	}
 
 	// Try to fallback to url if no explicit data
 	if data == "" {
-		url, err := v.readConfig("coreos.config.url")
+		url, err := v.readConfig("cloud-init.config.url")
 		if err != nil {
 			return nil, err
 		}

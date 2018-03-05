@@ -7,14 +7,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/codegangsta/cli"
-
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
 
-func bootstrapAction(c *cli.Context) error {
+func BootstrapMain() {
+	log.InitLogger()
+
 	log.Debugf("bootstrapAction")
 	if err := UdevSettle(); err != nil {
 		log.Errorf("Failed to run udev settle: %v", err)
@@ -39,16 +39,18 @@ func bootstrapAction(c *cli.Context) error {
 	}
 
 	log.Debugf("bootstrapAction: RunCommandSequence(%v)", cfg.Bootcmd)
-	util.RunCommandSequence(cfg.Bootcmd)
+	err := util.RunCommandSequence(cfg.Bootcmd)
+	if err != nil {
+		log.Error(err)
+	}
 
 	if cfg.Rancher.State.Dev != "" && cfg.Rancher.State.Wait {
 		waitForRoot(cfg)
 	}
 
-	autoformatDevices := cfg.Rancher.State.Autoformat
-	log.Debugf("bootstrapAction: Autoformat(%v)", cfg.Rancher.State.Autoformat)
-	if len(autoformatDevices) > 0 {
-		if err := autoformat(autoformatDevices); err != nil {
+	if len(cfg.Rancher.State.Autoformat) > 0 {
+		log.Infof("bootstrap container: Autoformat(%v) as %s", cfg.Rancher.State.Autoformat, "ext4")
+		if err := autoformat(cfg.Rancher.State.Autoformat); err != nil {
 			log.Errorf("Failed to run autoformat: %v", err)
 		}
 	}
@@ -57,8 +59,6 @@ func bootstrapAction(c *cli.Context) error {
 	if err := UdevSettle(); err != nil {
 		log.Errorf("Failed to run udev settle: %v", err)
 	}
-
-	return nil
 }
 
 func mdadmScan() error {

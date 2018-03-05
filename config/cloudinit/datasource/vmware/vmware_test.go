@@ -17,6 +17,7 @@ package vmware
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
@@ -24,11 +25,13 @@ import (
 	"testing"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/rancher/os/netconf"
 )
 
 type MockHypervisor map[string]string
 
 func (h MockHypervisor) ReadConfig(key string) (string, error) {
+	fmt.Printf("read(%s) %s\n", key, h[key])
 	return h[key], nil
 }
 
@@ -53,26 +56,48 @@ func TestFetchMetadata(t *testing.T) {
 	}{
 		{
 			variables: map[string]string{
+				"hostname":         "first",
 				"interface.0.mac":  "test mac",
 				"interface.0.dhcp": "yes",
 			},
 			metadata: datasource.Metadata{
-			//				NetworkConfig: map[string]string{
-			//					"interface.0.mac":  "test mac",
-			//					"interface.0.dhcp": "yes",
-			//				},
+				Hostname: "first",
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Match:     "mac:test mac",
+							DHCP:      true,
+							Addresses: []string{},
+						},
+					},
+				},
+				//				NetworkConfig: map[string]string{
+				//					"interface.0.mac":  "test mac",
+				//					"interface.0.dhcp": "yes",
+				//				},
 			},
 		},
 		{
 			variables: map[string]string{
+				"hostname":         "second",
 				"interface.0.name": "test name",
 				"interface.0.dhcp": "yes",
 			},
 			metadata: datasource.Metadata{
-			//				NetworkConfig: map[string]string{
-			//					"interface.0.name": "test name",
-			//					"interface.0.dhcp": "yes",
-			//				},
+				Hostname: "second",
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Match:     "test name",
+							DHCP:      true,
+							Addresses: []string{},
+						},
+					},
+				},
+				//				NetworkConfig: map[string]string{
+				//					"interface.0.name": "test name",
+				//					"interface.0.dhcp": "yes",
+				//				},
 			},
 		},
 		{
@@ -87,6 +112,19 @@ func TestFetchMetadata(t *testing.T) {
 			metadata: datasource.Metadata{
 				Hostname:    "test host",
 				PrivateIPv6: net.ParseIP("fe00::100"),
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Match: "mac:test mac",
+							DHCP:  false,
+							Addresses: []string{
+								"fe00::100/64",
+							},
+							Gateway: "fe00::1",
+							//TODO: Destination
+						},
+					},
+				},
 				//				NetworkConfig: map[string]string{
 				//					"interface.0.mac":                 "test mac",
 				//					"interface.0.ip.0.address":        "fe00::100/64",
@@ -114,6 +152,29 @@ func TestFetchMetadata(t *testing.T) {
 				Hostname:    "test host",
 				PublicIPv4:  net.ParseIP("10.0.0.101"),
 				PrivateIPv4: net.ParseIP("10.0.0.102"),
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Match: "test name",
+							DHCP:  false,
+							Addresses: []string{
+								"10.0.0.100/24",
+								"10.0.0.101/24",
+							},
+							Gateway: "10.0.0.1",
+							//TODO: Destination
+						},
+						"eth1": netconf.InterfaceConfig{
+							Match: "mac:test mac",
+							DHCP:  false,
+							Addresses: []string{
+								"10.0.0.102/24",
+							},
+							Gateway: "10.0.0.2",
+							//TODO: Destination
+						},
+					},
+				},
 				//				NetworkConfig: map[string]string{
 				//					"interface.0.name":                "test name",
 				//					"interface.0.ip.0.address":        "10.0.0.100/24",
@@ -150,45 +211,45 @@ func TestFetchUserdata(t *testing.T) {
 	}{
 		{},
 		{
-			variables: map[string]string{"coreos.config.data": "test config"},
+			variables: map[string]string{"cloud-init.config.data": "test config"},
 			userdata:  "test config",
 		},
 		{
 			variables: map[string]string{
-				"coreos.config.data.encoding": "",
-				"coreos.config.data":          "test config",
+				"cloud-init.data.encoding": "",
+				"cloud-init.config.data":   "test config",
 			},
 			userdata: "test config",
 		},
 		{
 			variables: map[string]string{
-				"coreos.config.data.encoding": "base64",
-				"coreos.config.data":          "dGVzdCBjb25maWc=",
+				"cloud-init.data.encoding": "base64",
+				"cloud-init.config.data":   "dGVzdCBjb25maWc=",
 			},
 			userdata: "test config",
 		},
 		{
 			variables: map[string]string{
-				"coreos.config.data.encoding": "gzip+base64",
-				"coreos.config.data":          "H4sIABaoWlUAAytJLS5RSM7PS8tMBwCQiHNZCwAAAA==",
+				"cloud-init.data.encoding": "gzip+base64",
+				"cloud-init.config.data":   "H4sIABaoWlUAAytJLS5RSM7PS8tMBwCQiHNZCwAAAA==",
 			},
 			userdata: "test config",
 		},
 		{
 			variables: map[string]string{
-				"coreos.config.data.encoding": "test encoding",
+				"cloud-init.data.encoding": "test encoding",
 			},
 			err: errors.New(`Unsupported encoding "test encoding"`),
 		},
 		{
 			variables: map[string]string{
-				"coreos.config.url": "http://good.example.com",
+				"cloud-init.config.url": "http://good.example.com",
 			},
 			userdata: "test config",
 		},
 		{
 			variables: map[string]string{
-				"coreos.config.url": "http://bad.example.com",
+				"cloud-init.config.url": "http://bad.example.com",
 			},
 			err: errors.New("Not found"),
 		},
@@ -239,7 +300,7 @@ func TestOvfTransport(t *testing.T) {
    </PlatformSection>
    <PropertySection>
       <Property oe:key="foo" oe:value="42"/>
-      <Property oe:key="guestinfo.coreos.config.url" oe:value="http://good.example.com"/>
+      <Property oe:key="guestinfo.cloud-init.config.url" oe:value="http://good.example.com"/>
       <Property oe:key="guestinfo.hostname" oe:value="test host"/>
       <Property oe:key="guestinfo.interface.0.name" oe:value="test name"/>
       <Property oe:key="guestinfo.interface.0.role" oe:value="public"/>
@@ -258,17 +319,29 @@ func TestOvfTransport(t *testing.T) {
 				Hostname:    "test host",
 				PublicIPv4:  net.ParseIP("10.0.0.101"),
 				PrivateIPv4: net.ParseIP("10.0.0.102"),
-				//NetworkConfig: map[string]string{
-				//	"interface.0.name":                "test name",
-				//	"interface.0.ip.0.address":        "10.0.0.100/24",
-				//	"interface.0.ip.1.address":        "10.0.0.101/24",
-				//	"interface.0.route.0.gateway":     "10.0.0.1",
-				//	"interface.0.route.0.destination": "0.0.0.0",
-				//	"interface.1.mac":                 "test mac",
-				//	"interface.1.route.0.gateway":     "10.0.0.2",
-				//	"interface.1.route.0.destination": "0.0.0.0",
-				//	"interface.1.ip.0.address":        "10.0.0.102/24",
-				//				},
+				NetworkConfig: netconf.NetworkConfig{
+					Interfaces: map[string]netconf.InterfaceConfig{
+						"eth0": netconf.InterfaceConfig{
+							Match: "test name",
+							DHCP:  false,
+							Addresses: []string{
+								"10.0.0.100/24",
+								"10.0.0.101/24",
+							},
+							Gateway: "10.0.0.1",
+							//TODO: Destination
+						},
+						"eth1": netconf.InterfaceConfig{
+							Match: "mac:test mac",
+							DHCP:  false,
+							Addresses: []string{
+								"10.0.0.102/24",
+							},
+							Gateway: "10.0.0.2",
+							//TODO: Destination
+						},
+					},
+				},
 			},
 			userdata: []byte("test config"),
 		},
@@ -283,6 +356,9 @@ func TestOvfTransport(t *testing.T) {
 
 		file.WriteString(tt.document)
 		v := NewDatasource(file.Name())
+		if v == nil {
+			continue
+		}
 		v.urlDownload = fakeDownloader
 
 		metadata, err := v.FetchMetadata()

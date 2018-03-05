@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|docs|release')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|release|build-moby|run-moby')
 
 .dapper:
 	@echo Downloading dapper
@@ -25,8 +25,11 @@ run: build/initrd/.id .dapper
 	./.dapper -m bind build-target
 	./scripts/run
 
-docs:
-	./scripts/docs
+build-moby:
+	./scripts/build-moby
+
+run-moby:
+	./scripts/run-moby
 
 shell-bind: .dapper
 	./.dapper -m bind -s
@@ -34,7 +37,7 @@ shell-bind: .dapper
 clean:
 	@./scripts/clean
 
-release: .dapper release-build openstack
+release: .dapper release-build qcows
 
 release-build:
 	mkdir -p dist
@@ -43,22 +46,22 @@ release-build:
 itest:
 	mkdir -p dist
 	./.dapper integration-test 2>&1 | tee dist/itest.log
+	grep --binary-files=text FAIL dist/itest.log || true
 
-openstack:
+qcows:
 	cp dist/artifacts/rancheros.iso scripts/images/openstack/
-	cd scripts/images/openstack && ../../../.dapper
-	cp ./scripts/images/openstack/dist/*.img dist/
+	cd scripts/images/openstack && \
+		APPEND="console=tty1 console=ttyS0,115200n8 printk.devkmsg=on rancher.autologin=ttyS0" \
+		NAME=openstack ../../../.dapper
+	cd scripts/images/openstack && \
+		APPEND="console=tty1 printk.devkmsg=on notsc clocksource=kvm-clock rancher.network.interfaces.eth0.ipv4ll rancher.cloud_init.datasources=[digitalocean] rancher.autologin=tty1 rancher.autologin=ttyS0 rancher.resize_device=/dev/vda" \
+		NAME=digitalocean ../../../.dapper
+	cp ./scripts/images/openstack/dist/*.img dist/artifacts/
 
-openstack-run:
-	qemu-system-x86_64 -curses \
-		-net nic -net user \
-		-m 2048M \
-		--hdc scripts/images/openstack/dist/rancheros-openstack.img
-
-rpi: release
-	# scripts/images/raspberry-pi-hypriot/dist/rancheros-raspberry-pi.zip
-	cp dist/artifacts/rootfs_arm.tar.gz scripts/images/raspberry-pi-hypriot/
-	cd scripts/images/raspberry-pi-hypriot/ \
+rpi64:
+	# scripts/images/raspberry-pi-hypriot64/dist/rancheros-raspberry-pi.zip
+	cp dist/artifacts/rootfs_arm64.tar.gz scripts/images/raspberry-pi-hypriot64/
+	cd scripts/images/raspberry-pi-hypriot64/ \
 		&& ../../../.dapper
 
 help:

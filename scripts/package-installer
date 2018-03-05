@@ -21,12 +21,7 @@ fi
 # build kexec
 pushd .
 cd scripts/installer/kexec
-echo Downloading dapper
-curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m|sed 's/v7l//'` > .dapper.tmp
-chmod +x .dapper.tmp
-./.dapper.tmp -v
-mv .dapper.tmp .dapper
-./.dapper
+dapper
 popd
 
 
@@ -38,6 +33,7 @@ cat scripts/isolinux.cfg | envsubst >         ${DIST}/boot/isolinux/isolinux.cfg
 cat scripts/isolinux_label.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/linux-current.cfg
 #cat scripts/isolinux_label.cfg | LABEL=debug APPEND="rancher.debug=true" envsubst >   ${DIST}/boot/linux-previous.cfg
 cat scripts/global.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+cp scripts/rancher.png ${DIST}/boot/
 
 
 mkdir -p ./scripts/installer/build/boot
@@ -61,8 +57,9 @@ cp -r ${DIST}/boot/* ./scripts/installer/build/boot
 cp $DOCKERFILE ./scripts/installer/build/Dockerfile
 # Full installer image with initrd - used for pulling from network
 docker build \
-    -t ${OS_REPO}/os:${VERSION}${SUFFIX} \
+    -t ${OS_REPO}/os \
     ./scripts/installer/build
+docker tag ${OS_REPO}/os ${OS_REPO}/os:${VERSION}${SUFFIX}
 
 docker save -o ${ARTIFACTS}/fullinstaller.tar ${OS_REPO}/os:${VERSION}${SUFFIX}
 echo ${OS_REPO}/os:${VERSION}${SUFFIX} >> dist/images

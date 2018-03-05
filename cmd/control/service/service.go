@@ -36,7 +36,6 @@ func Commands() cli.Command {
 	app := cli.Command{}
 	app.Name = "service"
 	app.ShortName = "s"
-	app.Usage = "Command line interface for services and compose."
 	app.Before = beforeApp
 	app.Flags = append(dockerApp.DockerClientFlags(), cli.BoolFlag{
 		Name: "verbose,debug",
@@ -208,9 +207,17 @@ func IsLocalOrURL(service string) bool {
 	return isLocal(service) || strings.HasPrefix(service, "http:/") || strings.HasPrefix(service, "https:/")
 }
 
-func validateService(service string, cfg *config.CloudConfig) {
+// ValidService checks to see if the service definition exists
+func ValidService(service string, cfg *config.CloudConfig) bool {
 	services := availableService(cfg)
 	if !IsLocalOrURL(service) && !util.Contains(services, service) {
+		return false
+	}
+	return true
+}
+
+func validateService(service string, cfg *config.CloudConfig) {
+	if !ValidService(service, cfg) {
 		log.Fatalf("%s is not a valid service", service)
 	}
 }

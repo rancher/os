@@ -83,4 +83,5 @@ sudo ros config export --private --full | grep "ntp"
 sudo ros config export --full | grep "labels"
 
 sudo ros config export --private --full | grep "PRIVATE KEY"`)
+
 }

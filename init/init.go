@@ -13,9 +13,8 @@ import (
 	"syscall"
 
 	"github.com/docker/docker/pkg/mount"
-	//	"github.com/rancher/os/cmd/control"
-	networkCmd "github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/dfs"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
@@ -92,7 +91,15 @@ func sysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func MainInit() {
-	// TODO: log.InitLogger()
+	log.InitLogger()
+	// TODO: this breaks and does nothing if the cfg is invalid (or is it due to threading?)
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Starting Recovery console: %v\n", r)
+			recovery(nil)
+		}
+	}()
+
 	if err := RunInit(); err != nil {
 		log.Fatal(err)
 	}
@@ -210,6 +217,15 @@ func setupSharedRoot(c *config.CloudConfig) (*config.CloudConfig, error) {
 	return c, mount.MakeShared("/")
 }
 
+func PrintConfig() {
+	cfgString, err := config.Export(false, true)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Error("Error serializing config")
+	} else {
+		log.Debugf("Config: %s", cfgString)
+	}
+}
+
 func RunInit() error {
 	os.Setenv("PATH", "/sbin:/usr/sbin:/usr/bin")
 	if isInitrd() {
@@ -222,40 +238,48 @@ func RunInit() error {
 
 	boot2DockerEnvironment := false
 	var shouldSwitchRoot bool
+	hypervisor := ""
 
 	configFiles := make(map[string][]byte)
 
-	initFuncs := []config.CfgFunc{
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
+	initFuncs := []config.CfgFuncData{
+		config.CfgFuncData{"preparefs", func(c *config.CloudConfig) (*config.CloudConfig, error) {
 			return c, dfs.PrepareFs(&mountConfig)
-		},
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			// will this be passed to cloud-init-save?
+		}},
+		config.CfgFuncData{"save init cmdline", func(c *config.CloudConfig) (*config.CloudConfig, error) {
+			// the Kernel Patch added for RancherOS passes `--` (only) elided kernel boot params to the init process
 			cmdLineArgs := strings.Join(os.Args, " ")
 			config.SaveInitCmdline(cmdLineArgs)
 
-			return c, nil
-		},
-		mountOem,
-		func(_ *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg := config.LoadConfig()
-
+			log.Debugf("Cmdline debug = %t", cfg.Rancher.Debug)
 			if cfg.Rancher.Debug {
-				cfgString, err := config.Export(false, true)
-				if err != nil {
-					log.WithFields(log.Fields{"err": err}).Error("Error serializing config")
-				} else {
-					log.Debugf("Config: %s", cfgString)
-				}
+				log.SetLevel(log.DebugLevel)
+			} else {
+				log.SetLevel(log.InfoLevel)
 			}
 
 			return cfg, nil
-		},
-		loadModules,
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			if util.ResolveDevice("LABEL=B2D_STATE") != "" {
+		}},
+		config.CfgFuncData{"mount OEM", mountOem},
+		config.CfgFuncData{"debug save cfg", func(_ *config.CloudConfig) (*config.CloudConfig, error) {
+			PrintConfig()
+
+			cfg := config.LoadConfig()
+			return cfg, nil
+		}},
+		config.CfgFuncData{"load modules", loadModules},
+		config.CfgFuncData{"recovery console", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if cfg.Rancher.Recovery {
+				recovery(nil)
+			}
+			return cfg, nil
+		}},
+		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if dev := util.ResolveDevice("LABEL=B2D_STATE"); dev != "" {
 				boot2DockerEnvironment = true
 				cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
+				log.Infof("boot2DockerEnvironment %s: %s", cfg.Rancher.State.Dev, dev)
 				return cfg, nil
 			}
 
@@ -272,6 +296,8 @@ func RunInit() error {
 						boot2DockerEnvironment = true
 						cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
 						cfg.Rancher.State.Autoformat = []string{device}
+						log.Infof("boot2DockerEnvironment %s: Autoformat %s", cfg.Rancher.State.Dev, cfg.Rancher.State.Autoformat[0])
+
 						break
 					}
 				}
@@ -288,61 +314,85 @@ func RunInit() error {
 			}
 
 			return config.LoadConfig(), nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"mount and bootstrap", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			var err error
 			cfg, shouldSwitchRoot, err = tryMountAndBootstrap(cfg)
+
 			if err != nil {
 				return nil, err
 			}
 			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-
+		}},
+		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
+			hypervisor = util.GetHypervisor()
+			if hypervisor == "" {
+				log.Infof("ros init: No Detected Hypervisor")
+			} else {
+				log.Infof("ros init: Detected Hypervisor: %s", hypervisor)
+			}
+			if hypervisor == "vmware" {
+				// add vmware to the end - we don't want to over-ride an choices the user has made
+				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
+			}
+
 			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
 				log.Error(err)
 			}
 
-			// Udev tools not available here at this point - defer to cloud-init-save container
-			//if err := control.UdevSettle(); err != nil {
-			//		log.Errorf("Failed to run udev settle: %v", err)
-			//	}
-
-			//cfg := rancherConfig.LoadConfig()
-			log.Debugf("init: SaveCloudConfig(pre ApplyNetworkConfig): %#v", cfg.Rancher.Network)
-			networkCmd.ApplyNetworkConfig(cfg)
-
-			log.Debug("init: runCloudInitServices()")
+			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
 			if err := runCloudInitServices(cfg); err != nil {
 				log.Error(err)
 			}
 
-			// Apply any newly detected network config.
-			cfg = config.LoadConfig()
-			log.Debugf("init: SaveCloudConfig(post ApplyNetworkConfig): %#v", cfg.Rancher.Network)
-			networkCmd.ApplyNetworkConfig(cfg)
+			// It'd be nice to push to rsyslog before this, but we don't have network
+			log.AddRSyslogHook()
 
-			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			return config.LoadConfig(), nil
+		}},
+		config.CfgFuncData{"read cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
 				config.CloudConfigInitFile,
 				config.CloudConfigBootFile,
 				config.CloudConfigNetworkFile,
 				config.MetaDataFile,
+				config.EtcResolvConfFile,
+			}
+			// And all the files in /var/log/boot/
+			// TODO: I wonder if we can put this code into the log module, and have things write to the buffer until we FsReady()
+			bootLog := "/var/log/"
+			if files, err := ioutil.ReadDir(bootLog); err == nil {
+				for _, file := range files {
+					if !file.IsDir() {
+						filePath := filepath.Join(bootLog, file.Name())
+						filesToCopy = append(filesToCopy, filePath)
+						log.Debugf("Swizzle: Found %s to save", filePath)
+					}
+				}
+			}
+			bootLog = "/var/log/boot/"
+			if files, err := ioutil.ReadDir(bootLog); err == nil {
+				for _, file := range files {
+					filePath := filepath.Join(bootLog, file.Name())
+					filesToCopy = append(filesToCopy, filePath)
+					log.Debugf("Swizzle: Found %s to save", filePath)
+				}
 			}
 			for _, name := range filesToCopy {
-				content, err := ioutil.ReadFile(name)
-				if err != nil {
-					log.Error(err)
-					continue
+				if _, err := os.Lstat(name); !os.IsNotExist(err) {
+					content, err := ioutil.ReadFile(name)
+					if err != nil {
+						log.Errorf("read cfg file (%s) %s", name, err)
+						continue
+					}
+					log.Debugf("Swizzle: Saved %s to memory", name)
+					configFiles[name] = content
 				}
-				configFiles[name] = content
 			}
 			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"switchroot", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if !shouldSwitchRoot {
 				return cfg, nil
 			}
@@ -351,16 +401,24 @@ func RunInit() error {
 				return cfg, err
 			}
 			return cfg, nil
-		},
-		mountOem,
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"mount OEM2", mountOem},
+		config.CfgFuncData{"write cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			for name, content := range configFiles {
-				if err := os.MkdirAll(filepath.Dir(name), os.ModeDir|0700); err != nil {
+				dirMode := os.ModeDir | 0755
+				fileMode := os.FileMode(0444)
+				if strings.HasPrefix(name, "/var/lib/rancher/conf/") {
+					// only make the conf files harder to get to
+					dirMode = os.ModeDir | 0700
+					fileMode = os.FileMode(0400)
+				}
+				if err := os.MkdirAll(filepath.Dir(name), dirMode); err != nil {
 					log.Error(err)
 				}
-				if err := util.WriteFileAtomic(name, content, 400); err != nil {
+				if err := util.WriteFileAtomic(name, content, fileMode); err != nil {
 					log.Error(err)
 				}
+				log.Infof("Swizzle: Wrote file to %s", name)
 			}
 			if err := os.MkdirAll(config.VarRancherDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
@@ -368,9 +426,21 @@ func RunInit() error {
 			if err := os.Chmod(config.VarRancherDir, os.ModeDir|0755); err != nil {
 				log.Error(err)
 			}
+			log.FsReady()
+			log.Debugf("WARNING: switchroot and mount OEM2 phases not written to log file")
+
+			// update docker-sys bridge setting
+			if dockerSysSubnet := cmdline.GetCmdline(config.RKPDockerSysBridgeSubnet); dockerSysSubnet != "" {
+				val := dockerSysSubnet.(string)
+				config.SaveCNISubnet(val, config.CNIBridgeConfigFile)
+			}
+
 			return cfg, nil
-		},
-		func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+		}},
+		config.CfgFuncData{"b2d Env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+
+			log.Debugf("memory Resolve.conf == [%s]", configFiles["/etc/resolv.conf"])
+
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)
@@ -381,33 +451,70 @@ func RunInit() error {
 			}
 
 			return config.LoadConfig(), nil
-		},
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			return c, dfs.PrepareFs(&mountConfig)
-		},
-		loadModules,
-		func(c *config.CloudConfig) (*config.CloudConfig, error) {
-			network.SetProxyEnvironmentVariables(c)
-			return c, nil
-		},
-		initializeSelinux,
-		setupSharedRoot,
-		sysInit,
+		}},
+		config.CfgFuncData{"hypervisor tools", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			enableHypervisorService(cfg, hypervisor)
+			return config.LoadConfig(), nil
+		}},
+		config.CfgFuncData{"preparefs2", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			return cfg, dfs.PrepareFs(&mountConfig)
+		}},
+		config.CfgFuncData{"load modules2", loadModules},
+		config.CfgFuncData{"set proxy env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			network.SetProxyEnvironmentVariables()
+
+			return cfg, nil
+		}},
+		config.CfgFuncData{"init SELinux", initializeSelinux},
+		config.CfgFuncData{"setupSharedRoot", setupSharedRoot},
+		config.CfgFuncData{"sysinit", sysInit},
 	}
 
-	cfg, err := config.ChainCfgFuncs(nil, initFuncs...)
+	cfg, err := config.ChainCfgFuncs(nil, initFuncs)
 	if err != nil {
-		return err
+		recovery(err)
 	}
 
 	launchConfig, args := getLaunchConfig(cfg, &cfg.Rancher.SystemDocker)
 	launchConfig.Fork = !cfg.Rancher.SystemDocker.Exec
+	//launchConfig.NoLog = true
 
 	log.Info("Launching System Docker")
 	_, err = dfs.LaunchDocker(launchConfig, config.SystemDockerBin, args...)
 	if err != nil {
+		log.Errorf("Error Launching System Docker: %s", err)
+		recovery(err)
 		return err
 	}
+	// Code never gets here - rancher.system_docker.exec=true
 
 	return pidOne()
+}
+
+func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
+	if hypervisorName == "" {
+		return
+	}
+
+	// only enable open-vm-tools for vmware
+	// these services(xenhvm-vm-tools, kvm-vm-tools, hyperv-vm-tools and bhyve-vm-tools) don't exist yet
+	if hypervisorName == "vmware" {
+		hypervisorName = "open"
+		serviceName := hypervisorName + "-vm-tools"
+		if !cfg.Rancher.HypervisorService {
+			log.Infof("Skipping %s as `rancher.hypervisor_service` is set to false", serviceName)
+			return
+		}
+
+		// Check removed - there's an x509 cert failure on first boot of an installed system
+		// check quickly to see if there is a yml file available
+		//	if service.ValidService(serviceName, cfg) {
+		log.Infof("Setting rancher.services_include. %s=true", serviceName)
+		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
+			log.Error(err)
+		}
+		//	} else {
+		//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
+		//	}
+	}
 }

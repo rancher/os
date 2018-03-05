@@ -8,9 +8,9 @@ func (s *QemuSuite) TestCustomDocker(c *C) {
 	s.CheckCall(c, `
 set -ex
 
-docker version | grep 1.10.3
+docker version | grep 1.12.6
 
-sudo ros engine list | grep 1.10.3 | grep current
+sudo ros engine list | grep 1.12.6 | grep current
 (sudo ros engine switch invalid 2>&1 || true) | grep "invalid is not a valid engine"
 (sudo ros engine enable invalid 2>&1 || true) | grep "invalid is not a valid engine"
 
@@ -20,10 +20,10 @@ docker ps | grep nginx`)
 	s.CheckCall(c, `
 set -ex
 
-sudo ros engine switch docker-1.11.2
+sudo ros engine switch docker-1.13.1
 /usr/sbin/wait-for-docker
-docker version | grep 1.11.2
-sudo ros engine list | grep 1.11.2 | grep current
+docker version | grep 1.13.1
+sudo ros engine list | grep 1.13.1 | grep current
 docker ps | grep nginx`)
 
 	s.Reboot(c)
@@ -31,8 +31,8 @@ docker ps | grep nginx`)
 	s.CheckCall(c, `
 set -ex
 
-docker version | grep 1.11.2
-sudo ros engine list | grep 1.11.2 | grep current
+docker version | grep 1.13.1
+sudo ros engine list | grep 1.13.1 | grep current
 docker ps | grep nginx`)
 }
 
@@ -43,18 +43,18 @@ func (s *QemuSuite) TestCustomDockerInPersistentConsole(c *C) {
 set -ex
 
 apt-get --version
-docker version | grep 1.10.3
-sudo ros engine list | grep 1.10.3 | grep current
+docker version | grep 17.06.1-ce
+sudo ros engine list | grep 17.06.1-ce | grep current
 docker run -d --restart=always nginx
 docker ps | grep nginx`)
 
 	s.CheckCall(c, `
 set -ex
 
-sudo ros engine switch docker-1.11.2
+sudo ros engine switch docker-1.12.6
 /usr/sbin/wait-for-docker
-docker version | grep 1.11.2
-sudo ros engine list | grep 1.11.2 | grep current
+docker version | grep 1.12.6
+sudo ros engine list | grep 1.12.6 | grep current
 docker ps | grep nginx`)
 
 	s.Reboot(c)
@@ -62,7 +62,7 @@ docker ps | grep nginx`)
 	s.CheckCall(c, `
 set -ex
 
-docker version | grep 1.11.2
-sudo ros engine list | grep 1.11.2 | grep current
+docker version | grep 1.12.6
+sudo ros engine list | grep 1.12.6 | grep current
 docker ps | grep nginx`)
 }

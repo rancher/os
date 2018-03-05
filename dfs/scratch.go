@@ -75,7 +75,7 @@ func createOptionalMounts(mounts ...[]string) {
 		log.Debugf("Mounting %s %s %s %s", mount[0], mount[1], mount[2], mount[3])
 		err := util.Mount(mount[0], mount[1], mount[2], mount[3])
 		if err != nil {
-			log.Debugf("Unable to mount %s %s %s %s: %s", mount[0], mount[1], mount[2], mount[3], err)
+			log.Debugf("Unable to mount %s %s %s %s: %v", mount[0], mount[1], mount[2], mount[3], err)
 		}
 	}
 }
@@ -215,11 +215,7 @@ func execDocker(config *Config, docker, cmd string, args []string) (*exec.Cmd, e
 
 func copyDefault(folder, name string) error {
 	defaultFile := path.Join(defaultPrefix, folder, name)
-	if err := CopyFile(defaultFile, folder, name); err != nil {
-		return err
-	}
-
-	return nil
+	return CopyFile(defaultFile, folder, name)
 }
 
 func copyDefaultFolder(folder string) error {
@@ -264,15 +260,21 @@ func defaultFolders(folders ...string) error {
 }
 
 func CopyFile(src, folder, name string) error {
+	return CopyFileOverwrite(src, folder, name, false)
+}
+
+func CopyFileOverwrite(src, folder, name string, overwrite bool) error {
 	if _, err := os.Lstat(src); os.IsNotExist(err) {
 		log.Debugf("Not copying %s, does not exists", src)
 		return nil
 	}
 
 	dst := path.Join(folder, name)
-	if _, err := os.Lstat(dst); err == nil {
-		log.Debugf("Not copying %s => %s already exists", src, dst)
-		return nil
+	if !overwrite {
+		if _, err := os.Lstat(dst); err == nil {
+			log.Debugf("Not copying %s => %s already exists", src, dst)
+			return nil
+		}
 	}
 
 	if err := createDirs(folder); err != nil {
@@ -351,14 +353,20 @@ ff02::2    ip6-allrouters
 127.0.1.1       `+hostname)
 
 	if len(cfg.DNSConfig.Nameservers) != 0 {
-		if _, err := resolvconf.Build("/etc/resolv.conf", cfg.DNSConfig.Nameservers, cfg.DNSConfig.Search, nil); err != nil {
-			return err
+		resolve, err := ioutil.ReadFile("/etc/resolv.conf")
+		log.Debugf("Resolve.conf == [%s], %v", resolve, err)
+
+		if err != nil {
+			log.Infof("scratch Writing empty resolv.conf (%v) %v", []string{}, []string{})
+			if _, err := resolvconf.Build("/etc/resolv.conf", []string{}, []string{}, nil); err != nil {
+				return err
+			}
 		}
 	}
 
 	if cfg.BridgeName != "" && cfg.BridgeName != "none" {
 		log.Debugf("Creating bridge %s (%s)", cfg.BridgeName, cfg.BridgeAddress)
-		if err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
+		if _, err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
 			Interfaces: map[string]netconf.InterfaceConfig{
 				cfg.BridgeName: {
 					Address: cfg.BridgeAddress,
@@ -366,7 +374,8 @@ ff02::2    ip6-allrouters
 					Bridge:  "true",
 				},
 			},
-		}); err != nil {
+		}, false, false); err != nil {
+			log.Errorf("Error creating bridge: %s", err)
 			return err
 		}
 	}
@@ -446,11 +455,7 @@ func PrepareFs(config *Config) error {
 		return err
 	}
 
-	if err := firstPrepare(); err != nil {
-		return err
-	}
-
-	return nil
+	return firstPrepare()
 }
 
 func touchSocket(path string) error {
@@ -574,11 +579,7 @@ func firstPrepare() error {
 		return err
 	}
 
-	if err := createGroup(); err != nil {
-		return err
-	}
-
-	return nil
+	return createGroup()
 }
 
 func secondPrepare(config *Config, docker string, args ...string) error {

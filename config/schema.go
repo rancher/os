@@ -37,6 +37,7 @@ var schema = `{
         "no_sharedroot": {"type": "boolean"},
         "log": {"type": "boolean"},
         "force_console_rebuild": {"type": "boolean"},
+        "recovery": {"type": "boolean"},
         "disable": {"$ref": "#/definitions/list_of_strings"},
         "services_include": {"type": "object"},
         "modules": {"$ref": "#/definitions/list_of_strings"},
@@ -52,7 +53,9 @@ var schema = `{
         "defaults": {"$ref": "#/definitions/defaults_config"},
         "resize_device": {"type": "string"},
         "sysctl": {"type": "object"},
-        "restart_services": {"type": "array"}
+        "restart_services": {"type": "array"},
+	"hypervisor_service": {"type": "boolean"},
+        "shutdown_timeout": {"type": "integer"}
       }
     },
 
@@ -144,7 +147,10 @@ var schema = `{
       "additionalProperties": false,
 
       "properties": {
-        "keys": {"type": "object"}
+        "keys": {"type": "object"},
+        "daemon": {"type": "boolean"},
+        "port": {"type": "integer"},
+        "listen_address": {"type": "string"}
       }
     },
 

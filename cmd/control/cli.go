@@ -1,6 +1,7 @@
 package control
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/codegangsta/cli"
@@ -11,10 +12,15 @@ import (
 
 func Main() {
 	log.InitLogger()
+	cli.VersionPrinter = func(c *cli.Context) {
+		cfg := config.LoadConfig()
+		runningName := cfg.Rancher.Upgrade.Image + ":" + config.Version
+		fmt.Fprintf(c.App.Writer, "version %s from os image %s\n", c.App.Version, runningName)
+	}
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
-	app.Usage = "Control and configure RancherOS"
+	app.Usage = fmt.Sprintf("Control and configure RancherOS\nbuilt: %s", config.BuildDate)
 	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true
@@ -26,13 +32,6 @@ func Main() {
 	}
 
 	app.Commands = []cli.Command{
-		{
-			Name:            "bootstrap",
-			Hidden:          true,
-			HideHelp:        true,
-			SkipFlagParsing: true,
-			Action:          bootstrapAction,
-		},
 		{
 			Name:        "config",
 			ShortName:   "c",
@@ -100,6 +99,13 @@ func Main() {
 			HideHelp:        true,
 			SkipFlagParsing: true,
 			Action:          preloadImagesAction,
+		},
+		{
+			Name:            "recovery-init",
+			Hidden:          true,
+			HideHelp:        true,
+			SkipFlagParsing: true,
+			Action:          recoveryInitAction,
 		},
 		{
 			Name:            "switch-console",

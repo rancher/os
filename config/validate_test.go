@@ -10,11 +10,13 @@ import (
 )
 
 func testValidate(t *testing.T, cfg []byte, contains string) {
-	validationErrors, err := Validate(cfg)
+	fmt.Printf("Testing %s, contains %s", string(cfg), contains)
+	validationErrors, err := ValidateBytes(cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if contains == "" && len(validationErrors.Errors()) != 0 {
+		fmt.Printf("validationErrors: %v", validationErrors.Errors())
 		t.Fail()
 	}
 	if !strings.Contains(fmt.Sprint(validationErrors.Errors()), contains) {

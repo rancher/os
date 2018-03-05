@@ -10,6 +10,9 @@ MEMORY=2048
 
 while [ "$#" -gt 0 ]; do
     case $1 in
+	--debug)
+	    DEBUG=1
+            ;;
         --iso)
             BOOT_ISO=1
             QEMU=0
@@ -22,16 +25,45 @@ while [ "$#" -gt 0 ]; do
             QIND=0
             REBUILD=0
             ;;
+        --resizehd)
+            shift 1
+            RESIZEHD=$1
+            ;;
         --pxe)
             BOOT_PXE=1
+            FORMAT=0
+            ;;
+        --do)
+            BOOT_HD=1
+            QEMU=0
+            QIND=0
+            REBUILD=0
+            CONSOLEDISPLAY=1
+            USE_OPENSTACK_IMG="digitalocean"
+            ;;
+        --digitalocean)
+            BOOT_HD=1
+            QEMU=0
+            QIND=0
+            REBUILD=0
+            CONSOLEDISPLAY=1
+            USE_OPENSTACK_IMG="digitalocean"
             ;;
         --openstack)
-            USE_OPENSTACK_IMG=1
+            BOOT_HD=1
+            QEMU=0
+            QIND=0
+            REBUILD=0
+            CONSOLEDISPLAY=1
+            USE_OPENSTACK_IMG="openstack"
             ;;
         --append)
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
             ;;
+	--rsyslog)
+	   RSYSLOG=1
+	   ;;
         --append-init)
             shift 1
             APPEND_INIT="${APPEND_INIT} $1"
@@ -84,6 +116,9 @@ while [ "$#" -gt 0 ]; do
         --no-rebuild)
             REBUILD=0
             ;;
+        --no-network)
+            NO_NETWORK=1
+            ;;
         --fresh)
             FRESH=1
             ;;
@@ -94,6 +129,12 @@ while [ "$#" -gt 0 ]; do
         --console)
         # use the bios console, not serial (lets you see syslinux)
             CONSOLEDISPLAY=1
+            ;;
+        --netconsole)
+            NETCONSOLE=1
+            ;;
+        --gui)
+            GUICONSOLE=1
             ;;
         --installed)
             ./scripts/create-installed
@@ -126,22 +167,33 @@ if [ "$REBUILD" == "1" ] || [ ! -e ${INITRD} ]; then
 fi
 
 KERNEL_ARGS="${DEFAULT_KERNEL_ARGS} ${QEMU_APPEND}"
+if [ "$DEBUG" == "1" ]; then
+    KERNEL_ARGS="${KERNEL_ARGS} rancher.debug=true"
+fi
 if [ "$FORMAT" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.state.dev=LABEL=RANCHER_STATE rancher.state.autoformat=[/dev/sda,/dev/vda]"
 fi
 if [ "$RM_USR" == "1" ]; then
     KERNEL_ARGS="${KERNEL_ARGS} rancher.rm_usr"
 fi
-if [ "$APPEND_INIT" != "" ]; then
-    KERNEL_ARGS="${KERNEL_ARGS} -- ${APPEND_INIT}"
-fi
-
 if [ "$BOOT_PXE" == "1" ]; then
-    sudo pixiecore boot \
+    KERNEL_ARGS="console=tty1 rancher.autologin=tty1 ${KERNEL_ARGS}"
+    set -ex
+    PIXIECORE=$(which pixiecore)
+    sudo -E $PIXIECORE boot \
                "${KERNEL}" \
                "${INITRD}" \
                --cmdline="${KERNEL_ARGS}"
     return 0
+fi
+if [ "$RSYSLOG" == "1" ]; then
+	defaultDev=$(ip route | grep default | cut -f 5 -d " ")
+	devIP=$(ip a show dev $defaultDev | grep "inet " | cut -d " " -f 6 | cut -d / -f 1)
+	KERNEL_ARGS="${KERNEL_ARGS} loglevel=8 netconsole=+9999@10.0.2.14/,514@${devIP}/"
+fi
+# ELIDE_COMMANDLINE - MUST BE LAST
+if [ "$APPEND_INIT" != "" ]; then
+    KERNEL_ARGS="${KERNEL_ARGS} -- ${APPEND_INIT}"
 fi
 
 if [ "$KVM" == "" ] && [ -c /dev/kvm ] && [ -r /dev/kvm ] && [ -w /dev/kvm ]; then
@@ -155,12 +207,13 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
 
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
-        if [ "$USE_OPENSTACK_IMG" == "1" ]; then
-           if [ ! -e "dist/rancheros-openstack.img" ]; then
+        if [ "$USE_OPENSTACK_IMG" != "" ]; then
+           if [ ! -e "dist/artifacts/rancheros-${USE_OPENSTACK_IMG}.img" ]; then
                echo "please build the open stack image first (run make release)."
                exit 1
            fi
-           cp dist/rancheros-openstack.img $HD
+           cp dist/artifacts/rancheros-${USE_OPENSTACK_IMG}.img $HD
+           qemu-img resize ${HD} 70GB
         else
             if [ ¨$INSTALLED¨ == ¨1¨ ]; then
                 ./scripts/create-installed
@@ -173,6 +226,10 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
                     qemu-img create -f qcow2 -o size=10G ${HD}
                 fi
             fi
+        fi
+    else
+        if [ "$RESIZEHD" != "" ]; then
+            qemu-img resize ${HD} ${RESIZEHD}
         fi
     fi
 
@@ -214,8 +271,10 @@ if [ "$QIND" != "1" ]; then
                 CLOUD_CONFIG_DISK="-cdrom ${BASE}/state/configdrive.iso"
             ;;
             fat)
-                echo "TODO: implement a vfat formated qemu img & copy the config files into it"
-                exit 1
+                truncate --size 2M ${BASE}/state/configdrive.img
+                mkfs.vfat -n config-2 ${BASE}/state/configdrive.img
+                mcopy -osi ${BASE}/state/configdrive.img ${CCROOT}/* ::
+                CLOUD_CONFIG_DISK="-hdb ${BASE}/state/configdrive.img"
             ;;
             *)
                 CLOUD_CONFIG_DISK="-fsdev local,security_model=passthrough,readonly,id=fsdev0,path=${CCROOT} \
@@ -227,15 +286,26 @@ if [ "$QIND" != "1" ]; then
     HOME=${HOME:-/}
 fi
 
-if [ "$CONSOLEDISPLAY" == "1" ]; then
-    DISPLAY_OPTS="-curses"
+if [ "$GUICONSOLE" == "" ]; then
+	# default serial console
+	DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
+	if [ "$CONSOLEDISPLAY" == "1" ]; then
+	    DISPLAY_OPTS="-curses"
+	fi
+	if [ "$NETCONSOLE" == "1" ]; then
+	    # put ttyS1 on port 4444
+	    DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
+	    KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
+	fi
+fi
+
+if [ "${NO_NETWORK}" == "1" ]; then
+    NETWORK="-net none"
 else
-    # default
-    DISPLAY_OPTS="-nographic -serial stdio -display none"
+    NETWORK="${network["$ARCH"]}"
 fi
 
 if [ "$QEMU" == "1" ]; then
-
     if [ "$INSTALLED" == "1" ]; then
         # kernel args only works when using -kernel
         KERNEL_ARGS=""
@@ -252,10 +322,11 @@ if [ "$QEMU" == "1" ]; then
             ${CPU} \
             ${machine["$ARCH"]} \
             -m $MEMORY \
-            ${network["$ARCH"]} \
+            ${NETWORK} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
+            -device virtio-rng-pci \
             ${CLOUD_CONFIG_DISK} \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home \
@@ -279,11 +350,13 @@ elif [ "$BOOT_ISO" == "1" ] ||
             ${CPU} \
             ${machine["$ARCH"]} \
             -m $MEMORY \
-            ${network["$ARCH"]} \
+            ${NETWORK} \
             $(eval "${hd["$ARCH"]} ${HD}") \
             ${SECOND_DRIVE_ENABLE} \
             -smp 1 \
-            ${ISO_OPTS}
+            -device virtio-rng-pci \
+            ${ISO_OPTS} \
+            "${@}"
 elif [ "$QIND" == "1" ]; then
 
     NAME=${NAME:-ros-qind}

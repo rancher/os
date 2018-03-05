@@ -2,23 +2,32 @@ package power
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"golang.org/x/net/context"
 
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
+	"github.com/rancher/os/cmd/control/install"
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/util"
 )
 
+// You can't shutdown the system from a process in console because we want to stop the console container.
+// If you do that you kill yourself.  So we spawn a separate container to do power operations
+// This can up because on shutdown we want ssh to gracefully die, terminating ssh connections and not just hanging tcp session
+//
+// Be careful of container name. only [a-zA-Z0-9][a-zA-Z0-9_.-] are allowed
 func runDocker(name string) error {
 	if os.ExpandEnv("${IN_DOCKER}") == "true" {
 		return nil
@@ -29,14 +38,16 @@ func runDocker(name string) error {
 		return err
 	}
 
-	cmd := []string{name}
+	cmd := os.Args
+	log.Debugf("runDocker cmd: %s", cmd)
 
 	if name == "" {
 		name = filepath.Base(os.Args[0])
-		cmd = os.Args
 	}
 
-	existing, err := client.ContainerInspect(context.Background(), name)
+	containerName := strings.TrimPrefix(strings.Join(strings.Split(name, "/"), "-"), "-")
+
+	existing, err := client.ContainerInspect(context.Background(), containerName)
 	if err == nil && existing.ID != "" {
 		err := client.ContainerRemove(context.Background(), types.ContainerRemoveOptions{
 			ContainerID: existing.ID,
@@ -71,26 +82,40 @@ func runDocker(name string) error {
 				currentContainer.ID,
 			},
 			Privileged: true,
-		}, nil, name)
+		}, nil, containerName)
 	if err != nil {
 		return err
 	}
-
-	go func() {
-		client.ContainerAttach(context.Background(), types.ContainerAttachOptions{
-			ContainerID: powerContainer.ID,
-			Stream:      true,
-			Stderr:      true,
-			Stdout:      true,
-		})
-	}()
 
 	err = client.ContainerStart(context.Background(), powerContainer.ID)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.ContainerWait(context.Background(), powerContainer.ID)
+	reader, err := client.ContainerLogs(context.Background(), types.ContainerLogsOptions{
+		ContainerID: powerContainer.ID,
+		ShowStderr:  true,
+		ShowStdout:  true,
+		Follow:      true,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for {
+		p := make([]byte, 4096)
+		n, err := reader.Read(p)
+		if err != nil {
+			log.Error(err)
+			if n == 0 {
+				reader.Close()
+				break
+			}
+		}
+		if n > 0 {
+			fmt.Print(string(p))
+		}
+	}
 
 	if err != nil {
 		log.Fatal(err)
@@ -100,40 +125,72 @@ func runDocker(name string) error {
 	return nil
 }
 
-func common(name string) {
+func reboot(name string, force bool, code uint) {
 	if os.Geteuid() != 0 {
 		log.Fatalf("%s: Need to be root", os.Args[0])
 	}
 
-	if err := runDocker(name); err != nil {
-		log.Fatal(err)
+	// Add shutdown timeout
+	cfg := config.LoadConfig()
+	timeoutValue := cfg.Rancher.ShutdownTimeout
+	if timeoutValue == 0 {
+		timeoutValue = 60
 	}
-}
+	if timeoutValue < 5 {
+		timeoutValue = 5
+	}
+	log.Infof("Setting %s timeout to %d (rancher.shutdown_timeout set to %d)", os.Args[0], timeoutValue, cfg.Rancher.ShutdownTimeout)
 
-func Off() {
-	common("poweroff")
-	reboot(syscall.LINUX_REBOOT_CMD_POWER_OFF)
-}
+	go func() {
+		timeout := time.After(time.Duration(timeoutValue) * time.Second)
+		tick := time.Tick(100 * time.Millisecond)
+		// Keep trying until we're timed out or got a result or got an error
+		for {
+			select {
+			// Got a timeout! fail with a timeout error
+			case <-timeout:
+				log.Errorf("Container shutdown taking too long, forcing %s.", os.Args[0])
+				syscall.Sync()
+				syscall.Reboot(int(code))
+			case <-tick:
+				fmt.Printf(".")
+			}
+		}
+	}()
 
-func Reboot() {
-	common("reboot")
-	reboot(syscall.LINUX_REBOOT_CMD_RESTART)
-}
+	// reboot -f should work even when system-docker is having problems
+	if !force {
+		if kexecFlag || previouskexecFlag || kexecAppendFlag != "" {
+			// pass through the cmdline args
+			name = ""
+		}
+		if err := runDocker(name); err != nil {
+			log.Fatal(err)
+		}
+	}
 
-func Halt() {
-	common("halt")
-	reboot(syscall.LINUX_REBOOT_CMD_HALT)
-}
+	if kexecFlag || previouskexecFlag || kexecAppendFlag != "" {
+		// need to mount boot dir, or `system-docker run -v /:/host -w /host/boot` ?
+		baseName := "/mnt/new_img"
+		_, _, err := install.MountDevice(baseName, "", "", false)
+		if err != nil {
+			log.Errorf("ERROR: can't Kexec: %s", err)
+			return
+		}
+		defer util.Unmount(baseName)
+		Kexec(previouskexecFlag, filepath.Join(baseName, install.BootDir), kexecAppendFlag)
+		return
+	}
 
-func reboot(code uint) {
-	err := shutDownContainers()
-	if err != nil {
-		log.Error(err)
+	if !force {
+		err := shutDownContainers()
+		if err != nil {
+			log.Error(err)
+		}
 	}
 
 	syscall.Sync()
-
-	err = syscall.Reboot(int(code))
+	err := syscall.Reboot(int(code))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -187,27 +244,63 @@ func shutDownContainers() error {
 	}
 
 	var stopErrorStrings []string
+	consoleContainerIdx := -1
 
-	for _, container := range containers {
+	for idx, container := range containers {
 		if container.ID == currentContainerID {
 			continue
 		}
+		if container.Names[0] == "/console" {
+			consoleContainerIdx = idx
+			continue
+		}
 
-		log.Infof("Stopping %s : %v", container.ID[:12], container.Names)
+		log.Infof("Stopping %s : %s", container.Names[0], container.ID[:12])
 		stopErr := client.ContainerStop(context.Background(), container.ID, timeout)
 		if stopErr != nil {
+			log.Errorf("------- Error Stopping %s : %s", container.Names[0], stopErr.Error())
 			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
 		}
 	}
 
+	// lets see what containers are still running and only wait on those
+	containers, err = client.ContainerList(context.Background(), opts)
+	if err != nil {
+		return err
+	}
+
 	var waitErrorStrings []string
 
-	for _, container := range containers {
+	for idx, container := range containers {
 		if container.ID == currentContainerID {
 			continue
 		}
+		if container.Names[0] == "/console" {
+			consoleContainerIdx = idx
+			continue
+		}
+		log.Infof("Waiting %s : %s", container.Names[0], container.ID[:12])
 		_, waitErr := client.ContainerWait(context.Background(), container.ID)
 		if waitErr != nil {
+			log.Errorf("------- Error Waiting %s : %s", container.Names[0], waitErr.Error())
+			waitErrorStrings = append(waitErrorStrings, " ["+container.ID+"] "+waitErr.Error())
+		}
+	}
+
+	// and now stop the console
+	if consoleContainerIdx != -1 {
+		container := containers[consoleContainerIdx]
+		log.Infof("Console Stopping %v : %s", container.Names, container.ID[:12])
+		stopErr := client.ContainerStop(context.Background(), container.ID, timeout)
+		if stopErr != nil {
+			log.Errorf("------- Error Stopping %v : %s", container.Names, stopErr.Error())
+			stopErrorStrings = append(stopErrorStrings, " ["+container.ID+"] "+stopErr.Error())
+		}
+
+		log.Infof("Console Waiting %v : %s", container.Names, container.ID[:12])
+		_, waitErr := client.ContainerWait(context.Background(), container.ID)
+		if waitErr != nil {
+			log.Errorf("------- Error Waiting %v : %s", container.Names, waitErr.Error())
 			waitErrorStrings = append(waitErrorStrings, " ["+container.ID+"] "+waitErr.Error())
 		}
 	}

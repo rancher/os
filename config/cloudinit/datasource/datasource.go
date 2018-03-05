@@ -38,6 +38,7 @@ type Metadata struct {
 	Hostname      string
 	SSHPublicKeys map[string]string
 	NetworkConfig netconf.NetworkConfig
+	RootDisk      string
 
 	PublicIPv4  net.IP
 	PublicIPv6  net.IP

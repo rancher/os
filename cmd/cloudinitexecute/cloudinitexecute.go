@@ -71,6 +71,25 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 		if len(mount) != 4 {
 			log.Errorf("Unable to mount %s: must specify exactly four arguments", mount[1])
 		}
+
+		if mount[2] == "nfs" || mount[2] == "nfs4" {
+			if err := os.MkdirAll(mount[1], 0755); err != nil {
+				log.Errorf("Unable to create mount point %s: %v", mount[1], err)
+				continue
+			}
+			cmdArgs := []string{mount[0], mount[1], "-t", mount[2]}
+			if mount[3] != "" {
+				cmdArgs = append(cmdArgs, "-o", mount[3])
+			}
+			cmd := exec.Command("mount", cmdArgs...)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				log.Errorf("Failed to mount %s: %v", mount[1], err)
+			}
+			continue
+		}
+
 		device := util.ResolveDevice(mount[0])
 
 		if mount[2] == "swap" {
@@ -84,22 +103,15 @@ func ApplyConsole(cfg *rancherConfig.CloudConfig) {
 			continue
 		}
 
-		cmdArgs := []string{device, mount[1]}
-		if mount[2] != "" {
-			cmdArgs = append(cmdArgs, "-t", mount[2])
-		}
-		if mount[3] != "" {
-			cmdArgs = append(cmdArgs, "-o", mount[3])
-		}
-		cmd := exec.Command("mount", cmdArgs...)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
+		if err := util.Mount(device, mount[1], mount[2], mount[3]); err != nil {
 			log.Errorf("Failed to mount %s: %v", mount[1], err)
 		}
 	}
 
-	util.RunCommandSequence(cfg.Runcmd)
+	err := util.RunCommandSequence(cfg.Runcmd)
+	if err != nil {
+		log.Error(err)
+	}
 }
 
 func WriteFiles(cfg *rancherConfig.CloudConfig, container string) {
@@ -125,11 +137,15 @@ func WriteFiles(cfg *rancherConfig.CloudConfig, container string) {
 }
 
 func applyPreConsole(cfg *rancherConfig.CloudConfig) {
-	if _, err := os.Stat(resizeStamp); os.IsNotExist(err) && cfg.Rancher.ResizeDevice != "" {
-		if err := resizeDevice(cfg); err == nil {
-			os.Create(resizeStamp)
+	if cfg.Rancher.ResizeDevice != "" {
+		if _, err := os.Stat(resizeStamp); os.IsNotExist(err) {
+			if err := resizeDevice(cfg); err == nil {
+				os.Create(resizeStamp)
+			} else {
+				log.Errorf("Failed to resize %s: %s", cfg.Rancher.ResizeDevice, err)
+			}
 		} else {
-			log.Errorf("Failed to resize %s: %s", cfg.Rancher.ResizeDevice, err)
+			log.Infof("Skipped resizing %s because %s exists", cfg.Rancher.ResizeDevice, resizeStamp)
 		}
 	}
 
@@ -168,7 +184,11 @@ func resizeDevice(cfg *rancherConfig.CloudConfig) error {
 		return err
 	}
 
-	cmd = exec.Command("resize2fs", fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice))
+	targetPartition := fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice)
+	if strings.Contains(cfg.Rancher.ResizeDevice, "nvme") {
+		targetPartition = fmt.Sprintf("%sp1", cfg.Rancher.ResizeDevice)
+	}
+	cmd = exec.Command("resize2fs", targetPartition)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()

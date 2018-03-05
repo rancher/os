@@ -35,6 +35,7 @@
         "no_sharedroot": {"type": "boolean"},
         "log": {"type": "boolean"},
         "force_console_rebuild": {"type": "boolean"},
+        "recovery": {"type": "boolean"},
         "disable": {"$ref": "#/definitions/list_of_strings"},
         "services_include": {"type": "object"},
         "modules": {"$ref": "#/definitions/list_of_strings"},
@@ -50,7 +51,9 @@
         "defaults": {"$ref": "#/definitions/defaults_config"},
         "resize_device": {"type": "string"},
         "sysctl": {"type": "object"},
-        "restart_services": {"type": "array"}
+        "restart_services": {"type": "array"},
+	"hypervisor_service": {"type": "boolean"},
+	"shutdown_timeout": {"type": "integer"}
       }
     },
 
@@ -142,7 +145,8 @@
       "additionalProperties": false,
 
       "properties": {
-        "keys": {"type": "object"}
+        "keys": {"type": "object"},
+        "daemon": {"type": "boolean"}
       }
     },
 

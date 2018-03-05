@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
@@ -22,6 +21,7 @@ const (
 )
 
 func dockerInitAction(c *cli.Context) error {
+	// TODO: this should be replaced by a "Console ready event watcher"
 	for {
 		if _, err := os.Stat(consoleDone); err == nil {
 			break
@@ -29,21 +29,33 @@ func dockerInitAction(c *cli.Context) error {
 		time.Sleep(200 * time.Millisecond)
 	}
 
-	dockerBin := "/usr/bin/docker"
-	for _, binPath := range []string{
+	dockerBin := ""
+	dockerPaths := []string{
+		"/usr/bin",
 		"/opt/bin",
 		"/usr/local/bin",
 		"/var/lib/rancher/docker",
-	} {
+	}
+	for _, binPath := range dockerPaths {
 		if util.ExistsAndExecutable(path.Join(binPath, "dockerd")) {
 			dockerBin = path.Join(binPath, "dockerd")
 			break
 		}
-		if util.ExistsAndExecutable(path.Join(binPath, "docker")) {
-			dockerBin = path.Join(binPath, "docker")
-			break
+	}
+	if dockerBin == "" {
+		for _, binPath := range dockerPaths {
+			if util.ExistsAndExecutable(path.Join(binPath, "docker")) {
+				dockerBin = path.Join(binPath, "docker")
+				break
+			}
 		}
 	}
+	if dockerBin == "" {
+		err := fmt.Errorf("Failed to find either dockerd or docker binaries")
+		log.Error(err)
+		return err
+	}
+	log.Infof("Found %s", dockerBin)
 
 	if err := syscall.Mount("", "/", "", syscall.MS_SHARED|syscall.MS_REC, ""); err != nil {
 		log.Error(err)
@@ -69,9 +81,8 @@ func dockerInitAction(c *cli.Context) error {
 		fmt.Sprintf(`[ -e %s ] && source %s; exec /usr/bin/dockerlaunch %s %s $DOCKER_OPTS >> %s 2>&1`, dockerConf, dockerConf, dockerBin, strings.Join(c.Args(), " "), dockerLog),
 	}
 
-	cfg := config.LoadConfig()
-
-	if err := ioutil.WriteFile(dockerDone, []byte(cfg.Rancher.Docker.Engine), 0644); err != nil {
+	// TODO: this should be replaced by a "Docker ready event watcher"
+	if err := ioutil.WriteFile(dockerDone, []byte(CurrentEngine()), 0644); err != nil {
 		log.Error(err)
 	}
 

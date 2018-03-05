@@ -14,6 +14,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
@@ -63,7 +64,7 @@ func consoleInitFunc() error {
 	createHomeDir(rancherHome, 1100, 1100)
 	createHomeDir(dockerHome, 1101, 1101)
 
-	password := config.GetCmdline("rancher.password")
+	password := cmdline.GetCmdline("rancher.password")
 	if password != "" {
 		cmd := exec.Command("chpasswd")
 		cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))
@@ -81,16 +82,17 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := writeRespawn(); err != nil {
+	if err := writeRespawn("rancher", cfg.Rancher.SSH.Daemon, false); err != nil {
 		log.Error(err)
 	}
 
-	if err := modifySshdConfig(); err != nil {
+	if err := modifySshdConfig(cfg); err != nil {
 		log.Error(err)
 	}
 
 	for _, link := range []symlink{
 		{"/var/lib/rancher/engine/docker", "/usr/bin/docker"},
+		{"/var/lib/rancher/engine/docker-init", "/usr/bin/docker-init"},
 		{"/var/lib/rancher/engine/docker-containerd", "/usr/bin/docker-containerd"},
 		{"/var/lib/rancher/engine/docker-containerd-ctr", "/usr/bin/docker-containerd-ctr"},
 		{"/var/lib/rancher/engine/docker-containerd-shim", "/usr/bin/docker-containerd-shim"},
@@ -107,18 +109,42 @@ func consoleInitFunc() error {
 	}
 
 	// font backslashes need to be escaped for when issue is output! (but not the others..)
-	if err := ioutil.WriteFile("/etc/issue", []byte(`
-               ,        , ______                 _                 _____ _____TM
-  ,------------|'------'| | ___ \\               | |               /  _  /  ___|
- / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
- \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
-   |   .________.'----'   | |\\ \\ (_| | | | | (__| | | |  __/ |    | \\_/ /\\__/ /
-   |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
-   \\___/        \\___/     \s \r
-
-         RancherOS `+config.Version+` \n \l
-         `), 0644); err != nil {
+	if err := ioutil.WriteFile("/etc/issue", []byte(config.Banner), 0644); err != nil {
 		log.Error(err)
+	}
+
+	// write out a profile.d file for the proxy settings.
+	// maybe write these on the host and bindmount into everywhere?
+	proxyLines := []string{}
+	for _, k := range []string{"http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY"} {
+		if v, ok := cfg.Rancher.Environment[k]; ok {
+			proxyLines = append(proxyLines, fmt.Sprintf("export %s=%s", k, v))
+		}
+	}
+
+	if len(proxyLines) > 0 {
+		proxyString := strings.Join(proxyLines, "\n")
+		proxyString = fmt.Sprintf("#!/bin/sh\n%s\n", proxyString)
+		if err := ioutil.WriteFile("/etc/profile.d/proxy.sh", []byte(proxyString), 0755); err != nil {
+			log.Error(err)
+		}
+	}
+
+	// write out a profile.d file for the PATH settings.
+	pathLines := []string{}
+	for _, k := range []string{"PATH", "path"} {
+		if v, ok := cfg.Rancher.Environment[k]; ok {
+			for _, p := range strings.Split(v, ",") {
+				pathLines = append(pathLines, fmt.Sprintf("export PATH=$PATH:%s", strings.TrimSpace(p)))
+			}
+		}
+	}
+	if len(pathLines) > 0 {
+		pathString := strings.Join(pathLines, "\n")
+		pathString = fmt.Sprintf("#!/bin/sh\n%s\n", pathString)
+		if err := ioutil.WriteFile("/etc/profile.d/path.sh", []byte(pathString), 0755); err != nil {
+			log.Error(err)
+		}
 	}
 
 	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
@@ -135,7 +161,7 @@ func consoleInitFunc() error {
 		log.Error(err)
 	}
 
-	if err := ioutil.WriteFile(consoleDone, []byte(cfg.Rancher.Console), 0644); err != nil {
+	if err := ioutil.WriteFile(consoleDone, []byte(CurrentConsole()), 0644); err != nil {
 		log.Error(err)
 	}
 
@@ -153,17 +179,22 @@ func consoleInitFunc() error {
 	return syscall.Exec(respawnBinPath, []string{"respawn", "-f", "/etc/respawn.conf"}, os.Environ())
 }
 
-func generateRespawnConf(cmdline string) string {
+func generateRespawnConf(cmdline, user string, sshd, recovery bool) string {
 	var respawnConf bytes.Buffer
+
+	autologinBin := "/usr/bin/autologin"
+	if recovery {
+		autologinBin = "/usr/bin/recovery"
+	}
 
 	for i := 1; i < 7; i++ {
 		tty := fmt.Sprintf("tty%d", i)
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
+			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:tty%d", autologinBin, user, i))
 		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
 
 	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
@@ -173,23 +204,25 @@ func generateRespawnConf(cmdline string) string {
 
 		respawnConf.WriteString(gettyCmd)
 		if strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
-			respawnConf.WriteString(" --autologin rancher")
+			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:%s", autologinBin, user, tty))
 		}
-		respawnConf.WriteString(fmt.Sprintf(" 115200 %s\n", tty))
+		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
 	}
 
-	respawnConf.WriteString("/usr/sbin/sshd -D")
+	if sshd {
+		respawnConf.WriteString("/usr/sbin/sshd -D")
+	}
 
 	return respawnConf.String()
 }
 
-func writeRespawn() error {
+func writeRespawn(user string, sshd, recovery bool) error {
 	cmdline, err := ioutil.ReadFile("/proc/cmdline")
 	if err != nil {
 		return err
 	}
 
-	respawn := generateRespawnConf(string(cmdline))
+	respawn := generateRespawnConf(string(cmdline), user, sshd, recovery)
 
 	files, err := ioutil.ReadDir("/etc/respawn.conf.d")
 	if err == nil {
@@ -209,19 +242,28 @@ func writeRespawn() error {
 	return ioutil.WriteFile("/etc/respawn.conf", []byte(respawn), 0644)
 }
 
-func modifySshdConfig() error {
+func modifySshdConfig(cfg *config.CloudConfig) error {
 	sshdConfig, err := ioutil.ReadFile("/etc/ssh/sshd_config")
 	if err != nil {
 		return err
 	}
 	sshdConfigString := string(sshdConfig)
 
-	for _, item := range []string{
+	modifiedLines := []string{
 		"UseDNS no",
 		"PermitRootLogin no",
 		"ServerKeyBits 2048",
 		"AllowGroups docker",
-	} {
+	}
+
+	if cfg.Rancher.SSH.Port > 0 && cfg.Rancher.SSH.Port < 65355 {
+		modifiedLines = append(modifiedLines, fmt.Sprintf("Port %d", cfg.Rancher.SSH.Port))
+	}
+	if cfg.Rancher.SSH.ListenAddress != "" {
+		modifiedLines = append(modifiedLines, fmt.Sprintf("ListenAddress %s", cfg.Rancher.SSH.ListenAddress))
+	}
+
+	for _, item := range modifiedLines {
 		match, err := regexp.Match("^"+item, sshdConfig)
 		if err != nil {
 			return err

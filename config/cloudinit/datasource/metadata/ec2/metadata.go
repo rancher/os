@@ -15,8 +15,6 @@
 package ec2
 
 import (
-	"bufio"
-	"bytes"
 	"fmt"
 	"log"
 	"net"
@@ -32,8 +30,11 @@ import (
 const (
 	DefaultAddress = "http://169.254.169.254/"
 	apiVersion     = "latest/"
-	userdataPath   = apiVersion + "user-data/"
+	userdataPath   = apiVersion + "user-data"
 	metadataPath   = apiVersion + "meta-data/"
+
+	defaultXVRootDisk   = "/dev/xvda"
+	defaultNVMeRootDisk = "/dev/nvme0n1"
 )
 
 type MetadataService struct {
@@ -57,7 +58,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	metadata := datasource.Metadata{}
 	metadata.NetworkConfig = netconf.NetworkConfig{}
 
-	if keynames, err := ms.fetchAttributes("public-keys"); err == nil {
+	if keynames, err := ms.FetchAttributes("public-keys"); err == nil {
 		keyIDs := make(map[string]string)
 		for _, keyname := range keynames {
 			tokens := strings.SplitN(keyname, "=", 2)
@@ -69,7 +70,7 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 
 		metadata.SSHPublicKeys = map[string]string{}
 		for name, id := range keyIDs {
-			sshkey, err := ms.fetchAttribute(fmt.Sprintf("public-keys/%s/openssh-key", id))
+			sshkey, err := ms.FetchAttribute(fmt.Sprintf("public-keys/%s/openssh-key", id))
 			if err != nil {
 				return metadata, err
 			}
@@ -80,44 +81,44 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		return metadata, err
 	}
 
-	if hostname, err := ms.fetchAttribute("hostname"); err == nil {
+	if hostname, err := ms.FetchAttribute("hostname"); err == nil {
 		metadata.Hostname = strings.Split(hostname, " ")[0]
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
 
 	// TODO: these are only on the first interface - it looks like you can have as many as you need...
-	if localAddr, err := ms.fetchAttribute("local-ipv4"); err == nil {
+	if localAddr, err := ms.FetchAttribute("local-ipv4"); err == nil {
 		metadata.PrivateIPv4 = net.ParseIP(localAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
-	if publicAddr, err := ms.fetchAttribute("public-ipv4"); err == nil {
+	if publicAddr, err := ms.FetchAttribute("public-ipv4"); err == nil {
 		metadata.PublicIPv4 = net.ParseIP(publicAddr)
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
 	}
 
 	metadata.NetworkConfig.Interfaces = make(map[string]netconf.InterfaceConfig)
-	if macs, err := ms.fetchAttributes("network/interfaces/macs"); err != nil {
+	if macs, err := ms.FetchAttributes("network/interfaces/macs"); err != nil {
 		for _, mac := range macs {
-			if deviceNumber, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/device-number", mac)); err != nil {
+			if deviceNumber, err := ms.FetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/device-number", mac)); err != nil {
 				network := netconf.InterfaceConfig{
 					DHCP: true,
 				}
 				/* Looks like we must use DHCP for aws
 				// private ipv4
-				if subnetCidrBlock, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv4-cidr-block", mac)); err != nil {
+				if subnetCidrBlock, err := ms.FetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv4-cidr-block", mac)); err != nil {
 					cidr := strings.Split(subnetCidrBlock, "/")
-					if localAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", mac)); err != nil {
+					if localAddr, err := ms.FetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", mac)); err != nil {
 						for _, addr := range localAddr {
 							network.Addresses = append(network.Addresses, addr+"/"+cidr[1])
 						}
 					}
 				}
 				// ipv6
-				if localAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", mac)); err != nil {
-					if subnetCidrBlock, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv6-cidr-block", mac)); err != nil {
+				if localAddr, err := ms.FetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/ipv6s", mac)); err != nil {
+					if subnetCidrBlock, err := ms.FetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/subnet-ipv6-cidr-block", mac)); err != nil {
 						for i, addr := range localAddr {
 							cidr := strings.Split(subnetCidrBlock[i], "/")
 							network.Addresses = append(network.Addresses, addr+"/"+cidr[1])
@@ -126,8 +127,8 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 				}
 				*/
 				// disabled - it looks to me like you don't actually put the public IP on the eth device
-				/*				if publicAddr, err := ms.fetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/public-ipv4s", mac)); err != nil {
-									if vpcCidrBlock, err := ms.fetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/vpc-ipv4-cidr-block", mac)); err != nil {
+				/*				if publicAddr, err := ms.FetchAttributes(fmt.Sprintf("network/interfaces/macs/%s/public-ipv4s", mac)); err != nil {
+									if vpcCidrBlock, err := ms.FetchAttribute(fmt.Sprintf("network/interfaces/macs/%s/vpc-ipv4-cidr-block", mac)); err != nil {
 										cidr := strings.Split(vpcCidrBlock, "/")
 										network.Addresses = append(network.Addresses, publicAddr+"/"+cidr[1])
 									}
@@ -139,31 +140,20 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		}
 	}
 
+	// With C5 and M5 instances, EBS volumes are exposed as NVMe block devices.
+	// http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
+	metadata.RootDisk = defaultXVRootDisk
+	if instanceType, err := ms.FetchAttribute("instance-type"); err == nil {
+		if strings.HasPrefix(instanceType, "m5") || strings.HasPrefix(instanceType, "c5") {
+			metadata.RootDisk = defaultNVMeRootDisk
+		}
+	} else if _, ok := err.(pkg.ErrNotFound); !ok {
+		return metadata, err
+	}
+
 	return metadata, nil
 }
 
 func (ms MetadataService) Type() string {
 	return "ec2-metadata-service"
-}
-
-func (ms MetadataService) fetchAttributes(key string) ([]string, error) {
-	url := ms.MetadataURL() + key
-	resp, err := ms.FetchData(url)
-	if err != nil {
-		return nil, err
-	}
-	scanner := bufio.NewScanner(bytes.NewBuffer(resp))
-	data := make([]string, 0)
-	for scanner.Scan() {
-		data = append(data, scanner.Text())
-	}
-	return data, scanner.Err()
-}
-
-func (ms MetadataService) fetchAttribute(key string) (string, error) {
-	attrs, err := ms.fetchAttributes(key)
-	if err == nil && len(attrs) > 0 {
-		return attrs[0], nil
-	}
-	return "", err
 }

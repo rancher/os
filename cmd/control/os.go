@@ -3,7 +3,6 @@ package control
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"net/url"
 	"os"
 	"runtime"
@@ -22,6 +21,8 @@ import (
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
+	"github.com/rancher/os/util"
+	"github.com/rancher/os/util/network"
 )
 
 type Images struct {
@@ -64,6 +65,10 @@ func osSubcommands() []cli.Command {
 					Name:  "upgrade-console",
 					Usage: "upgrade console even if persistent",
 				},
+				cli.BoolFlag{
+					Name:  "debug",
+					Usage: "Run installer with debug output",
+				},
 			},
 		},
 		{
@@ -79,7 +84,6 @@ func osSubcommands() []cli.Command {
 	}
 }
 
-// TODO: this and the getLatestImage should probably move to utils/network and be suitably cached.
 func getImages() (*Images, error) {
 	upgradeURL, err := getUpgradeURL()
 	if err != nil {
@@ -101,15 +105,13 @@ func getImages() (*Images, error) {
 
 		q := u.Query()
 		q.Set("current", config.Version)
+		if hypervisor := util.GetHypervisor(); hypervisor == "" {
+			q.Set("hypervisor", hypervisor)
+		}
 		u.RawQuery = q.Encode()
 		upgradeURL = u.String()
 
-		resp, err := http.Get(upgradeURL)
-		if err != nil {
-			return nil, err
-		}
-		defer resp.Body.Close()
-		body, err = ioutil.ReadAll(resp.Body)
+		body, err = network.LoadFromNetwork(upgradeURL)
 		if err != nil {
 			return nil, err
 		}
@@ -187,7 +189,16 @@ func osUpgrade(c *cli.Context) error {
 	if c.Args().Present() {
 		log.Fatalf("invalid arguments %v", c.Args())
 	}
-	if err := startUpgradeContainer(image, c.Bool("stage"), c.Bool("force"), !c.Bool("no-reboot"), c.Bool("kexec"), c.Bool("upgrade-console"), c.String("append")); err != nil {
+	if err := startUpgradeContainer(
+		image,
+		c.Bool("stage"),
+		c.Bool("force"),
+		!c.Bool("no-reboot"),
+		c.Bool("kexec"),
+		c.Bool("upgrade-console"),
+		c.Bool("debug"),
+		c.String("append"),
+	); err != nil {
 		log.Fatal(err)
 	}
 
@@ -199,7 +210,7 @@ func osVersion(c *cli.Context) error {
 	return nil
 }
 
-func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgradeConsole bool, kernelArgs string) error {
+func startUpgradeContainer(image string, stage, force, reboot, kexec, upgradeConsole, debug bool, kernelArgs string) error {
 	command := []string{
 		"-t", "rancher-upgrade",
 		"-r", config.Version,
@@ -207,6 +218,9 @@ func startUpgradeContainer(image string, stage, force, reboot, kexec bool, upgra
 
 	if kexec {
 		command = append(command, "--kexec")
+	}
+	if debug {
+		command = append(command, "--debug")
 	}
 
 	kernelArgs = strings.TrimSpace(kernelArgs)

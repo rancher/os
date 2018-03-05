@@ -78,32 +78,25 @@ func writeFiles(cfg *config.CloudConfig) error {
 }
 
 func setupCommandSymlinks() {
-	for _, powerOperation := range []string{
-		"/sbin/poweroff",
-		"/sbin/shutdown",
-		"/sbin/reboot",
-		"/sbin/halt",
-		"/usr/sbin/poweroff",
-		"/usr/sbin/shutdown",
-		"/usr/sbin/reboot",
-		"/usr/sbin/halt",
-	} {
-		os.Remove(powerOperation)
-	}
-
 	for _, link := range []symlink{
+		{config.RosBin, "/usr/bin/autologin"},
+		{config.RosBin, "/usr/bin/recovery"},
 		{config.RosBin, "/usr/bin/cloud-init-execute"},
 		{config.RosBin, "/usr/bin/cloud-init-save"},
 		{config.RosBin, "/usr/bin/dockerlaunch"},
 		{config.RosBin, "/usr/bin/respawn"},
-		{config.RosBin, "/usr/bin/system-docker"},
 		{config.RosBin, "/usr/sbin/netconf"},
 		{config.RosBin, "/usr/sbin/wait-for-docker"},
+		{config.RosBin, "/usr/sbin/poweroff"},
+		{config.RosBin, "/usr/sbin/reboot"},
+		{config.RosBin, "/usr/sbin/halt"},
+		{config.RosBin, "/usr/sbin/shutdown"},
 		{config.RosBin, "/sbin/poweroff"},
 		{config.RosBin, "/sbin/reboot"},
 		{config.RosBin, "/sbin/halt"},
 		{config.RosBin, "/sbin/shutdown"},
 	} {
+		os.Remove(link.newname)
 		if err := os.Symlink(link.oldname, link.newname); err != nil {
 			log.Error(err)
 		}

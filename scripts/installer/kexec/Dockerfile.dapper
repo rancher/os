@@ -1,23 +1,23 @@
 FROM ubuntu:16.04
 # FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
+# get the apt-cacher proxy set
+ARG APTPROXY=
 
-RUN apt-get update \
+RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01proxy \
+    && cat /etc/apt/apt.conf.d/01proxy \
+    && apt-get update \
     && apt-get install -yq build-essential autoconf libtool gawk alien fakeroot \
         zlib1g-dev uuid-dev libattr1-dev libblkid-dev libselinux-dev libudev-dev libdevmapper-dev \
         module-init-tools \
-        parted lsscsi ksh curl git
+        parted lsscsi ksh curl git wget
 
 WORKDIR /source
 
-#ADD https://github.com/rancher/os-kernel/releases/download/v4.9.15-rancher/build-linux-4.9.15-rancher-x86.tar.gz .
-#RUN mkdir -p /usr/src/v4.9.15-rancher \
-#    && cd /usr/src/v4.9.15-rancher \
-#    && tar zxvf /source/build-linux-4.9.15-rancher-x86.tar.gz
-
 # https://www.kernel.org/pub/linux/utils/kernel/kexec/
-ENV VERSION 2.0.14
-ADD https://www.kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-$VERSION.tar.gz .
+ENV VERSION 2.0.15
+RUN wget https://www.kernel.org/pub/linux/utils/kernel/kexec/kexec-tools-$VERSION.tar.gz \
+    && tar zxvf kexec-tools-$VERSION.tar.gz
 
 RUN zcat kexec-tools-$VERSION.tar.gz | tar xvf - \
   && cd kexec-tools-$VERSION \
@@ -30,7 +30,7 @@ RUN mkdir -p /source/dist \
 
 ########## Dapper Configuration #####################
 
-ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST APTPROXY
 #ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /source
 ENV DAPPER_OUTPUT ./dist

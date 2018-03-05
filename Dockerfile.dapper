@@ -1,8 +1,13 @@
 FROM ubuntu:16.04
-# FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
+# FROM arm64=aarch64/ubuntu:16.04
 
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+# get the apt-cacher proxy set
+ARG APTPROXY=
+
+RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01proxy \
+    && cat /etc/apt/apt.conf.d/01proxy \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
         build-essential \
         ca-certificates \
         cpio \
@@ -19,6 +24,7 @@ RUN apt-get update && \
         libselinux1-dev \
         locales \
         module-init-tools \
+        mtools \
         openssh-client \
         pkg-config \
         qemu \
@@ -28,11 +34,13 @@ RUN apt-get update && \
         syslinux-common \
         vim \
         wget \
-        xorriso
+        xorriso \
+        xz-utils \
+        telnet
 
 ########## Dapper Configuration #####################
 
-ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG APTPROXY ENGINE_REGISTRY_MIRROR INTEGRATION_TESTS
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
 ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd ./build/kernel
@@ -56,16 +64,13 @@ ARG DOCKER_BUILD_VERSION=1.10.3
 ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.3/policy.29
 
-ARG KERNEL_VERSION_amd64=4.9.22-rancher
+ARG KERNEL_VERSION_amd64=4.15.2-rancher
 ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/v${KERNEL_VERSION_amd64}/linux-${KERNEL_VERSION_amd64}-x86.tar.gz
-ARG KERNEL_URL_arm64=https://github.com/imikushin/os-kernel/releases/download/Estuary-4.4.0-arm64.8/linux-4.4.0-rancher-arm64.tar.gz
 
 ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
-ARG DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm.tgz
 ARG DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64.tgz
 
 ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_BUILD_VERSION}
-ARG BUILD_DOCKER_URL_arm=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm
 ARG BUILD_DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm64
 
 ARG OS_RELEASES_YML=https://releases.rancher.com/os
@@ -74,9 +79,12 @@ ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
 ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-2
 
-ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2016.08.1-2/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2016.08.1-2/os-base_arm64.tar.xz
-ARG OS_BASE_URL_arm=https://github.com/rancher/os-base/releases/download/v2016.08.1-3/os-base_arm.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2017.02.10-1/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2017.02.10-1/os-base_arm64.tar.xz
+
+ARG SYSTEM_DOCKER_VERSION=17.06-ros3
+ARG SYSTEM_DOCKER_URL_amd64=https://github.com/niusmallnan/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
+ARG SYSTEM_DOCKER_URL_arm64=https://github.com/niusmallnan/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 ######################################################
 
 # Set up environment and export all ARGS as ENV
@@ -85,7 +93,6 @@ ENV ARCH=${ARCH} \
 
 ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     BUILD_DOCKER_URL_amd64=${BUILD_DOCKER_URL_amd64} \
-    BUILD_DOCKER_URL_arm=${BUILD_DOCKER_URL_arm} \
     BUILD_DOCKER_URL_arm64=${BUILD_DOCKER_URL_arm64} \
     DAPPER_HOST_ARCH=${DAPPER_HOST_ARCH} \
     DFS_IMAGE=${DFS_IMAGE} \
@@ -93,12 +100,11 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     DOCKER_PATCH_VERSION=${DOCKER_PATCH_VERSION} \
     DOCKER_URL=DOCKER_URL_${ARCH} \
     DOCKER_URL_amd64=${DOCKER_URL_amd64} \
-    DOCKER_URL_arm=${DOCKER_URL_arm} \
     DOCKER_URL_arm64=${DOCKER_URL_arm64} \
     DOCKER_VERSION=${DOCKER_VERSION} \
     DOWNLOADS=/usr/src/downloads \
     GOPATH=/go \
-    GO_VERSION=1.7.1 \
+    GO_VERSION=1.8.5 \
     GOARCH=$ARCH \
     HOSTNAME_DEFAULT=${HOSTNAME_DEFAULT} \
     IMAGE_NAME=${IMAGE_NAME} \
@@ -109,13 +115,15 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     OS_BASE_SHA1=OS_BASE_SHA1_${ARCH} \
     OS_BASE_URL=OS_BASE_URL_${ARCH} \
     OS_BASE_URL_amd64=${OS_BASE_URL_amd64} \
-    OS_BASE_URL_arm=${OS_BASE_URL_arm} \
     OS_BASE_URL_arm64=${OS_BASE_URL_arm64} \
     OS_RELEASES_YML=${OS_RELEASES_YML} \
     OS_REPO=${OS_REPO} \
     OS_SERVICES_REPO=${OS_SERVICES_REPO} \
     REPO_VERSION=master \
-    SELINUX_POLICY_URL=${SELINUX_POLICY_URL}
+    SELINUX_POLICY_URL=${SELINUX_POLICY_URL} \
+    SYSTEM_DOCKER_URL=SYSTEM_DOCKER_URL_${ARCH} \
+    SYSTEM_DOCKER_URL_amd64=${SYSTEM_DOCKER_URL_amd64} \
+    SYSTEM_DOCKER_URL_arm64=${SYSTEM_DOCKER_URL_arm64}
 ENV PATH=${GOPATH}/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p ${DOWNLOADS}
@@ -131,10 +139,8 @@ RUN echo "... Downloading  ${!KERNEL_URL}"; \
 RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
 
 # Install Go
-COPY assets/go-dnsclient.patch ${DAPPER_SOURCE}
 RUN ln -sf go-6 /usr/bin/go && \
     curl -sfL https://storage.googleapis.com/golang/go${GO_VERSION}.src.tar.gz | tar -xzf - -C /usr/local && \
-    patch /usr/local/go/src/net/dnsclient_unix.go ${DAPPER_SOURCE}/go-dnsclient.patch && \
     cd /usr/local/go/src && \
     GOROOT_BOOTSTRAP=/usr GOARCH=${HOST_ARCH} GOHOSTARCH=${HOST_ARCH} ./make.bash && \
     rm /usr/bin/go

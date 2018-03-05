@@ -15,23 +15,30 @@ import (
 func LoadService(p *project.Project, cfg *config.CloudConfig, useNetwork bool, service string) error {
 	bytes, err := network.LoadServiceResource(service, useNetwork, cfg)
 	if err != nil {
+		log.Error(err)
 		return err
 	}
 
 	m := map[interface{}]interface{}{}
 	if err = yaml.Unmarshal(bytes, &m); err != nil {
-		return fmt.Errorf("Failed to parse YAML configuration for %s: %v", service, err)
+		e := fmt.Errorf("Failed to parse YAML configuration for %s: %v", service, err)
+		log.Error(e)
+		return e
 	}
 
 	m = adjustContainerNames(m)
 
 	bytes, err = yaml.Marshal(m)
 	if err != nil {
-		return fmt.Errorf("Failed to marshal YAML configuration for %s: %v", service, err)
+		e := fmt.Errorf("Failed to marshal YAML configuration for %s: %v", service, err)
+		log.Error(e)
+		return e
 	}
 
 	if err = p.Load(bytes); err != nil {
-		return fmt.Errorf("Failed to load %s: %v", service, err)
+		e := fmt.Errorf("Failed to load %s: %v", service, err)
+		log.Error(e)
+		return e
 	}
 
 	return nil
@@ -85,7 +92,7 @@ func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, envir
 
 			if err := LoadService(p, cfg, *useNetwork, service); err != nil {
 				if err != network.ErrNoNetwork {
-					log.Error(err)
+					log.Errorf("Failed to load service(%s): %v", service, err)
 				}
 				continue
 			}
@@ -99,12 +106,12 @@ func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, envir
 
 		if loadConsole {
 			if err := loadConsoleService(cfg, p); err != nil {
-				log.Errorf("Failed to load console: %v", err)
+				log.Errorf("Failed to load rancher.console=(%s): %v", cfg.Rancher.Console, err)
 			}
 		}
 
 		if err := loadEngineService(cfg, p); err != nil {
-			log.Errorf("Failed to load engine: %v", err)
+			log.Errorf("Failed to load rancher.docker.engine=(%s): %v", cfg.Rancher.Docker.Engine, err)
 		}
 
 		return nil

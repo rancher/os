@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 ros="$1"
 
@@ -14,6 +14,7 @@ fi
 
 OUTPUT=${OUTPUT:-bin/ros}
 echo Building $OUTPUT
+BUILDDATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-CONST="-X github.com/docker/docker/dockerversion.GitCommit=${COMMIT} -X github.com/docker/docker/dockerversion.Version=${DOCKER_PATCH_VERSION} -X github.com/docker/docker/dockerversion.BuildTime=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -X github.com/docker/docker/dockerversion.IAmStatic=true -X github.com/rancher/os/config.Version=${VERSION} -X github.com/rancher/os/config.OsRepo=${OS_REPO}"
-go build -tags "selinux cgo daemon netgo dnspatch" -installsuffix netgo -ldflags "$CONST -linkmode external -extldflags -static -s -w" -o ${OUTPUT}
+CONST="-X github.com/rancher/os/config.Version=${VERSION} -X github.com/rancher/os/config.OsRepo=${OS_REPO} -X github.com/rancher/os/config.BuildDate='${BUILDDATE}'"
+go build -tags "selinux cgo daemon netgo" -installsuffix netgo -ldflags "$CONST -linkmode external -extldflags -static -s -w" -o ${OUTPUT}

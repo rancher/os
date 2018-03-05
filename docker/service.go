@@ -54,7 +54,10 @@ func (s *Service) missingImage() bool {
 		return false
 	}
 	client := s.context.ClientFactory.Create(s)
-	_, _, err := client.ImageInspectWithRaw(context.Background(), s.Config().Image, false)
+	_, _, err := client.ImageInspectWithRaw(context.Background(), image, false)
+	if err != nil {
+		log.Errorf("Missing the image: %v", err)
+	}
 	return err != nil
 }
 

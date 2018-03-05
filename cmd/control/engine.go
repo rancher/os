@@ -2,17 +2,18 @@ package control
 
 import (
 	"fmt"
-	"io/ioutil"
 	"sort"
 	"strings"
 
 	"golang.org/x/net/context"
 
 	"github.com/codegangsta/cli"
+	"github.com/docker/docker/reference"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 	"github.com/rancher/os/util/network"
@@ -104,7 +105,7 @@ func engineEnable(c *cli.Context) error {
 func engineList(c *cli.Context) error {
 	cfg := config.LoadConfig()
 	engines := availableEngines(cfg)
-	currentEngine := currentEngine()
+	currentEngine := CurrentEngine()
 
 	for _, engine := range engines {
 		if engine == currentEngine {
@@ -135,12 +136,33 @@ func availableEngines(cfg *config.CloudConfig) []string {
 	return engines
 }
 
-func currentEngine() (engine string) {
-	engineBytes, err := ioutil.ReadFile(dockerDone)
-	if err == nil {
-		engine = strings.TrimSpace(string(engineBytes))
-	} else {
-		log.Warnf("Failed to detect current Docker engine: %v", err)
+// CurrentEngine gets the name of the docker that's running
+func CurrentEngine() (engine string) {
+	// sudo system-docker inspect --format "{{.Config.Image}}" docker
+	client, err := docker.NewSystemClient()
+	if err != nil {
+		log.Warnf("Failed to detect current docker: %v", err)
+		return
 	}
+	info, err := client.ContainerInspect(context.Background(), "docker")
+	if err != nil {
+		log.Warnf("Failed to detect current docker: %v", err)
+		return
+	}
+	// parse image name, then remove os- prefix and the engine suffix
+	image, err := reference.ParseNamed(info.Config.Image)
+	if err != nil {
+		log.Warnf("Failed to detect current docker(%s): %v", info.Config.Image, err)
+		return
+	}
+	if t, ok := image.(reference.NamedTagged); ok {
+		tag := t.Tag()
+		if !strings.HasPrefix(tag, "1.") {
+			// TODO: this assumes we only do Docker ce :/
+			tag = tag + "-ce"
+		}
+		return "docker-" + tag
+	}
+
 	return
 }

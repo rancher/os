@@ -157,83 +157,120 @@ func populateDefault(netCfg *NetworkConfig) {
 	}
 }
 
-func ApplyNetworkConfigs(netCfg *NetworkConfig) error {
+func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool) (bool, error) {
 	populateDefault(netCfg)
 
 	log.Debugf("Config: %#v", netCfg)
 	runCmds(netCfg.PreCmds, "")
+	defer runCmds(netCfg.PostCmds, "")
 
 	createInterfaces(netCfg)
-
 	createSlaveInterfaces(netCfg)
 
 	links, err := netlink.LinkList()
 	if err != nil {
-		return err
-	}
-
-	//apply network config
-	for _, link := range links {
-		linkName := link.Attrs().Name
-		if match, ok := findMatch(link, netCfg); ok && !match.DHCP {
-			if err := applyInterfaceConfig(link, match); err != nil {
-				log.Errorf("Failed to apply settings to %s : %v", linkName, err)
-			}
-		}
-	}
-
-	runCmds(netCfg.PostCmds, "")
-	return err
-}
-
-func RunDhcp(netCfg *NetworkConfig, setHostname, setDNS bool) error {
-	log.Debugf("RunDhcp")
-	populateDefault(netCfg)
-
-	links, err := netlink.LinkList()
-	if err != nil {
-		log.Errorf("RunDhcp failed to get LinkList, %s", err)
-		return err
+		log.Errorf("error getting LinkList: %s", err)
+		return false, err
 	}
 
 	wg := sync.WaitGroup{}
 
+	//apply network config
 	for _, link := range links {
-		name := link.Attrs().Name
-		if name == "lo" {
-			continue
+		linkName := link.Attrs().Name
+		if linkName != "lo" {
+			applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
 		}
-		match, ok := findMatch(link, netCfg)
-		if !ok {
-			continue
-		}
-		wg.Add(1)
-		go func(iface string, match InterfaceConfig) {
-			if match.DHCP {
-				// retrigger, perhaps we're running this to get the new address
-				runDhcp(netCfg, iface, match.DHCPArgs, setHostname, setDNS)
-			} else {
-				if hasDhcp(iface) {
-					log.Infof("dhcp release %s", iface)
-					runDhcp(netCfg, iface, dhcpReleaseCmd, false, true)
-				}
-			}
-			wg.Done()
-		}(name, match)
 	}
 	wg.Wait()
 
-	return nil
+	// make sure there was a DHCP set dns - or tell ros to write 8.8.8.8,8.8.8.4
+	log.Infof("Checking to see if DNS was set by DHCP")
+	dnsSet := false
+	for _, link := range links {
+		linkName := link.Attrs().Name
+		if linkName != "lo" {
+			log.Infof("dns testing %s", linkName)
+			lease := getDhcpLease(linkName)
+			if _, ok := lease["domain_name_servers"]; ok {
+				log.Infof("dns was dhcp set for %s", linkName)
+				dnsSet = true
+			}
+		}
+	}
+
+	return dnsSet, nil
+}
+
+func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg *sync.WaitGroup, userSetHostname, userSetDNS bool) {
+	linkName := link.Attrs().Name
+	log.Debugf("applyOuter(%v, %v), link: %s", userSetHostname, userSetDNS, linkName)
+	match, ok := findMatch(link, netCfg)
+	if !ok {
+		return
+	}
+
+	log.Debugf("Config(%s): %#v", linkName, match)
+	runCmds(match.PreUp, linkName)
+	defer runCmds(match.PostUp, linkName)
+
+	if !match.DHCP {
+		if err := applyInterfaceConfig(link, match); err != nil {
+			log.Errorf("Failed to apply settings to %s : %v", linkName, err)
+		}
+	}
+
+	if !match.DHCP && !hasDhcp(linkName) {
+		log.Debugf("Skipping(%s): DHCP=false && no DHCP lease yet", linkName)
+		return
+	}
+
+	wg.Add(1)
+	go func(iface string, match InterfaceConfig) {
+		if match.DHCP {
+			// retrigger, perhaps we're running this to get the new address
+			runDhcp(netCfg, iface, match.DHCPArgs, !userSetHostname, !userSetDNS)
+		} else {
+			log.Infof("dhcp release %s", iface)
+			runDhcp(netCfg, iface, dhcpReleaseCmd, false, true)
+		}
+		wg.Done()
+	}(linkName, match)
+}
+
+func getDhcpLease(iface string) (lease map[string]string) {
+	lease = make(map[string]string)
+
+	out := getDhcpLeaseString(iface)
+	log.Debugf("getDhcpLease %s: %s", iface, out)
+
+	lines := strings.Split(string(out), "\n")
+	for _, line := range lines {
+		l := strings.SplitN(line, "=", 2)
+		log.Debugf("line: %v", l)
+		if len(l) > 1 {
+			lease[l[0]] = l[1]
+		}
+	}
+	return lease
+}
+
+func getDhcpLeaseString(iface string) []byte {
+	args := defaultDhcpArgs
+	args = append(args, "-U", iface)
+	cmd := exec.Command(args[0], args[1:]...)
+	//cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
+	log.Debugf("Running cmd: %s, output: %s", args, string(out))
+	if err != nil {
+		// dhcpcd works fine, but gets an error: exit status 1
+		log.Warnf("Failed to run cmd: %s, error: %v", args, err)
+	}
+	return out
 }
 
 func hasDhcp(iface string) bool {
-	cmd := exec.Command("dhcpcd", "-U", iface)
-	//cmd.Stderr = os.Stderr
-	out, err := cmd.Output()
-	if err != nil {
-		log.Error(err)
-	}
-	log.Debugf("dhcpcd -u %s: %s", iface, out)
+	out := getDhcpLeaseString(iface)
 	return len(out) > 0
 }
 
@@ -258,13 +295,17 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, se
 		args = append(args, "--nohook", "resolv.conf")
 	}
 
+	// Wait for lease
+	// TODO: this should be optional - based on kernel arg?
+	args = append(args, "-w", "--debug")
+
 	args = append(args, iface)
 	cmd := exec.Command(args[0], args[1:]...)
 	log.Infof("Running DHCP on %s: %s", iface, strings.Join(args, " "))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
-		log.Error(err)
+		log.Errorf("Failed to run dhcpcd for %s: %v", iface, err)
 	}
 }
 
@@ -358,10 +399,7 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 		if err != nil {
 			return err
 		}
-		if err := b.AddSlave(link.Attrs().Name); err != nil {
-			return err
-		}
-		return nil
+		return b.AddSlave(link.Attrs().Name)
 	}
 
 	//TODO: undo
@@ -402,11 +440,6 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	addrMap := make(map[string]bool)
 	for _, address := range addresses {
 		addrMap[address] = true
-		log.Infof("Applying %s to %s", address, link.Attrs().Name)
-		err := applyAddress(address, link, netConf)
-		if err != nil {
-			log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
-		}
 	}
 	for _, addr := range existingAddrs {
 		if _, ok := addrMap[addr.IPNet.String()]; !ok {
@@ -419,6 +452,13 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 			}
 		}
 	}
+	for _, address := range addresses {
+		log.Infof("Applying %s to %s", address, link.Attrs().Name)
+		err := applyAddress(address, link, netConf)
+		if err != nil {
+			log.Errorf("Failed to apply address %s to %s: %v", address, link.Attrs().Name, err)
+		}
+	}
 
 	// TODO: can we set to default?
 	if netConf.MTU > 0 {
@@ -427,8 +467,6 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 			return err
 		}
 	}
-
-	runCmds(netConf.PreUp, link.Attrs().Name)
 
 	if err := linkUp(link, netConf); err != nil {
 		return err
@@ -444,13 +482,13 @@ func applyInterfaceConfig(link netlink.Link, netConf InterfaceConfig) error {
 	}
 
 	// TODO: how to remove a GW? (on aws it seems to be hard to find out what the gw is :/)
-	runCmds(netConf.PostUp, link.Attrs().Name)
-
 	return nil
 }
 
 func runCmds(cmds []string, iface string) {
+	log.Debugf("runCmds(on %s): %v", iface, cmds)
 	for _, cmd := range cmds {
+		log.Debugf("runCmd(on %s): %v", iface, cmd)
 		cmd = strings.TrimSpace(cmd)
 		if cmd == "" {
 			continue

@@ -25,7 +25,7 @@ const (
 	ModulesArchive   = "/modules.tar"
 	Debug            = false
 	SystemDockerLog  = "/var/log/system-docker.log"
-	SystemDockerBin  = "/usr/bin/system-docker"
+	SystemDockerBin  = "/usr/bin/system-dockerd"
 
 	HashLabel         = "io.rancher.os.hash"
 	IDLabel           = "io.rancher.os.id"
@@ -46,11 +46,16 @@ const (
 	CloudConfigScriptFile  = "/var/lib/rancher/conf/cloud-config-script"
 	MetaDataFile           = "/var/lib/rancher/conf/metadata"
 	CloudConfigFile        = "/var/lib/rancher/conf/cloud-config.yml"
+	EtcResolvConfFile      = "/etc/resolv.conf"
+	CNIBridgeConfigFile    = "/etc/docker/cni/bridge.d/bridge.conf"
+
+	RKPDockerSysBridgeSubnet = "rancher.system_docker.subnet"
 )
 
 var (
 	OemConfigFile = OEM + "/oem-config.yml"
 	Version       string
+	BuildDate     string
 	Arch          string
 	Suffix        string
 	OsRepo        string
@@ -113,6 +118,7 @@ type RancherConfig struct {
 	NoSharedRoot        bool                                      `yaml:"no_sharedroot,omitempty"`
 	Log                 bool                                      `yaml:"log,omitempty"`
 	ForceConsoleRebuild bool                                      `yaml:"force_console_rebuild,omitempty"`
+	Recovery            bool                                      `yaml:"recovery,omitempty"`
 	Disable             []string                                  `yaml:"disable,omitempty"`
 	ServicesInclude     map[string]bool                           `yaml:"services_include,omitempty"`
 	Modules             []string                                  `yaml:"modules,omitempty"`
@@ -129,6 +135,8 @@ type RancherConfig struct {
 	ResizeDevice        string                                    `yaml:"resize_device,omitempty"`
 	Sysctl              map[string]string                         `yaml:"sysctl,omitempty"`
 	RestartServices     []string                                  `yaml:"restart_services,omitempty"`
+	HypervisorService   bool                                      `yaml:"hypervisor_service,omitempty"`
+	ShutdownTimeout     int                                       `yaml:"shutdown_timeout,omitempty"`
 }
 
 type UpgradeConfig struct {
@@ -174,7 +182,10 @@ type DockerConfig struct {
 }
 
 type SSHConfig struct {
-	Keys map[string]string `yaml:"keys,omitempty"`
+	Keys          map[string]string `yaml:"keys,omitempty"`
+	Daemon        bool              `yaml:"daemon,omitempty"`
+	Port          int               `yaml:"port,omitempty"`
+	ListenAddress string            `yaml:"listen_address,omitempty"`
 }
 
 type StateConfig struct {

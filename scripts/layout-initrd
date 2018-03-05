@@ -1,0 +1,59 @@
+
+echo Create initrd layout in $INITRD_DIR
+
+rm -rf ${INITRD_DIR}
+mkdir -p ${INITRD_DIR}/usr/{etc,lib,bin,share/ros,var/lib/cni/bin}
+
+./scripts/template
+
+cp -rf assets/selinux          ${INITRD_DIR}/usr/etc
+cp -rf assets/docker           ${INITRD_DIR}/usr/etc
+cp build/images.tar            ${INITRD_DIR}/usr/share/ros/
+cp bin/ros                     ${INITRD_DIR}/usr/bin/
+ln -s usr/bin/ros              ${INITRD_DIR}/init
+ln -s bin                      ${INITRD_DIR}/usr/sbin
+ln -s usr/sbin                 ${INITRD_DIR}/sbin
+ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge
+ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/host-local
+
+curl -SL ${!SYSTEM_DOCKER_URL} | tar --strip-components=1 -xzvf - -C ${INITRD_DIR}/usr/bin/
+
+cat <<HERE > ${INITRD_DIR}/usr/share/ros/os-release
+NAME="RancherOS"
+VERSION=${VERSION}
+ID=rancheros
+ID_LIKE=
+VERSION_ID=${VERSION}
+PRETTY_NAME="RancherOS ${VERSION}"
+HOME_URL="http://rancher.com/rancher-os/"
+SUPPORT_URL="https://forums.rancher.com/c/rancher-os"
+BUG_REPORT_URL="https://github.com/rancher/os/issues"
+BUILD_ID=
+HERE
+# TODO: usr/lib dir is overwritten by the kernel modules and firmware
+ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/lib/
+ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/etc/
+
+# Support upgrades from old persistent consoles that bind mount these
+touch ${INITRD_DIR}/usr/bin/docker-containerd
+touch ${INITRD_DIR}/usr/bin/docker-containerd-shim
+touch ${INITRD_DIR}/usr/bin/docker
+
+if [ -e ${DOWNLOADS}/policy.29 ]; then
+    mkdir -p ${INITRD_DIR}/usr/etc/selinux/ros/policy/
+    cp ${DOWNLOADS}/policy.29 ${INITRD_DIR}/usr/etc/selinux/ros/policy/
+fi
+
+# make rancher/os-initrd image
+cat <<HERE > ${INITRD_DIR}/../Dockerfile.initrd
+FROM scratch
+COPY initrd/* /
+HERE
+
+name="os-initrd"
+tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
+pushd .
+cd ${INITRD_DIR}/..
+docker build -t ${OS_REPO}/${name} -f Dockerfile.initrd .
+docker tag rancher/${name} ${tag}
+popd

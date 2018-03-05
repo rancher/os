@@ -1,6 +1,7 @@
 package respawn
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/codegangsta/cli"
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 )
 
@@ -28,6 +30,11 @@ func Main() {
 	runtime.LockOSThread()
 	app := cli.NewApp()
 
+	app.Name = os.Args[0]
+	app.Usage = fmt.Sprintf("%s RancherOS\nbuilt: %s", app.Name, config.BuildDate)
+	app.Version = config.Version
+	app.Author = "Rancher Labs, Inc."
+
 	app.Flags = []cli.Flag{
 		cli.StringFlag{
 			Name:  "file, f",
@@ -35,6 +42,9 @@ func Main() {
 		},
 	}
 	app.Action = run
+
+	log.Infof("%s, %s", app.Usage, app.Version)
+	fmt.Printf("%s, %s", app.Usage, app.Version)
 
 	app.Run(os.Args)
 }
@@ -69,17 +79,21 @@ func run(c *cli.Context) error {
 		panic(err)
 	}
 
-	var wg sync.WaitGroup
+	lines := strings.Split(string(input), "\n")
+	doneChannel := make(chan string, len(lines))
 
-	for _, line := range strings.Split(string(input), "\n") {
+	for _, line := range lines {
 		if strings.TrimSpace(line) == "" || strings.Index(strings.TrimSpace(line), "#") == 0 {
 			continue
 		}
-		wg.Add(1)
-		go execute(line, &wg)
+		go execute(line, doneChannel)
 	}
 
-	wg.Wait()
+	for i := 0; i < len(lines); i++ {
+		line := <-doneChannel
+		log.Infof("FINISHED: %s", line)
+		fmt.Printf("FINISHED: %s", line)
+	}
 	return nil
 }
 
@@ -101,19 +115,20 @@ func termPids() {
 	defer processLock.Unlock()
 
 	for _, process := range processes {
+		log.Infof("sending SIGTERM to %d", process.Pid)
 		process.Signal(syscall.SIGTERM)
 	}
 }
 
-func execute(line string, wg *sync.WaitGroup) {
-	defer wg.Done()
+func execute(line string, doneChannel chan string) {
+	defer func() { doneChannel <- line }()
 
 	start := time.Now()
 	count := 0
 
-	for {
-		args := strings.Split(line, " ")
+	args := strings.Split(line, " ")
 
+	for {
 		cmd := exec.Command(args[0], args[1:]...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -144,7 +159,7 @@ func execute(line string, wg *sync.WaitGroup) {
 		count++
 
 		if count > 10 {
-			if start.Sub(time.Now()) <= (1 * time.Second) {
+			if time.Now().Sub(start) <= (1 * time.Second) {
 				log.Errorf("%s : restarted too fast, not executing", line)
 				break
 			}

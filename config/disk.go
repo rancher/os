@@ -1,7 +1,9 @@
 package config
 
 import (
+	"encoding/json"
 	"io/ioutil"
+	"net"
 	"os"
 	"path"
 	"path/filepath"
@@ -14,6 +16,7 @@ import (
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/initialize"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
 )
@@ -48,14 +51,26 @@ func loadRawDiskConfig(dirPrefix string, full bool) map[interface{}]interface{} 
 
 func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
 	rawCfg := loadRawDiskConfig(dirPrefix, full)
-	rawCfg = util.Merge(rawCfg, readCmdline())
+	procCmdline, err := cmdline.Read(false)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
+	}
+	rawCfg = util.Merge(rawCfg, procCmdline)
 	rawCfg = util.Merge(rawCfg, readElidedCmdline(rawCfg))
 	rawCfg = applyDebugFlags(rawCfg)
 	return mergeMetadata(rawCfg, readMetadata())
 }
 
 func LoadConfig() *CloudConfig {
-	return LoadConfigWithPrefix("")
+	cfg := LoadConfigWithPrefix("")
+
+	if cfg.Rancher.Debug {
+		log.SetDefaultLevel(log.DebugLevel)
+	} else {
+		log.SetDefaultLevel(log.InfoLevel)
+	}
+
+	return cfg
 }
 
 func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
@@ -63,7 +78,19 @@ func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
 
 	cfg := &CloudConfig{}
 	if err := util.Convert(rawCfg, cfg); err != nil {
-		log.Errorf("Failed to parse configuration: %s", err)
+		log.Errorf("EXITING: Failed to parse configuration: %s", err)
+		log.Debugf("Bad cfg:\n%v\n", rawCfg)
+		// no point returning {}, it'll just sit there broken
+		// TODO: print some context around what failed..
+		validationErrors, err := ValidateRawCfg(rawCfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, validationError := range validationErrors.Errors() {
+			log.Error(validationError)
+		}
+		// TODO: I'd love to panic & recover(), for issues on boot, but it doesn't work yet
+		os.Exit(-1)
 		return &CloudConfig{}
 	}
 	cfg = amendNils(cfg)
@@ -87,7 +114,7 @@ func Insert(m interface{}, args ...interface{}) interface{} {
 }
 
 func SaveInitCmdline(cmdLineArgs string) {
-	elidedCfg := parseCmdline(cmdLineArgs)
+	elidedCfg := cmdline.Parse(cmdLineArgs, false)
 
 	env := Insert(make(map[interface{}]interface{}), interface{}("EXTRA_CMDLINE"), interface{}(cmdLineArgs))
 	rancher := Insert(make(map[interface{}]interface{}), interface{}("environment"), env)
@@ -97,6 +124,30 @@ func SaveInitCmdline(cmdLineArgs string) {
 
 	if err := WriteToFile(newCfg, CloudConfigInitFile); err != nil {
 		log.Errorf("Failed to write init-cmdline config: %s", err)
+	}
+}
+
+func SaveCNISubnet(subnet, filename string) {
+	if _, _, err := net.ParseCIDR(subnet); err != nil {
+		log.Errorf("Failed to parse system-docker subnet from cmdline: %v", err)
+	}
+	rBytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		log.Errorf("Failed to read from %s: %v", filename, err)
+	}
+	var data map[string]interface{}
+	if err = json.Unmarshal(rBytes, &data); err != nil {
+		log.Errorf("Failed to pasre json: %v", err)
+	}
+	ipam := data["ipam"].(map[string]interface{})
+	ipam["subnet"] = subnet
+	wBytes, err := json.MarshalIndent(data, "", "\t")
+	if err != nil {
+		log.Errorf("Failed to convert to bytes: %v", err)
+	}
+	log.Debugf("New cni bridge conf: %s", wBytes)
+	if err = ioutil.WriteFile(filename, wBytes, 0644); err != nil {
+		log.Errorf("Failed to write cni bridge file %s: %v", filename, err)
 	}
 }
 
@@ -135,10 +186,10 @@ func applyDebugFlags(rawCfg map[interface{}]interface{}) map[interface{}]interfa
 	}
 
 	log.SetLevel(log.DebugLevel)
-	_, rawCfg = getOrSetVal("rancher.docker.debug", rawCfg, true)
-	_, rawCfg = getOrSetVal("rancher.system_docker.debug", rawCfg, true)
-	_, rawCfg = getOrSetVal("rancher.bootstrap_docker.debug", rawCfg, true)
-	_, rawCfg = getOrSetVal("rancher.log", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.docker.debug", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.system_docker.debug", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.bootstrap_docker.debug", rawCfg, true)
+	_, rawCfg = cmdline.GetOrSetVal("rancher.log", rawCfg, true)
 
 	return rawCfg
 }
@@ -180,6 +231,11 @@ func mergeMetadata(rawCfg map[interface{}]interface{}, md datasource.Metadata) m
 
 	out["ssh_authorized_keys"] = finalKeys
 
+	rancherOut, _ := out["rancher"].(map[interface{}]interface{})
+	if _, ok := rancherOut["resize_device"]; md.RootDisk != "" && !ok {
+		rancherOut["resize_device"] = md.RootDisk
+	}
+
 	return out
 }
 
@@ -196,29 +252,13 @@ func readElidedCmdline(rawCfg map[interface{}]interface{}) map[interface{}]inter
 	for k, v := range rawCfg {
 		if key, _ := k.(string); key == "EXTRA_CMDLINE" {
 			if val, ok := v.(string); ok {
-				cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(val))))
+				cmdLineObj := cmdline.Parse(strings.TrimSpace(util.UnescapeKernelParams(string(val))), false)
 
 				return cmdLineObj
 			}
 		}
 	}
 	return nil
-}
-
-func readCmdline() map[interface{}]interface{} {
-	cmdLine, err := ioutil.ReadFile("/proc/cmdline")
-	if err != nil {
-		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
-		return nil
-	}
-
-	if len(cmdLine) == 0 {
-		return nil
-	}
-
-	cmdLineObj := parseCmdline(strings.TrimSpace(util.UnescapeKernelParams(string(cmdLine))))
-
-	return cmdLineObj
 }
 
 func amendNils(c *CloudConfig) *CloudConfig {
