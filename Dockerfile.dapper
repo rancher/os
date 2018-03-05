@@ -82,7 +82,7 @@ ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-2
 ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2017.02.10-1/os-base_amd64.tar.xz
 ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2017.02.10-1/os-base_arm64.tar.xz
 
-ARG SYSTEM_DOCKER_VERSION=17.06-ros1
+ARG SYSTEM_DOCKER_VERSION=17.06-ros3
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/niusmallnan/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/niusmallnan/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 ######################################################
