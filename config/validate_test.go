@@ -16,6 +16,7 @@ func testValidate(t *testing.T, cfg []byte, contains string) {
 		t.Fatal(err)
 	}
 	if contains == "" && len(validationErrors.Errors()) != 0 {
+		fmt.Printf("validationErrors: %v", validationErrors.Errors())
 		t.Fail()
 	}
 	if !strings.Contains(fmt.Sprint(validationErrors.Errors()), contains) {
