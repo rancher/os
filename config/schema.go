@@ -148,7 +148,9 @@ var schema = `{
 
       "properties": {
         "keys": {"type": "object"},
-        "daemon": {"type": "boolean"}
+        "daemon": {"type": "boolean"},
+        "port": {"type": "integer"},
+        "listen_address": {"type": "string"}
       }
     },
 
