@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
 )
 
@@ -18,4 +19,12 @@ func yes(question string) bool {
 	}
 
 	return strings.ToLower(line[0:1]) == "y"
+}
+
+func formatImage(image string, cfg *config.CloudConfig) string {
+	domainRegistry := cfg.Rancher.Environment["REGISTRY_DOMAIN"]
+	if domainRegistry != "docker.io" && domainRegistry != "" {
+		return fmt.Sprintf("%s/%s", domainRegistry, image)
+	}
+	return image
 }
