@@ -117,7 +117,18 @@ func getImages() (*Images, error) {
 		}
 	}
 
-	return parseBody(body)
+	images, err := parseBody(body)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := config.LoadConfig()
+	images.Current = formatImage(images.Current, cfg)
+	for i := len(images.Available) - 1; i >= 0; i-- {
+		images.Available[i] = formatImage(images.Available[i], cfg)
+	}
+
+	return images, nil
 }
 
 func osMetaDataGet(c *cli.Context) error {
@@ -133,6 +144,7 @@ func osMetaDataGet(c *cli.Context) error {
 
 	cfg := config.LoadConfig()
 	runningName := cfg.Rancher.Upgrade.Image + ":" + config.Version
+	runningName = formatImage(runningName, cfg)
 
 	foundRunning := false
 	for i := len(images.Available) - 1; i >= 0; i-- {

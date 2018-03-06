@@ -3,6 +3,7 @@ rancher:
   environment:
     VERSION: {{.VERSION}}
     SUFFIX: {{.SUFFIX}}
+    REGISTRY_DOMAIN: "docker.io"
   defaults:
     hostname: {{.HOSTNAME_DEFAULT}}
     {{if eq "amd64" .ARCH -}}

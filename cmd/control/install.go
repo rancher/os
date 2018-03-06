@@ -121,7 +121,11 @@ func installAction(c *cli.Context) error {
 	image := c.String("image")
 	cfg := config.LoadConfig()
 	if image == "" {
-		image = cfg.Rancher.Upgrade.Image + ":" + config.Version + config.Suffix
+		image = fmt.Sprintf("%s:%s%s",
+			cfg.Rancher.Upgrade.Image,
+			config.Version,
+			config.Suffix)
+		image = formatImage(image, cfg)
 	}
 
 	installType := c.String("install-type")
@@ -202,7 +206,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 	}
 
 	// Versions before 0.8.0-rc3 use the old calling convention (from the lay-down-os shell script)
-	imageVersion := strings.TrimPrefix(image, "rancher/os:")
+	imageVersion := strings.Split(image, ":")[1]
 	if version.GreaterThan("v0.8.0-rc3", imageVersion) {
 		log.Infof("user specified to install pre v0.8.0: %s", image)
 		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
