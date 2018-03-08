@@ -17,6 +17,8 @@ ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge
 ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/host-local
 
 curl -SL ${!SYSTEM_DOCKER_URL} | tar --strip-components=1 -xzvf - -C ${INITRD_DIR}/usr/bin/
+# we have diabled the user-proxy so we get rid of system-docker-proxy
+rm -f ${INITRD_DIR}/usr/bin/system-docker-proxy
 
 cat <<HERE > ${INITRD_DIR}/usr/share/ros/os-release
 NAME="RancherOS"
