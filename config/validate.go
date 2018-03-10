@@ -1,8 +1,8 @@
 package config
 
 import (
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/xeipuuv/gojsonschema"
+	"gopkg.in/yaml.v2"
 )
 
 // ConvertKeysToStrings is temporarily copied from libcompose

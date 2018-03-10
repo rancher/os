@@ -24,7 +24,7 @@ import (
 	"sync"
 	"time"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"gopkg.in/yaml.v2"
 
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/cmd/network"

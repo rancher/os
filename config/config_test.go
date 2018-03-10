@@ -3,7 +3,7 @@ package config
 import (
 	"testing"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"gopkg.in/yaml.v2"
 
 	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/util"
@@ -66,7 +66,7 @@ func TestUnmarshalOrReturnString(t *testing.T) {
 	assert.Equal("a,", cmdline.UnmarshalOrReturnString("a,"))
 	assert.Equal(",b", cmdline.UnmarshalOrReturnString(",b"))
 
-	assert.Equal(int64(10), cmdline.UnmarshalOrReturnString("10"))
+	assert.Equal(int(10), cmdline.UnmarshalOrReturnString("10"))
 	assert.Equal(true, cmdline.UnmarshalOrReturnString("true"))
 	assert.Equal(false, cmdline.UnmarshalOrReturnString("false"))
 
@@ -94,8 +94,8 @@ func TestUnmarshalOrReturnString(t *testing.T) {
 	assert.Equal([]interface{}{"a", "\nb"}, cmdline.UnmarshalOrReturnString("[a,\"\nb\"]"))
 	assert.Equal([]interface{}{" a\n ", " \nb "}, cmdline.UnmarshalOrReturnString("[\" a\n \",\" \nb \"]"))
 
-	assert.Equal([]interface{}{"a", int64(10)}, cmdline.UnmarshalOrReturnString("[a,10]"))
-	assert.Equal([]interface{}{int64(10), "a"}, cmdline.UnmarshalOrReturnString("[10,a]"))
+	assert.Equal([]interface{}{"a", int(10)}, cmdline.UnmarshalOrReturnString("[a,10]"))
+	assert.Equal([]interface{}{int(10), "a"}, cmdline.UnmarshalOrReturnString("[10,a]"))
 
 	assert.Equal([]interface{}{"a", true}, cmdline.UnmarshalOrReturnString("[a,true]"))
 	assert.Equal([]interface{}{false, "a"}, cmdline.UnmarshalOrReturnString("[false,a]"))
@@ -131,7 +131,7 @@ func TestCmdlineParse(t *testing.T) {
 
 	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
-			"key": int64(5),
+			"key": int(5),
 		},
 	}, cmdline.Parse("rancher.key=5", false), false)
 
@@ -143,7 +143,7 @@ func TestCmdlineParse(t *testing.T) {
 
 	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
-			"keyArray": []interface{}{int64(1), int64(2)},
+			"keyArray": []interface{}{int(1), int(2)},
 		},
 	}, cmdline.Parse("rancher.keyArray=[1,2]", false), false)
 

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"text/template"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/log"
+	"gopkg.in/yaml.v2"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"

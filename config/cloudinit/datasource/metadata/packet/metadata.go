@@ -24,8 +24,8 @@ import (
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/netconf"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	packetMetadata "github.com/packethost/packngo/metadata"
+	"gopkg.in/yaml.v2"
 )
 
 const (

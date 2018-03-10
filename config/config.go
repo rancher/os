@@ -4,9 +4,9 @@ import (
 	"io/ioutil"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/util"
+	"gopkg.in/yaml.v2"
 )
 
 const Banner = `

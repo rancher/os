@@ -12,8 +12,8 @@ import (
 	"path"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	osYaml "github.com/rancher/os/config/yaml"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -93,7 +93,6 @@ func ConvertIgnoreOmitEmpty(from, to interface{}) error {
 	var buffer bytes.Buffer
 
 	encoder := yaml.NewEncoder(&buffer)
-	encoder.IgnoreOmitEmpty = true
 
 	if err := encoder.Encode(from); err != nil {
 		return err

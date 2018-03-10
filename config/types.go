@@ -101,8 +101,8 @@ type CloudConfig struct {
 }
 
 type File struct {
-	config.File
-	Container string `yaml:"container,omitempty"`
+	config.File `yaml:",inline"`
+	Container   string `yaml:"container,omitempty"`
 }
 
 type RancherConfig struct {
@@ -167,7 +167,7 @@ type EngineOpts struct {
 }
 
 type DockerConfig struct {
-	EngineOpts
+	EngineOpts     `yaml:",inline"`
 	Engine         string   `yaml:"engine,omitempty"`
 	TLS            bool     `yaml:"tls,omitempty"`
 	TLSArgs        []string `yaml:"tls_args,flow,omitempty"`
