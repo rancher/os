@@ -27,7 +27,7 @@ func Shutdown() {
 	log.InitLogger()
 	app := cli.NewApp()
 
-	app.Name = os.Args[0]
+	app.Name = filepath.Base(os.Args[0])
 	app.Usage = fmt.Sprintf("%s RancherOS\nbuilt: %s", app.Name, config.BuildDate)
 	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
