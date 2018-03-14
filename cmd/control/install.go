@@ -380,20 +380,32 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 	return nil
 }
 
+func getDeviceByLabel(label string) (string, string) {
+	d, t, err := util.Blkid(label)
+	if err != nil {
+		log.Warnf("Failed to run blkid for %s", label)
+		return "", ""
+	}
+	return d, t
+}
+
 func getBootIso() (string, string, error) {
 	deviceName := "/dev/sr0"
 	deviceType := "iso9660"
-	d, t, err := util.Blkid("RancherOS")
-	if err != nil {
-		return "", "", errors.Wrap(err, "Failed to run blkid")
-	}
-	if d != "" {
-		deviceName = d
-		deviceType = t
+
+	// Our ISO LABEL is RancherOS
+	// But some tools(like rufus) will change LABEL to RANCHEROS
+	for _, label := range []string{"RancherOS", "RANCHEROS"} {
+		d, t := getDeviceByLabel(label)
+		if d != "" {
+			deviceName = d
+			deviceType = t
+			continue
+		}
 	}
 
 	// Check the sr deive if exist
-	if _, err = os.Stat(deviceName); os.IsNotExist(err) {
+	if _, err := os.Stat(deviceName); os.IsNotExist(err) {
 		return "", "", err
 	}
 
