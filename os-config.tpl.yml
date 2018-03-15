@@ -299,7 +299,11 @@ rancher:
       - command-volumes
       - system-volumes
     system-cron:
+      {{if eq "amd64" .ARCH -}}
       image: rancher/container-crontab:v0.4.0
+      {{else -}}
+      image: niusmallnan/container-crontab:v0.4.0{{.SUFFIX}}
+      {{end -}}
       labels:
         io.rancher.os.scope: system
       uts: host
