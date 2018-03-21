@@ -6,6 +6,7 @@
 /dist
 /gopath
 /images/*/build
+/scripts/images/vmware/assets
 .dockerfile
 *.swp
 /tests/integration/MANIFEST

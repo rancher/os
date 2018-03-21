@@ -64,6 +64,17 @@ rpi64:
 	cd scripts/images/raspberry-pi-hypriot64/ \
 		&& ../../../.dapper
 
+vmware:
+	rm -rf scripts/images/vmware/assets
+	mkdir -p scripts/images/vmware/assets/
+	cp -r dist/ scripts/images/vmware/assets/
+	cp -r build/ scripts/images/vmware/assets/
+	scripts/version > scripts/images/vmware/assets/version.txt
+	cd scripts/images/vmware/ \
+		&& $(shell cat Dockerfile.dapper | grep '^ARG KERNEL_VERSION_amd64=\S\+' | awk -F ' ' '{print $$NF}') \
+			$(shell cat Dockerfile.dapper | grep '^ARG DISTRIB_ID=\S\+' | awk -F ' ' '{print $$NF}') \
+			../../../.dapper
+
 help:
 	@./scripts/help
 
