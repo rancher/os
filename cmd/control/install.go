@@ -451,7 +451,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	//cloudConfig := SCRIPTS_DIR + "/conf/empty.yml" //${cloudConfig:-"${SCRIPTS_DIR}/conf/empty.yml"}
 	CONSOLE := "tty0"
 	baseName := "/mnt/new_img"
-	kernelArgs := "printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait" // console="+CONSOLE
+	kernelArgs := "printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait panic=10" // console="+CONSOLE
 	if statedir != "" {
 		kernelArgs = kernelArgs + " rancher.state.directory=" + statedir
 	}
