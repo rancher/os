@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	rancherConfig "github.com/rancher/os/config"
+	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/rancher/os/config/cloudinit/system"
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
@@ -123,6 +124,14 @@ func WriteFiles(cfg *rancherConfig.CloudConfig, container string) {
 		if fileContainer != container {
 			continue
 		}
+
+		content, err := config.DecodeContent(file.File.Content, file.File.Encoding)
+		if err != nil {
+			continue
+		}
+
+		file.File.Content = string(content)
+		file.File.Encoding = ""
 
 		f := system.File{
 			File: file.File,
