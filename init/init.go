@@ -60,7 +60,9 @@ func loadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		}
 
 		log.Debugf("Loading module %s", module)
-		cmd := exec.Command("modprobe", module)
+		// split module and module parameters
+		cmdParam := strings.SplitN(module, " ", -1)
+		cmd := exec.Command("modprobe", cmdParam...)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
