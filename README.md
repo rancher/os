@@ -12,9 +12,10 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ![How it works](./rancheros.png "How it works")
 
-## Stable Release
+## Release
 
-**v1.2.0 - Docker 17.09.1-ce - Linux 4.9.78**
+- **Latest: v1.3.0 - Docker 17.09.1-ce - Linux 4.9.80**
+- **Stable: v1.2.0 - Docker 17.09.1-ce - Linux 4.9.78**
 
 ### ISO
 
