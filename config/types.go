@@ -137,6 +137,7 @@ type RancherConfig struct {
 	RestartServices     []string                                  `yaml:"restart_services,omitempty"`
 	HypervisorService   bool                                      `yaml:"hypervisor_service,omitempty"`
 	ShutdownTimeout     int                                       `yaml:"shutdown_timeout,omitempty"`
+	PreloadWait         bool                                      `yaml:"preload_wait,omitempty"`
 }
 
 type UpgradeConfig struct {
