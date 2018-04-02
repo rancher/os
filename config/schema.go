@@ -55,7 +55,8 @@ var schema = `{
         "sysctl": {"type": "object"},
         "restart_services": {"type": "array"},
 	"hypervisor_service": {"type": "boolean"},
-        "shutdown_timeout": {"type": "integer"}
+        "shutdown_timeout": {"type": "integer"},
+	"preload_wait": {"type": "boolean"}
       }
     },
 

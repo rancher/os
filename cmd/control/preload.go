@@ -14,6 +14,8 @@ import (
 	"github.com/codegangsta/cli"
 
 	dockerClient "github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/docker"
 	"github.com/rancher/os/log"
 )
@@ -90,10 +92,17 @@ func PreloadImages(clientFactory func() (dockerClient.APIClient, error), imagesD
 			clientInitialized = true
 		}
 
-		log.Infof("Loading image %s", filename)
-		if _, err = client.ImageLoad(context.Background(), imageReader, false); err != nil {
+		var imageLoadResponse types.ImageLoadResponse
+		if imageLoadResponse, err = client.ImageLoad(context.Background(), imageReader, false); err != nil {
 			return err
 		}
+		cfg := config.LoadConfig()
+		if cfg.Rancher.PreloadWait {
+			if _, err := ioutil.ReadAll(imageLoadResponse.Body); err != nil {
+				return err
+			}
+		}
+
 		log.Infof("Finished to load image %s", filename)
 
 		log.Infof("Creating done stamp file for image %s", filename)
