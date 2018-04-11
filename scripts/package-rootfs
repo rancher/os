@@ -16,7 +16,7 @@ INITRD=${ARTIFACTS}/initrd
 mkdir -p ${ARTIFACTS} ${PREPOP_DIR}
 
 if [ "$(docker info | grep 'Storage Driver: ' | sed 's/Storage Driver: //')" != "overlay" ]; then
-    echo Overlay storage driver is require to prepackage exploded images
+    echo Overlay storage driver is required to prepackage exploded images
     echo packaging images.tar instead
     tar czf ${ARTIFACTS}/rootfs${SUFFIX}.tar.gz --exclude lib/modules --exclude lib/firmware -C ${INITRD_DIR} .
     exit 0
