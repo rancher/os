@@ -33,14 +33,14 @@ func TestAvailabilityChanges(t *testing.T) {
 
 func TestIsAvailable(t *testing.T) {
 	for _, tt := range []struct {
-		root       string
-		apiVersion string
-		resources  map[string]string
-		expect     bool
+		root      string
+		checkPath string
+		resources map[string]string
+		expect    bool
 	}{
 		{
-			root:       "/",
-			apiVersion: "2009-04-04",
+			root:      "/",
+			checkPath: "2009-04-04",
 			resources: map[string]string{
 				"/2009-04-04": "",
 			},
@@ -53,9 +53,9 @@ func TestIsAvailable(t *testing.T) {
 		},
 	} {
 		service := &Service{
-			Root:       tt.root,
-			Client:     &test.HTTPClient{Resources: tt.resources, Err: nil},
-			APIVersion: tt.apiVersion,
+			Root:                 tt.root,
+			Client:               &test.HTTPClient{Resources: tt.resources, Err: nil},
+			IsAvailableCheckPath: tt.checkPath,
 		}
 		if a := service.IsAvailable(); a != tt.expect {
 			t.Fatalf("bad isAvailable (%q): want %t, got %t", tt.resources, tt.expect, a)

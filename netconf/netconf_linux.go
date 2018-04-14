@@ -191,7 +191,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 		linkName := link.Attrs().Name
 		if linkName != "lo" {
 			log.Infof("dns testing %s", linkName)
-			lease := getDhcpLease(linkName)
+			lease := GetDhcpLease(linkName)
 			if _, ok := lease["domain_name_servers"]; ok {
 				log.Infof("dns was dhcp set for %s", linkName)
 				dnsSet = true
@@ -238,7 +238,7 @@ func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg *sync.WaitGroup, us
 	}(linkName, match)
 }
 
-func getDhcpLease(iface string) (lease map[string]string) {
+func GetDhcpLease(iface string) (lease map[string]string) {
 	lease = make(map[string]string)
 
 	out := getDhcpLeaseString(iface)

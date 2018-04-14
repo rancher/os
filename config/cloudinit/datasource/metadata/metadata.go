@@ -26,25 +26,34 @@ import (
 )
 
 type Service struct {
-	Root         string
-	Client       pkg.Getter
-	APIVersion   string
-	UserdataPath string
-	MetadataPath string
-	lastError    error
+	Root                 string
+	Client               pkg.Getter
+	APIVersion           string
+	IsAvailableCheckPath string
+	UserdataPath         string
+	MetadataPath         string
+	lastError            error
 }
 
+// NewDatasource creates as HTTP based cloud-data service with the corresponding paths for the user-data and meta-data.
+// To check the available in IsAvailable, the apiVersion is used as path.
 func NewDatasource(root, apiVersion, userdataPath, metadataPath string, header http.Header) Service {
+	return NewDatasourceWithCheckPath(root, apiVersion, apiVersion, userdataPath, metadataPath, header)
+}
+
+// NewDatasourceWithCheckPath creates as HTTP based cloud-data service with the corresponding paths for the user-data and meta-data.
+func NewDatasourceWithCheckPath(root, apiVersion, isAvailableCheckPath, userdataPath, metadataPath string, header http.Header) Service {
 	if !strings.HasSuffix(root, "/") {
 		root += "/"
 	}
-	return Service{root, pkg.NewHTTPClientHeader(header), apiVersion, userdataPath, metadataPath, nil}
+	return Service{root, pkg.NewHTTPClientHeader(header), apiVersion, isAvailableCheckPath, userdataPath, metadataPath, nil}
 }
 
 func (ms Service) IsAvailable() bool {
-	_, ms.lastError = ms.Client.Get(ms.Root + ms.APIVersion)
+	checkURL := ms.Root + ms.IsAvailableCheckPath
+	_, ms.lastError = ms.Client.Get(checkURL)
 	if ms.lastError != nil {
-		log.Errorf("%s: %s (lastError: %s)", "IsAvailable", ms.Root+":"+ms.UserdataPath, ms.lastError)
+		log.Errorf("%s: %s (lastError: %s)", "IsAvailable", checkURL, ms.lastError)
 	}
 	return (ms.lastError == nil)
 }
@@ -54,7 +63,7 @@ func (ms *Service) Finish() error {
 }
 
 func (ms *Service) String() string {
-	return fmt.Sprintf("%s: %s (lastError: %s)", "metadata", ms.Root+ms.UserdataPath, ms.lastError)
+	return fmt.Sprintf("%s: %s (lastError: %s)", "metadata", ms.UserdataURL(), ms.lastError)
 }
 
 func (ms Service) AvailabilityChanges() bool {
