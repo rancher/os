@@ -25,7 +25,6 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/pkg"
 	"github.com/rancher/os/log"
-	"github.com/vishvananda/netlink"
 )
 
 const (
@@ -44,14 +43,10 @@ func NewDatasource(root string) []*MetadataService {
 	roots := make([]string, 0, 5)
 
 	if root == "" {
-		if links, err := netlink.LinkList(); err == nil {
+		if links, err := netconf.GetValidLinkList(); err == nil {
 			log.Infof("Checking to see if a cloudstack server-identifier is available")
 			for _, link := range links {
 				linkName := link.Attrs().Name
-				if linkName == "lo" {
-					continue
-				}
-
 				log.Infof("searching for cloudstack server %s on %s", serverIdentifier, linkName)
 				lease := netconf.GetDhcpLease(linkName)
 				if server, ok := lease[serverIdentifier]; ok {

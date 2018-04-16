@@ -368,7 +368,7 @@ rancher:
   system_docker:
     exec: true
     storage_driver: overlay2
-    bridge: none
+    bip: 172.18.42.1/16
     restart: false
     graph: /var/lib/system-docker
     group: root
