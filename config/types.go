@@ -148,6 +148,7 @@ type UpgradeConfig struct {
 
 type EngineOpts struct {
 	Bridge           string            `yaml:"bridge,omitempty" opt:"bridge"`
+	BIP              string            `yaml:"bip,omitempty" opt:"bip"`
 	ConfigFile       string            `yaml:"config_file,omitempty" opt:"config-file"`
 	Containerd       string            `yaml:"containerd,omitempty" opt:"containerd"`
 	Debug            *bool             `yaml:"debug,omitempty" opt:"debug"`

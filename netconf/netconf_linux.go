@@ -66,7 +66,7 @@ func createInterfaces(netCfg *NetworkConfig) {
 }
 
 func createSlaveInterfaces(netCfg *NetworkConfig) {
-	links, err := netlink.LinkList()
+	links, err := GetValidLinkList()
 	if err != nil {
 		log.Errorf("Failed to list links: %v", err)
 		return
@@ -167,7 +167,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 	createInterfaces(netCfg)
 	createSlaveInterfaces(netCfg)
 
-	links, err := netlink.LinkList()
+	links, err := GetValidLinkList()
 	if err != nil {
 		log.Errorf("error getting LinkList: %s", err)
 		return false, err
@@ -177,10 +177,7 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 
 	//apply network config
 	for _, link := range links {
-		linkName := link.Attrs().Name
-		if linkName != "lo" {
-			applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
-		}
+		applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
 	}
 	wg.Wait()
 
@@ -189,13 +186,11 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 	dnsSet := false
 	for _, link := range links {
 		linkName := link.Attrs().Name
-		if linkName != "lo" {
-			log.Infof("dns testing %s", linkName)
-			lease := GetDhcpLease(linkName)
-			if _, ok := lease["domain_name_servers"]; ok {
-				log.Infof("dns was dhcp set for %s", linkName)
-				dnsSet = true
-			}
+		log.Infof("dns testing %s", linkName)
+		lease := GetDhcpLease(linkName)
+		if _, ok := lease["domain_name_servers"]; ok {
+			log.Infof("dns was dhcp set for %s", linkName)
+			dnsSet = true
 		}
 	}
 
@@ -509,4 +504,23 @@ func runCmds(cmds []string, iface string) {
 			continue
 		}
 	}
+}
+
+func GetValidLinkList() ([]netlink.Link, error) {
+	var validLinkList []netlink.Link
+	links, err := netlink.LinkList()
+	if err != nil {
+		return validLinkList, err
+	}
+
+	for _, l := range links {
+		linkName := l.Attrs().Name
+		if linkName == "lo" || linkName == "docker-sys" {
+			continue
+		}
+		validLinkList = append(validLinkList, l)
+	}
+
+	return validLinkList, nil
+
 }

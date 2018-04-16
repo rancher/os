@@ -122,6 +122,7 @@ var schema = `{
         "storage_context": {"type": "string"},
         "exec": {"type": ["boolean", "null"]},
         "bridge": {"type": "string"},
+        "bip": {"type": "string"},
         "config_file": {"type": "string"},
         "containerd": {"type": "string"},
         "debug": {"type": ["boolean", "null"]},
