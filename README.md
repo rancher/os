@@ -63,23 +63,23 @@ SSH keys are added to the **`rancher`** user, so you must log in using the **ran
 
 **HVM**
 
-Region | Type | AMI |
--------|------|------
-ap-south-1 | HVM | [ami-12db887d](https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-12db887d)
-eu-west-3 | HVM | [ami-d5a315a8](https://eu-west-3.console.aws.amazon.com/ec2/home?region=eu-west-3#launchInstanceWizard:ami=ami-d5a315a8)
-eu-west-2 | HVM | [ami-80bd58e7](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#launchInstanceWizard:ami=ami-80bd58e7)
-eu-west-1 | HVM | [ami-69187010](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-69187010)
-ap-northeast-2 | HVM | [ami-57dd7f39](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-57dd7f39)
-ap-northeast-1 | HVM | [ami-a3c2b5c5](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-a3c2b5c5)
-sa-east-1 | HVM | [ami-6c2f6100](https://sa-east-1.console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-6c2f6100)
-ca-central-1 | HVM | [ami-b8a622dc](https://ca-central-1.console.aws.amazon.com/ec2/home?region=ca-central-1#launchInstanceWizard:ami=ami-b8a622dc)
-ap-southeast-1 | HVM | [ami-0f5a1b73](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-0f5a1b73)
-ap-southeast-2 | HVM | [ami-edc73c8f](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-edc73c8f)
-eu-central-1 | HVM | [ami-28422647](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-28422647)
-us-east-1 | HVM | [ami-a7151cdd](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-a7151cdd)
-us-east-2 | HVM | [ami-a383b6c6](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-a383b6c6)
-us-west-1 | HVM | [ami-c4b3bca4](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-c4b3bca4)
-us-west-2 | HVM | [ami-6e1a9e16](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-6e1a9e16)
+Region | Type | AMI(Stable) | AMI(Latest)
+-------|------|------|------
+ap-south-1 | HVM | [ami-12db887d](https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-12db887d) | [ami-7e227811](https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-7e227811)
+eu-west-3 | HVM | [ami-d5a315a8](https://eu-west-3.console.aws.amazon.com/ec2/home?region=eu-west-3#launchInstanceWizard:ami=ami-d5a315a8) | [ami-662d9b1b](https://eu-west-3.console.aws.amazon.com/ec2/home?region=eu-west-3#launchInstanceWizard:ami=ami-662d9b1b)
+eu-west-2 | HVM | [ami-80bd58e7](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#launchInstanceWizard:ami=ami-80bd58e7) | [ami-89bb5aee](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#launchInstanceWizard:ami=ami-89bb5aee)
+eu-west-1 | HVM | [ami-69187010](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-69187010) | [ami-386b3841](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-386b3841)
+ap-northeast-2 | HVM | [ami-57dd7f39](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-57dd7f39) | [ami-7da90613](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-7da90613)
+ap-northeast-1 | HVM | [ami-a3c2b5c5](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-a3c2b5c5) | [ami-14070f68](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-14070f68)
+sa-east-1 | HVM | [ami-6c2f6100](https://sa-east-1.console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-6c2f6100) | [ami-7345121f](https://sa-east-1.console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-7345121f)
+ca-central-1 | HVM | [ami-b8a622dc](https://ca-central-1.console.aws.amazon.com/ec2/home?region=ca-central-1#launchInstanceWizard:ami=ami-b8a622dc) | [ami-1ea3257a](https://ca-central-1.console.aws.amazon.com/ec2/home?region=ca-central-1#launchInstanceWizard:ami=ami-1ea3257a)
+ap-southeast-1 | HVM | [ami-0f5a1b73](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-0f5a1b73) | [ami-4b4d1437](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-4b4d1437)
+ap-southeast-2 | HVM | [ami-edc73c8f](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-edc73c8f) | [ami-e4498586](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-e4498586)
+eu-central-1 | HVM | [ami-28422647](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-28422647) | [ami-bc386557](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-bc386557)
+us-east-1 | HVM | [ami-a7151cdd](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-a7151cdd) | [ami-38964e45](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-38964e45)
+us-east-2 | HVM | [ami-a383b6c6](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-a383b6c6) | [ami-a0d7e6c5](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-a0d7e6c5)
+us-west-1 | HVM | [ami-c4b3bca4](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-c4b3bca4) | [ami-a4a0b6c4](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-a4a0b6c4)
+us-west-2 | HVM | [ami-6e1a9e16](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-6e1a9e16) | [ami-c60c94be](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-c60c94be)
 
 Additionally, images are available with support for Amazon EC2 Container Service (ECS) [here](https://docs.rancher.com/os/amazon-ecs/#amazon-ecs-enabled-amis).
 
@@ -87,7 +87,9 @@ Additionally, images are available with support for Amazon EC2 Container Service
 
 We are providing a disk image that users can download and import for use in Google Compute Engine. The image can be obtained from the release artifacts for RancherOS.
 
-[Download Image](https://releases.rancher.com/os/v1.2.0/rancheros-gce.tar.gz)
+[Download Latest Image](https://releases.rancher.com/os/latest/rancheros-gce.tar.gz)
+
+[Download Stable Image](https://releases.rancher.com/os/v1.2.0/rancheros-gce.tar.gz)
 
 Please follow the directions at our [docs to launch in GCE](http://docs.rancher.com/os/running-rancheros/cloud/gce/).
 
