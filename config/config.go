@@ -35,6 +35,7 @@ func Merge(bytes []byte) error {
 
 func Export(private, full bool) (string, error) {
 	rawCfg := loadRawConfig("", full)
+	rawCfg = filterAdditional(rawCfg)
 	if !private {
 		rawCfg = filterPrivateKeys(rawCfg)
 	}
@@ -45,6 +46,14 @@ func Export(private, full bool) (string, error) {
 func filterPrivateKeys(data map[interface{}]interface{}) map[interface{}]interface{} {
 	for _, privateKey := range PrivateKeys {
 		_, data = filterKey(data, strings.Split(privateKey, "."))
+	}
+
+	return data
+}
+
+func filterAdditional(data map[interface{}]interface{}) map[interface{}]interface{} {
+	for _, additional := range Additional {
+		_, data = filterKey(data, strings.Split(additional, "."))
 	}
 
 	return data

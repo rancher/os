@@ -67,6 +67,11 @@ var (
 		"rancher.docker.server_key",
 		"rancher.docker.server_cert",
 	}
+	Additional = []string{
+		"rancher.password",
+		"rancher.autologin",
+		"EXTRA_CMDLINE",
+	}
 )
 
 func init() {
