@@ -16,7 +16,7 @@ if [ -z "$VERSION" ]; then
 fi
 
 INITRD=initrd-${VERSION}
-export VERSION COMMIT INITRD
+export VERSION COMMIT INITRD GIT_TAG
 
 # Suffix
 export SUFFIX=""

@@ -4,6 +4,9 @@ set -ex
 cd $(dirname $0)/..
 source ./scripts/version
 export REPO_VERSION=$VERSION
+if [[ -z "$GIT_TAG" ]]; then
+    export REPO_VERSION=master
+fi
 export COMPRESS="xz --format=lzma -9 --memlimit-compress=80% -e"
 
 ./scripts/ci
