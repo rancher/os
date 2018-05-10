@@ -278,6 +278,13 @@ func RunInit() error {
 			return cfg, nil
 		}},
 		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			if _, err := os.Stat("/var/lib/boot2docker"); os.IsNotExist(err) {
+				err := os.Mkdir("/var/lib/boot2docker", 0755)
+				if err != nil {
+					log.Errorf("Failed to create boot2docker directory: %v", err)
+				}
+			}
+
 			if dev := util.ResolveDevice("LABEL=B2D_STATE"); dev != "" {
 				boot2DockerEnvironment = true
 				cfg.Rancher.State.Dev = "LABEL=B2D_STATE"
