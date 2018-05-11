@@ -80,6 +80,8 @@ us-east-1 | HVM | [ami-a7151cdd](https://us-east-1.console.aws.amazon.com/ec2/ho
 us-east-2 | HVM | [ami-a383b6c6](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-a383b6c6) | [ami-a0d7e6c5](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-a0d7e6c5)
 us-west-1 | HVM | [ami-c4b3bca4](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-c4b3bca4) | [ami-a4a0b6c4](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-a4a0b6c4)
 us-west-2 | HVM | [ami-6e1a9e16](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-6e1a9e16) | [ami-c60c94be](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-c60c94be)
+cn-north-1 | HVM | [ami-18c11e75](https://cn-north-1.console.amazonaws.cn/ec2/home?region=cn-north-1#launchInstanceWizard:ami=ami-18c11e75) | [ami-07a37d6a](https://cn-north-1.console.amazonaws.cn/ec2/home?region=cn-north-1#launchInstanceWizard:ami=ami-07a37d6a)
+cn-northwest-1 | HVM | [ami-bcedf9de](https://cn-northwest-1.console.amazonaws.cn/ec2/home?region=cn-northwest-1#launchInstanceWizard:ami=ami-bcedf9de) | [ami-8f8094ed](https://cn-northwest-1.console.amazonaws.cn/ec2/home?region=cn-northwest-1#launchInstanceWizard:ami=ami-8f8094ed)
 
 Additionally, images are available with support for Amazon EC2 Container Service (ECS) [here](https://docs.rancher.com/os/amazon-ecs/#amazon-ecs-enabled-amis).
 
