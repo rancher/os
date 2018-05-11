@@ -47,9 +47,6 @@ const (
 	MetaDataFile           = "/var/lib/rancher/conf/metadata"
 	CloudConfigFile        = "/var/lib/rancher/conf/cloud-config.yml"
 	EtcResolvConfFile      = "/etc/resolv.conf"
-	CNIBridgeConfigFile    = "/etc/docker/cni/bridge.d/bridge.conf"
-
-	RKPDockerSysBridgeSubnet = "rancher.system_docker.subnet"
 )
 
 var (
