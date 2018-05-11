@@ -32,7 +32,11 @@ mkdir -p ${DIST}/boot/isolinux/
 cat scripts/isolinux.cfg | envsubst >         ${DIST}/boot/isolinux/isolinux.cfg
 cat scripts/isolinux_label.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/linux-current.cfg
 #cat scripts/isolinux_label.cfg | LABEL=debug APPEND="rancher.debug=true" envsubst >   ${DIST}/boot/linux-previous.cfg
-cat scripts/global.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+if [ "$VMWARE_AUTOFORMAT" = 1 ] && [ -e ".make-vmware" ];then
+    cat scripts/global-vmware.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+else
+    cat scripts/global.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+fi
 cp scripts/rancher.png ${DIST}/boot/
 
 

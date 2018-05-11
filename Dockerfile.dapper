@@ -85,6 +85,7 @@ ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2018
 ARG SYSTEM_DOCKER_VERSION=17.06-ros4
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/niusmallnan/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/niusmallnan/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
+ARG VMWARE_AUTOFORMAT=1
 ######################################################
 
 # Set up environment and export all ARGS as ENV
@@ -123,7 +124,8 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     SELINUX_POLICY_URL=${SELINUX_POLICY_URL} \
     SYSTEM_DOCKER_URL=SYSTEM_DOCKER_URL_${ARCH} \
     SYSTEM_DOCKER_URL_amd64=${SYSTEM_DOCKER_URL_amd64} \
-    SYSTEM_DOCKER_URL_arm64=${SYSTEM_DOCKER_URL_arm64}
+    SYSTEM_DOCKER_URL_arm64=${SYSTEM_DOCKER_URL_arm64} \
+    VMWARE_AUTOFORMAT=${VMWARE_AUTOFORMAT}
 ENV PATH=${GOPATH}/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p ${DOWNLOADS}
