@@ -64,8 +64,9 @@ rpi64:
 	cd scripts/images/raspberry-pi-hypriot64/ \
 		&& ../../../.dapper
 
-vmware: 
-	INTEGRATION_TESTS=0 ./.dapper vmware-release 
+vmware: .dapper
+	mkdir -p dist
+	INTEGRATION_TESTS=0 ./.dapper vmware-release 2>&1 | tee dist/release.log
 
 help:
 	@./scripts/help

@@ -13,8 +13,8 @@ for i in $IMAGES; do
 done
 
 if [ -e ".make-vmware" ]; then
-    docker pull rancher/os-openvmtools:10.2.5-1
-    IMAGES="$IMAGES rancher/os-openvmtools:10.2.5-1"
+    docker pull rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}
+    IMAGES="$IMAGES rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}"
 fi
 
 echo "tar-images: docker save ${IMAGES} > build/images.tar"

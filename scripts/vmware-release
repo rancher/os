@@ -5,4 +5,16 @@ cd $(dirname $0)/..
 
 touch .make-vmware
 
+source ./scripts/version
 ./scripts/release
+
+ISO_NAME="rancheros-vmware.iso"
+
+mkdir -p /tmp/dist && mv ./dist/* /tmp/dist/
+mkdir -p ./dist/vmware && mv /tmp/dist/* ./dist/vmware/
+mkdir -p ./dist/artifacts && cp ./dist/vmware/artifacts/rancheros.iso ./dist/artifacts/${ISO_NAME}
+
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${ISO_NAME} --name ${ISO_NAME}" > ./dist/publish.sh
+echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/latest/${ISO_NAME}" > ./dist/publish_gss_latest.sh
+echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/${VERSION}/${ISO_NAME}" > ./dist/publish_gss_${VERSION}.sh
+chmod 755 ./dist/*.sh
