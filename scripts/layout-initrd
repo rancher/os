@@ -13,8 +13,6 @@ cp bin/ros                     ${INITRD_DIR}/usr/bin/
 ln -s usr/bin/ros              ${INITRD_DIR}/init
 ln -s bin                      ${INITRD_DIR}/usr/sbin
 ln -s usr/sbin                 ${INITRD_DIR}/sbin
-ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/bridge
-ln -s ../../../../usr/bin/ros  ${INITRD_DIR}/usr/var/lib/cni/bin/host-local
 
 curl -SL ${!SYSTEM_DOCKER_URL} | tar --strip-components=1 -xzvf - -C ${INITRD_DIR}/usr/bin/
 # we have diabled the user-proxy so we get rid of system-docker-proxy
