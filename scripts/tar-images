@@ -17,6 +17,13 @@ if [ -e ".make-vmware" ]; then
     IMAGES="$IMAGES rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}"
 fi
 
-echo "tar-images: docker save ${IMAGES} > build/images.tar"
-docker save ${IMAGES} | xz > build/images.tar
+echo "tar-images: docker save ${IMAGES}"
+if [ "$COMPRESS" == "" ]; then
+    docker save ${IMAGES} | gzip > build/images.tar
+else
+    # system-docker can not load images which compressed by xz with a compression level of 9
+    # decompression consumes more memory if using level 9
+    # the default compression level for xz is 6
+    docker save ${IMAGES} | xz -6 -e > build/images.tar
+fi
 echo "tar-images: DONE"
