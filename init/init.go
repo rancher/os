@@ -443,6 +443,32 @@ func RunInit() error {
 
 			log.Debugf("memory Resolve.conf == [%s]", configFiles["/etc/resolv.conf"])
 
+			// this code make sure the open-vm-tools service can be started correct when there is no network
+			if hypervisor == "vmware" {
+				// make sure the cache directory exist
+				if err := os.MkdirAll("/var/lib/rancher/cache/", os.ModeDir|0755); err != nil {
+					log.Errorf("Create service cache diretory error: %v", err)
+				}
+
+				// move os-services cache file
+				if _, err := os.Stat("/usr/share/ros/services-cache"); err == nil {
+					files, err := ioutil.ReadDir("/usr/share/ros/services-cache/")
+					if err != nil {
+						log.Errorf("Read file error: %v", err)
+					}
+					for _, f := range files {
+						err := os.Rename("/usr/share/ros/services-cache/"+f.Name(), "/var/lib/rancher/cache/"+f.Name())
+						if err != nil {
+							log.Errorf("Rename file error: %v", err)
+						}
+					}
+					if err := os.Remove("/usr/share/ros/services-cache"); err != nil {
+						log.Errorf("Remove file error: %v", err)
+					}
+				}
+
+			}
+
 			if boot2DockerEnvironment {
 				if err := config.Set("rancher.state.dev", cfg.Rancher.State.Dev); err != nil {
 					log.Errorf("Failed to update rancher.state.dev: %v", err)

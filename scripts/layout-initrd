@@ -30,6 +30,20 @@ SUPPORT_URL="https://forums.rancher.com/c/rancher-os"
 BUG_REPORT_URL="https://github.com/rancher/os/issues"
 BUILD_ID=
 HERE
+
+# cache os-services yml file
+if [ -e ".make-vmware" ]; then
+    SERVICE_URL=${OS_SERVICES_REPO}/${REPO_VERSION}
+    SERVICE_INDEX_URL="${SERVICE_URL}/index.yml"
+    SERVICE_OPEN_VMTOOLS_URL="${SERVICE_URL}/o/open-vm-tools.yml"
+    SERVICE_INDEX_URL_MD5=$(echo -n ${SERVICE_INDEX_URL}|md5sum|cut -d ' ' -f1)
+    SERVICE_OPEN_VMTOOLS_URL_MD5=$(echo -n ${SERVICE_OPEN_VMTOOLS_URL}|md5sum|cut -d ' ' -f1)
+
+    mkdir -p ${INITRD_DIR}/usr/share/ros/services-cache/
+    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_INDEX_URL_MD5} ${SERVICE_INDEX_URL}
+    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_OPEN_VMTOOLS_URL_MD5} ${SERVICE_OPEN_VMTOOLS_URL}
+fi
+
 # TODO: usr/lib dir is overwritten by the kernel modules and firmware
 ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/lib/
 ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/etc/
