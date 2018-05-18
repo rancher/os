@@ -114,8 +114,8 @@ func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool)
 				continue
 			}
 
-			// Don't match mac address of the bond because it is the same as the slave
-			if bytes.Compare(haAddr, link.Attrs().HardwareAddr) == 0 && link.Attrs().Name != netConf.Bond {
+			// Don't match mac address of a bond or VLAN interface because it is the same address as the slave or parent.
+			if bytes.Compare(haAddr, link.Attrs().HardwareAddr) == 0 && link.Attrs().Name != netConf.Bond && link.Type() != "vlan" {
 				// MAC address match is used over all other matches
 				return netConf, true
 			}
