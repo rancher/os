@@ -94,15 +94,17 @@ func (s *Service) collectContainers(ctx context.Context) ([]*Container, error) {
 		numberLabel := container.Labels[labels.NUMBER.Str()]
 		name := strings.SplitAfter(container.Names[0], "/")
 		if numberLabel == "" {
-			result = append(result, NewContainer(client, name[1], 1, s))
+			result = append(result, NewContainer(client, name[len(name)-1], 1, s))
 			return result, nil
 		}
 		containerNumber, err := strconv.Atoi(numberLabel)
 		if err != nil {
 			return nil, err
 		}
-		// Compose add "/" before name, so Name[1] will store actaul name.
-		result = append(result, NewContainer(client, name[1], containerNumber, s))
+		// Compose add "/" before ordinary container name,
+		// Compose add "/primary-container-name/" before Linked container name,
+		// so use Name[len(name)-1] to store actaul name
+		result = append(result, NewContainer(client, name[len(name)-1], containerNumber, s))
 	}
 
 	return result, nil
