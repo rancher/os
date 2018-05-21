@@ -5,12 +5,12 @@ import (
 
 	"golang.org/x/net/context"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	dockerClient "github.com/docker/engine-api/client"
 	"github.com/docker/libcompose/cli/logger"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/docker"
 	composeClient "github.com/docker/libcompose/docker/client"
+	"gopkg.in/yaml.v2"
 
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/events"

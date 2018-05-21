@@ -9,7 +9,6 @@ import (
 	"sort"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config/cloudinit/datasource"
@@ -17,6 +16,7 @@ import (
 	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/log"
 	"github.com/rancher/os/util"
+	"gopkg.in/yaml.v2"
 )
 
 func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*CloudConfig, error) {

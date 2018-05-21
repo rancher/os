@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/util"
+	"gopkg.in/yaml.v2"
 )
 
 func Read(parseAll bool) (m map[interface{}]interface{}, err error) {

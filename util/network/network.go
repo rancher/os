@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"gopkg.in/yaml.v2"
 
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/log"
