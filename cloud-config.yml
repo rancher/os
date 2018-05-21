@@ -1,0 +1,89 @@
+#cloud-config
+
+#hostname: sample-hostname.aaa.aaa.aa
+hostname: myhost
+
+rancher:
+  bootstrap:
+  bootstrap_docker:
+    bridge: none
+    graph: /var/lib/system-docker
+    group: root
+    host:
+    - unix:///var/run/system-docker.sock
+    restart: false
+    storage_driver: overlay2
+    userland_proxy: false
+
+  #cloud_init:
+  #  datasources:
+  #  - configdrive:/media/config-2
+  #
+  #cloud_init:
+  #  datasources:
+  #  - ec2
+
+  #
+  #console:
+  # alpine | centos | debian | default | fedora | ubuntu
+  #
+  console: default
+
+  #docker:
+  #  engine:
+  #
+  #docker-1.12.6 | docker-1.13.1 | docker-17.03.1-ce | docker-17.03.2-ce | docker-17.04.0-ce | docker-17.05.0-ce |
+  #docker-17.06.1-ce | docker-17.06.2-ce | docker-17.09.0-ce | docker-17.09.1-ce | docker-17.12.0-ce | docker-17.12.1-ce
+  #
+  docker:
+    engine: docker-17.09.1-ce
+    group: docker
+    host:
+    - unix:///var/run/docker.sock
+    log_opts:
+      max-file: 2
+      max-size: 25m
+  environment:
+    EXTRA_CMDLINE: /init
+    REGISTRY_DOMAIN: docker.io
+    SUFFIX: null
+    VERSION: v1.3.0
+  hypervisor_service: true
+  modules:
+  - ena
+
+  #
+  #network:
+  #  interfaces:
+  #    eth0:
+  #      address: 1.1.1.2/29
+  #      gateway: 1.1.1.1
+  #      dhcp: false
+  #  dns:
+  #    nameservers:
+  #    - 8.8.8.8
+  #    - 8.8.4.4
+  #
+  network:
+    dns: {}
+  resize_device: /dev/xvda
+  system_docker:
+    bridge: none
+    config_file: /etc/docker/system-docker.json
+    exec: true
+    exec_root: /var/run/system-docker
+    graph: /var/lib/system-docker
+    group: root
+    host:
+    - unix:///var/run/system-docker.sock
+    log_opts:
+      max-file: 2
+      max-size: 25m
+    pid_file: /var/run/system-docker.pid
+    restart: false
+    storage_driver: overlay2
+    userland_proxy: false
+
+#ssh_authorized_keys:
+#  - ssh-rsa AAA...ZZZ example1@rancher
+ssh_authorized_keys: []

@@ -97,6 +97,11 @@ Please follow the directions at our [docs to launch in GCE](http://docs.rancher.
 
 Please refer to our [RancherOS Documentation](http://docs.rancher.com/os/) website to read all about RancherOS. It has detailed information on how RancherOS works, getting-started and other details.
 
+### Full `cloud-config.yml` example
+
+You can view full sample of `cloud-config.yml` [here](https://github.com/rancher/os/blob/master/cloud-config.yml),
+and the usage of the config file [here](https://rancher.com/docs/os/v1.x/en/installation/running-rancheros/server/install-to-disk).
+
 ## Support, Discussion, and Community
 If you need any help with RancherOS or Rancher, please join us at either our [Rancher forums](http://forums.rancher.com) or [#rancher IRC channel](http://webchat.freenode.net/?channels=rancher) where most of our team hangs out at.
 
