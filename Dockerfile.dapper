@@ -87,7 +87,7 @@ ARG SYSTEM_DOCKER_URL_amd64=https://github.com/niusmallnan/os-system-docker/rele
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/niusmallnan/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
 ARG VMWARE_AUTOFORMAT=1
-ARG OPEN_VMTOOLS_VERSION=10.2.5-2
+ARG OPEN_VMTOOLS_VERSION=10.2.5-3
 ######################################################
 
 # Set up environment and export all ARGS as ENV
