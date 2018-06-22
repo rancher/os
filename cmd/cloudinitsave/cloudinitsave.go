@@ -182,6 +182,11 @@ func fetchAndSave(ds datasource.Datasource) error {
 		log.Errorf("Failed fetching user-data from datasource: %v", err)
 		return err
 	}
+	userDataBytes, err = decompressIfGzip(userDataBytes)
+	if err != nil {
+		log.Errorf("Failed decompressing user-data from datasource: %v", err)
+		return err
+	}
 	log.Infof("Fetching meta-data from datasource of type %v", ds.Type())
 	metadata, err = ds.FetchMetadata()
 	if err != nil {
@@ -366,4 +371,14 @@ func composeToCloudConfig(bytes []byte) ([]byte, error) {
 			"services": compose,
 		},
 	})
+}
+
+const gzipMagicBytes = "\x1f\x8b"
+
+func decompressIfGzip(userdataBytes []byte) ([]byte, error) {
+	if !bytes.HasPrefix(userdataBytes, []byte(gzipMagicBytes)) {
+		return userdataBytes, nil
+	}
+
+	return config.DecompressGzip(userdataBytes)
 }
