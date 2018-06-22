@@ -18,7 +18,12 @@ func DecodeBase64Content(content string) ([]byte, error) {
 }
 
 func DecodeGzipContent(content string) ([]byte, error) {
-	gzr, err := gzip.NewReader(bytes.NewReader([]byte(content)))
+	byteContent := []byte(content)
+	return DecompressGzip(byteContent)
+}
+
+func DecompressGzip(content []byte) ([]byte, error) {
+	gzr, err := gzip.NewReader(bytes.NewReader(content))
 
 	if err != nil {
 		return nil, fmt.Errorf("Unable to decode gzip: %q", err)
