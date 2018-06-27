@@ -13,6 +13,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
+	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/log"
@@ -88,6 +89,27 @@ func consoleInitFunc() error {
 
 	if err := modifySshdConfig(cfg); err != nil {
 		log.Error(err)
+	}
+
+	p, err := compose.GetProject(cfg, false, true)
+	if err != nil {
+		log.Error(err)
+	}
+
+	// check the multi engine service & generate the multi engine script
+	for _, key := range p.ServiceConfigs.Keys() {
+		serviceConfig, ok := p.ServiceConfigs.Get(key)
+		if !ok {
+			log.Errorf("Failed to get service config from the project")
+			continue
+		}
+		if _, ok := serviceConfig.Labels[config.UserDockerLabel]; ok {
+			err = util.GenerateEngineScript(serviceConfig.Labels[config.UserDockerLabel])
+			if err != nil {
+				log.Errorf("Failed to generate engine script: %v", err)
+				continue
+			}
+		}
 	}
 
 	for _, link := range []symlink{

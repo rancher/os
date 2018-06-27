@@ -295,3 +295,21 @@ func RunCommandSequence(commandSequence []osYaml.StringandSlice) error {
 	}
 	return nil
 }
+
+func GenerateEngineScript(name string) error {
+	if _, err := os.Stat("/usr/bin/docker-" + name); err == nil {
+		err = os.Remove("/usr/bin/docker-" + name)
+		if err != nil {
+			return err
+		}
+	}
+
+	bytes := []byte("/usr/bin/docker -H unix:///var/lib/m-user-docker/" + name + "/docker-" + name + ".sock $@")
+
+	err := ioutil.WriteFile("/usr/bin/docker-"+name, bytes, 755)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

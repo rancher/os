@@ -27,15 +27,18 @@ const (
 	SystemDockerLog  = "/var/log/system-docker.log"
 	SystemDockerBin  = "/usr/bin/system-dockerd"
 
-	HashLabel         = "io.rancher.os.hash"
-	IDLabel           = "io.rancher.os.id"
-	DetachLabel       = "io.rancher.os.detach"
-	CreateOnlyLabel   = "io.rancher.os.createonly"
-	ReloadConfigLabel = "io.rancher.os.reloadconfig"
-	ConsoleLabel      = "io.rancher.os.console"
-	ScopeLabel        = "io.rancher.os.scope"
-	RebuildLabel      = "io.docker.compose.rebuild"
-	System            = "system"
+	HashLabel          = "io.rancher.os.hash"
+	IDLabel            = "io.rancher.os.id"
+	DetachLabel        = "io.rancher.os.detach"
+	CreateOnlyLabel    = "io.rancher.os.createonly"
+	ReloadConfigLabel  = "io.rancher.os.reloadconfig"
+	ConsoleLabel       = "io.rancher.os.console"
+	ScopeLabel         = "io.rancher.os.scope"
+	RebuildLabel       = "io.docker.compose.rebuild"
+	UserDockerLabel    = "io.rancher.user_docker.name"
+	UserDockerNetLabel = "io.rancher.user_docker.net"
+	UserDockerFIPLabel = "io.rancher.user_docker.fix_ip"
+	System             = "system"
 
 	OsConfigFile           = "/usr/share/ros/os-config.yml"
 	VarRancherDir          = "/var/lib/rancher"
@@ -47,6 +50,8 @@ const (
 	MetaDataFile           = "/var/lib/rancher/conf/metadata"
 	CloudConfigFile        = "/var/lib/rancher/conf/cloud-config.yml"
 	EtcResolvConfFile      = "/etc/resolv.conf"
+	MultiDockerConfFile    = "/var/lib/rancher/conf.d/m-user-docker.yml"
+	MultiDockerDataDir     = "/var/lib/m-user-docker"
 )
 
 var (

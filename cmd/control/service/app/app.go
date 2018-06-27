@@ -85,6 +85,7 @@ func ProjectUp(p project.APIProject, c *cli.Context) error {
 	if err != nil {
 		return cli.NewExitError(err.Error(), 1)
 	}
+
 	if c.Bool("foreground") {
 		signalChan := make(chan os.Signal, 1)
 		cleanupDone := make(chan bool)

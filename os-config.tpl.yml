@@ -139,6 +139,7 @@ rancher:
       read_only: true
       volumes:
       - /var/lib/user-docker:/var/lib/docker
+      - /var/lib/m-user-docker:/var/lib/m-user-docker
     user-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
