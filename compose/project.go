@@ -2,6 +2,8 @@ package compose
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 
 	"golang.org/x/net/context"
 
@@ -224,8 +226,31 @@ func StageServices(cfg *config.CloudConfig, services ...string) error {
 		return err
 	}
 
+	// read engine services
+	composeConfigs := map[string]composeConfig.ServiceConfigV1{}
+	if _, err := os.Stat(config.MultiDockerConfFile); err == nil {
+		// read from engine compose
+		multiEngineBytes, err := ioutil.ReadFile(config.MultiDockerConfFile)
+		if err != nil {
+			return fmt.Errorf("Failed to read %s : %v", config.MultiDockerConfFile, err)
+		}
+		err = yaml.Unmarshal(multiEngineBytes, &composeConfigs)
+		if err != nil {
+			return fmt.Errorf("Failed to unmarshal %s : %v", config.MultiDockerConfFile, err)
+		}
+	}
+
 	for _, service := range services {
-		bytes, err := network.LoadServiceResource(service, true, cfg)
+		var bytes []byte
+		foundServiceConfig := map[string]composeConfig.ServiceConfigV1{}
+
+		if _, ok := composeConfigs[service]; ok {
+			foundServiceConfig[service] = composeConfigs[service]
+			bytes, err = yaml.Marshal(foundServiceConfig)
+		} else {
+			bytes, err = network.LoadServiceResource(service, true, cfg)
+		}
+
 		if err != nil {
 			return fmt.Errorf("Failed to load %s : %v", service, err)
 		}
