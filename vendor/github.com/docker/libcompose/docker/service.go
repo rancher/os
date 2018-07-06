@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/docker/engine-api/types/network"
 	"golang.org/x/net/context"
 
 	"github.com/Sirupsen/logrus"
@@ -257,6 +258,10 @@ func (s *Service) Run(ctx context.Context, commandParts []string) (int, error) {
 
 	c := NewOneOffContainer(client, containerName, containerNumber, s)
 
+	if err := s.connectContainerToNetworks(ctx, c, true); err != nil {
+		return -1, err
+	}
+
 	return c.Run(ctx, imageName, &config.ServiceConfig{Command: commandParts, Tty: true, StdinOpen: true})
 }
 
@@ -306,6 +311,10 @@ func (s *Service) up(ctx context.Context, imageName string, create bool, options
 			if err := s.recreateIfNeeded(ctx, imageName, c, options.NoRecreate, options.ForceRecreate); err != nil {
 				return err
 			}
+		}
+
+		if err := s.connectContainerToNetworks(ctx, c, false); err != nil {
+			return err
 		}
 
 		if options.Log {
@@ -509,4 +518,66 @@ func (s *Service) specificiesHostPort() bool {
 	}
 
 	return false
+}
+
+func (s *Service) connectContainerToNetworks(ctx context.Context, c *Container, oneOff bool) error {
+	existingContainer, err := c.findExisting(ctx)
+	if err != nil {
+		return nil
+	}
+	connectedNetworks := existingContainer.NetworkSettings.Networks
+
+	if _, ok := s.serviceConfig.Labels["io.rancher.user_docker.net"]; ok {
+		for networkName, connectedNetwork := range connectedNetworks {
+			aliasPresent := false
+			for _, alias := range connectedNetwork.Aliases {
+				ID, _ := c.ID()
+				ID = ID[:12]
+				if alias == ID {
+					aliasPresent = true
+				}
+			}
+			if aliasPresent {
+				continue
+			}
+			if err := s.NetworkDisconnect(ctx, c, networkName, oneOff); err != nil {
+				return err
+			}
+		}
+
+		if _, fipExist := s.serviceConfig.Labels["io.rancher.user_docker.fix_ip"]; fipExist {
+			if err := s.NetworkConnect(ctx, c, s.serviceConfig.Labels["io.rancher.user_docker.net"], s.serviceConfig.Labels["io.rancher.user_docker.fix_ip"], oneOff); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// NetworkConnect connects the container to the specified network
+// FIXME(vdemeester) will be refactor with Container refactoring
+func (s *Service) NetworkConnect(ctx context.Context, c *Container, net, ipv4 string, oneOff bool) error {
+	containerID, err := c.ID()
+	if err != nil {
+		return err
+	}
+	client := s.context.ClientFactory.Create(s)
+	return client.NetworkConnect(ctx, net, containerID, &network.EndpointSettings{
+		IPAddress: ipv4,
+		IPAMConfig: &network.EndpointIPAMConfig{
+			IPv4Address: ipv4,
+		},
+	})
+}
+
+// NetworkDisconnect disconnects the container from the specified network
+func (s *Service) NetworkDisconnect(ctx context.Context, c *Container, net string, oneOff bool) error {
+	containerID, err := c.ID()
+	if err != nil {
+		return err
+	}
+
+	client := s.context.ClientFactory.Create(s)
+	return client.NetworkDisconnect(ctx, net, containerID, true)
 }

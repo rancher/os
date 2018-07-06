@@ -22,6 +22,7 @@ import (
 	"github.com/docker/libcompose/logger"
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/events"
+	"github.com/docker/engine-api/types/network"
 	util "github.com/docker/libcompose/utils"
 )
 
@@ -506,9 +507,42 @@ func (c *Container) createContainer(ctx context.Context, imageName, oldContainer
 		configWrapper.HostConfig.Binds = util.Merge(configWrapper.HostConfig.Binds, volumeBinds(configWrapper.Config.Volumes, &info))
 	}
 
+	networkConfig := configWrapper.NetworkingConfig
+	if configWrapper.HostConfig.NetworkMode != "" && configWrapper.HostConfig.NetworkMode.IsUserDefined() {
+		if networkConfig == nil {
+			// check user docker label, assign the user define ipv4 address
+			if _, ok := configWrapper.Config.Labels["io.rancher.user_docker.fix_ip"]; ok {
+				networkConfig = &network.NetworkingConfig{
+					EndpointsConfig: map[string]*network.EndpointSettings{
+						string(configWrapper.HostConfig.NetworkMode): {
+							IPAddress: configWrapper.Config.Labels["io.rancher.user_docker.fix_ip"],
+							IPAMConfig: &network.EndpointIPAMConfig{
+								IPv4Address: configWrapper.Config.Labels["io.rancher.user_docker.fix_ip"],
+							},
+						},
+					},
+				}
+			} else {
+				networkConfig = &network.NetworkingConfig{
+					EndpointsConfig: map[string]*network.EndpointSettings{
+						string(configWrapper.HostConfig.NetworkMode): {},
+					},
+				}
+			}
+		}
+		for key, value := range networkConfig.EndpointsConfig {
+			conf := value
+			if value.Aliases == nil {
+				value.Aliases = []string{}
+			}
+			value.Aliases = append(value.Aliases, c.serviceName)
+			networkConfig.EndpointsConfig[key] = conf
+		}
+	}
+
 	logrus.Debugf("Creating container %s %#v", c.name, configWrapper)
 
-	container, err := c.client.ContainerCreate(ctx, configWrapper.Config, configWrapper.HostConfig, configWrapper.NetworkingConfig, c.name)
+	container, err := c.client.ContainerCreate(ctx, configWrapper.Config, configWrapper.HostConfig, networkConfig, c.name)
 	if err != nil {
 		logrus.Debugf("Failed to create container %s: %v", c.name, err)
 		return nil, err
