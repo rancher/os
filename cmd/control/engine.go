@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
-	"os/user"
 	"path"
 	"sort"
 	"strconv"
@@ -17,6 +16,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/docker/docker/reference"
 	"github.com/docker/engine-api/types"
+	"github.com/docker/engine-api/types/filters"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	composeYaml "github.com/docker/libcompose/yaml"
@@ -32,8 +32,7 @@ import (
 )
 
 var (
-	SupportedEngineVersions = []string{"docker:17.12.1-dind", "docker:18.03-dind", "docker:18.03.1-dind"}
-	SSHKeyPathDefault       = "%s/.ssh/authorized_keys"
+	SupportedDindVersions = []string{"cnrancher/docker:17.12.1-dind", "cnrancher/docker:18.03.1-dind"}
 )
 
 func engineSubcommands() []cli.Command {
@@ -62,7 +61,7 @@ func engineSubcommands() []cli.Command {
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "version, v",
-					Value: SupportedEngineVersions[0],
+					Value: SupportedDindVersions[0],
 					Usage: "set the version for the engine",
 				},
 				cli.StringFlag{
@@ -164,10 +163,6 @@ func engineCreate(c *cli.Context) error {
 	authorizedKeys := c.String("authorized-keys")
 	network := c.String("network")
 	fixedIP := c.String("fixed-ip")
-
-	if authorizedKeys == "" {
-		authorizedKeys = authorizedKeysPath()
-	}
 
 	// generate & create engine compose
 	err := generateEngineCompose(name, version, sshPort, authorizedKeys, network, fixedIP)
@@ -282,6 +277,32 @@ func engineList(c *cli.Context) error {
 		}
 	}
 
+	// check the dind container
+	client, err := docker.NewSystemClient()
+	if err != nil {
+		log.Warnf("Failed to detect dind: %v", err)
+		return nil
+	}
+
+	filter := filters.NewArgs()
+	filter.Add("label", config.UserDockerLabel)
+	opts := types.ContainerListOptions{
+		All:    true,
+		Filter: filter,
+	}
+	containers, err := client.ContainerList(context.Background(), opts)
+	if err != nil {
+		log.Warnf("Failed to detect dind: %v", err)
+		return nil
+	}
+	for _, c := range containers {
+		if c.State == "running" {
+			fmt.Printf("enabled  %s\n", c.Labels[config.UserDockerLabel])
+		} else {
+			fmt.Printf("disabled %s\n", c.Labels[config.UserDockerLabel])
+		}
+	}
+
 	return nil
 }
 
@@ -351,6 +372,13 @@ func preFlightValidate(c *cli.Context) error {
 		return errors.New("Must specify one engine ssh port")
 	}
 
+	authorizedKeys := c.String("authorized-keys")
+	if authorizedKeys != "" {
+		if _, err := os.Stat(authorizedKeys); os.IsNotExist(err) {
+			return errors.New("The authorized-keys should be an exist file, recommended to put in the /opt or /var/lib/rancher directory")
+		}
+	}
+
 	network := c.String("network")
 	if network == "" {
 		return errors.New("Must specify network")
@@ -372,7 +400,7 @@ func preFlightValidate(c *cli.Context) error {
 	}
 
 	isVersionMatch := false
-	for _, v := range SupportedEngineVersions {
+	for _, v := range SupportedDindVersions {
 		if v == version {
 			isVersionMatch = true
 			break
@@ -380,7 +408,7 @@ func preFlightValidate(c *cli.Context) error {
 	}
 
 	if !isVersionMatch {
-		return errors.Errorf("Engine version not supported only %v are supported", SupportedEngineVersions)
+		return errors.Errorf("Engine version not supported only %v are supported", SupportedDindVersions)
 	}
 
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:"+strconv.Itoa(port))
@@ -394,16 +422,6 @@ func preFlightValidate(c *cli.Context) error {
 	defer l.Close()
 
 	return nil
-}
-
-func authorizedKeysPath() string {
-	home := "/home/rancher"
-	user, err := user.Current()
-	if err == nil {
-		home = user.HomeDir
-	}
-
-	return fmt.Sprintf(SSHKeyPathDefault, home)
 }
 
 func randomSSHPort() int {
@@ -446,17 +464,21 @@ func generateEngineCompose(name, version string, sshPort int, authorizedKeys, ne
 		return err
 	}
 
+	volumes := []string{
+		"/lib/modules:/lib/modules",
+		config.MultiDockerDataDir + "/" + name + ":" + config.MultiDockerDataDir + "/" + name,
+	}
+	if authorizedKeys != "" {
+		volumes = append(volumes, authorizedKeys+":/root/.ssh/authorized_keys")
+	}
+
 	composeConfigs[name] = composeConfig.ServiceConfigV1{
-		Image:      "${REGISTRY_DOMAIN}/" + version,
-		Restart:    "always",
-		Privileged: true,
-		Net:        network,
-		Ports:      []string{strconv.Itoa(sshPort) + ":22"},
-		Volumes: []string{
-			"/lib/modules:/lib/modules",
-			config.MultiDockerDataDir + "/" + name + ":" + config.MultiDockerDataDir + "/" + name,
-			authorizedKeys + ":/root/.ssh/authorized_keys",
-		},
+		Image:       "${REGISTRY_DOMAIN}/" + version,
+		Restart:     "always",
+		Privileged:  true,
+		Net:         network,
+		Ports:       []string{strconv.Itoa(sshPort) + ":22"},
+		Volumes:     volumes,
 		VolumesFrom: []string{},
 		Command: composeYaml.Command{
 			"dockerd-entrypoint.sh",
