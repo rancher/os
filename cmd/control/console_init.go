@@ -104,7 +104,7 @@ func consoleInitFunc() error {
 			continue
 		}
 		if _, ok := serviceConfig.Labels[config.UserDockerLabel]; ok {
-			err = util.GenerateEngineScript(serviceConfig.Labels[config.UserDockerLabel])
+			err = util.GenerateDindEngineScript(serviceConfig.Labels[config.UserDockerLabel])
 			if err != nil {
 				log.Errorf("Failed to generate engine script: %v", err)
 				continue
