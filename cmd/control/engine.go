@@ -39,7 +39,7 @@ func engineSubcommands() []cli.Command {
 	return []cli.Command{
 		{
 			Name:   "switch",
-			Usage:  "switch Docker engine without a reboot",
+			Usage:  "switch user Docker engine without a reboot",
 			Action: engineSwitch,
 			Flags: []cli.Flag{
 				cli.BoolFlag{
@@ -54,7 +54,7 @@ func engineSubcommands() []cli.Command {
 		},
 		{
 			Name:      "create",
-			Usage:     "create Docker engine without a reboot",
+			Usage:     "create user Docker engine without a reboot",
 			ArgsUsage: "<name>",
 			Before:    preFlightValidate,
 			Action:    engineCreate,
@@ -85,7 +85,7 @@ func engineSubcommands() []cli.Command {
 		},
 		{
 			Name:      "rm",
-			Usage:     "remove Docker engine without a reboot",
+			Usage:     "remove Dind engine without a reboot",
 			ArgsUsage: "<name>",
 			Before: func(c *cli.Context) error {
 				if len(c.Args()) != 1 {
@@ -93,31 +93,27 @@ func engineSubcommands() []cli.Command {
 				}
 				return nil
 			},
-			Action: engineRemove,
+			Action: dindEngineRemove,
 			Flags: []cli.Flag{
 				cli.IntFlag{
 					Name:  "timeout,t",
-					Usage: "Specify a shutdown timeout in seconds.",
+					Usage: "specify a shutdown timeout in seconds",
 					Value: 10,
 				},
 				cli.BoolFlag{
-					Name:  "force,f",
-					Usage: "Allow deletion of all services",
-				},
-				cli.BoolFlag{
-					Name:  "v",
-					Usage: "Remove volumes associated with containers",
+					Name:  "force, f",
+					Usage: "do not prompt for input",
 				},
 			},
 		},
 		{
 			Name:   "enable",
-			Usage:  "set Docker engine to be switched on next reboot",
+			Usage:  "set user Docker engine to be switched on next reboot",
 			Action: engineEnable,
 		},
 		{
 			Name:   "list",
-			Usage:  "list available Docker engines",
+			Usage:  "list available Docker engines (include the Dind engines)",
 			Action: engineList,
 		},
 	}
@@ -189,7 +185,7 @@ func engineCreate(c *cli.Context) error {
 	}
 
 	// generate engine script
-	err = util.GenerateEngineScript(name)
+	err = util.GenerateDindEngineScript(name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -197,7 +193,19 @@ func engineCreate(c *cli.Context) error {
 	return nil
 }
 
-func engineRemove(c *cli.Context) error {
+func dindEngineRemove(c *cli.Context) error {
+	if !c.Bool("force") {
+		if !yes("Continue") {
+			return nil
+		}
+	}
+
+	// app.ProjectDelete needs to use this flag
+	// Allow deletion of the Dind engine
+	c.Set("force", "true")
+	// Remove volumes associated with the Dind engine container
+	c.Set("v", "true")
+
 	name := c.Args()[0]
 	cfg := config.LoadConfig()
 	p, err := compose.GetProject(cfg, true, false)
@@ -237,6 +245,12 @@ func engineRemove(c *cli.Context) error {
 	err = RemoveEngineFromCompose(name)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	// 5. remove dind engine script
+	err = util.RemoveDindEngineScript(name)
+	if err != nil {
+		return err
 	}
 
 	return nil
