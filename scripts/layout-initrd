@@ -2,7 +2,7 @@
 echo Create initrd layout in $INITRD_DIR
 
 rm -rf ${INITRD_DIR}
-mkdir -p ${INITRD_DIR}/usr/{etc,lib,bin,share/ros,var/lib/cni/bin}
+mkdir -p ${INITRD_DIR}/usr/{etc,lib,bin,share/ros}
 
 ./scripts/template
 
