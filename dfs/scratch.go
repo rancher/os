@@ -570,7 +570,6 @@ func firstPrepare() error {
 		"/etc/selinux/ros",
 		"/etc/selinux/ros/policy",
 		"/etc/selinux/ros/contexts",
-		"/var/lib/cni",
 	); err != nil {
 		return err
 	}
