@@ -11,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/compose"
@@ -128,6 +130,14 @@ func consoleInitFunc() error {
 		if err := os.Symlink(link.oldname, link.newname); err != nil {
 			log.Error(err)
 		}
+	}
+
+	// mount systemd cgroups
+	if err := os.MkdirAll("/sys/fs/cgroup/systemd", 0555); err != nil {
+		log.Error(err)
+	}
+	if err := unix.Mount("cgroup", "/sys/fs/cgroup/systemd", "cgroup", 0, "none,name=systemd"); err != nil {
+		log.Error(err)
 	}
 
 	// font backslashes need to be escaped for when issue is output! (but not the others..)
