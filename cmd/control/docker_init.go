@@ -70,8 +70,8 @@ func dockerInitAction(c *cli.Context) error {
 	}
 
 	for _, mount := range strings.Split(string(mountInfo), "\n") {
-		if strings.Contains(mount, "/var/lib/docker /var/lib/docker") && strings.Contains(mount, "rootfs") {
-			os.Setenv("DOCKER_RAMDISK", "1")
+		if strings.Contains(mount, "/var/lib/user-docker /var/lib/docker") && strings.Contains(mount, "rootfs") {
+			os.Setenv("DOCKER_RAMDISK", "true")
 		}
 	}
 
