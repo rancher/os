@@ -41,7 +41,7 @@ func (f *LocalFile) Finish() error {
 }
 
 func (f *LocalFile) String() string {
-	return fmt.Sprintf("%s: %s (lastError: %s)", f.Type(), f.path, f.lastError)
+	return fmt.Sprintf("%s: %s (lastError: %v)", f.Type(), f.path, f.lastError)
 }
 
 func (f *LocalFile) AvailabilityChanges() bool {

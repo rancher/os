@@ -53,7 +53,7 @@ func (ms Service) IsAvailable() bool {
 	checkURL := ms.Root + ms.IsAvailableCheckPath
 	_, ms.lastError = ms.Client.Get(checkURL)
 	if ms.lastError != nil {
-		log.Errorf("%s: %s (lastError: %s)", "IsAvailable", checkURL, ms.lastError)
+		log.Errorf("%s: %s (lastError: %v)", "IsAvailable", checkURL, ms.lastError)
 	}
 	return (ms.lastError == nil)
 }
@@ -63,7 +63,7 @@ func (ms *Service) Finish() error {
 }
 
 func (ms *Service) String() string {
-	return fmt.Sprintf("%s: %s (lastError: %s)", "metadata", ms.UserdataURL(), ms.lastError)
+	return fmt.Sprintf("%s: %s (lastError: %v)", "metadata", ms.UserdataURL(), ms.lastError)
 }
 
 func (ms Service) AvailabilityChanges() bool {

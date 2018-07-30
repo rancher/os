@@ -47,7 +47,7 @@ func (a *Waagent) Finish() error {
 }
 
 func (a *Waagent) String() string {
-	return fmt.Sprintf("%s: %s (lastError: %s)", a.Type(), a.root, a.lastError)
+	return fmt.Sprintf("%s: %s (lastError: %v)", a.Type(), a.root, a.lastError)
 }
 
 func (a *Waagent) AvailabilityChanges() bool {

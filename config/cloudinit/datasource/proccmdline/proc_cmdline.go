@@ -57,7 +57,7 @@ func (c *ProcCmdline) Finish() error {
 }
 
 func (c *ProcCmdline) String() string {
-	return fmt.Sprintf("%s: %s (lastError: %s)", c.Type(), c.Location, c.lastError)
+	return fmt.Sprintf("%s: %s (lastError: %v)", c.Type(), c.Location, c.lastError)
 }
 
 func (c *ProcCmdline) AvailabilityChanges() bool {

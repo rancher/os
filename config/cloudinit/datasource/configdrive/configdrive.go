@@ -70,7 +70,7 @@ func (cd *ConfigDrive) Finish() error {
 
 func (cd *ConfigDrive) String() string {
 	if cd.lastError != nil {
-		return fmt.Sprintf("%s: %s (lastError: %s)", cd.Type(), cd.root, cd.lastError)
+		return fmt.Sprintf("%s: %s (lastError: %v)", cd.Type(), cd.root, cd.lastError)
 	}
 	return fmt.Sprintf("%s: %s", cd.Type(), cd.root)
 }
