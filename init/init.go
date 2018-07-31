@@ -362,6 +362,7 @@ func RunInit() error {
 		config.CfgFuncData{"read cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
 				config.CloudConfigInitFile,
+				config.CloudConfigScriptFile,
 				config.CloudConfigBootFile,
 				config.CloudConfigNetworkFile,
 				config.MetaDataFile,
@@ -418,7 +419,11 @@ func RunInit() error {
 				if strings.HasPrefix(name, "/var/lib/rancher/conf/") {
 					// only make the conf files harder to get to
 					dirMode = os.ModeDir | 0700
-					fileMode = os.FileMode(0400)
+					if name == config.CloudConfigScriptFile {
+						fileMode = os.FileMode(0755)
+					} else {
+						fileMode = os.FileMode(0400)
+					}
 				}
 				if err := os.MkdirAll(filepath.Dir(name), dirMode); err != nil {
 					log.Error(err)
