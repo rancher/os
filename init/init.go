@@ -147,9 +147,11 @@ func mountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func tryMountState(cfg *config.CloudConfig) error {
-	if mountState(cfg) == nil {
+	err := mountState(cfg)
+	if err == nil {
 		return nil
 	}
+	log.Infof("Skipped an error when first mounting: %v", err)
 
 	// If we failed to mount lets run bootstrap and try again
 	if err := bootstrap(cfg); err != nil {
