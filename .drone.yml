@@ -5,4 +5,4 @@ pipeline:
     volumes:
     - /var/run/docker.sock:/var/run/docker.sock
     commands:
-    - dapper ci
+    - KERNEL_CHECK=0 dapper ci
