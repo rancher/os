@@ -53,6 +53,10 @@ func loadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		mounted[strings.SplitN(reader.Text(), " ", 2)[0]] = true
 	}
 
+	if util.GetHypervisor() == "hyperv" {
+		cfg.Rancher.Modules = append(cfg.Rancher.Modules, "hv_utils")
+	}
+
 	for _, module := range cfg.Rancher.Modules {
 		if mounted[module] {
 			continue
@@ -278,6 +282,33 @@ func RunInit() error {
 			}
 			return cfg, nil
 		}},
+		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
+			hypervisor = util.GetHypervisor()
+			if hypervisor == "" {
+				log.Infof("ros init: No Detected Hypervisor")
+			} else {
+				log.Infof("ros init: Detected Hypervisor: %s", hypervisor)
+			}
+			if hypervisor == "vmware" {
+				// add vmware to the end - we don't want to over-ride an choices the user has made
+				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
+			}
+
+			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
+				log.Error(err)
+			}
+
+			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
+			if err := runCloudInitServices(cfg); err != nil {
+				log.Error(err)
+			}
+
+			// It'd be nice to push to rsyslog before this, but we don't have network
+			log.AddRSyslogHook()
+
+			return config.LoadConfig(), nil
+		}},
 		config.CfgFuncData{"b2d env", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			if _, err := os.Stat("/var/lib/boot2docker"); os.IsNotExist(err) {
 				err := os.Mkdir("/var/lib/boot2docker", 0755)
@@ -333,33 +364,6 @@ func RunInit() error {
 				return nil, err
 			}
 			return cfg, nil
-		}},
-		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
-			hypervisor = util.GetHypervisor()
-			if hypervisor == "" {
-				log.Infof("ros init: No Detected Hypervisor")
-			} else {
-				log.Infof("ros init: Detected Hypervisor: %s", hypervisor)
-			}
-			if hypervisor == "vmware" {
-				// add vmware to the end - we don't want to over-ride an choices the user has made
-				cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
-			}
-
-			if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
-				log.Error(err)
-			}
-
-			log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
-			if err := runCloudInitServices(cfg); err != nil {
-				log.Error(err)
-			}
-
-			// It'd be nice to push to rsyslog before this, but we don't have network
-			log.AddRSyslogHook()
-
-			return config.LoadConfig(), nil
 		}},
 		config.CfgFuncData{"read cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
@@ -533,9 +537,17 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 
 	// only enable open-vm-tools for vmware
 	// these services(xenhvm-vm-tools, kvm-vm-tools, hyperv-vm-tools and bhyve-vm-tools) don't exist yet
-	if hypervisorName == "vmware" {
-		hypervisorName = "open"
-		serviceName := hypervisorName + "-vm-tools"
+	serviceName := ""
+	switch hypervisorName {
+	case "vmware":
+		serviceName = "open-vm-tools"
+	case "hyperv":
+		serviceName = "hyperv-vm-tools"
+	default:
+		log.Infof("no hypervisor matched")
+	}
+
+	if serviceName != "" {
 		if !cfg.Rancher.HypervisorService {
 			log.Infof("Skipping %s as `rancher.hypervisor_service` is set to false", serviceName)
 			return
@@ -548,8 +560,5 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 		if err := config.Set("rancher.services_include."+serviceName, "true"); err != nil {
 			log.Error(err)
 		}
-		//	} else {
-		//		log.Infof("Skipping %s, can't get %s.yml file", serviceName, serviceName)
-		//	}
 	}
 }
