@@ -325,15 +325,6 @@ func RunInit() error {
 
 			return config.LoadConfig(), nil
 		}},
-		config.CfgFuncData{"mount and bootstrap", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-			var err error
-			cfg, shouldSwitchRoot, err = tryMountAndBootstrap(cfg)
-
-			if err != nil {
-				return nil, err
-			}
-			return cfg, nil
-		}},
 		config.CfgFuncData{"cloud-init", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(state).Rancher.CloudInit.Datasources
 			hypervisor = util.GetHypervisor()
@@ -360,6 +351,15 @@ func RunInit() error {
 			log.AddRSyslogHook()
 
 			return config.LoadConfig(), nil
+		}},
+		config.CfgFuncData{"mount and bootstrap", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			var err error
+			cfg, shouldSwitchRoot, err = tryMountAndBootstrap(cfg)
+
+			if err != nil {
+				return nil, err
+			}
+			return cfg, nil
 		}},
 		config.CfgFuncData{"read cfg and log files", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 			filesToCopy := []string{
