@@ -41,7 +41,7 @@ func Export(private, full bool) (string, error) {
 	}
 
 	bytes, err := yaml.Marshal(rawCfg)
-	return string(bytes), err
+	return "#cloud-config\n" + string(bytes), err
 }
 func filterPrivateKeys(data map[interface{}]interface{}) map[interface{}]interface{} {
 	for _, privateKey := range PrivateKeys {
