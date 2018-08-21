@@ -277,6 +277,26 @@ func RunScript(path string) error {
 	return cmd.Run()
 }
 
+func RunScriptStr(script string) error {
+	if script == "" {
+		return nil
+	}
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		return err
+	}
+	if _, err := f.WriteString(script); err != nil {
+		return err
+	}
+	if err := f.Chmod(os.ModePerm); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		return err
+	}
+	return RunScript(f.Name())
+}
+
 func RunCommandSequence(commandSequence []osYaml.StringandSlice) error {
 	for _, command := range commandSequence {
 		var cmd *exec.Cmd

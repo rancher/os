@@ -65,6 +65,8 @@ func Main() {
 	if err := saveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
+
+	runCloudInitCmd()
 }
 
 func saveCloudConfig() error {
@@ -90,6 +92,19 @@ func saveCloudConfig() error {
 	network.ApplyNetworkConfig(cfg)
 
 	return nil
+}
+
+func runCloudInitCmd() {
+	cfg := rancherConfig.LoadConfig()
+
+	log.Debugf("cloud-init-save: RunCommandSequence(%v)", cfg.CloudInitcmd)
+	if err := util.RunCommandSequence(cfg.CloudInitcmd); err != nil {
+		log.Errorf("Failed to run cloud-init cmd: %v", err)
+	}
+	log.Debugf("cloud-init-save: RunScriptStr(%s)", cfg.CloudInitScript)
+	if err := util.RunScriptStr(cfg.CloudInitScript); err != nil {
+		log.Errorf("Failed to run cloud-init script: %v", err)
+	}
 }
 
 func RequiresNetwork(datasource string) bool {

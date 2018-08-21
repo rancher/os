@@ -14,7 +14,9 @@ var schema = `{
     "mounts": {"type": "array"},
     "rancher": {"$ref": "#/definitions/rancher_config"},
     "runcmd": {"type": "array"},
-    "bootcmd": {"type": "array"}
+    "bootcmd": {"type": "array"},
+    "cloud_init_cmd": {"type": "array"},
+    "cloud_init_script": {"type": "string"}
   },
 
   "definitions": {

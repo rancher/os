@@ -1,7 +1,6 @@
 package control
 
 import (
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -32,10 +31,8 @@ func BootstrapMain() {
 
 	stateScript := cfg.Rancher.State.Script
 	log.Debugf("bootstrapAction: stateScript(%v)", stateScript)
-	if stateScript != "" {
-		if err := runStateScript(stateScript); err != nil {
-			log.Errorf("Failed to run state script: %v", err)
-		}
+	if err := util.RunScriptStr(stateScript); err != nil {
+		log.Errorf("Failed to run state script: %v", err)
 	}
 
 	log.Debugf("bootstrapAction: RunCommandSequence(%v)", cfg.Bootcmd)
@@ -66,23 +63,6 @@ func mdadmScan() error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
-}
-
-func runStateScript(script string) error {
-	f, err := ioutil.TempFile("", "")
-	if err != nil {
-		return err
-	}
-	if _, err := f.WriteString(script); err != nil {
-		return err
-	}
-	if err := f.Chmod(os.ModePerm); err != nil {
-		return err
-	}
-	if err := f.Close(); err != nil {
-		return err
-	}
-	return util.RunScript(f.Name())
 }
 
 func waitForRoot(cfg *config.CloudConfig) {

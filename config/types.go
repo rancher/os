@@ -105,6 +105,8 @@ type CloudConfig struct {
 	Rancher           RancherConfig         `yaml:"rancher,omitempty"`
 	Runcmd            []yaml.StringandSlice `yaml:"runcmd,omitempty"`
 	Bootcmd           []yaml.StringandSlice `yaml:"bootcmd,omitempty"`
+	CloudInitcmd      []yaml.StringandSlice `yaml:"cloud_init_cmd,omitempty"`
+	CloudInitScript   string                `yaml:"cloud_init_script,omitempty"`
 }
 
 type File struct {
