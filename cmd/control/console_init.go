@@ -67,8 +67,16 @@ func consoleInitFunc() error {
 	createHomeDir(rancherHome, 1100, 1100)
 	createHomeDir(dockerHome, 1101, 1101)
 
+	ignorePassword := false
+	for _, d := range cfg.Rancher.Disable {
+		if d == "password" {
+			ignorePassword = true
+			break
+		}
+	}
+
 	password := cmdline.GetCmdline("rancher.password")
-	if password != "" {
+	if !ignorePassword && password != "" {
 		cmd := exec.Command("chpasswd")
 		cmd.Stdin = strings.NewReader(fmt.Sprint("rancher:", password))
 		if err := cmd.Run(); err != nil {
@@ -221,10 +229,10 @@ func generateRespawnConf(cmdline, user string, sshd, recovery bool) string {
 
 	config := config.LoadConfig()
 
-	autoLogin := true
+	allowAutoLogin := true
 	for _, d := range config.Rancher.Disable {
 		if d == "autologin" {
-			autoLogin = false
+			allowAutoLogin = false
 			break
 		}
 	}
@@ -233,20 +241,19 @@ func generateRespawnConf(cmdline, user string, sshd, recovery bool) string {
 		tty := fmt.Sprintf("tty%d", i)
 
 		respawnConf.WriteString(gettyCmd)
-		if autoLogin && strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
+		if allowAutoLogin && strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:tty%d", autologinBin, user, i))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" --noclear %s linux\n", tty))
 	}
 
 	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
-		log.Infof("console.......... %s", cmdline)
 		if !strings.Contains(cmdline, fmt.Sprintf("console=%s", tty)) {
 			continue
 		}
 
 		respawnConf.WriteString(gettyCmd)
-		if autoLogin && strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
+		if allowAutoLogin && strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
 			respawnConf.WriteString(fmt.Sprintf(" -n -l %s -o %s:%s", autologinBin, user, tty))
 		}
 		respawnConf.WriteString(fmt.Sprintf(" %s\n", tty))
