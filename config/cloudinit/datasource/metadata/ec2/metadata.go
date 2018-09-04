@@ -37,6 +37,10 @@ const (
 	defaultNVMeRootDisk = "/dev/nvme0n1"
 )
 
+var (
+	nvmeInstanceTypes = []string{"c5", "c5d", "i3.metal", "m5", "m5d", "r5", "r5d", "t3", "z1d"}
+)
+
 type MetadataService struct {
 	metadata.Service
 }
@@ -144,8 +148,11 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	// http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html
 	metadata.RootDisk = defaultXVRootDisk
 	if instanceType, err := ms.FetchAttribute("instance-type"); err == nil {
-		if strings.HasPrefix(instanceType, "m5") || strings.HasPrefix(instanceType, "c5") {
-			metadata.RootDisk = defaultNVMeRootDisk
+		for _, nvmeType := range nvmeInstanceTypes {
+			if strings.HasPrefix(instanceType, nvmeType) {
+				metadata.RootDisk = defaultNVMeRootDisk
+				break
+			}
 		}
 	} else if _, ok := err.(pkg.ErrNotFound); !ok {
 		return metadata, err
