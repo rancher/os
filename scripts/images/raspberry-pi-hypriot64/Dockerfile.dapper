@@ -1,5 +1,5 @@
 FROM rancher/os-debianconsole-base
-# FROM amd64=debian:jessie arm64=aarch64/debian:jessie arm=armhf/debian:jessie
+# FROM amd64=ubuntu:xenial arm64=arm64v8/ubuntu:xenial
 
 ENV DAPPER_RUN_ARGS --privileged
 ENV DAPPER_OUTPUT dist
