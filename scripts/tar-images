@@ -1,29 +1,48 @@
 #!/bin/bash
 set -ex
 
+INIT_DEP="rancher/os-bootstrap"
+SHARED_DEP="rancher/os-base"
+INIT_IMAGES_DST="build/images-init.tar"
+SYSTEM_IMAGES_DST="build/images-system.tar"
+
 cd $(dirname $0)/..
 
 IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)
-echo "tar-image: IMAGES=$IMAGES"
-for i in $IMAGES; do
+INIT_IMAGES=""
+SYSTEM_IMAGES=""
+for i in ${IMAGES}; do
     echo "tar-image: pull($i)"
     if [ "${FORCE_PULL}" = "1" ] || ! docker inspect $i >/dev/null 2>&1; then
-        docker pull $i
+        docker pull ${i}
+    fi
+
+    if [ "${i%%:*}" != "$INIT_DEP" ] ; then
+        SYSTEM_IMAGES="$SYSTEM_IMAGES $i"
+    fi
+
+    if [ "${i%%:*}" = "$INIT_DEP" ] || [ "${i%%:*}" = "$SHARED_DEP" ] ; then
+        INIT_IMAGES="$INIT_IMAGES $i"
     fi
 done
 
 if [ -e ".make-vmware" ]; then
     docker pull rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}
-    IMAGES="$IMAGES rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}"
+    SYSTEM_IMAGES="$SYSTEM_IMAGES rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}"
 fi
 
-echo "tar-images: docker save ${IMAGES}"
+echo "tar-image: SYSTEM_IMAGES=$SYSTEM_IMAGES"
+echo "tar-image: INIT_IMAGES=$INIT_IMAGES"
+
 if [ "$COMPRESS" == "" ]; then
-    docker save ${IMAGES} | gzip > build/images.tar
+    ARCHIVE_CMD="gzip"
 else
     # system-docker can not load images which compressed by xz with a compression level of 9
     # decompression consumes more memory if using level 9
     # the default compression level for xz is 6
-    docker save ${IMAGES} | xz -6 -e > build/images.tar
+    ARCHIVE_CMD="xz -4 -e"
 fi
+
+docker save ${INIT_IMAGES} | ${ARCHIVE_CMD} > ${INIT_IMAGES_DST}
+docker save ${SYSTEM_IMAGES} | ${ARCHIVE_CMD} > ${SYSTEM_IMAGES_DST}
 echo "tar-images: DONE"

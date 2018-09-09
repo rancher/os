@@ -7,7 +7,7 @@ mkdir -p ${INITRD_DIR}/usr/{etc,lib,bin,share/ros}
 ./scripts/template
 
 cp -rf assets/selinux          ${INITRD_DIR}/usr/etc
-cp build/images.tar            ${INITRD_DIR}/usr/share/ros/
+cp build/images*.tar           ${INITRD_DIR}/usr/share/ros/
 cp bin/ros                     ${INITRD_DIR}/usr/bin/
 ln -s usr/bin/ros              ${INITRD_DIR}/init
 ln -s bin                      ${INITRD_DIR}/usr/sbin

@@ -21,7 +21,8 @@ const (
 	SystemDockerHost = "unix:///var/run/system-docker.sock"
 	DockerHost       = "unix:///var/run/docker.sock"
 	ImagesPath       = "/usr/share/ros"
-	ImagesPattern    = "images*.tar"
+	InitImages       = "images-init.tar"
+	SystemImages     = "images-system.tar"
 	ModulesArchive   = "/modules.tar"
 	Debug            = false
 	SystemDockerLog  = "/var/log/system-docker.log"

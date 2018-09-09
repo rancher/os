@@ -68,7 +68,7 @@ func bootstrap(cfg *config.CloudConfig) error {
 
 	_, err = config.ChainCfgFuncs(cfg,
 		[]config.CfgFuncData{
-			config.CfgFuncData{"bootstrap loadImages", loadImages},
+			config.CfgFuncData{"bootstrap loadImages", loadBootstrapImages},
 			config.CfgFuncData{"bootstrap Services", bootstrapServices},
 		})
 	return err
@@ -84,7 +84,7 @@ func runCloudInitServices(cfg *config.CloudConfig) error {
 
 	_, err = config.ChainCfgFuncs(cfg,
 		[]config.CfgFuncData{
-			config.CfgFuncData{"cloudinit loadImages", loadImages},
+			config.CfgFuncData{"cloudinit loadImages", loadBootstrapImages},
 			config.CfgFuncData{"cloudinit Services", runCloudInitServiceSet},
 		})
 	return err

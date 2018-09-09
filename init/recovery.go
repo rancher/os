@@ -87,7 +87,7 @@ func recovery(initFailure error) {
 
 	_, err = config.ChainCfgFuncs(&recoveryConfig,
 		[]config.CfgFuncData{
-			config.CfgFuncData{"loadImages", loadImages},
+			config.CfgFuncData{"loadSystemImages", loadSystemImages},
 			config.CfgFuncData{"recovery console", recoveryServices},
 		})
 	if err != nil {
