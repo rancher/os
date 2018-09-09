@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"syscall"
 
 	"golang.org/x/net/context"
@@ -29,62 +30,47 @@ func hasImage(name string) bool {
 	return true
 }
 
-func findImages(cfg *config.CloudConfig) ([]string, error) {
-	log.Debugf("Looking for images at %s", config.ImagesPath)
-
-	result := []string{}
-
-	dir, err := os.Open(config.ImagesPath)
-	if os.IsNotExist(err) {
-		log.Debugf("Not loading images, %s does not exist", config.ImagesPath)
-		return result, nil
-	}
-	if err != nil {
-		return nil, err
+func getImagesArchive(bootstrap bool) string {
+	var archive string
+	if bootstrap {
+		archive = path.Join(config.ImagesPath, config.InitImages)
+	} else {
+		archive = path.Join(config.ImagesPath, config.SystemImages)
 	}
 
-	defer dir.Close()
-
-	files, err := dir.Readdirnames(0)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, fileName := range files {
-		if ok, _ := path.Match(config.ImagesPattern, fileName); ok {
-			log.Debugf("Found %s", fileName)
-			result = append(result, fileName)
-		}
-	}
-
-	return result, nil
+	return archive
 }
 
-func loadImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	images, err := findImages(cfg)
-	if err != nil || len(images) == 0 {
-		return cfg, err
-	}
+func loadBootstrapImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+	return loadImages(cfg, true)
+}
+
+func loadSystemImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+	return loadImages(cfg, false)
+}
+
+func loadImages(cfg *config.CloudConfig, bootstrap bool) (*config.CloudConfig, error) {
+	archive := getImagesArchive(bootstrap)
 
 	client, err := docker.NewSystemClient()
 	if err != nil {
 		return cfg, err
 	}
 
-	for _, image := range images {
-		if hasImage(image) {
-			continue
+	if !hasImage(filepath.Base(archive)) {
+		if _, err := os.Stat(archive); os.IsNotExist(err) {
+			log.Fatalf("FATAL: Could not load images from %s (file not found)", archive)
 		}
 
 		// client.ImageLoad is an asynchronous operation
 		// To ensure the order of execution, use cmd instead of it
-		inputFileName := path.Join(config.ImagesPath, image)
-		log.Infof("Loading images from %s", inputFileName)
-		if err = exec.Command("/usr/bin/system-docker", "load", "-q", "-i", inputFileName).Run(); err != nil {
-			log.Fatalf("FATAL: failed loading images from %s: %s", inputFileName, err)
+		log.Infof("Loading images from %s", archive)
+		cmd := exec.Command("/usr/bin/system-docker", "load", "-q", "-i", archive)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			log.Fatalf("FATAL: Error loading images from %s (%v)\n%s ", archive, err, out)
 		}
 
-		log.Infof("Done loading images from %s", inputFileName)
+		log.Infof("Done loading images from %s", archive)
 	}
 
 	dockerImages, _ := client.ImageList(context.Background(), types.ImageListOptions{})
@@ -104,7 +90,7 @@ func SysInit() error {
 
 	_, err := config.ChainCfgFuncs(cfg,
 		[]config.CfgFuncData{
-			config.CfgFuncData{"loadImages", loadImages},
+			config.CfgFuncData{"loadSystemImages", loadSystemImages},
 			config.CfgFuncData{"start project", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 				p, err := compose.GetProject(cfg, false, true)
 				if err != nil {
