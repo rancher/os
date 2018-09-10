@@ -7,7 +7,7 @@ export REPO_VERSION=$VERSION
 if [[ -n "$DIRTY" || -z "$GIT_TAG" ]]; then
     export REPO_VERSION=master
 fi
-export COMPRESS="xz --format=lzma -9 --memlimit-compress=80% -e"
+export COMPRESS="gzip -9"
 
 ./scripts/ci
 
