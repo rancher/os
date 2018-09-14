@@ -23,6 +23,13 @@ func BootstrapMain() {
 	log.Debugf("bootstrapAction: loadingConfig")
 	cfg := config.LoadConfig()
 
+	log.Debugf("bootstrapAction: Rngd(%v)", cfg.Rancher.State.Rngd)
+	if cfg.Rancher.State.Rngd {
+		if err := runRngd(); err != nil {
+			log.Errorf("Failed to run rngd: %v", err)
+		}
+	}
+
 	log.Debugf("bootstrapAction: MdadmScan(%v)", cfg.Rancher.State.MdadmScan)
 	if cfg.Rancher.State.MdadmScan {
 		if err := mdadmScan(); err != nil {
@@ -63,6 +70,13 @@ func BootstrapMain() {
 
 func mdadmScan() error {
 	cmd := exec.Command("mdadm", "--assemble", "--scan")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func runRngd() error {
+	cmd := exec.Command("rngd", "-q")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
