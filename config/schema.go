@@ -169,6 +169,7 @@ var schema = `{
         "required": {"type": "boolean"},
         "autoformat": {"$ref": "#/definitions/list_of_strings"},
         "mdadm_scan": {"type": "boolean"},
+        "rngd": {"type": "boolean"},
         "script": {"type": "string"},
         "oem_fstype": {"type": "string"},
         "oem_dev": {"type": "string"}
