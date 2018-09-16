@@ -20,7 +20,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/netconf"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"

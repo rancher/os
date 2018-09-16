@@ -19,7 +19,7 @@ import (
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/util/network"
+	"github.com/rancher/os/pkg/util/network"
 )
 
 type RemoteFile struct {

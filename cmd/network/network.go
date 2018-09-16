@@ -3,15 +3,15 @@ package network
 import (
 	"golang.org/x/net/context"
 
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
 
 	"io/ioutil"
 
 	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/hostname"
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/hostname"
+	"github.com/rancher/os/pkg/netconf"
 )
 
 func Main() {

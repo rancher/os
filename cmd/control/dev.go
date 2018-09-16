@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/util"
 )
 
 func devAction(c *cli.Context) error {

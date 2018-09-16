@@ -15,8 +15,8 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/initialize"
 	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
 )
 
 func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*CloudConfig, error) {

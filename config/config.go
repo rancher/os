@@ -6,7 +6,7 @@ import (
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/util"
 )
 
 const Banner = `

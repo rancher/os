@@ -22,6 +22,6 @@ COVERPKG=${COVERPKG//./}
 # generate arg for "go test"
 export COVER="-coverprofile ${COVEROUT}/${COVERPKG}.out"
 
-source ./test
+source test
 
 go tool cover -html=${COVEROUT}/${COVERPKG}.out

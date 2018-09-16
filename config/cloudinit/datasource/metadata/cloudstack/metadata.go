@@ -19,12 +19,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/netconf"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 const (

@@ -7,7 +7,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 func Main() {

@@ -11,11 +11,11 @@ import (
 	"text/template"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/util"
 )
 
 func configSubcommands() []cli.Command {

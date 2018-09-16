@@ -4,8 +4,8 @@ import (
 	"os"
 
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
 )
 
 func Main() {

@@ -22,7 +22,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 )

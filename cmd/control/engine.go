@@ -23,12 +23,12 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/cmd/control/service/app"
-	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
-	"github.com/rancher/os/util/network"
+	"github.com/rancher/os/pkg/compose"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
+	"github.com/rancher/os/pkg/util/network"
 )
 
 var (

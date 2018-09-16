@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 func RunGrub(baseName, device string) error {

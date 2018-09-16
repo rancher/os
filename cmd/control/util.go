@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 func yes(question string) bool {

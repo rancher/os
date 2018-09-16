@@ -25,7 +25,7 @@ import (
 	"testing"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/netconf"
 )
 
 type MockHypervisor map[string]string

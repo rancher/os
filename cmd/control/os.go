@@ -11,18 +11,18 @@ import (
 	"golang.org/x/net/context"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 	dockerClient "github.com/docker/engine-api/client"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/power"
-	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/util"
-	"github.com/rancher/os/util/network"
+	"github.com/rancher/os/pkg/compose"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/util"
+	"github.com/rancher/os/pkg/util/network"
 )
 
 type Images struct {

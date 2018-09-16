@@ -8,28 +8,22 @@ import (
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/rancher/os/config/yaml"
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/netconf"
 )
 
 const (
 	OEM              = "/usr/share/ros/oem"
-	DockerBin        = "/usr/bin/docker"
-	DockerDistBin    = "/usr/bin/docker.dist"
 	RosBin           = "/usr/bin/ros"
 	SysInitBin       = "/usr/bin/ros-sysinit"
-	SystemDockerHome = "/var/lib/system-docker"
 	SystemDockerHost = "unix:///var/run/system-docker.sock"
 	DockerHost       = "unix:///var/run/docker.sock"
 	ImagesPath       = "/usr/share/ros"
 	InitImages       = "images-init.tar"
 	SystemImages     = "images-system.tar"
-	ModulesArchive   = "/modules.tar"
 	Debug            = false
 	SystemDockerLog  = "/var/log/system-docker.log"
 	SystemDockerBin  = "/usr/bin/system-dockerd"
 
-	HashLabel          = "io.rancher.os.hash"
-	IDLabel            = "io.rancher.os.id"
 	DetachLabel        = "io.rancher.os.detach"
 	CreateOnlyLabel    = "io.rancher.os.createonly"
 	ReloadConfigLabel  = "io.rancher.os.reloadconfig"
@@ -53,6 +47,7 @@ const (
 	EtcResolvConfFile      = "/etc/resolv.conf"
 	MultiDockerConfFile    = "/var/lib/rancher/conf.d/m-user-docker.yml"
 	MultiDockerDataDir     = "/var/lib/m-user-docker"
+	State                  = "/state"
 )
 
 var (

@@ -8,11 +8,11 @@ import (
 	dockerApp "github.com/docker/libcompose/cli/docker/app"
 	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/cmd/control/service/command"
-	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
-	"github.com/rancher/os/util/network"
+	"github.com/rancher/os/pkg/compose"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
+	"github.com/rancher/os/pkg/util/network"
 )
 
 type projectFactory struct {

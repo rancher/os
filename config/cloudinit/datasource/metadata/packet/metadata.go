@@ -21,8 +21,8 @@ import (
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/netconf"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	packetMetadata "github.com/packethost/packngo/metadata"

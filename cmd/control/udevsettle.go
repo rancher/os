@@ -5,7 +5,7 @@ import (
 	"os/exec"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 func udevSettleAction(c *cli.Context) {
