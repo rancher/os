@@ -17,10 +17,10 @@ import (
 	"github.com/docker/engine-api/types/filters"
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/util"
 )
 
 // You can't shutdown the system from a process in console because we want to stop the console container.

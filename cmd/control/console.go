@@ -12,12 +12,12 @@ import (
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control/service"
-	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
-	"github.com/rancher/os/util/network"
+	"github.com/rancher/os/pkg/compose"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
+	"github.com/rancher/os/pkg/util/network"
 )
 
 func consoleSubcommands() []cli.Command {

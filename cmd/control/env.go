@@ -8,7 +8,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/util"
 )
 
 func envAction(c *cli.Context) error {

@@ -12,9 +12,9 @@ import (
 	rancherConfig "github.com/rancher/os/config"
 	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/rancher/os/config/cloudinit/system"
-	"github.com/rancher/os/docker"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
 	"golang.org/x/net/context"
 )
 

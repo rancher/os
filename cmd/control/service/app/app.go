@@ -7,7 +7,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 	"golang.org/x/net/context"
 
 	"github.com/codegangsta/cli"

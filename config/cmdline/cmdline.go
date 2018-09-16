@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/util"
 )
 
 func Read(parseAll bool) (m map[interface{}]interface{}, err error) {
@@ -125,7 +125,7 @@ func UnmarshalOrReturnString(value string) (result interface{}) {
 }
 
 func Parse(cmdLine string, parseAll bool) map[interface{}]interface{} {
-	result := make(map[interface{}]interface{})
+	result := map[interface{}]interface{}{}
 
 outer:
 	for _, part := range strings.Split(cmdLine, " ") {

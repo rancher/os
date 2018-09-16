@@ -22,7 +22,7 @@ import (
 	"strings"
 
 	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 type Service struct {

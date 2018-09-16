@@ -4,8 +4,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	initPkg "github.com/rancher/os/init"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/sysinit"
 )
 
 func Main() {
@@ -15,7 +15,7 @@ func Main() {
 	log.Infof("Resolv.conf == [%s], %v", resolve, err)
 	log.Infof("Exec %v", os.Args)
 
-	if err := initPkg.SysInit(); err != nil {
+	if err := sysinit.SysInit(); err != nil {
 		log.Fatal(err)
 	}
 }

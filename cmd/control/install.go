@@ -14,7 +14,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 	"github.com/pkg/errors"
@@ -22,8 +22,8 @@ import (
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/config"
-	"github.com/rancher/os/dfs" // TODO: move CopyFile into util or something.
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/dfs" // TODO: move CopyFile into util or something.
+	"github.com/rancher/os/pkg/util"
 )
 
 var installCommand = cli.Command{

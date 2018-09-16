@@ -21,8 +21,8 @@ import (
 
 	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/netconf"
 )
 
 type readConfigFunction func(key string) (string, error)

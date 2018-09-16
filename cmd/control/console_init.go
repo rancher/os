@@ -15,11 +15,11 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
-	"github.com/rancher/os/compose"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/compose"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
 )
 
 const (

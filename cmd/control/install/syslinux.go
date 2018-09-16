@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 func syslinuxConfig(menu BootVars) error {

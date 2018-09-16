@@ -43,9 +43,9 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/url"
 	"github.com/rancher/os/config/cloudinit/datasource/vmware"
 	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/log"
-	"github.com/rancher/os/netconf"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/netconf"
+	"github.com/rancher/os/pkg/util"
 )
 
 const (

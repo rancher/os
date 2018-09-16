@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/rancher/os/util"
+	"github.com/rancher/os/pkg/util"
 )
 
 func testValidate(t *testing.T, cfg []byte, contains string) {

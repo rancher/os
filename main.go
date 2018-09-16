@@ -9,13 +9,13 @@ import (
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/cmd/control"
+	osInit "github.com/rancher/os/cmd/init"
 	"github.com/rancher/os/cmd/network"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/cmd/respawn"
 	"github.com/rancher/os/cmd/sysinit"
 	"github.com/rancher/os/cmd/wait"
-	"github.com/rancher/os/dfs"
-	osInit "github.com/rancher/os/init"
+	"github.com/rancher/os/pkg/dfs"
 )
 
 var entrypoints = map[string]func(){

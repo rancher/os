@@ -6,7 +6,7 @@ import (
 	"syscall"
 
 	"github.com/codegangsta/cli"
-	"github.com/rancher/os/log"
+	"github.com/rancher/os/pkg/log"
 )
 
 func recoveryInitAction(c *cli.Context) error {

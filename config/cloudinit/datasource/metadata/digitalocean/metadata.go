@@ -19,7 +19,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/rancher/os/netconf"
+	"github.com/rancher/os/pkg/netconf"
 
 	"net"
 
