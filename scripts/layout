@@ -18,7 +18,7 @@ docker export ${DFS_ARCH} | tar xf - -C ${INITRD_DIR} --exclude=usr/bin/docker* 
                                                       --exclude=usr/share/git-core   \
                                                       --exclude=usr/bin/git          \
                                                       --exclude=usr/bin/ssh          \
-                                                      --exclude=usr/libexec/git-core \
+                                                      --exclude=usr/libexec          \
                                                       usr
 
 ./scripts/hash-initrd
