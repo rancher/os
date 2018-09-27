@@ -540,6 +540,12 @@ func createLayout(config *Config) error {
 		return err
 	}
 
+	ecsDirectory := "/var/lib/ecs"
+
+	if err := createDirs(ecsDirectory); err != nil {
+		return err
+	}
+
 	if err := createDaemonConfig(config); err != nil {
 		return err
 	}

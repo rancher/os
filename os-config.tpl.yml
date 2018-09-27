@@ -123,6 +123,7 @@ rancher:
       - /run:/run
       - /usr/share/ros:/usr/share/ros
       - /var/lib/boot2docker:/var/lib/boot2docker
+      - /var/lib/ecs:/var/lib/ecs
       - /var/lib/rancher/cache:/var/lib/rancher/cache
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/lib/rancher:/var/lib/rancher
