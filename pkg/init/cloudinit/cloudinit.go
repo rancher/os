@@ -10,7 +10,7 @@ import (
 )
 
 func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(config.State).Rancher.CloudInit.Datasources
+	cfg.Rancher.CloudInit.Datasources = config.LoadConfigWithPrefix(config.StateDir).Rancher.CloudInit.Datasources
 	hypervisor := util.GetHypervisor()
 	if hypervisor == "" {
 		log.Infof("ros init: No Detected Hypervisor")

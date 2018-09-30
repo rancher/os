@@ -178,7 +178,7 @@ func reboot(name string, force bool, code uint) {
 			return
 		}
 		defer util.Unmount(baseName)
-		Kexec(previouskexecFlag, filepath.Join(baseName, install.BootDir), kexecAppendFlag)
+		Kexec(previouskexecFlag, filepath.Join(baseName, config.BootDir), kexecAppendFlag)
 		return
 	}
 

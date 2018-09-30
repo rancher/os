@@ -19,15 +19,27 @@ var (
 	ShouldSwitchRoot bool
 )
 
-func OEM(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	if cfg == nil {
-		cfg = config.LoadConfig()
-	}
-	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OEM); err != nil {
+func MountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+	if err := mountConfigured("oem", cfg.Rancher.State.OemDev, cfg.Rancher.State.OemFsType, config.OemDir); err != nil {
 		log.Debugf("Not mounting OEM: %v", err)
 	} else {
 		log.Infof("Mounted OEM: %s", cfg.Rancher.State.OemDev)
 	}
+
+	return cfg, nil
+}
+
+func MountBoot(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+	if IsInitrd() {
+		return cfg, nil
+	}
+
+	if err := mountConfigured("boot", cfg.Rancher.State.BootDev, cfg.Rancher.State.BootFsType, config.BootDir); err != nil {
+		log.Debugf("Not mounting BOOT: %v", err)
+	} else {
+		log.Infof("Mounted BOOT: %s", cfg.Rancher.State.BootDev)
+	}
+
 	return cfg, nil
 }
 
@@ -56,7 +68,7 @@ func mountConfigured(display, dev, fsType, target string) error {
 }
 
 func mountState(cfg *config.CloudConfig) error {
-	return mountConfigured("state", cfg.Rancher.State.Dev, cfg.Rancher.State.FsType, config.State)
+	return mountConfigured("state", cfg.Rancher.State.Dev, cfg.Rancher.State.FsType, config.StateDir)
 }
 
 func tryMountState(cfg *config.CloudConfig) error {
@@ -74,7 +86,7 @@ func tryMountState(cfg *config.CloudConfig) error {
 	return mountState(cfg)
 }
 
-func tryMountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, bool, error) {
+func tryMountStateAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, bool, error) {
 	if !IsInitrd() || cfg.Rancher.State.Dev == "" {
 		return cfg, false, nil
 	}
@@ -94,9 +106,9 @@ func IsInitrd() bool {
 	return int64(stat.Type) == tmpfsMagic || int64(stat.Type) == ramfsMagic
 }
 
-func MountAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+func MountStateAndBootstrap(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	var err error
-	cfg, ShouldSwitchRoot, err = tryMountAndBootstrap(cfg)
+	cfg, ShouldSwitchRoot, err = tryMountStateAndBootstrap(cfg)
 
 	if err != nil {
 		return nil, err

@@ -12,7 +12,9 @@ import (
 )
 
 const (
-	OEM              = "/usr/share/ros/oem"
+	OemDir           = "/usr/share/ros/oem"
+	BootDir          = "/boot"
+	StateDir         = "/state"
 	RosBin           = "/usr/bin/ros"
 	SysInitBin       = "/usr/bin/ros-sysinit"
 	SystemDockerHost = "unix:///var/run/system-docker.sock"
@@ -47,11 +49,10 @@ const (
 	EtcResolvConfFile      = "/etc/resolv.conf"
 	MultiDockerConfFile    = "/var/lib/rancher/conf.d/m-user-docker.yml"
 	MultiDockerDataDir     = "/var/lib/m-user-docker"
-	State                  = "/state"
 )
 
 var (
-	OemConfigFile = OEM + "/oem-config.yml"
+	OemConfigFile = OemDir + "/oem-config.yml"
 	Version       string
 	BuildDate     string
 	Arch          string
@@ -205,6 +206,8 @@ type StateConfig struct {
 	Script     string   `yaml:"script,omitempty"`
 	OemFsType  string   `yaml:"oem_fstype,omitempty"`
 	OemDev     string   `yaml:"oem_dev,omitempty"`
+	BootFsType string   `yaml:"boot_fstype,omitempty"`
+	BootDev    string   `yaml:"boot_dev,omitempty"`
 }
 
 type CloudInit struct {

@@ -86,7 +86,7 @@ func WriteConfigFiles(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		log.Error(err)
 	}
 	log.FsReady()
-	log.Debugf("WARNING: switchroot and mount OEM2 phases not written to log file")
+	log.Debugf("WARNING: switchroot and mount OEM2 and BOOT phases not written to log file")
 
 	return cfg, nil
 }
