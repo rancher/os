@@ -82,6 +82,8 @@ rancher:
     fstype: auto
     oem_fstype: auto
     oem_dev: LABEL=RANCHER_OEM
+    boot_fstype: auto
+    boot_dev: LABEL=RANCHER_BOOT
     rngd: true
   sysctl:
     fs.file-max: 1000000000

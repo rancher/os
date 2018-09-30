@@ -11,8 +11,6 @@ import (
 	"github.com/rancher/os/pkg/util"
 )
 
-const BootDir = "boot/"
-
 type MenuEntry struct {
 	Name, BootDir, Version, KernelArgs, Append string
 }
@@ -53,7 +51,7 @@ func MountDevice(baseName, device, partition string, raw bool) (string, string, 
 		}
 		if d != "" {
 			partition = d
-			baseName = filepath.Join(baseName, BootDir)
+			baseName = filepath.Join(baseName, config.BootDir)
 		} else {
 			if dev := util.ResolveDevice(cfg.Rancher.State.Dev); dev != "" {
 				// try the rancher.state.dev setting

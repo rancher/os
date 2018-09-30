@@ -560,20 +560,20 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	kernelArgs = kernelArgs + " console=" + CONSOLE
 
 	if kappend == "" {
-		preservedAppend, _ := ioutil.ReadFile(filepath.Join(baseName, install.BootDir+"append"))
+		preservedAppend, _ := ioutil.ReadFile(filepath.Join(baseName, config.BootDir, "append"))
 		kappend = string(preservedAppend)
 	} else {
-		ioutil.WriteFile(filepath.Join(baseName, install.BootDir+"append"), []byte(kappend), 0644)
+		ioutil.WriteFile(filepath.Join(baseName, config.BootDir, "append"), []byte(kappend), 0644)
 	}
 
 	if installType == "amazon-ebs-pv" {
 		menu := install.BootVars{
 			BaseName: baseName,
-			BootDir:  install.BootDir,
+			BootDir:  config.BootDir,
 			Timeout:  0,
 			Fallback: 0, // need to be conditional on there being a 'rollback'?
 			Entries: []install.MenuEntry{
-				install.MenuEntry{"RancherOS-current", install.BootDir, VERSION, kernelArgs, kappend},
+				install.MenuEntry{"RancherOS-current", config.BootDir, VERSION, kernelArgs, kappend},
 			},
 		}
 		install.PvGrubConfig(menu)
@@ -587,7 +587,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	log.Debugf("installRancher done")
 
 	if kexec {
-		power.Kexec(false, filepath.Join(baseName, install.BootDir), kernelArgs+" "+kappend)
+		power.Kexec(false, filepath.Join(baseName, config.BootDir), kernelArgs+" "+kappend)
 	}
 
 	return nil
@@ -801,7 +801,7 @@ func setBootable(device, diskType string) error {
 func upgradeBootloader(device, baseName, diskType string) error {
 	log.Debugf("start upgradeBootloader")
 
-	grubDir := filepath.Join(baseName, install.BootDir+"grub")
+	grubDir := filepath.Join(baseName, config.BootDir, "grub")
 	if _, err := os.Stat(grubDir); os.IsNotExist(err) {
 		log.Debugf("%s does not exist - no need to upgrade bootloader", grubDir)
 		// we've already upgraded
@@ -809,12 +809,12 @@ func upgradeBootloader(device, baseName, diskType string) error {
 		return nil
 	}
 	// deal with systems which were previously upgraded, then rolled back, and are now being re-upgraded
-	grubBackup := filepath.Join(baseName, install.BootDir+"grub_backup")
+	grubBackup := filepath.Join(baseName, config.BootDir, "grub_backup")
 	if err := os.RemoveAll(grubBackup); err != nil {
 		log.Errorf("RemoveAll (%s): %s", grubBackup, err)
 		return err
 	}
-	backupSyslinuxDir := filepath.Join(baseName, install.BootDir+"syslinux_backup")
+	backupSyslinuxDir := filepath.Join(baseName, config.BootDir, "syslinux_backup")
 	if _, err := os.Stat(backupSyslinuxDir); !os.IsNotExist(err) {
 		backupSyslinuxLdlinuxSys := filepath.Join(backupSyslinuxDir, "ldlinux.sys")
 		if _, err := os.Stat(backupSyslinuxLdlinuxSys); !os.IsNotExist(err) {
@@ -837,7 +837,7 @@ func upgradeBootloader(device, baseName, diskType string) error {
 		return err
 	}
 
-	syslinuxDir := filepath.Join(baseName, install.BootDir+"syslinux")
+	syslinuxDir := filepath.Join(baseName, config.BootDir, "syslinux")
 	// it seems that v0.5.0 didn't have a syslinux dir, while 0.7 does
 	if _, err := os.Stat(syslinuxDir); !os.IsNotExist(err) {
 		if err := os.Rename(syslinuxDir, backupSyslinuxDir); err != nil {
@@ -858,15 +858,15 @@ func upgradeBootloader(device, baseName, diskType string) error {
 
 				cfg = strings.Replace(cfg, "current", "previous", -1)
 				// TODO consider removing the APPEND line - as the global.cfg should have the same result
-				ioutil.WriteFile(filepath.Join(baseName, install.BootDir, "linux-current.cfg"), []byte(cfg), 0644)
+				ioutil.WriteFile(filepath.Join(baseName, config.BootDir, "linux-current.cfg"), []byte(cfg), 0644)
 
 				lines := strings.Split(cfg, "\n")
 				for _, line := range lines {
 					line = strings.TrimSpace(line)
 					if strings.HasPrefix(line, "APPEND") {
-						log.Errorf("write new (%s) %s", filepath.Join(baseName, install.BootDir, "global.cfg"), err)
+						log.Errorf("write new (%s) %s", filepath.Join(baseName, config.BootDir, "global.cfg"), err)
 						// TODO: need to append any extra's the user specified
-						ioutil.WriteFile(filepath.Join(baseName, install.BootDir, "global.cfg"), []byte(cfg), 0644)
+						ioutil.WriteFile(filepath.Join(baseName, config.BootDir, "global.cfg"), []byte(cfg), 0644)
 						break
 					}
 				}
@@ -927,7 +927,7 @@ func installSyslinux(device, baseName, diskType string) error {
 		}
 	}
 
-	sysLinuxDir := filepath.Join(baseName, install.BootDir, "syslinux")
+	sysLinuxDir := filepath.Join(baseName, config.BootDir, "syslinux")
 	if err := os.MkdirAll(sysLinuxDir, 0755); err != nil {
 		log.Errorf("MkdirAll(%s)): %s", sysLinuxDir, err)
 		//return err
@@ -985,12 +985,12 @@ func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 	log.Debugf("installRancher")
 
 	// detect if there already is a linux-current.cfg, if so, move it to linux-previous.cfg,
-	currentCfg := filepath.Join(baseName, install.BootDir, "linux-current.cfg")
+	currentCfg := filepath.Join(baseName, config.BootDir, "linux-current.cfg")
 	if _, err := os.Stat(currentCfg); !os.IsNotExist(err) {
 		existingCfg := filepath.Join(DIST, "linux-current.cfg")
 		// only remove previous if there is a change to the current
 		if different(currentCfg, existingCfg) {
-			previousCfg := filepath.Join(baseName, install.BootDir, "linux-previous.cfg")
+			previousCfg := filepath.Join(baseName, config.BootDir, "linux-previous.cfg")
 			if _, err := os.Stat(previousCfg); !os.IsNotExist(err) {
 				if err := os.Remove(previousCfg); err != nil {
 					return currentCfg, err
@@ -1012,7 +1012,7 @@ func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 		if file.Name() == "global.cfg" {
 			overwrite = false
 		}
-		if err := dfs.CopyFileOverwrite(filepath.Join(DIST, file.Name()), filepath.Join(baseName, install.BootDir), file.Name(), overwrite); err != nil {
+		if err := dfs.CopyFileOverwrite(filepath.Join(DIST, file.Name()), filepath.Join(baseName, config.BootDir), file.Name(), overwrite); err != nil {
 			log.Errorf("copy %s: %s", file.Name(), err)
 			//return err
 		}
@@ -1020,7 +1020,7 @@ func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 
 	// the general INCLUDE syslinuxcfg
 	isolinuxFile := filepath.Join(DIST, "isolinux", "isolinux.cfg")
-	syslinuxDir := filepath.Join(baseName, install.BootDir, "syslinux")
+	syslinuxDir := filepath.Join(baseName, config.BootDir, "syslinux")
 	if err := dfs.CopyFileOverwrite(isolinuxFile, syslinuxDir, "syslinux.cfg", true); err != nil {
 		log.Errorf("copy global syslinux.cfgS%s: %s", "syslinux.cfg", err)
 		//return err
@@ -1030,7 +1030,7 @@ func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 	}
 
 	// The global.cfg INCLUDE - useful for over-riding the APPEND line
-	globalFile := filepath.Join(filepath.Join(baseName, install.BootDir), "global.cfg")
+	globalFile := filepath.Join(baseName, config.BootDir, "global.cfg")
 	if _, err := os.Stat(globalFile); !os.IsNotExist(err) {
 		err := ioutil.WriteFile(globalFile, []byte("APPEND "+kappend), 0644)
 		if err != nil {

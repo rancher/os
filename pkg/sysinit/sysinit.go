@@ -22,7 +22,7 @@ const (
 )
 
 func hasImage(name string) bool {
-	stamp := path.Join(config.State, name)
+	stamp := path.Join(config.StateDir, name)
 	if _, err := os.Stat(stamp); os.IsNotExist(err) {
 		return false
 	}

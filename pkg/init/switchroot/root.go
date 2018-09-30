@@ -19,8 +19,8 @@ func SwitchRoot(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if !fsmount.ShouldSwitchRoot {
 		return cfg, nil
 	}
-	log.Debugf("Switching to new root at %s %s", config.State, cfg.Rancher.State.Directory)
-	if err := switchRoot(config.State, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr); err != nil {
+	log.Debugf("Switching to new root at %s %s", config.StateDir, cfg.Rancher.State.Directory)
+	if err := switchRoot(config.StateDir, cfg.Rancher.State.Directory, cfg.Rancher.RmUsr); err != nil {
 		return cfg, err
 	}
 	return cfg, nil
@@ -112,7 +112,7 @@ func copyMoveRoot(rootfs string, rmUsr bool) error {
 }
 
 func switchRoot(rootfs, subdir string, rmUsr bool) error {
-	if err := syscall.Unmount(config.OEM, 0); err != nil {
+	if err := syscall.Unmount(config.OemDir, 0); err != nil {
 		log.Debugf("Not umounting OEM: %v", err)
 	}
 
