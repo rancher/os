@@ -527,6 +527,11 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 		if err := os.MkdirAll(filepath.Join(baseName, statedir), 0755); err != nil {
 			return err
 		}
+		err = seedData(baseName, cloudConfig, FILES)
+		if err != nil {
+			log.Errorf("seedData %s", err)
+			return err
+		}
 	case "raid":
 		var err error
 		device, partition, err = install.MountDevice(baseName, device, partition, false)
