@@ -70,8 +70,14 @@ func serviceSubCommands() []cli.Command {
 			Action: disable,
 		},
 		{
-			Name:   "list",
-			Usage:  "list services and state",
+			Name:  "list",
+			Usage: "list services and state",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "all, a",
+					Usage: "list all services and state",
+				},
+			},
 			Action: list,
 		},
 		{
@@ -174,6 +180,12 @@ func list(c *cli.Context) error {
 	}
 
 	services := availableService(cfg)
+
+	if c.Bool("all") {
+		for service := range cfg.Rancher.Services {
+			fmt.Printf("enabled  %s\n", service)
+		}
+	}
 
 	for _, service := range services {
 		if enabled, ok := clone[service]; ok {
