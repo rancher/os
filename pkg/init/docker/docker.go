@@ -46,7 +46,7 @@ func GetLaunchConfig(cfg *config.CloudConfig, dockerCfg *config.DockerConfig) (*
 	launchConfig.Environment = dockerCfg.Environment
 
 	if !cfg.Rancher.Debug {
-		launchConfig.LogFile = config.SystemDockerLog
+		launchConfig.LogFile = cfg.Rancher.Defaults.SystemDockerLogs
 	}
 
 	return &launchConfig, args

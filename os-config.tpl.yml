@@ -16,6 +16,7 @@ rancher:
     network:
       dns:
         nameservers: [8.8.8.8, 8.8.4.4]
+    system_docker_logs: /var/log/system-docker.log
   ssh:
     daemon: true
   hypervisor_service: true
