@@ -58,26 +58,19 @@ ARG OS_REPO=rancher
 ARG HOSTNAME_DEFAULT=rancher
 ARG DISTRIB_ID=RancherOS
 
-ARG DOCKER_VERSION=1.11.2
-ARG DOCKER_PATCH_VERSION=v${DOCKER_VERSION}-ros1
-ARG DOCKER_BUILD_VERSION=1.10.3
-ARG DOCKER_BUILD_PATCH_VERSION=v${DOCKER_BUILD_VERSION}-ros1
 ARG SELINUX_POLICY_URL=https://github.com/rancher/refpolicy/releases/download/v0.0.3/policy.29
 
 ARG KERNEL_VERSION_amd64=4.14.73-rancher
 ARG KERNEL_URL_amd64=https://github.com/rancher/os-kernel/releases/download/v${KERNEL_VERSION_amd64}/linux-${KERNEL_VERSION_amd64}-x86.tar.gz
 
-ARG DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz
-ARG DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_PATCH_VERSION}/docker-${DOCKER_VERSION}_arm64.tgz
-
-ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_BUILD_VERSION}
-ARG BUILD_DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/${DOCKER_BUILD_PATCH_VERSION}/docker-${DOCKER_BUILD_VERSION}_arm64
+ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-1.10.3
+ARG BUILD_DOCKER_URL_arm64=https://github.com/rancher/docker/releases/download/v1.10.3-ros1/docker-1.10.3_arm64
 
 ARG OS_RELEASES_YML=https://releases.rancher.com/os
 
 ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
-ARG DFS_IMAGE=${OS_REPO}/docker:v${DOCKER_VERSION}-2
+ARG DFS_IMAGE=${OS_REPO}/docker:v1.11.2-2
 
 ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2018.02-4/os-base_amd64.tar.xz
 ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2018.02-4/os-base_arm64.tar.xz
@@ -100,11 +93,6 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     DAPPER_HOST_ARCH=${DAPPER_HOST_ARCH} \
     DFS_IMAGE=${DFS_IMAGE} \
     DISTRIB_ID=${DISTRIB_ID} \
-    DOCKER_PATCH_VERSION=${DOCKER_PATCH_VERSION} \
-    DOCKER_URL=DOCKER_URL_${ARCH} \
-    DOCKER_URL_amd64=${DOCKER_URL_amd64} \
-    DOCKER_URL_arm64=${DOCKER_URL_arm64} \
-    DOCKER_VERSION=${DOCKER_VERSION} \
     DOWNLOADS=/usr/src/downloads \
     GOPATH=/go \
     GO_VERSION=1.8.5 \
