@@ -78,9 +78,14 @@ func (v VMWare) IsAvailable() bool {
 	}
 	if v.ovfFileName != "" {
 		_, v.lastError = os.Stat(v.ovfFileName)
-		return !os.IsNotExist(v.lastError)
+		if !os.IsNotExist(v.lastError) {
+			// when GuestInfo is empty, the DataSource should not be available.
+			return v.checkGuestInfo()
+		}
+		return false
 	}
-	return vmcheck.IsVirtualWorld()
+	// when GuestInfo is empty, the DataSource should not be available.
+	return vmcheck.IsVirtualWorld() && v.checkGuestInfo()
 }
 
 func readConfig(key string) (string, error) {
@@ -106,4 +111,24 @@ func getOvfReadConfig(ovfEnv []byte) readConfigFunction {
 func urlDownload(url string) ([]byte, error) {
 	client := pkg.NewHTTPClient()
 	return client.GetRetry(url)
+}
+
+func (v VMWare) checkGuestInfo() bool {
+	userData, err := v.FetchUserdata()
+	if err == nil && string(userData) != "" {
+		return true
+	}
+	metadata, err := v.FetchMetadata()
+	if err == nil {
+		if metadata.Hostname != "" {
+			return true
+		}
+		if len(metadata.NetworkConfig.DNS.Nameservers) > 0 || len(metadata.NetworkConfig.DNS.Search) > 0 {
+			return true
+		}
+		if len(metadata.NetworkConfig.Interfaces) > 0 {
+			return true
+		}
+	}
+	return false
 }
