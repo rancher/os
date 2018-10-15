@@ -8,13 +8,88 @@ touch .make-vmware
 source ./scripts/version
 ./scripts/release
 
-ISO_NAME="rancheros-vmware.iso"
+ROOT_FS_NAME="rootfs.tar.gz"
+VMDK_NAME="rancheros.vmdk"
 
-mkdir -p /tmp/dist && mv ./dist/* /tmp/dist/
+if [ "$VMWARE_AUTOFORMAT" = 1 ]; then
+    ISO_NAME="rancheros-autoformat.iso"
+else
+    ISO_NAME="rancheros.iso"
+fi
+
+if [ "$VMWARE_APPEND" != "" ]; then
+    echo "--append ${VMWARE_APPEND}"
+    APPEND_PARAM="--append \"${VMWARE_APPEND}\""
+fi
+
+mkdir -p /tmp/dist/openstack/latest && mv ./dist/* /tmp/dist/
+
+# create rancheros-vmware.vmdk
+if [ -e /tmp/dist/vmdk.img ]; then
+    rm -rf /tmp/dist/vmdk.img
+fi
+
+cat > /tmp/dist/openstack/latest/user_data << EOF
+#!/bin/bash
+set -e
+
+trap "poweroff" EXIT
+
+mount -t 9p -o trans=virtio,version=9p2000.L config-2 /mnt
+
+touch log
+sleep 5
+openvt -s -- tail -f log &
+ros install \
+    -d /dev/vda \
+    ${APPEND_PARAM} \
+    -f \
+    --no-reboot >log 2>&1
+
+touch /mnt/success
+EOF
+
+rm -f /tmp/dist/success
+
 mkdir -p ./dist/vmware && mv /tmp/dist/* ./dist/vmware/
-mkdir -p ./dist/artifacts && cp ./dist/vmware/artifacts/rancheros.iso ./dist/artifacts/${ISO_NAME}
+mkdir -p ./dist/artifacts
 
-echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${ISO_NAME} --name ${ISO_NAME}" > ./dist/publish.sh
-echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/latest/${ISO_NAME}" > ./dist/publish_gss_latest.sh
-echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/${VERSION}/${ISO_NAME}" > ./dist/publish_gss_${VERSION}.sh
+qemu-img create -f qcow2 ./dist/vmware/vmdk.img 8G
+kvm -curses \
+    -drive if=virtio,file=./dist/vmware/vmdk.img \
+    -cdrom ./dist/vmware/artifacts/rancheros.iso \
+    -m 2048 \
+    -fsdev local,id=conf,security_model=none,path=./dist/vmware \
+    -device virtio-9p-pci,fsdev=conf,mount_tag=config-2
+
+[ -f ./dist/vmware/success ]
+
+echo Converting ./dist/${VMDK_NAME}
+qemu-img convert -f qcow2 -O vmdk ./dist/vmware/vmdk.img ./dist/artifacts/${VMDK_NAME}
+
+cp ./dist/vmware/artifacts/rancheros.iso ./dist/artifacts/${ISO_NAME} && \
+    cp ./dist/vmware/artifacts/rootfs.tar.gz ./dist/artifacts/${ROOT_FS_NAME} && \
+    cp ./dist/vmware/artifacts/${INITRD} ./dist/artifacts/${INITRD}
+
+for file in $(ls dist/artifacts/); do
+    case $file in
+        "initrd-"*)
+            echo "gsutil cp dist/artifacts/${INITRD} gs://releases.rancher.com/os/latest/vmware/${INITRD}" >> ./dist/publish_gss_latest.sh
+            echo "gsutil cp dist/artifacts/${INITRD} gs://releases.rancher.com/os/${VERSION}/vmware/${INITRD}" >> ./dist/publish_gss_${VERSION}.sh
+            ;;
+        "rancheros.iso" | "rancheros-autoformat.iso")
+            echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/latest/vmware/${ISO_NAME}" >> ./dist/publish_gss_latest.sh
+            echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${ISO_NAME}" >> ./dist/publish_gss_${VERSION}.sh
+            ;;
+        "rancheros.vmdk")
+            echo "gsutil cp dist/artifacts/${VMDK_NAME} gs://releases.rancher.com/os/latest/vmware/${VMDK_NAME}" >> ./dist/publish_gss_latest.sh
+            echo "gsutil cp dist/artifacts/${VMDK_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${VMDK_NAME}" >> ./dist/publish_gss_${VERSION}.sh
+            ;;
+        "rootfs.tar.gz")
+            echo "gsutil cp dist/artifacts/${ROOT_FS_NAME} gs://releases.rancher.com/os/latest/vmware/${ROOT_FS_NAME}" >> ./dist/publish_gss_latest.sh
+            echo "gsutil cp dist/artifacts/${ROOT_FS_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${ROOT_FS_NAME}" >> ./dist/publish_gss_${VERSION}.sh
+            ;;
+    esac
+ done
+
 chmod 755 ./dist/*.sh

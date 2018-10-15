@@ -66,7 +66,9 @@ rpi64:
 
 vmware: .dapper
 	mkdir -p dist
-	INTEGRATION_TESTS=0 ./.dapper vmware-release 2>&1 | tee dist/release.log
+	INTEGRATION_TESTS=0 \
+	VMWARE_APPEND="console=tty1 console=ttyS0,115200n8 printk.devkmsg=on rancher.autologin=tty1 rancher.autologin=ttyS0 rancher.autologin=ttyS1 panic=10" \
+	    ./.dapper vmware-release 2>&1 | tee dist/release.log
 
 help:
 	@./scripts/help
