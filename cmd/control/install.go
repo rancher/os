@@ -606,12 +606,42 @@ func seedData(baseName, cloudData string, files []string) error {
 		return err
 	}
 
-	if err = os.MkdirAll(filepath.Join(baseName, "/var/lib/rancher/conf/cloud-config.d"), 0700); err != nil {
+	stateSeedDir := "state_seed"
+	cloudConfigBase := "/var/lib/rancher/conf/cloud-config.d"
+	cloudConfigDir := ""
+
+	// If there is a separate boot partition, cloud-config should be written to RANCHER_STATE partition.
+	bootPartition, _, err := util.Blkid("RANCHER_BOOT")
+	if err != nil {
+		log.Errorf("Failed to run blkid: %s", err)
+	}
+	if bootPartition != "" {
+		stateSeedFullPath := filepath.Join(baseName, stateSeedDir)
+		if err = os.MkdirAll(stateSeedFullPath, 0700); err != nil {
+			return err
+		}
+
+		defer util.Unmount(stateSeedFullPath)
+
+		statePartition := install.GetStatePartition()
+		cmd := exec.Command("mount", statePartition, stateSeedFullPath)
+		//cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+		log.Debugf("seedData: mount %s to %s", statePartition, stateSeedFullPath)
+		if err = cmd.Run(); err != nil {
+			return err
+		}
+
+		cloudConfigDir = filepath.Join(baseName, stateSeedDir, cloudConfigBase)
+	} else {
+		cloudConfigDir = filepath.Join(baseName, cloudConfigBase)
+	}
+
+	if err = os.MkdirAll(cloudConfigDir, 0700); err != nil {
 		return err
 	}
 
 	if !strings.HasSuffix(cloudData, "empty.yml") {
-		if err = dfs.CopyFile(cloudData, baseName+"/var/lib/rancher/conf/cloud-config.d/", filepath.Base(cloudData)); err != nil {
+		if err = dfs.CopyFile(cloudData, cloudConfigDir, filepath.Base(cloudData)); err != nil {
 			return err
 		}
 	}
