@@ -24,7 +24,6 @@ const (
 	ImagesPattern    = "images*.tar"
 	ModulesArchive   = "/modules.tar"
 	Debug            = false
-	SystemDockerLog  = "/var/log/system-docker.log"
 	SystemDockerBin  = "/usr/bin/system-dockerd"
 
 	HashLabel         = "io.rancher.os.hash"
@@ -211,9 +210,10 @@ type CloudInit struct {
 }
 
 type Defaults struct {
-	Hostname string                `yaml:"hostname,omitempty"`
-	Docker   DockerConfig          `yaml:"docker,omitempty"`
-	Network  netconf.NetworkConfig `yaml:"network,omitempty"`
+	Hostname         string                `yaml:"hostname,omitempty"`
+	Docker           DockerConfig          `yaml:"docker,omitempty"`
+	Network          netconf.NetworkConfig `yaml:"network,omitempty"`
+	SystemDockerLogs string                `yaml:"system_docker_logs,omitempty"`
 }
 
 func (r Repositories) ToArray() []string {
