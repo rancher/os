@@ -136,19 +136,14 @@ func execute(line string, doneChannel chan string) {
 			Setsid: true,
 		}
 
-		err := cmd.Start()
-		if err != nil {
-			log.Errorf("%s : %v", line, err)
-		}
-
-		if err == nil {
+		if err := cmd.Start(); err == nil {
 			addProcess(cmd.Process)
-			err = cmd.Wait()
+			if err = cmd.Wait(); err != nil {
+				log.Errorf("Wait cmd to exit: %s, err: %v", line, err)
+			}
 			removeProcess(cmd.Process)
-		}
-
-		if err != nil {
-			log.Errorf("%s : %v", line, err)
+		} else {
+			log.Errorf("Start cmd: %s, err: %v", line, err)
 		}
 
 		if !running {
