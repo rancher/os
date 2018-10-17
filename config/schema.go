@@ -194,7 +194,8 @@ var schema = `{
 			"properties": {
 				"hostname": {"type": "string"},
 				"docker": {"type": "object"},
-				"network": {"$ref": "#/definitions/network_config"}
+				"network": {"$ref": "#/definitions/network_config"},
+				"system_docker_logs": {"type": "string"}
 			}
 		},
 
