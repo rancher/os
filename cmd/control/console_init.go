@@ -11,9 +11,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/codegangsta/cli"
+	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/sys/unix"
 
-	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/config/cmdline"
@@ -239,6 +240,9 @@ func generateRespawnConf(cmdline, user string, sshd, recovery bool) string {
 
 	for i := 1; i < 7; i++ {
 		tty := fmt.Sprintf("tty%d", i)
+		if !istty(tty) {
+			continue
+		}
 
 		respawnConf.WriteString(gettyCmd)
 		if allowAutoLogin && strings.Contains(cmdline, fmt.Sprintf("rancher.autologin=%s", tty)) {
@@ -249,6 +253,10 @@ func generateRespawnConf(cmdline, user string, sshd, recovery bool) string {
 
 	for _, tty := range []string{"ttyS0", "ttyS1", "ttyS2", "ttyS3", "ttyAMA0"} {
 		if !strings.Contains(cmdline, fmt.Sprintf("console=%s", tty)) {
+			continue
+		}
+
+		if !istty(tty) {
 			continue
 		}
 
@@ -369,4 +377,11 @@ func setupSSH(cfg *config.CloudConfig) error {
 	}
 
 	return os.MkdirAll("/var/run/sshd", 0644)
+}
+
+func istty(name string) bool {
+	if f, err := os.Open(fmt.Sprintf("/dev/%s", name)); err == nil {
+		return terminal.IsTerminal(int(f.Fd()))
+	}
+	return false
 }
