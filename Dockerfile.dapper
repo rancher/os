@@ -154,7 +154,7 @@ RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
 RUN go get github.com/rancher/trash
 
 # Install golint
-RUN go get github.com/golang/lint/golint
+RUN go get golang.org/x/lint/golint
 
 RUN go get gopkg.in/check.v1
 
