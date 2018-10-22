@@ -42,7 +42,6 @@ var schema = `{
 				"services_include": {"type": "object"},
 				"modules": {"$ref": "#/definitions/list_of_strings"},
 				"network": {"$ref": "#/definitions/network_config"},
-				"default_network": {"type": "object"},
 				"repositories": {"type": "object"},
 				"ssh": {"$ref": "#/definitions/ssh_config"},
 				"state": {"$ref": "#/definitions/state_config"},
