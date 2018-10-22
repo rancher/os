@@ -284,12 +284,18 @@ func getDatasources(datasources []string) []datasource.Datasource {
 }
 
 func enableDoLinkLocal() {
+	cfg := rancherConfig.LoadConfig()
+	dhcpTimeout := cfg.Rancher.Defaults.Network.DHCPTimeout
+	if cfg.Rancher.Network.DHCPTimeout > 0 {
+		dhcpTimeout = cfg.Rancher.Network.DHCPTimeout
+	}
 	_, err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
 		Interfaces: map[string]netconf.InterfaceConfig{
 			"eth0": {
 				IPV4LL: true,
 			},
 		},
+		DHCPTimeout: dhcpTimeout,
 	}, false, false)
 	if err != nil {
 		log.Errorf("Failed to apply link local on eth0: %v", err)

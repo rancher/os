@@ -13,6 +13,13 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	stateConfig := config.LoadConfigWithPrefix(config.StateDir)
 	cfg.Rancher.CloudInit.Datasources = stateConfig.Rancher.CloudInit.Datasources
 
+	if stateConfig.Rancher.Network.DHCPTimeout > 0 {
+		cfg.Rancher.Network.DHCPTimeout = stateConfig.Rancher.Network.DHCPTimeout
+		if err := config.Set("rancher.network.dhcp_timeout", stateConfig.Rancher.Network.DHCPTimeout); err != nil {
+			log.Error(err)
+		}
+	}
+
 	if len(stateConfig.Rancher.Network.Interfaces) > 0 {
 		cfg.Rancher.Network = stateConfig.Rancher.Network
 		if err := config.Set("rancher.network", stateConfig.Rancher.Network); err != nil {

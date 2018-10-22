@@ -1,13 +1,14 @@
 package netconf
 
 type NetworkConfig struct {
-	PreCmds    []string                   `yaml:"pre_cmds,omitempty"`
-	DNS        DNSConfig                  `yaml:"dns,omitempty"`
-	Interfaces map[string]InterfaceConfig `yaml:"interfaces,omitempty"`
-	PostCmds   []string                   `yaml:"post_cmds,omitempty"`
-	HTTPProxy  string                     `yaml:"http_proxy,omitempty"`
-	HTTPSProxy string                     `yaml:"https_proxy,omitempty"`
-	NoProxy    string                     `yaml:"no_proxy,omitempty"`
+	PreCmds     []string                   `yaml:"pre_cmds,omitempty"`
+	DHCPTimeout int                        `yaml:"dhcp_timeout,omitempty"`
+	DNS         DNSConfig                  `yaml:"dns,omitempty"`
+	Interfaces  map[string]InterfaceConfig `yaml:"interfaces,omitempty"`
+	PostCmds    []string                   `yaml:"post_cmds,omitempty"`
+	HTTPProxy   string                     `yaml:"http_proxy,omitempty"`
+	HTTPSProxy  string                     `yaml:"https_proxy,omitempty"`
+	NoProxy     string                     `yaml:"no_proxy,omitempty"`
 }
 
 type InterfaceConfig struct {

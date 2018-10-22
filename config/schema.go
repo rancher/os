@@ -81,6 +81,7 @@ var schema = `{
 
 			"properties": {
 				"pre_cmds": {"$ref": "#/definitions/list_of_strings"},
+				"dhcp_timeout": {"type": "integer"},
 				"dns": {"type": "object"},
 				"interfaces": {"type": "object"},
 				"post_cmds": {"$ref": "#/definitions/list_of_strings"},
