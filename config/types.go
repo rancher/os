@@ -126,7 +126,6 @@ type RancherConfig struct {
 	ServicesInclude     map[string]bool                           `yaml:"services_include,omitempty"`
 	Modules             []string                                  `yaml:"modules,omitempty"`
 	Network             netconf.NetworkConfig                     `yaml:"network,omitempty"`
-	DefaultNetwork      netconf.NetworkConfig                     `yaml:"default_network,omitempty"`
 	Repositories        Repositories                              `yaml:"repositories,omitempty"`
 	SSH                 SSHConfig                                 `yaml:"ssh,omitempty"`
 	State               StateConfig                               `yaml:"state,omitempty"`
