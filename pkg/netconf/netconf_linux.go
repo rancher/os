@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -288,6 +289,10 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, se
 
 	if !setDNS {
 		args = append(args, "--nohook", "resolv.conf")
+	}
+
+	if netCfg.DHCPTimeout > 0 {
+		args = append(args, "--timeout", strconv.Itoa(netCfg.DHCPTimeout))
 	}
 
 	// Wait for lease

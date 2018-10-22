@@ -42,6 +42,9 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 	}
 
 	userSetHostname := cfg.Hostname != ""
+	if cfg.Rancher.Network.DHCPTimeout <= 0 {
+		cfg.Rancher.Network.DHCPTimeout = cfg.Rancher.Defaults.Network.DHCPTimeout
+	}
 	dhcpSetDNS, err := netconf.ApplyNetworkConfigs(&cfg.Rancher.Network, userSetHostname, userSetDNS)
 	if err != nil {
 		log.Errorf("Failed to apply network configs(by netconf): %v", err)

@@ -14,6 +14,7 @@ rancher:
       engine: docker-18.03.1-ce
     {{end -}}
     network:
+      dhcp_timeout: 10
       dns:
         nameservers: [8.8.8.8, 8.8.4.4]
     system_docker_logs: /var/log/system-docker.log
