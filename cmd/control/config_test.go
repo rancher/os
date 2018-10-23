@@ -2,11 +2,11 @@ package control
 
 import (
 	"bytes"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"os"
 )
 
 func TestGenTpl(t *testing.T) {

@@ -20,12 +20,11 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/rancher/os/pkg/netconf"
-
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/test"
 	"github.com/rancher/os/config/cloudinit/pkg"
+	"github.com/rancher/os/pkg/netconf"
 )
 
 func TestType(t *testing.T) {

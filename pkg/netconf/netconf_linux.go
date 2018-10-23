@@ -11,9 +11,9 @@ import (
 	"sync"
 	"syscall"
 
-	shlex "github.com/flynn/go-shlex"
 	"github.com/rancher/os/pkg/log"
 
+	shlex "github.com/flynn/go-shlex"
 	glob "github.com/ryanuber/go-glob"
 	"github.com/vishvananda/netlink"
 )

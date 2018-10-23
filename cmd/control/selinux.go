@@ -4,8 +4,9 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
+
+	"github.com/codegangsta/cli"
 )
 
 func selinuxCommand() cli.Command {

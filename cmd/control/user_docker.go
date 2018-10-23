@@ -5,21 +5,20 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"syscall"
 	"time"
 
-	"golang.org/x/net/context"
-
-	"path/filepath"
-
-	"github.com/codegangsta/cli"
-	composeClient "github.com/docker/libcompose/docker/client"
-	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/compose"
 	rosDocker "github.com/rancher/os/pkg/docker"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
+
+	"github.com/codegangsta/cli"
+	composeClient "github.com/docker/libcompose/docker/client"
+	"github.com/docker/libcompose/project"
+	"golang.org/x/net/context"
 )
 
 const (

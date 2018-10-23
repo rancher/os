@@ -8,10 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/rancher/os/config/cmdline"
+
 	"github.com/Sirupsen/logrus"
 	lsyslog "github.com/Sirupsen/logrus/hooks/syslog"
-
-	"github.com/rancher/os/config/cmdline"
 )
 
 var logFile *os.File

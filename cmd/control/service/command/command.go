@@ -3,9 +3,10 @@ package command
 import (
 	"errors"
 
+	"github.com/rancher/os/cmd/control/service/app"
+
 	"github.com/codegangsta/cli"
 	composeApp "github.com/docker/libcompose/cli/app"
-	"github.com/rancher/os/cmd/control/service/app"
 )
 
 func verifyOneOrMoreServices(c *cli.Context) error {

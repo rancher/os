@@ -9,14 +9,15 @@ import (
 	"sort"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/docker/engine-api/types"
-	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/initialize"
 	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
+
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	"github.com/docker/engine-api/types"
+	composeConfig "github.com/docker/libcompose/config"
 )
 
 func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*CloudConfig, error) {

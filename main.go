@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/docker/docker/docker"
-	"github.com/docker/docker/pkg/reexec"
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/cmd/cloudinitsave"
 	"github.com/rancher/os/cmd/control"
@@ -16,6 +14,9 @@ import (
 	"github.com/rancher/os/cmd/sysinit"
 	"github.com/rancher/os/cmd/wait"
 	"github.com/rancher/os/pkg/dfs"
+
+	"github.com/docker/docker/docker"
+	"github.com/docker/docker/pkg/reexec"
 )
 
 var entrypoints = map[string]func(){

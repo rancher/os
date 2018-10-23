@@ -1,8 +1,9 @@
 package docker
 
 import (
-	dockerClient "github.com/docker/engine-api/client"
 	"github.com/rancher/os/config"
+
+	dockerClient "github.com/docker/engine-api/client"
 	"golang.org/x/net/context"
 )
 

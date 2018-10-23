@@ -10,17 +10,16 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/net/context"
+	"github.com/rancher/os/cmd/control/install"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
 
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
-	"github.com/rancher/os/cmd/control/install"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
-
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/util"
+	"golang.org/x/net/context"
 )
 
 // You can't shutdown the system from a process in console because we want to stop the console container.

@@ -10,7 +10,14 @@ import (
 	"strconv"
 	"strings"
 
-	"golang.org/x/net/context"
+	"github.com/rancher/os/cmd/control/service"
+	"github.com/rancher/os/cmd/control/service/app"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/pkg/compose"
+	"github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
+	"github.com/rancher/os/pkg/util/network"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/codegangsta/cli"
@@ -21,14 +28,7 @@ import (
 	"github.com/docker/libcompose/project/options"
 	composeYaml "github.com/docker/libcompose/yaml"
 	"github.com/pkg/errors"
-	"github.com/rancher/os/cmd/control/service"
-	"github.com/rancher/os/cmd/control/service/app"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/compose"
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
-	"github.com/rancher/os/pkg/util/network"
+	"golang.org/x/net/context"
 )
 
 var (

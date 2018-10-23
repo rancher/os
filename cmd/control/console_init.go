@@ -11,16 +11,16 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/codegangsta/cli"
-	"golang.org/x/crypto/ssh/terminal"
-	"golang.org/x/sys/unix"
-
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/pkg/compose"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
+
+	"github.com/codegangsta/cli"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/sys/unix"
 )
 
 const (

@@ -3,13 +3,14 @@ package compose
 import (
 	"fmt"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	composeConfig "github.com/docker/libcompose/config"
-	"github.com/docker/libcompose/project"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/docker"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util/network"
+
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	composeConfig "github.com/docker/libcompose/config"
+	"github.com/docker/libcompose/project"
 )
 
 func LoadService(p *project.Project, cfg *config.CloudConfig, useNetwork bool, service string) error {

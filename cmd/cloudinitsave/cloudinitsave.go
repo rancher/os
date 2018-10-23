@@ -24,8 +24,6 @@ import (
 	"sync"
 	"time"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/cmd/network"
 	rancherConfig "github.com/rancher/os/config"
@@ -46,6 +44,8 @@ import (
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/netconf"
 	"github.com/rancher/os/pkg/util"
+
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 )
 
 const (

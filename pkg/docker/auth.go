@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/pkg/log"
+
 	"github.com/docker/docker/registry"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/libcompose/docker"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
 )
 
 // ConfigAuthLookup will lookup registry auth info from cloud config

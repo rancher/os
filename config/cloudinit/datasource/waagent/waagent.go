@@ -22,9 +22,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/rancher/os/pkg/log"
-
 	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/rancher/os/pkg/log"
 )
 
 type Waagent struct {

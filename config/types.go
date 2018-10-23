@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/docker/engine-api/types"
-	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config/cloudinit/config"
 	"github.com/rancher/os/config/yaml"
 	"github.com/rancher/os/pkg/netconf"
+
+	"github.com/docker/engine-api/types"
+	composeConfig "github.com/docker/libcompose/config"
 )
 
 const (

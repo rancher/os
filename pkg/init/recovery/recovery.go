@@ -1,14 +1,15 @@
 package recovery
 
 import (
-	composeConfig "github.com/docker/libcompose/config"
-	"github.com/docker/libcompose/yaml"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/compose"
 	"github.com/rancher/os/pkg/init/docker"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/netconf"
 	"github.com/rancher/os/pkg/sysinit"
+
+	composeConfig "github.com/docker/libcompose/config"
+	"github.com/docker/libcompose/yaml"
 )
 
 var (

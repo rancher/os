@@ -11,13 +11,13 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/codegangsta/cli"
-
-	dockerClient "github.com/docker/engine-api/client"
-	"github.com/docker/engine-api/types"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/docker"
 	"github.com/rancher/os/pkg/log"
+
+	"github.com/codegangsta/cli"
+	dockerClient "github.com/docker/engine-api/client"
+	"github.com/docker/engine-api/types"
 )
 
 const (

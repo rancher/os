@@ -3,8 +3,9 @@ package control
 import (
 	"fmt"
 
-	"github.com/codegangsta/cli"
 	"github.com/rancher/os/pkg/util"
+
+	"github.com/codegangsta/cli"
 )
 
 func devAction(c *cli.Context) error {
