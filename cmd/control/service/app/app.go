@@ -8,11 +8,11 @@ import (
 	"syscall"
 
 	"github.com/rancher/os/pkg/log"
-	"golang.org/x/net/context"
 
 	"github.com/codegangsta/cli"
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/options"
+	"golang.org/x/net/context"
 )
 
 func ProjectPs(p project.APIProject, c *cli.Context) error {

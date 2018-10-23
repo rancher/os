@@ -5,8 +5,9 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/codegangsta/cli"
 	"github.com/rancher/os/pkg/log"
+
+	"github.com/codegangsta/cli"
 )
 
 func recoveryInitAction(c *cli.Context) error {

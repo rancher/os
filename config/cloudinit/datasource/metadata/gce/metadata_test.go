@@ -20,8 +20,6 @@ import (
 	"reflect"
 	"testing"
 
-	//"github.com/rancher/os/netconf"
-
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/test"

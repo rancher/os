@@ -12,8 +12,9 @@ import (
 	"path"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	osYaml "github.com/rancher/os/config/yaml"
+
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 )
 
 const (

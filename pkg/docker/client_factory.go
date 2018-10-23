@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"sync"
 
-	"golang.org/x/net/context"
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
 
 	dockerclient "github.com/docker/engine-api/client"
 	composeClient "github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/project"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"golang.org/x/net/context"
 )
 
 type ClientFactory struct {

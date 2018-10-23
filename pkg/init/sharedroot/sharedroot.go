@@ -3,9 +3,10 @@ package sharedroot
 import (
 	"os"
 
-	"github.com/docker/docker/pkg/mount"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/init/fsmount"
+
+	"github.com/docker/docker/pkg/mount"
 )
 
 func Setup(c *config.CloudConfig) (*config.CloudConfig, error) {

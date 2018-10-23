@@ -1,10 +1,11 @@
 package docker
 
 import (
+	"github.com/rancher/os/pkg/util"
+
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
-	"github.com/rancher/os/pkg/util"
 )
 
 type ServiceFactory struct {

@@ -5,23 +5,21 @@ package init
 import (
 	"fmt"
 
-	"github.com/rancher/os/pkg/init/selinux"
-
-	"github.com/rancher/os/pkg/init/docker"
-	"github.com/rancher/os/pkg/init/one"
-
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/dfs"
 	"github.com/rancher/os/pkg/init/b2d"
 	"github.com/rancher/os/pkg/init/cloudinit"
 	"github.com/rancher/os/pkg/init/configfiles"
 	"github.com/rancher/os/pkg/init/debug"
+	"github.com/rancher/os/pkg/init/docker"
 	"github.com/rancher/os/pkg/init/env"
 	"github.com/rancher/os/pkg/init/fsmount"
 	"github.com/rancher/os/pkg/init/hypervisor"
 	"github.com/rancher/os/pkg/init/modules"
+	"github.com/rancher/os/pkg/init/one"
 	"github.com/rancher/os/pkg/init/prepare"
 	"github.com/rancher/os/pkg/init/recovery"
+	"github.com/rancher/os/pkg/init/selinux"
 	"github.com/rancher/os/pkg/init/sharedroot"
 	"github.com/rancher/os/pkg/init/switchroot"
 	"github.com/rancher/os/pkg/log"

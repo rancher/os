@@ -6,9 +6,10 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/codegangsta/cli"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/util"
+
+	"github.com/codegangsta/cli"
 )
 
 func envAction(c *cli.Context) error {

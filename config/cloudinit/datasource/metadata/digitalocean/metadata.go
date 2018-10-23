@@ -17,14 +17,12 @@ package digitalocean
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
-
-	"github.com/rancher/os/pkg/netconf"
-
 	"net"
+	"strconv"
 
 	"github.com/rancher/os/config/cloudinit/datasource"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata"
+	"github.com/rancher/os/pkg/netconf"
 )
 
 const (

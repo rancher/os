@@ -1,8 +1,9 @@
 package docker
 
 import (
-	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config"
+
+	composeConfig "github.com/docker/libcompose/config"
 )
 
 func IsSystemContainer(serviceConfig *composeConfig.ServiceConfig) bool {

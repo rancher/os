@@ -8,11 +8,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/docker/docker/pkg/archive"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/dfs"
 	"github.com/rancher/os/pkg/init/fsmount"
 	"github.com/rancher/os/pkg/log"
+
+	"github.com/docker/docker/pkg/archive"
 )
 
 func SwitchRoot(cfg *config.CloudConfig) (*config.CloudConfig, error) {

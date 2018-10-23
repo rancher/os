@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
+
+	composeConfig "github.com/docker/libcompose/config"
 )
 
 type ConfigEnvironment struct {

@@ -3,11 +3,12 @@ package control
 import (
 	"errors"
 
-	"github.com/codegangsta/cli"
-	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/compose"
 	"github.com/rancher/os/pkg/log"
+
+	"github.com/codegangsta/cli"
+	"github.com/docker/libcompose/project/options"
 	"golang.org/x/net/context"
 )
 

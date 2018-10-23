@@ -9,9 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/codegangsta/cli"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
+
+	"github.com/codegangsta/cli"
 )
 
 const (

@@ -12,12 +12,12 @@ import (
 	"syscall"
 
 	"github.com/rancher/os/pkg/init/one"
-
-	"github.com/docker/libnetwork/resolvconf"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/netconf"
 	"github.com/rancher/os/pkg/selinux"
 	"github.com/rancher/os/pkg/util"
+
+	"github.com/docker/libnetwork/resolvconf"
 )
 
 const (

@@ -5,7 +5,11 @@ import (
 	"io/ioutil"
 	"os"
 
-	"golang.org/x/net/context"
+	"github.com/rancher/os/config"
+	rosDocker "github.com/rancher/os/pkg/docker"
+	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util"
+	"github.com/rancher/os/pkg/util/network"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	dockerClient "github.com/docker/engine-api/client"
@@ -13,15 +17,10 @@ import (
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/docker"
 	composeClient "github.com/docker/libcompose/docker/client"
-
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/events"
 	"github.com/docker/libcompose/project/options"
-	"github.com/rancher/os/config"
-	rosDocker "github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
-	"github.com/rancher/os/pkg/util/network"
+	"golang.org/x/net/context"
 )
 
 func CreateService(cfg *config.CloudConfig, name string, serviceConfig *composeConfig.ServiceConfigV1) (project.Service, error) {

@@ -5,12 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	"golang.org/x/net/context"
-
-	"github.com/codegangsta/cli"
-	"github.com/docker/docker/reference"
-	composeConfig "github.com/docker/libcompose/config"
-	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control/service"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/compose"
@@ -18,6 +12,12 @@ import (
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
 	"github.com/rancher/os/pkg/util/network"
+
+	"github.com/codegangsta/cli"
+	"github.com/docker/docker/reference"
+	composeConfig "github.com/docker/libcompose/config"
+	"github.com/docker/libcompose/project/options"
+	"golang.org/x/net/context"
 )
 
 func consoleSubcommands() []cli.Command {

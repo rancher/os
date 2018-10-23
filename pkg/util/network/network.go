@@ -8,11 +8,11 @@ import (
 	"os"
 	"strings"
 
-	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-
-	composeConfig "github.com/docker/libcompose/config"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
+
+	yaml "github.com/cloudfoundry-incubator/candiedyaml"
+	composeConfig "github.com/docker/libcompose/config"
 )
 
 var (

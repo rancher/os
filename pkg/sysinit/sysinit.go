@@ -7,13 +7,14 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/docker/engine-api/types"
-	"github.com/docker/libcompose/project/options"
 	"github.com/rancher/os/cmd/control"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/compose"
 	"github.com/rancher/os/pkg/docker"
 	"github.com/rancher/os/pkg/log"
+
+	"github.com/docker/engine-api/types"
+	"github.com/docker/libcompose/project/options"
 	"golang.org/x/net/context"
 )
 

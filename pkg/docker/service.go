@@ -3,14 +3,15 @@ package docker
 import (
 	"fmt"
 
+	"github.com/rancher/os/config"
+	"github.com/rancher/os/pkg/log"
+
 	dockerclient "github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/docker"
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/options"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
 	"golang.org/x/net/context"
 )
 

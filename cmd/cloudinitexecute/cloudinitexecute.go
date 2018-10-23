@@ -15,6 +15,7 @@ import (
 	"github.com/rancher/os/pkg/docker"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
+
 	"golang.org/x/net/context"
 )
 

@@ -7,10 +7,11 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/codegangsta/cli"
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
+
+	"github.com/codegangsta/cli"
 )
 
 var (
