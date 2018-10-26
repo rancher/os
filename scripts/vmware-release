@@ -13,6 +13,9 @@ VMDK_NAME="rancheros.vmdk"
 
 if [ "$VMWARE_AUTOFORMAT" = 1 ]; then
     ISO_NAME="rancheros-autoformat.iso"
+    echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/latest/vmware/${ISO_NAME}"
+    echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${ISO_NAME}"
+    exit 0
 else
     ISO_NAME="rancheros.iso"
 fi
@@ -77,7 +80,7 @@ for file in $(ls dist/artifacts/); do
             echo "gsutil cp dist/artifacts/${INITRD} gs://releases.rancher.com/os/latest/vmware/${INITRD}" >> ./dist/publish_gss_latest.sh
             echo "gsutil cp dist/artifacts/${INITRD} gs://releases.rancher.com/os/${VERSION}/vmware/${INITRD}" >> ./dist/publish_gss_${VERSION}.sh
             ;;
-        "rancheros.iso" | "rancheros-autoformat.iso")
+        "rancheros.iso")
             echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/latest/vmware/${ISO_NAME}" >> ./dist/publish_gss_latest.sh
             echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${ISO_NAME}" >> ./dist/publish_gss_${VERSION}.sh
             ;;
