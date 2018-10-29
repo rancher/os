@@ -76,7 +76,11 @@ func mdadmScan() error {
 }
 
 func runRngd() error {
-	cmd := exec.Command("rngd", "-q")
+	// use /dev/urandom as random number input for rngd
+	// this is a really bad idea
+	// since I am simple filling the kernel entropy pool with entropy coming from the kernel itself!
+	// but this does not need to consider the user's hw rngd drivers.
+	cmd := exec.Command("rngd", "-r", "/dev/urandom", "-q")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
