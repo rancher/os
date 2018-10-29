@@ -72,8 +72,8 @@ ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
 ARG DFS_IMAGE=${OS_REPO}/docker:v1.11.2-2
 
-ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2018.02-4/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2018.02-4/os-base_arm64.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2018.02.7-1/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2018.02.7-1/os-base_arm64.tar.xz
 
 ARG SYSTEM_DOCKER_VERSION=17.06-ros4
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
