@@ -37,7 +37,8 @@ kvm -curses \
     -cdrom assets/rancheros.iso \
     -m 2048 \
     -fsdev local,id=conf,security_model=none,path=$(pwd)/build \
-    -device virtio-9p-pci,fsdev=conf,mount_tag=config-2
+    -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
+    -device virtio-rng-pci
 
 [ -f build/success ]
 

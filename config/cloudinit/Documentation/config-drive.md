@@ -36,5 +36,6 @@ image and use a plain directory containing the same contents:
 qemu-system-x86_64 \
     -fsdev local,id=conf,security_model=none,readonly,path=/tmp/new-drive \
     -device virtio-9p-pci,fsdev=conf,mount_tag=config-2 \
+    -device virtio-rng-pci \
     [usual qemu options here...]
 ```
