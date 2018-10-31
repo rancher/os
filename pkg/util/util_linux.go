@@ -119,6 +119,28 @@ func Blkid(label string) (deviceName, deviceType string, err error) {
 	return
 }
 
+func BlkidType(deviceType string) (deviceNames []string, err error) {
+	// Not all blkid's have `blkid -L label (see busybox/alpine)
+	cmd := exec.Command("blkid")
+	cmd.Stderr = os.Stderr
+	out, err := cmd.Output()
+	if err != nil {
+		return nil, err
+	}
+	r := bytes.NewReader(out)
+	s := bufio.NewScanner(r)
+	for s.Scan() {
+		line := s.Text()
+		if !strings.Contains(line, `TYPE="`+deviceType+`"`) {
+			continue
+		}
+		d := strings.Split(line, ":")
+		deviceName := d[0]
+		deviceNames = append(deviceNames, deviceName)
+	}
+	return deviceNames, nil
+}
+
 // GetHypervisor tries to detect if we're running in a VM, and returns a string for its type
 func GetHypervisor() string {
 	return cpuid.CPU.HypervisorName
