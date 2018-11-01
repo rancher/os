@@ -123,7 +123,7 @@ func consoleInitFunc() error {
 		}
 	}
 
-	for _, link := range []symlink{
+	baseSymlink := []symlink{
 		{"/var/lib/rancher/engine/docker", "/usr/bin/docker"},
 		{"/var/lib/rancher/engine/docker-init", "/usr/bin/docker-init"},
 		{"/var/lib/rancher/engine/docker-containerd", "/usr/bin/docker-containerd"},
@@ -134,7 +134,21 @@ func consoleInitFunc() error {
 		{"/var/lib/rancher/engine/docker-runc", "/usr/bin/docker-runc"},
 		{"/usr/share/ros/os-release", "/usr/lib/os-release"},
 		{"/usr/share/ros/os-release", "/etc/os-release"},
-	} {
+	}
+
+	if cfg.Rancher.Console == "default" {
+		// add iptables symlinks for default console
+		baseSymlink = append(baseSymlink, []symlink{
+			{"/usr/sbin/iptables", "/usr/sbin/iptables-save"},
+			{"/usr/sbin/iptables", "/usr/sbin/iptables-restore"},
+			{"/usr/sbin/iptables", "/usr/sbin/ip6tables"},
+			{"/usr/sbin/iptables", "/usr/sbin/ip6tables-save"},
+			{"/usr/sbin/iptables", "/usr/sbin/ip6tables-restore"},
+			{"/usr/sbin/iptables", "/usr/bin/iptables-xml"},
+		}...)
+	}
+
+	for _, link := range baseSymlink {
 		syscall.Unlink(link.newname)
 		if err := os.Symlink(link.oldname, link.newname); err != nil {
 			log.Error(err)
