@@ -65,6 +65,9 @@ func Main() {
 	if err := saveCloudConfig(); err != nil {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
+
+	// exit dhcpcd
+	netconf.StopDhcpcd()
 }
 
 func saveCloudConfig() error {
