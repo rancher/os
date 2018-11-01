@@ -73,7 +73,7 @@ func Recovery(initFailure error) {
 	recoveryConfig.Rancher.BootstrapDocker = config.DockerConfig{
 		EngineOpts: config.EngineOpts{
 			Bridge:        "none",
-			StorageDriver: "overlay",
+			StorageDriver: "overlay2",
 			Restart:       &[]bool{false}[0],
 			Graph:         "/var/lib/recovery-docker",
 			Group:         "root",
@@ -89,7 +89,7 @@ func Recovery(initFailure error) {
 
 	_, err = config.ChainCfgFuncs(&recoveryConfig,
 		[]config.CfgFuncData{
-			{"loadSystemImages", sysinit.LoadSystemImages},
+			{"loadSystemImages", sysinit.LoadBootstrapImages},
 			{"recovery console", recoveryServices},
 		})
 	if err != nil {
