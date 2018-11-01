@@ -2,6 +2,9 @@ package network
 
 import (
 	"io/ioutil"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/docker"
@@ -29,7 +32,11 @@ func Main() {
 		log.Error(err)
 	}
 
-	select {}
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGTERM)
+	<-signalChan
+	log.Info("Received SIGTERM, shutting down")
+	netconf.StopDhcpcd()
 }
 
 func ApplyNetworkConfig(cfg *config.CloudConfig) {

@@ -25,6 +25,7 @@ const (
 
 var (
 	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
+	exitDhcpArgs    = []string{"dhcpcd", "-x"}
 	dhcpReleaseCmd  = "dhcpcd --release"
 )
 
@@ -527,5 +528,13 @@ func GetValidLinkList() ([]netlink.Link, error) {
 	}
 
 	return validLinkList, nil
+}
 
+func StopDhcpcd() {
+	cmd := exec.Command(exitDhcpArgs[0], exitDhcpArgs[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Errorf("Failed to run command [%v]: %v", cmd, err)
+	}
 }
