@@ -12,13 +12,6 @@ export ARTIFACTS BUILD INITRD_DIR VERSION
 ./scripts/layout-initrd
 ./scripts/layout-kernel
 
-DFS_ARCH=$(docker create ${DFS_IMAGE}${SUFFIX})
-trap "docker rm -fv ${DFS_ARCH} >/dev/null" EXIT
-docker export ${DFS_ARCH} | tar xf - -C ${INITRD_DIR} --exclude=usr/bin/docker*      \
-                                                      --exclude=usr/share/git-core   \
-                                                      --exclude=usr/bin/git          \
-                                                      --exclude=usr/bin/ssh          \
-                                                      --exclude=usr/libexec          \
-                                                      usr
+curl -sL ${!OS_INITRD_BASE_URL} | tar xzvf - -C ${INITRD_DIR}
 
 ./scripts/hash-initrd
