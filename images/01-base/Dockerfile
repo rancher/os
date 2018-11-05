@@ -39,6 +39,8 @@ COPY dhcpcd/10-mtu /lib/dhcpcd/dhcpcd-hooks/
 COPY dhcpcd/dhcpcd.debug /usr/share/logrotate/logrotate.d/
 RUN sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
     sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
+    rm -f /etc/wpa_supplicant.conf && \
+    ln -s /usr/share/dhcpcd/hooks/10-wpa_supplicant /lib/dhcpcd/dhcpcd-hooks/ && \
     sed -i 1,10d /etc/rsyslog.conf && \
     echo "*.*                /var/log/syslog" >> /etc/rsyslog.conf
 # dump kernel log to console (but after we've finished booting)
