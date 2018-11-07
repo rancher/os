@@ -17,4 +17,4 @@ echo Building $OUTPUT
 BUILDDATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
 CONST="-X github.com/rancher/os/config.Version=${VERSION} -X github.com/rancher/os/config.OsRepo=${OS_REPO} -X github.com/rancher/os/config.BuildDate='${BUILDDATE}'"
-go build -tags "selinux cgo daemon netgo" -installsuffix netgo -ldflags "$CONST -linkmode external -extldflags -static -s -w" -o ${OUTPUT}
+go build -ldflags "$CONST -extldflags -static -s -w" -o ${OUTPUT}
