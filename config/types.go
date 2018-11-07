@@ -47,6 +47,10 @@ const (
 	MetaDataFile           = "/var/lib/rancher/conf/metadata"
 	CloudConfigFile        = "/var/lib/rancher/conf/cloud-config.yml"
 	EtcResolvConfFile      = "/etc/resolv.conf"
+	WPAConfigFile          = "/etc/wpa_supplicant-%s.conf"
+	WPATemplateFile        = "/etc/wpa_supplicant.conf.tpl"
+	DHCPCDConfigFile       = "/etc/dhcpcd.conf"
+	DHCPCDTemplateFile     = "/etc/dhcpcd.conf.tpl"
 	MultiDockerConfFile    = "/var/lib/rancher/conf.d/m-user-docker.yml"
 	MultiDockerDataDir     = "/var/lib/m-user-docker"
 )

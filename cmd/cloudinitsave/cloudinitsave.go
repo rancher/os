@@ -66,6 +66,8 @@ func Main() {
 		log.Errorf("Failed to save cloud-config: %v", err)
 	}
 
+	// exit wpa_supplicant
+	netconf.StopWpaSupplicant()
 	// exit dhcpcd
 	netconf.StopDhcpcd()
 }

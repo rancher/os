@@ -26,6 +26,7 @@ const (
 var (
 	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
 	exitDhcpArgs    = []string{"dhcpcd", "-x"}
+	exitWpaArgs     = []string{"wpa_cli", "terminate"}
 	dhcpReleaseCmd  = "dhcpcd --release"
 )
 
@@ -208,6 +209,13 @@ func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg *sync.WaitGroup, us
 	}
 
 	log.Debugf("Config(%s): %#v", linkName, match)
+
+	// We plan to use the dhcpcd hook to control the wpa_supplicant, Whether the Wi-Fi network uses DHCP or Static
+	// https://wiki.archlinux.org/index.php/Dhcpcd#Hooks.
+	if match.WifiNetwork != "" {
+		match.DHCP = true
+	}
+
 	runCmds(match.PreUp, linkName)
 	defer runCmds(match.PostUp, linkName)
 
@@ -223,16 +231,19 @@ func applyOuter(link netlink.Link, netCfg *NetworkConfig, wg *sync.WaitGroup, us
 	}
 
 	wg.Add(1)
-	go func(iface string, match InterfaceConfig) {
+	go func(link netlink.Link, match InterfaceConfig) {
 		if match.DHCP {
-			// retrigger, perhaps we're running this to get the new address
-			runDhcp(netCfg, iface, match.DHCPArgs, !userSetHostname, !userSetDNS)
+			if match.WifiNetwork != "" {
+				runWifiDhcp(netCfg, link, match.WifiNetwork, !userSetHostname, !userSetDNS)
+			} else {
+				runDhcp(netCfg, link.Attrs().Name, match.DHCPArgs, !userSetHostname, !userSetDNS)
+			}
 		} else {
-			log.Infof("dhcp release %s", iface)
-			runDhcp(netCfg, iface, dhcpReleaseCmd, false, true)
+			log.Infof("dhcp release %s", link.Attrs().Name)
+			runDhcp(netCfg, link.Attrs().Name, dhcpReleaseCmd, false, true)
 		}
 		wg.Done()
-	}(linkName, match)
+	}(link, match)
 }
 
 func GetDhcpLease(iface string) (lease map[string]string) {
@@ -308,6 +319,25 @@ func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, se
 	if err := cmd.Run(); err != nil {
 		log.Errorf("Failed to run dhcpcd for %s: %v", iface, err)
 	}
+}
+
+func runWifiDhcp(netCfg *NetworkConfig, link netlink.Link, network string, setHostname, setDNS bool) {
+	iface := link.Attrs().Name
+	if _, ok := netCfg.WifiNetworks[network]; !ok {
+		return
+	}
+
+	// Remove DHCP lease IP and static IP
+	if hasDhcp(iface) {
+		runDhcp(netCfg, iface, dhcpReleaseCmd, false, false)
+	}
+	existAddress, _ := getLinkAddrs(link)
+	for _, addr := range existAddress {
+		log.Infof("removing  %s from %s", addr.String(), link.Attrs().Name)
+		removeAddress(addr, link)
+	}
+
+	runDhcp(netCfg, iface, "", !setHostname, !setDNS)
 }
 
 func linkUp(link netlink.Link, netConf InterfaceConfig) error {
@@ -536,5 +566,22 @@ func StopDhcpcd() {
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
 		log.Errorf("Failed to run command [%v]: %v", cmd, err)
+	}
+}
+
+func StopWpaSupplicant() {
+	links, err := GetValidLinkList()
+	if err != nil {
+		log.Errorf("error getting LinkList: %s", err)
+		return
+	}
+	// need terminate all ifname
+	for _, link := range links {
+		cmd := exec.Command(exitWpaArgs[0], exitWpaArgs[1], "-i", link.Attrs().Name)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Errorf("Failed to run command %v: %v", cmd.Args, err)
+		}
 	}
 }

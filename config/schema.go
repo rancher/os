@@ -87,7 +87,8 @@ var schema = `{
 				"post_cmds": {"$ref": "#/definitions/list_of_strings"},
 				"http_proxy": {"type": "string"},
 				"https_proxy": {"type": "string"},
-				"no_proxy": {"type": "string"}
+				"no_proxy": {"type": "string"},
+				"wifi_networks": {"type": "object"}
 			}
 		},
 

@@ -20,6 +20,13 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		}
 	}
 
+	if len(stateConfig.Rancher.Network.WifiNetworks) > 0 {
+		cfg.Rancher.Network.WifiNetworks = stateConfig.Rancher.Network.WifiNetworks
+		if err := config.Set("rancher.network.wifi_networks", stateConfig.Rancher.Network.WifiNetworks); err != nil {
+			log.Error(err)
+		}
+	}
+
 	if len(stateConfig.Rancher.Network.Interfaces) > 0 {
 		cfg.Rancher.Network = stateConfig.Rancher.Network
 		if err := config.Set("rancher.network", stateConfig.Rancher.Network); err != nil {
