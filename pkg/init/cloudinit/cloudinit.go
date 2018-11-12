@@ -1,6 +1,9 @@
 package cloudinit
 
 import (
+	"path/filepath"
+	"strings"
+
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/compose"
 	"github.com/rancher/os/pkg/init/docker"
@@ -12,6 +15,37 @@ import (
 func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	stateConfig := config.LoadConfigWithPrefix(config.StateDir)
 	cfg.Rancher.CloudInit.Datasources = stateConfig.Rancher.CloudInit.Datasources
+
+	hypervisor := util.GetHypervisor()
+	if hypervisor == "" {
+		log.Infof("ros init: No Detected Hypervisor")
+	} else {
+		log.Infof("ros init: Detected Hypervisor: %s", hypervisor)
+	}
+	if hypervisor == "vmware" {
+		// add vmware to the end - we don't want to over-ride an choices the user has made
+		cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
+	}
+
+	if len(cfg.Rancher.CloudInit.Datasources) == 0 {
+		log.Info("No specific datasources, ignore cloudinit")
+		return cfg, nil
+	}
+	if onlyConfigDrive(cfg.Rancher.CloudInit.Datasources) {
+		configDev := util.ResolveDevice("LABEL=config-2")
+		if configDev == "" {
+			// Check v9fs: https://www.kernel.org/doc/Documentation/filesystems/9p.txt
+			matches, _ := filepath.Glob("/sys/bus/virtio/drivers/9pnet_virtio/virtio*/mount_tag")
+			if len(matches) == 0 {
+				log.Info("Configdrive was enabled but has no configdrive device or filesystem, ignore cloudinit")
+				return cfg, nil
+			}
+		}
+	}
+
+	if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
+		log.Error(err)
+	}
 
 	if stateConfig.Rancher.Network.DHCPTimeout > 0 {
 		cfg.Rancher.Network.DHCPTimeout = stateConfig.Rancher.Network.DHCPTimeout
@@ -32,21 +66,6 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		if err := config.Set("rancher.network", stateConfig.Rancher.Network); err != nil {
 			log.Error(err)
 		}
-	}
-
-	hypervisor := util.GetHypervisor()
-	if hypervisor == "" {
-		log.Infof("ros init: No Detected Hypervisor")
-	} else {
-		log.Infof("ros init: Detected Hypervisor: %s", hypervisor)
-	}
-	if hypervisor == "vmware" {
-		// add vmware to the end - we don't want to over-ride an choices the user has made
-		cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
-	}
-
-	if err := config.Set("rancher.cloud_init.datasources", cfg.Rancher.CloudInit.Datasources); err != nil {
-		log.Error(err)
 	}
 
 	log.Infof("init, runCloudInitServices(%v)", cfg.Rancher.CloudInit.Datasources)
@@ -80,4 +99,17 @@ func runCloudInitServiceSet(cfg *config.CloudConfig) (*config.CloudConfig, error
 	log.Info("Running cloud-init services")
 	_, err := compose.RunServiceSet("cloud-init", cfg, cfg.Rancher.CloudInitServices)
 	return cfg, err
+}
+
+func onlyConfigDrive(datasources []string) bool {
+	if len(datasources) != 1 {
+		return false
+	}
+	for _, ds := range datasources {
+		parts := strings.SplitN(ds, ":", 2)
+		if parts[0] == "configdrive" {
+			return true
+		}
+	}
+	return false
 }
