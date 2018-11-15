@@ -11,9 +11,14 @@ cd $(dirname $0)/..
 IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)
 INIT_IMAGES=""
 SYSTEM_IMAGES=""
+
+for i in ${APPEND_SYSTEM_IMAGES};do
+    IMAGES="${IMAGES} ${i}"
+done
+
 for i in ${IMAGES}; do
     echo "tar-image: pull($i)"
-    if [ "${FORCE_PULL}" = "1" ] || ! docker inspect $i >/dev/null 2>&1; then
+    if ! docker inspect $i >/dev/null 2>&1; then
         docker pull ${i}
     fi
 
@@ -25,11 +30,6 @@ for i in ${IMAGES}; do
         INIT_IMAGES="$INIT_IMAGES $i"
     fi
 done
-
-if [ -e ".make-vmware" ]; then
-    docker pull rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}
-    SYSTEM_IMAGES="$SYSTEM_IMAGES rancher/os-openvmtools:${OPEN_VMTOOLS_VERSION}"
-fi
 
 echo "tar-image: SYSTEM_IMAGES=$SYSTEM_IMAGES"
 echo "tar-image: INIT_IMAGES=$INIT_IMAGES"

@@ -40,7 +40,7 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
 
 ########## Dapper Configuration #####################
 
-ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG APTPROXY ENGINE_REGISTRY_MIRROR INTEGRATION_TESTS KERNEL_CHECK VMWARE_APPEND
+ENV DAPPER_ENV VERSION DEV_BUILD RUNTEST DEBUG APTPROXY ENGINE_REGISTRY_MIRROR INTEGRATION_TESTS KERNEL_CHECK APPEND_SYSTEM_IMAGES VMWARE_APPEND
 ENV DAPPER_DOCKER_SOCKET true
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os
 ENV DAPPER_OUTPUT ./bin ./dist ./build/initrd ./build/kernel
@@ -82,7 +82,6 @@ ARG SYSTEM_DOCKER_URL_amd64=https://github.com/rancher/os-system-docker/releases
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
 ARG VMWARE_AUTOFORMAT=1
-ARG OPEN_VMTOOLS_VERSION=10.2.5-3
 ######################################################
 
 # Set up environment and export all ARGS as ENV
@@ -118,8 +117,7 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     SYSTEM_DOCKER_URL=SYSTEM_DOCKER_URL_${ARCH} \
     SYSTEM_DOCKER_URL_amd64=${SYSTEM_DOCKER_URL_amd64} \
     SYSTEM_DOCKER_URL_arm64=${SYSTEM_DOCKER_URL_arm64} \
-    VMWARE_AUTOFORMAT=${VMWARE_AUTOFORMAT} \
-    OPEN_VMTOOLS_VERSION=${OPEN_VMTOOLS_VERSION}
+    VMWARE_AUTOFORMAT=${VMWARE_AUTOFORMAT}
 ENV PATH=${GOPATH}/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p ${DOWNLOADS}
