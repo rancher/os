@@ -51,8 +51,8 @@ func enableHypervisorService(cfg *config.CloudConfig, hypervisorName string) {
 		return
 	}
 
-	// only enable open-vm-tools for vmware
-	// these services(xenhvm-vm-tools, kvm-vm-tools, hyperv-vm-tools and bhyve-vm-tools) don't exist yet
+	// enable open-vm-tools and hyperv-vm-tools
+	// these services(xenhvm-vm-tools, kvm-vm-tools, and bhyve-vm-tools) don't exist yet
 	serviceName := ""
 	switch hypervisorName {
 	case "vmware":

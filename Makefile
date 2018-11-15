@@ -71,6 +71,12 @@ vmware: .dapper
 	VMWARE_APPEND="console=tty1 console=ttyS0,115200n8 printk.devkmsg=on rancher.autologin=tty1 rancher.autologin=ttyS0 rancher.autologin=ttyS1 panic=10" \
 	./.dapper vmware-release 2>&1 | tee dist/release.log
 
+hyperv: .dapper
+	mkdir -p dist
+	INTEGRATION_TESTS=0 \
+	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v1.5.0-rc1" \
+	./.dapper hyperv-release 2>&1 | tee dist/release.log
+
 help:
 	@./scripts/help
 
