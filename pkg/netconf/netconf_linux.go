@@ -329,7 +329,7 @@ func runWifiDhcp(netCfg *NetworkConfig, link netlink.Link, network string, setHo
 
 	// Remove DHCP lease IP and static IP
 	if hasDhcp(iface) {
-		runDhcp(netCfg, iface, dhcpReleaseCmd, false, false)
+		runDhcp(netCfg, iface, dhcpReleaseCmd, false, true)
 	}
 	existAddress, _ := getLinkAddrs(link)
 	for _, addr := range existAddress {
@@ -337,7 +337,7 @@ func runWifiDhcp(netCfg *NetworkConfig, link netlink.Link, network string, setHo
 		removeAddress(addr, link)
 	}
 
-	runDhcp(netCfg, iface, "", !setHostname, !setDNS)
+	runDhcp(netCfg, iface, "", !setHostname, setDNS)
 }
 
 func linkUp(link netlink.Link, netConf InterfaceConfig) error {
