@@ -13,6 +13,9 @@ VMDK_NAME="rancheros.vmdk"
 
 if [ "$VMWARE_AUTOFORMAT" = 1 ]; then
     ISO_NAME="rancheros-autoformat.iso"
+    mkdir -p /tmp/dist && mv ./dist/* /tmp/dist/
+    mkdir -p ./dist/vmware && mv /tmp/dist/* ./dist/vmware/
+    mkdir -p ./dist/artifacts && cp ./dist/vmware/artifacts/rancheros.iso ./dist/artifacts/${ISO_NAME}
     echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/latest/vmware/${ISO_NAME}"
     echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${ISO_NAME}"
     exit 0
