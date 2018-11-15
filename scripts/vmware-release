@@ -8,9 +8,6 @@ touch .make-vmware
 source ./scripts/version
 ./scripts/release
 
-ROOT_FS_NAME="rootfs.tar.gz"
-VMDK_NAME="rancheros.vmdk"
-
 if [ "$VMWARE_AUTOFORMAT" = 1 ]; then
     ISO_NAME="rancheros-autoformat.iso"
     mkdir -p /tmp/dist && mv ./dist/* /tmp/dist/
@@ -19,9 +16,11 @@ if [ "$VMWARE_AUTOFORMAT" = 1 ]; then
     echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/latest/vmware/${ISO_NAME}"
     echo "gsutil cp dist/artifacts/${ISO_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${ISO_NAME}"
     exit 0
-else
-    ISO_NAME="rancheros.iso"
 fi
+
+ROOT_FS_NAME="rootfs.tar.gz"
+VMDK_NAME="rancheros.vmdk"
+ISO_NAME="rancheros.iso"
 
 if [ "$VMWARE_APPEND" != "" ]; then
     echo "--append ${VMWARE_APPEND}"
@@ -97,6 +96,6 @@ for file in $(ls dist/artifacts/); do
             echo "gsutil cp dist/artifacts/${ROOT_FS_NAME} gs://releases.rancher.com/os/${VERSION}/vmware/${ROOT_FS_NAME}" >> ./dist/publish_gss_${VERSION}.sh
             ;;
     esac
- done
+done
 
 chmod 755 ./dist/*.sh
