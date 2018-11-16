@@ -24,10 +24,11 @@ const (
 )
 
 var (
-	defaultDhcpArgs = []string{"dhcpcd", "-MA4"}
-	exitDhcpArgs    = []string{"dhcpcd", "-x"}
-	exitWpaArgs     = []string{"wpa_cli", "terminate"}
-	dhcpReleaseCmd  = "dhcpcd --release"
+	defaultDhcpArgs  = []string{"dhcpcd", "-MA4"}
+	inactiveDhcpArgs = []string{"dhcpcd", "-MA4", "--inactive"}
+	exitDhcpArgs     = []string{"dhcpcd", "-x"}
+	exitWpaArgs      = []string{"wpa_cli", "terminate"}
+	dhcpReleaseCmd   = "dhcpcd --release"
 )
 
 func createInterfaces(netCfg *NetworkConfig) {
@@ -178,7 +179,12 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 
 	wg := sync.WaitGroup{}
 
-	//apply network config
+	// Don't start any interfaces other than those specified on the command line.
+	// This allows dhcpcd to be started in Master mode.
+	// Then wait for subsequent dhcpcd commands to start each interface as required.
+	runInactiveDhcp()
+
+	// apply network config
 	for _, link := range links {
 		applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
 	}
@@ -280,6 +286,15 @@ func getDhcpLeaseString(iface string) []byte {
 func hasDhcp(iface string) bool {
 	out := getDhcpLeaseString(iface)
 	return len(out) > 0
+}
+
+func runInactiveDhcp() {
+	cmd := exec.Command(inactiveDhcpArgs[0], inactiveDhcpArgs[1:]...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Errorf("Failed to run command [%v]: %v", cmd, err)
+	}
 }
 
 func runDhcp(netCfg *NetworkConfig, iface string, argstr string, setHostname, setDNS bool) {
