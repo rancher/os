@@ -79,22 +79,7 @@ for file in $(ls dist/artifacts/); do
 done
 echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/release.log --name release.log" >> dist/publish.sh
 
-for extra_file in rancheros-openstack.img rancheros-digitalocean.img; do
-    echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${extra_file} --name ${extra_file}" >> dist/publish.sh
-    echo "gsutil cp dist/artifacts/${extra_file} gs://releases.rancher.com/os/latest/${extra_file}" >> ./dist/publish_gss_latest.sh
-    echo "gsutil cp dist/artifacts/${extra_file} gs://releases.rancher.com/os/${VERSION}/${extra_file}" >> ./dist/publish_gss_${VERSION}.sh
-done
-
-# openstack image is made later atm
-#pushd .
-#cd dist
-#for algo in sha256 md5; do
-#    echo "$algo: $(${algo}sum rancheros-openstack.img)" >> ../../$CHECKSUM
-#done
-#popd
-
 echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ${CHECKSUM} --name checksums.txt" >> dist/publish.sh
-#echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/artifacts/changelog.txt --name changelog.txt" >> dist/publish.sh
 
 echo >> dist/publish.sh
 
