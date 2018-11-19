@@ -180,7 +180,17 @@ func ApplyNetworkConfigs(netCfg *NetworkConfig, userSetHostname, userSetDNS bool
 
 	//apply network config
 	for _, link := range links {
-		applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
+		if !strings.Contains(link.Attrs().Name, "wlan") {
+			applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
+		}
+	}
+	wg.Wait()
+
+	// apply wifi network config
+	for _, link := range links {
+		if strings.Contains(link.Attrs().Name, "wlan") {
+			applyOuter(link, netCfg, &wg, userSetHostname, userSetDNS)
+		}
 	}
 	wg.Wait()
 
@@ -337,7 +347,7 @@ func runWifiDhcp(netCfg *NetworkConfig, link netlink.Link, network string, setHo
 		removeAddress(addr, link)
 	}
 
-	runDhcp(netCfg, iface, "", !setHostname, setDNS)
+	runDhcp(netCfg, iface, "", setHostname, setDNS)
 }
 
 func linkUp(link netlink.Link, netConf InterfaceConfig) error {
