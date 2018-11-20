@@ -1,10 +1,12 @@
 package sysinit
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/rancher/os/cmd/control"
@@ -20,6 +22,7 @@ import (
 
 const (
 	systemImagesPreloadDirectory = "/var/lib/rancher/preload/system-docker"
+	systemImagesLoadStamp        = "/var/lib/rancher/.sysimages_%s_loaded.done"
 )
 
 func hasImage(name string) bool {
@@ -46,7 +49,14 @@ func LoadBootstrapImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func LoadSystemImages(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-	return loadImages(cfg, false)
+	stamp := fmt.Sprintf(systemImagesLoadStamp, strings.Replace(config.Version, ".", "_", -1))
+	if _, err := os.Stat(stamp); os.IsNotExist(err) {
+		os.Create(stamp)
+		return loadImages(cfg, false)
+	}
+
+	log.Infof("Skipped loading system images because %s exists", systemImagesLoadStamp)
+	return cfg, nil
 }
 
 func loadImages(cfg *config.CloudConfig, bootstrap bool) (*config.CloudConfig, error) {
@@ -75,7 +85,7 @@ func loadImages(cfg *config.CloudConfig, bootstrap bool) (*config.CloudConfig, e
 
 	dockerImages, _ := client.ImageList(context.Background(), types.ImageListOptions{})
 	for _, dimg := range dockerImages {
-		log.Infof("Got image repo tags: %s", dimg.RepoTags)
+		log.Debugf("Loaded a docker image: %s", dimg.RepoTags)
 	}
 
 	return cfg, nil
