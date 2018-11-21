@@ -561,7 +561,7 @@ func GetValidLinkList() ([]netlink.Link, error) {
 
 	for _, l := range links {
 		linkName := l.Attrs().Name
-		if linkName == "lo" || linkName == "docker-sys" {
+		if linkName == "lo" || linkName == "docker-sys" || linkName == "docker0" {
 			continue
 		}
 		validLinkList = append(validLinkList, l)
