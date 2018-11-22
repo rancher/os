@@ -8,12 +8,12 @@ set -ex
 # https://github.com/packethost/docker-machine-driver-packet/releases
 
 if [ "${PACKET_API_KEY}" == "" ]; then
-	echo "need to set the PACKET_API_KEY"
-	exit
+    echo "need to set the PACKET_API_KEY"
+    exit
 fi
 if [ "${PACKET_PROJECT_ID}" == "" ]; then
-	echo "need to set the PACKET_PROJECT_ID"
-	exit
+    echo "need to set the PACKET_PROJECT_ID"
+    exit
 fi
 
 # facilities
@@ -31,12 +31,12 @@ PLAN=baremetal_0
 HOST=sven-${FACILITY}-${PLAN/_/-}
 
 if ! docker-machine inspect $HOST ; then
-	docker-machine create -d packet \
-		--packet-api-key=${PACKET_API_KEY} --packet-project-id=${PACKET_PROJECT_ID} \
-		--packet-facility-code ${FACILITY} \
-		--packet-plan ${PLAN} \
-		--packet-os=ubuntu_16_04 \
-		${HOST}
+    docker-machine create -d packet \
+        --packet-api-key=${PACKET_API_KEY} --packet-project-id=${PACKET_PROJECT_ID} \
+        --packet-facility-code ${FACILITY} \
+        --packet-plan ${PLAN} \
+        --packet-os=ubuntu_16_04 \
+        ${HOST}
 fi
 
 SSH="docker-machine ssh $HOST"
@@ -116,7 +116,7 @@ $SSHSOS sudo dd if=/dev/zero of=/dev/sda count=4 bs=1024
 
 #If you're not running a type-0, also run the following command: 
 if [ "$PLAN" != "baremetal_0" ]; then
-	$SSHSOS sudo dd if=/dev/zero of=/dev/sdb count=4 bs=1024
+    $SSHSOS sudo dd if=/dev/zero of=/dev/sdb count=4 bs=1024
 fi
 
 #Both of these will hang after you run them. Just let them run for a second or two and then hit ctrl+c.

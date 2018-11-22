@@ -15,7 +15,7 @@ if [ ! -e "../dist/artifacts/$INITRD" ]; then
 fi
 
 if [ "$RUNTEST" != "" ]; then
-	RUNTEST="-check.f ${RUNTEST}"
+    RUNTEST="-check.f ${RUNTEST}"
 fi
 
 time go test -v -timeout 9999m $RUNTEST

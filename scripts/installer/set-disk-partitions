@@ -6,7 +6,7 @@ set -x
 DEVICE=${1}
 DISKTYPE=${2}
 if [[ -z $DISKTYPE ]]; then
-	DISKTYPE="msdos"
+    DISKTYPE="msdos"
 fi
 
 if [[ -z $DEVICE ]]; then
@@ -18,14 +18,14 @@ PARTITION_COUNT=$(grep $(echo $DEVICE | cut -d '/' -f3) /proc/partitions | wc -l
 if [ "$PARTITION_COUNT" -gt "1" ]; then
     echo "Device ${DEVICE} already partitioned!"
     echo "Checking to see if it is mounted"
-    
+
     # Check this container first...
     if grep -q "${DEVICE}" /proc/mounts; then
         echo "Device is mounted, we can not repartition" 1>&2
         exit 1
     fi
-   
-    # Check other system containers... 
+
+    # Check other system containers...
     for container in $(system-docker ps -q); do
         if system-docker exec $container grep -q "${DEVICE}" /proc/mounts; then
             echo "Device is mounted in system container ${container}, we can not repartition" 1>&2

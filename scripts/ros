@@ -4,10 +4,10 @@ set -e
 cd $(dirname $0)/..
 
 if [ ! -e "./build/initrd/usr/share/ros/os-config.yml" ]; then
-	./.dapper release
+    ./.dapper release
 else
-	echo "using existing build of ros"
-#	./.dapper build-target
+    echo "using existing build of ros"
+    #./.dapper build-target
 fi
 
 source ./scripts/version
@@ -20,10 +20,10 @@ echo "cloud-init-save"
 echo "---------------------------------"
 
 docker run --rm -it \
-	-v $(pwd)/build/initrd/usr/share:/usr/share \
-	-v $(pwd)/bin/ros:/usr/bin/ros \
-	-v /etc/ssl/certs:/etc/ssl/certs \
-	-v /usr/share/ca-certificates:/usr/share/ca-certificates \
-	-w  /var/lib/rancher \
-	--entrypoint sh \
-		rancher/os-base:v1.0.3
+    -v $(pwd)/build/initrd/usr/share:/usr/share \
+    -v $(pwd)/bin/ros:/usr/bin/ros \
+    -v /etc/ssl/certs:/etc/ssl/certs \
+    -v /usr/share/ca-certificates:/usr/share/ca-certificates \
+    -w  /var/lib/rancher \
+    --entrypoint sh \
+    rancher/os-base:v1.0.3

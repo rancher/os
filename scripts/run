@@ -10,8 +10,8 @@ MEMORY=2048
 
 while [ "$#" -gt 0 ]; do
     case $1 in
-	--debug)
-	    DEBUG=1
+        --debug)
+            DEBUG=1
             ;;
         --iso)
             BOOT_ISO=1
@@ -61,9 +61,9 @@ while [ "$#" -gt 0 ]; do
             shift 1
             QEMU_APPEND="${QEMU_APPEND} $1"
             ;;
-	--rsyslog)
-	   RSYSLOG=1
-	   ;;
+        --rsyslog)
+            RSYSLOG=1
+            ;;
         --append-init)
             shift 1
             APPEND_INIT="${APPEND_INIT} $1"
@@ -187,9 +187,9 @@ if [ "$BOOT_PXE" == "1" ]; then
     return 0
 fi
 if [ "$RSYSLOG" == "1" ]; then
-	defaultDev=$(ip route | grep default | cut -f 5 -d " ")
-	devIP=$(ip a show dev $defaultDev | grep "inet " | cut -d " " -f 6 | cut -d / -f 1)
-	KERNEL_ARGS="${KERNEL_ARGS} loglevel=8 netconsole=+9999@10.0.2.14/,514@${devIP}/"
+    defaultDev=$(ip route | grep default | cut -f 5 -d " ")
+    devIP=$(ip a show dev $defaultDev | grep "inet " | cut -d " " -f 6 | cut -d / -f 1)
+    KERNEL_ARGS="${KERNEL_ARGS} loglevel=8 netconsole=+9999@10.0.2.14/,514@${devIP}/"
 fi
 # ELIDE_COMMANDLINE - MUST BE LAST
 if [ "$APPEND_INIT" != "" ]; then
@@ -287,16 +287,16 @@ if [ "$QIND" != "1" ]; then
 fi
 
 if [ "$GUICONSOLE" == "" ]; then
-	# default serial console
-	DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
-	if [ "$CONSOLEDISPLAY" == "1" ]; then
-	    DISPLAY_OPTS="-curses"
-	fi
-	if [ "$NETCONSOLE" == "1" ]; then
-	    # put ttyS1 on port 4444
-	    DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
-	    KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
-	fi
+    # default serial console
+    DISPLAY_OPTS="-nographic -serial mon:stdio -display none"
+    if [ "$CONSOLEDISPLAY" == "1" ]; then
+        DISPLAY_OPTS="-curses"
+    fi
+    if [ "$NETCONSOLE" == "1" ]; then
+        # put ttyS1 on port 4444
+        DISPLAY_OPTS="${DISPLAY_OPTS} -serial tcp::4444,server"
+        KERNEL_ARGS="rancher.console=ttyS1 rancher.autologin=ttyS1 ${KERNEL_ARGS}"
+    fi
 fi
 
 if [ "${NO_NETWORK}" == "1" ]; then

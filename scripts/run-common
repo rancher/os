@@ -49,7 +49,7 @@ QEMUARCH=${qemuarch["${ARCH}"]}
 TTYCONS=${ttycons["${ARCH}"]}
 
 if [ "$ENGINE_REGISTRY_MIRROR" != "" ]; then
-	REGISTRY_MIRROR="rancher.bootstrap_docker.registry_mirror=${ENGINE_REGISTRY_MIRROR} rancher.system_docker.registry_mirror=${ENGINE_REGISTRY_MIRROR} rancher.docker.registry_mirror=${ENGINE_REGISTRY_MIRROR}"
+    REGISTRY_MIRROR="rancher.bootstrap_docker.registry_mirror=${ENGINE_REGISTRY_MIRROR} rancher.system_docker.registry_mirror=${ENGINE_REGISTRY_MIRROR} rancher.docker.registry_mirror=${ENGINE_REGISTRY_MIRROR}"
 fi
 
 DEFAULT_KERNEL_ARGS="printk.devkmsg=on rancher.password=rancher console=tty1 rancher.autologin=tty1 console=${TTYCONS} rancher.autologin=${TTYCONS} ${REGISTRY_MIRROR} "

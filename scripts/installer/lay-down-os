@@ -16,7 +16,7 @@ do
         c) CLOUD_CONFIG="$OPTARG" ;;
         a) APPEND="$OPTARG" ;;
         g) MBR_FILE=gptmbr.bin ;;
-	# upgrade!
+        # upgrade!
         r) ROLLBACK_VERSION="$OPTARG" ;;
         k) KEXEC=y ;;
         # used for testing?

@@ -15,29 +15,29 @@ append command [lrange $argv 4 end]
 set timeout -1
 
 proc runcmd { username password cmd } {
-	send_user "<< username: $username"
-	send_user "<< password: $password"
-	send_user "<< cmd: $cmd"
+    send_user "<< username: $username"
+    send_user "<< password: $password"
+    send_user "<< cmd: $cmd"
 
-	set done 0;
-	while {$done == 0} {
-		expect  {
-			"*?login:" {
-				send -- "$username\r"
-			}
-			"*?assword:" {
-				send -- "$password\r"
-				#send -- "\r"
-			}
-			"*?:~#" {
-				send -- "$cmd\r"
-				set done 1
-			}
-			"*?Reached target Shutdown." {
-				set done 1
-			}
-		}
-	}
+    set done 0;
+    while {$done == 0} {
+        expect  {
+            "*?login:" {
+                send -- "$username\r"
+            }
+            "*?assword:" {
+                send -- "$password\r"
+                #send -- "\r"
+            }
+            "*?:~#" {
+                send -- "$cmd\r"
+                    set done 1
+            }
+            "*?Reached target Shutdown." {
+                set done 1
+            }
+        }
+    }
 }
 
 
@@ -48,16 +48,16 @@ send -- "\r"
 set running [ runcmd $username $password $command ]
 
 expect {
-	"*? (yes/no)?" {
-		send -- "no\r"
-		expect "# "
-	}
-	"# " {
-	}
-	"*?Restarting system" {
-	}
-	"*?kexec_core: Starting new kernel" {
-	}
+    "*? (yes/no)?" {
+        send -- "no\r"
+        expect "# "
+    }
+    "# " {
+    }
+    "*?Restarting system" {
+    }
+    "*?kexec_core: Starting new kernel" {
+    }
 }
 
 send_user "<< DONE expect"

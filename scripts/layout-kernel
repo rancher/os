@@ -39,7 +39,7 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
         ## and then package it up cpio
         #cd ${BUILD}/kernel-fs/
         #echo Creating kernel ${ARTIFACTS}/linuxmods-${KERNEL_VERSION}
-        
+
         #if [ "$COMPRESS" == "" ]; then
         #    COMPRESS="gzip -1"
         #fi
@@ -50,17 +50,17 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
         #cp ${ARTIFACTS}/linuxmods-${KERNEL_VERSION} ${BUILD}/kernel/linuxmods
     fi
 else
-	if [ "$ARCH" == "amd64" ]; then
-		echo "no ${DOWNLOADS}/kernel.tar.gz found"
-		exit 1
-	fi
+    if [ "$ARCH" == "amd64" ]; then
+        echo "no ${DOWNLOADS}/kernel.tar.gz found"
+        exit 1
+    fi
 fi
 
 if [ "$ARCH" == "amd64" ]; then
-	ls -lah ${ARTIFACTS}/vmlinuz-*
-	if [ ! -e "${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}" ]; then
-		echo "Can't find ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}"
-		exit -1
-	fi
+    ls -lah ${ARTIFACTS}/vmlinuz-*
+    if [ ! -e "${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}" ]; then
+        echo "Can't find ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}"
+        exit -1
+    fi
 fi
 

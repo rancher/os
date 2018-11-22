@@ -49,16 +49,16 @@ docker run --privileged -it --rm \
     -v /dev/mapper:/dev/mapper \
     -v ${STATE}:/cluster \
     rancher/os:${VERSION} \
-	--isoinstallerloaded=1 \
-        --force \
-        --no-reboot \
-	--debug \
-        -c /cluster/cloud-config.yml \
-        -t generic \
-        -d ${LOOPBACK} \
-        -p ${PARTITION} \
-	--append "rancher.autologin=tty1"
-        #-f /cluster/images.tar.xz:var/lib/system-docker/preload/images.tar.xz
+    --isoinstallerloaded=1 \
+    --force \
+    --no-reboot \
+    --debug \
+    -c /cluster/cloud-config.yml \
+    -t generic \
+    -d ${LOOPBACK} \
+    -p ${PARTITION} \
+    --append "rancher.autologin=tty1"
+    #-f /cluster/images.tar.xz:var/lib/system-docker/preload/images.tar.xz
 
 
 sync

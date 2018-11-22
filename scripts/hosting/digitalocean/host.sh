@@ -15,12 +15,12 @@ DIST="../../../dist/artifacts"
 command -v caddy >/dev/null 2>&1 || { echo >&2 "I require caddy but it's not installed, see https://github.com/mholt/caddy#quick-start . Aborting."; exit 1; }
 
 if [[ -e "dist/artifacts" ]]; then
-	cd scripts/hosting/digitalocean
+    cd scripts/hosting/digitalocean
 fi
 
 if [[ ! -e "$DIST" ]]; then
-	echo "Need to 'make release' so that there are files to serve. Aborting."
-	exit 1
+    echo "Need to 'make release' so that there are files to serve. Aborting."
+    exit 1
 fi
 
 source ${DIST}/../../scripts/version
@@ -35,10 +35,10 @@ SOURCECONFIG="fedora-symbiote.yml"
 CLOUDCONFIG="digitalocean.sh"
 
 cat ${SOURCECONFIG} \
-	| sed "s|^URL_BASE.*$|URL_BASE=http://${IP}:${PORT}|g" \
-	| sed "s|^VMLINUX.*$|VMLINUX=${VMLINUX}|g" \
-	| sed "s|^INITRD.*$|INITRD=${INITRD}|g" \
-		> ${DIST}/${CLOUDCONFIG}
+    | sed "s|^URL_BASE.*$|URL_BASE=http://${IP}:${PORT}|g" \
+    | sed "s|^VMLINUX.*$|VMLINUX=${VMLINUX}|g" \
+    | sed "s|^INITRD.*$|INITRD=${INITRD}|g" \
+    > ${DIST}/${CLOUDCONFIG}
 
 echo "Hosting a cloud-config script at http://${IP}:${PORT}/${CLOUDCONFIG}"
 echo "Usage:"
