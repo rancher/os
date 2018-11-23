@@ -17,6 +17,7 @@ func udevSettleAction(c *cli.Context) {
 
 func UdevSettle() error {
 	cmd := exec.Command("udevd", "--daemon")
+	defer exec.Command("killall", "udevd").Run()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Run(); err != nil {
