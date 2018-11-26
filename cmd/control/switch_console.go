@@ -25,6 +25,14 @@ func switchConsoleAction(c *cli.Context) error {
 		return err
 	}
 
+	// stop docker and console to avoid zombie process
+	if err = project.Stop(context.Background(), 10, "docker"); err != nil {
+		log.Errorf("Failed to stop Docker: %v", err)
+	}
+	if err = project.Stop(context.Background(), 10, "console"); err != nil {
+		log.Errorf("Failed to stop console: %v", err)
+	}
+
 	if newConsole != "default" {
 		if err = compose.LoadSpecialService(project, cfg, "console", newConsole); err != nil {
 			return err
@@ -41,8 +49,8 @@ func switchConsoleAction(c *cli.Context) error {
 		return err
 	}
 
-	if err = project.Restart(context.Background(), 10, "docker"); err != nil {
-		log.Errorf("Failed to restart Docker: %v", err)
+	if err = project.Start(context.Background(), "docker"); err != nil {
+		log.Errorf("Failed to start Docker: %v", err)
 	}
 
 	return nil
