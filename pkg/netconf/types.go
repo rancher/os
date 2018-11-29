@@ -1,15 +1,16 @@
 package netconf
 
 type NetworkConfig struct {
-	PreCmds      []string                     `yaml:"pre_cmds,omitempty"`
-	DHCPTimeout  int                          `yaml:"dhcp_timeout,omitempty"`
-	DNS          DNSConfig                    `yaml:"dns,omitempty"`
-	Interfaces   map[string]InterfaceConfig   `yaml:"interfaces,omitempty"`
-	PostCmds     []string                     `yaml:"post_cmds,omitempty"`
-	HTTPProxy    string                       `yaml:"http_proxy,omitempty"`
-	HTTPSProxy   string                       `yaml:"https_proxy,omitempty"`
-	NoProxy      string                       `yaml:"no_proxy,omitempty"`
-	WifiNetworks map[string]WifiNetworkConfig `yaml:"wifi_networks,omitempty"`
+	PreCmds       []string                     `yaml:"pre_cmds,omitempty"`
+	DHCPTimeout   int                          `yaml:"dhcp_timeout,omitempty"`
+	DNS           DNSConfig                    `yaml:"dns,omitempty"`
+	Interfaces    map[string]InterfaceConfig   `yaml:"interfaces,omitempty"`
+	PostCmds      []string                     `yaml:"post_cmds,omitempty"`
+	HTTPProxy     string                       `yaml:"http_proxy,omitempty"`
+	HTTPSProxy    string                       `yaml:"https_proxy,omitempty"`
+	NoProxy       string                       `yaml:"no_proxy,omitempty"`
+	WifiNetworks  map[string]WifiNetworkConfig `yaml:"wifi_networks,omitempty"`
+	ModemNetworks []ModemNetworkConfig         `yaml:"modem_networks,omitempty"`
 }
 
 type InterfaceConfig struct {
@@ -56,4 +57,10 @@ type WifiNetworkConfig struct {
 	EapolFlags        int      `yaml:"eapol_flags,omitempty"`
 	KeyMgmt           string   `yaml:"key_mgmt,omitempty"`
 	Password          string   `yaml:"password,omitempty"`
+}
+
+type ModemNetworkConfig struct {
+	Apn       string `yaml:"apn"`
+	Interface string `yaml:"interface"`
+	ExtraArgs string `yaml:"extra_args,omitempty"`
 }
