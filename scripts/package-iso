@@ -13,15 +13,6 @@ CHECKSUM=iso-checksums.txt
 mkdir -p ${CD}/boot/isolinux
 mkdir -p ${CD}/rancheros
 
-if \
-      [[ "${ARCH}" != "amd64" ]] || \
-      [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || \
-      [ ! -f ${ARTIFACTS}/${INITRD} ]; \
-    then
-    echo "Skipping package-iso due to ARM/ARM64 build: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${ARTIFACTS}/${INITRD} not found"
-    exit 0
-fi
-
 cp ${ARTIFACTS}/${INITRD}                     ${CD}/boot
 
 # TODO: these move to os-kernel
@@ -39,7 +30,7 @@ cp /usr/lib/syslinux/modules/bios/ldlinux.c32  ${CD}/boot/isolinux/
 cp /usr/lib/syslinux/modules/bios/*.c32        ${CD}/boot/isolinux/
 # add the installer image to the iso for non-network / dev/test
 cp ${ARTIFACTS}/installer.tar                  ${CD}/rancheros/
-cp ${ARTIFACTS}/Dockerfile.amd64               ${CD}/rancheros/
+cp ${ARTIFACTS}/Dockerfile.${ARCH}             ${CD}/rancheros/
 gzip ${CD}/rancheros/installer.tar
 cd ${CD} && xorriso \
     -as mkisofs \

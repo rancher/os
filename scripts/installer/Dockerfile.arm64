@@ -1,19 +1,7 @@
-FROM aarch64/debian:jessie
-ENV DEBIAN_FRONTEND noninteractive
-ENV ARCH arm
+FROM rancher/os-installer
 
-RUN apt-get update && apt-get install -y parted git gcc make autoconf
+# TODO: separate out the elements below - so we can mix and match updates
+RUN rm /dist/ \
+    && mkdir -p /dist/
 
-RUN mkdir -p /usr/local/src && \
-    cd /usr/local/src && \
-    git clone -b kdump/v0.14 https://git.linaro.org/people/takahiro.akashi/kexec-tools.git && \
-    cd kexec-tools && ./bootstrap && ./configure && make && make install
-
-COPY conf lay-down-os seed-data set-disk-partitions /scripts/
-COPY ./build/vmlinuz /dist/vmlinuz
-COPY ./build/initrd  /dist/initrd
-
-ARG VERSION
-ENV VERSION=${VERSION}
-
-ENTRYPOINT ["/scripts/lay-down-os"]
+COPY ./boot/ /dist/

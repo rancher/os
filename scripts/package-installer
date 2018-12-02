@@ -9,15 +9,6 @@ BASEDOCKERFILE=./scripts/installer/BaseDockerfile.${ARCH}
 DOCKERFILE=./scripts/installer/Dockerfile.${ARCH}
 ARTIFACTS=./dist/artifacts
 
-if \
-      [[ "${ARCH}" != "amd64" ]] || \
-      [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ] || \
-      [ ! -f ${ARTIFACTS}/${INITRD} ]; \
-      then
-    echo "Skipping package-installer due to ARM/ARM64 build: ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION}  or ${ARTIFACTS}/${INITRD} not found"
-    exit 0
-fi
-
 # build kexec
 pushd .
 cd scripts/installer/kexec
