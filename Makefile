@@ -43,11 +43,6 @@ release-build:
 	mkdir -p dist
 	./.dapper release 2>&1 | tee dist/release.log
 
-itest:
-	mkdir -p dist
-	./.dapper integration-test 2>&1 | tee dist/itest.log
-	grep --binary-files=text FAIL dist/itest.log || true
-
 rpi64:
 	# scripts/images/raspberry-pi-hypriot64/dist/rancheros-raspberry-pi.zip
 	cp dist/artifacts/rootfs_arm64.tar.gz scripts/images/raspberry-pi-hypriot64/
@@ -56,14 +51,12 @@ rpi64:
 
 vmware: .dapper
 	mkdir -p dist
-	INTEGRATION_TESTS=0 \
 	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.2.5-3" \
 	VMWARE_APPEND="console=tty1 console=ttyS0,115200n8 printk.devkmsg=on rancher.autologin=tty1 rancher.autologin=ttyS0 rancher.autologin=ttyS1 panic=10" \
 	./.dapper vmware-release 2>&1 | tee dist/release.log
 
 hyperv: .dapper
 	mkdir -p dist
-	INTEGRATION_TESTS=0 \
 	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v1.5.0-rc1" \
 	./.dapper hyperv-release 2>&1 | tee dist/release.log
 
