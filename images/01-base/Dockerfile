@@ -1,6 +1,7 @@
 FROM rancher/os-rootfs
-RUN ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules
-# Cleanup Buildroot
+
+COPY . /
+
 RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     sed -i '/^root/s!/bin/sh!/bin/bash!' /etc/passwd && \
     echo 'RancherOS \n \l' > /etc/issue && \
@@ -30,16 +31,9 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     adduser rancher docker && \
     adduser rancher sudo && \
     adduser docker sudo && \
-    echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers
-COPY inputrc /etc/inputrc
-COPY growpart /usr/bin/growpart
-COPY start_ntp.sh /bin/start_ntp.sh
-COPY dhcpcd/dhcpcd.enter-hook /etc/dhcpcd.enter-hook
-COPY dhcpcd/10-mtu /lib/dhcpcd/dhcpcd-hooks/
-COPY dhcpcd/dhcpcd.debug /usr/share/logrotate/logrotate.d/
-COPY templates/dhcpcd.conf.tpl /etc/dhcpcd.conf.tpl
-COPY templates/wpa_supplicant.conf.tpl /etc/wpa_supplicant.conf.tpl
-RUN sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
+    echo '%sudo ALL=(ALL) ALL' >> /etc/sudoers && \
+    ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules && \
+    sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
     sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
     rm -f /etc/wpa_supplicant.conf && \
     ln -s /usr/share/dhcpcd/hooks/10-wpa_supplicant /lib/dhcpcd/dhcpcd-hooks/ && \
