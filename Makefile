@@ -57,7 +57,7 @@ vmware: .dapper
 
 hyperv: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v1.5.0-rc1" \
+	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.85-rancher-1" \
 	./.dapper hyperv-release 2>&1 | tee dist/release.log
 
 help:
