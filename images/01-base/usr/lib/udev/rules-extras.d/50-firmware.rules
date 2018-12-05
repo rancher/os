@@ -1,0 +1,3 @@
+# stub for immediately telling the kernel that userspace firmware loading
+# failed; necessary to avoid long timeouts with CONFIG_FW_LOADER_USER_HELPER=y
+SUBSYSTEM=="firmware", ACTION=="add", ATTR{loading}="-1"

@@ -1,0 +1,14 @@
+# Use MAC based names for network interfaces which are directly or indirectly
+# on USB and have an universally administered (stable) MAC address (second bit
+# is 0). Don't do this when ifnames is disabled via kernel command line or
+# customizing/disabling 80-net-setup-link.rules.
+
+IMPORT{cmdline}="net.ifnames"
+ENV{net.ifnames}=="0", GOTO="usb_net_by_mac_end"
+
+ACTION=="add", SUBSYSTEM=="net", SUBSYSTEMS=="usb", NAME=="", \
+    ATTR{address}=="?[014589cd]:*", \
+    TEST!="/etc/udev/rules.d/80-net-setup-link.rules", \
+    IMPORT{builtin}="net_id", NAME="$env{ID_NET_NAME_MAC}"
+
+LABEL="usb_net_by_mac_end"
