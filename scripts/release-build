@@ -1,0 +1,18 @@
+#!/bin/bash
+set -ex
+
+cd $(dirname $0)/..
+source ./scripts/version
+export REPO_VERSION=$VERSION
+if [[ -n "$DIRTY" || -z "$GIT_TAG" ]]; then
+    export REPO_VERSION=master
+fi
+export COMPRESS="gzip -9"
+
+./scripts/ci
+
+# from scripts/ci
+echo PREPARE
+./scripts/prepare
+echo PACKAGE
+./scripts/package

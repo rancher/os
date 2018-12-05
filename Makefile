@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|release|build-moby|run-moby')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|release*|build-moby|run-moby')
 
 .dapper:
 	@echo Downloading dapper
@@ -53,12 +53,12 @@ vmware: .dapper
 	mkdir -p dist
 	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.2.5-3" \
 	VMWARE_APPEND="console=tty1 console=ttyS0,115200n8 printk.devkmsg=on rancher.autologin=tty1 rancher.autologin=ttyS0 rancher.autologin=ttyS1 panic=10" \
-	./.dapper vmware-release 2>&1 | tee dist/release.log
+	./.dapper release-vmware 2>&1 | tee dist/release.log
 
 hyperv: .dapper
 	mkdir -p dist
 	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.85-rancher-1" \
-	./.dapper hyperv-release 2>&1 | tee dist/release.log
+	./.dapper release-hyperv 2>&1 | tee dist/release.log
 
 help:
 	@./scripts/help

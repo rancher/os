@@ -2,78 +2,8 @@
 set -ex
 
 cd $(dirname $0)/..
+
 source ./scripts/version
-export REPO_VERSION=$VERSION
-if [[ -n "$DIRTY" || -z "$GIT_TAG" ]]; then
-    export REPO_VERSION=master
-fi
-export COMPRESS="gzip -9"
+./scripts/release-build
 
-./scripts/ci
-
-# from scripts/ci
-echo PREPARE
-./scripts/prepare
-echo PACKAGE
-./scripts/package
-
-#if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
-## make generated changelog
-#lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
-#git log --format="%s: %b" ${lastrelease}..${VERSION}  | grep "Merge pull" | sed 's/.*\(#.*\) from .*:\(.*\)/* \1: \2/g' > dist/artifacts/changelog.txt
-#fi
-
-CHECKSUM="dist/checksums.txt"
-rm -f $CHECKSUM
-
-cat scripts/hosting/rancheros.ipxe | sed "s/latest/${VERSION}/g" > dist/artifacts/rancheros.ipxe
-
-echo "github-release release --user rancher --repo os --tag ${VERSION} --pre-release --draft" > dist/publish.sh
-chmod 755 dist/publish.sh
-
-touch dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
-chmod 755 dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
-
-for file in $(ls dist/artifacts/); do
-    case $file in
-        *"installer.tar" | "Dockerfile"*)
-            ;;
-        "initrd-"*)
-            echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${file} --name initrd" >> dist/publish.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/latest/initrd" >> ./dist/publish_gss_latest.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/${VERSION}/initrd" >> ./dist/publish_gss_${VERSION}.sh
-            ;;
-        "vmlinuz-"*)
-            echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${file} --name vmlinuz" >> dist/publish.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/latest/vmlinuz" >> ./dist/publish_gss_latest.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/${VERSION}/vmlinuz" >> ./dist/publish_gss_${VERSION}.sh
-            ;;
-        *)
-            echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ./dist/artifacts/${file} --name ${file}" >> dist/publish.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/latest/${file}" >> ./dist/publish_gss_latest.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/${VERSION}/${file}" >> ./dist/publish_gss_${VERSION}.sh
-            ;;
-    esac
-
-    #checksums
-    pushd .
-    cd dist/artifacts
-    for algo in sha256 md5; do
-        echo "$algo: $(${algo}sum $file)" >> ../../$CHECKSUM
-    done
-    popd
-done
-echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/release.log --name release.log" >> dist/publish.sh
-
-echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file ${CHECKSUM} --name checksums.txt" >> dist/publish.sh
-
-echo >> dist/publish.sh
-
-cat dist/images | sed 's/^/docker push /' >> dist/publish.sh
-
-echo "--- Run dist/publish.sh"
-cat dist/publish.sh
-
-echo "--- Run dist/publish_gss.sh"
-cat dist/publish_gss_latest.sh
-cat dist/publish_gss_${VERSION}.sh
+./scripts/release-${ARCH}
