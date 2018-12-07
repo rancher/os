@@ -89,7 +89,7 @@ var schema = `{
 				"https_proxy": {"type": "string"},
 				"no_proxy": {"type": "string"},
 				"wifi_networks": {"type": "object"},
-				"modem_networks": {"type": "array"}
+				"modem_networks": {"type": "object"}
 			}
 		},
 

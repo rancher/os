@@ -43,6 +43,18 @@ if [ -e ".make-vmware" ]; then
     wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_OPEN_VMTOOLS_URL_MD5} ${SERVICE_OPEN_VMTOOLS_URL}
 fi
 
+if [ -e ".make-4glte" ]; then
+    SERVICE_URL=${OS_SERVICES_REPO}/${REPO_VERSION}
+    SERVICE_INDEX_URL="${SERVICE_URL}/index.yml"
+    SERVICE_MODEM_MANAGER_URL="${SERVICE_URL}/m/modem-manager.yml"
+    SERVICE_INDEX_URL_MD5=$(echo -n ${SERVICE_INDEX_URL}|md5sum|cut -d ' ' -f1)
+    SERVICE_MODEM_MANAGER_URL_MD5=$(echo -n ${SERVICE_MODEM_MANAGER_URL}|md5sum|cut -d ' ' -f1)
+
+    mkdir -p ${INITRD_DIR}/usr/share/ros/services-cache/
+    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_INDEX_URL_MD5} ${SERVICE_INDEX_URL}
+    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_MODEM_MANAGER_URL_MD5} ${SERVICE_MODEM_MANAGER_URL}
+fi
+
 # TODO: usr/lib dir is overwritten by the kernel modules and firmware
 ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/lib/
 ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/etc/
