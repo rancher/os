@@ -343,14 +343,16 @@ func modifySshdConfig(cfg *config.CloudConfig) error {
 		modifiedLines = append(modifiedLines, fmt.Sprintf("ListenAddress %s", cfg.Rancher.SSH.ListenAddress))
 	}
 
-	for _, item := range modifiedLines {
-		match, err := regexp.Match("^"+item, sshdConfig)
-		if err != nil {
-			return err
-		}
-		if !match {
+	match, err := regexp.Match(modifiedLines[3], sshdConfig)
+	if err != nil {
+		return err
+	}
+
+	if !match {
+		for _, item := range modifiedLines {
 			sshdConfigString += fmt.Sprintf("%s\n", item)
 		}
+
 	}
 
 	return ioutil.WriteFile("/etc/ssh/sshd_config", []byte(sshdConfigString), 0644)
