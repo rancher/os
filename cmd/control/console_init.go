@@ -29,6 +29,7 @@ const (
 	gettyCmd    = "/sbin/agetty"
 	rancherHome = "/home/rancher"
 	startScript = "/opt/rancher/bin/start.sh"
+	runLockDir  = "/run/lock"
 )
 
 type symlink struct {
@@ -67,6 +68,13 @@ func consoleInitFunc() error {
 
 	createHomeDir(rancherHome, 1100, 1100)
 	createHomeDir(dockerHome, 1101, 1101)
+
+	// some software need this dir, like open-iscsi
+	if _, err := os.Stat(runLockDir); os.IsNotExist(err) {
+		if err = os.Mkdir(runLockDir, 0755); err != nil {
+			log.Error(err)
+		}
+	}
 
 	ignorePassword := false
 	for _, d := range cfg.Rancher.Disable {
