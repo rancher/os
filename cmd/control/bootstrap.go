@@ -1,9 +1,11 @@
 package control
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -34,6 +36,20 @@ func BootstrapMain() {
 	if cfg.Rancher.State.MdadmScan {
 		if err := mdadmScan(); err != nil {
 			log.Errorf("Failed to run mdadm scan: %v", err)
+		}
+	}
+
+	log.Debugf("bootstrapAction: cryptsetup(%v)", cfg.Rancher.State.Cryptsetup)
+	if cfg.Rancher.State.Cryptsetup {
+		if err := cryptsetup(); err != nil {
+			log.Errorf("Failed to run cryptsetup: %v", err)
+		}
+	}
+
+	log.Debugf("bootstrapAction: LvmScan(%v)", cfg.Rancher.State.LvmScan)
+	if cfg.Rancher.State.LvmScan {
+		if err := vgchange(); err != nil {
+			log.Errorf("Failed to run vgchange: %v", err)
 		}
 	}
 
@@ -73,6 +89,45 @@ func mdadmScan() error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func vgchange() error {
+	cmd := exec.Command("vgchange", "--activate", "ay")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
+func cryptsetup() error {
+	devices, err := util.BlkidType("crypto_LUKS")
+	if err != nil {
+		return err
+	}
+
+	for _, cryptdevice := range devices {
+		fdRead, err := os.Open("/dev/console")
+		if err != nil {
+			return err
+		}
+		defer fdRead.Close()
+
+		fdWrite, err := os.OpenFile("/dev/console", os.O_WRONLY|os.O_APPEND, 0)
+		if err != nil {
+			return err
+		}
+		defer fdWrite.Close()
+
+		cmd := exec.Command("cryptsetup", "luksOpen", cryptdevice, fmt.Sprintf("luks-%s", filepath.Base(cryptdevice)))
+		cmd.Stdout = fdWrite
+		cmd.Stderr = fdWrite
+		cmd.Stdin = fdRead
+
+		if err := cmd.Run(); err != nil {
+			log.Errorf("Failed to run cryptsetup for %s: %v", cryptdevice, err)
+		}
+	}
+
+	return nil
 }
 
 func runRngd() error {
