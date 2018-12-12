@@ -2,6 +2,7 @@ package sysinit
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -124,7 +125,33 @@ func SysInit() error {
 	return err
 }
 
+func loadServicesCache() {
+	// this code make sure the open-vm-tools, modem-manager... services can be started correct when there is no network
+	// make sure the cache directory exist
+	if err := os.MkdirAll("/var/lib/rancher/cache/", os.ModeDir|0755); err != nil {
+		log.Errorf("Create service cache diretory error: %v", err)
+	}
+
+	// move os-services cache file
+	if _, err := os.Stat("/usr/share/ros/services-cache"); err == nil {
+		files, err := ioutil.ReadDir("/usr/share/ros/services-cache/")
+		if err != nil {
+			log.Errorf("Read file error: %v", err)
+		}
+		for _, f := range files {
+			err := os.Rename("/usr/share/ros/services-cache/"+f.Name(), "/var/lib/rancher/cache/"+f.Name())
+			if err != nil {
+				log.Errorf("Rename file error: %v", err)
+			}
+		}
+		if err := os.Remove("/usr/share/ros/services-cache"); err != nil {
+			log.Errorf("Remove file error: %v", err)
+		}
+	}
+}
+
 func RunSysInit(c *config.CloudConfig) (*config.CloudConfig, error) {
+	loadServicesCache()
 	args := append([]string{config.SysInitBin}, os.Args[1:]...)
 
 	cmd := &exec.Cmd{

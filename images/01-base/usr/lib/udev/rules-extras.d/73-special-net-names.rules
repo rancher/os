@@ -1,0 +1,9 @@
+# On Dell PowerEdge systems, the iDRAC7 and later support a USB Virtual NIC
+#   which terminates in the iDRAC. Help identify this with 'idrac'
+ACTION=="add", SUBSYSTEM=="net", SUBSYSTEMS=="usb", ATTRS{idVendor}=="413c", ATTRS{idProduct}=="a102", NAME="idrac"
+
+# ibmveth devices' $DEVPATH number is tied to (virtual) hardware (slot id
+# selected in the HMC), thus this provides a reliable naming (e. g.
+# "/devices/vio/30000002/net/eth1"); we ignore the bus number, as
+# there should only ever be one bus, and then remove leading zeros
+ACTION=="add", SUBSYSTEM=="net", NAME=="", DRIVERS=="ibmveth", PROGRAM="/bin/sh -ec 'D=${DEVPATH#*/vio/}; D=${D%%%%/*}; D=${D#????}; D=${D#0}; D=${D#0}; D=${D#0}; D=${D#0}; echo ${D:-0}'", NAME="ibmveth$result"

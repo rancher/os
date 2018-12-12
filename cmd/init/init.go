@@ -58,7 +58,6 @@ func RunInit() error {
 		{"mount OEM2", fsmount.MountOem},
 		{"mount BOOT", fsmount.MountBoot},
 		{"write cfg and log files", configfiles.WriteConfigFiles},
-		{"hypervisor Env", hypervisor.Env},
 		{"b2d Env", b2d.Env},
 		{"hypervisor tools", hypervisor.Tools},
 		{"preparefs2", prepare.FS},

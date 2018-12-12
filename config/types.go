@@ -53,6 +53,8 @@ const (
 	DHCPCDTemplateFile     = "/etc/dhcpcd.conf.tpl"
 	MultiDockerConfFile    = "/var/lib/rancher/conf.d/m-user-docker.yml"
 	MultiDockerDataDir     = "/var/lib/m-user-docker"
+	UdevRulesDir           = "/etc/udev/rules.d"
+	UdevRulesExtrasDir     = "/lib/udev/rules-extras.d"
 )
 
 var (
