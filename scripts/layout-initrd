@@ -1,3 +1,19 @@
+#!/bin/bash
+
+function cache_services() {
+    local SERVICE_YMLFILE=$1
+
+    local SERVICE_URL=${OS_SERVICES_REPO}/${REPO_VERSION}
+    local SERVICE_INDEX_URL="${SERVICE_URL}/index.yml"
+    local SERVICE_YMLFILE_URL="${SERVICE_URL}/${SERVICE_YMLFILE}"
+
+    local SERVICE_INDEX_URL_MD5=$(echo -n ${SERVICE_INDEX_URL}|md5sum|cut -d ' ' -f1)
+    local SERVICE_YMLFILE_URL_MD5=$(echo -n ${SERVICE_YMLFILE_URL}|md5sum|cut -d ' ' -f1)
+
+    mkdir -p ${INITRD_DIR}/usr/share/ros/services-cache/
+    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_INDEX_URL_MD5} ${SERVICE_INDEX_URL}
+    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_YMLFILE_URL_MD5} ${SERVICE_YMLFILE_URL}
+}
 
 echo Create initrd layout in $INITRD_DIR
 
@@ -31,29 +47,16 @@ BUILD_ID=
 HERE
 
 # cache os-services yml file
-if [ -e ".make-vmware" ]; then
-    SERVICE_URL=${OS_SERVICES_REPO}/${REPO_VERSION}
-    SERVICE_INDEX_URL="${SERVICE_URL}/index.yml"
-    SERVICE_OPEN_VMTOOLS_URL="${SERVICE_URL}/o/open-vm-tools.yml"
-    SERVICE_INDEX_URL_MD5=$(echo -n ${SERVICE_INDEX_URL}|md5sum|cut -d ' ' -f1)
-    SERVICE_OPEN_VMTOOLS_URL_MD5=$(echo -n ${SERVICE_OPEN_VMTOOLS_URL}|md5sum|cut -d ' ' -f1)
-
-    mkdir -p ${INITRD_DIR}/usr/share/ros/services-cache/
-    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_INDEX_URL_MD5} ${SERVICE_INDEX_URL}
-    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_OPEN_VMTOOLS_URL_MD5} ${SERVICE_OPEN_VMTOOLS_URL}
-fi
-
-if [ -e ".make-4glte" ]; then
-    SERVICE_URL=${OS_SERVICES_REPO}/${REPO_VERSION}
-    SERVICE_INDEX_URL="${SERVICE_URL}/index.yml"
-    SERVICE_MODEM_MANAGER_URL="${SERVICE_URL}/m/modem-manager.yml"
-    SERVICE_INDEX_URL_MD5=$(echo -n ${SERVICE_INDEX_URL}|md5sum|cut -d ' ' -f1)
-    SERVICE_MODEM_MANAGER_URL_MD5=$(echo -n ${SERVICE_MODEM_MANAGER_URL}|md5sum|cut -d ' ' -f1)
-
-    mkdir -p ${INITRD_DIR}/usr/share/ros/services-cache/
-    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_INDEX_URL_MD5} ${SERVICE_INDEX_URL}
-    wget -O ${INITRD_DIR}/usr/share/ros/services-cache/${SERVICE_MODEM_MANAGER_URL_MD5} ${SERVICE_MODEM_MANAGER_URL}
-fi
+for file in $(ls .make-*); do
+    case $file in
+        ".make-vmware")
+            cache_services "o/open-vm-tools.yml"
+            ;;
+        ".make-4glte")
+            cache_services "m/modem-manager.yml"
+            ;;
+    esac
+done
 
 # TODO: usr/lib dir is overwritten by the kernel modules and firmware
 ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/lib/
