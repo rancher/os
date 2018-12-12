@@ -15,7 +15,7 @@ if [ "$VMWARE_AUTOFORMAT" = 1 ]; then
     echo "gsutil cp dist/artifacts/rancheros.iso gs://releases.rancher.com/os/latest/vmware/rancheros-autoformat.iso" >> ./dist/publish_gss_latest.sh
     echo "gsutil cp dist/artifacts/rancheros.iso gs://releases.rancher.com/os/${VERSION}/vmware/rancheros-autoformat.iso" >> ./dist/publish_gss_${VERSION}.sh
     echo "gsutil cp dist/artifacts/rancheros.iso gs://releases.rancher.com/os/latest/rancheros-vmware.iso" >> ./dist/publish_gss_latest.sh
-    echo "gsutil cp dist/artifacts/rancheros.iso gs://releases.rancher.com/os/${VERISION}/rancheros-vmware.iso" >> ./dist/publish_gss_${VERSION}.sh
+    echo "gsutil cp dist/artifacts/rancheros.iso gs://releases.rancher.com/os/${VERSION}/rancheros-vmware.iso" >> ./dist/publish_gss_${VERSION}.sh
     exit 0
 fi
 
