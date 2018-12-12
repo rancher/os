@@ -55,6 +55,9 @@ for file in $(ls .make-*); do
         ".make-4glte")
             cache_services "m/modem-manager.yml"
             ;;
+        ".make-hyperv")
+            cache_services "h/hyperv-vm-tools.yml"
+            ;;
     esac
 done
 

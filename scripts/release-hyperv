@@ -3,6 +3,8 @@ set -ex
 
 cd $(dirname $0)/..
 
+touch .make-hyperv
+
 source ./scripts/version
 ./scripts/release-build
 
