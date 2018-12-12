@@ -11,6 +11,7 @@ import (
 
 func selinuxCommand() cli.Command {
 	app := cli.Command{}
+	app.Hidden = true
 	app.Name = "selinux"
 	app.Action = func(c *cli.Context) error {
 		argv := []string{"system-docker", "run", "-it", "--privileged", "--rm",
