@@ -31,10 +31,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-var (
-	SupportedDindVersions = []string{"cnrancher/docker:17.12.1-dind", "cnrancher/docker:18.03.1-dind"}
-)
-
 func engineSubcommands() []cli.Command {
 	return []cli.Command{
 		{
@@ -53,16 +49,17 @@ func engineSubcommands() []cli.Command {
 			},
 		},
 		{
-			Name:      "create",
-			Usage:     "create user Docker engine without a reboot",
-			ArgsUsage: "<name>",
-			Before:    preFlightValidate,
-			Action:    engineCreate,
+			Name:        "create",
+			Usage:       "create Dind engine without a reboot",
+			Description: "must switch user docker to 17.12.1 or earlier if using Dind",
+			ArgsUsage:   "<name>",
+			Before:      preFlightValidate,
+			Action:      engineCreate,
 			Flags: []cli.Flag{
 				cli.StringFlag{
 					Name:  "version, v",
-					Value: SupportedDindVersions[0],
-					Usage: "set the version for the engine",
+					Value: config.DefaultDind,
+					Usage: fmt.Sprintf("set the version for the engine, %s are available", config.SupportedDinds),
 				},
 				cli.StringFlag{
 					Name:  "network",
@@ -79,7 +76,7 @@ func engineSubcommands() []cli.Command {
 				},
 				cli.StringFlag{
 					Name:  "authorized-keys",
-					Usage: "set the ssh authorized_keys path for the engine",
+					Usage: "set the ssh authorized_keys absolute path for the engine",
 				},
 			},
 		},
@@ -414,7 +411,7 @@ func preFlightValidate(c *cli.Context) error {
 	}
 
 	isVersionMatch := false
-	for _, v := range SupportedDindVersions {
+	for _, v := range config.SupportedDinds {
 		if v == version {
 			isVersionMatch = true
 			break
@@ -422,7 +419,7 @@ func preFlightValidate(c *cli.Context) error {
 	}
 
 	if !isVersionMatch {
-		return errors.Errorf("Engine version not supported only %v are supported", SupportedDindVersions)
+		return errors.Errorf("Engine version not supported only %v are supported", config.SupportedDinds)
 	}
 
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:"+strconv.Itoa(port))
@@ -495,7 +492,6 @@ func generateEngineCompose(name, version string, sshPort int, authorizedKeys, ne
 		Volumes:     volumes,
 		VolumesFrom: []string{},
 		Command: composeYaml.Command{
-			"dockerd-entrypoint.sh",
 			"--storage-driver=overlay2",
 			"--data-root=" + config.MultiDockerDataDir + "/" + name,
 			"--host=unix://" + config.MultiDockerDataDir + "/" + name + "/docker-" + name + ".sock",

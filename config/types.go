@@ -25,6 +25,7 @@ const (
 	SystemImages     = "images-system.tar"
 	Debug            = false
 	SystemDockerBin  = "/usr/bin/system-dockerd"
+	DefaultDind      = "rancher/os-dind:17.12.1"
 
 	DetachLabel        = "io.rancher.os.detach"
 	CreateOnlyLabel    = "io.rancher.os.createonly"
@@ -76,6 +77,10 @@ var (
 		"rancher.password",
 		"rancher.autologin",
 		"EXTRA_CMDLINE",
+	}
+	SupportedDinds = []string{
+		"rancher/os-dind:17.12.1",
+		"rancher/os-dind:18.03.1",
 	}
 )
 
