@@ -26,7 +26,7 @@ func LoadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	}
 
 	if util.GetHypervisor() == "hyperv" {
-		cfg.Rancher.Modules = append(cfg.Rancher.Modules, "hv_utils", "hv_storvsc")
+		cfg.Rancher.Modules = append(cfg.Rancher.Modules, "hv_utils", "hv_storvsc", "hv_vmbus")
 	}
 
 	for _, module := range cfg.Rancher.Modules {
