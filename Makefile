@@ -43,11 +43,8 @@ release-build:
 	mkdir -p dist
 	./.dapper release 2>&1 | tee dist/release.log
 
-rpi64:
-	# scripts/images/raspberry-pi-hypriot64/dist/rancheros-raspberry-pi.zip
-	cp dist/artifacts/rootfs_arm64.tar.gz scripts/images/raspberry-pi-hypriot64/
-	cd scripts/images/raspberry-pi-hypriot64/ \
-		&& ../../../.dapper
+rpi64: .dapper
+	./scripts/release-rpi64
 
 vmware: .dapper
 	mkdir -p dist

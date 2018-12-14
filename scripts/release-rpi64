@@ -1,0 +1,22 @@
+#!/bin/bash
+set -ex
+
+cd $(dirname $0)/..
+
+if [ ! -f ./dist/artifacts/rootfs_arm64.tar.gz ]; then
+    echo "Please run make first"
+    exit 0
+fi
+
+cp ./dist/artifacts/rootfs_arm64.tar.gz ./scripts/images/raspberry-pi-hypriot64/
+pushd ./scripts/images/raspberry-pi-hypriot64/
+./../../../.dapper
+popd
+
+cp ./scripts/images/raspberry-pi-hypriot64/dist/rancheros-raspberry-pi64.zip ./dist/artifacts/
+
+touch dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
+chmod 755 dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
+
+echo "gsutil cp dist/artifacts/rancheros-raspberry-pi64.zip gs://releases.rancher.com/os/latest/arm64/rancheros-raspberry-pi64.zip" >> ./dist/publish_gss_latest.sh
+echo "gsutil cp dist/artifacts/rancheros-raspberry-pi64.zip gs://releases.rancher.com/os/${VERSION}/arm64/rancheros-raspberry-pi64.zip" >> ./dist/publish_gss_${VERSION}.sh
