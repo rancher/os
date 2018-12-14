@@ -21,6 +21,10 @@ rancher:
   ssh:
     daemon: true
   hypervisor_service: true
+  services_include:
+  {{if eq "true" .AZURE_SERVICE -}}
+    waagent: true
+  {{end -}}
   bootstrap:
     bootstrap:
       image: {{.OS_REPO}}/os-bootstrap:{{.VERSION}}{{.SUFFIX}}
@@ -130,6 +134,7 @@ rancher:
       - /var/lib/rancher/cache:/var/lib/rancher/cache
       - /var/lib/rancher/conf:/var/lib/rancher/conf
       - /var/lib/rancher:/var/lib/rancher
+      - /var/lib/waagent:/var/lib/waagent
       - /var/log:/var/log
       - /var/run:/var/run
     container-data-volumes:
