@@ -60,6 +60,23 @@ for file in $(ls .make-*); do
             ;;
     esac
 done
+case ${OS_CONSOLE} in
+    "alpine")
+        cache_services "a/alpine.yml"
+        ;;
+    "centos")
+        cache_services "c/centos.yml"
+        ;;
+    "debian")
+        cache_services "d/debian.yml"
+        ;;
+    "fedora")
+        cache_services "f/fedora.yml"
+        ;;
+    "ubuntu")
+        cache_services "u/ubuntu.yml"
+        ;;
+esac
 
 # TODO: usr/lib dir is overwritten by the kernel modules and firmware
 ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/lib/
