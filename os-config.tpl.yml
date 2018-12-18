@@ -73,7 +73,7 @@ rancher:
     group: root
     host: ["unix:///var/run/system-docker.sock"]
     userland_proxy: false
-  console: default
+  console: {{.OS_CONSOLE}}
   cloud_init:
     datasources:
     - configdrive:/media/config-2
