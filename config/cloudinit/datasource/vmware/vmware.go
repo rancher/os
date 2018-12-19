@@ -77,10 +77,24 @@ func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
 		}
 		metadata.NetworkConfig.DNS.Nameservers = append(metadata.NetworkConfig.DNS.Nameservers, val)
 	}
+	dnsServers, _ := v.read("dns.servers")
+	for _, val := range strings.Split(dnsServers, ",") {
+		if val == "" {
+			break
+		}
+		metadata.NetworkConfig.DNS.Nameservers = append(metadata.NetworkConfig.DNS.Nameservers, val)
+	}
 
 	for i := 0; ; i++ {
 		//if domain := saveConfig("dns.domain.%d", i); domain == "" {
 		val, _ := v.read("dns.domain.%d", i)
+		if val == "" {
+			break
+		}
+		metadata.NetworkConfig.DNS.Search = append(metadata.NetworkConfig.DNS.Search, val)
+	}
+	dnsDomains, _ := v.read("dns.domains")
+	for _, val := range strings.Split(dnsDomains, ",") {
 		if val == "" {
 			break
 		}
@@ -119,6 +133,11 @@ func (v VMWare) FetchMetadata() (metadata datasource.Metadata, err error) {
 			address, _ := v.read("interface.%d.ip.%d.address", i, a)
 			if address == "" {
 				break
+			}
+			netmask, _ := v.read("interface.%d.ip.%d.netmask", i, a)
+			if netmask != "" {
+				ones, _ := net.IPMask(net.ParseIP(netmask).To4()).Size()
+				address = fmt.Sprintf("%s/%d", address, ones)
 			}
 			netDevice.Addresses = append(netDevice.Addresses, address)
 			found = true

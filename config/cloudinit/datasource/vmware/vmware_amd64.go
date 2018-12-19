@@ -32,7 +32,10 @@ type ovfWrapper struct {
 }
 
 func (ovf ovfWrapper) readConfig(key string) (string, error) {
-	return ovf.env.Properties["guestinfo."+key], nil
+	if val := ovf.env.Properties["guestinfo."+key]; val != "" {
+		return val, nil
+	}
+	return readConfig(key)
 }
 
 func NewDatasource(fileName string) *VMWare {
