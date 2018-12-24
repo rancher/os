@@ -67,11 +67,10 @@ func engineSubcommands() []cli.Command {
 				},
 				cli.StringFlag{
 					Name:  "fixed-ip",
-					Usage: "set the fix ip for the engine",
+					Usage: "set the fixed ip for the engine",
 				},
-				cli.IntFlag{
+				cli.StringFlag{
 					Name:  "ssh-port",
-					Value: randomSSHPort(),
 					Usage: "set the ssh port for the engine",
 				},
 				cli.StringFlag{
@@ -152,7 +151,10 @@ func engineSwitch(c *cli.Context) error {
 func engineCreate(c *cli.Context) error {
 	name := c.Args()[0]
 	version := c.String("version")
-	sshPort := c.Int("ssh-port")
+	sshPort, _ := strconv.Atoi(c.String("ssh-port"))
+	if sshPort <= 0 {
+		sshPort = randomSSHPort()
+	}
 	authorizedKeys := c.String("authorized-keys")
 	network := c.String("network")
 	fixedIP := c.String("fixed-ip")
@@ -378,11 +380,6 @@ func preFlightValidate(c *cli.Context) error {
 		return errors.New("Must specify one engine version")
 	}
 
-	port := c.Int("ssh-port")
-	if port == 0 {
-		return errors.New("Must specify one engine ssh port")
-	}
-
 	authorizedKeys := c.String("authorized-keys")
 	if authorizedKeys != "" {
 		if _, err := os.Stat(authorizedKeys); os.IsNotExist(err) {
@@ -422,15 +419,23 @@ func preFlightValidate(c *cli.Context) error {
 		return errors.Errorf("Engine version not supported only %v are supported", config.SupportedDinds)
 	}
 
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:"+strconv.Itoa(port))
-	if err != nil {
-		return errors.Errorf("Failed to resolve tcp addr: %v", err)
+	if c.String("ssh-port") != "" {
+		port, err := strconv.Atoi(c.String("ssh-port"))
+		if err != nil {
+			return errors.Wrap(err, "Failed to convert ssh port to Int")
+		}
+		if port > 0 {
+			addr, err := net.ResolveTCPAddr("tcp", "localhost:"+strconv.Itoa(port))
+			if err != nil {
+				return errors.Errorf("Failed to resolve tcp addr: %v", err)
+			}
+			l, err := net.ListenTCP("tcp", addr)
+			if err != nil {
+				return errors.Errorf("Failed to listen tcp: %v", err)
+			}
+			defer l.Close()
+		}
 	}
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		return errors.Errorf("Failed to listen tcp: %v", err)
-	}
-	defer l.Close()
 
 	return nil
 }
