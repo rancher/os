@@ -65,6 +65,11 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 	if err != nil {
 		return datasource.Metadata{}, err
 	}
+	blockProjectSSHKeys, err := ms.fetchString("instance/attributes/block-project-ssh-keys")
+	if err != nil {
+		return datasource.Metadata{}, err
+	}
+
 	md := datasource.Metadata{
 		PublicIPv4:    public,
 		PrivateIPv4:   local,
@@ -89,8 +94,10 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		md.NetworkConfig.Interfaces["eth0"] = network
 	}
 	*/
-
-	keyStrings := strings.Split(projectSSHKeys+"\n"+instanceSSHKeys, "\n")
+	keyStrings := strings.Split(instanceSSHKeys, "\n")
+	if blockProjectSSHKeys != "true" {
+		keyStrings = append(keyStrings, strings.Split(projectSSHKeys, "\n")...)
+	}
 
 	i := 0
 	for _, keyString := range keyStrings {
