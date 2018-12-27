@@ -57,11 +57,11 @@ func (ms MetadataService) FetchMetadata() (datasource.Metadata, error) {
 		return datasource.Metadata{}, err
 	}
 
-	projectSSHKeys, err := ms.fetchString("project/attributes/sshKeys")
+	projectSSHKeys, err := ms.fetchString("project/attributes/ssh-keys")
 	if err != nil {
 		return datasource.Metadata{}, err
 	}
-	instanceSSHKeys, err := ms.fetchString("instance/attributes/sshKeys")
+	instanceSSHKeys, err := ms.fetchString("instance/attributes/ssh-keys")
 	if err != nil {
 		return datasource.Metadata{}, err
 	}
