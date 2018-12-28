@@ -59,7 +59,8 @@ for file in $(ls .make-*); do
             cache_services "h/hyperv-vm-tools.yml"
             ;;
         ".make-azure")
-            cache_services "h/hyperv-vm-tools.yml w/waagent.yml"
+            cache_services "h/hyperv-vm-tools.yml"
+            cache_services "w/waagent.yml"
             ;;
     esac
 done
