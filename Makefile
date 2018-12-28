@@ -57,6 +57,12 @@ hyperv: .dapper
 	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.85-rancher-1" \
 	./.dapper release-hyperv 2>&1 | tee dist/release.log
 
+azure: .dapper
+	mkdir -p dist
+	AZURE_SERVICE="true" \
+	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.85-rancher-1 rancher/os-waagent:v2.2.34-1" \
+	./.dapper release-azure 2>&1 | tee dist/release.log
+
 4glte: .dapper
 	mkdir -p dist
 	APPEND_SYSTEM_IMAGES="rancher/os-modemmanager:v1.6.4-1" \

@@ -97,23 +97,6 @@ func saveCloudConfig() error {
 	return nil
 }
 
-func RequiresNetwork(datasource string) bool {
-	// TODO: move into the datasources (and metadatasources)
-	// and then we can enable that platforms defaults..
-	parts := strings.SplitN(datasource, ":", 2)
-	requiresNetwork, ok := map[string]bool{
-		"ec2":          true,
-		"file":         false,
-		"url":          true,
-		"cmdline":      true,
-		"configdrive":  false,
-		"digitalocean": true,
-		"gce":          true,
-		"packet":       true,
-	}[parts[0]]
-	return ok && requiresNetwork
-}
-
 func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadata) error {
 	os.MkdirAll(rancherConfig.CloudConfigDir, os.ModeDir|0600)
 

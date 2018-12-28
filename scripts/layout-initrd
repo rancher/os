@@ -58,6 +58,9 @@ for file in $(ls .make-*); do
         ".make-hyperv")
             cache_services "h/hyperv-vm-tools.yml"
             ;;
+        ".make-azure")
+            cache_services "h/hyperv-vm-tools.yml w/waagent.yml"
+            ;;
     esac
 done
 case ${OS_CONSOLE} in
