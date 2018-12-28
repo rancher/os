@@ -22,7 +22,7 @@ rancher:
     daemon: true
   hypervisor_service: true
   services_include:
-  {{if eq "true" .AZURE_SERVICE -}}
+  {{- if eq "true" .AZURE_SERVICE}}
     waagent: true
   {{end -}}
   bootstrap:
