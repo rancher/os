@@ -26,6 +26,7 @@ const (
 	dockerPidFile         = "/var/run/docker.pid"
 	sourceDirectory       = "/engine"
 	destDirectory         = "/var/lib/rancher/engine"
+	dockerCompletionFName = "completion"
 )
 
 var (
@@ -94,8 +95,14 @@ func copyBinaries(source, dest string) error {
 		if err = out.Close(); err != nil {
 			return err
 		}
-		if err := os.Chmod(destFile, 0751); err != nil {
-			return err
+		if file.Name() == dockerCompletionFName {
+			if err := os.Chmod(destFile, 0644); err != nil {
+				return err
+			}
+		} else {
+			if err := os.Chmod(destFile, 0751); err != nil {
+				return err
+			}
 		}
 	}
 

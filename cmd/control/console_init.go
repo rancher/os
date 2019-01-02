@@ -144,6 +144,12 @@ func consoleInitFunc() error {
 		{"/usr/share/ros/os-release", "/etc/os-release"},
 	}
 
+	if _, err := os.Stat(dockerCompletionFile); err == nil {
+		baseSymlink = append(baseSymlink, symlink{
+			dockerCompletionFile, dockerCompletionLinkFile,
+		})
+	}
+
 	if cfg.Rancher.Console == "default" {
 		// add iptables symlinks for default console
 		baseSymlink = append(baseSymlink, []symlink{
