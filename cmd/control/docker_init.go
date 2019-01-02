@@ -16,9 +16,11 @@ import (
 )
 
 const (
-	dockerConf = "/var/lib/rancher/conf/docker"
-	dockerDone = "/run/docker-done"
-	dockerLog  = "/var/log/docker.log"
+	dockerConf               = "/var/lib/rancher/conf/docker"
+	dockerDone               = "/run/docker-done"
+	dockerLog                = "/var/log/docker.log"
+	dockerCompletionLinkFile = "/usr/share/bash-completion/completions/docker"
+	dockerCompletionFile     = "/var/lib/rancher/engine/completion"
 )
 
 func dockerInitAction(c *cli.Context) error {
@@ -28,6 +30,12 @@ func dockerInitAction(c *cli.Context) error {
 			break
 		}
 		time.Sleep(200 * time.Millisecond)
+	}
+
+	if _, err := os.Stat(dockerCompletionFile); err != nil {
+		if _, err := os.Readlink(dockerCompletionLinkFile); err == nil {
+			syscall.Unlink(dockerCompletionLinkFile)
+		}
 	}
 
 	dockerBin := ""
