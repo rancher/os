@@ -24,7 +24,7 @@ rancher:
   services_include:
   {{- if eq "true" .AZURE_SERVICE}}
     waagent: true
-  {{end -}}
+  {{- end}}
   bootstrap:
     bootstrap:
       image: {{.OS_REPO}}/os-bootstrap:{{.VERSION}}{{.SUFFIX}}
