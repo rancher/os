@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
 
@@ -81,6 +82,16 @@ func dockerInitAction(c *cli.Context) error {
 	for _, mount := range strings.Split(string(mountInfo), "\n") {
 		if strings.Contains(mount, "/var/lib/user-docker /var/lib/docker") && strings.Contains(mount, "rootfs") {
 			os.Setenv("DOCKER_RAMDISK", "true")
+		}
+	}
+
+	cfg := config.LoadConfig()
+	baseSymlink := symLinkEngineBinary(cfg.Rancher.Docker.Engine)
+
+	for _, link := range baseSymlink {
+		syscall.Unlink(link.newname)
+		if err := os.Symlink(link.oldname, link.newname); err != nil {
+			log.Error(err)
 		}
 	}
 
