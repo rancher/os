@@ -289,6 +289,7 @@ rancher:
     preload-user-images:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: ros preload-images
+      net: host
       labels:
         io.rancher.os.detach: "false"
         io.rancher.os.scope: system
