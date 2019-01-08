@@ -49,6 +49,7 @@ func runDocker(name string) error {
 
 	existing, err := client.ContainerInspect(context.Background(), containerName)
 	if err == nil && existing.ID != "" {
+		// remove the old version of reboot
 		err := client.ContainerRemove(context.Background(), types.ContainerRemoveOptions{
 			ContainerID: existing.ID,
 		})
@@ -77,7 +78,8 @@ func runDocker(name string) error {
 			},
 		},
 		&container.HostConfig{
-			PidMode: "host",
+			PidMode:     "host",
+			NetworkMode: "none",
 			VolumesFrom: []string{
 				currentContainer.ID,
 			},
