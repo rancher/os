@@ -164,7 +164,7 @@ func editSyslinux(c *cli.Context) error {
 		return errors.New("raspberry pi can not use this command")
 	}
 
-	if _, err := os.Stat("/proc/1/root/boot/global.cfg"); os.IsNotExist(err) {
+	if isExist := checkGlobalCfg(); !isExist {
 		buf := bufio.NewWriter(os.Stdout)
 		fmt.Fprintln(buf, "global.cfg can not be found")
 		buf.Flush()

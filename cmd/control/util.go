@@ -55,3 +55,11 @@ func symLinkEngineBinary(version string) []symlink {
 	}
 	return baseSymlink
 }
+
+func checkGlobalCfg() bool {
+	_, err := os.Stat("/proc/1/root/boot/global.cfg")
+	if err == nil || os.IsExist(err) {
+		return true
+	}
+	return false
+}
