@@ -185,6 +185,10 @@ func osUpgrade(c *cli.Context) error {
 		log.Fatalf("ros install / upgrade only supported on 'amd64', not '%s'", runtime.GOARCH)
 	}
 
+	if isExist := checkGlobalCfg(); !isExist {
+		log.Fatalf("ros upgrade cannot be supported")
+	}
+
 	image := c.String("image")
 
 	if image == "" {
