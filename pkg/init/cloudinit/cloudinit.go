@@ -62,9 +62,16 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	}
 
 	if len(stateConfig.Rancher.Network.Interfaces) > 0 {
-		cfg.Rancher.Network = stateConfig.Rancher.Network
-		if err := config.Set("rancher.network", stateConfig.Rancher.Network); err != nil {
-			log.Error(err)
+		// DO also uses static networking, but this IP may change if:
+		// 1. not using Floating IP
+		// 2. creating a droplet with a snapshot, the snapshot cached the previous IP
+		if onlyDigitalOcean(cfg.Rancher.CloudInit.Datasources) {
+			log.Info("Do not use the previous network settings on DigitalOcean")
+		} else {
+			cfg.Rancher.Network = stateConfig.Rancher.Network
+			if err := config.Set("rancher.network", stateConfig.Rancher.Network); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 
@@ -108,6 +115,19 @@ func onlyConfigDrive(datasources []string) bool {
 	for _, ds := range datasources {
 		parts := strings.SplitN(ds, ":", 2)
 		if parts[0] == "configdrive" {
+			return true
+		}
+	}
+	return false
+}
+
+func onlyDigitalOcean(datasources []string) bool {
+	if len(datasources) != 1 {
+		return false
+	}
+	for _, ds := range datasources {
+		parts := strings.SplitN(ds, ":", 2)
+		if parts[0] == "digitalocean" {
 			return true
 		}
 	}
