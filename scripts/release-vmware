@@ -19,11 +19,6 @@ if [ "$VMWARE_AUTOFORMAT" = 1 ]; then
     exit 0
 fi
 
-if [ "$VMWARE_APPEND" != "" ]; then
-    echo "--append ${VMWARE_APPEND}"
-    APPEND_PARAM="--append \"${VMWARE_APPEND}\""
-fi
-
 mkdir -p /tmp/dist/openstack/latest ./dist/vmware
 
 cat > /tmp/dist/openstack/latest/user_data << EOF
@@ -39,7 +34,6 @@ sleep 5
 openvt -s -- tail -f log &
 ros install \
     -d /dev/vda \
-    ${APPEND_PARAM} \
     -f \
     --no-reboot >log 2>&1
 
