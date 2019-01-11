@@ -49,7 +49,6 @@ rpi64: .dapper
 vmware: .dapper
 	mkdir -p dist
 	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.2.5-3" \
-	VMWARE_APPEND="console=tty1 console=ttyS0,115200n8 printk.devkmsg=on rancher.autologin=tty1 rancher.autologin=ttyS0 rancher.autologin=ttyS1 panic=10" \
 	./.dapper release-vmware 2>&1 | tee dist/release.log
 
 hyperv: .dapper
