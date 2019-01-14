@@ -68,6 +68,12 @@ azure: .dapper
 	APPEND_SYSTEM_IMAGES="rancher/os-modemmanager:v1.6.4-1" \
 	./.dapper release-4glte 2>&1 | tee dist/release.log
 
+proxmoxve: .dapper
+	mkdir -p dist
+	PROXMOXVE_SERVICE="true" \
+	APPEND_SYSTEM_IMAGES="rancher/os-qemuguestagent:v2.8.1-2" \
+	./.dapper release-proxmoxve 2>&1 | tee dist/release.log
+
 help:
 	@./scripts/help
 

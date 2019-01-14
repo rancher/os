@@ -28,6 +28,11 @@ if [ "$VMWARE_AUTOFORMAT" = 1 ] && [ -e ".make-vmware" ];then
 else
     cat scripts/global.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
 fi
+if [ "$PROXMOXVE_AUTOFORMAT" = 1 ] && [ -e ".make-proxmoxve" ];then
+    cat scripts/global-proxmoxve.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+else
+    cat scripts/global.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+fi
 cp scripts/rancher.png ${DIST}/boot/
 
 
