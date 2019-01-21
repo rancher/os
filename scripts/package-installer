@@ -20,13 +20,14 @@ popd
 DIST=$(pwd)/dist
 echo "mkdir -p ${DIST}/boot/isolinux/"
 mkdir -p ${DIST}/boot/isolinux/
-cat scripts/isolinux.cfg | envsubst >         ${DIST}/boot/isolinux/isolinux.cfg
-cat scripts/isolinux_label.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/linux-current.cfg
-#cat scripts/isolinux_label.cfg | LABEL=debug APPEND="rancher.debug=true" envsubst >   ${DIST}/boot/linux-previous.cfg
-if [ "$VMWARE_AUTOFORMAT" = 1 ] && [ -e ".make-vmware" ];then
-    cat scripts/global-vmware.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+cat scripts/isolinux.cfg | envsubst > ${DIST}/boot/isolinux/isolinux.cfg
+cat scripts/isolinux_label.cfg | LABEL=${VERSION} envsubst > ${DIST}/boot/linux-current.cfg
+#cat scripts/isolinux_label.cfg | LABEL=debug APPEND="rancher.debug=true" envsubst > ${DIST}/boot/linux-previous.cfg
+if [ "$OS_AUTOFORMAT" = "true" ]; then
+    APPEND_AUTOFORMAT="rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait=true"
+    cat scripts/global.cfg | APPEND="$APPEND_AUTOFORMAT" envsubst > ${DIST}/boot/global.cfg
 else
-    cat scripts/global.cfg | LABEL=${VERSION} envsubst >   ${DIST}/boot/global.cfg
+    cat scripts/global.cfg | envsubst > ${DIST}/boot/global.cfg
 fi
 cp scripts/rancher.png ${DIST}/boot/
 
