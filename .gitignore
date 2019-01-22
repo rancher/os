@@ -17,5 +17,6 @@
 __pycache__
 /.dapper
 /.trash-cache
+/trash.lock
 .idea
 .trash-conf
