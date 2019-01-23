@@ -2,6 +2,7 @@ package control
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -288,15 +289,16 @@ func validate(c *cli.Context) error {
 }
 
 func inputBytes(c *cli.Context) ([]byte, error) {
-	input := os.Stdin
 	inputFile := c.String("input")
-	if inputFile != "" {
-		var err error
-		input, err = os.Open(inputFile)
-		if err != nil {
-			return nil, err
-		}
-		defer input.Close()
+	if inputFile == "" {
+		return nil, errors.New("input parameter can not be empty")
 	}
-	return ioutil.ReadAll(input)
+	content, err := ioutil.ReadFile(inputFile)
+	if err != nil {
+		return nil, err
+	}
+	if bytes.Contains(content, []byte{13, 10}) {
+		return nil, errors.New("file format shouldn't contain CRLF characters")
+	}
+	return content, nil
 }
