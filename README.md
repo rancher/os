@@ -91,6 +91,7 @@ ca-central-1 | HVM | [ami-06a0d5077db5cb530](https://ca-central-1.console.aws.am
 ap-southeast-1 | HVM | [ami-0443782221e818bd8](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-0443782221e818bd8)
 ap-southeast-2 | HVM | [ami-031c628be26b5921f](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-031c628be26b5921f)
 eu-central-1 | HVM | [ami-062a6985def70a2ca](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-062a6985def70a2ca)
+eu-north-1 | HVM | [ami-0d654f2128e1b86bf](https://eu-north-1.console.aws.amazon.com/ec2/home?region=eu-north-1#launchInstanceWizard:ami=ami-0d654f2128e1b86bf)
 us-east-1 | HVM | [ami-05342ca821afde9d7](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-05342ca821afde9d7)
 us-east-2 | HVM | [ami-0be73aeb7d3076a36](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-0be73aeb7d3076a36)
 us-west-1 | HVM | [ami-0052c7f3c5277f6b7](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-0052c7f3c5277f6b7)
