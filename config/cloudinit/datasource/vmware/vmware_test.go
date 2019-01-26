@@ -361,8 +361,8 @@ func TestOvfTransport(t *testing.T) {
 		}
 		v.urlDownload = fakeDownloader
 
-		metadata, err := v.FetchMetadata()
-		userdata, err := v.FetchUserdata()
+		metadata, _ := v.FetchMetadata()
+		userdata, _ := v.FetchUserdata()
 
 		if !reflect.DeepEqual(tt.metadata, metadata) {
 			t.Errorf("bad metadata (#%d): want %#v, got %#v", i, tt.metadata, metadata)

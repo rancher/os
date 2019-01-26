@@ -472,7 +472,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	case "generic":
 		log.Debugf("formatAndMount")
 		var err error
-		device, partition, err = formatAndMount(baseName, device, partition)
+		device, _, err = formatAndMount(baseName, device, partition)
 		if err != nil {
 			log.Errorf("formatAndMount %s", err)
 			return err
@@ -489,7 +489,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 		}
 	case "arm":
 		var err error
-		device, partition, err = formatAndMount(baseName, device, partition)
+		_, _, err = formatAndMount(baseName, device, partition)
 		if err != nil {
 			return err
 		}
@@ -499,7 +499,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	case "amazon-ebs-hvm":
 		CONSOLE = "ttyS0"
 		var err error
-		device, partition, err = formatAndMount(baseName, device, partition)
+		device, _, err = formatAndMount(baseName, device, partition)
 		if err != nil {
 			return err
 		}
@@ -511,7 +511,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	case "googlecompute":
 		CONSOLE = "ttyS0"
 		var err error
-		device, partition, err = formatAndMount(baseName, device, partition)
+		device, _, err = formatAndMount(baseName, device, partition)
 		if err != nil {
 			return err
 		}
@@ -519,7 +519,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 		seedData(baseName, cloudConfig, FILES)
 	case "noformat":
 		var err error
-		device, partition, err = install.MountDevice(baseName, device, partition, false)
+		device, _, err = install.MountDevice(baseName, device, partition, false)
 		if err != nil {
 			return err
 		}
@@ -534,7 +534,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 		}
 	case "raid":
 		var err error
-		device, partition, err = install.MountDevice(baseName, device, partition, false)
+		device, _, err = install.MountDevice(baseName, device, partition, false)
 		if err != nil {
 			return err
 		}
@@ -542,7 +542,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	case "bootstrap":
 		CONSOLE = "ttyS0"
 		var err error
-		device, partition, err = install.MountDevice(baseName, device, partition, true)
+		_, _, err = install.MountDevice(baseName, device, partition, true)
 		if err != nil {
 			return err
 		}
@@ -552,7 +552,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 		fallthrough
 	case "upgrade":
 		var err error
-		device, partition, err = install.MountDevice(baseName, device, partition, false)
+		device, _, err = install.MountDevice(baseName, device, partition, false)
 		if err != nil {
 			return err
 		}

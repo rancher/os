@@ -225,19 +225,14 @@ func dindEngineRemove(c *cli.Context) error {
 	}
 
 	// 3. service delete
-	changed := false
-
 	if _, ok := cfg.Rancher.ServicesInclude[name]; !ok {
 		log.Fatalf("Failed to found enabled service %s", name)
 	}
 
 	delete(cfg.Rancher.ServicesInclude, name)
-	changed = true
 
-	if changed {
-		if err = config.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
-			log.Fatal(err)
-		}
+	if err = config.Set("rancher.services_include", cfg.Rancher.ServicesInclude); err != nil {
+		log.Fatal(err)
 	}
 
 	// 4. remove service from file
