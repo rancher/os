@@ -363,7 +363,7 @@ func TestFilename(t *testing.T) {
 		{logicalInterface{name: "iface", hwaddr: net.HardwareAddr([]byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xab}), configDepth: 1}, "01-iface"},
 	} {
 		if tt.i.Filename() != tt.f {
-			t.Fatalf("bad filename (%q): got %q, want %q", tt.i, tt.i.Filename(), tt.f)
+			t.Fatalf("bad filename: got %q, want %q", tt.i.Filename(), tt.f)
 		}
 	}
 }
