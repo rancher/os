@@ -57,7 +57,7 @@ func ProcessVMwareNetconf(config map[string]string) ([]InterfaceGenerator, error
 		var dhcp bool
 		iface := &physicalInterface{}
 
-		log.Printf("Proccessing interface %d", i)
+		log.Printf("Processing interface %d", i)
 
 		log.Println("Processing DHCP")
 		if dhcp, err = processDHCPConfig(config, fmt.Sprintf("interface.%d.", i)); err != nil {

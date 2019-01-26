@@ -28,7 +28,7 @@ type Datasource interface {
 	FetchUserdata() ([]byte, error)
 	Type() string
 	String() string
-	// Finish gives the datasource the oportunity to clean up, unmount or release any open / cache resources
+	// Finish gives the datasource the opportunity to clean up, unmount or release any open / cache resources
 	Finish() error
 }
 

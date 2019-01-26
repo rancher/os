@@ -149,7 +149,7 @@ func coerceNodes(w, s Node) Node {
 	return n
 }
 
-// normalizeNodeNames replaces all occurences of '-' with '_' within key names
+// normalizeNodeNames replaces all occurrences of '-' with '_' within key names
 // and makes a note of each replacement in the report.
 func normalizeNodeNames(node Node, report *Report) Node {
 	if strings.Contains(node.name, "-") {
