@@ -7,9 +7,10 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
+	"text/template"
 
 	"github.com/rancher/os/cmd/cloudinitexecute"
 	"github.com/rancher/os/config"
@@ -318,37 +319,26 @@ func writeRespawn(user string, sshd, recovery bool) error {
 }
 
 func modifySshdConfig(cfg *config.CloudConfig) error {
-	sshdConfig, err := ioutil.ReadFile("/etc/ssh/sshd_config")
+	os.Remove("/etc/ssh/sshd_config")
+	sshdTpl, err := template.ParseFiles("/etc/ssh/sshd_config.tpl")
 	if err != nil {
 		return err
 	}
-	sshdConfigString := string(sshdConfig)
-
-	modifiedLines := []string{
-		"UseDNS no",
-		"PermitRootLogin no",
-		"ServerKeyBits 2048",
-		"AllowGroups docker",
+	f, err := os.OpenFile("/etc/ssh/sshd_config", os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		return err
 	}
+	defer f.Close()
 
+	config := map[string]string{}
 	if cfg.Rancher.SSH.Port > 0 && cfg.Rancher.SSH.Port < 65355 {
-		modifiedLines = append(modifiedLines, fmt.Sprintf("Port %d", cfg.Rancher.SSH.Port))
+		config["Port"] = strconv.Itoa(cfg.Rancher.SSH.Port)
 	}
 	if cfg.Rancher.SSH.ListenAddress != "" {
-		modifiedLines = append(modifiedLines, fmt.Sprintf("ListenAddress %s", cfg.Rancher.SSH.ListenAddress))
+		config["ListenAddress"] = cfg.Rancher.SSH.ListenAddress
 	}
 
-	for _, item := range modifiedLines {
-		match, err := regexp.Match("^"+item, sshdConfig)
-		if err != nil {
-			return err
-		}
-		if !match {
-			sshdConfigString += fmt.Sprintf("%s\n", item)
-		}
-	}
-
-	return ioutil.WriteFile("/etc/ssh/sshd_config", []byte(sshdConfigString), 0644)
+	return sshdTpl.Execute(f, config)
 }
 
 func setupSSH(cfg *config.CloudConfig) error {
