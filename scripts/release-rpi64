@@ -3,6 +3,8 @@ set -ex
 
 cd $(dirname $0)/..
 
+source ./scripts/version
+
 if [ ! -f ./dist/artifacts/rootfs_arm64.tar.gz ]; then
     echo "Please run make first"
     exit 0
