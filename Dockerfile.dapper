@@ -157,7 +157,7 @@ RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
     chmod +x /usr/bin/docker
 
 # Install dapper
-RUN curl -sL https://releases.rancher.com/dapper/v0.3.4/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
+RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
 
 RUN cd ${DOWNLOADS} && \
