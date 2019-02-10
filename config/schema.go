@@ -99,7 +99,8 @@ var schema = `{
 			"properties": {
 				"url": {"type": "string"},
 				"image": {"type": "string"},
-				"rollback": {"type": "string"}
+				"rollback": {"type": "string"},
+				"policy": {"type": "string"}
 			}
 		},
 

@@ -34,6 +34,7 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
 COPY inputrc /etc/inputrc
 COPY growpart /usr/bin/growpart
 COPY start_ntp.sh /bin/start_ntp.sh
+COPY os-subscriber /usr/bin/os-subscriber
 COPY dhcpcd/dhcpcd.enter-hook /etc/dhcpcd.enter-hook
 COPY dhcpcd/10-mtu /lib/dhcpcd/dhcpcd-hooks/
 COPY dhcpcd/dhcpcd.debug /usr/share/logrotate/logrotate.d/

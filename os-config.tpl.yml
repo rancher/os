@@ -368,6 +368,25 @@ rancher:
       volumes:
       - /sys:/host/sys
       - /var/lib/system-docker:/var/lib/system-docker:shared
+    subscriber:
+      image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
+      command: os-subscriber
+      environment:
+      - IN_DOCKER=true
+      labels:
+        io.rancher.os.scope: system
+        io.rancher.os.after: console
+        cron.schedule: "0 0 3 * * ?"
+      privileged: true
+      pid: host
+      ipc: host
+      net: host
+      uts: host
+      volumes_from:
+      - command-volumes
+      - system-volumes
+      volumes:
+      - /sys:/host/sys
   system_docker:
     exec: true
     storage_driver: overlay2
@@ -386,6 +405,7 @@ rancher:
   upgrade:
     url: {{.OS_RELEASES_YML}}/releases{{.SUFFIX}}.yml
     image: {{.OS_REPO}}/os
+    policy: download
   docker:
     {{if eq "amd64" .ARCH -}}
     engine: docker-18.03.1-ce
