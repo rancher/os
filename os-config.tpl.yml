@@ -345,9 +345,9 @@ rancher:
       - system-volumes
     docker:
       {{if eq "amd64" .ARCH -}}
-      image: {{.OS_REPO}}/os-docker:18.03.1{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:18.03.1-1{{.SUFFIX}}
       {{else -}}
-      image: {{.OS_REPO}}/os-docker:18.03.1{{.SUFFIX}}
+      image: {{.OS_REPO}}/os-docker:18.03.1-1{{.SUFFIX}}
       {{end -}}
       command: ros user-docker
       environment:
