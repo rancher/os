@@ -83,8 +83,8 @@ ARG OS_BASE_URL_amd64=https://github.com/rancher/os-base/releases/download/v2018
 ARG OS_BASE_URL_arm64=https://github.com/rancher/os-base/releases/download/v2018.02-4/os-base_arm64.tar.xz
 
 ARG SYSTEM_DOCKER_VERSION=17.06-ros6
-ARG SYSTEM_DOCKER_URL_amd64=https://releases.rancher.com/os/system-docker/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
-ARG SYSTEM_DOCKER_URL_arm64=https://releases.rancher.com/os/system-docker/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
+ARG SYSTEM_DOCKER_URL_amd64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
+ARG SYSTEM_DOCKER_URL_arm64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
 ARG VMWARE_AUTOFORMAT=1
 ARG OPEN_VMTOOLS_VERSION=10.2.5-3
