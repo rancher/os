@@ -82,8 +82,8 @@ ARG OS_INITRD_BASE_URL_amd64=https://github.com/rancher/os-initrd-base/releases/
 ARG OS_INITRD_BASE_URL_arm64=https://github.com/rancher/os-initrd-base/releases/download/v2018.02.7-1/os-initrd-base-arm64.tar.gz
 
 ARG SYSTEM_DOCKER_VERSION=17.06-ros6
-ARG SYSTEM_DOCKER_URL_amd64=https://releases.rancher.com/os/system-docker/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
-ARG SYSTEM_DOCKER_URL_arm64=https://releases.rancher.com/os/system-docker/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
+ARG SYSTEM_DOCKER_URL_amd64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
+ARG SYSTEM_DOCKER_URL_arm64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
 ARG USER_DOCKER_VERSION=18.06.1-1
 ARG USER_DOCKER_ENGINE_VERSION=docker-18.06.1-ce
