@@ -21,7 +21,7 @@ __read_policy() {
 
 __report_activity() {
     arch=`uname -m`
-    uuid=`cat /sys/class/dmi/id/product_uuid`
+    uuid=`cat /sys/class/dmi/id/product_uuid || true`
     release=`ros -v | awk '{print $2}'`
     response=`wget --server-response ${gateway_address}/report --header 'Accept: application/json' --header 'Content-type: application/json' --header "arch: $arch" --header "uuid: $uuid" --header "release: $release" 2>&1 | awk '/^  HTTP/{print $2}'`
     if [ $response -ge 200 -a $response -le 300 ]; then
