@@ -43,11 +43,6 @@ release-build:
 	mkdir -p dist
 	./.dapper release 2>&1 | tee dist/release.log
 
-itest:
-	mkdir -p dist
-	./.dapper integration-test 2>&1 | tee dist/itest.log
-	grep --binary-files=text FAIL dist/itest.log || true
-
 qcows:
 	cp dist/artifacts/rancheros.iso scripts/images/openstack/
 	cd scripts/images/openstack && \
@@ -66,7 +61,7 @@ rpi64:
 
 vmware: .dapper
 	mkdir -p dist
-	INTEGRATION_TESTS=0 ./.dapper vmware-release 2>&1 | tee dist/release.log
+	./.dapper vmware-release 2>&1 | tee dist/release.log
 
 help:
 	@./scripts/help

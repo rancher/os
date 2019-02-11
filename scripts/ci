@@ -9,12 +9,3 @@ echo TEST
 ./scripts/test
 echo VALIDATE
 ./scripts/validate
-
-# Drone servers kernel too old, and the integration tests often time out
-#echo PREPARE
-#./scripts/prepare
-#echo PACKAGE
-#./scripts/package
-#echo INTEGRATION-TEST
-#./scripts/integration-test
-

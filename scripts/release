@@ -17,20 +17,6 @@ echo PREPARE
 echo PACKAGE
 ./scripts/package
 
-if [[ "$INTEGRATION_TESTS" != "" ]]; then
-    if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
-        export INTEGRATION_TESTS=1
-    else
-        export INTEGRATION_TESTS=0
-    fi
-fi
-if [[ "$INTEGRATION_TESTS" != "1" ]]; then
-    echo INTEGRATION-TEST
-    ./scripts/integration-test
-else
-    echo "Skipping integration tests"
-fi
-
 #if [[ "$ARCH" == "" || "$ARCH" == "amd64" ]]; then
 ## make generated changelog
 #lastrelease=$(hub release | grep -v rc | head -n1 | tr -d ' \r\n')
