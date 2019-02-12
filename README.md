@@ -25,8 +25,12 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 - https://releases.rancher.com/os/v1.5.1/rancheros.iso
 - https://releases.rancher.com/os/v1.5.1/hyperv/rancheros.iso
 - https://releases.rancher.com/os/v1.5.1/4glte/rancheros.iso
-- https://releases.rancher.com/os/v1.5.1/rancheros-vmware.iso [boot by docker-machine]
-- https://releases.rancher.com/os/v1.5.1/vmware/rancheros.iso [boot from ISO]
+- https://releases.rancher.com/os/v1.5.1/vmware/rancheros.iso
+
+#### Special docker-machine Links
+
+- https://releases.rancher.com/os/v1.5.1/vmware/rancheros-autoformat.iso
+- https://releases.rancher.com/os/v1.5.1/proxmoxve/rancheros-autoformat.iso
 
 ### Additional Downloads
 
@@ -62,6 +66,11 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 * https://releases.rancher.com/os/v1.5.1/hyperv/initrd
 * https://releases.rancher.com/os/v1.5.1/hyperv/rootfs.tar.gz
+
+#### Proxmox VE Links
+
+* https://releases.rancher.com/os/v1.5.1/proxmoxve/initrd
+* https://releases.rancher.com/os/v1.5.1/proxmoxve/rootfs.tar.gz
 
 #### 4G-LTE Links
 
