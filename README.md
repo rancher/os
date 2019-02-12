@@ -67,6 +67,8 @@ us-east-1 | HVM | [ami-071ece35fd8f75bd9](https://us-east-1.console.aws.amazon.c
 us-east-2 | HVM | [ami-014c1a9ddda965fb3](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-014c1a9ddda965fb3)
 us-west-1 | HVM | [ami-0d4aaf00afe4eab90](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-0d4aaf00afe4eab90)
 us-west-2 | HVM | [ami-0172914721778cc07](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-0172914721778cc07)
+cn-north-1 | HVM | [ami-06d6d50c039ae27ff](https://cn-north-1.console.amazonaws.cn/ec2/home?region=cn-north-1#launchInstanceWizard:ami=ami-06d6d50c039ae27ff)
+cn-northwest-1 | HVM | [ami-02ebe74291444cf52](https://cn-northwest-1.console.amazonaws.cn/ec2/home?region=cn-northwest-1#launchInstanceWizard:ami=ami-02ebe74291444cf52)
 
 Additionally, images are available with support for Amazon EC2 Container Service (ECS) [here](https://rancher.com/docs/os/v1.x/en/installation/amazon-ecs/#amazon-ecs-enabled-amis).
 
