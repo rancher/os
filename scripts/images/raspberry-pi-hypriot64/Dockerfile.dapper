@@ -12,17 +12,11 @@ RUN mkdir -p /source/assets
 #RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz > /source/assets/rootfs_arm64.tar.gz
 COPY rootfs_arm64.tar.gz /source/assets/rootfs_arm64.tar.gz
 
-ENV URL=https://github.com/DieterReuter/rpi64-kernel/releases/download
-ENV VER=v20180426-171616
+ENV KERNEL_URL=https://github.com/DieterReuter/rpi64-kernel/releases/download/v20180426-171616/4.9.80-hypriotos-v8.tar.gz
+ENV BOOTLOADER_URL=https://github.com/DieterReuter/rpi-bootloader/releases/download/v20180320-071222/rpi-bootloader.tar.gz
 
-RUN curl -fL ${URL}/${VER}/4.9.80-hypriotos-v8.tar.gz > /source/assets/kernel.tar.gz
-RUN curl -fL ${URL}/${VER}/bootfiles.tar.gz > /source/assets/bootfiles.tar.gz
-RUN curl -fL https://github.com/DieterReuter/rpi-bootloader/releases/download/v20180320-071222/rpi-bootloader.tar.gz > /source/assets/rpi-bootfiles.tar.gz
-
-#ENV RPI_URL=https://github.com/raspberrypi/firmware/raw/master/boot
-#RUN curl -fL ${RPI_URL}/bootcode.bin > /source/assets/bootcode.bin
-#RUN curl -fL ${RPI_URL}/fixup.dat > /source/assets/fixup.dat
-#RUN curl -fL ${RPI_URL}/start.elf > /source/assets/start.elf
+RUN curl -fL ${KERNEL_URL} > /source/assets/kernel.tar.gz
+RUN curl -fL ${BOOTLOADER_URL} > /source/assets/rpi-bootfiles.tar.gz
 
 WORKDIR /source
 CMD ["./scripts/build.sh"]

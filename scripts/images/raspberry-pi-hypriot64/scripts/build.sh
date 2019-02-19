@@ -54,10 +54,6 @@ echo "RancherOS: root partition" > build/root/root.txt
 mkdir -p build/basefs
 tar -C build/basefs -zxvf build/kernel.tar.gz
 tar -C build/basefs -zxvf build/rpi-bootfiles.tar.gz
-tar -C build/basefs -zxvf build/bootfiles.tar.gz
-# remove RPi1 kernel, we only support RPi2 and RPi3 in ARMv7 mode
-rm -fr build/basefs/boot/kernel.img
-rm -fr build/basefs/lib/modules/{4.4.27+,4.4.27-hypriotos+}
 
 # populate kernel, bootloader and RancherOS rootfs
 cp -R build/basefs/* build/root
@@ -65,6 +61,16 @@ tar -xf assets/rootfs_arm64.tar.gz -C build/root
 echo "+dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 cgroup-enable=memory swapaccount=1 elevator=deadline rootwait console=ttyAMA0,115200 console=tty0 rancher.password=rancher rancher.autologin=ttyAMA0 rw init=/init" > build/root/boot/cmdline.txt
 # enable serial console mode for rpi3
 echo "enable_uart=1" > build/root/boot/config.txt
+
+## wireless support
+mkdir -p build/root/lib/firmware/brcm
+pushd build/root/lib/firmware/brcm
+curl -sL -o brcmfmac43430-sdio.txt https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43430-sdio.txt
+curl -sL -o brcmfmac43430-sdio.bin https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43430-sdio.bin
+curl -sL -o brcmfmac43455-sdio.bin https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43455-sdio.bin
+curl -sL -o brcmfmac43455-sdio.clm_blob https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43455-sdio.clm_blob
+curl -sL -o brcmfmac43455-sdio.txt https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43455-sdio.txt
+popd
 
 # show details
 tree -a -L 3 build/root
