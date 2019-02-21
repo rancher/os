@@ -9,7 +9,6 @@ ARTIFACTS=$(pwd)/dist/artifacts
 CD=${BUILD}/cd
 rm -rf ${CD}/
 ISO=${ARTIFACTS}/$(echo ${DISTRIB_ID} | tr '[:upper:]' '[:lower:]').iso
-CHECKSUM=iso-checksums.txt
 
 mkdir -p ${CD}/boot/isolinux
 mkdir -p ${CD}/rancheros
@@ -42,7 +41,3 @@ cd ${CD} && xorriso \
     -o $ISO ${CD}
 
 cd $(dirname $ISO)
-rm -f $CHECKSUM
-for algo in sha256 md5; do
-    echo "$algo: $(${algo}sum $(basename $ISO))" >> $CHECKSUM
-done

@@ -1,0 +1,43 @@
+#!/bin/bash
+set -ex
+
+cd $(dirname $0)/..
+
+source ./scripts/version
+
+CHECKSUM="dist/checksums.txt"
+rm -f $CHECKSUM
+
+FILELIST="
+initrd
+rancheros.ipxe
+rancheros.iso
+rootfs.tar.gz
+vmlinuz
+rancheros-aliyun.vhd
+rancheros-cloudstack.img
+rancheros-digitalocean.img
+rancheros-openstack.img
+rancheros-gce.tar.gz
+rancheros-raspberry-pi64.zip
+rancheros-4glte.iso
+rancheros-hyperv.iso
+rancheros-proxmoxve.iso
+rancheros-proxmoxve-autoformat.iso
+rancheros-vmware.iso
+rancheros-vmware-autoformat.iso
+"
+
+rm -rf dist/checksums && mkdir -p dist/checksums
+pushd dist/checksums
+for file in $FILELIST; do
+    curl -sSL -o $file https://github.com/rancher/os/releases/download/$VERSION/$file
+    for algo in sha256 md5; do
+        echo "$algo: $(${algo}sum $file)" >> ../../$CHECKSUM
+    done
+done
+popd
+
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file $CHECKSUM --name checksums.txt"
+echo "gsutil cp $CHECKSUM gs://releases.rancher.com/os/latest/checksums.txt"
+echo "gsutil cp $CHECKSUM gs://releases.rancher.com/os/$VERSION/checksums.txt"
