@@ -2,10 +2,12 @@ package docker
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
 
+	"github.com/docker/docker/layer"
 	dockerclient "github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
@@ -148,7 +150,13 @@ func (s *Service) Up(ctx context.Context, options options.Up) error {
 		}
 		for _, c := range cs {
 			if _, err := c.(*docker.Container).Recreate(ctx, s.Config().Image); err != nil {
-				return err
+				// sometimes we can get ErrMountNameConflict when booting on RPi
+				// ignore this error so that ros can boot success, otherwise it will hang forever
+				if strings.Contains(err.Error(), layer.ErrMountNameConflict.Error()) {
+					log.Warn(err)
+				} else {
+					return err
+				}
 			}
 		}
 		if err = s.rename(ctx); err != nil {
