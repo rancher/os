@@ -43,8 +43,14 @@ func consoleSubcommands() []cli.Command {
 			Action: consoleEnable,
 		},
 		{
-			Name:   "list",
-			Usage:  "list available consoles",
+			Name:  "list",
+			Usage: "list available consoles",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "update, u",
+					Usage: "update console cache",
+				},
+			},
 			Action: consoleList,
 		},
 	}
@@ -127,7 +133,7 @@ func consoleEnable(c *cli.Context) error {
 
 func consoleList(c *cli.Context) error {
 	cfg := config.LoadConfig()
-	consoles := availableConsoles(cfg)
+	consoles := availableConsoles(cfg, c.Bool("update"))
 	CurrentConsole := CurrentConsole()
 
 	for _, console := range consoles {
@@ -144,13 +150,20 @@ func consoleList(c *cli.Context) error {
 }
 
 func validateConsole(console string, cfg *config.CloudConfig) {
-	consoles := availableConsoles(cfg)
+	consoles := availableConsoles(cfg, false)
 	if !service.IsLocalOrURL(console) && !util.Contains(consoles, console) {
 		log.Fatalf("%s is not a valid console", console)
 	}
 }
 
-func availableConsoles(cfg *config.CloudConfig) []string {
+func availableConsoles(cfg *config.CloudConfig, update bool) []string {
+	if update {
+		err := network.UpdateCaches(cfg.Rancher.Repositories.ToArray(), "consoles")
+		if err != nil {
+			log.Debugf("Failed to update console caches: %v", err)
+		}
+
+	}
 	consoles, err := network.GetConsoles(cfg.Rancher.Repositories.ToArray())
 	if err != nil {
 		log.Fatal(err)

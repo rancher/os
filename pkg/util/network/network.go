@@ -193,3 +193,38 @@ func LoadMultiEngineResource(name string) ([]byte, error) {
 
 	return nil, err
 }
+
+func UpdateCaches(urls []string, key string) error {
+	for _, url := range urls {
+		indexURL := fmt.Sprintf("%s/index.yml", url)
+		content, err := UpdateCache(indexURL)
+		if err != nil {
+			return err
+		}
+
+		services := make(map[string][]string)
+		err = yaml.Unmarshal(content, &services)
+		if err != nil {
+			return err
+		}
+
+		list := services[key]
+		for _, name := range list {
+			serviceURL := serviceURL(url, name)
+			// no need to handle error
+			UpdateCache(serviceURL)
+		}
+	}
+	return nil
+}
+
+func UpdateCache(location string) ([]byte, error) {
+	if err := cacheRemove(location); err != nil {
+		return []byte{}, err
+	}
+	content, err := LoadResource(location, true)
+	if err != nil {
+		return []byte{}, err
+	}
+	return content, nil
+}
