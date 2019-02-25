@@ -78,6 +78,10 @@ func serviceSubCommands() []cli.Command {
 					Name:  "all, a",
 					Usage: "list all services and state",
 				},
+				cli.BoolFlag{
+					Name:  "update, u",
+					Usage: "update service cache",
+				},
 			},
 			Action: list,
 		},
@@ -180,7 +184,7 @@ func list(c *cli.Context) error {
 		clone[service] = enabled
 	}
 
-	services := availableService(cfg)
+	services := availableService(cfg, c.Bool("update"))
 
 	if c.Bool("all") {
 		for service := range cfg.Rancher.Services {
@@ -222,7 +226,7 @@ func IsLocalOrURL(service string) bool {
 
 // ValidService checks to see if the service definition exists
 func ValidService(service string, cfg *config.CloudConfig) bool {
-	services := availableService(cfg)
+	services := availableService(cfg, false)
 	if !IsLocalOrURL(service) && !util.Contains(services, service) {
 		return false
 	}
@@ -235,7 +239,14 @@ func validateService(service string, cfg *config.CloudConfig) {
 	}
 }
 
-func availableService(cfg *config.CloudConfig) []string {
+func availableService(cfg *config.CloudConfig, update bool) []string {
+	if update {
+		err := network.UpdateCaches(cfg.Rancher.Repositories.ToArray(), "services")
+		if err != nil {
+			log.Debugf("Failed to update service caches: %v", err)
+		}
+
+	}
 	services, err := network.GetServices(cfg.Rancher.Repositories.ToArray())
 	if err != nil {
 		log.Fatalf("Failed to get services: %v", err)

@@ -71,8 +71,14 @@ func osSubcommands() []cli.Command {
 			},
 		},
 		{
-			Name:   "list",
-			Usage:  "list the current available versions",
+			Name:  "list",
+			Usage: "list the current available versions",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "update, u",
+					Usage: "update engine cache",
+				},
+			},
 			Action: osMetaDataGet,
 		},
 		{
@@ -83,7 +89,7 @@ func osSubcommands() []cli.Command {
 	}
 }
 
-func getImages() (*Images, error) {
+func getImages(update bool) (*Images, error) {
 	upgradeURL, err := getUpgradeURL()
 	if err != nil {
 		return nil, err
@@ -110,6 +116,13 @@ func getImages() (*Images, error) {
 		u.RawQuery = q.Encode()
 		upgradeURL = u.String()
 
+		if update {
+			_, err := network.UpdateCache(upgradeURL)
+			if err != nil {
+				log.Errorf("Failed to update os caches: %v", err)
+			}
+		}
+
 		body, err = network.LoadFromNetwork(upgradeURL)
 		if err != nil {
 			return nil, err
@@ -131,7 +144,7 @@ func getImages() (*Images, error) {
 }
 
 func osMetaDataGet(c *cli.Context) error {
-	images, err := getImages()
+	images, err := getImages(c.Bool("update"))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -172,7 +185,7 @@ func osMetaDataGet(c *cli.Context) error {
 }
 
 func getLatestImage() (string, error) {
-	images, err := getImages()
+	images, err := getImages(false)
 	if err != nil {
 		return "", err
 	}

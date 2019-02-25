@@ -43,3 +43,8 @@ func cacheAdd(location string, data []byte) {
 	cacheFile := cacheDirectory + locationHash(location)
 	os.Rename(tempFile.Name(), cacheFile)
 }
+
+func cacheRemove(location string) error {
+	cacheFile := cacheDirectory + locationHash(location)
+	return os.Remove(cacheFile)
+}

@@ -108,8 +108,14 @@ func engineSubcommands() []cli.Command {
 			Action: engineEnable,
 		},
 		{
-			Name:   "list",
-			Usage:  "list available Docker engines (include the Dind engines)",
+			Name:  "list",
+			Usage: "list available Docker engines (include the Dind engines)",
+			Flags: []cli.Flag{
+				cli.BoolFlag{
+					Name:  "update, u",
+					Usage: "update engine cache",
+				},
+			},
 			Action: engineList,
 		},
 	}
@@ -272,7 +278,7 @@ func engineEnable(c *cli.Context) error {
 
 func engineList(c *cli.Context) error {
 	cfg := config.LoadConfig()
-	engines := availableEngines(cfg)
+	engines := availableEngines(cfg, c.Bool("update"))
 	currentEngine := CurrentEngine()
 
 	for _, engine := range engines {
@@ -315,13 +321,20 @@ func engineList(c *cli.Context) error {
 }
 
 func validateEngine(engine string, cfg *config.CloudConfig) {
-	engines := availableEngines(cfg)
+	engines := availableEngines(cfg, false)
 	if !service.IsLocalOrURL(engine) && !util.Contains(engines, engine) {
 		log.Fatalf("%s is not a valid engine", engine)
 	}
 }
 
-func availableEngines(cfg *config.CloudConfig) []string {
+func availableEngines(cfg *config.CloudConfig, update bool) []string {
+	if update {
+		err := network.UpdateCaches(cfg.Rancher.Repositories.ToArray(), "engines")
+		if err != nil {
+			log.Debugf("Failed to update engine caches: %v", err)
+		}
+
+	}
 	engines, err := network.GetEngines(cfg.Rancher.Repositories.ToArray())
 	if err != nil {
 		log.Fatal(err)
