@@ -289,11 +289,17 @@ func validate(c *cli.Context) error {
 }
 
 func inputBytes(c *cli.Context) ([]byte, error) {
+	input := os.Stdin
 	inputFile := c.String("input")
-	if inputFile == "" {
-		return nil, errors.New("input parameter can not be empty")
+	if inputFile != "" {
+		var err error
+		input, err = os.Open(inputFile)
+		if err != nil {
+			return nil, err
+		}
+		defer input.Close()
 	}
-	content, err := ioutil.ReadFile(inputFile)
+	content, err := ioutil.ReadAll(input)
 	if err != nil {
 		return nil, err
 	}
