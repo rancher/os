@@ -72,6 +72,12 @@ curl -sL -o brcmfmac43455-sdio.clm_blob https://raw.githubusercontent.com/RPi-Di
 curl -sL -o brcmfmac43455-sdio.txt https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43455-sdio.txt
 popd
 
+# TODO: we need to remove these lines
+# mitigate this issue: https://github.com/rancher/os/issues/2674
+pushd build/root/usr/share/ros/
+sed -i 's/io.docker.compose.rebuild: always/io.docker.compose.rebuild\: "false"/g' os-config.yml
+popd
+
 # show details
 tree -a -L 3 build/root
 df -h
