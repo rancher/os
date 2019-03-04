@@ -95,6 +95,11 @@ func dockerInitAction(c *cli.Context) error {
 		}
 	}
 
+	err = checkZfsBackingFS(cfg.Rancher.Docker.StorageDriver, cfg.Rancher.Docker.Graph)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	args := []string{
 		"bash",
 		"-c",

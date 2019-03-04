@@ -3,11 +3,15 @@ package control
 import (
 	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
+
+	"github.com/pkg/errors"
 )
 
 func yes(question string) bool {
@@ -54,6 +58,25 @@ func symLinkEngineBinary(version string) []symlink {
 		}...)
 	}
 	return baseSymlink
+}
+
+func checkZfsBackingFS(driver, dir string) error {
+	if driver != "zfs" {
+		return nil
+	}
+	for i := 0; i < 4; i++ {
+		mountInfo, err := ioutil.ReadFile("/proc/self/mountinfo")
+		if err != nil {
+			continue
+		}
+		for _, mount := range strings.Split(string(mountInfo), "\n") {
+			if strings.Contains(mount, dir) && strings.Contains(mount, driver) {
+				return nil
+			}
+		}
+		time.Sleep(1 * time.Second)
+	}
+	return errors.Errorf("BackingFS: %s not match storage-driver: %s", dir, driver)
 }
 
 func checkGlobalCfg() bool {
