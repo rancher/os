@@ -26,6 +26,7 @@ rancheros-proxmoxve.iso
 rancheros-proxmoxve-autoformat.iso
 rancheros-vmware.iso
 rancheros-vmware-autoformat.iso
+rancheros-vmware.vmdk
 "
 
 rm -rf dist/checksums && mkdir -p dist/checksums

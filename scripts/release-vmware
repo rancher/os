@@ -71,4 +71,5 @@ for file in $(ls dist/artifacts/); do
     esac
 done
 
-echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/artifacts/rancheros.iso --name rancheros-vmware.iso" > dist/publish.sh
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/artifacts/rancheros.iso --name rancheros-vmware.iso" >> dist/publish.sh
+echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/artifacts/rancheros.vmdk --name rancheros-vmware.vmdk" >> dist/publish.sh
