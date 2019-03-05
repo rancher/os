@@ -5,12 +5,14 @@ INIT_DEP="rancher/os-bootstrap"
 SHARED_DEP="rancher/os-base"
 INIT_IMAGES_DST="build/images-init.tar"
 SYSTEM_IMAGES_DST="build/images-system.tar"
+USER_IMAGES_DST="build/images-user.tar"
 
 cd $(dirname $0)/..
 
 IMAGES=$(bin/host_ros c images -i build/initrd/usr/share/ros/os-config.yml)
 INIT_IMAGES=""
 SYSTEM_IMAGES=""
+USER_IMAGES=""
 
 for i in ${APPEND_SYSTEM_IMAGES};do
     IMAGES="${IMAGES} ${i}"
@@ -31,8 +33,13 @@ for i in ${IMAGES}; do
     fi
 done
 
+for i in ${APPEND_USER_IMAGES}; do
+    USER_IMAGES="${USER_IMAGES} ${i}"
+done
+
 echo "tar-image: SYSTEM_IMAGES=$SYSTEM_IMAGES"
 echo "tar-image: INIT_IMAGES=$INIT_IMAGES"
+echo "tar-image: USER_IMAGES=$USER_IMAGES"
 
 if [ "$COMPRESS" == "" ]; then
     ARCHIVE_CMD="gzip"
@@ -45,4 +52,7 @@ fi
 
 docker save ${INIT_IMAGES} | ${ARCHIVE_CMD} > ${INIT_IMAGES_DST}
 docker save ${SYSTEM_IMAGES} | ${ARCHIVE_CMD} > ${SYSTEM_IMAGES_DST}
+if [ ! -z "$USER_IMAGES" ]; then
+    docker save ${USER_IMAGES} | ${ARCHIVE_CMD} > ${USER_IMAGES_DST}
+fi
 echo "tar-images: DONE"
