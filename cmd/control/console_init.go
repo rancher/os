@@ -70,6 +70,15 @@ func consoleInitFunc() error {
 	createHomeDir(rancherHome, 1100, 1100)
 	createHomeDir(dockerHome, 1101, 1101)
 
+	// who & w command need this file
+	if _, err := os.Stat("/run/utmp"); os.IsNotExist(err) {
+		f, err := os.OpenFile("/run/utmp", os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			log.Error(err)
+		}
+		defer f.Close()
+	}
+
 	// some software need this dir, like open-iscsi
 	if _, err := os.Stat(runLockDir); os.IsNotExist(err) {
 		if err = os.Mkdir(runLockDir, 0755); err != nil {
