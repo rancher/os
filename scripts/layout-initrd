@@ -62,7 +62,7 @@ for file in $(ls .make-*); do
             cache_services "h/hyperv-vm-tools.yml"
             cache_services "w/waagent.yml"
             ;;
-	".make-proxmoxve")
+        ".make-proxmoxve")
             cache_services "q/qemu-guest-agent.yml"
             ;;
     esac
