@@ -38,6 +38,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/gce"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
 	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
+	"github.com/rancher/os/config/cloudinit/datasource/tftp"
 	"github.com/rancher/os/config/cloudinit/datasource/url"
 	"github.com/rancher/os/config/cloudinit/datasource/vmware"
 	"github.com/rancher/os/config/cloudinit/pkg"
@@ -237,6 +238,8 @@ func getDatasources(datasources []string) []datasource.Datasource {
 			if root != "" {
 				dss = append(dss, file.NewDatasource(root))
 			}
+		case "tftp":
+			dss = append(dss, tftp.NewDatasource(root))
 		case "url":
 			if root != "" {
 				dss = append(dss, url.NewDatasource(root))
