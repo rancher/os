@@ -111,6 +111,11 @@ func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool)
 		}
 
 		if strings.HasPrefix(netConf.Match, "mac") {
+			if strings.Contains(netConf.Match, "*") {
+				// If selector contains wildcard * and MAC address matches wildcard then return
+				return netConf, glob.Glob(netConf.Match[4:], link.Attrs().HardwareAddr.String())
+			}
+
 			haAddr, err := net.ParseMAC(netConf.Match[4:])
 			if err != nil {
 				log.Errorf("Failed to parse mac %s: %v", netConf.Match[4:], err)
