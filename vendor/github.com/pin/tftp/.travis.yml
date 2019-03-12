@@ -1,0 +1,8 @@
+language: go
+
+os:
+  - linux
+  - osx
+
+before_install:
+  - ulimit -n 4096
