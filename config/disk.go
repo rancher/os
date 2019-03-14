@@ -18,6 +18,7 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
+	"github.com/xeipuuv/gojsonschema"
 )
 
 func ReadConfig(bytes []byte, substituteMetadataVars bool, files ...string) (*CloudConfig, error) {
@@ -48,6 +49,21 @@ func loadRawDiskConfig(dirPrefix string, full bool) map[interface{}]interface{} 
 	return util.Merge(rawCfg, additionalCfgs)
 }
 
+func loadRawDiskConfigWithError(dirPrefix string, full bool) (map[interface{}]interface{}, error) {
+	var rawCfg map[interface{}]interface{}
+	rawCfg, err := readConfigs(nil, true, true, OsConfigFile, OemConfigFile)
+	if err != nil {
+		return nil, err
+	}
+	files := CloudConfigDirFiles(dirPrefix)
+	files = append(files, path.Join(dirPrefix, CloudConfigFile))
+	additionalCfgs, err := readConfigs(nil, true, true, files...)
+	if err != nil {
+		return nil, err
+	}
+	return util.Merge(rawCfg, additionalCfgs), nil
+}
+
 func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
 	rawCfg := loadRawDiskConfig(dirPrefix, full)
 	procCmdline, err := cmdline.Read(false)
@@ -60,6 +76,21 @@ func loadRawConfig(dirPrefix string, full bool) map[interface{}]interface{} {
 	return mergeMetadata(rawCfg, readMetadata())
 }
 
+func loadRawConfigWithError(dirPrefix string, full bool) (map[interface{}]interface{}, error) {
+	rawCfg, err := loadRawDiskConfigWithError(dirPrefix, full)
+	if err != nil {
+		return nil, err
+	}
+	procCmdline, err := cmdline.Read(false)
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Error("Failed to read kernel params")
+	}
+	rawCfg = util.Merge(rawCfg, procCmdline)
+	rawCfg = util.Merge(rawCfg, readElidedCmdline(rawCfg))
+	rawCfg = applyDebugFlags(rawCfg)
+	return mergeMetadata(rawCfg, readMetadata()), nil
+}
+
 func LoadConfig() *CloudConfig {
 	cfg := LoadConfigWithPrefix("")
 
@@ -70,6 +101,21 @@ func LoadConfig() *CloudConfig {
 	}
 
 	return cfg
+}
+
+func LoadConfigWithError() (*CloudConfig, *gojsonschema.Result, error) {
+	rawCfg, err := loadRawConfigWithError("", true)
+	if err != nil {
+		return &CloudConfig{}, nil, err
+	}
+	cfg := &CloudConfig{}
+	if err := util.Convert(rawCfg, cfg); err != nil {
+		validationErrors, err := ValidateRawCfg(rawCfg)
+		return &CloudConfig{}, validationErrors, err
+	}
+	cfg = amendNils(cfg)
+	cfg = amendContainerNames(cfg)
+	return cfg, nil, nil
 }
 
 func LoadConfigWithPrefix(dirPrefix string) *CloudConfig {
