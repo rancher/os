@@ -131,8 +131,23 @@ func reboot(name string, force bool, code uint) {
 		log.Fatalf("%s: Need to be root", os.Args[0])
 	}
 
-	// Add shutdown timeout
 	cfg := config.LoadConfig()
+
+	// Validate config
+	if !force {
+		_, validationErrors, err := config.LoadConfigWithError()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if validationErrors != nil && !validationErrors.Valid() {
+			for _, validationError := range validationErrors.Errors() {
+				log.Error(validationError)
+			}
+			return
+		}
+	}
+
+	// Add shutdown timeout
 	timeoutValue := cfg.Rancher.ShutdownTimeout
 	if timeoutValue == 0 {
 		timeoutValue = 60
