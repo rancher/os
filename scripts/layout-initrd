@@ -85,9 +85,9 @@ case ${OS_CONSOLE} in
         ;;
 esac
 
-# TODO: usr/lib dir is overwritten by the kernel modules and firmware
-ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/lib/
-ln -s ${INITRD_DIR}/usr/share/ros/os-release ${INITRD_DIR}/usr/etc/
+pushd ${INITRD_DIR}/usr/etc
+ln -s ../share/ros/os-release .
+popd
 
 # Support upgrades from old persistent consoles that bind mount these
 touch ${INITRD_DIR}/usr/bin/docker-containerd
