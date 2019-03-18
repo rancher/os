@@ -37,12 +37,6 @@ type symlink struct {
 	oldname, newname string
 }
 
-func ConsoleInitMain() {
-	if err := consoleInitFunc(); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func consoleInitAction(c *cli.Context) error {
 	return consoleInitFunc()
 }

@@ -15,7 +15,6 @@ import (
 	"github.com/rancher/os/cmd/wait"
 	"github.com/rancher/os/pkg/dfs"
 
-	"github.com/docker/docker/docker"
 	"github.com/docker/docker/pkg/reexec"
 )
 
@@ -23,9 +22,6 @@ var entrypoints = map[string]func(){
 	"autologin":          control.AutologinMain,
 	"cloud-init-execute": cloudinitexecute.Main,
 	"cloud-init-save":    cloudinitsave.Main,
-	"console":            control.ConsoleInitMain,
-	"console.sh":         control.ConsoleInitMain,
-	"docker":             docker.Main,
 	"dockerlaunch":       dfs.Main,
 	"init":               osInit.MainInit,
 	"netconf":            network.Main,
