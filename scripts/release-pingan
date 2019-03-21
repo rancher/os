@@ -1,0 +1,25 @@
+#!/bin/bash
+set -ex
+
+cd $(dirname $0)/..
+
+touch .make-pingan
+
+source ./scripts/version
+./scripts/release-build
+
+touch dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
+chmod 755 dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
+
+for file in $(ls dist/artifacts/); do
+    case $file in
+        "initrd-"*)
+            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/latest/pingan/initrd" >> ./dist/publish_gss_latest.sh
+            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/${VERSION}/pingan/initrd" >> ./dist/publish_gss_${VERSION}.sh
+            ;;
+        "rancheros.iso" | "rootfs.tar.gz")
+            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/latest/pingan/${file}" >> ./dist/publish_gss_latest.sh
+            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/${VERSION}/pingan/${file}" >> ./dist/publish_gss_${VERSION}.sh
+            ;;
+    esac
+done
