@@ -73,6 +73,11 @@ proxmoxve: .dapper
 	APPEND_SYSTEM_IMAGES="rancher/os-qemuguestagent:v2.8.1-2" \
 	./.dapper release-proxmoxve 2>&1 | tee dist/release.log
 
+pingan: .dapper
+	mkdir -p dist
+	APPEND_SYSTEM_IMAGES="rancher/os-pingan-amc:v0.0.6-1" \
+	./.dapper release-pingan 2>&1 | tee dist/release.log
+
 help:
 	@./scripts/help
 
