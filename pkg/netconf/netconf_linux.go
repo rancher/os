@@ -113,7 +113,11 @@ func findMatch(link netlink.Link, netCfg *NetworkConfig) (InterfaceConfig, bool)
 		if strings.HasPrefix(netConf.Match, "mac") {
 			if strings.Contains(netConf.Match, "*") {
 				// If selector contains wildcard * and MAC address matches wildcard then return
-				return netConf, glob.Glob(netConf.Match[4:], link.Attrs().HardwareAddr.String())
+				// Don't match mac address of a bond or VLAN interface because it is the same address as the slave or parent.
+				if glob.Glob(netConf.Match[4:], link.Attrs().HardwareAddr.String()) && link.Attrs().Name != netConf.Bond && link.Type() != "vlan" {
+					return netConf, true
+				}
+				continue
 			}
 
 			haAddr, err := net.ParseMAC(netConf.Match[4:])
