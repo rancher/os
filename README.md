@@ -110,6 +110,10 @@ cn-northwest-1 | HVM | [ami-08c6e6474bd4a48d1](https://cn-northwest-1.console.am
 
 Additionally, images are available with support for Amazon EC2 Container Service (ECS) [here](https://rancher.com/docs/os/v1.x/en/installation/amazon-ecs/#amazon-ecs-enabled-amis).
 
+### Azure
+
+You can get RancherOS in the [Azure Marketplace](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/rancher.rancheros), currently only the `rancher` user can be logged in through SSH keys.
+
 ## Documentation for RancherOS
 
 Please refer to our [RancherOS Documentation](https://rancher.com/docs/os/v1.x/en/) website to read all about RancherOS. It has detailed information on how RancherOS works, getting-started and other details.
