@@ -30,22 +30,25 @@ ls -al build/run.img
 
 # partition #1 - Type= c W95 FAT32 (LBA)
 losetup
-losetup -f
-losetup -d /dev/loop0 || /bin/true
-losetup --offset $BOOT_PARTITION_OFFSET --sizelimit $BOOT_PARTITION_BYTES /dev/loop0 build/run.img
-mkfs.vfat -n RancherOS /dev/loop0
-losetup -d /dev/loop0
+PART1_DEVICE=$(losetup -f)
+losetup -d ${PART1_DEVICE} || /bin/true
+losetup --offset $BOOT_PARTITION_OFFSET --sizelimit $BOOT_PARTITION_BYTES ${PART1_DEVICE} build/run.img
+mkfs.vfat -n RancherOS ${PART1_DEVICE}
+losetup -d ${PART1_DEVICE}
 
 # partition #2 - Type=83 Linux
-losetup -d /dev/loop1 || /bin/true
-losetup --offset $ROOT_PARTITION_OFFSET /dev/loop1 build/run.img
-mkfs.ext4 -O ^has_journal -b 4096 -L rootfs /dev/loop1
-losetup -d /dev/loop1
+PART2_DEVICE=$(losetup -f)
+losetup -d ${PART2_DEVICE} || /bin/true
+losetup --offset $ROOT_PARTITION_OFFSET ${PART2_DEVICE} build/run.img
+mkfs.ext4 -O ^has_journal -b 4096 -L rootfs ${PART2_DEVICE}
+losetup -d ${PART2_DEVICE}
 
 # mount partitions as loopback devices
-mount -t ext4 -o loop=/dev/loop1,offset=$ROOT_PARTITION_OFFSET build/run.img build/root
+mount -t ext4 -o loop=${PART2_DEVICE},offset=$ROOT_PARTITION_OFFSET build/run.img build/root
+rm -rf build/root/lost+found
 mkdir -p build/root/boot
-mount -t vfat -o loop=/dev/loop0,offset=$BOOT_PARTITION_OFFSET build/run.img build/root/boot
+mount -t vfat -o loop=${PART1_DEVICE},offset=$BOOT_PARTITION_OFFSET build/run.img build/root/boot
+rm -rf build/root/boot/lost+found
 echo "RancherOS: boot partition" > build/root/boot/boot.txt
 echo "RancherOS: root partition" > build/root/root.txt
 
@@ -65,11 +68,12 @@ echo "enable_uart=1" > build/root/boot/config.txt
 ## wireless support
 mkdir -p build/root/lib/firmware/brcm
 pushd build/root/lib/firmware/brcm
-curl -sL -o brcmfmac43430-sdio.txt https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43430-sdio.txt
-curl -sL -o brcmfmac43430-sdio.bin https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43430-sdio.bin
-curl -sL -o brcmfmac43455-sdio.bin https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43455-sdio.bin
-curl -sL -o brcmfmac43455-sdio.clm_blob https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43455-sdio.clm_blob
-curl -sL -o brcmfmac43455-sdio.txt https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm/brcmfmac43455-sdio.txt
+BRCM_URL_BASE=https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm
+curl -sL -o brcmfmac43430-sdio.txt ${BRCM_URL_BASE}/brcmfmac43430-sdio.txt
+curl -sL -o brcmfmac43430-sdio.bin ${BRCM_URL_BASE}/brcmfmac43430-sdio.bin
+curl -sL -o brcmfmac43455-sdio.bin ${BRCM_URL_BASE}/brcmfmac43455-sdio.bin
+curl -sL -o brcmfmac43455-sdio.clm_blob ${BRCM_URL_BASE}/brcmfmac43455-sdio.clm_blob
+curl -sL -o brcmfmac43455-sdio.txt ${BRCM_URL_BASE}/brcmfmac43455-sdio.txt
 popd
 
 # TODO: we need to remove these lines
@@ -79,7 +83,7 @@ sed -i 's/io.docker.compose.rebuild: always/io.docker.compose.rebuild\: "false"/
 popd
 
 # show details
-tree -a -L 3 build/root
+tree -a -L 4 build/root
 df -h
 
 # unmount partitions (loopback devices will be removed automatically)
