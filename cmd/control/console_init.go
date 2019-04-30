@@ -31,6 +31,8 @@ const (
 	rancherHome = "/home/rancher"
 	startScript = "/opt/rancher/bin/start.sh"
 	runLockDir  = "/run/lock"
+	sshdFile    = "/etc/ssh/sshd_config"
+	sshdTplFile = "/etc/ssh/sshd_config.tpl"
 )
 
 type symlink struct {
@@ -322,26 +324,33 @@ func writeRespawn(user string, sshd, recovery bool) error {
 }
 
 func modifySshdConfig(cfg *config.CloudConfig) error {
-	os.Remove("/etc/ssh/sshd_config")
-	sshdTpl, err := template.ParseFiles("/etc/ssh/sshd_config.tpl")
-	if err != nil {
-		return err
-	}
-	f, err := os.OpenFile("/etc/ssh/sshd_config", os.O_WRONLY|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
+	_, err := os.Stat(sshdTplFile)
+	if err == nil {
+		os.Remove(sshdFile)
+		sshdTpl, err := template.ParseFiles(sshdTplFile)
+		if err != nil {
+			return err
+		}
+		f, err := os.OpenFile(sshdFile, os.O_WRONLY|os.O_CREATE, 0644)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
 
-	config := map[string]string{}
-	if cfg.Rancher.SSH.Port > 0 && cfg.Rancher.SSH.Port < 65355 {
-		config["Port"] = strconv.Itoa(cfg.Rancher.SSH.Port)
-	}
-	if cfg.Rancher.SSH.ListenAddress != "" {
-		config["ListenAddress"] = cfg.Rancher.SSH.ListenAddress
+		config := map[string]string{}
+		if cfg.Rancher.SSH.Port > 0 && cfg.Rancher.SSH.Port < 65355 {
+			config["Port"] = strconv.Itoa(cfg.Rancher.SSH.Port)
+		}
+		if cfg.Rancher.SSH.ListenAddress != "" {
+			config["ListenAddress"] = cfg.Rancher.SSH.ListenAddress
+		}
+
+		return sshdTpl.Execute(f, config)
+	} else if os.IsNotExist(err) {
+		return nil
 	}
 
-	return sshdTpl.Execute(f, config)
+	return err
 }
 
 func setupSSH(cfg *config.CloudConfig) error {
