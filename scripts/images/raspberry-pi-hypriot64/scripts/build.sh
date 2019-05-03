@@ -34,13 +34,15 @@ PART1_DEVICE=$(losetup -f)
 losetup -d ${PART1_DEVICE} || /bin/true
 losetup --offset $BOOT_PARTITION_OFFSET --sizelimit $BOOT_PARTITION_BYTES ${PART1_DEVICE} build/run.img
 mkfs.vfat -n RancherOS ${PART1_DEVICE}
-losetup -d ${PART1_DEVICE}
 
 # partition #2 - Type=83 Linux
 PART2_DEVICE=$(losetup -f)
 losetup -d ${PART2_DEVICE} || /bin/true
 losetup --offset $ROOT_PARTITION_OFFSET ${PART2_DEVICE} build/run.img
 mkfs.ext4 -O ^has_journal -b 4096 -L rootfs ${PART2_DEVICE}
+
+# detach loop devices
+losetup -d ${PART1_DEVICE}
 losetup -d ${PART2_DEVICE}
 
 # mount partitions as loopback devices
