@@ -1,5 +1,5 @@
-FROM ubuntu:xenial
-# FROM arm64=arm64v8/ubuntu:xenial
+FROM ubuntu:bionic
+# FROM arm64=arm64v8/ubuntu:bionic
 
 ENV DAPPER_RUN_ARGS --privileged
 ENV DAPPER_OUTPUT dist
