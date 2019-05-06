@@ -32,6 +32,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/configdrive"
 	"github.com/rancher/os/config/cloudinit/datasource/file"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/aliyun"
+	"github.com/rancher/os/config/cloudinit/datasource/metadata/azure"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/cloudstack"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/digitalocean"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/ec2"
@@ -268,6 +269,8 @@ func getDatasources(datasources []string) []datasource.Datasource {
 			}
 		case "aliyun":
 			dss = append(dss, aliyun.NewDatasource(root))
+		case "azure":
+			dss = append(dss, azure.NewDatasource(root))
 		}
 	}
 
