@@ -39,6 +39,7 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     ln -s /usr/share/dhcpcd/hooks/10-wpa_supplicant /lib/dhcpcd/dhcpcd-hooks/ && \
     rm -f /usr/share/bash-completion/completions/* && \
     chmod 555 /lib/dhcpcd/dhcpcd-run-hooks && \
+    chmod +x /usr/lib/rancher/cache-services.sh && \
     sed -i 1,10d /etc/rsyslog.conf && \
     echo "*.*                /var/log/syslog" >> /etc/rsyslog.conf
 # dump kernel log to console (but after we've finished booting)

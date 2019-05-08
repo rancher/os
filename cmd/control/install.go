@@ -88,6 +88,10 @@ var installCommand = cli.Command{
 			Usage: "reboot using kexec",
 		},
 		cli.BoolFlag{
+			Name:  "stage, s",
+			Usage: "stage services",
+		},
+		cli.BoolFlag{
 			Name:  "debug",
 			Usage: "Run installer with debug output",
 		},
@@ -177,7 +181,9 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
-	if err := runInstall(image, installType, cloudConfig, device, partition, statedir, kappend, force, kexec, isoinstallerloaded, debug); err != nil {
+	stageImages := install.GetCacheImageList(c.Bool("stage"), cloudConfig, installType, cfg)
+
+	if err := runInstall(image, installType, cloudConfig, device, partition, statedir, kappend, force, kexec, isoinstallerloaded, debug, stageImages); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 		return err
 	}
@@ -190,7 +196,7 @@ func installAction(c *cli.Context) error {
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, partition, statedir, kappend string, force, kexec, isoinstallerloaded, debug bool) error {
+func runInstall(image, installType, cloudConfig, device, partition, statedir, kappend string, force, kexec, isoinstallerloaded, debug bool, stageImages []string) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -241,6 +247,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 	//}
 
 	useIso := false
+	usePartition := false
 	// --isoinstallerloaded is used if the ros has created the installer container from and image that was on the booted iso
 	if !isoinstallerloaded {
 		log.Infof("start !isoinstallerloaded")
@@ -311,6 +318,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			}
 			if partition != "" {
 				installerCmd = append(installerCmd, "--partition", partition)
+				usePartition = true
 			}
 			if statedir != "" {
 				installerCmd = append(installerCmd, "--statedir", statedir)
@@ -320,11 +328,20 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			if useIso {
 				util.Unmount("/bootiso")
 			}
-
 			cmd := exec.Command("system-docker", installerCmd...)
 			log.Debugf("Run(%v)", cmd)
 			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-			return cmd.Run()
+
+			if err = cmd.Run(); err != nil {
+				return err
+			}
+			if len(stageImages) > 0 && cloudConfig != "" && installType != "upgrade" {
+				if usePartition {
+					return runCacheScript(partition, stageImages)
+				}
+				return runCacheScript(device+"1", stageImages)
+			}
+			return nil
 		}
 	}
 
@@ -1074,4 +1091,11 @@ func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 		}
 	}
 	return currentCfg, nil
+}
+
+func runCacheScript(partition string, images []string) error {
+	args := make([]string, 0)
+	args = append(args, partition)
+	args = append(args, strings.Join(images, " "))
+	return util.RunScript("/usr/lib/rancher/cache-services.sh", args...)
 }
