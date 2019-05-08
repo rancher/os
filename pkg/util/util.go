@@ -252,7 +252,7 @@ func ExistsAndExecutable(path string) bool {
 	return mode&os.ModePerm != 0
 }
 
-func RunScript(path string) error {
+func RunScript(path string, args ...string) error {
 	if !ExistsAndExecutable(path) {
 		return nil
 	}
@@ -269,7 +269,7 @@ func RunScript(path string) error {
 
 	cmd := exec.Command("/bin/sh", path)
 	if string(magic) == "#!" {
-		cmd = exec.Command(path)
+		cmd = exec.Command(path, args...)
 	}
 
 	cmd.Stdout = os.Stdout
