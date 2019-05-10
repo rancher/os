@@ -48,7 +48,7 @@ rpi64: .dapper
 
 vmware: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.2.5-3" \
+	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.3.10-1" \
 	./.dapper release-vmware 2>&1 | tee dist/release.log
 
 hyperv: .dapper
