@@ -13,7 +13,7 @@ cp assets/*.tar.gz build/
 # size of root and boot partion (in MByte)
 IMAGE_TOTAL_SIZE=2048
 BOOT_PARTITION_START=2048
-BOOT_PARTITION_SIZE=25
+BOOT_PARTITION_SIZE=30
 #---don't change here---
 BOOT_PARTITION_OFFSET="$((BOOT_PARTITION_START*512))"
 BOOT_PARTITION_BYTES="$((BOOT_PARTITION_SIZE*1024*1024))"
@@ -70,12 +70,11 @@ echo "enable_uart=1" > build/root/boot/config.txt
 ## wireless support
 mkdir -p build/root/lib/firmware/brcm
 pushd build/root/lib/firmware/brcm
-BRCM_URL_BASE=https://raw.githubusercontent.com/RPi-Distro/firmware-nonfree/master/brcm
-curl -sL -o brcmfmac43430-sdio.txt ${BRCM_URL_BASE}/brcmfmac43430-sdio.txt
+BRCM_URL_BASE=https://git.kernel.org/pub/scm/linux/kernel/git/firmware/linux-firmware.git/plain/brcm/
+curl -sL -o brcmfmac43430-sdio.txt ${BRCM_URL_BASE}/brcmfmac43430-sdio.raspberrypi,3-model-b.txt
 curl -sL -o brcmfmac43430-sdio.bin ${BRCM_URL_BASE}/brcmfmac43430-sdio.bin
 curl -sL -o brcmfmac43455-sdio.bin ${BRCM_URL_BASE}/brcmfmac43455-sdio.bin
-curl -sL -o brcmfmac43455-sdio.clm_blob ${BRCM_URL_BASE}/brcmfmac43455-sdio.clm_blob
-curl -sL -o brcmfmac43455-sdio.txt ${BRCM_URL_BASE}/brcmfmac43455-sdio.txt
+curl -sL -o brcmfmac43455-sdio.txt ${BRCM_URL_BASE}/brcmfmac43455-sdio.raspberrypi,3-model-b-plus.txt
 popd
 
 # TODO: we need to remove these lines
