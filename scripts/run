@@ -336,7 +336,7 @@ if [ "$QEMU" == "1" ]; then
 elif [ "$BOOT_ISO" == "1" ] ||
             [ "$BOOT_HD" == "1" ]; then
     if [ "$BOOT_ISO" == "1" ]; then
-        ISO_OPTS="-boot d -cdrom ./dist/artifacts/rancheros.iso \
+        ISO_OPTS="-boot c -cdrom ./dist/artifacts/rancheros.iso \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home "
             echo "----- $ISO_OPTS"
