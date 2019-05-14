@@ -12,8 +12,8 @@ RUN mkdir -p /source/assets
 #RUN curl -fL https://releases.rancher.com/os/latest/rootfs_arm64.tar.gz > /source/assets/rootfs_arm64.tar.gz
 COPY rootfs_arm64.tar.gz /source/assets/rootfs_arm64.tar.gz
 
-ENV KERNEL_URL=https://github.com/DieterReuter/rpi64-kernel/releases/download/v20180426-171616/4.9.80-hypriotos-v8.tar.gz
-ENV BOOTLOADER_URL=https://github.com/DieterReuter/rpi-bootloader/releases/download/v20180320-071222/rpi-bootloader.tar.gz
+ENV KERNEL_URL=https://github.com/Jason-ZW/os-rpi-kernel/releases/download/v4.14.114-rancher/4.14.114-rancheros-v8.tar.gz
+ENV BOOTLOADER_URL=https://github.com/Jason-ZW/os-rpi-kernel/releases/download/v4.14.114-rancher/rpi-bootloader.tar.gz
 
 RUN curl -fL ${KERNEL_URL} > /source/assets/kernel.tar.gz
 RUN curl -fL ${BOOTLOADER_URL} > /source/assets/rpi-bootfiles.tar.gz
