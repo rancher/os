@@ -17,11 +17,8 @@ type ImageConfig struct {
 	Image string `yaml:"image,omitempty"`
 }
 
-func GetCacheImageList(stage bool, cloudconfig, installType string, cfg *config.CloudConfig) []string {
+func GetCacheImageList(cloudconfig string, cfg *config.CloudConfig) []string {
 	stageImages := make([]string, 0)
-	if !stage || cloudconfig == "" || installType == "upgrade" {
-		return stageImages
-	}
 	bytes, err := readConfigFile(cloudconfig)
 	if err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to read cloud-config")
@@ -58,6 +55,10 @@ func GetCacheImageList(stage bool, cloudconfig, installType string, cfg *config.
 		}
 	}
 	return stageImages
+}
+
+func RunCacheScript(partition string, images []string) error {
+	return util.RunScript("/scripts/cache-services.sh", partition, strings.Join(images, " "))
 }
 
 func readConfigFile(file string) ([]byte, error) {
