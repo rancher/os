@@ -47,8 +47,9 @@ BUILD_ID=
 HERE
 
 # cache os-services yml file
-for file in $(basename $(find . -type f -name ".make-*")); do
-    case $file in
+for file in $(find . -type f -name ".make-*"); do
+    f_file=$(basename ${file})
+    case $f_file in
         ".make-vmware")
             cache_services "o/open-vm-tools.yml"
             ;;
