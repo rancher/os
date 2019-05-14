@@ -21,6 +21,8 @@ COPY kexec/dist/sbin/kexec /sbin/
 
 RUN ln -s /bootiso/boot/ /dist
 
+COPY cache-services.sh /scripts/
+
 # need to make a /scripts/set-disk-partitions so that older releases can call the installer
 RUN echo "#!/bin/sh" > /scripts/set-disk-partitions \
     && echo "echo 'set-disk-partitions deprecated'" >> /scripts/set-disk-partitions \

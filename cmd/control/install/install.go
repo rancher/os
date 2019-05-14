@@ -82,3 +82,10 @@ func GetStatePartition() string {
 	}
 	return d
 }
+
+func GetDefaultPartition(device string) string {
+	if strings.Contains(device, "nvme") {
+		return device + "p1"
+	}
+	return device + "1"
+}

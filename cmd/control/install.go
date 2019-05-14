@@ -11,10 +11,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 
-	"github.com/rancher/catalog-service/utils/version"
 	"github.com/rancher/os/cmd/control/install"
 	"github.com/rancher/os/cmd/power"
 	"github.com/rancher/os/config"
@@ -181,7 +179,11 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
-	stageImages := install.GetCacheImageList(c.Bool("stage"), cloudConfig, installType, cfg)
+	stageImages := []string{}
+	if c.Bool("stage") && cloudConfig != "" && installType != "upgrade" {
+		stageImages = install.GetCacheImageList(cloudConfig, cfg)
+		log.Debugf("Will cache these images: %s", stageImages)
+	}
 
 	if err := runInstall(image, installType, cloudConfig, device, partition, statedir, kappend, force, kexec, isoinstallerloaded, debug, stageImages); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
@@ -205,49 +207,8 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			os.Exit(1)
 		}
 	}
-	diskType := "msdos"
-
-	if installType == "gptsyslinux" {
-		diskType = "gpt"
-	}
-
-	// Versions before 0.8.0-rc3 use the old calling convention (from the lay-down-os shell script)
-	imageVersion := strings.Split(image, ":")[1]
-	if version.GreaterThan("v0.8.0-rc3", imageVersion) {
-		log.Infof("user specified to install pre v0.8.0: %s", image)
-		imageVersion = strings.Replace(imageVersion, "-", ".", -1)
-		vArray := strings.Split(imageVersion, ".")
-		if len(vArray) >= 2 {
-			v, _ := strconv.ParseFloat(vArray[0]+"."+vArray[1], 32)
-			if v < 0.8 || imageVersion == "0.8.0-rc1" {
-				log.Infof("starting installer container for %s", image)
-				if installType == "generic" ||
-					installType == "syslinux" ||
-					installType == "gptsyslinux" {
-					cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=all-volumes",
-						"--entrypoint=/scripts/set-disk-partitions", image, device, diskType)
-					cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-					if err := cmd.Run(); err != nil {
-						return err
-					}
-				}
-				cmd := exec.Command("system-docker", "run", "--net=host", "--privileged", "--volumes-from=user-volumes",
-					"--volumes-from=command-volumes", image, "-d", device, "-t", installType, "-c", cloudConfig,
-					"-a", kappend)
-				cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-				return cmd.Run()
-			}
-		}
-	}
-
-	//if _, err := os.Stat("/usr/bin/system-docker"); os.IsNotExist(err) {
-	//if err := os.Symlink("/usr/bin/ros", "/usr/bin/system-docker"); err != nil {
-	//log.Errorf("ln error %s", err)
-	//}
-	//}
 
 	useIso := false
-	usePartition := false
 	// --isoinstallerloaded is used if the ros has created the installer container from and image that was on the booted iso
 	if !isoinstallerloaded {
 		log.Infof("start !isoinstallerloaded")
@@ -318,10 +279,12 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			}
 			if partition != "" {
 				installerCmd = append(installerCmd, "--partition", partition)
-				usePartition = true
 			}
 			if statedir != "" {
 				installerCmd = append(installerCmd, "--statedir", statedir)
+			}
+			if len(stageImages) > 0 {
+				installerCmd = append(installerCmd, "--stage")
 			}
 
 			// TODO: mount at /mnt for shared mount?
@@ -332,16 +295,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			log.Debugf("Run(%v)", cmd)
 			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 
-			if err = cmd.Run(); err != nil {
-				return err
-			}
-			if len(stageImages) > 0 && cloudConfig != "" && installType != "upgrade" {
-				if usePartition {
-					return runCacheScript(partition, stageImages)
-				}
-				return runCacheScript(device+"1", stageImages)
-			}
-			return nil
+			return cmd.Run()
 		}
 	}
 
@@ -365,7 +319,7 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			device = "/host" + device
 			//# TODO: Change this to a number so that users can specify.
 			//# Will need to make it so that our builds and packer APIs remain consistent.
-			partition = device + "1" //${partition:=${device}1}
+			partition = install.GetDefaultPartition(device)
 		}
 	}
 
@@ -392,6 +346,10 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 	if err != nil {
 		log.Errorf("error layDownOS %s", err)
 		return err
+	}
+
+	if len(stageImages) > 0 {
+		return install.RunCacheScript(partition, stageImages)
 	}
 
 	return nil
@@ -1091,11 +1049,4 @@ func installRancher(baseName, VERSION, DIST, kappend string) (string, error) {
 		}
 	}
 	return currentCfg, nil
-}
-
-func runCacheScript(partition string, images []string) error {
-	args := make([]string, 0)
-	args = append(args, partition)
-	args = append(args, strings.Join(images, " "))
-	return util.RunScript("/usr/lib/rancher/cache-services.sh", args...)
 }
