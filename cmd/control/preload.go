@@ -54,6 +54,20 @@ func PreloadImages(clientFactory func() (dockerClient.APIClient, error), imagesD
 		return err
 	}
 
+	// try to load predefined user images
+	if imagesDir == userImagesPreloadDirectory {
+		oldUserImgName := path.Join(config.ImagesPath, config.UserImages)
+		userImgfile, err := os.Stat(oldUserImgName)
+		if err == nil {
+			newUserImgName := path.Join(userImagesPreloadDirectory, userImgfile.Name())
+			if _, err = os.Stat(newUserImgName); os.IsNotExist(err) {
+				if err := os.Symlink(oldUserImgName, newUserImgName); err != nil {
+					log.Error(err)
+				}
+			}
+		}
+	}
+
 	files, err := ioutil.ReadDir(imagesDir)
 	if err != nil {
 		return err

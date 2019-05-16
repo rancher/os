@@ -23,6 +23,7 @@ const (
 	ImagesPath       = "/usr/share/ros"
 	InitImages       = "images-init.tar"
 	SystemImages     = "images-system.tar"
+	UserImages       = "images-user.tar"
 	Debug            = false
 	SystemDockerBin  = "/usr/bin/system-dockerd"
 	DefaultDind      = "rancher/os-dind:17.12.1"

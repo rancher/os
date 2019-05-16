@@ -34,6 +34,9 @@ for i in ${IMAGES}; do
 done
 
 for i in ${APPEND_USER_IMAGES}; do
+    if ! docker inspect $i >/dev/null 2>&1; then
+        docker pull ${i}
+    fi
     USER_IMAGES="${USER_IMAGES} ${i}"
 done
 
