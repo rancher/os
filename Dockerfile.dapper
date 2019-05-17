@@ -1,5 +1,5 @@
-FROM ubuntu:16.04
-# FROM arm64=aarch64/ubuntu:16.04
+FROM ubuntu:bionic
+# FROM arm64=arm64v8/ubuntu:bionic
 
 # get the apt-cacher proxy set
 ARG APTPROXY=
@@ -94,7 +94,8 @@ ARG PROXMOXVE_SERVICE=false
 
 # Set up environment and export all ARGS as ENV
 ENV ARCH=${ARCH} \
-    HOST_ARCH=${HOST_ARCH}
+    HOST_ARCH=${HOST_ARCH} \
+    XZ_DEFAULTS="-T0"
 
 ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     BUILD_DOCKER_URL_amd64=${BUILD_DOCKER_URL_amd64} \
