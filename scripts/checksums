@@ -18,6 +18,7 @@ rancheros-aliyun.vhd
 rancheros-cloudstack.img
 rancheros-digitalocean.img
 rancheros-openstack.img
+rancheros-pingan.img
 rancheros-gce.tar.gz
 rancheros-raspberry-pi64.zip
 rancheros-4glte.iso
