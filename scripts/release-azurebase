@@ -3,7 +3,7 @@ set -ex
 
 cd $(dirname $0)/..
 
-touch .make-azure
+touch .make-azurebase
 
 source ./scripts/version
 ./scripts/release-build

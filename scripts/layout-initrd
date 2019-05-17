@@ -62,7 +62,7 @@ for file in $(find . -type f -name ".make-*"); do
         ".make-hyperv")
             cache_services "h/hyperv-vm-tools.yml"
             ;;
-        ".make-azure")
+        ".make-azurebase")
             cache_services "h/hyperv-vm-tools.yml"
             cache_services "w/waagent.yml"
             ;;
