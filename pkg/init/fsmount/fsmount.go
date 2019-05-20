@@ -2,9 +2,11 @@ package fsmount
 
 import (
 	"fmt"
+	"strings"
 	"syscall"
 
 	"github.com/rancher/os/config"
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/pkg/init/bootstrap"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
@@ -32,6 +34,15 @@ func MountOem(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 func MountBoot(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if IsInitrd() {
 		return cfg, nil
+	}
+
+	rootDevice := cmdline.GetCmdline("root").(string)
+
+	if rootDevice != "" && strings.Contains(rootDevice, "mmcblk") {
+		if err := util.Mount("/dev/mmcblk0p1", config.BootDir, "vfat", ""); err != nil {
+			log.Debugf("Not mounting BOOT: %v", err)
+			return cfg, nil
+		}
 	}
 
 	if err := mountConfigured("boot", cfg.Rancher.State.BootDev, cfg.Rancher.State.BootFsType, config.BootDir); err != nil {
