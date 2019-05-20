@@ -11,6 +11,7 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/rancher/os/config/cmdline"
 	"github.com/rancher/os/pkg/init/one"
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/netconf"
@@ -548,11 +549,21 @@ func createLayout(config *Config) error {
 
 	selinux.SetFileContext(graphDirectory, "system_u:object_r:var_lib_t:s0")
 
-	return CreateSymlinks([][]string{
+	symlinks := [][]string{
 		{"usr/lib", "/lib"},
 		{"usr/sbin", "/sbin"},
 		{"../run", "/var/run"},
-	})
+	}
+
+	rootCmdline := cmdline.GetCmdline("root")
+	rootDevice := rootCmdline.(string)
+	if rootDevice != "" {
+		if _, err := os.Stat("/dev/root"); os.IsNotExist(err) {
+			symlinks = append(symlinks, []string{rootDevice, "/dev/root"})
+		}
+	}
+
+	return CreateSymlinks(symlinks)
 }
 
 func firstPrepare() error {

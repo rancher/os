@@ -181,7 +181,17 @@ func applyPreConsole(cfg *rancherConfig.CloudConfig) {
 }
 
 func resizeDevice(cfg *rancherConfig.CloudConfig) error {
-	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, "1")
+	partition := "1"
+	targetPartition := fmt.Sprintf("%s%s", cfg.Rancher.ResizeDevice, partition)
+
+	if strings.Contains(cfg.Rancher.ResizeDevice, "mmcblk") {
+		partition = "2"
+		targetPartition = fmt.Sprintf("%sp%s", cfg.Rancher.ResizeDevice, partition)
+	} else if strings.Contains(cfg.Rancher.ResizeDevice, "nvme") {
+		targetPartition = fmt.Sprintf("%sp%s", cfg.Rancher.ResizeDevice, partition)
+	}
+
+	cmd := exec.Command("growpart", cfg.Rancher.ResizeDevice, partition)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Run()
@@ -194,10 +204,6 @@ func resizeDevice(cfg *rancherConfig.CloudConfig) error {
 		return err
 	}
 
-	targetPartition := fmt.Sprintf("%s1", cfg.Rancher.ResizeDevice)
-	if strings.Contains(cfg.Rancher.ResizeDevice, "nvme") {
-		targetPartition = fmt.Sprintf("%sp1", cfg.Rancher.ResizeDevice)
-	}
 	cmd = exec.Command("resize2fs", targetPartition)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
