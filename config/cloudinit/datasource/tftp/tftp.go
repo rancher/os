@@ -55,7 +55,7 @@ func (f *RemoteFile) Finish() error {
 }
 
 func (f *RemoteFile) String() string {
-	return fmt.Sprintf("%s: %s%s (lastError: %v)", f.Type(), f.host, f.path, f.lastError)
+	return fmt.Sprintf("%s, host:%s, path:%s (lastError: %v)", f.Type(), f.host, f.path, f.lastError)
 }
 
 func (f *RemoteFile) AvailabilityChanges() bool {
