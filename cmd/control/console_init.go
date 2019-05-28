@@ -182,7 +182,7 @@ func consoleInitFunc() error {
 	proxyLines := []string{}
 	for _, k := range []string{"http_proxy", "HTTP_PROXY", "https_proxy", "HTTPS_PROXY", "no_proxy", "NO_PROXY"} {
 		if v, ok := cfg.Rancher.Environment[k]; ok {
-			proxyLines = append(proxyLines, fmt.Sprintf("export %s=%s", k, v))
+			proxyLines = append(proxyLines, fmt.Sprintf("export %s=%q", k, v))
 		}
 	}
 
