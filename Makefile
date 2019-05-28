@@ -53,13 +53,13 @@ vmware: .dapper
 
 hyperv: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.119-rancher-1" \
+	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.122-rancher-1" \
 	./.dapper release-hyperv 2>&1 | tee dist/release.log
 
 azurebase: .dapper
 	mkdir -p dist
 	AZURE_SERVICE="true" \
-	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.119-rancher-1 rancher/os-waagent:v2.2.34-1" \
+	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.122-rancher-1 rancher/os-waagent:v2.2.34-1" \
 	./.dapper release-azurebase 2>&1 | tee dist/release.log
 
 4glte: .dapper
