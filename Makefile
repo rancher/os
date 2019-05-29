@@ -75,7 +75,7 @@ proxmoxve: .dapper
 
 pingan: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-pingan-amc:v0.0.6-1" \
+	APPEND_SYSTEM_IMAGES="cnrancher/os-pingan-amc:v0.0.6-1" \
 	./.dapper release-pingan 2>&1 | tee dist/release.log
 
 help:
