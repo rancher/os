@@ -7,6 +7,8 @@ if [ "$ROOTFS" != "0" ]; then
     ./package-rootfs
 fi
 ./package-initrd
-./package-installer
-./package-iso
 
+if [ "$ARCH" == "amd64" ]; then
+    ./package-installer
+    ./package-iso
+fi

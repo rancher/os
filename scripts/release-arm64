@@ -27,3 +27,6 @@ for file in $(ls dist/artifacts/); do
             ;;
     esac
 done
+
+cat dist/images | sed 's/^/docker push /' >> dist/publish.sh
+chmod 755 dist/publish.sh
