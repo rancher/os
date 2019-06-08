@@ -125,6 +125,12 @@ func TestCmdlineParse(t *testing.T) {
 
 	assert.Equal(map[interface{}]interface{}{
 		"rancher": map[interface{}]interface{}{
+			"key": "a b",
+		},
+	}, cmdline.Parse("rancher.key='a b'", false), false)
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
 			"key": "a:b",
 		},
 	}, cmdline.Parse("rancher.key=a:b", false), false)
@@ -158,6 +164,24 @@ func TestCmdlineParse(t *testing.T) {
 			"strArray": []interface{}{"url:http://192.168.1.100/cloud-config?a=b"},
 		},
 	}, cmdline.Parse("rancher.strArray=[url:http://192.168.1.100/cloud-config?a=b]", false), false)
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"strArray": []interface{}{"part1 part2", "part3"},
+		},
+	}, cmdline.Parse("rancher.strArray=['part1 part2',part3]", false), false)
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"strArray": []interface{}{"part1 part2", "part3"},
+		},
+	}, cmdline.Parse("rancher.strArray=[\"part1 part2\",part3]", false), false)
+
+	assert.Equal(map[interface{}]interface{}{
+		"rancher": map[interface{}]interface{}{
+			"strArray": []interface{}{"part1 part2", "part3"},
+		},
+	}, cmdline.Parse("rancher.strArray=[ \"part1 part2\", part3 ]", false), false)
 }
 
 func TestGet(t *testing.T) {

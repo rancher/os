@@ -3,6 +3,7 @@ package cmdline
 import (
 	"io/ioutil"
 	"strings"
+	"unicode"
 
 	"github.com/rancher/os/pkg/util"
 
@@ -125,11 +126,34 @@ func UnmarshalOrReturnString(value string) (result interface{}) {
 	return
 }
 
+//splitCmdLine splits on spaces except when a space is within a quoted or bracketed string.
+func splitCmdLine(cmdLine string) []string {
+	lastRune := rune(0)
+	f := func(c rune) bool {
+		switch {
+		case c == lastRune:
+			lastRune = rune(0)
+			return false
+		case lastRune != rune(0):
+			return false
+		case unicode.In(c, unicode.Quotation_Mark):
+			lastRune = c
+			return false
+		case c == '[':
+			lastRune = ']'
+			return false
+		default:
+			return c == ' '
+		}
+	}
+	return strings.FieldsFunc(cmdLine, f)
+}
+
 func Parse(cmdLine string, parseAll bool) map[interface{}]interface{} {
 	result := map[interface{}]interface{}{}
 
 outer:
-	for _, part := range strings.Split(cmdLine, " ") {
+	for _, part := range splitCmdLine(cmdLine) {
 		if strings.HasPrefix(part, "cc.") {
 			part = part[3:]
 		} else if !strings.HasPrefix(part, "rancher.") {
