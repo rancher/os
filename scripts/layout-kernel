@@ -64,3 +64,7 @@ if [ "$ARCH" == "amd64" ]; then
     fi
 fi
 
+if [ "$OS_FIRMWARE" = "false" ]; then
+    # the cloud images don't need firmware
+    rm -rf ${INITRD_DIR}/usr/lib/firmware
+fi

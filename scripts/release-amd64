@@ -6,6 +6,13 @@ cd $(dirname $0)/..
 source ./scripts/version
 ./scripts/release-build
 
+
+if [ "$OS_FIRMWARE" = "false" ]; then
+    echo "gsutil cp dist/artifacts/rancheros.iso gs://releases.rancher.com/os/latest/rancheros-nofirmware.iso" >> ./dist/publish_gss_latest.sh
+    echo "gsutil cp dist/artifacts/rancheros.iso gs://releases.rancher.com/os/${VERSION}/rancheros-nofirmware.iso" >> ./dist/publish_gss_${VERSION}.sh
+    exit 0
+fi
+
 cat scripts/hosting/rancheros.ipxe | sed "s/latest/${VERSION}/g" > dist/artifacts/rancheros.ipxe
 
 echo "github-release release --user rancher --repo os --tag ${VERSION} --pre-release --draft" > dist/publish.sh
