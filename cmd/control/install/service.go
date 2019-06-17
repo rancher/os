@@ -17,7 +17,7 @@ type ImageConfig struct {
 	Image string `yaml:"image,omitempty"`
 }
 
-func GetCacheImageList(cloudconfig string, cfg *config.CloudConfig) []string {
+func GetCacheImageList(cloudconfig string, oldcfg *config.CloudConfig) []string {
 	stageImages := make([]string, 0)
 	bytes, err := readConfigFile(cloudconfig)
 	if err != nil {
@@ -29,32 +29,74 @@ func GetCacheImageList(cloudconfig string, cfg *config.CloudConfig) []string {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to unmarshal cloud-config")
 		return stageImages
 	}
-	c := &config.CloudConfig{}
-	if err := util.Convert(r, c); err != nil {
+	newcfg := &config.CloudConfig{}
+	if err := util.Convert(r, newcfg); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to convert cloud-config")
 		return stageImages
 	}
-	for key, value := range c.Rancher.ServicesInclude {
+
+	// services_include
+	for key, value := range newcfg.Rancher.ServicesInclude {
 		if value {
-			bytes, err = network.LoadServiceResource(key, true, cfg)
-			if err != nil {
-				log.WithFields(log.Fields{"err": err}).Fatal("Failed to load service resource")
-				return stageImages
+			serviceImage := getServiceImage(key, "", oldcfg, newcfg)
+			if serviceImage != "" {
+				stageImages = append(stageImages, serviceImage)
 			}
-			imageCfg := map[interface{}]ImageConfig{}
-			if err := yaml.Unmarshal(bytes, &imageCfg); err != nil {
-				log.WithFields(log.Fields{"err": err}).Fatal("Failed to unmarshal service")
-				return stageImages
-			}
-			serviceImage := replaceRegistryDomain(imageCfg[key].Image)
-			slice := strings.SplitN(serviceImage, "/", 2)
-			if slice[0] == "${REGISTRY_DOMAIN}" {
-				serviceImage = slice[1]
-			}
-			stageImages = append(stageImages, serviceImage)
 		}
 	}
+
+	// console
+	newConsole := newcfg.Rancher.Console
+	if newConsole != "" && newConsole != "default" {
+		consoleImage := getServiceImage(newConsole, "console", oldcfg, newcfg)
+		if consoleImage != "" {
+			stageImages = append(stageImages, consoleImage)
+		}
+	}
+
+	// docker engine
+	newEngine := newcfg.Rancher.Docker.Engine
+	if newEngine != "" && newEngine != oldcfg.Rancher.Docker.Engine {
+		engineImage := getServiceImage(newEngine, "docker", oldcfg, newcfg)
+		if engineImage != "" {
+			stageImages = append(stageImages, engineImage)
+		}
+
+	}
+
 	return stageImages
+}
+
+func getServiceImage(service, svctype string, oldcfg, newcfg *config.CloudConfig) string {
+	var (
+		serviceImage string
+		bytes        []byte
+		err          error
+	)
+	if len(newcfg.Rancher.Repositories.ToArray()) > 0 {
+		bytes, err = network.LoadServiceResource(service, true, newcfg)
+	} else {
+		bytes, err = network.LoadServiceResource(service, true, oldcfg)
+	}
+	if err != nil {
+		log.WithFields(log.Fields{"err": err}).Fatal("Failed to load service resource")
+		return serviceImage
+	}
+	imageConfig := map[interface{}]ImageConfig{}
+	if err = yaml.Unmarshal(bytes, &imageConfig); err != nil {
+		log.WithFields(log.Fields{"err": err}).Fatal("Failed to unmarshal service")
+		return serviceImage
+	}
+	switch svctype {
+	case "console":
+		serviceImage = formatImage(imageConfig["console"].Image, oldcfg, newcfg)
+	case "docker":
+		serviceImage = formatImage(imageConfig["docker"].Image, oldcfg, newcfg)
+	default:
+		serviceImage = formatImage(imageConfig[service].Image, oldcfg, newcfg)
+	}
+
+	return serviceImage
 }
 
 func RunCacheScript(partition string, images []string) error {
@@ -74,10 +116,14 @@ func readConfigFile(file string) ([]byte, error) {
 	return content, err
 }
 
-func replaceRegistryDomain(image string) string {
-	slice := strings.SplitN(image, "/", 2)
-	if slice[0] == "${REGISTRY_DOMAIN}" {
-		return slice[1]
+func formatImage(image string, oldcfg, newcfg *config.CloudConfig) string {
+	registryDomain := newcfg.Rancher.Environment["REGISTRY_DOMAIN"]
+	if registryDomain == "" {
+		registryDomain = oldcfg.Rancher.Environment["REGISTRY_DOMAIN"]
 	}
+	image = strings.Replace(image, "${REGISTRY_DOMAIN}", registryDomain, -1)
+
+	image = strings.Replace(image, "${SUFFIX}", config.Suffix, -1)
+
 	return image
 }
