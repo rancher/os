@@ -101,9 +101,12 @@ func LoadFromNetworkWithCache(location string) ([]byte, error) {
 }
 
 func LoadFromNetwork(location string) ([]byte, error) {
-	SetProxyEnvironmentVariables()
-
 	var err error
+
+	if err = AllDefaultGWOK(DefaultRoutesCheckTimeout); err != nil {
+		return nil, err
+	}
+	SetProxyEnvironmentVariables()
 
 	var resp *http.Response
 	log.Debugf("LoadFromNetwork(%s)", location)
