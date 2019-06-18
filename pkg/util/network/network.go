@@ -7,12 +7,17 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	composeConfig "github.com/docker/libcompose/config"
+)
+
+const (
+	defaultTimeout = 10 * time.Second
 )
 
 var (
@@ -110,7 +115,10 @@ func LoadFromNetwork(location string) ([]byte, error) {
 
 	var resp *http.Response
 	log.Debugf("LoadFromNetwork(%s)", location)
-	resp, err = http.Get(location)
+	netClient := &http.Client{
+		Timeout: defaultTimeout,
+	}
+	resp, err = netClient.Get(location)
 	log.Debugf("LoadFromNetwork(%s) returned %v, %v", location, resp, err)
 	if err == nil {
 		defer resp.Body.Close()
