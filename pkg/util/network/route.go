@@ -96,14 +96,14 @@ func AllDefaultGWOK(timeout int) error {
 		if checkAllDefaultGW() {
 			break
 		}
-		log.Info("Waiting for the default gateway ready")
+		log.Debug("Waiting for the default gateway ready")
 	}
 
 	if err != nil {
 		return err
 	}
 
-	log.Info("The default gateway is ready")
+	log.Debug("The default gateway is ready")
 
 	return nil
 }
