@@ -230,12 +230,24 @@ func UpdateCaches(urls []string, key string) error {
 }
 
 func UpdateCache(location string) ([]byte, error) {
-	if err := cacheRemove(location); err != nil {
-		return []byte{}, err
+	// move cache file to temp directory
+	tempFile, err := cacheMove(location)
+	if err != nil {
+		return nil, err
 	}
+
 	content, err := LoadResource(location, true)
 	if err != nil {
-		return []byte{}, err
+		// move back old cache file
+		if err := cacheMoveBack(tempFile); err != nil {
+			return nil, err
+		}
+		return ioutil.ReadFile(location)
 	}
+	// remove old cache file
+	if err := os.Remove(tempFile); err != nil {
+		return nil, err
+	}
+
 	return content, nil
 }

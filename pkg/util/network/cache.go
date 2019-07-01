@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/rancher/os/pkg/log"
 )
@@ -44,7 +45,15 @@ func cacheAdd(location string, data []byte) {
 	os.Rename(tempFile.Name(), cacheFile)
 }
 
-func cacheRemove(location string) error {
+func cacheMove(location string) (string, error) {
 	cacheFile := cacheDirectory + locationHash(location)
-	return os.Remove(cacheFile)
+	tempFile := cacheFile + "_temp"
+	if err := os.Rename(cacheFile, tempFile); err != nil {
+		return "", err
+	}
+	return tempFile, nil
+}
+
+func cacheMoveBack(name string) error {
+	return os.Rename(name, strings.TrimRight(name, "_temp"))
 }
