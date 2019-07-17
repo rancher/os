@@ -3,46 +3,59 @@ set -e -x
 
 gateway_address="http://ros.rancher.io/gateway"
 
-_sigProcess() {
+sigProcess() {
     echo "SIGINT/SIGTERM signal..."
     kill -9 $$
 }
 
-trap _sigProcess SIGINT SIGKILL SIGTERM
+trap sigProcess SIGINT SIGKILL SIGTERM
 
-__read_policy() {
+read_policy() {
     policy=`ros c get rancher.upgrade.policy`
-    if [ -z $policy ]; then
+    if [[ -z ${policy} ]]; then
         echo "can not read upgrade.policy"
-        exit 1
+        return 1
     fi
     return $(($policy))
 }
 
-__report_activity() {
+report_activity() {
     arch=`uname -m`
     uuid=`cat /sys/class/dmi/id/product_uuid || true`
     release=`ros -v | awk '{print $2}'`
     response=`wget --server-response ${gateway_address}/report --header 'Accept: application/json' --header 'Content-type: application/json' --header "arch: $arch" --header "uuid: $uuid" --header "release: $release" 2>&1 | awk '/^  HTTP/{print $2}'`
-    if [ $response -ge 200 -a $response -le 300 ]; then
+    if [[ -n ${response} && ${response} -ge 200 && ${response} -le 300 ]]; then
         echo "report activity success"
     else
         echo "report activity failed"
+        return 1
     fi
 }
 
-__upgrade_operate() {
+upgrade_operate() {
     recommend_version=`wget ${gateway_address}/version -q -O -`
-    case $policy in
+    case ${policy} in
         download)
             echo "upgrade.policy is 'download'"
-            __report_activity
-            system-docker pull $recommend_version
+            report_activity
+            if [[ ${recommend_version} ]];
+            then
+                system-docker pull ${recommend_version}
+            else
+                echo "pull recommend image failed"
+                return 1
+            fi
         ;;
         auto)
             echo "upgrade.policy is 'auto'"
-            __report_activity
-            ros os upgrade -i $recommend_version -f
+            report_activity
+            if [[ ${recommend_version} ]];
+            then
+                ros os upgrade -i ${recommend_version} -f
+            else
+                echo "execute ros os upgrade failed"
+                return 1
+            fi
         ;;
         none)
             echo "upgrade.policy is 'none'"
@@ -53,6 +66,12 @@ __upgrade_operate() {
     esac
 }
 
-__read_policy
+read_policy
 
-__upgrade_operate
+n=0
+until [[ ${n} -ge 5 ]]
+do
+    upgrade_operate && break
+    n=$[$n+1]
+    sleep 5
+done
