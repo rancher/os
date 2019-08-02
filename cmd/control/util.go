@@ -10,6 +10,7 @@ import (
 
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util/versions"
 
 	"github.com/pkg/errors"
 )
@@ -34,6 +35,7 @@ func formatImage(image string, cfg *config.CloudConfig) string {
 }
 
 func symLinkEngineBinary(version string) []symlink {
+	versionNum := strings.Replace(strings.Replace(version, "docker-", "", -1), "-ce", "", -1)
 	baseSymlink := []symlink{
 		{"/var/lib/rancher/engine/docker", "/usr/bin/docker"},
 		{"/var/lib/rancher/engine/dockerd", "/usr/bin/dockerd"},
@@ -42,7 +44,7 @@ func symLinkEngineBinary(version string) []symlink {
 		{"/usr/share/ros/os-release", "/usr/lib/os-release"},
 		{"/usr/share/ros/os-release", "/etc/os-release"},
 	}
-	if strings.Contains(version, "18.09") {
+	if versions.GreaterThanOrEqualTo(versionNum, "18.09.0") {
 		baseSymlink = append(baseSymlink, []symlink{
 			{"/var/lib/rancher/engine/containerd", "/usr/bin/containerd"},
 			{"/var/lib/rancher/engine/ctr", "/usr/bin/ctr"},
