@@ -83,7 +83,9 @@ func checkAllDefaultGW() bool {
 
 func AllDefaultGWOK(timeout int) error {
 	backoff := util.Backoff{
-		MaxMillis: timeout,
+		StartMillis:       100,
+		MaxIntervalMillis: 2000,
+		MaxMillis:         timeout,
 	}
 	defer backoff.Close()
 
