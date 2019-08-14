@@ -18,6 +18,7 @@ import (
 	"github.com/rancher/os/pkg/log"
 	"github.com/rancher/os/pkg/util"
 	"github.com/rancher/os/pkg/util/network"
+	"github.com/rancher/os/pkg/util/versions"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/codegangsta/cli"
@@ -364,8 +365,14 @@ func CurrentEngine() (engine string) {
 	}
 	if t, ok := image.(reference.NamedTagged); ok {
 		tag := t.Tag()
-		if !strings.HasPrefix(tag, "1.") {
-			// TODO: this assumes we only do Docker ce :/
+
+		// compatible with some patch image tags, such as 17.12.1-1,17.06.2-1,...
+		tag = strings.SplitN(tag, "-", 2)[0]
+
+		if !strings.HasPrefix(tag, "1.") && versions.LessThan(tag, "18.09.0") {
+			// >= 18.09.0, docker-<version>
+			// < 18.09.0 and >= 16.03, docker-<version>-ce
+			// < 17.03, docker-<version>
 			tag = tag + "-ce"
 		}
 		return "docker-" + tag
