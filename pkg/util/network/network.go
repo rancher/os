@@ -4,20 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/rancher/os/config"
+	httpRetry "github.com/rancher/os/config/cloudinit/pkg"
 	"github.com/rancher/os/pkg/log"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	composeConfig "github.com/docker/libcompose/config"
-)
-
-const (
-	defaultTimeout = 10 * time.Second
 )
 
 var (
@@ -113,29 +108,18 @@ func LoadFromNetwork(location string) ([]byte, error) {
 	}
 	SetProxyEnvironmentVariables()
 
-	var resp *http.Response
-	log.Debugf("LoadFromNetwork(%s)", location)
-	netClient := &http.Client{
-		Timeout: defaultTimeout,
+	client := httpRetry.NewHTTPClient()
+	client.MaxRetries = 3
+	log.Debugf("start trying LoadFromNetwork(%s)", location)
+	bytes, err := client.GetRetry(location)
+	if err != nil {
+		log.Errorf("failed to LoadFromNetwork: %v", err)
+		return nil, err
 	}
-	resp, err = netClient.Get(location)
-	log.Debugf("LoadFromNetwork(%s) returned %v, %v", location, resp, err)
-	if err == nil {
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("non-200 http response: %d", resp.StatusCode)
-		}
+	log.Debugf("LoadFromNetwork(%s) returned", location)
+	cacheAdd(location, bytes)
 
-		bytes, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		cacheAdd(location, bytes)
-		return bytes, nil
-	}
-
-	return nil, err
+	return bytes, nil
 }
 
 func LoadResource(location string, network bool) ([]byte, error) {
