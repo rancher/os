@@ -137,7 +137,7 @@ func consoleInitFunc() error {
 		}
 	}
 
-	baseSymlink := symLinkEngineBinary(cfg.Rancher.Docker.Engine)
+	baseSymlink := symLinkEngineBinary()
 
 	if _, err := os.Stat(dockerCompletionFile); err == nil {
 		baseSymlink = append(baseSymlink, symlink{
