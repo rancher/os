@@ -86,12 +86,13 @@ func dockerInitAction(c *cli.Context) error {
 	}
 
 	cfg := config.LoadConfig()
-	baseSymlink := symLinkEngineBinary(cfg.Rancher.Docker.Engine)
 
-	for _, link := range baseSymlink {
+	for _, link := range symLinkEngineBinary() {
 		syscall.Unlink(link.newname)
-		if err := os.Symlink(link.oldname, link.newname); err != nil {
-			log.Error(err)
+		if _, err := os.Stat(link.oldname); err == nil {
+			if err := os.Symlink(link.oldname, link.newname); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 
