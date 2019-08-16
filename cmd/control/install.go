@@ -86,8 +86,8 @@ var installCommand = cli.Command{
 			Usage: "reboot using kexec",
 		},
 		cli.BoolFlag{
-			Name:  "stage, s",
-			Usage: "stage services",
+			Name:  "save, s",
+			Usage: "save services and images for next booting",
 		},
 		cli.BoolFlag{
 			Name:  "debug",
@@ -179,13 +179,13 @@ func installAction(c *cli.Context) error {
 		cloudConfig = uc
 	}
 
-	stageImages := []string{}
-	if c.Bool("stage") && cloudConfig != "" && installType != "upgrade" {
-		stageImages = install.GetCacheImageList(cloudConfig, cfg)
-		log.Debugf("Will cache these images: %s", stageImages)
+	savedImages := []string{}
+	if c.Bool("save") && cloudConfig != "" && installType != "upgrade" {
+		savedImages = install.GetCacheImageList(cloudConfig, cfg)
+		log.Debugf("Will cache these images: %s", savedImages)
 	}
 
-	if err := runInstall(image, installType, cloudConfig, device, partition, statedir, kappend, force, kexec, isoinstallerloaded, debug, stageImages); err != nil {
+	if err := runInstall(image, installType, cloudConfig, device, partition, statedir, kappend, force, kexec, isoinstallerloaded, debug, savedImages); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to run install")
 		return err
 	}
@@ -198,7 +198,7 @@ func installAction(c *cli.Context) error {
 	return nil
 }
 
-func runInstall(image, installType, cloudConfig, device, partition, statedir, kappend string, force, kexec, isoinstallerloaded, debug bool, stageImages []string) error {
+func runInstall(image, installType, cloudConfig, device, partition, statedir, kappend string, force, kexec, isoinstallerloaded, debug bool, savedImages []string) error {
 	fmt.Printf("Installing from %s\n", image)
 
 	if !force {
@@ -283,8 +283,8 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 			if statedir != "" {
 				installerCmd = append(installerCmd, "--statedir", statedir)
 			}
-			if len(stageImages) > 0 {
-				installerCmd = append(installerCmd, "--stage")
+			if len(savedImages) > 0 {
+				installerCmd = append(installerCmd, "--save")
 			}
 
 			// TODO: mount at /mnt for shared mount?
@@ -348,8 +348,8 @@ func runInstall(image, installType, cloudConfig, device, partition, statedir, ka
 		return err
 	}
 
-	if len(stageImages) > 0 {
-		return install.RunCacheScript(partition, stageImages)
+	if len(savedImages) > 0 {
+		return install.RunCacheScript(partition, savedImages)
 	}
 
 	return nil

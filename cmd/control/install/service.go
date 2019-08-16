@@ -18,21 +18,21 @@ type ImageConfig struct {
 }
 
 func GetCacheImageList(cloudconfig string, oldcfg *config.CloudConfig) []string {
-	stageImages := make([]string, 0)
+	savedImages := make([]string, 0)
 	bytes, err := readConfigFile(cloudconfig)
 	if err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to read cloud-config")
-		return stageImages
+		return savedImages
 	}
 	r := make(map[interface{}]interface{})
 	if err := yaml.Unmarshal(bytes, &r); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to unmarshal cloud-config")
-		return stageImages
+		return savedImages
 	}
 	newcfg := &config.CloudConfig{}
 	if err := util.Convert(r, newcfg); err != nil {
 		log.WithFields(log.Fields{"err": err}).Fatal("Failed to convert cloud-config")
-		return stageImages
+		return savedImages
 	}
 
 	// services_include
@@ -40,7 +40,7 @@ func GetCacheImageList(cloudconfig string, oldcfg *config.CloudConfig) []string 
 		if value {
 			serviceImage := getServiceImage(key, "", oldcfg, newcfg)
 			if serviceImage != "" {
-				stageImages = append(stageImages, serviceImage)
+				savedImages = append(savedImages, serviceImage)
 			}
 		}
 	}
@@ -50,7 +50,7 @@ func GetCacheImageList(cloudconfig string, oldcfg *config.CloudConfig) []string 
 	if newConsole != "" && newConsole != "default" {
 		consoleImage := getServiceImage(newConsole, "console", oldcfg, newcfg)
 		if consoleImage != "" {
-			stageImages = append(stageImages, consoleImage)
+			savedImages = append(savedImages, consoleImage)
 		}
 	}
 
@@ -59,12 +59,12 @@ func GetCacheImageList(cloudconfig string, oldcfg *config.CloudConfig) []string 
 	if newEngine != "" && newEngine != oldcfg.Rancher.Docker.Engine {
 		engineImage := getServiceImage(newEngine, "docker", oldcfg, newcfg)
 		if engineImage != "" {
-			stageImages = append(stageImages, engineImage)
+			savedImages = append(savedImages, engineImage)
 		}
 
 	}
 
-	return stageImages
+	return savedImages
 }
 
 func getServiceImage(service, svctype string, oldcfg, newcfg *config.CloudConfig) string {
