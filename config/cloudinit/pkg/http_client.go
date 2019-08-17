@@ -18,11 +18,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	neturl "net/url"
 	"strings"
 	"time"
+
+	"github.com/rancher/os/pkg/log"
 )
 
 const (
@@ -120,14 +121,14 @@ func (h *HTTPClient) GetRetry(rawurl string) ([]byte, error) {
 
 	duration := h.InitialBackoff
 	for retry := 1; retry <= h.MaxRetries; retry++ {
-		log.Printf("Fetching data from %s. Attempt #%d", dataURL, retry)
+		log.Debugf("Fetching data from %s. Attempt #%d", dataURL, retry)
 
 		data, err := h.Get(dataURL)
 		switch err.(type) {
 		case ErrNetwork:
-			log.Printf(err.Error())
+			log.Debugf(err.Error())
 		case ErrServer:
-			log.Printf(err.Error())
+			log.Debugf(err.Error())
 		case ErrNotFound:
 			return data, err
 		default:
@@ -135,7 +136,7 @@ func (h *HTTPClient) GetRetry(rawurl string) ([]byte, error) {
 		}
 
 		duration = ExpBackoff(duration, h.MaxBackoff)
-		log.Printf("Sleeping for %v...", duration)
+		log.Debugf("Sleeping for %v...", duration)
 		time.Sleep(duration)
 	}
 
