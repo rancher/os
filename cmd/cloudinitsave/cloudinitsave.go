@@ -36,6 +36,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/cloudstack"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/digitalocean"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/ec2"
+	"github.com/rancher/os/config/cloudinit/datasource/metadata/exoscale"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/gce"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
 	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
@@ -228,7 +229,9 @@ func getDatasources(datasources []string) []datasource.Datasource {
 
 		switch parts[0] {
 		case "*":
-			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce", "cloudstack"})...)
+			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce", "cloudstack", "exoscale"})...)
+		case "exoscale":
+			dss = append(dss, exoscale.NewDatasource(root))
 		case "cloudstack":
 			for _, source := range cloudstack.NewDatasource(root) {
 				dss = append(dss, source)
