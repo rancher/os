@@ -28,7 +28,7 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
 	}
 
-	exoscale, err := isExoscale()
+	exoscale, err := onlyExoscale()
 	if err != nil {
 		log.Error(err)
 	}
@@ -143,7 +143,7 @@ func onlyDigitalOcean(datasources []string) bool {
 	return false
 }
 
-func isExoscale() (bool, error) {
+func onlyExoscale() (bool, error) {
 	f, err := ioutil.ReadFile("/sys/class/dmi/id/product_name")
 	if err != nil {
 		return false, err
