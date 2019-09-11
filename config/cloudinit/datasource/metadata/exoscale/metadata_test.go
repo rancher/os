@@ -30,12 +30,12 @@ func TestFetchMetadata(t *testing.T) {
 	}{
 		{
 			root:         "/",
-			metadataPath: "latest/meta-data/",
+			metadataPath: "1.0/meta-data/",
 			resources: map[string]string{
-				"/latest/meta-data/local-hostname": "host",
-				"/latest/meta-data/local-ipv4":     "1.2.3.4",
-				"/latest/meta-data/public-ipv4":    "5.6.7.8",
-				"/latest/meta-data/public-keys":    "key\n",
+				"/1.0/meta-data/local-hostname": "host",
+				"/1.0/meta-data/local-ipv4":     "1.2.3.4",
+				"/1.0/meta-data/public-ipv4":    "5.6.7.8",
+				"/1.0/meta-data/public-keys":    "key\n",
 			},
 			expect: datasource.Metadata{
 				Hostname:      "host",
@@ -46,12 +46,12 @@ func TestFetchMetadata(t *testing.T) {
 		},
 		{
 			root:         "/",
-			metadataPath: "latest/meta-data/",
+			metadataPath: "1.0/meta-data/",
 			resources: map[string]string{
-				"/latest/meta-data/local-hostname": "host domain another_domain",
-				"/latest/meta-data/local-ipv4":     "21.2.3.4",
-				"/latest/meta-data/public-ipv4":    "25.6.7.8",
-				"/latest/meta-data/public-keys":    "key\n",
+				"/1.0/meta-data/local-hostname": "host domain another_domain",
+				"/1.0/meta-data/local-ipv4":     "21.2.3.4",
+				"/1.0/meta-data/public-ipv4":    "25.6.7.8",
+				"/1.0/meta-data/public-keys":    "key\n",
 			},
 			expect: datasource.Metadata{
 				Hostname:      "host",
