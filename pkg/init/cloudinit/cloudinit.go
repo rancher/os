@@ -148,9 +148,6 @@ func onlyExoscale() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if strings.HasPrefix(string(f), "Exoscale") {
-		return true, nil
-	}
 
-	return false, nil
+	return strings.HasPrefix(string(f), "Exoscale"), nil
 }
