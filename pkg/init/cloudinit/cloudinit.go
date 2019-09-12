@@ -1,6 +1,7 @@
 package cloudinit
 
 import (
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 
@@ -25,6 +26,14 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 	if hypervisor == "vmware" {
 		// add vmware to the end - we don't want to over-ride an choices the user has made
 		cfg.Rancher.CloudInit.Datasources = append(cfg.Rancher.CloudInit.Datasources, hypervisor)
+	}
+
+	exoscale, err := onlyExoscale()
+	if err != nil {
+		log.Error(err)
+	}
+	if exoscale {
+		cfg.Rancher.CloudInit.Datasources = append([]string{"exoscale"}, cfg.Rancher.CloudInit.Datasources...)
 	}
 
 	if len(cfg.Rancher.CloudInit.Datasources) == 0 {
@@ -132,4 +141,13 @@ func onlyDigitalOcean(datasources []string) bool {
 		}
 	}
 	return false
+}
+
+func onlyExoscale() (bool, error) {
+	f, err := ioutil.ReadFile("/sys/class/dmi/id/product_name")
+	if err != nil {
+		return false, err
+	}
+
+	return strings.HasPrefix(string(f), "Exoscale"), nil
 }
