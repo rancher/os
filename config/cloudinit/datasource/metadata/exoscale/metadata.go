@@ -39,6 +39,16 @@ func NewDatasource(root string) *MetadataService {
 	}
 }
 
+func (ms MetadataService) IsAvailable() bool {
+	checkURL := ms.Root + ms.IsAvailableCheckPath
+	var err error
+	_, err = ms.Client.GetRetry(checkURL)
+	if err != nil {
+		log.Errorf("%s: %s (lastError: %v)", "IsAvailable", checkURL, err)
+	}
+	return (err == nil)
+}
+
 func (ms MetadataService) AvailabilityChanges() bool {
 	// TODO: if it can't find the network, maybe we can start it?
 	return false
