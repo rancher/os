@@ -6,6 +6,7 @@ import (
 
 	"github.com/rancher/os/config"
 	"github.com/rancher/os/pkg/log"
+	"github.com/rancher/os/pkg/util/network"
 
 	"github.com/docker/docker/layer"
 	dockerclient "github.com/docker/engine-api/client"
@@ -133,6 +134,13 @@ func (s *Service) shouldRebuild(ctx context.Context) (bool, error) {
 
 func (s *Service) Up(ctx context.Context, options options.Up) error {
 	labels := s.Config().Labels
+
+	// wait for networking if necessary
+	if after := labels["io.rancher.os.after"]; after == "network" {
+		if err := network.AllDefaultGWOK(network.DefaultRoutesCheckTimeout); err != nil {
+			log.Warnf("Timeout to wait for the networking ready: %v", err)
+		}
+	}
 
 	if err := s.Service.Create(ctx, options.Create); err != nil {
 		return err
