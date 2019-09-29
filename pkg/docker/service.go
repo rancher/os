@@ -58,6 +58,27 @@ func (s *Service) missingImage() bool {
 		return false
 	}
 	client := s.context.ClientFactory.Create(s)
+
+	// If it is already built-in, we should use tag image
+	// use case: open-vmtools with another REGISTRY_DOMAIN setting
+	registryDomain := config.LoadConfig().Rancher.Environment["REGISTRY_DOMAIN"]
+	if registryDomain != "docker.io" && strings.Index(image, registryDomain) >= 0 {
+		orginImage := strings.SplitN(image, "/", 2)[1]
+		_, _, err := client.ImageInspectWithRaw(context.Background(), orginImage, false)
+		if err == nil {
+			log.Infof("Will tag image %s to %s", orginImage, image)
+			options := types.ImageTagOptions{
+				ImageID:        orginImage,
+				RepositoryName: strings.SplitN(image, ":", 2)[0],
+				Tag:            strings.SplitN(image, ":", 2)[1],
+				Force:          false,
+			}
+			if err := client.ImageTag(context.Background(), options); err != nil {
+				log.Warnf("Failed to tag image from %s to %s: %v", orginImage, image, err)
+			}
+		}
+	}
+
 	_, _, err := client.ImageInspectWithRaw(context.Background(), image, false)
 	return err != nil
 }
