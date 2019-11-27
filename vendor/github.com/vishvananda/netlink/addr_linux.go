@@ -103,14 +103,17 @@ func (h *Handle) addrHandle(link Link, addr *Addr, req *nl.NetlinkRequest) error
 		}
 	}
 
-	if addr.Broadcast == nil {
+	if addr.Broadcast == nil && prefixlen < 31 {
 		calcBroadcast := make(net.IP, masklen/8)
 		for i := range localAddrData {
 			calcBroadcast[i] = localAddrData[i] | ^addr.Mask[i]
 		}
 		addr.Broadcast = calcBroadcast
 	}
-	req.AddData(nl.NewRtAttr(syscall.IFA_BROADCAST, addr.Broadcast))
+
+	if addr.Broadcast != nil {
+		req.AddData(nl.NewRtAttr(syscall.IFA_BROADCAST, addr.Broadcast))
+	}
 
 	if addr.Label != "" {
 		labelData := nl.NewRtAttr(syscall.IFA_LABEL, nl.ZeroTerminated(addr.Label))
