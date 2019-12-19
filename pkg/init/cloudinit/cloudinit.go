@@ -41,7 +41,7 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		log.Error(err)
 	}
 	if proxmox {
-		cfg.Rancher.CloudInit.Datasources = append([]string{"proxmox"}, cfg.Rancher.CloutInit.Datasources...)
+		cfg.Rancher.CloudInit.Datasources = append([]string{"proxmox"}, cfg.Rancher.CloudInit.Datasources...)
 	}
 
 	if len(cfg.Rancher.CloudInit.Datasources) == 0 {
