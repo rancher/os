@@ -40,6 +40,7 @@ import (
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/gce"
 	"github.com/rancher/os/config/cloudinit/datasource/metadata/packet"
 	"github.com/rancher/os/config/cloudinit/datasource/proccmdline"
+	"github.com/rancher/os/config/cloudinit/datasource/proxmox"
 	"github.com/rancher/os/config/cloudinit/datasource/tftp"
 	"github.com/rancher/os/config/cloudinit/datasource/url"
 	"github.com/rancher/os/config/cloudinit/datasource/vmware"
@@ -229,7 +230,12 @@ func getDatasources(datasources []string) []datasource.Datasource {
 
 		switch parts[0] {
 		case "*":
-			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce", "cloudstack", "exoscale"})...)
+			dss = append(dss, getDatasources([]string{"configdrive", "vmware", "ec2", "digitalocean", "packet", "gce", "cloudstack", "exoscale", "proxmox"})...)
+		case "proxmox":
+			if root == "" {
+				root = "/media/pve-config"
+			}
+			dss = append(dss, proxmox.NewDataSource(root))
 		case "exoscale":
 			dss = append(dss, exoscale.NewDatasource(root))
 		case "cloudstack":

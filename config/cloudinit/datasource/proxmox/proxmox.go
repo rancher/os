@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	configDev = "/dev/sr0"
+	configDev           = "/dev/sr0"
 	configDevMountPoint = "/media/pve-config"
 )
 
@@ -105,6 +105,7 @@ func MountConfigDrive() error {
 	if err != nil {
 		return err
 	}
+
 	return mount.Mount(configDev, configDevMountPoint, fsType, "ro")
 }
 

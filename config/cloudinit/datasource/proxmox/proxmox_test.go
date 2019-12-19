@@ -1,6 +1,10 @@
 package proxmox
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/rancher/os/config/cloudinit/datasource/test"
+)
 
 func TestFetchUserdata(t *testing.T) {
 	for _, tt := range []struct {
@@ -14,15 +18,15 @@ func TestFetchUserdata(t *testing.T) {
 			userdata: "",
 		},
 		{
-			root:      "/media/pve-config",
-			files:     test.NewMockFilesystem(test.File{Path: "/media/pve-config/user-data", Contents: "userdata"}),
+			root:     "/media/config",
+			files:    test.NewMockFilesystem(test.File{Path: "/media/config/user-data", Contents: "userdata"}),
 			userdata: "userdata",
 		},
 	} {
 		pve := Proxmox{tt.root, tt.files.ReadFile, nil, true}
 		userdata, err := pve.FetchUserdata()
 		if err != nil {
-			t.Fatalf("bad error for %+v: want %v, get %q", tt, nil, err)
+			t.Fatalf("bad error for %+v: want %v, got %q", tt, nil, err)
 		}
 		if string(userdata) != tt.userdata {
 			t.Fatalf("bad userdata for %+v: want %q, got %q", tt, tt.userdata, userdata)
