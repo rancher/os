@@ -36,6 +36,14 @@ func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 		cfg.Rancher.CloudInit.Datasources = append([]string{"exoscale"}, cfg.Rancher.CloudInit.Datasources...)
 	}
 
+	proxmox, err := onlyProxmox()
+	if err != nil {
+		log.Error(err)
+	}
+	if proxmox {
+		cfg.Rancher.CloudInit.Datasources = append([]string{"proxmox"}, cfg.Rancher.CloutInit.Datasources...)
+	}
+
 	if len(cfg.Rancher.CloudInit.Datasources) == 0 {
 		log.Info("No specific datasources, ignore cloudinit")
 		return cfg, nil
@@ -150,4 +158,13 @@ func onlyExoscale() (bool, error) {
 	}
 
 	return strings.HasPrefix(string(f), "Exoscale"), nil
+}
+
+func onlyProxmox() (bool, error) {
+	f, err := ioutil.ReadFile("/sys/class/dmi/id/product_name")
+	if err != nil {
+		return false, err
+	}
+
+	return strings.Contains(string(f), "Proxmox"), nil
 }
