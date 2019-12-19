@@ -108,8 +108,9 @@ func LoadFromNetwork(location string) ([]byte, error) {
 	}
 	SetProxyEnvironmentVariables()
 
+	cfg := config.LoadConfig()
 	client := httpRetry.NewHTTPClient()
-	client.MaxRetries = 3
+	client.MaxRetries = cfg.Rancher.HTTPLoadRetries
 	log.Debugf("start trying LoadFromNetwork(%s)", location)
 	bytes, err := client.GetRetry(location)
 	if err != nil {

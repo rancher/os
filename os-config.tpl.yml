@@ -1,5 +1,6 @@
 rancher:
   shutdown_timeout: 60
+  http_load_retries: 6
   environment:
     VERSION: {{.VERSION}}
     SUFFIX: {{.SUFFIX}}

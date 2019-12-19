@@ -55,6 +55,7 @@ var schema = `{
 				"restart_services": {"type": "array"},
 				"hypervisor_service": {"type": "boolean"},
 				"shutdown_timeout": {"type": "integer"},
+				"http_load_retries": {"type": "integer"},
 				"preload_wait": {"type": "boolean"}
 			}
 		},
