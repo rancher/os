@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"strings"
 
@@ -108,6 +109,7 @@ func LoadFromNetwork(location string) ([]byte, error) {
 	}
 	SetProxyEnvironmentVariables()
 
+	net.DefaultResolver.PreferGo = true
 	cfg := config.LoadConfig()
 	client := httpRetry.NewHTTPClient()
 	client.MaxRetries = cfg.Rancher.HTTPLoadRetries
