@@ -48,18 +48,18 @@ rpi64: .dapper
 
 vmware: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.3.10-1" \
+	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.3.10-2" \
 	./.dapper release-vmware
 
 hyperv: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.138-rancher-1" \
+	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.159-rancher-1" \
 	./.dapper release-hyperv
 
 azurebase: .dapper
 	mkdir -p dist
 	AZURE_SERVICE="true" \
-	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.138-rancher-1 rancher/os-waagent:v2.2.34-1" \
+	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.159-rancher-1 rancher/os-waagent:v2.2.34-1" \
 	./.dapper release-azurebase
 
 4glte: .dapper
