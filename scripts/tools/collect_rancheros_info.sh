@@ -46,6 +46,9 @@ docker info > $dest_conf_dir/docker-info
 cat /proc/mounts > $dest_conf_dir/proc-mounts
 cat /proc/1/mounts > $dest_conf_dir/proc-1-mounts
 cat /proc/cmdline > $dest_conf_dir/cmdline
+ip a > $dest_conf_dir/ipall
+ip route > $dest_conf_dir/iproutes
+cat /etc/resolv.conf > $dest_conf_dir/resolv
 dmesg > $dest_conf_dir/dmesg.log
 
 cd $conf_file_src_dir && cp -rf `ls  | grep -E -v "^(pem)$"` $dest_conf_dir
