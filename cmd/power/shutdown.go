@@ -214,7 +214,7 @@ func shutdown(c *cli.Context) error {
 	// cannot contain slashes.
 	appName := filepath.Base(c.App.Name)
 	if appName == "shutdown" && timeArg != "" {
-		if timeArg != "now" {
+		if timeArg != "now" && timeArg != "+0" {
 			err := fmt.Errorf("Sorry, can't parse '%s' as time value (only 'now' supported)", timeArg)
 			log.Error(err)
 			return err
