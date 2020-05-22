@@ -85,7 +85,7 @@ ARG SYSTEM_DOCKER_VERSION=17.06-ros6
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
-ARG USER_DOCKER_VERSION=19.03.8
+ARG USER_DOCKER_VERSION=19.03.9
 ARG USER_DOCKER_ENGINE_VERSION=docker-${USER_DOCKER_VERSION}
 
 ARG AZURE_SERVICE=false
