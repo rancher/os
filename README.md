@@ -18,68 +18,57 @@ it would really be bad if somebody did `docker rm -f $(docker ps -qa)` and delet
 
 ## Release
 
-- **v1.5.5 - Docker 19.03.5 - Linux 4.14.138**
+- **v1.5.6 - Docker 19.03.11 - Linux 4.14.138**
 
 ### ISO
 
-- https://releases.rancher.com/os/v1.5.5/rancheros.iso
-- https://releases.rancher.com/os/v1.5.5/hyperv/rancheros.iso
-- https://releases.rancher.com/os/v1.5.5/4glte/rancheros.iso
-- https://releases.rancher.com/os/v1.5.5/vmware/rancheros.iso
+- https://releases.rancher.com/os/v1.5.6/rancheros.iso
+- https://releases.rancher.com/os/v1.5.6/hyperv/rancheros.iso
+- https://releases.rancher.com/os/v1.5.6/4glte/rancheros.iso
+- https://releases.rancher.com/os/v1.5.6/vmware/rancheros.iso
 
 #### Special docker-machine Links
 
-- https://releases.rancher.com/os/v1.5.5/vmware/rancheros-autoformat.iso
-- https://releases.rancher.com/os/v1.5.5/proxmoxve/rancheros-autoformat.iso
+- https://releases.rancher.com/os/v1.5.6/vmware/rancheros-autoformat.iso
+- https://releases.rancher.com/os/v1.5.6/proxmoxve/rancheros-autoformat.iso
 
 ### Additional Downloads
 
 #### AMD64 Links
 
-* https://releases.rancher.com/os/v1.5.5/initrd
-* https://releases.rancher.com/os/v1.5.5/vmlinuz
-* https://releases.rancher.com/os/v1.5.5/rancheros.ipxe
-* https://releases.rancher.com/os/v1.5.5/rootfs.tar.gz
-
-#### ARM64 Links
-
-* https://releases.rancher.com/os/v1.5.5/arm64/initrd
-* https://releases.rancher.com/os/v1.5.5/arm64/vmlinuz
-* https://releases.rancher.com/os/v1.5.5/arm64/rootfs_arm64.tar.gz
-* https://releases.rancher.com/os/v1.5.5/arm64/rancheros-raspberry-pi64.zip
+* https://releases.rancher.com/os/v1.5.6/initrd
+* https://releases.rancher.com/os/v1.5.6/vmlinuz
+* https://releases.rancher.com/os/v1.5.6/rancheros.ipxe
+* https://releases.rancher.com/os/v1.5.6/rootfs.tar.gz
 
 #### Cloud Links
 
-* https://releases.rancher.com/os/v1.5.5/rancheros-openstack.img
-* https://releases.rancher.com/os/v1.5.5/rancheros-digitalocean.img
-* https://releases.rancher.com/os/v1.5.5/rancheros-cloudstack.img
-* https://releases.rancher.com/os/v1.5.5/rancheros-aliyun.vhd
-* https://releases.rancher.com/os/v1.5.5/rancheros-gce.tar.gz
+* https://releases.rancher.com/os/v1.5.6/rancheros-gce.tar.gz
 
 #### VMware Links
 
-* https://releases.rancher.com/os/v1.5.5/vmware/initrd
-* https://releases.rancher.com/os/v1.5.5/vmware/rancheros.vmdk
-* https://releases.rancher.com/os/v1.5.5/vmware/rootfs.tar.gz
+* https://releases.rancher.com/os/v1.5.6/vmware/initrd
+* https://releases.rancher.com/os/v1.5.6/vmware/rancheros.vmdk
+* https://releases.rancher.com/os/v1.5.6/vmware/rootfs.tar.gz
 
 #### Hyper-V Links
 
-* https://releases.rancher.com/os/v1.5.5/hyperv/initrd
-* https://releases.rancher.com/os/v1.5.5/hyperv/rootfs.tar.gz
+* https://releases.rancher.com/os/v1.5.6/hyperv/initrd
+* https://releases.rancher.com/os/v1.5.6/hyperv/rootfs.tar.gz
 
 #### Proxmox VE Links
 
-* https://releases.rancher.com/os/v1.5.5/proxmoxve/initrd
-* https://releases.rancher.com/os/v1.5.5/proxmoxve/rootfs.tar.gz
+* https://releases.rancher.com/os/v1.5.6/proxmoxve/initrd
+* https://releases.rancher.com/os/v1.5.6/proxmoxve/rootfs.tar.gz
 
 #### 4G-LTE Links
 
-* https://releases.rancher.com/os/v1.5.5/4glte/initrd
-* https://releases.rancher.com/os/v1.5.5/4glte/rootfs.tar.gz
+* https://releases.rancher.com/os/v1.5.6/4glte/initrd
+* https://releases.rancher.com/os/v1.5.6/4glte/rootfs.tar.gz
 
 **Note**:
 1. you can use `http` instead of `https` in the above URLs, e.g. for iPXE.
-2. you can use `latest` instead of `v1.5.5` in the above URLs if you want to get the latest version.
+2. you can use `latest` instead of `v1.5.6` in the above URLs if you want to get the latest version.
 
 ### Amazon
 
@@ -89,24 +78,22 @@ SSH keys are added to the **`rancher`** user, so you must log in using the **ran
 
 Region | Type | AMI
 -------|------|------
-eu-north-1 | HVM | [ami-02c60b1d15cfdb395](https://eu-north-1.console.aws.amazon.com/ec2/home?region=eu-north-1#launchInstanceWizard:ami=ami-02c60b1d15cfdb395)
-ap-south-1 | HVM | [ami-03c6826f71f10a89d](https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-03c6826f71f10a89d)
-eu-west-3 | HVM | [ami-08f81096c8ca76b8c](https://eu-west-3.console.aws.amazon.com/ec2/home?region=eu-west-3#launchInstanceWizard:ami=ami-08f81096c8ca76b8c)
-eu-west-2 | HVM | [ami-0a9b760b7f5743662](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#launchInstanceWizard:ami=ami-0a9b760b7f5743662)
-eu-west-1 | HVM | [ami-0985b29f1ceb02183](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-0985b29f1ceb02183)
-ap-northeast-2 | HVM | [ami-05a24d2c2ae2ff01c](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-05a24d2c2ae2ff01c)
-ap-northeast-1 | HVM | [ami-0faebbe4fa02127b9](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-0faebbe4fa02127b9)
-sa-east-1 | HVM | [ami-01872ab8569bde461](https://sa-east-1.console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-01872ab8569bde461)
-ca-central-1 | HVM | [ami-00b399e6eafdbe50b](https://ca-central-1.console.aws.amazon.com/ec2/home?region=ca-central-1#launchInstanceWizard:ami=ami-00b399e6eafdbe50b)
-ap-southeast-1 | HVM | [ami-0b8a7192b0dc07709](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-0b8a7192b0dc07709)
-ap-southeast-2 | HVM | [ami-058f3d6c035b8d6d1](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-058f3d6c035b8d6d1)
-eu-central-1 | HVM | [ami-0b31348605bf75c44](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-0b31348605bf75c44)
-us-east-1 | HVM | [ami-085b489bb4756f126](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-085b489bb4756f126)
-us-east-2 | HVM | [ami-002ab867b8b8591d5](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-002ab867b8b8591d5)
-us-west-1 | HVM | [ami-0f3cd370f66d772c4](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-0f3cd370f66d772c4)
-us-west-2 | HVM | [ami-04a8b7119cc82a3b2](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-04a8b7119cc82a3b2)
-cn-north-1 | HVM | [ami-0048342c054fb5a3e](https://cn-north-1.console.amazonaws.cn/ec2/home?region=cn-north-1#launchInstanceWizard:ami=ami-0048342c054fb5a3e)
-cn-northwest-1 | HVM | [ami-0b0f6c8524c8ec27c](https://cn-northwest-1.console.amazonaws.cn/ec2/home?region=cn-northwest-1#launchInstanceWizard:ami=ami-0b0f6c8524c8ec27c)
+eu-north-1 | HVM | [ami-0b28754e9e36e8e07](https://eu-north-1.console.aws.amazon.com/ec2/home?region=eu-north-1#launchInstanceWizard:ami=ami-0b28754e9e36e8e07)
+ap-south-1 | HVM | [ami-0a8d6fd80f6647904](https://ap-south-1.console.aws.amazon.com/ec2/home?region=ap-south-1#launchInstanceWizard:ami=ami-0a8d6fd80f6647904)
+eu-west-3 | HVM | [ami-0a20d2e00be3ce551](https://eu-west-3.console.aws.amazon.com/ec2/home?region=eu-west-3#launchInstanceWizard:ami=ami-0a20d2e00be3ce551)
+eu-west-2 | HVM | [ami-00d503d7ef22da04a](https://eu-west-2.console.aws.amazon.com/ec2/home?region=eu-west-2#launchInstanceWizard:ami=ami-00d503d7ef22da04a)
+eu-west-1 | HVM | [ami-01e9e007e7af05e9f](https://eu-west-1.console.aws.amazon.com/ec2/home?region=eu-west-1#launchInstanceWizard:ami=ami-01e9e007e7af05e9f)
+ap-northeast-2 | HVM | [ami-0798c48ba8aad886b](https://ap-northeast-2.console.aws.amazon.com/ec2/home?region=ap-northeast-2#launchInstanceWizard:ami=ami-0798c48ba8aad886b)
+ap-northeast-1 | HVM | [ami-0a251d44dc78b0f2f](https://ap-northeast-1.console.aws.amazon.com/ec2/home?region=ap-northeast-1#launchInstanceWizard:ami=ami-0a251d44dc78b0f2f)
+sa-east-1 | HVM | [ami-0726b3d19b7868934](https://sa-east-1.console.aws.amazon.com/ec2/home?region=sa-east-1#launchInstanceWizard:ami=ami-0726b3d19b7868934)
+ca-central-1 | HVM | [ami-0eccf03e8527335c9](https://ca-central-1.console.aws.amazon.com/ec2/home?region=ca-central-1#launchInstanceWizard:ami=ami-0eccf03e8527335c9)
+ap-southeast-1 | HVM | [ami-0782dcdedcc2aaa11](https://ap-southeast-1.console.aws.amazon.com/ec2/home?region=ap-southeast-1#launchInstanceWizard:ami=ami-0782dcdedcc2aaa11)
+ap-southeast-2 | HVM | [ami-03f9ce52431a00706](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#launchInstanceWizard:ami=ami-03f9ce52431a00706)
+eu-central-1 | HVM | [ami-0b63175a9bbbcda85](https://eu-central-1.console.aws.amazon.com/ec2/home?region=eu-central-1#launchInstanceWizard:ami=ami-0b63175a9bbbcda85)
+us-east-1 | HVM | [ami-0e8a3347e4c5959bd](https://us-east-1.console.aws.amazon.com/ec2/home?region=us-east-1#launchInstanceWizard:ami=ami-0e8a3347e4c5959bd)
+us-east-2 | HVM | [ami-08faee1387289d316](https://us-east-2.console.aws.amazon.com/ec2/home?region=us-east-2#launchInstanceWizard:ami=ami-08faee1387289d316)
+us-west-1 | HVM | [ami-030a2ddc7ac6017e4](https://us-west-1.console.aws.amazon.com/ec2/home?region=us-west-1#launchInstanceWizard:ami=ami-030a2ddc7ac6017e4)
+us-west-2 | HVM | [ami-0fb650eb46d1c240f](https://us-west-2.console.aws.amazon.com/ec2/home?region=us-west-2#launchInstanceWizard:ami=ami-0fb650eb46d1c240f)
 
 Additionally, images are available with support for Amazon EC2 Container Service (ECS) [here](https://rancher.com/docs/os/v1.x/en/installation/amazon-ecs/#amazon-ecs-enabled-amis).
 
