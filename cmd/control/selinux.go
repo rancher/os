@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"syscall"
 
-	"github.com/rancher/os/config"
+	"github.com/burmilla/os/config"
 
 	"github.com/codegangsta/cli"
 )

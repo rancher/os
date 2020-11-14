@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 )
 
 func LoadModules(cfg *config.CloudConfig) (*config.CloudConfig, error) {

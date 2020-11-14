@@ -11,12 +11,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/pkg/init/one"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/netconf"
-	"github.com/rancher/os/pkg/selinux"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config/cmdline"
+	"github.com/burmilla/os/pkg/init/one"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/netconf"
+	"github.com/burmilla/os/pkg/selinux"
+	"github.com/burmilla/os/pkg/util"
 
 	"github.com/docker/libnetwork/resolvconf"
 )

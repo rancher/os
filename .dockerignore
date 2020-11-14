@@ -12,7 +12,6 @@ tests/integration/.tox
 */*/*/*.pyc
 */*/*/__pycache__
 .trash-cache
-#.dapper
 vendor/*/*/*/.git
 tmp
 docs/_site

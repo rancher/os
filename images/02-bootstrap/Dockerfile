@@ -1,2 +1,2 @@
-FROM rancher/os-base
+FROM burmilla/os-base
 COPY . /

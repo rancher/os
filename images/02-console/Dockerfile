@@ -1,4 +1,4 @@
-FROM rancher/os-base
+FROM burmilla/os-base
 COPY build/lsb-release /etc/
 COPY build/sshd_config.append.tpl /etc/ssh/
 COPY prompt.sh /etc/profile.d/

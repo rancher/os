@@ -64,8 +64,8 @@ $SCP ./scripts/hosting/packet/packet.sh $HOST:~/
 #$SCP ./dist/artifacts/initrd $HOST:~/
 #$SCP ./dist/artifacts/vmlinuz-4.9-rancher2 $HOST:~/vmlinuz
 
-$SSH wget -c https://github.com/rancher/os/releases/download/v0.7.1/vmlinuz
-$SSH wget -c https://github.com/rancher/os/releases/download/v0.7.1/initrd
+$SSH wget -c https://github.com/burmilla/os/releases/download/v0.7.1/vmlinuz
+$SSH wget -c https://github.com/burmilla/os/releases/download/v0.7.1/initrd
 
 #Install the kexec-tools package.
 

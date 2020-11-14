@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/pkg/log"
 )
 
 func syslinuxConfig(menu BootVars) error {
@@ -22,7 +22,7 @@ LABEL {{.Name}}
     INITRD ../initrd-{{.Version}}-rancheros
 {{end}}
 TIMEOUT 20   #2 seconds
-DEFAULT RancherOS-current
+DEFAULT BurmillaOS-current
 
 {{- range .Entries}}
 {{template "syslinuxmenu" .}}

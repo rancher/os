@@ -1,7 +1,7 @@
 #!/bin/bash
 set -ex
 
-INSTALLER_IMAGE=rancher/os:v0.7.1
+INSTALLER_IMAGE=burmilla/os:v0.7.1
 
 ros config set rancher.network.interfaces.eth1.dhcp false
 if grep eth2 /proc/net/dev; then
@@ -21,7 +21,7 @@ TINKERBELL_URL=$(cat /proc/cmdline | sed -e 's/^.*tinkerbell=//' -e 's/ .*$//')/
 
 tinkerbell_post()
 {
-    system-docker run rancher/curl -X POST -H "Content-Type: application/json" -d "{\"type\":\"provisioning.$1\",\"body\":\"$2\"}" ${TINKERBELL_URL}
+    system-docker run burmilla/curl -X POST -H "Content-Type: application/json" -d "{\"type\":\"provisioning.$1\",\"body\":\"$2\"}" ${TINKERBELL_URL}
 }
 
 tinkerbell_post 104 "Connected to magic install system"
@@ -123,7 +123,7 @@ umount /mnt/oem
 
 tinkerbell_post 106 "OEM drive configured"
 
-METADATA=$(system-docker run rancher/curl -sL https://metadata.packet.net/metadata)
+METADATA=$(system-docker run burmilla/curl -sL https://metadata.packet.net/metadata)
 eval $(echo ${METADATA} | jq -r '.network.addresses[] | select(.address_family == 4 and .public) | "ADDRESS=\(.address)/\(.cidr)\nGATEWAY=\(.gateway)"')
 eval $(echo ${METADATA} | jq -r '.network.interfaces[0] | "MAC=\(.mac)"')
 NETWORK_ARGS="rancher.network.interfaces.bond0.address=$ADDRESS rancher.network.interfaces.bond0.gateway=$GATEWAY rancher.network.interfaces.mac:${MAC}.bond=bond0"

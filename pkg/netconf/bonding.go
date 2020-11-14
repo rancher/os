@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/vishvananda/netlink"
 )

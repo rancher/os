@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rancher/os/cmd/control/service"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/cmd/control/service"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 )
@@ -21,7 +21,7 @@ func Main() {
 	app := cli.NewApp()
 
 	app.Name = os.Args[0]
-	app.Usage = fmt.Sprintf("Control and configure RancherOS\nbuilt: %s", config.BuildDate)
+	app.Usage = fmt.Sprintf("Control and configure BurmillaOS\nbuilt: %s", config.BuildDate)
 	app.Version = config.Version
 	app.Author = "Rancher Labs, Inc."
 	app.EnableBashCompletion = true

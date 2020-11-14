@@ -3,10 +3,10 @@
 # How to use:
 #   make shell-bind
 #   cd scripts/tools/
-#   wget https://link/rancheros-xxx.img
+#   wget https://link/burmillaos-xxx.img
 #   wget http://link/custom.crt
 #
-#   ./flush_crt_nbd.sh --img rancheros-openstack.img --cert custom.crt
+#   ./flush_crt_nbd.sh --img burmillaos-openstack.img --cert custom.crt
 #   # or
 #   ./flush_crt_nbd.sh --initrd initrd-xxxx --cert custom.crt
 #

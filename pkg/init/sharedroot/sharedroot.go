@@ -3,8 +3,8 @@ package sharedroot
 import (
 	"os"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/init/fsmount"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/init/fsmount"
 
 	"github.com/docker/docker/pkg/mount"
 )

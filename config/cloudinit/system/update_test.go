@@ -20,7 +20,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 func testReadConfig(config string) func() (io.Reader, error) {

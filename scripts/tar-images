@@ -1,8 +1,8 @@
 #!/bin/bash
 set -ex
 
-INIT_DEP="rancher/os-bootstrap"
-SHARED_DEP="rancher/os-base"
+INIT_DEP="burmilla/os-bootstrap"
+SHARED_DEP="burmilla/os-base"
 INIT_IMAGES_DST="build/images-init.tar"
 SYSTEM_IMAGES_DST="build/images-system.tar"
 USER_IMAGES_DST="build/images-user.tar"

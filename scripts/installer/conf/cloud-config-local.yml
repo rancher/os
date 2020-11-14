@@ -1,4 +1,4 @@
 rancher:
   cloud_init:
     datasources:
-      - file:/var/lib/rancher/conf/user_config.yml
+      - file:/var/lib/burmilla/conf/user_config.yml

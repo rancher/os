@@ -19,7 +19,7 @@ import (
 	"net"
 	"testing"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/datasource"
 )
 
 func TestSubstituteUserDataVars(t *testing.T) {

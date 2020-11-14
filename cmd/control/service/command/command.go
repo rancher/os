@@ -3,7 +3,7 @@ package command
 import (
 	"errors"
 
-	"github.com/rancher/os/cmd/control/service/app"
+	"github.com/burmilla/os/cmd/control/service/app"
 
 	"github.com/codegangsta/cli"
 	composeApp "github.com/docker/libcompose/cli/app"

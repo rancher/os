@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/rancher/os/config/cloudinit/config"
-	"github.com/rancher/os/config/yaml"
-	"github.com/rancher/os/pkg/netconf"
+	"github.com/burmilla/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/yaml"
+	"github.com/burmilla/os/pkg/netconf"
 
 	"github.com/docker/engine-api/types"
 	composeConfig "github.com/docker/libcompose/config"
@@ -26,7 +26,7 @@ const (
 	UserImages       = "images-user.tar"
 	Debug            = false
 	SystemDockerBin  = "/usr/bin/system-dockerd"
-	DefaultDind      = "rancher/os-dind:17.12.1"
+	DefaultDind      = "burmilla/os-dind:17.12.1"
 
 	DetachLabel        = "io.rancher.os.detach"
 	CreateOnlyLabel    = "io.rancher.os.createonly"

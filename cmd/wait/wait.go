@@ -3,9 +3,9 @@ package wait
 import (
 	"os"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/docker"
+	"github.com/burmilla/os/pkg/log"
 )
 
 func Main() {

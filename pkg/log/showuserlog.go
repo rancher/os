@@ -9,7 +9,7 @@ import (
 	logrus_syslog "github.com/Sirupsen/logrus/hooks/syslog"
 )
 
-// ShowuserlogHook stores all levels of logrus entries in memory until its told the RancherOS logging system is ready
+// ShowuserlogHook stores all levels of logrus entries in memory until its told the BurmillaOS logging system is ready
 // then it replays them to be logged
 type ShowuserlogHook struct {
 	Level         logrus.Level

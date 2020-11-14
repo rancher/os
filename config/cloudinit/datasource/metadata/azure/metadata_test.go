@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/config/cloudinit/datasource/metadata"
-	"github.com/rancher/os/config/cloudinit/datasource/metadata/test"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/datasource/metadata"
+	"github.com/burmilla/os/config/cloudinit/datasource/metadata/test"
 )
 
 func TestType(t *testing.T) {

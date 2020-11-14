@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/pkg/log"
 )
 
 func RunGrub(baseName, device string) error {
@@ -63,7 +63,7 @@ func PvGrubConfig(menu BootVars) error {
 	log.Debugf("pvGrubConfig")
 
 	filetmpl, err := template.New("grublst").Parse(`{{define "grubmenu"}}
-title RancherOS {{.Version}}-({{.Name}})
+title BurmillaOS {{.Version}}-({{.Name}})
 root (hd0)
 kernel /${bootDir}vmlinuz-{{.Version}}-rancheros {{.KernelArgs}} {{.Append}}
 initrd /${bootDir}initrd-{{.Version}}-rancheros

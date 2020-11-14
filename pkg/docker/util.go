@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"github.com/rancher/os/config"
+	"github.com/burmilla/os/config"
 
 	composeConfig "github.com/docker/libcompose/config"
 )

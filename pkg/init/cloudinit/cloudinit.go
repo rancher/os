@@ -5,12 +5,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/compose"
-	"github.com/rancher/os/pkg/init/docker"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/sysinit"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/compose"
+	"github.com/burmilla/os/pkg/init/docker"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/sysinit"
+	"github.com/burmilla/os/pkg/util"
 )
 
 func CloudInit(cfg *config.CloudConfig) (*config.CloudConfig, error) {

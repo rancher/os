@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"path"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 // OEM is a top-level structure which embeds its underlying configuration,

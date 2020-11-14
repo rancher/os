@@ -48,35 +48,34 @@ rpi64: .dapper
 
 vmware: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-openvmtools:10.3.10-2" \
+	OS_FIRMWARE="false" \
+	APPEND_SYSTEM_IMAGES="$(APPEND_SYSTEM_IMAGES) burmilla/os-openvmtools:11.2.0-1" \
 	./.dapper release-vmware
 
 hyperv: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.138-rancher-1" \
+	OS_FIRMWARE="false" \
+	APPEND_SYSTEM_IMAGES="$(APPEND_SYSTEM_IMAGES) burmilla/os-hypervvmtools:v4.14.206-burmilla-1" \
 	./.dapper release-hyperv
 
 azurebase: .dapper
 	mkdir -p dist
 	AZURE_SERVICE="true" \
-	APPEND_SYSTEM_IMAGES="rancher/os-hypervvmtools:v4.14.138-rancher-1 rancher/os-waagent:v2.2.34-1" \
+	OS_FIRMWARE="false" \
+	APPEND_SYSTEM_IMAGES="$(APPEND_SYSTEM_IMAGES) burmilla/os-hypervvmtools:v4.14.206-burmilla-1 burmilla/os-waagent:v2.2.49.2-1" \
 	./.dapper release-azurebase
 
 4glte: .dapper
 	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="rancher/os-modemmanager:v1.6.4-1" \
+	APPEND_SYSTEM_IMAGES="$(APPEND_SYSTEM_IMAGES) burmilla/os-modemmanager:v1.6.4-1" \
 	./.dapper release-4glte
 
 proxmoxve: .dapper
 	mkdir -p dist
 	PROXMOXVE_SERVICE="true" \
-	APPEND_SYSTEM_IMAGES="rancher/os-qemuguestagent:v2.8.1-2" \
+	OS_FIRMWARE="false" \
+	APPEND_SYSTEM_IMAGES="$(APPEND_SYSTEM_IMAGES) burmilla/os-qemuguestagent:v3.1.0-1" \
 	./.dapper release-proxmoxve
-
-pingan: .dapper
-	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="cnrancher/os-pingan-amc:v0.0.6-1" \
-	./.dapper release-pingan
 
 help:
 	@./scripts/help

@@ -3,8 +3,8 @@ package config
 import (
 	"testing"
 
-	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config/cmdline"
+	"github.com/burmilla/os/pkg/util"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/stretchr/testify/require"

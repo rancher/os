@@ -21,7 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 
 	"github.com/coreos/yaml"
 )

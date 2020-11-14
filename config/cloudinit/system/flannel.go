@@ -18,7 +18,7 @@ import (
 	"path"
 	"strings"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 // Flannel is a top-level structure which embeds its underlying configuration,

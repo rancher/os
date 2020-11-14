@@ -17,7 +17,7 @@ package initialize
 import (
 	"fmt"
 
-	"github.com/rancher/os/config/cloudinit/system"
+	"github.com/burmilla/os/config/cloudinit/system"
 )
 
 func SSHImportGithubUser(systemUser string, githubUser string) error {

@@ -20,7 +20,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 const DefaultIpv4Address = "127.0.0.1"

@@ -3,9 +3,9 @@ package control
 import (
 	"errors"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/compose"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/compose"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 	"github.com/docker/libcompose/project/options"

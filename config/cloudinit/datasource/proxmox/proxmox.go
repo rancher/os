@@ -7,9 +7,9 @@ import (
 	"path"
 	"syscall"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	"github.com/docker/docker/pkg/mount"
 )

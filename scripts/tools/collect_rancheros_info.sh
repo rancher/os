@@ -5,7 +5,7 @@
 # 1. Login to your rancheros and switch to root
 #    $ sudo su - root
 # 2. Collecting rancheros information
-#    # curl https://raw.githubusercontent.com/rancher/os/master/scripts/tools/collect_rancheros_info.sh | sh
+#    # curl https://raw.githubusercontent.com/burmilla/os/master/scripts/tools/collect_rancheros_info.sh | sh
 
 set -e
 # /var/log directory

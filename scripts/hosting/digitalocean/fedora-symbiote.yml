@@ -5,7 +5,7 @@
 # either way, the part inside the "if" needs to be run by hand from the console atmA
 #
 # The most experimental way, is to use the ./scripts/hosting/digitalocean/host.sh script to modify this one for the current build
-# push the rancher/os:sha image to hub, and then use
+# push the burmilla/os:sha image to hub, and then use
 #   doctl.exe compute droplet create --enable-ipv6 --enable-private-networking --image fedora-25-x64 --region sfo1 --size 2gb --ssh-keys 6956055 --ssh-keys 7170404 --user-data-file digitalocean.yml sven
 #  where:
 #$ cat digitalocean.yml
@@ -15,7 +15,7 @@
 #
 
 ROS_VERSION="v1.0.1-rc1"
-URL_BASE="https://github.com/rancher/os/releases/download/${ROS_VERSION}"
+URL_BASE="https://github.com/burmilla/os/releases/download/${ROS_VERSION}"
 VMLINUX="vmlinuz-4.9.22-rancher"
 INITRD="initrd
 

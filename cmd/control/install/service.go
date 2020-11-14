@@ -5,10 +5,10 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
-	"github.com/rancher/os/pkg/util/network"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
+	"github.com/burmilla/os/pkg/util/network"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 )

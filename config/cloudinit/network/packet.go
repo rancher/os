@@ -17,7 +17,7 @@ package network
 import (
 	"net"
 
-	"github.com/rancher/os/pkg/netconf"
+	"github.com/burmilla/os/pkg/netconf"
 )
 
 func ProcessPacketNetconf(netdata netconf.NetworkConfig) ([]InterfaceGenerator, error) {

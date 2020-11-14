@@ -26,4 +26,4 @@ docker run --rm -it \
     -v /usr/share/ca-certificates:/usr/share/ca-certificates \
     -w  /var/lib/rancher \
     --entrypoint sh \
-    rancher/os-base:v1.0.3
+    burmilla/os-base:v1.0.3

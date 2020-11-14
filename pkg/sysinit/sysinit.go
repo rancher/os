@@ -10,11 +10,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rancher/os/cmd/control"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/compose"
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/cmd/control"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/compose"
+	"github.com/burmilla/os/pkg/docker"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/docker/engine-api/types"
 	"github.com/docker/libcompose/project/options"
@@ -119,7 +119,7 @@ func SysInit() error {
 				return cfg, nil
 			}},
 			{"banner", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
-				log.Infof("RancherOS %s started", config.Version)
+				log.Infof("BurmillaOS %s started", config.Version)
 				return cfg, nil
 			}}})
 	return err

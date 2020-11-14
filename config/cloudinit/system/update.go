@@ -24,7 +24,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 const (

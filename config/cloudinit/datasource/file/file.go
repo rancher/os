@@ -19,7 +19,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/datasource"
 )
 
 type LocalFile struct {

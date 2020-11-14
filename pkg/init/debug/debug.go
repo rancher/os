@@ -1,8 +1,8 @@
 package debug
 
 import (
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
 )
 
 func PrintAndLoadConfig(_ *config.CloudConfig) (*config.CloudConfig, error) {

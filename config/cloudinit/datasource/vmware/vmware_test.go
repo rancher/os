@@ -24,8 +24,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/pkg/netconf"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/pkg/netconf"
 )
 
 type MockHypervisor map[string]string

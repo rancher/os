@@ -8,10 +8,10 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/dfs"
-	"github.com/rancher/os/pkg/init/fsmount"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/dfs"
+	"github.com/burmilla/os/pkg/init/fsmount"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/docker/docker/pkg/archive"
 )
@@ -30,7 +30,7 @@ func SwitchRoot(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 func cleanupTarget(rootfs, targetUsr, usr, usrVer, tmpDir string) (bool, error) {
 	log.Debugf("Deleting %s", targetUsr)
 	if err := os.Remove(targetUsr); err != nil && !os.IsNotExist(err) {
-		log.Errorf("Failed to delete %s, possibly invalid RancherOS state partition: %v", targetUsr, err)
+		log.Errorf("Failed to delete %s, possibly invalid BurmillaOS state partition: %v", targetUsr, err)
 		return false, err
 	}
 

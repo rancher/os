@@ -8,12 +8,12 @@ version_gt() {
 
 if [ "$KERNEL_CHECK" != "0" ]; then
     echo "Host Kernel: $(uname -r)"
-    echo "RancherOS Kernel: $KERNEL_VERSION"
+    echo "BurmillaOS Kernel: $KERNEL_VERSION"
 
-    if [ $(uname -r) != $KERNEL_VERSION ] && ! version_gt $(uname -r) $KERNEL_VERSION; then
-        echo "Your host kernel must be greater than RancherOS KERNEL_VERSION"
-        exit 1
-    fi
+#    if [ $(uname -r) != $KERNEL_VERSION ] && ! version_gt $(uname -r) $KERNEL_VERSION; then
+#        echo "Your host kernel must be greater than BurmillaOS KERNEL_VERSION"
+#        exit 1
+#    fi
 fi
 
 echo -------------------------./build-target

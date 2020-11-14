@@ -208,11 +208,11 @@ if [ "$QEMU" == "1" ] || [ "$BOOT_ISO" == "1" ] || [ "$BOOT_HD" == "1" ]; then
     if [ ! -e ${HD} ]; then
         mkdir -p $(dirname ${HD})
         if [ "$USE_OPENSTACK_IMG" != "" ]; then
-           if [ ! -e "dist/artifacts/rancheros-${USE_OPENSTACK_IMG}.img" ]; then
+           if [ ! -e "dist/artifacts/burmillaos-${USE_OPENSTACK_IMG}.img" ]; then
                echo "please build the open stack image first (run make release)."
                exit 1
            fi
-           cp dist/artifacts/rancheros-${USE_OPENSTACK_IMG}.img $HD
+           cp dist/artifacts/burmillaos-${USE_OPENSTACK_IMG}.img $HD
            qemu-img resize ${HD} 70GB
         else
             if [ ¨$INSTALLED¨ == ¨1¨ ]; then
@@ -336,7 +336,7 @@ if [ "$QEMU" == "1" ]; then
 elif [ "$BOOT_ISO" == "1" ] ||
             [ "$BOOT_HD" == "1" ]; then
     if [ "$BOOT_ISO" == "1" ]; then
-        ISO_OPTS="-boot c -cdrom ./dist/artifacts/rancheros.iso \
+        ISO_OPTS="-boot c -cdrom ./dist/artifacts/burmillaos.iso \
             -fsdev local,security_model=none,id=fsdev1,path=${HOME} \
             -device virtio-9p-pci,id=fs1,fsdev=fsdev1,mount_tag=home "
             echo "----- $ISO_OPTS"
@@ -386,7 +386,7 @@ elif [ "$QIND" == "1" ]; then
 
         set -x
         docker create --name=${NAME} -it ${KVM_ENABLE} \
-                    rancher/qind \
+                    burmilla/qind \
                     --hostname "rancher-dev" \
                     ${CLOUD_CONFIG_ENABLE} \
                     ${SSH_PUB_ENABLE} \

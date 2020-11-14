@@ -5,9 +5,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	"github.com/codegangsta/cli"
 	machineUtil "github.com/docker/machine/utils"

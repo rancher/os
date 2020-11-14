@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/pkg/errors"
 )

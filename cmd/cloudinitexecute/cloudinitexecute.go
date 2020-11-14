@@ -9,12 +9,12 @@ import (
 	"path"
 	"strings"
 
-	rancherConfig "github.com/rancher/os/config"
-	"github.com/rancher/os/config/cloudinit/config"
-	"github.com/rancher/os/config/cloudinit/system"
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	rancherConfig "github.com/burmilla/os/config"
+	"github.com/burmilla/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/system"
+	"github.com/burmilla/os/pkg/docker"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	"golang.org/x/net/context"
 )

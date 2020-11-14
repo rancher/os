@@ -16,5 +16,5 @@ OUTPUT=${OUTPUT:-bin/ros}
 echo Building $OUTPUT
 BUILDDATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
-CONST="-X github.com/rancher/os/config.Version=${VERSION} -X github.com/rancher/os/config.OsRepo=${OS_REPO} -X github.com/rancher/os/config.BuildDate='${BUILDDATE}'"
+CONST="-X github.com/burmilla/os/config.Version=${VERSION} -X github.com/burmilla/os/config.OsRepo=${OS_REPO} -X github.com/burmilla/os/config.BuildDate='${BUILDDATE}'"
 go build -ldflags "$CONST -extldflags -static -s -w" -o ${OUTPUT}

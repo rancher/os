@@ -34,15 +34,15 @@ curl -SL ${!SYSTEM_DOCKER_URL} | tar --strip-components=1 -xzvf - -C ${INITRD_DI
 rm -f ${INITRD_DIR}/usr/bin/system-docker-proxy
 
 cat <<HERE > ${INITRD_DIR}/usr/share/ros/os-release
-NAME="RancherOS"
+NAME="BurmillaOS"
 VERSION=${VERSION}
-ID=rancheros
+ID=burmillaos
 ID_LIKE=
 VERSION_ID=${VERSION}
-PRETTY_NAME="RancherOS ${VERSION}"
-HOME_URL="http://rancher.com/rancher-os/"
-SUPPORT_URL="https://forums.rancher.com/c/rancher-os"
-BUG_REPORT_URL="https://github.com/rancher/os/issues"
+PRETTY_NAME="BurmillaOS ${VERSION}"
+HOME_URL="https://burmilla.github.io"
+SUPPORT_URL="https://github.com/burmilla/os/issues"
+BUG_REPORT_URL="https://github.com/burmilla/os/issues"
 BUILD_ID=
 HERE
 
@@ -55,9 +55,6 @@ for file in $(find . -type f -name ".make-*"); do
             ;;
         ".make-4glte")
             cache_services "m/modem-manager.yml"
-            ;;
-        ".make-pingan")
-            cache_services "p/pingan-amc.yml"
             ;;
         ".make-hyperv")
             cache_services "h/hyperv-vm-tools.yml"
@@ -103,7 +100,7 @@ if [ -e ${DOWNLOADS}/policy.29 ]; then
     cp ${DOWNLOADS}/policy.29 ${INITRD_DIR}/usr/etc/selinux/ros/policy/
 fi
 
-# make rancher/os-initrd image
+# make burmilla/os-initrd image
 cat <<HERE > ${INITRD_DIR}/../Dockerfile.initrd
 FROM scratch
 COPY initrd/* /
@@ -114,5 +111,5 @@ tag="${OS_REPO}/${name}:${VERSION}${SUFFIX}"
 pushd .
 cd ${INITRD_DIR}/..
 docker build -t ${OS_REPO}/${name} -f Dockerfile.initrd .
-docker tag rancher/${name} ${tag}
+docker tag burmilla/${name} ${tag}
 popd

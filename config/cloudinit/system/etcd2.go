@@ -15,7 +15,7 @@
 package system
 
 import (
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 // Etcd2 is a top-level structure which embeds its underlying configuration,

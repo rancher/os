@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/docker/docker/registry"
 	"github.com/docker/engine-api/types"

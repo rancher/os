@@ -5,11 +5,11 @@ import (
 	"os/exec"
 	"syscall"
 
-	"github.com/rancher/os/cmd/cloudinitexecute"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/cmd/cloudinitexecute"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/docker"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	"github.com/codegangsta/cli"
 	"golang.org/x/net/context"

@@ -19,8 +19,8 @@ for i in $BASE/[0-9]*; do
         ${i}/prebuild.sh
     fi
 
-    if dapper -d --build -f ${i}/Dockerfile -- -t rancher/${name} ${i}; then
-        docker tag rancher/${name} ${tag}
+    if dapper -d --build -f ${i}/Dockerfile -- -t burmilla/${name} ${i}; then
+        docker tag burmilla/${name} ${tag}
         echo "${tag}" >> dist/images
     elif [ "$?" != "42" ]; then
         exit 1

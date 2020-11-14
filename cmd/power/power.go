@@ -10,11 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rancher/os/cmd/control/install"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/cmd/control/install"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/docker"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"

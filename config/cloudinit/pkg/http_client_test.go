@@ -109,8 +109,8 @@ coreos:
 	    id: test
 	    name: CoreOS.box for Test
 	    version-id: %VERSION_ID%+%BUILD_ID%
-	    home-url: https://github.com/rancher/os/config/cloudinit
-	    bug-report-url: https://github.com/rancher/os/config/cloudinit
+	    home-url: https://github.com/burmilla/os/config/cloudinit
+	    bug-report-url: https://github.com/burmilla/os/config/cloudinit
 	update:
 		reboot-strategy: best-effort
 `

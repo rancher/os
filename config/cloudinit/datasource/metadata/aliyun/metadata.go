@@ -5,9 +5,9 @@ import (
 	"log"
 	"strings"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/config/cloudinit/datasource/metadata"
-	"github.com/rancher/os/pkg/netconf"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/datasource/metadata"
+	"github.com/burmilla/os/pkg/netconf"
 )
 
 const (

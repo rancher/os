@@ -20,7 +20,7 @@ import (
 	"path"
 	"testing"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 func TestWriteFileUnencodedContent(t *testing.T) {

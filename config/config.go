@@ -4,21 +4,21 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"github.com/burmilla/os/config/cmdline"
+	"github.com/burmilla/os/pkg/util"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
-	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/pkg/util"
 )
 
 const Banner = `
-               ,        , ______                 _                 _____ _____TM
-  ,------------|'------'| | ___ \\               | |               /  _  /  ___|
- / .           '-'    |-  | |_/ /__ _ _ __   ___| |__   ___ _ __  | | | \\ '--.
- \\/|             |    |   |    // _' | '_ \\ / __| '_ \\ / _ \\ '__' | | | |'--. \\
-   |   .________.'----'   | |\\ \\ (_| | | | | (__| | | |  __/ |    | \\_/ /\\__/ /
-   |   |        |   |     \\_| \\_\\__,_|_| |_|\\___|_| |_|\\___|_|     \\___/\\____/
-   \\___/        \\___/     \s \r
+||||||                                              |||||||  |||||
+|     | |    | |||||  |    | | |      |        ||   |     | |     |
+|     | |    | |    | ||  || | |      |       |  |  |     | |
+||||||  |    | |    | | || | | |      |      |    | |     |  |||||
+|     | |    | |||||  |    | | |      |      |||||| |     |       |
+|     | |    | |   |  |    | | |      |      |    | |     | |     |
+||||||   ||||  |    | |    | | |||||| |||||| |    | |||||||  |||||
 
-         RancherOS \v \n \l
+         BurmillaOS \v \n \l
          `
 
 func Merge(bytes []byte) error {

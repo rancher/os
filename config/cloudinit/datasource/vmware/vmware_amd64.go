@@ -18,9 +18,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config/cloudinit/pkg"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	"github.com/sigma/vmw-guestinfo/rpcvmx"
 	"github.com/sigma/vmw-guestinfo/vmcheck"

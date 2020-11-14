@@ -11,9 +11,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/docker"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/docker"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 	dockerClient "github.com/docker/engine-api/client"

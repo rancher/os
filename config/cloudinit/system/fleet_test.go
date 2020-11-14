@@ -18,7 +18,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 func TestFleetUnits(t *testing.T) {

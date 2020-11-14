@@ -12,7 +12,7 @@ import (
 	"path"
 	"strings"
 
-	osYaml "github.com/rancher/os/config/yaml"
+	osYaml "github.com/burmilla/os/config/yaml"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 )

@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rancher/os/config"
-	httpRetry "github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	httpRetry "github.com/burmilla/os/config/cloudinit/pkg"
+	"github.com/burmilla/os/pkg/log"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	composeConfig "github.com/docker/libcompose/config"

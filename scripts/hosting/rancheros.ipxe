@@ -1,6 +1,0 @@
-#!ipxe
-dhcp
-set base-url https://releases.rancher.com/os/latest
-kernel ${base-url}/vmlinuz printk.devkmsg=on rancher.debug=true rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=tty0 rancher.state.mdadm_scan console=ttyS1,115200n8 rancher.autologin=ttyS1 rancher.network.interfaces.eth*.dhcp=true rancher.cloud_init.datasources=[configdrive,ec2,gce,packet,digitalocean]
-initrd ${base-url}/initrd
-boot

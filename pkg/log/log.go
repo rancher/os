@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rancher/os/config/cmdline"
+	"github.com/burmilla/os/config/cmdline"
 
 	"github.com/Sirupsen/logrus"
 	lsyslog "github.com/Sirupsen/logrus/hooks/syslog"
@@ -201,7 +201,7 @@ func AddRSyslogHook() {
 				hook, err := lsyslog.NewSyslogHook("udp", netconsoleDestination, syslog.LOG_DEBUG, "")
 				if err == nil {
 					logrus.StandardLogger().Hooks.Add(hook)
-					Infof("Sending RancherOS Logs to: %s", netconsoleDestination)
+					Infof("Sending BurmillaOS Logs to: %s", netconsoleDestination)
 				} else {
 					Errorf("Error creating SyslogHook: %s", err)
 				}

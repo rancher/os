@@ -3,10 +3,10 @@
 # How to use:
 #   make shell-bind
 #   cd scripts/tools/
-#   wget https://link/rancheros-xxx.iso
+#   wget https://link/burmillaos-xxx.iso
 #   wget http://link/custom.crt
 #
-#   ./flush_crt_iso.sh --iso rancheros-vmware-autoformat.iso --cert custom.crt
+#   ./flush_crt_iso.sh --iso burmillaos-vmware-autoformat.iso --cert custom.crt
 #   # or
 #   ./flush_crt_iso.sh --initrd initrd-xxxx --cert custom.crt
 #

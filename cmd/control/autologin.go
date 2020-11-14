@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 )
@@ -57,7 +57,7 @@ func autologinAction(c *cli.Context) error {
 	// replace \n and \l
 	banner := config.Banner
 	banner = strings.Replace(banner, "\\v", config.Version, -1)
-	banner = strings.Replace(banner, "\\s", "RancherOS "+runtime.GOARCH, -1)
+	banner = strings.Replace(banner, "\\s", "BurmillaOS "+runtime.GOARCH, -1)
 	banner = strings.Replace(banner, "\\r", config.GetKernelVersion(), -1)
 	banner = strings.Replace(banner, "\\n", cfg.Hostname, -1)
 	banner = strings.Replace(banner, "\\l", tty, -1)

@@ -1,6 +1,6 @@
-FROM rancher/os
+FROM burmilla/os
 
-# replace this with `rancher/os-initrd`
+# replace this with `burmilla/os-initrd`
 RUN mkdir /tmp/initrd \
   && cd /tmp/initrd \
   && cat /dist/initrd-* | gunzip | cpio -i \
@@ -13,8 +13,8 @@ RUN mkdir /tmp/initrd \
   && cd / \
   && rm -rf /tmp/initrd
 
-#FROM rancher/os-installer
+#FROM burmilla/os-installer
 #RUN cp /bin/ros /init
 
-#FROM rancher/os-installer
+#FROM burmilla/os-installer
 #RUN cp /bin/ros /init

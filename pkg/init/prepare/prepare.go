@@ -4,9 +4,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/dfs"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/dfs"
+	"github.com/burmilla/os/pkg/log"
 )
 
 var (
@@ -25,7 +25,7 @@ func FS(c *config.CloudConfig) (*config.CloudConfig, error) {
 }
 
 func SaveCmdline(c *config.CloudConfig) (*config.CloudConfig, error) {
-	// the Kernel Patch added for RancherOS passes `--` (only) elided kernel boot params to the init process
+	// the Kernel Patch added for BurmillaOS passes `--` (only) elided kernel boot params to the init process
 	cmdLineArgs := strings.Join(os.Args, " ")
 	config.SaveInitCmdline(cmdLineArgs)
 

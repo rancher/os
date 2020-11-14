@@ -13,12 +13,12 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/rancher/os/cmd/control/install"
-	"github.com/rancher/os/cmd/power"
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/dfs" // TODO: move CopyFile into util or something.
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/cmd/control/install"
+	"github.com/burmilla/os/cmd/power"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/dfs" // TODO: move CopyFile into util or something.
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	"github.com/codegangsta/cli"
 	"github.com/pkg/errors"
@@ -26,7 +26,7 @@ import (
 
 var installCommand = cli.Command{
 	Name:     "install",
-	Usage:    "install RancherOS to disk",
+	Usage:    "install BurmillaOS to disk",
 	HideHelp: true,
 	Action:   installAction,
 	Flags: []cli.Flag{
@@ -38,9 +38,9 @@ var installCommand = cli.Command{
 		},
 		cli.StringFlag{
 			Name: "install-type, t",
-			Usage: `generic:    (Default) Creates 1 ext4 partition and installs RancherOS (syslinux)
-                        amazon-ebs: Installs RancherOS and sets up PV-GRUB
-                        gptsyslinux: partition and format disk (gpt), then install RancherOS and setup Syslinux
+			Usage: `generic:    (Default) Creates 1 ext4 partition and installs BurmillaOS (syslinux)
+                        amazon-ebs: Installs BurmillaOS and sets up PV-GRUB
+                        gptsyslinux: partition and format disk (gpt), then install BurmillaOS and setup Syslinux
                         `,
 		},
 		cli.StringFlag{
@@ -553,7 +553,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 			Timeout:  0,
 			Fallback: 0, // need to be conditional on there being a 'rollback'?
 			Entries: []install.MenuEntry{
-				install.MenuEntry{"RancherOS-current", config.BootDir, VERSION, kernelArgs, kappend},
+				install.MenuEntry{"BurmillaOS-current", config.BootDir, VERSION, kernelArgs, kappend},
 			},
 		}
 		install.PvGrubConfig(menu)
@@ -859,9 +859,9 @@ func upgradeBootloader(device, baseName, diskType string) error {
 				log.Infof("error read(%s / syslinux.cfg): %s", backupSyslinuxDir, err)
 			} else {
 				cfg := string(oldSyslinux)
-				//DEFAULT RancherOS-current
+				//DEFAULT BurmillaOS-current
 				//
-				//LABEL RancherOS-current
+				//LABEL BurmillaOS-current
 				//    LINUX ../vmlinuz-v0.7.1-rancheros
 				//    APPEND rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait console=tty0 rancher.password=rancher
 				//    INITRD ../initrd-v0.7.1-rancheros

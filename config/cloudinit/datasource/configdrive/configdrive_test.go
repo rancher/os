@@ -18,8 +18,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/config/cloudinit/datasource/test"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/datasource/test"
 )
 
 func TestFetchMetadata(t *testing.T) {

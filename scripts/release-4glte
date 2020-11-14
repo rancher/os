@@ -8,20 +8,7 @@ touch .make-4glte
 source ./scripts/version
 ./scripts/release-build
 
-touch dist/publish.sh dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
-chmod 755 dist/publish.sh dist/publish_gss_${VERSION}.sh dist/publish_gss_latest.sh
+touch dist/publish.sh
+chmod 755 dist/publish.sh
 
-for file in $(ls dist/artifacts/); do
-    case $file in
-        "initrd-"*)
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/latest/4glte/initrd" >> ./dist/publish_gss_latest.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/${VERSION}/4glte/initrd" >> ./dist/publish_gss_${VERSION}.sh
-            ;;
-        "rancheros.iso" | "rootfs.tar.gz")
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/latest/4glte/${file}" >> ./dist/publish_gss_latest.sh
-            echo "gsutil cp dist/artifacts/${file} gs://releases.rancher.com/os/${VERSION}/4glte/${file}" >> ./dist/publish_gss_${VERSION}.sh
-            ;;
-    esac
-done
-
-echo "github-release upload  --user rancher --repo os --tag ${VERSION} --file dist/artifacts/rancheros.iso --name rancheros-4glte.iso" > dist/publish.sh
+echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}-4glte.iso" > dist/publish.sh

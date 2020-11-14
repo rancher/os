@@ -7,8 +7,8 @@ if [ "1" == "2" ]; then
 else
   qemu-system-x86_64 \
       -nographic \
-      -kernel ./rancheros-kernel \
-      -initrd ./rancheros-initrd.img \
+      -kernel ./burmillaos-kernel \
+      -initrd ./burmillaos-initrd.img \
       -m 2048 \
       -device virtio-rng-pci \
       -smp 1 \

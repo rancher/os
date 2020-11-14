@@ -5,11 +5,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/pkg/init/bootstrap"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/config/cmdline"
+	"github.com/burmilla/os/pkg/init/bootstrap"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 )
 
 const (

@@ -20,9 +20,9 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/pkg"
+	"github.com/burmilla/os/pkg/log"
 )
 
 const (

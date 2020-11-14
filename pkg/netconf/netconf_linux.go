@@ -11,7 +11,7 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/pkg/log"
 
 	shlex "github.com/flynn/go-shlex"
 	glob "github.com/ryanuber/go-glob"

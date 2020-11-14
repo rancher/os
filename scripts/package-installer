@@ -29,7 +29,7 @@ if [ "$OS_AUTOFORMAT" = "true" ]; then
 else
     cat scripts/global.cfg | envsubst > ${DIST}/boot/global.cfg
 fi
-cp scripts/rancher.png ${DIST}/boot/
+cp scripts/burmilla.png ${DIST}/boot/
 
 
 mkdir -p ./scripts/installer/build/boot

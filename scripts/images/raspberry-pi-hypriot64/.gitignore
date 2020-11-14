@@ -1,2 +1,4 @@
 dist
 rootfs_arm64.tar.gz
+/Dockerfile.dapper*
+!/Dockerfile.dapper

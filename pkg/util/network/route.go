@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 )
 
 const (

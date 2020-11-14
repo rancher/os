@@ -7,7 +7,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/rancher/os/pkg/log"
+	"github.com/burmilla/os/pkg/log"
 
 	"github.com/codegangsta/cli"
 	"github.com/docker/libcompose/project"

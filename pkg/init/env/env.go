@@ -3,10 +3,10 @@ package env
 import (
 	"os"
 
-	"github.com/rancher/os/config"
-	"github.com/rancher/os/pkg/init/fsmount"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util/network"
+	"github.com/burmilla/os/config"
+	"github.com/burmilla/os/pkg/init/fsmount"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util/network"
 )
 
 func Init(c *config.CloudConfig) (*config.CloudConfig, error) {

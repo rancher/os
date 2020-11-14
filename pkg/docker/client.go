@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"github.com/rancher/os/config"
+	"github.com/burmilla/os/config"
 
 	dockerClient "github.com/docker/engine-api/client"
 	"golang.org/x/net/context"

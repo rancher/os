@@ -10,7 +10,7 @@ source ./scripts/version
 BASE=$(pwd)
 
 STATE=/tmp
-DISK=${STATE}/rancheros.img
+DISK=${STATE}/burmillaos.img
 CONFIG=${STATE}/cloud-config.yml
 export LOOPBACK=$(losetup -f)
 PARTITION=$(echo "${LOOPBACK}p1" | sed 's/dev/dev\/mapper/')
@@ -48,7 +48,7 @@ sudo kpartx -a ${DISK}
 docker run --privileged -it --rm \
     -v /dev/mapper:/dev/mapper \
     -v ${STATE}:/cluster \
-    rancher/os:${VERSION} \
+    burmilla/os:${VERSION} \
     --isoinstallerloaded=1 \
     --force \
     --no-reboot \

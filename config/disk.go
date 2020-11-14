@@ -9,11 +9,11 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/config/cloudinit/initialize"
-	"github.com/rancher/os/config/cmdline"
-	"github.com/rancher/os/pkg/log"
-	"github.com/rancher/os/pkg/util"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/initialize"
+	"github.com/burmilla/os/config/cmdline"
+	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/docker/engine-api/types"

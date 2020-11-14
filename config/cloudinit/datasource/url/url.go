@@ -17,9 +17,9 @@ package url
 import (
 	"fmt"
 
-	"github.com/rancher/os/config/cloudinit/datasource"
-	"github.com/rancher/os/config/cloudinit/pkg"
-	"github.com/rancher/os/pkg/util/network"
+	"github.com/burmilla/os/config/cloudinit/datasource"
+	"github.com/burmilla/os/config/cloudinit/pkg"
+	"github.com/burmilla/os/pkg/util/network"
 )
 
 type RemoteFile struct {

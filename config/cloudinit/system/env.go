@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/rancher/os/config/cloudinit/config"
+	"github.com/burmilla/os/config/cloudinit/config"
 )
 
 // serviceContents generates the contents for a drop-in unit given the config.

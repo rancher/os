@@ -1,4 +1,4 @@
-FROM rancher/os-installer
+FROM burmilla/os-installer
 
 # TODO: separate out the elements below - so we can mix and match updates
 RUN rm /dist/ \

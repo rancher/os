@@ -39,7 +39,7 @@ qemu-img create -f qcow2 build/hd.img 8G
 qemu-system-${QEMUARCH} -serial mon:stdio \
     -enable-kvm \
     -drive if=virtio,file=build/hd.img \
-    -boot d -cdrom ./dist/artifacts/rancheros.iso \
+    -boot d -cdrom ./dist/artifacts/burmillaos.iso \
     -m 2048 \
     -smp 1 \
     -nographic \
