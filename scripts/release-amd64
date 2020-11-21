@@ -6,14 +6,19 @@ cd $(dirname $0)/..
 source ./scripts/version
 ./scripts/release-build
 
-echo "github-release release --user burmilla --repo os --tag ${VERSION} --pre-release --draft" > dist/publish.sh
+touch dist/publish.sh
 chmod 755 dist/publish.sh
 
-echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}.iso" >> dist/publish.sh
+if [ "$OS_FIRMWARE" = "false" ]; then
+    echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}-nofirmware.iso" >> dist/publish.sh
+    exit 0
+else
+    echo "github-release release --user burmilla --repo os --tag ${VERSION} --pre-release --draft" > dist/publish.sh
 
-echo >> dist/publish.sh
+    echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}.iso" >> dist/publish.sh
 
-cat dist/images | sed 's/^/docker push /' >> dist/publish.sh
+    cat dist/images | sed 's/^/docker push /' >> dist/publish.sh
+fi
 
 echo "--- Run dist/publish.sh"
 cat dist/publish.sh

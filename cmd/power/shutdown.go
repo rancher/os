@@ -29,9 +29,9 @@ func Shutdown() {
 	app := cli.NewApp()
 
 	app.Name = filepath.Base(os.Args[0])
-	app.Usage = fmt.Sprintf("%s RancherOS\nbuilt: %s", app.Name, config.BuildDate)
+	app.Usage = fmt.Sprintf("%s BurmillaOS\nbuilt: %s", app.Name, config.BuildDate)
 	app.Version = config.Version
-	app.Author = "Rancher Labs, Inc."
+	app.Author = "Project Burmilla\n\tRancher Labs, Inc."
 	app.EnableBashCompletion = true
 	app.Action = shutdown
 	app.Flags = []cli.Flag{

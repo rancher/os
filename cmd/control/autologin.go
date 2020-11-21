@@ -21,8 +21,8 @@ func AutologinMain() {
 	app.Name = os.Args[0]
 	app.Usage = "autologin console"
 	app.Version = config.Version
-	app.Author = "Rancher Labs, Inc."
-	app.Email = "sven@rancher.com"
+	app.Author = "Project Burmilla\n\tRancher Labs, Inc."
+	app.Email = "burmilla@localhost.local"
 	app.EnableBashCompletion = true
 	app.Action = autologinAction
 	app.HideHelp = true

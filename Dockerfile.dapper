@@ -60,7 +60,7 @@ ARG DISTRIB_ID=BurmillaOS
 
 ARG SELINUX_POLICY_URL=https://github.com/burmilla/refpolicy/releases/download/v0.0.3/policy.29
 
-ARG KERNEL_VERSION=4.14.206-burmilla
+ARG KERNEL_VERSION=4.14.207-burmilla
 ARG KERNEL_URL_amd64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-x86.tar.gz
 ARG KERNEL_URL_arm64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-arm64.tar.gz
 
@@ -72,7 +72,7 @@ ARG OS_RELEASES_YML=https://raw.githubusercontent.com/burmilla/releases/kernel-4
 ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
 
-ARG OS_CONSOLE=debian
+ARG OS_CONSOLE=default
 ARG OS_AUTOFORMAT=false
 ARG OS_FIRMWARE=true
 

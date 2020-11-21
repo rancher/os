@@ -36,12 +36,12 @@ rm -f ${INITRD_DIR}/usr/bin/system-docker-proxy
 cat <<HERE > ${INITRD_DIR}/usr/share/ros/os-release
 NAME="BurmillaOS"
 VERSION=${VERSION}
-ID=burmillaos
+ID=rancheros
 ID_LIKE=
 VERSION_ID=${VERSION}
 PRETTY_NAME="BurmillaOS ${VERSION}"
-HOME_URL="https://burmilla.github.io"
-SUPPORT_URL="https://github.com/burmilla/os/issues"
+HOME_URL="https://burmillaos.org"
+SUPPORT_URL="https://github.com/burmilla/os"
 BUG_REPORT_URL="https://github.com/burmilla/os/issues"
 BUILD_ID=
 HERE

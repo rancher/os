@@ -75,6 +75,15 @@ func consoleInitFunc() error {
 		defer f.Close()
 	}
 
+	// last command need this file
+	if _, err := os.Stat("/var/log/wtmp"); os.IsNotExist(err) {
+		f, err := os.OpenFile("/var/log/wtmp", os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			log.Error(err)
+		}
+		defer f.Close()
+	}
+
 	// some software need this dir, like open-iscsi
 	if _, err := os.Stat(runLockDir); os.IsNotExist(err) {
 		if err = os.Mkdir(runLockDir, 0755); err != nil {
@@ -145,17 +154,20 @@ func consoleInitFunc() error {
 		})
 	}
 
-	if cfg.Rancher.Console == "default" {
-		// add iptables symlinks for default console
-		baseSymlink = append(baseSymlink, []symlink{
-			{"/usr/sbin/iptables", "/usr/sbin/iptables-save"},
-			{"/usr/sbin/iptables", "/usr/sbin/iptables-restore"},
-			{"/usr/sbin/iptables", "/usr/sbin/ip6tables"},
-			{"/usr/sbin/iptables", "/usr/sbin/ip6tables-save"},
-			{"/usr/sbin/iptables", "/usr/sbin/ip6tables-restore"},
-			{"/usr/sbin/iptables", "/usr/bin/iptables-xml"},
-		}...)
-	}
+	// Disbled because Debian is now default console
+	/*
+		if cfg.Rancher.Console == "default" {
+			// add iptables symlinks for default console
+			baseSymlink = append(baseSymlink, []symlink{
+				{"/usr/sbin/iptables", "/usr/sbin/iptables-save"},
+				{"/usr/sbin/iptables", "/usr/sbin/iptables-restore"},
+				{"/usr/sbin/iptables", "/usr/sbin/ip6tables"},
+				{"/usr/sbin/iptables", "/usr/sbin/ip6tables-save"},
+				{"/usr/sbin/iptables", "/usr/sbin/ip6tables-restore"},
+				{"/usr/sbin/iptables", "/usr/bin/iptables-xml"},
+			}...)
+		}
+	*/
 
 	for _, link := range baseSymlink {
 		syscall.Unlink(link.newname)
@@ -211,7 +223,7 @@ func consoleInitFunc() error {
 		}
 	}
 
-	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet addr" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $2 == "Link" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
+	cmd = exec.Command("bash", "-c", `echo $(/sbin/ifconfig | grep -B1 "inet" |awk '{ if ( $1 == "inet" ) { print $2 } else if ( $3 == "mtu" ) { printf "%s:" ,$1 } }' |awk -F: '{ print $1 ": " $3}') >> /etc/issue`)
 	if err := cmd.Run(); err != nil {
 		log.Error(err)
 	}

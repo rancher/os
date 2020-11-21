@@ -29,7 +29,6 @@ jobs:
           exit 1
         fi
         export ARCH=amd64
-        export APPEND_SYSTEM_IMAGES="burmilla/os-debianconsole:$VERSION"
         make ${{ github.event.inputs.platform }}
 
     - name: Login to DockerHub

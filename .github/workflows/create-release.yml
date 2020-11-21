@@ -3,9 +3,9 @@ name: release
 on:
   workflow_dispatch:
     inputs:
-      arch:
-        description: 'Architecture'
-        default: 'amd64'
+      firmware:
+        description: 'Include firmwares'
+        default: 'true'
         required: true
 
 jobs:
@@ -28,13 +28,9 @@ jobs:
           echo "Build is not started from tag. Will exit..."
           exit 1
         fi
-        export ARCH=${{ github.event.inputs.arch }}
-        export APPEND_SYSTEM_IMAGES="burmilla/os-debianconsole:$VERSION"
+        export OS_FIRMWARE=${{ github.event.inputs.firmware }}
+        export ARCH=amd64
         make release
-
-        if [ "$ARCH" == "arm64" ]; then
-          make rpi64
-        fi
 
     - name: Login to DockerHub
       uses: docker/login-action@v1

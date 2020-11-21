@@ -230,9 +230,9 @@ rancher:
       command: ros console-init
       labels:
         io.rancher.os.scope: system
-        io.rancher.os.after: cloud-init-execute
-        io.docker.compose.rebuild: always
-        io.rancher.os.console: debian
+        io.rancher.os.after: network
+        io.docker.compose.rebuild: "false"
+        io.rancher.os.console: default
       environment:
       - HTTP_PROXY
       - HTTPS_PROXY
@@ -246,7 +246,8 @@ rancher:
       volumes_from:
       - all-volumes
       volumes:
-      - /usr/bin/iptables:/sbin/iptables:ro
+      - /media:/media:shared
+      - /mnt:/mnt:shared
     logrotate:
       image: {{.OS_REPO}}/os-logrotate:{{.VERSION}}{{.SUFFIX}}
       command: /usr/sbin/logrotate -v /etc/logrotate.conf

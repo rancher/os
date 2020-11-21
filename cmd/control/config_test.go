@@ -15,7 +15,7 @@ func TestGenTpl(t *testing.T) {
   services:
     {{if eq "amd64" .ARCH -}}
     acpid:
-      image: rancher/os-acpid:0.x.x
+      image: burmilla/os-acpid:0.x.x
       labels:
         io.rancher.os.scope: system
       net: host
@@ -34,7 +34,7 @@ func TestGenTpl(t *testing.T) {
 		{"amd64", `
   services:
     acpid:
-      image: rancher/os-acpid:0.x.x
+      image: burmilla/os-acpid:0.x.x
       labels:
         io.rancher.os.scope: system
       net: host

@@ -199,6 +199,6 @@ func CurrentConsole() (console string) {
 		console = "default"
 		return
 	}
-	console = strings.TrimPrefix(strings.TrimSuffix(image.Name(), "console"), "rancher/os-")
+	console = strings.TrimPrefix(strings.TrimSuffix(image.Name(), "console"), "burmilla/os-")
 	return
 }

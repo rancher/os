@@ -23,7 +23,7 @@ func Main() {
 	app.Name = os.Args[0]
 	app.Usage = fmt.Sprintf("Control and configure BurmillaOS\nbuilt: %s", config.BuildDate)
 	app.Version = config.Version
-	app.Author = "Rancher Labs, Inc."
+	app.Author = "Project Burmilla\n\tRancher Labs, Inc."
 	app.EnableBashCompletion = true
 	app.Before = func(c *cli.Context) error {
 		if os.Geteuid() != 0 {

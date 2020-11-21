@@ -31,7 +31,7 @@ var installCommand = cli.Command{
 	Action:   installAction,
 	Flags: []cli.Flag{
 		cli.StringFlag{
-			// TODO: need to validate ? -i rancher/os:v0.3.1 just sat there.
+			// TODO: need to validate ? -i burmilla/os:v0.3.1 just sat there.
 			Name: "image, i",
 			Usage: `install from a certain image (e.g., 'rancher/os:v0.7.0')
 							use 'ros os list' to see what versions are available.`,
@@ -417,7 +417,7 @@ func layDownOS(image, installType, cloudConfig, device, partition, statedir, kap
 	// ENV == installType
 	//[[ "$ARCH" == "arm" && "$ENV" != "upgrade" ]] && ENV=arm
 
-	// image == rancher/os:v0.7.0_arm
+	// image == burmilla/os:v0.7.0_arm
 	// TODO: remove the _arm suffix (but watch out, its not always there..)
 	VERSION := image[strings.Index(image, ":")+1:]
 

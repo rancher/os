@@ -80,8 +80,8 @@ var (
 		"EXTRA_CMDLINE",
 	}
 	SupportedDinds = []string{
-		"rancher/os-dind:17.12.1",
-		"rancher/os-dind:18.03.1",
+		"burmilla/os-dind:17.12.1",
+		"burmilla/os-dind:18.03.1",
 	}
 )
 
