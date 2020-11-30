@@ -27,6 +27,7 @@ const (
 	sourceDirectory       = "/engine"
 	destDirectory         = "/var/lib/rancher/engine"
 	dockerCompletionFName = "completion"
+	dockerComposeFName    = "docker-compose"
 )
 
 var (
@@ -97,6 +98,10 @@ func copyBinaries(source, dest string) error {
 		}
 		if file.Name() == dockerCompletionFName {
 			if err := os.Chmod(destFile, 0644); err != nil {
+				return err
+			}
+		} else if file.Name() == dockerComposeFName {
+			if err := os.Chmod(destFile, 0755); err != nil {
 				return err
 			}
 		} else {

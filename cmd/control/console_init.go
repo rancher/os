@@ -169,6 +169,24 @@ func consoleInitFunc() error {
 		}
 	*/
 
+	// create placeholder for docker-compose binary
+	const ComposePlaceholder = `
+#!/bin/bash
+echo 'INFO: System service "docker-compose" is not yet enabled'
+sudo ros service enable docker-compose
+sudo ros service up docker-compose
+`
+	if _, err := os.Stat("/var/lib/rancher/compose"); os.IsNotExist(err) {
+		if err := os.MkdirAll("/var/lib/rancher/compose", 0555); err != nil {
+			log.Error(err)
+		}
+	}
+	if _, err := os.Stat("/var/lib/rancher/compose/docker-compose"); os.IsNotExist(err) {
+		if err := ioutil.WriteFile("/var/lib/rancher/compose/docker-compose", []byte(ComposePlaceholder), 0755); err != nil {
+			log.Error(err)
+		}
+	}
+
 	for _, link := range baseSymlink {
 		syscall.Unlink(link.newname)
 		if err := os.Symlink(link.oldname, link.newname); err != nil {
