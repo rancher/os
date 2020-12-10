@@ -154,21 +154,6 @@ func consoleInitFunc() error {
 		})
 	}
 
-	// Disbled because Debian is now default console
-	/*
-		if cfg.Rancher.Console == "default" {
-			// add iptables symlinks for default console
-			baseSymlink = append(baseSymlink, []symlink{
-				{"/usr/sbin/iptables", "/usr/sbin/iptables-save"},
-				{"/usr/sbin/iptables", "/usr/sbin/iptables-restore"},
-				{"/usr/sbin/iptables", "/usr/sbin/ip6tables"},
-				{"/usr/sbin/iptables", "/usr/sbin/ip6tables-save"},
-				{"/usr/sbin/iptables", "/usr/sbin/ip6tables-restore"},
-				{"/usr/sbin/iptables", "/usr/bin/iptables-xml"},
-			}...)
-		}
-	*/
-
 	// create placeholder for docker-compose binary
 	const ComposePlaceholder = `
 #!/bin/bash

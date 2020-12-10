@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/burmilla/os/config"
@@ -40,31 +39,16 @@ func autologinAction(c *cli.Context) error {
 
 	usertty := ""
 	user := "root"
-	tty := ""
 	if c.NArg() > 0 {
 		usertty = c.Args().Get(0)
 		s := strings.SplitN(usertty, ":", 2)
 		user = s[0]
-		if len(s) > 1 {
-			tty = s[1]
-		}
 	}
 
 	mode := filepath.Base(os.Args[0])
 	console := CurrentConsole()
 
 	cfg := config.LoadConfig()
-	// replace \n and \l
-	banner := config.Banner
-	banner = strings.Replace(banner, "\\v", config.Version, -1)
-	banner = strings.Replace(banner, "\\s", "BurmillaOS "+runtime.GOARCH, -1)
-	banner = strings.Replace(banner, "\\r", config.GetKernelVersion(), -1)
-	banner = strings.Replace(banner, "\\n", cfg.Hostname, -1)
-	banner = strings.Replace(banner, "\\l", tty, -1)
-	banner = strings.Replace(banner, "\\\\", "\\", -1)
-	banner = banner + "\n"
-	banner = banner + "Autologin " + console + "\n"
-	fmt.Printf(banner)
 
 	loginBin := ""
 	args := []string{}

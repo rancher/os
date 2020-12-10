@@ -67,7 +67,7 @@ ARG KERNEL_URL_arm64=https://github.com/burmilla/os-kernel/releases/download/v${
 ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-1.10.3
 ARG BUILD_DOCKER_URL_arm64=https://github.com/burmilla/docker/releases/download/v1.10.3-ros1/docker-1.10.3_arm64
 
-ARG OS_RELEASES_YML=https://raw.githubusercontent.com/burmilla/releases/kernel-4.14.x
+ARG OS_RELEASES_YML=https://raw.githubusercontent.com/burmilla/releases/v1.9.x
 
 ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
