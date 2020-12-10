@@ -175,8 +175,8 @@ func editSyslinux(c *cli.Context) error {
 	cmd := exec.Command("system-docker", "run", "--rm", "-it",
 		"-v", "/:/host",
 		"-w", "/host",
-		"--entrypoint=vi",
-		"rancher/os-console:"+config.Version,
+		"--entrypoint=nano",
+		"burmilla/os-console:"+config.Version,
 		"boot/global.cfg")
 	cmd.Stdout, cmd.Stderr, cmd.Stdin = os.Stdout, os.Stderr, os.Stdin
 	return cmd.Run()
