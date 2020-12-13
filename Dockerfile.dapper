@@ -60,14 +60,16 @@ ARG DISTRIB_ID=BurmillaOS
 
 ARG SELINUX_POLICY_URL=https://github.com/burmilla/refpolicy/releases/download/v0.0.3/policy.29
 
-ARG KERNEL_VERSION=4.14.211-burmilla
-ARG KERNEL_URL_amd64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-x86.tar.gz
-ARG KERNEL_URL_arm64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-arm64.tar.gz
+ARG KERNEL_VERSION=5.4.0-54.60-rancher1
+ARG KERNEL_URL_amd64=https://github.com/rancher/k3os-kernel/releases/download/${KERNEL_VERSION}/kernel-generic_amd64.tar.xz
+ARG KERNEL_URL_arm64=https://github.com/rancher/k3os-kernel/releases/download/${KERNEL_VERSION}/kernel-generic_arm64.tar.xz
+ARG KERNEL_URL_mips64el=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-mips64el.tar.xz
 
 ARG BUILD_DOCKER_URL_amd64=https://get.docker.com/builds/Linux/x86_64/docker-1.10.3
 ARG BUILD_DOCKER_URL_arm64=https://github.com/burmilla/docker/releases/download/v1.10.3-ros1/docker-1.10.3_arm64
+ARG BUILD_DOCKER_URL_mips64el=https://github.com/burmilla/docker/releases/download/v1.10.3-ros1/docker-1.10.3_mips64el
 
-ARG OS_RELEASES_YML=https://raw.githubusercontent.com/burmilla/releases/v1.9.x
+ARG OS_RELEASES_YML=https://raw.githubusercontent.com/burmilla/releases/v2.0.x
 
 ARG OS_SERVICES_REPO=https://raw.githubusercontent.com/${OS_REPO}/os-services
 ARG IMAGE_NAME=${OS_REPO}/os
@@ -76,17 +78,20 @@ ARG OS_CONSOLE=default
 ARG OS_AUTOFORMAT=false
 ARG OS_FIRMWARE=true
 
-ARG OS_BASE_URL_amd64=https://github.com/burmilla/os-base/releases/download/v2018.02.11-1/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/burmilla/os-base/releases/download/v2018.02.11-1/os-base_arm64.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/burmilla/os-base/releases/download/v2020.02.8-1/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/burmilla/os-base/releases/download/v2020.02.8-1/os-base_arm64.tar.xz
+ARG OS_BASE_URL_mips64el=https://github.com/burmilla/os-base/releases/download/v2020.02.8-1/os-base_mips64el.tar.xz
 
-ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2018.02.11-1/os-initrd-base-amd64.tar.gz
-ARG OS_INITRD_BASE_URL_arm64=https://github.com/burmilla/os-initrd-base/releases/download/v2018.02.11-1/os-initrd-base-arm64.tar.gz
+ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2020.02.8-1/os-initrd-base-amd64.tar.gz
+ARG OS_INITRD_BASE_URL_arm64=https://github.com/burmilla/os-initrd-base/releases/download/v2020.02.8-1/os-initrd-base-arm64.tar.gz
+ARG OS_INITRD_BASE_URL_mips64el=https://github.com/burmilla/os-initrd-base/releases/download/v2020.02.8-1/os-initrd-base-mips64el.tar.gz
 
 ARG SYSTEM_DOCKER_VERSION=17.06-ros6
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
+ARG SYSTEM_DOCKER_URL_mips64el=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-mips64el-${SYSTEM_DOCKER_VERSION}.tgz
 
-ARG USER_DOCKER_VERSION=19.03.14
+ARG USER_DOCKER_VERSION=20.10.2
 ARG USER_DOCKER_ENGINE_VERSION=docker-${USER_DOCKER_VERSION}
 
 ARG AZURE_SERVICE=false
@@ -142,7 +147,7 @@ RUN mkdir -p ${DOWNLOADS}
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN echo "... Downloading  ${!KERNEL_URL}"; \
     if [ -n "${!KERNEL_URL}" ]; then \
-        curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.gz \
+        curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.xz \
     ;fi
 
 # Download SELinux Policy

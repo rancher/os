@@ -25,7 +25,6 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     passwd -l root && \
     addgroup -g 1100 rancher && \
     addgroup -g 1101 docker && \
-    addgroup -g 1103 sudo && \
     adduser -u 1100 -G rancher -D -h /home/rancher -s /bin/bash rancher && \
     adduser -u 1101 -G docker -D -h /home/docker -s /bin/bash docker && \
     adduser rancher docker && \

@@ -2,14 +2,14 @@
 set -e
 
 # Override using a local kernel build
-if [ -e ${DAPPER_SOURCE}/assets/kernel.tar.gz ]; then
-    echo "copying ${DAPPER_SOURCE}/assets/kernel.tar.gz ${DOWNLOADS}/kernel.tar.gz"
-    cp ${DAPPER_SOURCE}/assets/kernel.tar.gz ${DOWNLOADS}/kernel.tar.gz
+if [ -e ${DAPPER_SOURCE}/assets/kernel.tar.xz ]; then
+    echo "copying ${DAPPER_SOURCE}/assets/kernel.tar.xz ${DOWNLOADS}/kernel.tar.xz"
+    cp ${DAPPER_SOURCE}/assets/kernel.tar.xz ${DOWNLOADS}/kernel.tar.xz
 fi
 
-if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
+if [ -e ${DOWNLOADS}/kernel.tar.xz ]; then
     mkdir -p ${BUILD}/kernel
-    tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
+    tar Jxf ${DOWNLOADS}/kernel.tar.xz -C ${BUILD}/kernel
 
     for i in vmlinuz vmlinux; do
         if [ -e ${BUILD}/kernel/boot/${i}-* ]; then
@@ -24,7 +24,7 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
         fi
     done
 
-    # TODO: move these into a separate tar.gz and add to the syslinux initrd line
+    # TODO: move these into a separate tar.xz and add to the syslinux initrd line
     if [ -d ${BUILD}/kernel/lib ]; then
         rm -rf ${INITRD_DIR}/usr/lib
         cp -rf ${BUILD}/kernel/lib ${INITRD_DIR}/usr/
@@ -51,7 +51,7 @@ if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     fi
 else
     if [ "$ARCH" == "amd64" ]; then
-        echo "no ${DOWNLOADS}/kernel.tar.gz found"
+        echo "no ${DOWNLOADS}/kernel.tar.xz found"
         exit 1
     fi
 fi

@@ -10,7 +10,7 @@ touch dist/publish.sh
 chmod 755 dist/publish.sh
 
 if [ "$OS_FIRMWARE" = "false" ]; then
-    echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}-nofirmware.iso" >> dist/publish.sh
+    echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}-vm.iso" >> dist/publish.sh
     exit 0
 else
     echo "github-release release --user burmilla --repo os --tag ${VERSION} --pre-release --draft" > dist/publish.sh
