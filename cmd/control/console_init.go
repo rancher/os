@@ -54,6 +54,35 @@ func createHomeDir(homedir string, uid, gid int) {
 	}
 }
 
+func enableBashRC(homedir string, uid, gid int) {
+	if _, err := os.Stat(homedir + "/.bash_logout"); os.IsNotExist(err) {
+		if err := util.FileCopy("/etc/skel/.bash_logout", homedir+"/.bash_logout"); err != nil {
+			log.Error(err)
+		}
+		if err := os.Chown(homedir+"/.bash_logout", uid, gid); err != nil {
+			log.Error(err)
+		}
+	}
+
+	if _, err := os.Stat(homedir + "/.bashrc"); os.IsNotExist(err) {
+		if err := util.FileCopy("/etc/skel/.bashrc", homedir+"/.bashrc"); err != nil {
+			log.Error(err)
+		}
+		if err := os.Chown(homedir+"/.bashrc", uid, gid); err != nil {
+			log.Error(err)
+		}
+	}
+
+	if _, err := os.Stat(homedir + "/.profile"); os.IsNotExist(err) {
+		if err := util.FileCopy("/etc/skel/.profile", homedir+"/.profile"); err != nil {
+			log.Error(err)
+		}
+		if err := os.Chown(homedir+"/.profile", uid, gid); err != nil {
+			log.Error(err)
+		}
+	}
+}
+
 func consoleInitFunc() error {
 	cfg := config.LoadConfig()
 
@@ -247,6 +276,11 @@ sudo ros service up docker-compose
 	if err := util.RunScript("/etc/rc.local"); err != nil {
 		log.Error(err)
 	}
+
+	// Enable Bash colors
+	enableBashRC("/root", 0, 0)
+	enableBashRC(rancherHome, 1100, 1100)
+	enableBashRC(dockerHome, 1101, 1101)
 
 	os.Setenv("TERM", "linux")
 
