@@ -28,4 +28,6 @@ RUN apt-get update \
     && rm -f /etc/ssh/sshd_config.append.tpl /etc/ssh/sshd_config \
     && echo > /etc/motd
 
+COPY build/iscsid.conf /etc/iscsi/
+
 ENTRYPOINT ["/usr/bin/ros", "entrypoint"]
