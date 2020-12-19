@@ -192,6 +192,7 @@ func Convert(c *config.ServiceConfig, ctx project.Context) (*container.Config, *
 		},
 		NetworkMode:    container.NetworkMode(c.NetworkMode),
 		ReadonlyRootfs: c.ReadOnly,
+		OomScoreAdj:    c.OomScoreAdj,
 		PidMode:        container.PidMode(c.Pid),
 		UTSMode:        container.UTSMode(c.Uts),
 		IpcMode:        container.IpcMode(c.Ipc),

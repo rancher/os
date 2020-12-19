@@ -357,6 +357,7 @@ var schemaV2 = `{
             }
           ]
         },
+        "oom_score_adj": {"type": "integer", "minimum": -1000, "maximum": 1000},
         "pid": {"type": ["string", "null"]},
 
         "ports": {
