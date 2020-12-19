@@ -251,6 +251,7 @@ rancher:
       pid: host
       ipc: host
       privileged: true
+      oom_score_adj: -100
       restart: always
       volumes_from:
       - all-volumes
