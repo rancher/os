@@ -98,6 +98,7 @@ rancher:
   sysctl:
     fs.file-max: 1000000000
     fs.inotify.max_user_watches: 1048576
+    net.core.somaxconn: 4096
     vm.dirty_background_ratio: 5
     vm.dirty_ratio: 15
     vm.dirty_expire_centisecs: 500
