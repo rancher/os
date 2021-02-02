@@ -91,7 +91,7 @@ ARG SYSTEM_DOCKER_URL_amd64=https://github.com/burmilla/os-system-docker/release
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_mips64el=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-mips64el-${SYSTEM_DOCKER_VERSION}.tgz
 
-ARG USER_DOCKER_VERSION=20.10.2
+ARG USER_DOCKER_VERSION=20.10.3
 ARG USER_DOCKER_ENGINE_VERSION=docker-${USER_DOCKER_VERSION}
 
 ARG AZURE_SERVICE=false
@@ -165,7 +165,7 @@ RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
     chmod +x /usr/bin/docker
 
 # Install dapper
-RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
+RUN curl -sL https://releases.rancher.com/dapper/v0.5.4/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
 
 RUN cd ${DOWNLOADS} && \
