@@ -85,7 +85,7 @@ ARG SYSTEM_DOCKER_VERSION=17.06-ros6
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/rancher/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
-ARG USER_DOCKER_VERSION=19.03.14
+ARG USER_DOCKER_VERSION=19.03.15
 ARG USER_DOCKER_ENGINE_VERSION=docker-${USER_DOCKER_VERSION}
 
 ARG AZURE_SERVICE=false
@@ -158,7 +158,9 @@ RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \
     chmod +x /usr/bin/docker
 
 # Install dapper
-RUN curl -sL https://releases.rancher.com/dapper/latest/dapper-`uname -s`-`uname -m | sed 's/arm.*/arm/'` > /usr/bin/dapper && \
+# sidestep https://github.com/rancher/dapper/issues/92 with v0.5.4
+ARG DAPPER_VERSION="v0.5.4"
+RUN curl -sL https://github.com/rancher/dapper/releases/download/${DAPPER_VERSION}/dapper-$(uname -s)-$(uname -m) > /usr/bin/dapper && \
     chmod +x /usr/bin/dapper
 
 RUN cd ${DOWNLOADS} && \
