@@ -70,13 +70,13 @@ func TestFetchMetadata(t *testing.T) {
 				RootDisk:      "/dev/xvda",
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
-					/*			"eth0": netconf.InterfaceConfig{
-									Addresses: []string{
-										"1.2.3.4",
-										"5.6.7.8",
+						/*			"eth0": netconf.InterfaceConfig{
+										Addresses: []string{
+											"1.2.3.4",
+											"5.6.7.8",
+										},
 									},
-								},
-					*/},
+						*/},
 				},
 			},
 		},
@@ -100,13 +100,13 @@ func TestFetchMetadata(t *testing.T) {
 				RootDisk:      "/dev/nvme0n1",
 				NetworkConfig: netconf.NetworkConfig{
 					Interfaces: map[string]netconf.InterfaceConfig{
-					/*						"eth0": netconf.InterfaceConfig{
-												Addresses: []string{
-													"1.2.3.4",
-													"5.6.7.8",
+						/*						"eth0": netconf.InterfaceConfig{
+													Addresses: []string{
+														"1.2.3.4",
+														"5.6.7.8",
+													},
 												},
-											},
-					*/},
+						*/},
 				},
 			},
 		},

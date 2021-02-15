@@ -111,7 +111,7 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     DISTRIB_ID=${DISTRIB_ID} \
     DOWNLOADS=/usr/src/downloads \
     GOPATH=/go \
-    GO_VERSION=1.8.5 \
+    GO_VERSION=1.15.8 \
     GOARCH=$ARCH \
     HOSTNAME_DEFAULT=${HOSTNAME_DEFAULT} \
     IMAGE_NAME=${IMAGE_NAME} \
@@ -142,6 +142,7 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     PROXMOXVE_SERVICE=${PROXMOXVE_SERVICE} \
     SKIP_BUILD=${SKIP_BUILD}
 ENV PATH=${GOPATH}/bin:/usr/local/go/bin:$PATH
+ENV GO111MODULE=off
 
 RUN mkdir -p ${DOWNLOADS}
 
@@ -156,11 +157,11 @@ RUN echo "... Downloading  ${!KERNEL_URL}"; \
 RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
 
 # Install Go
-RUN wget -O - https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${GOARCH}.tar.gz | tar -xzf - -C /usr/local && \
+RUN curl -L https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${GOARCH}.tar.gz | tar -xzf - -C /usr/local && \
     go get github.com/burmilla/trash
 
-RUN mkdir -p ${GOPATH}/src/golang.org/x && cd ${GOPATH}/src/golang.org/x/ && git clone https://github.com/golang/tools && \
-    cd tools && git checkout 6adeb8aab2ded9eb693b831d5fd090c10a6ebdfa -b temp && go get golang.org/x/lint/golint
+# Install golint
+RUN go get golang.org/x/lint/golint
 
 # Install Host Docker
 RUN curl -fL ${!BUILD_DOCKER_URL} > /usr/bin/docker && \

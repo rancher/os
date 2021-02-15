@@ -20,10 +20,10 @@ import (
 
 func TestFormatConfigs(t *testing.T) {
 	for in, n := range map[string]int{
-		"":                                                    0,
-		"line1\\\nis long":                                    1,
-		"#comment":                                            0,
-		"#comment\\\ncomment":                                 0,
+		"":                    0,
+		"line1\\\nis long":    1,
+		"#comment":            0,
+		"#comment\\\ncomment": 0,
 		"  #comment \\\n comment\nline 1\nline 2\\\n is long": 2,
 	} {
 		lines := formatConfig(in)
