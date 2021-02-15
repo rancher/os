@@ -32,8 +32,8 @@ func Bootstrap(cfg *config.CloudConfig) error {
 
 	_, err = config.ChainCfgFuncs(cfg,
 		[]config.CfgFuncData{
-			{"bootstrap loadImages", sysinit.LoadBootstrapImages},
-			{"bootstrap Services", bootstrapServices},
+			{Name: "bootstrap loadImages", Func: sysinit.LoadBootstrapImages},
+			{Name: "bootstrap Services", Func: bootstrapServices},
 		})
 	return err
 }

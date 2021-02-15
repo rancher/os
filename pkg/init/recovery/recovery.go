@@ -89,8 +89,8 @@ func Recovery(initFailure error) {
 
 	_, err = config.ChainCfgFuncs(&recoveryConfig,
 		[]config.CfgFuncData{
-			{"loadSystemImages", sysinit.LoadBootstrapImages},
-			{"recovery console", recoveryServices},
+			{Name: "loadSystemImages", Func: sysinit.LoadBootstrapImages},
+			{Name: "recovery console", Func: recoveryServices},
 		})
 	if err != nil {
 		log.Fatal(err)

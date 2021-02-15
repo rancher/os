@@ -92,7 +92,7 @@ func getPseudoRandomGenerator(haAddr []byte) (*rand.Source, error) {
 func getLinkAddrs(link netlink.Link) ([]netlink.Addr, error) {
 	addrs, err := netlink.AddrList(link, nl.FAMILY_ALL)
 	if err != nil {
-		log.Error("Error fetching existing ip on interface, %s", err)
+		log.Errorf("Error fetching existing ip on interface, %s", err)
 		err = nil // atm, we ignore this, as the link may not have one?
 	}
 	return addrs, err

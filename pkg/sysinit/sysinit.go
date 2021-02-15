@@ -101,8 +101,8 @@ func SysInit() error {
 
 	_, err := config.ChainCfgFuncs(cfg,
 		config.CfgFuncs{
-			{"loadSystemImages", LoadSystemImages},
-			{"start project", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			{Name: "loadSystemImages", Func: LoadSystemImages},
+			{Name: "start project", Func: func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 				p, err := compose.GetProject(cfg, false, true)
 				if err != nil {
 					return cfg, err
@@ -114,11 +114,11 @@ func SysInit() error {
 					Log: cfg.Rancher.Log,
 				})
 			}},
-			{"sync", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			{Name: "sync", Func: func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 				syscall.Sync()
 				return cfg, nil
 			}},
-			{"banner", func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
+			{Name: "banner", Func: func(cfg *config.CloudConfig) (*config.CloudConfig, error) {
 				log.Infof("BurmillaOS %s started", config.Version)
 				return cfg, nil
 			}}})

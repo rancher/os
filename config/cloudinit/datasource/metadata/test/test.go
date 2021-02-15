@@ -32,7 +32,7 @@ func (t *HTTPClient) GetRetry(url string) ([]byte, error) {
 	if val, ok := t.Resources[url]; ok {
 		return []byte(val), nil
 	}
-	return nil, pkg.ErrNotFound{fmt.Errorf("not found: %q", url)}
+	return nil, pkg.ErrNotFound{Err: fmt.Errorf("not found: %q", url)}
 }
 
 func (t *HTTPClient) Get(url string) ([]byte, error) {

@@ -113,8 +113,8 @@ func runCloudInitServices(cfg *config.CloudConfig) error {
 
 	_, err = config.ChainCfgFuncs(cfg,
 		[]config.CfgFuncData{
-			{"cloudinit loadImages", sysinit.LoadBootstrapImages},
-			{"cloudinit Services", runCloudInitServiceSet},
+			{Name: "cloudinit loadImages", Func: sysinit.LoadBootstrapImages},
+			{Name: "cloudinit Services", Func: runCloudInitServiceSet},
 		})
 	return err
 }
