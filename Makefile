@@ -10,6 +10,12 @@ TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|release*|build-moby|run
 $(TARGETS): .dapper
 	./.dapper $@
 
+pr-validation: .dapper
+	ARCH="amd64" \
+	KERNEL_URL_amd64="skip" \
+	SKIP_BUILD="true" \
+	./.dapper ci
+
 trash: .dapper
 	./.dapper -m bind trash
 

@@ -3,8 +3,10 @@ set -ex
 
 cd $(dirname $0)/..
 
-echo BUILD
-./scripts/build
+if [ "$SKIP_BUILD" == "false" ]; then
+    echo BUILD
+    ./scripts/build
+fi
 echo TEST
 ./scripts/test
 echo VALIDATE

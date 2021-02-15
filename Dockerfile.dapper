@@ -96,6 +96,7 @@ ARG USER_DOCKER_ENGINE_VERSION=docker-${USER_DOCKER_VERSION}
 
 ARG AZURE_SERVICE=false
 ARG PROXMOXVE_SERVICE=false
+ARG SKIP_BUILD=false
 ######################################################
 
 # Set up environment and export all ARGS as ENV
@@ -138,7 +139,8 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     USER_DOCKER_VERSION=${USER_DOCKER_VERSION} \
     USER_DOCKER_ENGINE_VERSION=${USER_DOCKER_ENGINE_VERSION} \
     AZURE_SERVICE=${AZURE_SERVICE} \
-    PROXMOXVE_SERVICE=${PROXMOXVE_SERVICE}
+    PROXMOXVE_SERVICE=${PROXMOXVE_SERVICE} \
+    SKIP_BUILD=${SKIP_BUILD}
 ENV PATH=${GOPATH}/bin:/usr/local/go/bin:$PATH
 
 RUN mkdir -p ${DOWNLOADS}
@@ -146,8 +148,8 @@ RUN mkdir -p ${DOWNLOADS}
 # Download kernel
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
 RUN echo "... Downloading  ${!KERNEL_URL}"; \
-    if [ -n "${!KERNEL_URL}" ]; then \
-        curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.xz \
+    if [ "${!KERNEL_URL}" != "skip" ]; then \
+        curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.gz \
     ;fi
 
 # Download SELinux Policy

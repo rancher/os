@@ -2,14 +2,14 @@
 set -e
 
 # Override using a local kernel build
-if [ -e ${DAPPER_SOURCE}/assets/kernel.tar.xz ]; then
-    echo "copying ${DAPPER_SOURCE}/assets/kernel.tar.xz ${DOWNLOADS}/kernel.tar.xz"
-    cp ${DAPPER_SOURCE}/assets/kernel.tar.xz ${DOWNLOADS}/kernel.tar.xz
+if [ -e ${DAPPER_SOURCE}/assets/kernel.tar.gz ]; then
+    echo "copying ${DAPPER_SOURCE}/assets/kernel.tar.gz ${DOWNLOADS}/kernel.tar.gz"
+    cp ${DAPPER_SOURCE}/assets/kernel.tar.gz ${DOWNLOADS}/kernel.tar.gz
 fi
 
-if [ -e ${DOWNLOADS}/kernel.tar.xz ]; then
+if [ -e ${DOWNLOADS}/kernel.tar.gz ]; then
     mkdir -p ${BUILD}/kernel
-    tar Jxf ${DOWNLOADS}/kernel.tar.xz -C ${BUILD}/kernel
+    tar xf ${DOWNLOADS}/kernel.tar.gz -C ${BUILD}/kernel
 
     for i in vmlinuz vmlinux; do
         if [ -e ${BUILD}/kernel/boot/${i}-* ]; then
@@ -51,7 +51,7 @@ if [ -e ${DOWNLOADS}/kernel.tar.xz ]; then
     fi
 else
     if [ "$ARCH" == "amd64" ]; then
-        echo "no ${DOWNLOADS}/kernel.tar.xz found"
+        echo "no ${DOWNLOADS}/kernel.tar.gz found"
         exit 1
     fi
 fi
