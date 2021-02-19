@@ -26,7 +26,12 @@ RUN apt-get update \
     && cat /etc/ssh/sshd_config > /etc/ssh/sshd_config.tpl \
     && cat /etc/ssh/sshd_config.append.tpl >> /etc/ssh/sshd_config.tpl \
     && rm -f /etc/ssh/sshd_config.append.tpl /etc/ssh/sshd_config \
-    && echo > /etc/motd
+    && echo > /etc/motd \
+    \
+    && addgroup --gid 1200 user-docker \
+    && adduser --system -u 1200 --gid 1200 --disabled-login --no-create-home user-docker \
+    && echo 'user-docker:100000:65536' > /etc/subuid \
+    && echo 'user-docker:100000:65536' > /etc/subgid
 
 COPY build/iscsid.conf /etc/iscsi/
 

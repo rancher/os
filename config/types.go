@@ -197,6 +197,7 @@ type DockerConfig struct {
 	CAKey          string   `yaml:"ca_key,omitempty"`
 	Environment    []string `yaml:"environment,omitempty"`
 	StorageContext string   `yaml:"storage_context,omitempty"`
+	UserNsEnabled  bool     `yaml:"userns_enabled,omitempty"`
 	Exec           bool     `yaml:"exec,omitempty"`
 }
 

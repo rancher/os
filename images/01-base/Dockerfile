@@ -39,7 +39,12 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     rm -f /usr/share/bash-completion/completions/* && \
     chmod 555 /lib/dhcpcd/dhcpcd-run-hooks && \
     sed -i 1,10d /etc/rsyslog.conf && \
-    echo "*.*                /var/log/syslog" >> /etc/rsyslog.conf
+    echo "*.*                /var/log/syslog" >> /etc/rsyslog.conf && \
+    \
+    addgroup -g 1200 user-docker && \
+    adduser -u 1200 -G user-docker -S -H user-docker && \
+    echo 'user-docker:100000:65536' > /etc/subuid && \
+    echo 'user-docker:100000:65536' > /etc/subgid
 # dump kernel log to console (but after we've finished booting)
 #    echo "kern.*                /dev/console" >> /etc/rsyslog.conf
 
