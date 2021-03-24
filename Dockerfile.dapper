@@ -157,7 +157,7 @@ RUN echo "... Downloading  ${!KERNEL_URL}"; \
 RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
 
 # Install Go
-RUN curl -L https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${GOARCH}.tar.gz | tar -xzf - -C /usr/local && \
+RUN curl -L https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${HOST_ARCH}.tar.gz | tar -xzf - -C /usr/local && \
     go get github.com/burmilla/trash
 
 # Install golint
