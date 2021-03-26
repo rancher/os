@@ -58,7 +58,7 @@ echo "RancherOS: root partition" > build/root/root.txt
 #- doing this on a local folder keeps our resulting image clean (no dirty blocks from a delete)
 mkdir -p build/basefs
 tar -C build/basefs -zxvf build/kernel.tar.gz
-tar -C build/basefs -zxvf build/rpi-bootfiles.tar.gz
+tar -C build/basefs -zxvf build/rpi-bootloader.tar.gz
 
 # populate kernel, bootloader and RancherOS rootfs
 cp -R build/basefs/* build/root

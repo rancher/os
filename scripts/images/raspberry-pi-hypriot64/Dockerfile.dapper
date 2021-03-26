@@ -14,7 +14,7 @@ ENV KERNEL_URL=https://github.com/burmilla/os-rpi-kernel/releases/download/v5.10
 ENV BOOTLOADER_URL=https://github.com/burmilla/os-rpi-kernel/releases/download/v5.10.1-burmilla/rpi-bootloader.tar.gz
 
 RUN curl -fL ${KERNEL_URL} > /source/assets/kernel.tar.gz
-RUN curl -fL ${BOOTLOADER_URL} > /source/assets/rpi-bootfiles.tar.gz
+RUN curl -fL ${BOOTLOADER_URL} > /source/assets/rpi-bootloader.tar.gz
 
 WORKDIR /source
 CMD ["./scripts/build.sh"]
