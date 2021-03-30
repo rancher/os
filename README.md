@@ -4,6 +4,8 @@
 [![Docker Pulls](https://img.shields.io/docker/pulls/rancher/os.svg)](https://store.docker.com/community/images/rancher/os)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rancher/os)](https://goreportcard.com/badge/github.com/rancher/os)
 
+> RancherOS 1.x is currently in a maintain-only-as-essential mode. It is no longer being actively maintained at a code level other than addressing critical or security fixes. For more information about the support status of RancherOS, see [this page.](https://support.rancher.com/hc/en-us/articles/360041771072#development-status-0-0)
+
 The smallest, easiest way to run Docker in production at scale.  Everything in RancherOS is a container managed by Docker.  This includes system services such as udev and rsyslog.  RancherOS includes only the bare minimum amount of software needed to run Docker.  This keeps the binary download of RancherOS very small.  Everything else can be pulled in dynamically through Docker.
 
 ## How this works
