@@ -17,6 +17,11 @@ else
 
     echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}.iso" >> dist/publish.sh
 
+    # Include iPXE files
+    echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/initrd-${VERSION} --name initrd" >> dist/publish.sh
+    echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/vmlinuz-${KERNEL_VERSION} --name vmlinuz" >> dist/publish.sh
+    echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/rootfs.tar.gz --name rootfs.tar.gz" >> dist/publish.sh
+
     cat dist/images | sed 's/^/docker push /' >> dist/publish.sh
 fi
 
