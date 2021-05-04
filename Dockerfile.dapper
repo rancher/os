@@ -8,6 +8,7 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
     && cat /etc/apt/apt.conf.d/01proxy \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
+        libisl-dev \
         build-essential \
         ca-certificates \
         cpio \
