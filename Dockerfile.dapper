@@ -3,12 +3,14 @@ FROM ubuntu:bionic
 
 # get the apt-cacher proxy set
 ARG APTPROXY=
+ARG APT_ARCHIVE_SOURCE="archive.ubuntu.com"
 
 RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01proxy \
     && cat /etc/apt/apt.conf.d/01proxy \
+    && sed -i "s|archive.ubuntu.com|${APT_ARCHIVE_SOURCE}|" /etc/apt/sources.list \
+    && cat /etc/apt/sources.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
-        libisl-dev \
         build-essential \
         ca-certificates \
         cpio \
