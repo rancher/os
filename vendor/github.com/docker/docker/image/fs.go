@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/digest"
+	"github.com/sirupsen/logrus"
 )
 
 // IDWalkFunc is function called by StoreBackend.Walk

@@ -4,11 +4,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/libcompose/config"
 	"github.com/docker/libcompose/docker/client"
 	"github.com/docker/libcompose/lookup"
 	"github.com/docker/libcompose/project"
+	"github.com/sirupsen/logrus"
 )
 
 // ComposeVersion is name of docker-compose.yml file syntax supported version

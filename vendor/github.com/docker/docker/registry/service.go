@@ -7,10 +7,10 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/reference"
 	"github.com/docker/engine-api/types"
 	registrytypes "github.com/docker/engine-api/types/registry"
+	"github.com/sirupsen/logrus"
 )
 
 // Service is a registry service. It tracks configuration data such as a list

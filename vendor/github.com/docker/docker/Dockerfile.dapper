@@ -22,7 +22,7 @@ RUN apt-get update && apt-get install -y \
 	--no-install-recommends
 
 # Install go
-RUN curl -sLf https://storage.googleapis.com/golang/go1.6.2.linux-amd64.tar.gz | tar xzf - -C /usr/local
+RUN curl -sLf https://storage.googleapis.com/golang/go1.9.7.linux-amd64.tar.gz | tar xzf - -C /usr/local
 ENV GOPATH=/go
 ENV PATH=/go/bin:/usr/local/go/bin:$PATH
 

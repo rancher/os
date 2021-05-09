@@ -8,7 +8,6 @@ import (
 	"github.com/docker/engine-api/types/network"
 	"golang.org/x/net/context"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/client"
 	"github.com/docker/go-connections/nat"
 	"github.com/docker/libcompose/config"
@@ -17,6 +16,7 @@ import (
 	"github.com/docker/libcompose/project"
 	"github.com/docker/libcompose/project/options"
 	"github.com/docker/libcompose/utils"
+	"github.com/sirupsen/logrus"
 )
 
 // Service is a project.Service implementations.

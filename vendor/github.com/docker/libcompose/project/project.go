@@ -7,7 +7,6 @@ import (
 
 	"golang.org/x/net/context"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/docker/libcompose/config"
@@ -16,6 +15,7 @@ import (
 	"github.com/docker/libcompose/project/events"
 	"github.com/docker/libcompose/project/options"
 	"github.com/docker/libcompose/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 type wrapperAction func(*serviceWrapper, map[string]*serviceWrapper)

@@ -6,9 +6,9 @@ import (
 	"runtime"
 	"text/template"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/codegangsta/cli"
 	"github.com/docker/libcompose/version"
+	"github.com/sirupsen/logrus"
 )
 
 var versionTemplate = `Version:      {{.Version}} ({{.GitCommit}})

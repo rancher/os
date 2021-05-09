@@ -10,8 +10,8 @@ import (
 
 	"github.com/burmilla/os/config/cmdline"
 
-	"github.com/Sirupsen/logrus"
-	lsyslog "github.com/Sirupsen/logrus/hooks/syslog"
+	"github.com/sirupsen/logrus"
+	lsyslog "github.com/sirupsen/logrus/hooks/syslog"
 )
 
 var logFile *os.File

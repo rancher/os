@@ -6,8 +6,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/containerd/osutils"
+	"github.com/sirupsen/logrus"
 )
 
 var (

@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"sync"
+
 	// this is required for some certificates
 	_ "crypto/sha512"
 	"encoding/hex"
@@ -18,7 +19,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/distribution/registry/api/errcode"
 	"github.com/docker/docker/pkg/httputils"
 	"github.com/docker/docker/pkg/ioutils"
@@ -27,6 +27,7 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/docker/engine-api/types"
 	registrytypes "github.com/docker/engine-api/types/registry"
+	"github.com/sirupsen/logrus"
 )
 
 var (
