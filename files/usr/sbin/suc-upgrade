@@ -1,0 +1,15 @@
+#!/bin/bash
+set -x -e
+
+if [ "$FORCE" != "true" ]; then
+    if diff /etc/os-release /host/etc/os-release >/dev/null; then
+        echo Update to date with
+        cat /etc/os-release
+        exit 0
+    fi
+fi
+mount --rbind /host/dev /dev
+mount --rbind /host/run /run
+bash -x cos-upgrade --directory /
+nsenter -i -m -t 1 -- reboot
+exit 1

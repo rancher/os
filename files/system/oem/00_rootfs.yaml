@@ -1,0 +1,63 @@
+name: "Rootfs Layout Settings"
+stages:
+  rootfs:
+    - environment_file: /run/cos/cos-layout.env
+      environment:
+        VOLUMES: "LABEL=COS_OEM:/oem LABEL=COS_PERSISTENT:/usr/local"
+        OVERLAY: "tmpfs:25%"
+#       DEBUG_RW: "true"
+  initramfs:
+    - if: '[ -z "$(blkid -L COS_SYSTEM || true)" ]'
+      commands:
+      - |
+        target=/usr/local/.ros-state
+
+        # Always want the latest update of systemd conf from the image
+        mkdir -p ${target}/etc/systemd/
+        rsync -av /etc/systemd/ ${target}/etc/systemd/
+
+        # Only populate ssh conf once
+        if [ ! -e ${target}/etc/ssh ]; then
+          mkdir -p ${target}/etc/ssh/
+          rsync -av /etc/ssh/ ${target}/etc/ssh/
+        fi
+
+        # make /tmp tmpfs
+        cp -f /usr/share/systemd/tmp.mount ${target}/etc/systemd/system/
+
+        # undo /home /opt mount from cos immutable-rootfs module
+        sed -i '/overlay \/home /d' /etc/fstab
+        sed -i '/overlay \/opt /d' /etc/fstab
+        umount /home
+        umount /opt
+
+        # setup directories as persistent
+        for i in root opt home var/lib/rancher var/lib/kubelet etc/systemd etc/rancher etc/ssh usr/libexec; do
+          mkdir -p ${target}/$i /$i
+          mount ${target}/$i /$i -t none -o bind
+        done
+
+        # This is hidden so that if you run some selinux label checking or relabeling the bind
+        # mount won't screw up things.  If you have two files at different paths they will get
+        # labeled with two different labels.
+        mkdir -p ${target}/empty
+        mount ${target}/empty ${target} -o bind,ro
+
+        # persist machine-id
+        if [ -s /usr/local/etc/machine-id ]; then
+          cat /usr/local/etc/machine-id > /etc/machine-id
+        else
+          mkdir -p /usr/local/etc
+          cp /etc/machine-id /usr/local/etc
+        fi
+
+        # ensure /var/log/journal exists so it's labeled correctly
+        mkdir -p /var/log/journal
+  initramfs.after:
+    - if: '[ -z "$(blkid -L COS_SYSTEM || true)" ]'
+      commands:
+      - restorecon -R -v /etc /home /opt /var /usr/local /tmp /srv /root
+  fs.before:
+    - if: '[ -z "$(blkid -L COS_SYSTEM || true)" ]'
+      commands:
+      - restorecon -R -v /etc /home /opt /var /usr/local /tmp /srv /root

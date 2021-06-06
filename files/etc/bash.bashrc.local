@@ -1,0 +1,14 @@
+if [ -e /etc/rancher/rke2 ]; then
+    if [ -z "$KUBECONFIG" ]; then
+        export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+    fi
+fi
+if [ -d /var/lib/rancher/rke2/bin ]; then
+    export PATH="${PATH}:/var/lib/rancher/rke2/bin"
+fi
+if [ -z "$CONTAINER_RUNTIME_ENDPOINT" ]; then
+    export CONTAINER_RUNTIME_ENDPOINT=unix:///var/run/k3s/containerd/containerd.sock
+fi
+if [ -z "$IMAGE_SERVICE_ENDPOINT" ]; then
+    export IMAGE_SERVICE_ENDPOINT=unix:///var/run/k3s/containerd/containerd.sock
+fi

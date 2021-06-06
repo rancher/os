@@ -1,0 +1,26 @@
+packages:
+  rootfs:
+  - iso/rootfs
+  uefi:
+  - live/systemd-boot
+  - live/boot
+  isoimage:
+  - live/syslinux
+  - live/boot
+
+initramfs:
+  kernel_file: "vmlinuz"
+  rootfs_file: "initrd"
+
+overlay: true
+image_prefix: "distro"
+image_date: true
+label: "COS_LIVE"
+
+luet:
+  repositories:
+  - name: cOS
+    enable: true
+    urls:
+      - quay.io/costoolkit/releases-opensuse
+    type: docker

@@ -1,0 +1,2 @@
+#!/bin/bash
+cos-upgrade --no-verify --docker-image ibuildthecloud/test

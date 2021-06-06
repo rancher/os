@@ -1,0 +1,2 @@
+image: "{{.Values.image}}"
+unpack: true

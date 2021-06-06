@@ -1,0 +1,20 @@
+#!/bin/bash
+
+IMAGE=$1
+
+if [ -z "$IMAGE" ]; then
+    echo "Image name is required as the first argument"
+    echo
+    echo Usage: $0 [DOCKER_IMAGE]
+    exit 1
+fi
+
+cd /iso
+cat > values.yaml << EOF
+image: "$IMAGE"
+EOF
+
+luet build --values values.yaml iso/rootfs
+luet create-repo
+luet-makeiso iso.yaml --local /iso/build
+cp distro*iso /output.iso
