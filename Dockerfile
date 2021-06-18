@@ -1,12 +1,3 @@
-FROM opensuse/leap:15.3 as rancherd
-RUN zypper in -y curl docker squashfs xorriso go1.16 git
-RUN zypper in -y upx
-RUN git clone --depth=1 https://github.com/rancher/rancherd && \
-    cd ./rancherd && \
-    ./scripts/build && \
-    upx bin/rancherd && \
-    cp bin/rancherd /usr/bin/
-
 FROM opensuse/leap:15.3 as tools
 RUN zypper in -y curl docker squashfs xorriso go1.16 git
 RUN curl https://get.mocaccino.org/luet/get_luet_root.sh | sh
@@ -33,6 +24,7 @@ RUN zypper in -y \
     haveged \
     iproute2 \
     iptables \
+    iputils \
     jq \
     kernel-default \
     kernel-firmware-bnx2 \
@@ -66,7 +58,8 @@ RUN zypper in -y \
     vim \
     which
 
-COPY --from=rancherd /usr/bin/rancherd /usr/bin/rancherd
+RUN curl -L https://github.com/rancher/rancherd/releases/download/v0.0.1-alpha03/rancherd-${ARCH} > /usr/bin/rancherd && \
+    chmod +x /usr/bin/rancherd
 
 RUN zypper ar https://download.opensuse.org/repositories/security:/SELinux/openSUSE_Leap_15.3/security:SELinux.repo
 RUN zypper --gpg-auto-import-keys in -y --allow-vendor-change --allow-downgrade container-selinux -libsemanage1
@@ -74,7 +67,7 @@ RUN zypper --gpg-auto-import-keys in -y --allow-vendor-change --allow-downgrade 
 RUN mkdir /tmp/rpm && \
     cd /tmp/rpm && \
     curl -L -O https://github.com/k3s-io/k3s-selinux/releases/download/v0.3.testing.0/k3s-selinux-0.3-0.el7.noarch.rpm && \
-    curl -L -O  https://github.com/rancher/rancher-selinux/releases/download/v0.2-rc1.testing.1/rancher-selinux-0.2.rc1-1.el7.noarch.rpm && \
+    curl -L -O https://github.com/rancher/rancher-selinux/releases/download/v0.2-rc1.testing.1/rancher-selinux-0.2.rc1-1.el7.noarch.rpm && \
     mv /var/lib/selinux/targeted/active /var/lib/selinux/targeted/bkp && \
     mv /var/lib/selinux/targeted/bkp /var/lib/selinux/targeted/active && \
     rpm -ivh --nodeps *.rpm && \
