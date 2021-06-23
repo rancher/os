@@ -7,7 +7,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends iptables openssh-server rsync locales \
                            sudo less curl ca-certificates psmisc htop kmod iproute2 \
                            net-tools bash-completion wget \
-                           nano open-iscsi iputils-ping \
+                           nano open-iscsi iputils-ping nvi \
     && update-alternatives --set iptables /usr/sbin/iptables-legacy \
     && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy \
     && rm -rf /var/lib/apt/lists/* \
