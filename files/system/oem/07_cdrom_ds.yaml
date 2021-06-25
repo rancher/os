@@ -1,8 +1,0 @@
-name: "Cloud-init cdrom"
-stages:
-   fs:
-     - name: "cdrom datasource"
-       datasource:
-         providers:
-         - cdrom
-         path: /oem

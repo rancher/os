@@ -1,0 +1,14 @@
+# Default cOS OEM configuration file
+#
+# This file is part of cOS and will get reset during upgrades.
+#
+# Before you change this file manually,
+# consider copying this file to /usr/local/cloud-config or
+# copy the file with a prefix starting by 90, e.g. /oem/91_custom.yaml
+name: "Cloud providers metadata"
+stages:
+   network:
+     - name: "Cloud providers datasources"
+       datasource:
+         providers: ["aws", "gcp", "cdrom"]
+         path: "/oem"

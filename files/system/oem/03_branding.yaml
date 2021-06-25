@@ -3,20 +3,3 @@ stages:
    initramfs:
      - name: "Branding"
        hostname: "rancher"
-       Xfiles:
-        - path: /etc/issue
-          content: |
-            .-----.
-            | .-. |
-            | |.| |
-            | `-' |
-            `-----'
-
-            Welcome to \S !
-            IP address \4
-            Login with user: root, password: cos
-            Start the installer with "cos-installer <device>" to install it in the local system
-          permissions: 0644
-          owner: 0
-          group: 0
-

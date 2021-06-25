@@ -1,14 +1,16 @@
 .DEFAULT_GOAL := iso
-IMAGE=ibuildthecloud/test
+REPO=ibuildthecloud/test
+LABEL=latest
+IMAGE=${REPO}:${LABEL}
 TOOLS=${IMAGE}-tools
 
 .PHONY: build
 build:
-	docker build -t ${IMAGE} .
-
-.PHONY: final-build
-final-build:
-	docker build --build-arg FINALIZE=true -t ${IMAGE} .
+	docker build \
+		--build-arg CACHEBUST="${CACHEBUST}" \
+		--build-arg OS_LABEL=${LABEL} \
+		--build-arg OS_REPO=${REPO} \
+		-t ${IMAGE} .
 
 .PHONY: push
 push: build
@@ -19,7 +21,7 @@ tools:
 	docker build -t ${TOOLS} --target tools .
 
 .PHONY: iso
-iso: tools final-build
+iso: tools build
 	mkdir -p build
 	rm -f build/iso-container
 	docker run -v /var/run:/var/run -it --cidfile=build/iso-container ${TOOLS} makeiso ${IMAGE}

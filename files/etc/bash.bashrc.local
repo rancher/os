@@ -1,7 +1,8 @@
-if [ -e /etc/rancher/rke2 ]; then
-    if [ -z "$KUBECONFIG" ]; then
+if [ -z "$KUBECONFIG" ]; then
+    if [ -e /etc/rancher/rke2 ]; then
         export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
     fi
+    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
 fi
 if [ -d /var/lib/rancher/rke2/bin ]; then
     export PATH="${PATH}:/var/lib/rancher/rke2/bin"

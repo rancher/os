@@ -24,11 +24,6 @@ stages:
          primary_group: "rancher"
          shell: /bin/bash
          homedir: "/home/rancher"
-     #ensure_entities:
-     #- entity: |
-     #     kind: "shadow"
-     #     username: "root"
-     #     password: "$6$g9DDJRDNRS8MEzhH$w6Cn6PNzFnUVnatwRbNoLk6etanvAbcxUzfYlQcj6y/JLGq3Yrl7wXi6SkMzp1/tEM3NheMr5fH8.92NdiaB/0"
    - name: "Setup sudo"
      files:
      - path: "/etc/sudoers"

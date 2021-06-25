@@ -1,4 +1,0 @@
-#!/bin/bash
-set -e -x
-sudo cos-upgrade --no-verify --docker-image ibuildthecloud/test
-sudo reboot
