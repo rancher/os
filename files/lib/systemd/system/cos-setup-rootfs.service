@@ -1,0 +1,14 @@
+[Unit]
+Description=cOS system early rootfs setup
+DefaultDependencies=no
+After=initrd-root-fs.target
+Requires=initrd-root-fs.target
+Conflicts=initrd-switch-root.target
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/bin/ln -sf -t / /sysroot/system
+ExecStart=/usr/bin/cos-setup rootfs
+
+[Install]
+RequiredBy=initrd-fs.target

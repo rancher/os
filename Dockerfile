@@ -72,7 +72,7 @@ RUN zypper in -y \
     vim \
     which
 
-RUN curl -L https://github.com/rancher/rancherd/releases/download/v0.0.1-alpha04/rancherd-${ARCH} > /usr/bin/rancherd && \
+RUN curl -L https://github.com/rancher/rancherd/releases/download/v0.0.1-alpha05/rancherd-${ARCH} > /usr/bin/rancherd && \
     chmod +x /usr/bin/rancherd
 
 ARG CACHEBUST

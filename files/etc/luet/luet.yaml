@@ -13,6 +13,5 @@ repositories:
   priority: 1
   verify: false
   urls:
-  - "ibuildthecloud/releases-sle"
-    #- "quay.io/costoolkit/releases-opensuse"
+  - "quay.io/costoolkit/releases-opensuse"
 
