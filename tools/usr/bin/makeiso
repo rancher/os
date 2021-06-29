@@ -10,11 +10,7 @@ if [ -z "$IMAGE" ]; then
 fi
 
 cd /iso
-cat > values.yaml << EOF
-image: "$IMAGE"
-EOF
 
-luet build --values values.yaml iso/rootfs
-luet create-repo
-luet-makeiso iso.yaml --local /iso/build
+luet-makeiso iso.yaml --image "$IMAGE"
+
 cp distro*iso /output.iso
