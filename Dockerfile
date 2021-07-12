@@ -1,20 +1,23 @@
+ARG LUET_VERSION=0.16.7
+FROM quay.io/luet/base:$LUET_VERSION AS luet
+
 FROM registry.suse.com/suse/sle15:15.3 AS base
+
+# Copy luet from the official images
+COPY --from=luet /usr/bin/luet /usr/bin/luet
+
 ARG ARCH=amd64
 ENV ARCH=${ARCH}
-ENV LUET_VERSION 0.16.7
 RUN zypper rm -y container-suseconnect
 RUN zypper ar --priority=200 http://download.opensuse.org/distribution/leap/15.3/repo/oss repo-oss
 RUN zypper --no-gpg-checks ref
 COPY files/etc/luet/luet.yaml /etc/luet/luet.yaml
-RUN zypper in -y curl
-RUN curl -sfL -o /usr/bin/luet https://github.com/mudler/luet/releases/download/${LUET_VERSION}/luet-${LUET_VERSION}-linux-${ARCH} && \
-    chmod +x /usr/bin/luet
 
 FROM base as tools
-RUN zypper in -y docker squashfs xorriso
+ENV LUET_NOLOCK=true
+RUN zypper in -y squashfs xorriso
 COPY tools /
-RUN luet install -y repository/luet repository/mocaccino-repository-index
-RUN luet install -y extension/makeiso
+RUN luet install -y toolchain/luet-makeiso
 
 FROM base
 RUN zypper in -y \
@@ -72,9 +75,6 @@ RUN zypper in -y \
     vim \
     which
 
-RUN curl -L https://github.com/rancher/rancherd/releases/download/v0.0.1-alpha05/rancherd-${ARCH} > /usr/bin/rancherd && \
-    chmod +x /usr/bin/rancherd
-
 ARG CACHEBUST
 RUN luet install -y \
     toolchain/yip \
@@ -86,7 +86,8 @@ RUN luet install -y \
     selinux/k3s \
     selinux/rancher \
     utils/k9s \
-    utils/nerdctl
+    utils/nerdctl \
+    utils/rancherd
 
 COPY files/ /
 RUN mkinitrd

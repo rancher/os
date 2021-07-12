@@ -1,6 +1,4 @@
 packages:
-  rootfs:
-  - iso/rootfs
   uefi:
   - live/systemd-boot
   - live/boot
