@@ -1,5 +1,0 @@
-name: "Branding"
-stages:
-   initramfs:
-     - name: "Branding"
-       hostname: "rancher"

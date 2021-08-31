@@ -1,5 +1,0 @@
-#!/bin/bash
-set -e -x
-source /etc/os-release
-sudo cos-upgrade --no-verify --docker-image "${IMAGE}"
-sudo reboot

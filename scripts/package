@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+
+source $(dirname $0)/version
+
+cd $(dirname $0)/..
+
+export TAG
+make iso
+TARGETS="iso"
+
+if [ -n "$DOCKER_PASSWORD" ]; then
+    docker login -u "$DOCKER_USERNAME" -p "${DOCKER_PASSWORD}"
+    PUSH=true
+fi
+
+if [ "$PUSH" = "true" ]; then
+    make push
+fi
+
+
+TARGETS=qcow
+if [ "$PUSH" = "true" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
+    TARGETS="${TARGETS} all-amis"
+fi
+
+export GIT_COMMIT=${COMMIT}
+make -j8 ${TARGETS}
+
+mkdir -p dist
+for i in build/output.*; do
+    mv -f $i dist/rancheros-${TAG}${i##build/output}
+    echo Built: dist/rancheros-${TAG}${i##build/output}
+done

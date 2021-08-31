@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e -x
+source /usr/lib/rancheros-release
+cos-upgrade --no-verify --docker-image "${IMAGE}"
+reboot

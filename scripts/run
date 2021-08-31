@@ -1,0 +1,30 @@
+#!/bin/bash
+set -e -x
+
+mkdir -p build
+cd build
+
+if [ ! -e disk.img ]; then
+    qemu-img create -f qcow2 disk.img 40g
+fi
+
+touch meta-data
+touch user-data
+rm -f seed.iso
+genisoimage -output seed.iso -volid cidata -joliet -rock user-data meta-data
+
+    #-bios /usr/share/qemu/OVMF.fd \
+qemu-system-x86_64 \
+    -enable-kvm \
+    -m ${MEMORY:=4096} \
+    -machine accel=${ACCEL:="kvm"} \
+    -smp cores=4 \
+    -nographic \
+    -serial mon:stdio \
+    -rtc base=utc,clock=rt \
+    -chardev socket,path=qga.sock,server,nowait,id=qga0 \
+    -device virtio-serial \
+    -device virtserialport,chardev=qga0,name=org.qemu.guest_agent.0 \
+    -drive if=virtio,media=disk,file=disk.img \
+    -drive if=ide,media=cdrom,file=${1:-output.iso} \
+    -drive if=ide,media=cdrom,file=seed.iso

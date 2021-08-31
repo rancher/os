@@ -1,0 +1,12 @@
+logging:
+  color: false
+  enable_emoji: false
+general:
+   debug: false
+   spinner_charset: 9
+repositories:
+- name: "cos-toolkit-green"
+  type: "docker"
+  enable: true
+  urls:
+  - "quay.io/costoolkit/releases-green"

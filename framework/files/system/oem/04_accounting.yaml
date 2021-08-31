@@ -1,0 +1,16 @@
+name: "Default user"
+stages:
+  initramfs:
+  - if: |
+          cat /proc/cmdline | grep -q "CDLABEL"
+    name: "Setup user for live CD"
+    files:
+    - path: /etc/issue.d/99_passwd
+      content: |
+        Login with username=root, password=cos
+    ensure_entities:
+    - path: /etc/shadow
+      entity: |
+        kind: "shadow"
+        username: "root"
+        password: "cos"

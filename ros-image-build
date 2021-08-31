@@ -1,0 +1,185 @@
+#!/bin/bash
+set -e
+
+build()
+{
+    dockerfile | docker build -f - --build-arg IMAGE="${IMAGE}" . "${@}"
+}
+
+dockerfile()
+{
+    cat << "EOF"
+ARG IMAGE=rancher/os:dev
+
+FROM ${IMAGE} AS os
+
+FROM opensuse/leap:15.3 AS tools
+ENV LUET_NOLOCK=true
+# Copy luet from the official images
+RUN zypper in -y squashfs xorriso curl unzip git qemu-kvm qemu-tools tar pigz
+RUN cd /usr/sbin && \
+    rm packer && \
+    curl https://releases.hashicorp.com/packer/1.7.4/packer_1.7.4_linux_amd64.zip > tmp && \
+    unzip tmp && \
+    rm tmp
+RUN cd /usr/src && \
+    git clone https://github.com/rancher-sandbox/cOS-toolkit
+COPY --from=quay.io/luet/base:0.17.8 /usr/bin/luet /usr/bin/luet
+RUN mkdir /iso /etc/luet
+RUN echo -e \
+'logging:\n'\
+'  color: false\n'\
+'  enable_emoji: false\n'\
+'general:\n'\
+'   debug: false\n'\
+'   spinner_charset: 9\n'\
+'repositories:\n'\
+'- name: "cos-toolkit-green"\n'\
+'  type: "docker"\n'\
+'  enable: true\n'\
+'  urls:\n'\
+'  - "quay.io/costoolkit/releases-green"\n' > /etc/luet/luet.yaml
+RUN echo -e \
+'packages:\n'\
+'  uefi:\n'\
+'  - live/grub2-efi-image\n'\
+'  isoimage:\n'\
+'  - live/grub2\n'\
+'  - live/grub2-efi-image\n'\
+'\n'\
+'boot_file: "boot/x86_64/loader/eltorito.img"\n'\
+'boot_catalog: "boot/x86_64/boot.catalog"\n'\
+'isohybrid_mbr: "boot/x86_64/loader/boot_hybrid.img"\n'\
+'\n'\
+'initramfs:\n'\
+'  kernel_file: "vmlinuz"\n'\
+'  rootfs_file: "initrd"\n'\
+'\n'\
+'overlay:\n'\
+'  rootfs: /iso/overlay\n'\
+'\n'\
+'image_prefix: "output"\n'\
+'label: "COS_LIVE"\n'\
+'\n'\
+'squashfs_options:\n'\
+'  compression: gzip\n'\
+'\n'\
+'luet:\n'\
+'  repositories:\n'\
+'  - name: "cos-toolkit-green"\n'\
+'    type: "docker"\n'\
+'    enable: true\n'\
+'    urls:\n'\
+'    - "quay.io/costoolkit/releases-green"\n' > /iso/iso.yaml
+RUN luet install --no-spinner -y toolchain/luet-makeiso
+WORKDIR /usr/src/cOS-toolkit/packer
+
+FROM tools AS iso-build
+COPY --from=os / /iso/overlay
+RUN cd /iso && \
+    luet-makeiso iso.yaml
+
+FROM iso-build AS qcow-build
+RUN packer build \
+    -var "iso=/iso/output.iso" \
+    -var "accelerator=tcg" \
+    -only qemu.cos .
+RUN mkdir /output && \
+    mv *.box /output/output.box && \
+    pigz -dc *.tar.gz | tar xvf - && \
+    cat cOS | pigz -c > /output/output.qcow.gz
+
+FROM scratch AS qcow
+COPY --from=qcow-build /output/ /
+
+FROM scratch AS iso
+COPY --from=iso-build /iso/output.iso /
+
+FROM tools AS ami
+ARG AWS_ACCESS_KEY_ID
+ARG AWS_SECRET_ACCESS_KEY
+ARG AWS_DEFAULT_REGION
+ARG IMAGE=rancher/os:dev
+ARG NAME=RancherOS-Image-dev
+ARG VERSION=1
+ARG GIT_COMMIT=HEAD
+RUN packer build \
+    -var "cos_version=${VERSION}" \
+    -var "git_sha=${GIT_COMMIT}" \
+    -var 'aws_source_ami_filter_owners=["053594193760"]' \
+    -var "aws_cos_deploy_args=cos-deploy --no-verify --docker-image ${IMAGE}" \
+    -var "name=${NAME}" \
+    -only amazon-ebs.cos .
+EOF
+}
+
+
+iso()
+{
+    build --target iso -o build/
+}
+
+qcow()
+{
+    build --target qcow -o build/
+}
+
+ami()
+{
+    if [ -z "${AWS_ACCESS_KEY_ID}" ] || [ -z "${AWS_SECRET_ACCESS_KEY}" ] || [ -z "${AWS_DEFAULT_REGION}" ]; then
+        echo ERROR: The following environment variables must be set: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
+        exit 1
+    fi
+
+    build --target ami \
+        --build-arg AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+        --build-arg AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+        --build-arg AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION} \
+        --build-arg NAME="${NAME}" \
+        --build-arg GIT_COMMIT="${GIT_COMMIT}" \
+        --build-arg VERSION="${VERSION}"
+}
+
+usage()
+{
+    echo "Usage:"
+    echo "    $0 IMAGE OUTPUT"
+    echo
+    echo "    IMAGE: a Docker image"
+    echo "    OUTPUT: Comma seperated value of output image formats. Valid: aws,iso,qcow"
+}
+
+IMAGE=$1
+OUTPUT=$2
+VERSION=${IMAGE##*:}
+NAME=${IMAGE%%:${VERSION}}
+NAME=${NAME//[^a-zA-Z0-9-@.\/_]/-}
+
+if [ -z "${OUTPUT}" ] || [ -z "${IMAGE}" ] || echo "$@" | grep -q -- -h; then
+    usage
+    exit 1
+fi
+
+{
+    IFS=,
+    for i in ${OUTPUT}; do
+        case $i in
+            ami)
+                ami
+                ;;
+            qcow)
+                qcow
+                ;;
+            iso)
+                iso
+                ;;
+            dockerfile)
+                dockerfile
+                exit 0
+                ;;
+            *)
+                echo Unknown format $i
+                exit 1
+        esac
+    done
+}

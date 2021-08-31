@@ -1,0 +1,22 @@
+FROM golang:1.16.2-alpine3.12
+
+ARG DAPPER_HOST_ARCH
+ENV ARCH $DAPPER_HOST_ARCH
+
+RUN apk -U add bash git gcc musl-dev docker vim less file curl wget ca-certificates make
+RUN go get golang.org/x/tools/cmd/goimports
+RUN if [ "${ARCH}" == "amd64" ]; then \
+        curl -sL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.40.1; \
+    fi
+
+ENV DOCKER_BUILDKIT 1
+ENV DOCKER_CLI_EXPERIMENTAL enabled
+ENV DAPPER_ENV REPO TAG DRONE_TAG CROSS DOCKER_USERNAME DOCKER_PASSWORD AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_DEFAULT_REGION
+ENV DAPPER_SOURCE /go/src/github.com/rancher/os/
+ENV DAPPER_OUTPUT ./bin ./dist
+ENV DAPPER_DOCKER_SOCKET true
+ENV HOME ${DAPPER_SOURCE}
+WORKDIR ${DAPPER_SOURCE}
+
+ENTRYPOINT ["./scripts/entry"]
+CMD ["ci"]

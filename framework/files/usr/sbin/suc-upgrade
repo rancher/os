@@ -1,0 +1,18 @@
+#!/bin/bash
+set -x -e
+HOST_DIR="${HOST_DIR:-/host}"
+RELEASE_FILE="${RELEASE_FILE:-/etc/os-release}"
+
+if [ "$FORCE" != "true" ]; then
+    if diff $RELEASE_FILE ${HOST_DIR}${RELEASE_FILE} >/dev/null; then
+        echo Update to date with
+        cat /etc/os-release
+        exit 0
+    fi
+fi
+
+mount --rbind $HOST_DIR/dev /dev
+mount --rbind $HOST_DIR/run /run
+bash -x cos-upgrade --directory /
+nsenter -i -m -t 1 -- reboot
+exit 1

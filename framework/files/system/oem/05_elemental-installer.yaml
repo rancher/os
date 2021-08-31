@@ -1,0 +1,23 @@
+name: "Elemental Installer"
+stages:
+  initramfs:
+  - if: '[ -f /run/cos/live_mode ]'
+    files:
+    - path: /etc/motd
+      content: |
+
+        Run "ros-installer" to install to disk
+         
+      permissions: 0644
+    - path: /etc/systemd/system/serial-getty@ttyS0.service.d/override.conf
+      content: |
+        [Service]
+        ExecStart=
+        ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
+      permissions: 0644
+    - path: /etc/systemd/system/getty@tty1.service.d/override.conf
+      content: |
+        [Service]
+        ExecStart=
+        ExecStart=-/sbin/agetty --autologin root --noclear %I $TERM
+      permissions: 0644

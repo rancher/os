@@ -1,26 +1,42 @@
-ARG LUET_VERSION=0.16.7
-FROM quay.io/luet/base:$LUET_VERSION AS luet
+FROM opensuse/leap:15.3 AS build
+RUN zypper in -y squashfs xorriso go1.16 upx busybox-static
+COPY go.mod go.sum /usr/src/
+COPY cmd /usr/src/cmd
+COPY pkg /usr/src/pkg
+RUN cd /usr/src && \
+    CGO_ENABLED=0 go build -ldflags "-extldflags -static -s" -o /usr/sbin/ros-installer ./cmd/ros-installer && \
+    upx /usr/sbin/ros-installer
 
-FROM registry.suse.com/suse/sle15:15.3 AS base
+FROM scratch AS framework
+COPY --from=build /usr/bin/busybox-static /usr/bin/busybox
+COPY --from=quay.io/luet/base:0.17.8 /usr/bin/luet /usr/bin/luet
+COPY framework/files/etc/luet/luet.yaml /etc/luet/luet.yaml
+COPY --from=build /etc/ssl/certs /etc/ssl/certs
 
-# Copy luet from the official images
-COPY --from=luet /usr/bin/luet /usr/bin/luet
-
-ARG ARCH=amd64
-ENV ARCH=${ARCH}
-RUN zypper rm -y container-suseconnect
-RUN zypper ar --priority=200 http://download.opensuse.org/distribution/leap/15.3/repo/oss repo-oss
-RUN zypper --no-gpg-checks ref
-COPY files/etc/luet/luet.yaml /etc/luet/luet.yaml
-
-FROM base as tools
+ARG CACHEBUST
 ENV LUET_NOLOCK=true
-RUN zypper in -y squashfs xorriso
-COPY tools /
-RUN luet install -y toolchain/luet-makeiso
+RUN ["luet", \
+    "install", "--no-spinner", "-d", "-y", \
+    "selinux/k3s", \
+    "selinux/rancher", \
+    "system/base-dracut-modules", \
+    "system/cloud-config", \
+    "system/cos-setup", \
+    "system/grub2-config", \
+    "system/immutable-rootfs", \
+    "toolchain/yip", \
+    "utils/installer", \
+    "utils/k9s", \
+    "utils/nerdctl"]
 
-FROM base
+COPY --from=build /usr/sbin/ros-installer /usr/sbin/ros-installer
+COPY framework/files/ /
+RUN ["/usr/bin/busybox", "rm", "-rf", "/var", "/etc/ssl", "/usr/bin/busybox"]
+
+# Make OS image
+FROM opensuse/leap:15.3 as os
 RUN zypper in -y \
+    avahi \
     bash-completion \
     conntrack-tools \
     coreutils \
@@ -55,47 +71,44 @@ RUN zypper in -y \
     mdadm \
     multipath-tools \
     nano \
+    netcat-openbsd \
     nfs-utils \
     open-iscsi \
     open-vm-tools \
     parted \
     pigz \
     policycoreutils \
+    psmisc \
     procps \
     python-azure-agent \
     qemu-guest-agent \
-    rng-tools \
     rsync \
     squashfs \
     strace \
+    SUSEConnect \
     systemd \
     systemd-sysvinit \
+    tcpdump \
     tar \
     timezone \
     vim \
     which
 
-ARG CACHEBUST
-RUN luet install -y \
-    toolchain/yip \
-    utils/installer \
-    system/cloud-config \
-    system/cos-setup \
-    system/immutable-rootfs \
-    system/grub-config \
-    selinux/k3s \
-    selinux/rancher \
-    utils/k9s \
-    utils/nerdctl \
-    utils/rancherd
+# Copy in some local OS customizations
+COPY opensuse/files /
 
-COPY files/ /
+# Starting from here are the lines needed for RancherOS to work
+
+# IMPORTANT: Setup rancheros-release used for versioning/upgrade. The
+# values here should reflect the tag of the image building built
+ARG IMAGE_REPO=norepo
+ARG IMAGE_TAG=latest
+RUN echo "IMAGE_REPO=${IMAGE_REPO}"          > /usr/lib/rancheros-release && \
+    echo "IMAGE_TAG=${IMAGE_TAG}"           >> /usr/lib/rancheros-release && \
+    echo "IMAGE=${IMAGE_REPO}:${IMAGE_TAG}" >> /usr/lib/rancheros-release
+
+# Copy in framework runtime
+COPY --from=framework / /
+
+# Rebuild initrd to setup dracut with the boot configurations
 RUN mkinitrd
-
-ARG OS_NAME=RancherOS
-ARG OS_VERSION=999
-ARG OS_GIT=dirty
-ARG OS_REPO=norepo/norepo
-ARG OS_LABEL=latest
-RUN envsubst >/usr/lib/os-release </usr/lib/os-release.tmpl && \
-    rm /usr/lib/os-release.tmpl
