@@ -18,6 +18,14 @@ ci: .dapper
 clean:
 	rm -rf build
 
+.PHONY: build-framework
+build-framework:
+	docker build \
+		--build-arg CACHEBUST=${CACHEBUST} \
+		--build-arg IMAGE_TAG=${TAG} \
+		--build-arg IMAGE_REPO=${REPO}-framework \
+		-t ${REPO}-framework:${TAG} .
+
 .PHONY: build
 build:
 	docker build \
@@ -27,8 +35,12 @@ build:
 		-t ${IMAGE} .
 
 .PHONY: push
-push: build
+push:
 	docker push ${IMAGE}
+
+.PHONY: push
+push-framework:
+	docker push ${REPO}-framework:${TAG}
 
 .PHONY: iso
 iso: build

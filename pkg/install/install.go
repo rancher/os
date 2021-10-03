@@ -16,10 +16,10 @@ func Run(automatic bool) error {
 		return err
 	}
 
-	if automatic && !cfg.Elemental.Install.Automatic {
+	if automatic && !cfg.Rancher.Install.Automatic {
 		return nil
 	} else if automatic {
-		cfg.Elemental.Install.Silent = true
+		cfg.Rancher.Install.Silent = true
 	}
 
 	err = Ask(&cfg)
@@ -27,7 +27,7 @@ func Run(automatic bool) error {
 		return err
 	}
 
-	tempFile, err := ioutil.TempFile("", "elemental-install")
+	tempFile, err := ioutil.TempFile("", "ros-install")
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func runInstall(cfg config.Config, output string) error {
 		return err
 	}
 
-	if !cfg.Elemental.Install.Silent {
+	if !cfg.Rancher.Install.Silent {
 		val, err := questions.PromptBool("\nConfiguration\n"+"-------------\n\n"+
 			string(installBytes)+
 			"\nYour disk will be formatted and installed with the above configuration.\nContinue?", false)
@@ -53,30 +53,30 @@ func runInstall(cfg config.Config, output string) error {
 		}
 	}
 
-	if cfg.Elemental.Install.ConfigURL == "" {
+	if cfg.Rancher.Install.ConfigURL == "" {
 		yip := config.YipConfig{
 			Rancherd: config.Rancherd{
-				Server: cfg.Elemental.Install.ServerURL,
-				Token:  cfg.Elemental.Install.Token,
+				Server: cfg.Rancher.Install.ServerURL,
+				Token:  cfg.Rancher.Install.Token,
 			},
 		}
-		if cfg.Elemental.Install.ServerURL == "" {
+		if cfg.Rancher.Install.ServerURL == "" {
 			yip.Rancherd.Role = "cluster-init"
 		} else {
 			yip.Rancherd.Role = "agent"
 		}
-		if cfg.Elemental.Install.Password != "" || len(cfg.SSHAuthorizedKeys) > 0 {
+		if cfg.Rancher.Install.Password != "" || len(cfg.SSHAuthorizedKeys) > 0 {
 			yip.Stages = map[string][]config.Stage{
-				"initramfs": {{
+				"network": {{
 					Users: map[string]config.User{
 						"root": {
 							Name:              "root",
-							PasswordHash:      cfg.Elemental.Install.Password,
+							PasswordHash:      cfg.Rancher.Install.Password,
 							SSHAuthorizedKeys: cfg.SSHAuthorizedKeys,
 						},
 					}},
 				}}
-			cfg.Elemental.Install.Password = ""
+			cfg.Rancher.Install.Password = ""
 		}
 
 		data, err := yaml.Marshal(yip)
@@ -87,7 +87,7 @@ func runInstall(cfg config.Config, output string) error {
 		if err := ioutil.WriteFile(output+".yip", data, 0600); err != nil {
 			return err
 		}
-		cfg.Elemental.Install.ConfigURL = output + ".yip"
+		cfg.Rancher.Install.ConfigURL = output + ".yip"
 	}
 
 	ev, err := config.ToEnv(cfg)

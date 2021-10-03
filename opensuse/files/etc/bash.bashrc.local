@@ -13,3 +13,8 @@ fi
 if [ -z "$IMAGE_SERVICE_ENDPOINT" ]; then
     export IMAGE_SERVICE_ENDPOINT=unix:///var/run/k3s/containerd/containerd.sock
 fi
+
+# For ctr
+if [ -z "$CONTAINERD_ADDRESS" ]; then
+    export CONTAINERD_ADDRESS=/run/k3s/containerd/containerd.sock
+fi

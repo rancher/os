@@ -1,0 +1,58 @@
+name: "ROS Rootfs Layout Settings"
+stages:
+  initramfs:
+    - if: '[ ! -f /run/cos/recovery_mode ]'
+      commands:
+      - |
+        if [ ! -e /usr/local/etc/hostname ]; then
+          echo rancher-${RANDOM} > /usr/local/etc/hostname
+        fi
+        ln -sf /usr/local/etc/hostname /etc/hostname
+  rootfs:
+    - if: '[ ! -f "/run/cos/recovery_mode" ]'
+      name: "Layout configuration"
+      environment_file: /run/cos/cos-layout.env
+      environment:
+        VOLUMES: "LABEL=COS_OEM:/oem LABEL=COS_PERSISTENT:/usr/local"
+        OVERLAY: "tmpfs:25%"
+        RW_PATHS: "/var /etc /srv"
+        PERSISTENT_STATE_PATHS: >-
+          /etc/systemd
+          /etc/rancher
+          /etc/ssh
+          /etc/iscsi 
+          /etc/cni
+          /home
+          /opt
+          /root
+          /usr/libexec
+          /var/log
+          /var/lib/rancher
+          /var/lib/kubelet
+          /var/lib/wicked
+          /var/lib/longhorn
+          /var/lib/cni
+        PERSISTENT_STATE_BIND: "true"
+  rootfs.before:
+    - name: "Pull data from provider"
+      datasource:
+        providers: ["cdrom"]
+        path: "/oem"
+  fs.before:
+    - name: "Pull data from provider (local)"
+      datasource:
+        providers: ["aws", "gcp", "openstack", "cdrom"]
+        path: "/oem"
+  rootfs.after:
+    - if: '[ ! -f /run/cos/recovery_mode ] && [ ! -f /run/cos/live_mode ]'
+      name: "Grow persistent"
+      layout:
+        device:
+          label: COS_PERSISTENT
+        expand_partition:
+          size: 0
+  fs.before:
+    - if: '[ ! -f "/run/cos/recovery_mode" ] && [ ! -f /run/cos/live_mode ]'
+      name: "Grow persistent fs"
+      commands:
+      - resize2fs $(blkid -L COS_PERSISTENT)

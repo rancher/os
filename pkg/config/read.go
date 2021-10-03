@@ -40,7 +40,7 @@ func mapToEnv(prefix string, data map[string]interface{}) []string {
 	var result []string
 	for k, v := range data {
 		keyName := strings.ToUpper(prefix + convert.ToYAMLKey(k))
-		keyName = strings.ReplaceAll(keyName, "ELEMENTAL_", "COS_")
+		keyName = strings.ReplaceAll(keyName, "RANCHER_", "COS_")
 		if data, ok := v.(map[string]interface{}); ok {
 			subResult := mapToEnv(keyName+"_", data)
 			result = append(result, subResult...)

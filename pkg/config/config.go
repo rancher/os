@@ -1,6 +1,6 @@
 package config
 
-type Elemental struct {
+type Rancher struct {
 	Install Install `json:"install,omitempty"`
 }
 
@@ -21,8 +21,8 @@ type Install struct {
 }
 
 type Config struct {
-	SSHAuthorizedKeys []string  `json:"sshAuthorizedKeys,omitempty"`
-	Elemental         Elemental `json:"elemental,omitempty"`
+	SSHAuthorizedKeys []string `json:"sshAuthorizedKeys,omitempty"`
+	Rancher           Rancher  `json:"rancher,omitempty"`
 }
 
 type YipConfig struct {

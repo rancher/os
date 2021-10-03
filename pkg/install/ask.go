@@ -10,7 +10,7 @@ import (
 )
 
 func Ask(cfg *config.Config) error {
-	if cfg.Elemental.Install.Silent {
+	if cfg.Rancher.Install.Silent {
 		return nil
 	}
 
@@ -22,7 +22,7 @@ func Ask(cfg *config.Config) error {
 		return err
 	}
 
-	if cfg.Elemental.Install.ConfigURL == "" {
+	if cfg.Rancher.Install.ConfigURL == "" {
 		if err := AskGithub(cfg); err != nil {
 			return err
 		}
@@ -40,7 +40,7 @@ func Ask(cfg *config.Config) error {
 }
 
 func AskInstallDevice(cfg *config.Config) error {
-	if cfg.Elemental.Install.Device != "" {
+	if cfg.Rancher.Install.Device != "" {
 		return nil
 	}
 
@@ -54,7 +54,7 @@ func AskInstallDevice(cfg *config.Config) error {
 		return err
 	}
 
-	cfg.Elemental.Install.Device = "/dev/" + fields[i]
+	cfg.Rancher.Install.Device = "/dev/" + fields[i]
 	return nil
 }
 
@@ -64,7 +64,7 @@ func AskToken(cfg *config.Config, server bool) error {
 		err   error
 	)
 
-	if cfg.Elemental.Install.Token != "" {
+	if cfg.Rancher.Install.Token != "" {
 		return nil
 	}
 
@@ -77,7 +77,7 @@ func AskToken(cfg *config.Config, server bool) error {
 	} else {
 		token, err = questions.Prompt(msg+": ", "")
 	}
-	cfg.Elemental.Install.Token = token
+	cfg.Rancher.Install.Token = token
 
 	return err
 }
@@ -93,7 +93,7 @@ func isServer(cfg *config.Config) (bool, error) {
 }
 
 func AskServerAgent(cfg *config.Config) error {
-	if cfg.Elemental.Install.ServerURL != "" {
+	if cfg.Rancher.Install.ServerURL != "" {
 		return nil
 	}
 
@@ -110,13 +110,13 @@ func AskServerAgent(cfg *config.Config) error {
 	if err != nil {
 		return err
 	}
-	cfg.Elemental.Install.ServerURL = url
+	cfg.Rancher.Install.ServerURL = url
 
 	return AskToken(cfg, false)
 }
 
 func AskPassword(cfg *config.Config) error {
-	if cfg.Elemental.Install.Silent || cfg.Elemental.Install.Password != "" {
+	if cfg.Rancher.Install.Silent || cfg.Rancher.Install.Password != "" {
 		return nil
 	}
 
@@ -140,12 +140,12 @@ func AskPassword(cfg *config.Config) error {
 		}
 	}
 
-	cfg.Elemental.Install.Password = pass
+	cfg.Rancher.Install.Password = pass
 	return nil
 }
 
 func AskGithub(cfg *config.Config) error {
-	if len(cfg.SSHAuthorizedKeys) > 0 || cfg.Elemental.Install.Password != "" {
+	if len(cfg.SSHAuthorizedKeys) > 0 || cfg.Rancher.Install.Password != "" {
 		return nil
 	}
 
@@ -167,11 +167,11 @@ func AskGithub(cfg *config.Config) error {
 }
 
 func AskConfigURL(cfg *config.Config) error {
-	if cfg.Elemental.Install.ConfigURL != "" {
+	if cfg.Rancher.Install.ConfigURL != "" {
 		return nil
 	}
 
-	ok, err := questions.PromptBool("Configure system using an Elemental config file?", false)
+	ok, err := questions.PromptBool("Configure system using an cloud-config file?", false)
 	if err != nil {
 		return err
 	}
@@ -180,11 +180,11 @@ func AskConfigURL(cfg *config.Config) error {
 		return nil
 	}
 
-	str, err := questions.Prompt("Elemental config file location (file path or http URL): ", "")
+	str, err := questions.Prompt("cloud-config file location (file path or http URL): ", "")
 	if err != nil {
 		return err
 	}
 
-	cfg.Elemental.Install.ConfigURL = str
+	cfg.Rancher.Install.ConfigURL = str
 	return nil
 }

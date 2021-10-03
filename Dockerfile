@@ -36,21 +36,26 @@ RUN ["/usr/bin/busybox", "rm", "-rf", "/var", "/etc/ssl", "/usr/bin/busybox"]
 # Make OS image
 FROM opensuse/leap:15.3 as os
 RUN zypper in -y \
+    apparmor-parser \
     avahi \
     bash-completion \
     conntrack-tools \
     coreutils \
     curl \
     device-mapper \
+    dmidecode \
     dosfstools \
     dracut \
     e2fsprogs \
+    ethtool \
     findutils \
     gawk \
     gptfdisk \
     grub2-i386-pc \
     grub2-x86_64-efi \
     haveged \
+    hdparm \
+    iotop \
     iproute2 \
     iptables \
     iputils \
@@ -58,14 +63,22 @@ RUN zypper in -y \
     jq \
     kernel-default \
     kernel-firmware-bnx2 \
+    kernel-firmware-chelsio \
     kernel-firmware-i915 \
     kernel-firmware-intel \
     kernel-firmware-iwlwifi \
+    kernel-firmware-liquidio \
+    kernel-firmware-marvell \
+    kernel-firmware-mediatek \
     kernel-firmware-mellanox \
     kernel-firmware-network \
     kernel-firmware-platform \
+    kernel-firmware-qlogic \
     kernel-firmware-realtek \
+    kernel-firmware-usb-network \
     less \
+    lshw \
+    lsof \
     lsscsi \
     lvm2 \
     mdadm \
@@ -76,23 +89,27 @@ RUN zypper in -y \
     open-iscsi \
     open-vm-tools \
     parted \
+    pciutils \
     pigz \
     policycoreutils \
-    psmisc \
     procps \
+    psmisc \
     python-azure-agent \
     qemu-guest-agent \
+    rng-tools \
     rsync \
     squashfs \
     strace \
     SUSEConnect \
+    sysstat \
     systemd \
     systemd-sysvinit \
-    tcpdump \
     tar \
+    tcpdump \
     timezone \
     vim \
-    which
+    which \
+    zstd
 
 # Copy in some local OS customizations
 COPY opensuse/files /
@@ -100,7 +117,7 @@ COPY opensuse/files /
 # Starting from here are the lines needed for RancherOS to work
 
 # IMPORTANT: Setup rancheros-release used for versioning/upgrade. The
-# values here should reflect the tag of the image building built
+# values here should reflect the tag of the image being built
 ARG IMAGE_REPO=norepo
 ARG IMAGE_TAG=latest
 RUN echo "IMAGE_REPO=${IMAGE_REPO}"          > /usr/lib/rancheros-release && \

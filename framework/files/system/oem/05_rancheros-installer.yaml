@@ -1,4 +1,4 @@
-name: "Elemental Installer"
+name: "RancherOS Installer"
 stages:
   initramfs:
   - if: '[ -f /run/cos/live_mode ]'
