@@ -27,6 +27,7 @@ RUN ["luet", \
     "toolchain/yip", \
     "utils/installer", \
     "utils/k9s", \
+    "utils/rancherd", \
     "utils/nerdctl"]
 
 COPY --from=build /usr/sbin/ros-installer /usr/sbin/ros-installer

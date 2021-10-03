@@ -39,7 +39,7 @@ push:
 	docker push ${IMAGE}
 
 .PHONY: push
-push-framework:
+push-framework: build-framework
 	docker push ${REPO}-framework:${TAG}
 
 .PHONY: iso

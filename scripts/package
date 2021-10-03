@@ -16,6 +16,7 @@ fi
 
 if [ "$PUSH" = "true" ]; then
     make push
+    make push-framework
 fi
 
 
