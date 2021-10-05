@@ -25,7 +25,7 @@ RUN cd /usr/sbin && \
 RUN cd /usr/src && \
     git clone https://github.com/rancher-sandbox/cOS-toolkit
 COPY --from=quay.io/luet/base:0.17.8 /usr/bin/luet /usr/bin/luet
-RUN mkdir /iso /etc/luet
+RUN mkdir -p /iso/iso-overlay/boot/grub2 /etc/luet
 RUN echo -e \
 'logging:\n'\
 '  color: false\n'\
@@ -57,6 +57,7 @@ RUN echo -e \
 '\n'\
 'overlay:\n'\
 '  rootfs: /iso/overlay\n'\
+'  isoimage: /iso/iso-overlay\n'\
 '\n'\
 'image_prefix: "output"\n'\
 'label: "COS_LIVE"\n'\
@@ -71,6 +72,41 @@ RUN echo -e \
 '    enable: true\n'\
 '    urls:\n'\
 '    - "quay.io/costoolkit/releases-green"\n' > /iso/iso.yaml
+RUN echo -e \
+'search --file --set=root /boot/kernel.xz\n'\
+'set default=0\n'\
+'set timeout=10\n'\
+'set timeout_style=menu\n'\
+'set linux=linux\n'\
+'set initrd=initrd\n'\
+'if [ "${grub_cpu}" = "x86_64" -o "${grub_cpu}" = "i386" -o "${grub_cpu}" = "arm64" ];then\n'\
+'    if [ "${grub_platform}" = "efi" ]; then\n'\
+'        if [ "${grub_cpu}" != "arm64" ]; then\n'\
+'            set linux=linuxefi\n'\
+'            set initrd=initrdefi\n'\
+'        fi\n'\
+'    fi\n'\
+'fi\n'\
+'if [ "${grub_platform}" = "efi" ]; then\n'\
+'    echo "Please press 't' to show the boot menu on this console"\n'\
+'fi\n'\
+'set font=($root)/boot/${grub_cpu}/loader/grub2/fonts/unicode.pf2\n'\
+'if [ -f ${font} ];then\n'\
+'    loadfont ${font}\n'\
+'fi\n'\
+'menuentry "RancherOS Install" --class os --unrestricted {\n'\
+'    echo Loading kernel...\n'\
+'    $linux ($root)/boot/kernel.xz cdroot root=live:CDLABEL=COS_LIVE rd.live.dir=/ rd.live.squashimg=rootfs.squashfs console=tty1 console=ttyS0 rd.cos.disable\n'\
+'    echo Loading initrd...\n'\
+'    $initrd ($root)/boot/rootfs.xz\n'\
+'}\n'\
+'\n'\
+'if [ "${grub_platform}" = "efi" ]; then\n'\
+'    hiddenentry "Text mode" --hotkey "t" {\n'\
+'        set textmode=true\n'\
+'        terminal_output console\n'\
+'    }\n'\
+'fi\n' > /iso/iso-overlay/boot/grub2/grub.cfg
 RUN luet install --no-spinner -y toolchain/luet-makeiso
 WORKDIR /usr/src/cOS-toolkit/packer
 
