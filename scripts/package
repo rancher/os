@@ -28,8 +28,8 @@ fi
 export GIT_COMMIT=${COMMIT}
 make -j8 ${TARGETS}
 
-mkdir -p dist
+mkdir -p dist/artifacts
 for i in build/output.*; do
-    mv -f $i dist/rancheros-${TAG}${i##build/output}
-    echo Built: dist/rancheros-${TAG}${i##build/output}
+    mv -f $i dist/artifacts/rancheros-${TAG}${i##build/output}
+    echo Built: dist/artifacts/rancheros-${TAG}${i##build/output}
 done
