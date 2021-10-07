@@ -65,7 +65,6 @@ steps:
       from_secret: docker_password
     platforms:
       - linux/amd64
-      - linux/arm64
     target: "rancher/os:${DRONE_TAG}"
     template: "rancher/os:${DRONE_TAG}-ARCH"
   when:
