@@ -28,8 +28,12 @@ fi
 export GIT_COMMIT=${COMMIT}
 make -j8 ${TARGETS}
 
+isoinfo -x /rootfs.squashfs -R -i build/output.iso > build/output.squashfs
+isoinfo -x /boot/kernel.xz -R -i build/output.iso > build/output-kernel
+isoinfo -x /boot/rootfs.xz -R -i build/output.iso > build/output-initrd
+
 mkdir -p dist/artifacts
-for i in build/output.*; do
+for i in build/output*; do
     mv -f $i dist/artifacts/rancheros-${TAG}${i##build/output}
     echo Built: dist/artifacts/rancheros-${TAG}${i##build/output}
 done
