@@ -14,19 +14,27 @@ ARG IMAGE=rancher/os:dev
 FROM ${IMAGE} AS os
 
 FROM opensuse/leap:15.3 AS tools
+RUN zypper ref
 ENV LUET_NOLOCK=true
 # Copy luet from the official images
-RUN zypper in -y squashfs xorriso curl unzip git qemu-kvm qemu-tools tar pigz
+RUN zypper in -y squashfs xorriso curl unzip git qemu-arm qemu-x86 qemu-tools tar pigz go1.16 qemu-uefi-aarch64
 RUN cd /usr/sbin && \
     rm packer && \
-    curl https://releases.hashicorp.com/packer/1.7.4/packer_1.7.4_linux_amd64.zip > tmp && \
+    SUFFIX=amd64 && \
+    if [ "$(uname -m)" = "aarch64" ]; then SUFFIX=arm64; fi && \
+    curl https://releases.hashicorp.com/packer/1.7.4/packer_1.7.4_linux_${SUFFIX}.zip > tmp && \
     unzip tmp && \
     rm tmp
 RUN cd /usr/src && \
     git clone https://github.com/rancher-sandbox/cOS-toolkit
-COPY --from=quay.io/luet/base:0.17.8 /usr/bin/luet /usr/bin/luet
+RUN curl -Lo /usr/bin/luet https://github.com/mudler/luet/releases/download/0.18.1/luet-0.18.1-linux-$(go env GOARCH) && \
+    chmod +x /usr/bin/luet
 RUN mkdir -p /iso/iso-overlay/boot/grub2 /etc/luet
-RUN echo -e \
+RUN export SUFFIX; \
+if [ "$(uname -m)" == "aarch64" ]; then \
+    SUFFIX=-arm64 \
+;fi && \
+echo -e \
 'logging:\n'\
 '  color: false\n'\
 '  enable_emoji: false\n'\
@@ -38,8 +46,8 @@ RUN echo -e \
 '  type: "docker"\n'\
 '  enable: true\n'\
 '  urls:\n'\
-'  - "quay.io/costoolkit/releases-green"\n' > /etc/luet/luet.yaml
-RUN echo -e \
+"  - \"quay.io/costoolkit/releases-green${SUFFIX}\"\n" > /etc/luet/luet.yaml && \
+echo -e \
 'packages:\n'\
 '  uefi:\n'\
 '  - live/grub2-efi-image\n'\
@@ -71,7 +79,7 @@ RUN echo -e \
 '    type: "docker"\n'\
 '    enable: true\n'\
 '    urls:\n'\
-'    - "quay.io/costoolkit/releases-green"\n' > /iso/iso.yaml
+"    - \"quay.io/costoolkit/releases-green${SUFFIX}\"\n" > /iso/iso.yaml
 RUN echo -e \
 'search --file --set=root /boot/kernel.xz\n'\
 'set default=0\n'\
@@ -116,10 +124,15 @@ RUN cd /iso && \
     luet-makeiso iso.yaml
 
 FROM iso-build AS qcow-build
-RUN packer build \
+RUN SUFFIX= && \
+    FIRMWARE= && \
+    if [ "$(uname -m)" = "aarch64" ]; then SUFFIX=-arm64; FIRMWARE=/usr/share/qemu/qemu-uefi-aarch64.bin; fi && \
+    PACKER_LOG=1 packer build \
+    -var "firmware=${FIRMWARE}" \
+    -var "memory=1024" \
     -var "iso=/iso/output.iso" \
     -var "accelerator=tcg" \
-    -only qemu.cos .
+    -only qemu.cos${SUFFIX} .
 RUN mkdir /output && \
     mv *.box /output/output.box && \
     pigz -dc *.tar.gz | tar xvf - && \

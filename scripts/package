@@ -6,8 +6,8 @@ source $(dirname $0)/version
 cd $(dirname $0)/..
 
 export TAG
+make build
 make iso
-TARGETS="iso"
 
 if [ -n "$DOCKER_PASSWORD" ]; then
     docker login -u "$DOCKER_USERNAME" -p "${DOCKER_PASSWORD}"
@@ -19,14 +19,14 @@ if [ "$PUSH" = "true" ]; then
     make push-framework
 fi
 
-
-TARGETS=qcow
 if [ "$PUSH" = "true" ] && [ -n "$AWS_SECRET_ACCESS_KEY" ]; then
-    TARGETS="${TARGETS} all-amis"
+    IMAGE_TARGETS="${IMAGE_TARGETS} all-amis"
 fi
 
 export GIT_COMMIT=${COMMIT}
-make -j8 ${TARGETS}
+if [ -n "${IMAGE_TARGETS}" ]; then
+    make -j8 ${IMAGE_TARGETS}
+fi
 
 isoinfo -x /rootfs.squashfs -R -i build/output.iso > build/output.squashfs
 isoinfo -x /boot/kernel.xz -R -i build/output.iso > build/output-kernel

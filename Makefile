@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := build
+.DEFAULT_GOAL := package
 REPO?=rancher/os
 TAG?=dev
 IMAGE=${REPO}:${TAG}
@@ -10,13 +10,17 @@ IMAGE=${REPO}:${TAG}
 	@./.dapper.tmp -v
 	@mv .dapper.tmp .dapper
 
-.PHONY: validate
+.PHONY: ci
 ci: .dapper
 	./.dapper ci
 
+.PHONY: package
+package: .dapper
+	./.dapper package
+
 .PHONY: clean
 clean:
-	rm -rf build
+	rm -rf build dist
 
 .PHONY: build-framework
 build-framework:
@@ -43,12 +47,12 @@ push-framework: build-framework
 	docker push ${REPO}-framework:${TAG}
 
 .PHONY: iso
-iso: build
+iso:
 	./ros-image-build ${IMAGE} iso
 	@echo "INFO: ISO available at build/output.iso"
 
 .PHONY: qcow
-qcow: build
+qcow:
 	./ros-image-build ${IMAGE} qcow
 	@echo "INFO: QCOW image available at build/output.qcow.gz"
 

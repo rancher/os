@@ -1,5 +1,8 @@
 FROM opensuse/leap:15.3 AS build
-RUN zypper in -y squashfs xorriso go1.16 upx busybox-static
+RUN zypper ref
+RUN zypper in -y squashfs xorriso go1.16 upx busybox-static curl
+RUN curl -Lo /usr/bin/luet https://github.com/mudler/luet/releases/download/0.18.1/luet-0.18.1-linux-$(go env GOARCH) && \
+    chmod +x /usr/bin/luet
 COPY go.mod go.sum /usr/src/
 COPY cmd /usr/src/cmd
 COPY pkg /usr/src/pkg
@@ -9,7 +12,7 @@ RUN cd /usr/src && \
 
 FROM scratch AS framework
 COPY --from=build /usr/bin/busybox-static /usr/bin/busybox
-COPY --from=quay.io/luet/base:0.17.8 /usr/bin/luet /usr/bin/luet
+COPY --from=build /usr/bin/luet /usr/bin/luet
 COPY framework/files/etc/luet/luet.yaml /etc/luet/luet.yaml
 COPY --from=build /etc/ssl/certs /etc/ssl/certs
 
@@ -19,23 +22,19 @@ RUN ["luet", \
     "install", "--no-spinner", "-d", "-y", \
     "selinux/k3s", \
     "selinux/rancher", \
-    "system/base-dracut-modules", \
-    "system/cloud-config", \
-    "system/cos-setup", \
-    "system/grub2-config", \
-    "system/immutable-rootfs", \
-    "toolchain/yip", \
-    "utils/installer", \
+    "meta/cos-minimal", \
     "utils/k9s", \
     "utils/rancherd", \
     "utils/nerdctl"]
 
 COPY --from=build /usr/sbin/ros-installer /usr/sbin/ros-installer
 COPY framework/files/ /
+RUN ["/usr/bin/busybox", "sh", "-c", "if [ -e /etc/luet/luet.yaml.$(busybox uname -m) ]; then busybox mv -f /etc/luet/luet.yaml.$(busybox uname -m) /etc/luet/luet.yaml; fi && busybox rm -f /etc/luet/luet.yaml.*"]
 RUN ["/usr/bin/busybox", "rm", "-rf", "/var", "/etc/ssl", "/usr/bin/busybox"]
 
 # Make OS image
 FROM opensuse/leap:15.3 as os
+RUN zypper ref
 RUN zypper in -y \
     apparmor-parser \
     avahi \
@@ -129,4 +128,7 @@ RUN echo "IMAGE_REPO=${IMAGE_REPO}"          > /usr/lib/rancheros-release && \
 COPY --from=framework / /
 
 # Rebuild initrd to setup dracut with the boot configurations
-RUN mkinitrd
+RUN mkinitrd && \
+    # aarch64 has an uncompressed kernel so we need to link it to vmlinuz
+    kernel=$(ls /boot/Image-* | head -n1) && \
+    if [ -e "$kernel" ]; then ln -sf "${kernel#/boot/}" /boot/vmlinuz; fi
