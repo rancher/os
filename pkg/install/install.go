@@ -1,6 +1,7 @@
 package install
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -10,16 +11,16 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func Run(automatic bool) error {
-	cfg, err := config.ReadConfig()
+func Run(automatic bool, configFile string) error {
+	cfg, err := config.ReadConfig(configFile)
 	if err != nil {
 		return err
 	}
 
-	if automatic && !cfg.Rancher.Install.Automatic {
+	if automatic && !cfg.RancherOS.Install.Automatic {
 		return nil
 	} else if automatic {
-		cfg.Rancher.Install.Silent = true
+		cfg.RancherOS.Install.Silent = true
 	}
 
 	err = Ask(&cfg)
@@ -44,7 +45,7 @@ func runInstall(cfg config.Config, output string) error {
 		return err
 	}
 
-	if !cfg.Rancher.Install.Silent {
+	if !cfg.RancherOS.Install.Silent {
 		val, err := questions.PromptBool("\nConfiguration\n"+"-------------\n\n"+
 			string(installBytes)+
 			"\nYour disk will be formatted and installed with the above configuration.\nContinue?", false)
@@ -53,30 +54,20 @@ func runInstall(cfg config.Config, output string) error {
 		}
 	}
 
-	if cfg.Rancher.Install.ConfigURL == "" {
-		yip := config.YipConfig{
-			Rancherd: config.Rancherd{
-				Server: cfg.Rancher.Install.ServerURL,
-				Token:  cfg.Rancher.Install.Token,
-			},
-		}
-		if cfg.Rancher.Install.ServerURL == "" {
-			yip.Rancherd.Role = "cluster-init"
-		} else {
-			yip.Rancherd.Role = "agent"
-		}
-		if cfg.Rancher.Install.Password != "" || len(cfg.SSHAuthorizedKeys) > 0 {
+	if cfg.RancherOS.Install.ConfigURL == "" && !cfg.RancherOS.Install.Silent {
+		yip := config.YipConfig{}
+		if cfg.RancherOS.Install.Password != "" || len(cfg.SSHAuthorizedKeys) > 0 {
 			yip.Stages = map[string][]config.Stage{
 				"network": {{
 					Users: map[string]config.User{
 						"root": {
 							Name:              "root",
-							PasswordHash:      cfg.Rancher.Install.Password,
+							PasswordHash:      cfg.RancherOS.Install.Password,
 							SSHAuthorizedKeys: cfg.SSHAuthorizedKeys,
 						},
 					}},
 				}}
-			cfg.Rancher.Install.Password = ""
+			cfg.RancherOS.Install.Password = ""
 		}
 
 		data, err := yaml.Marshal(yip)
@@ -87,7 +78,7 @@ func runInstall(cfg config.Config, output string) error {
 		if err := ioutil.WriteFile(output+".yip", data, 0600); err != nil {
 			return err
 		}
-		cfg.Rancher.Install.ConfigURL = output + ".yip"
+		cfg.RancherOS.Install.ConfigURL = output + ".yip"
 	}
 
 	ev, err := config.ToEnv(cfg)
@@ -95,10 +86,28 @@ func runInstall(cfg config.Config, output string) error {
 		return err
 	}
 
+	printEnv(cfg)
+
 	cmd := exec.Command("cos-installer")
 	cmd.Env = append(os.Environ(), ev...)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func printEnv(cfg config.Config) {
+	if cfg.RancherOS.Install.Password != "" {
+		cfg.RancherOS.Install.Password = "<removed>"
+	}
+
+	ev2, err := config.ToEnv(cfg)
+	if err != nil {
+		return
+	}
+
+	fmt.Println("Install environment:")
+	for _, ev := range ev2 {
+		fmt.Println(ev)
+	}
 }

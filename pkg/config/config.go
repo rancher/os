@@ -1,6 +1,6 @@
 package config
 
-type Rancher struct {
+type RancherOS struct {
 	Install Install `json:"install,omitempty"`
 }
 
@@ -15,29 +15,20 @@ type Install struct {
 	NoFormat  bool   `json:"noFormat,omitempty"`
 	Debug     bool   `json:"debug,omitempty"`
 	TTY       string `json:"tty,omitempty"`
-	ServerURL string `json:"serverUrl,omitempty"`
-	Token     string `json:"token,omitempty"`
 	Password  string `json:"password,omitempty"`
 }
 
 type Config struct {
-	SSHAuthorizedKeys []string `json:"sshAuthorizedKeys,omitempty"`
-	Rancher           Rancher  `json:"rancher,omitempty"`
+	SSHAuthorizedKeys []string  `json:"sshAuthorizedKeys,omitempty"`
+	RancherOS         RancherOS `json:"rancheros,omitempty"`
 }
 
 type YipConfig struct {
-	Stages   map[string][]Stage `json:"stages,omitempty"`
-	Rancherd Rancherd           `json:"rancherd,omitempty"`
+	Stages map[string][]Stage `json:"stages,omitempty"`
 }
 
 type Stage struct {
 	Users map[string]User `json:"users,omitempty"`
-}
-
-type Rancherd struct {
-	Server string `json:"server,omitempty"`
-	Role   string `json:"role,omitempty"`
-	Token  string `json:"token,omitempty"`
 }
 
 type User struct {

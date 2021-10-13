@@ -11,10 +11,34 @@ fi
 touch meta-data
 touch user-data
 rm -f seed.iso
-genisoimage -output seed.iso -volid cidata -joliet -rock user-data meta-data
+mkisofs -output seed.iso -volid cidata -joliet -rock user-data meta-data
+BOOT=
+
+if [ "$1" = "pxe" ]; then
+    shift 1
+    if [ ! -e ipxe.cfg ]; then
+        if [ ! -e ../dist/artifacts/rancheros-dev.ipxe ]; then
+            make -C .. package
+        fi
+        if [ -e ../dist/artifacts/rancheros-dev.ipxe ]; then
+            cp ../dist/artifacts/rancheros-dev.ipxe ipxe.cfg
+        fi
+    fi
+    BOOT="-boot cn"
+
+    if [ ! -e dev ]; then
+        ln -s ../dist/artifacts dev
+    fi
+fi
+
+
+if [ "$1" == "" ] && [ ! -e output.iso ]; then
+    make -C .. build iso
+fi
 
     #-bios /usr/share/qemu/OVMF.fd \
 qemu-system-x86_64 \
+    $BOOT \
     -enable-kvm \
     -m ${MEMORY:=4096} \
     -machine accel=${ACCEL:="kvm"} \
@@ -23,6 +47,7 @@ qemu-system-x86_64 \
     -serial mon:stdio \
     -rtc base=utc,clock=rt \
     -chardev socket,path=qga.sock,server,nowait,id=qga0 \
+    -nic user,tftp=./,bootfile=/ipxe.cfg \
     -device virtio-serial \
     -device virtserialport,chardev=qga0,name=org.qemu.guest_agent.0 \
     -drive if=virtio,media=disk,file=disk.img \

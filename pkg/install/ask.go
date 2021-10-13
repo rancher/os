@@ -10,10 +10,6 @@ import (
 )
 
 func Ask(cfg *config.Config) error {
-	if cfg.Rancher.Install.Silent {
-		return nil
-	}
-
 	if err := AskInstallDevice(cfg); err != nil {
 		return err
 	}
@@ -22,16 +18,12 @@ func Ask(cfg *config.Config) error {
 		return err
 	}
 
-	if cfg.Rancher.Install.ConfigURL == "" {
+	if cfg.RancherOS.Install.ConfigURL == "" {
 		if err := AskGithub(cfg); err != nil {
 			return err
 		}
 
 		if err := AskPassword(cfg); err != nil {
-			return err
-		}
-
-		if err := AskServerAgent(cfg); err != nil {
 			return err
 		}
 	}
@@ -40,7 +32,7 @@ func Ask(cfg *config.Config) error {
 }
 
 func AskInstallDevice(cfg *config.Config) error {
-	if cfg.Rancher.Install.Device != "" {
+	if cfg.RancherOS.Install.Device != "" {
 		return nil
 	}
 
@@ -54,69 +46,22 @@ func AskInstallDevice(cfg *config.Config) error {
 		return err
 	}
 
-	cfg.Rancher.Install.Device = "/dev/" + fields[i]
+	cfg.RancherOS.Install.Device = "/dev/" + fields[i]
 	return nil
 }
 
-func AskToken(cfg *config.Config, server bool) error {
-	var (
-		token string
-		err   error
-	)
-
-	if cfg.Rancher.Install.Token != "" {
-		return nil
-	}
-
-	msg := "Token or cluster secret"
-	if server {
-		msg += " (optional)"
-	}
-	if server {
-		token, err = questions.PromptOptional(msg+": ", "")
-	} else {
-		token, err = questions.Prompt(msg+": ", "")
-	}
-	cfg.Rancher.Install.Token = token
-
-	return err
-}
-
-func isServer(cfg *config.Config) (bool, error) {
-	opts := []string{"server", "agent"}
+func isServer(cfg *config.Config) (bool, bool, error) {
+	opts := []string{"server", "agent", "none"}
 	i, err := questions.PromptFormattedOptions("Run as server or agent?", 0, opts...)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
-	return i == 0, nil
-}
-
-func AskServerAgent(cfg *config.Config) error {
-	if cfg.Rancher.Install.ServerURL != "" {
-		return nil
-	}
-
-	server, err := isServer(cfg)
-	if err != nil {
-		return err
-	}
-
-	if server {
-		return AskToken(cfg, true)
-	}
-
-	url, err := questions.Prompt("URL of server: ", "")
-	if err != nil {
-		return err
-	}
-	cfg.Rancher.Install.ServerURL = url
-
-	return AskToken(cfg, false)
+	return i == 0, i == 1, nil
 }
 
 func AskPassword(cfg *config.Config) error {
-	if cfg.Rancher.Install.Silent || cfg.Rancher.Install.Password != "" {
+	if cfg.RancherOS.Install.Silent || cfg.RancherOS.Install.Password != "" {
 		return nil
 	}
 
@@ -140,12 +85,12 @@ func AskPassword(cfg *config.Config) error {
 		}
 	}
 
-	cfg.Rancher.Install.Password = pass
+	cfg.RancherOS.Install.Password = pass
 	return nil
 }
 
 func AskGithub(cfg *config.Config) error {
-	if len(cfg.SSHAuthorizedKeys) > 0 || cfg.Rancher.Install.Password != "" {
+	if len(cfg.SSHAuthorizedKeys) > 0 || cfg.RancherOS.Install.Password != "" || cfg.RancherOS.Install.Silent {
 		return nil
 	}
 
@@ -167,7 +112,7 @@ func AskGithub(cfg *config.Config) error {
 }
 
 func AskConfigURL(cfg *config.Config) error {
-	if cfg.Rancher.Install.ConfigURL != "" {
+	if cfg.RancherOS.Install.ConfigURL != "" || cfg.RancherOS.Install.Silent {
 		return nil
 	}
 
@@ -185,6 +130,6 @@ func AskConfigURL(cfg *config.Config) error {
 		return err
 	}
 
-	cfg.Rancher.Install.ConfigURL = str
+	cfg.RancherOS.Install.ConfigURL = str
 	return nil
 }

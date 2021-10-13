@@ -32,6 +32,30 @@ isoinfo -x /rootfs.squashfs -R -i build/output.iso > build/output.squashfs
 isoinfo -x /boot/kernel.xz -R -i build/output.iso > build/output-kernel
 isoinfo -x /boot/rootfs.xz -R -i build/output.iso > build/output-initrd
 
+
+RELEASE_URL=${RELEASE_URL:-https://github.com/rancher/os/releases/download}
+INSTALL_CFG=${RELEASE_URL}/${VERSION}/example-cloud-init
+PXE_ASSET_VERSION="\${version}-\${arch}"
+if [ "${TAG}" = "dev" ]; then
+    RELEASE_URL=tftp://10.0.2.2
+    INSTALL_CFG=
+    VERSION=${TAG}
+    PXE_ASSET_VERSION=${TAG}
+fi
+
+cat > build/output.ipxe << EOF
+#!ipxe
+set arch ${ARCH}
+set version ${VERSION}
+set url ${RELEASE_URL}/\${version}
+set kernel rancheros-${PXE_ASSET_VERSION}-kernel
+set initrd rancheros-${PXE_ASSET_VERSION}-initrd
+set rootfs rancheros-${PXE_ASSET_VERSION}.squashfs
+kernel \${url}/\${kernel} initrd=\${initrd} ip=dhcp rd.cos.disable root=live:\${url}/\${rootfs} rancheros.install.automatic=true rancheros.install.config_url=\${config} console=tty1 console=ttyS0
+initrd \${url}/\${initrd}
+boot
+EOF
+
 mkdir -p dist/artifacts
 for i in build/output*; do
     mv -f $i dist/artifacts/rancheros-${TAG}${i##build/output}

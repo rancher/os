@@ -1,0 +1,17 @@
+[Unit]
+Description=RancherOS Automatic Installation
+Documentation=https://github.com/rancher/os
+Wants=network-online.target
+After=network-online.target
+Before=getty-pre.target serial-getty@ttyS0.service
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/%N
+EnvironmentFile=-/etc/sysconfig/%N
+TimeoutStartSec=0
+StandardOutput=journal+console
+ExecStart=/usr/sbin/ros-installer -automatic

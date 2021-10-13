@@ -30,7 +30,9 @@ func (f *FuzzyNames) addName(name, toName string) {
 }
 
 func (f *FuzzyNames) ModifySchema(schema *schemas2.Schema, schemas *schemas2.Schemas) error {
-	f.names = map[string]string{}
+	if f.names == nil {
+		f.names = map[string]string{}
+	}
 
 	for name := range schema.ResourceFields {
 		if strings.HasSuffix(name, "s") && len(name) > 1 {

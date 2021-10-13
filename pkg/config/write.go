@@ -6,10 +6,10 @@ import (
 )
 
 func PrintInstall(cfg Config) ([]byte, error) {
-	if cfg.Rancher.Install.Password != "" {
-		cfg.Rancher.Install.Password = "******"
+	if cfg.RancherOS.Install.Password != "" {
+		cfg.RancherOS.Install.Password = "******"
 	}
-	data, err := convert.EncodeToMap(cfg.Rancher.Install)
+	data, err := convert.EncodeToMap(cfg.RancherOS.Install)
 	if err != nil {
 		return nil, err
 	}

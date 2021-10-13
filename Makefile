@@ -68,6 +68,10 @@ ami:
 run:
 	./scripts/run
 
+.PHONY: run
+pxe:
+	./scripts/run pxe
+
 all-amis: \
 	ami-us-west-1 \
 	ami-us-west-2
