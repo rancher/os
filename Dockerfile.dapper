@@ -1,9 +1,9 @@
 FROM opensuse/leap
+RUN zypper ref
 
 ARG DAPPER_HOST_ARCH
 ENV ARCH $DAPPER_HOST_ARCH
 
-RUN zypper ref
 RUN zypper in -y bash git gcc docker vim less file curl wget ca-certificates make mkisofs go1.16
 RUN go get golang.org/x/tools/cmd/goimports
 RUN if [ "${ARCH}" == "amd64" ]; then \
@@ -16,6 +16,7 @@ ENV DAPPER_ENV REPO TAG DRONE_TAG CROSS DOCKER_USERNAME DOCKER_PASSWORD AWS_ACCE
 ENV DAPPER_SOURCE /go/src/github.com/rancher/os/
 ENV DAPPER_OUTPUT ./bin ./dist
 ENV DAPPER_DOCKER_SOCKET true
+ENV DAPPER_RUN_ARGS "-v ros-go16-pkg-1:/go/pkg -v ros-go16-cache-1:/root/.cache/go-build"
 WORKDIR ${DAPPER_SOURCE}
 
 ENTRYPOINT ["./scripts/entry"]

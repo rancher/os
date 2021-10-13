@@ -5,4 +5,4 @@ cd $(dirname $0)
 
 ./test
 ./validate
-./package
+IMAGE_TARGETS=${IMAGE_TARGETS:-qcow} ./package
