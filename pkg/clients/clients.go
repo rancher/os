@@ -17,6 +17,7 @@ import (
 )
 
 const (
+	// SystemNamespace Default namespace for rancher system objects
 	SystemNamespace = "cattle-system"
 )
 
