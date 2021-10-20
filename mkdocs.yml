@@ -1,0 +1,59 @@
+# Project information
+site_name: RancherOS v2 - Immutable Linux for Rancher
+site_url: https://rancher.github.io/os2
+
+# Repository
+repo_name: rancher/os2
+repo_url: https://github.com/rancher/os2
+edit_uri: https://github.com/rancher/os2/edit/main/docs/
+# Set to false for local docs development
+strict: true
+
+theme:
+  name: material
+  #logo: 'assets/logo_horizontal_white.png'
+  #favicon: 'assets/favicon.ico'
+  palette:
+    - scheme: default
+      primary: grey
+      toggle:
+        icon: material/eye-outline
+        name: Dark Mode
+    - scheme: slate
+      primary: grey
+      toggle:
+        icon: material/eye
+        name: Light Mode
+  icon:
+    repo: fontawesome/brands/github
+
+# Customization
+extra:
+  homepage: https://rancher.github.io/os2
+
+#google_analytics:
+plugins:
+  - search
+  - markdownextradata: {}
+
+markdown_extensions:
+- codehilite
+- admonition
+- pymdownx.tabbed
+- pymdownx.superfences
+- toc:
+    permalink: true
+
+nav:
+  - index.md
+    #- Installation:
+    #  - install/iso-install.md
+    #  - install/pxe-boot-install.md
+    #- configuration.md
+    #- Operator:
+    #    - operator/upgrade.md
+    #    - operator/inventory.md
+    #- dashboard.md
+    #- Reference:
+    #  - reference/api.md
+    #- faq.md

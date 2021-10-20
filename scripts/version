@@ -36,6 +36,6 @@ if echo $TAG | grep -q dirty; then
     HELM_VERSION=0.0.0-dev
 fi
 
-if echo "$HELM_VERSION" | grep -q '^[^0-9]'; then
+if ! echo "$HELM_VERSION" | grep -q '^[0-9]\.[0-9]'; then
     HELM_VERSION=0.0.0-dev
 fi
