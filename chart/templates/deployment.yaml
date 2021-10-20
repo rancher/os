@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rancheros-operator
+spec:
+  selector:
+    matchLabels:
+      app: rancheros-operator
+  template:
+    metadata:
+      labels:
+        app: rancheros-operator
+    spec:
+      containers:
+      - env:
+        {{- if .Values.proxy }}
+        - name: HTTP_PROXY
+          value: {{ .Values.proxy }}
+        - name: HTTPS_PROXY
+          value: {{ .Values.proxy }}
+        - name: NO_PROXY
+          value: {{ .Values.noProxy }}
+        {{- end }}
+        image: '{{ template "system_default_registry" . }}{{ .Values.image.repository }}:{{ .Values.image.tag }}'
+        name: rancheros-operator
+        imagePullPolicy: "{{ .Values.image.imagePullPolicy }}"
+        command:
+        - /usr/sbin/ros-operator
+      serviceAccountName: rancheros-operator
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

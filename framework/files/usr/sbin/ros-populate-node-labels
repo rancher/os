@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+. /usr/lib/rancheros-release
+
+IMAGE=$(echo "$IMAGE" | sed 's![/:]!-!g')
+for i in rke2 k3s; do
+    mkdir -p /etc/rancher/$i/config.yaml.d
+    cat > /etc/rancher/$i/config.yaml.d/99-rancheros-labels.yaml << EOF
+node-label+:
+- rancheros.cattle.io/image=${IMAGE}
+- rancheros.cattle.io/tag=${IMAGE_TAG}
+- plan.upgrade.cattle.io/os-upgrader=${IMAGE}
+EOF
+done

@@ -47,7 +47,7 @@ qemu-system-x86_64 \
     -serial mon:stdio \
     -rtc base=utc,clock=rt \
     -chardev socket,path=qga.sock,server,nowait,id=qga0 \
-    -nic user,tftp=./,bootfile=/ipxe.cfg \
+    -nic user,tftp=./,bootfile=/ipxe.cfg,hostfwd=tcp:127.0.0.1:2222-:22 \
     -device virtio-serial \
     -device virtserialport,chardev=qga0,name=org.qemu.guest_agent.0 \
     -drive if=virtio,media=disk,file=disk.img \

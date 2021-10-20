@@ -1,0 +1,13 @@
+[Unit]
+Description=RancherOS Populated Node Labels
+Documentation=https://github.com/rancher/os
+Before=network-online.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/%N
+EnvironmentFile=-/etc/sysconfig/%N
+ExecStart=ros-populate-node-labels

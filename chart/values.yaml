@@ -1,0 +1,23 @@
+image:
+  repository: rancher/os
+  tag: dev
+  imagePullPolicy: IfNotPresent
+
+# http[s] proxy server
+# proxy: http://<username>@<password>:<url>:<port>
+
+# comma separated list of domains or ip addresses that will not use the proxy
+noProxy: 127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,.svc,.cluster.local
+
+global:
+  cattle:
+    systemDefaultRegistry: ""
+
+nodeSelector:
+  kubernetes.io/os: linux
+
+tolerations:
+  - key: cattle.io/os
+    operator: "Equal"
+    value: "linux"
+    effect: NoSchedule

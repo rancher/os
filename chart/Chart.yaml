@@ -1,0 +1,13 @@
+apiVersion: v2
+name: rancheros-operator
+description: RancherOS Operator
+version: 0.0.0
+appVersion: 0.0.0
+icon: https://charts.rancher.io/assets/logos/rancheros-operator.svg
+annotations:
+  catalog.cattle.io/certified: rancher
+  catalog.cattle.io/experimental: "true"
+  catalog.cattle.io/namespace: cattle-rancheros-operator-system
+  catalog.cattle.io/release-name: rancheros-operator
+  catalog.cattle.io/provides-gvr: managedoses.rancheros.cattle.io/v1
+  catalog.cattle.io/os: linux

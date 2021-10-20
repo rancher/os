@@ -1,12 +1,12 @@
 #!/bin/bash
 set -x -e
 HOST_DIR="${HOST_DIR:-/host}"
-RELEASE_FILE="${RELEASE_FILE:-/etc/os-release}"
+RELEASE_FILE="${RELEASE_FILE:-/usr/lib/rancheros-release}"
 
 if [ "$FORCE" != "true" ]; then
     if diff $RELEASE_FILE ${HOST_DIR}${RELEASE_FILE} >/dev/null; then
         echo Update to date with
-        cat /etc/os-release
+        cat ${RELEASE_FILE}
         exit 0
     fi
 fi

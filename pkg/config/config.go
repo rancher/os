@@ -15,7 +15,7 @@ type Install struct {
 	NoFormat  bool   `json:"noFormat,omitempty"`
 	Debug     bool   `json:"debug,omitempty"`
 	TTY       string `json:"tty,omitempty"`
-	Password  string `json:"password,omitempty"`
+	Password  string `json:"password,omitempy"`
 }
 
 type Config struct {

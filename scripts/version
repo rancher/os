@@ -1,11 +1,17 @@
 #!/bin/bash
 
-if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+if [ -e .git ] || [ -e ../.git ]; then
+    if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
+        DIRTY="-dirty"
+    fi
+
+    COMMIT=$(git rev-parse --short HEAD)
+    GIT_TAG=${DRONE_TAG:-$(git tag -l --contains HEAD | head -n 1)}
+else
+    COMMIT=HEAD
+    GIT_TAG=HEAD
     DIRTY="-dirty"
 fi
-
-COMMIT=$(git rev-parse --short HEAD)
-GIT_TAG=${DRONE_TAG:-$(git tag -l --contains HEAD | head -n 1)}
 
 if [[ -z "$DIRTY" && -n "$GIT_TAG" ]]; then
     VERSION=$GIT_TAG
@@ -19,9 +25,17 @@ fi
 
 SUFFIX="-${ARCH}"
 
+HELM_TAG=${TAG:-${VERSION}}
+HELM_VERSION=${HELM_TAG/v/}
 TAG=${TAG:-${VERSION}${SUFFIX}}
 REPO=${REPO:-rancher}
 
 if echo $TAG | grep -q dirty; then
     TAG=dev
+    HELM_TAG=dev
+    HELM_VERSION=0.0.0-dev
+fi
+
+if echo "$HELM_VERSION" | grep -q '^[^0-9]'; then
+    HELM_VERSION=0.0.0-dev
 fi

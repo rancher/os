@@ -43,6 +43,8 @@ if [ "${TAG}" = "dev" ]; then
     PXE_ASSET_VERSION=${TAG}
 fi
 
+./scripts/package-helm
+
 cat > build/output.ipxe << EOF
 #!ipxe
 set arch ${ARCH}

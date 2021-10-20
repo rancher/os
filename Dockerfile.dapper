@@ -1,4 +1,4 @@
-FROM opensuse/leap
+FROM opensuse/leap:15.3
 RUN zypper ref
 
 ARG DAPPER_HOST_ARCH

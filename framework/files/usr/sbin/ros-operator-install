@@ -1,0 +1,36 @@
+#!/bin/bash
+set -x -e
+
+source /usr/lib/rancheros-release
+
+manifest() {
+    cat << EOF
+kind: ManagedOSImage
+apiVersion: rancheros.cattle.io/v1
+metadata:
+  name: default-os-image
+  namespace: fleet-local
+spec:
+  osImage: "${IMAGE}"
+  clusterTargets:
+  - clusterName: local
+EOF
+}
+
+PULL_POLICY=IfNotPresent
+if [ "$IMAGE_TAG" = dev ]; then
+    PULL_POLICY=Always
+fi
+
+helm upgrade \
+    --install \
+    --create-namespace \
+    -n cattle-rancheros-operator-system \
+    --set image.repository=${IMAGE_REPO} \
+    --set image.tag=${IMAGE_TAG} \
+    --set image.imagePullPolicy=${PULL_POLICY} \
+    rancheros-operator /usr/share/rancher/os/rancheros-operator-chart.tgz
+
+while ! manifest | kubectl apply -f -; do
+    sleep 15
+done
