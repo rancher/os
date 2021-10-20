@@ -21,7 +21,7 @@ limitations under the License.
 package v1
 
 import (
-	rancheros "github.com/rancher/os/pkg/apis/rancheros.cattle.io"
+	rancheros "github.com/rancher/os2/pkg/apis/rancheros.cattle.io"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"

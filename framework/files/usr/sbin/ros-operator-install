@@ -29,7 +29,7 @@ helm upgrade \
     --set image.repository=${IMAGE_REPO} \
     --set image.tag=${IMAGE_TAG} \
     --set image.imagePullPolicy=${PULL_POLICY} \
-    rancheros-operator /usr/share/rancher/os/rancheros-operator-chart.tgz
+    rancheros-operator /usr/share/rancher/os2/rancheros-operator-chart.tgz
 
 while ! manifest | kubectl apply -f -; do
     sleep 15

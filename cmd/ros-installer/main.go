@@ -4,8 +4,8 @@ import (
 	"flag"
 	"os"
 
-	"github.com/rancher/os/pkg/config"
-	"github.com/rancher/os/pkg/install"
+	"github.com/rancher/os2/pkg/config"
+	"github.com/rancher/os2/pkg/install"
 	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )

@@ -3,11 +3,11 @@ package operator
 import (
 	"context"
 
-	v1 "github.com/rancher/os/pkg/apis/rancheros.cattle.io/v1"
-	"github.com/rancher/os/pkg/clients"
-	"github.com/rancher/os/pkg/controllers/inventory"
-	"github.com/rancher/os/pkg/controllers/managedos"
-	"github.com/rancher/os/pkg/server"
+	v1 "github.com/rancher/os2/pkg/apis/rancheros.cattle.io/v1"
+	"github.com/rancher/os2/pkg/clients"
+	"github.com/rancher/os2/pkg/controllers/inventory"
+	"github.com/rancher/os2/pkg/controllers/managedos"
+	"github.com/rancher/os2/pkg/server"
 	"github.com/rancher/steve/pkg/aggregation"
 	"github.com/rancher/wrangler/pkg/crd"
 	"github.com/sirupsen/logrus"

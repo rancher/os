@@ -20,7 +20,7 @@ package management
 
 import (
 	"github.com/rancher/lasso/pkg/controller"
-	v3 "github.com/rancher/os/pkg/generated/controllers/management.cattle.io/v3"
+	v3 "github.com/rancher/os2/pkg/generated/controllers/management.cattle.io/v3"
 )
 
 type Interface interface {

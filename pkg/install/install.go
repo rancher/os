@@ -6,8 +6,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/rancher/os/pkg/config"
-	"github.com/rancher/os/pkg/questions"
+	"github.com/rancher/os2/pkg/config"
+	"github.com/rancher/os2/pkg/questions"
 	"sigs.k8s.io/yaml"
 )
 

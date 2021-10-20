@@ -4,9 +4,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/rancher/os/pkg/config"
-	"github.com/rancher/os/pkg/questions"
-	"github.com/rancher/os/pkg/util"
+	"github.com/rancher/os2/pkg/config"
+	"github.com/rancher/os2/pkg/questions"
+	"github.com/rancher/os2/pkg/util"
 )
 
 func Ask(cfg *config.Config) error {

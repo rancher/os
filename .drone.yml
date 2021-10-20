@@ -114,8 +114,8 @@ steps:
       from_secret: docker_password
     platforms:
       - linux/amd64
-    target: "rancher/os:${DRONE_TAG}"
-    template: "rancher/os:${DRONE_TAG}-ARCH"
+    target: "rancher/os2:${DRONE_TAG}"
+    template: "rancher/os2:${DRONE_TAG}-ARCH"
   when:
     instance:
     - drone-publish.rancher.io

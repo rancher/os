@@ -3,8 +3,8 @@ package managedos
 import (
 	"strings"
 
-	osv1 "github.com/rancher/os/pkg/apis/rancheros.cattle.io/v1"
-	"github.com/rancher/os/pkg/clients"
+	osv1 "github.com/rancher/os2/pkg/apis/rancheros.cattle.io/v1"
+	"github.com/rancher/os2/pkg/clients"
 	upgradev1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"

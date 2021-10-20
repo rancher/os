@@ -26,7 +26,7 @@ COPY --from=build /usr/bin/busybox-static /usr/bin/busybox
 COPY --from=build /usr/bin/rancherd /usr/bin/rancherd
 COPY --from=build /usr/bin/luet /usr/bin/luet
 COPY --from=build /usr/bin/helm /usr/bin/helm
-COPY --from=build /usr/src/dist/rancheros-operator-chart.tgz /usr/share/rancher/os/
+COPY --from=build /usr/src/dist/rancheros-operator-chart.tgz /usr/share/rancher/os2/
 COPY framework/files/etc/luet/luet.yaml /etc/luet/luet.yaml
 COPY --from=build /etc/ssl/certs /etc/ssl/certs
 

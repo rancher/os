@@ -1,4 +1,4 @@
-module github.com/rancher/os
+module github.com/rancher/os2
 
 go 1.16
 

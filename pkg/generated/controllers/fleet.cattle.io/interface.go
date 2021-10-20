@@ -20,7 +20,7 @@ package fleet
 
 import (
 	"github.com/rancher/lasso/pkg/controller"
-	v1alpha1 "github.com/rancher/os/pkg/generated/controllers/fleet.cattle.io/v1alpha1"
+	v1alpha1 "github.com/rancher/os2/pkg/generated/controllers/fleet.cattle.io/v1alpha1"
 )
 
 type Interface interface {

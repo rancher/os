@@ -33,7 +33,7 @@ isoinfo -x /boot/kernel.xz -R -i build/output.iso > build/output-kernel
 isoinfo -x /boot/rootfs.xz -R -i build/output.iso > build/output-initrd
 
 
-RELEASE_URL=${RELEASE_URL:-https://github.com/rancher/os/releases/download}
+RELEASE_URL=${RELEASE_URL:-https://github.com/rancher/os2/releases/download}
 INSTALL_CFG=${RELEASE_URL}/${VERSION}/example-cloud-init
 PXE_ASSET_VERSION="\${version}-\${arch}"
 if [ "${TAG}" = "dev" ]; then

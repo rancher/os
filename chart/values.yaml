@@ -1,5 +1,5 @@
 image:
-  repository: rancher/os
+  repository: rancher/os2
   tag: dev
   imagePullPolicy: IfNotPresent
 

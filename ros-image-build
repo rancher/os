@@ -9,7 +9,7 @@ build()
 dockerfile()
 {
     cat << "EOF"
-ARG IMAGE=rancher/os:dev
+ARG IMAGE=rancher/os2:dev
 
 FROM ${IMAGE} AS os
 
@@ -148,7 +148,7 @@ FROM tools AS ami
 ARG AWS_ACCESS_KEY_ID
 ARG AWS_SECRET_ACCESS_KEY
 ARG AWS_DEFAULT_REGION
-ARG IMAGE=rancher/os:dev
+ARG IMAGE=rancher/os2:dev
 ARG NAME=RancherOS-Image-dev
 ARG VERSION=1
 ARG GIT_COMMIT=HEAD

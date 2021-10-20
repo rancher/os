@@ -20,7 +20,7 @@ package provisioning
 
 import (
 	"github.com/rancher/lasso/pkg/controller"
-	v1 "github.com/rancher/os/pkg/generated/controllers/provisioning.cattle.io/v1"
+	v1 "github.com/rancher/os2/pkg/generated/controllers/provisioning.cattle.io/v1"
 )
 
 type Interface interface {

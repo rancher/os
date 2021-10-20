@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := package
-REPO?=rancher/os
+REPO?=rancher/os2
 TAG?=dev
 IMAGE=${REPO}:${TAG}
 

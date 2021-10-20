@@ -1,6 +1,6 @@
 [Unit]
 Description=RancherOS Populated Node Labels
-Documentation=https://github.com/rancher/os
+Documentation=https://github.com/rancher/os2
 Before=network-online.target
 
 [Install]

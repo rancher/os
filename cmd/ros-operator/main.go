@@ -5,7 +5,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/rancher/os/pkg/operator"
+	"github.com/rancher/os2/pkg/operator"
 	"github.com/rancher/wrangler/pkg/signals"
 	"github.com/sirupsen/logrus"
 )
