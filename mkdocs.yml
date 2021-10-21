@@ -6,8 +6,6 @@ site_url: https://rancher.github.io/os2
 repo_name: rancher/os2
 repo_url: https://github.com/rancher/os2
 edit_uri: https://github.com/rancher/os2/edit/main/docs/
-# Set to false for local docs development
-strict: true
 
 theme:
   name: material
@@ -46,6 +44,7 @@ markdown_extensions:
 
 nav:
   - index.md
+  - installation.md
     #- Installation:
     #  - install/iso-install.md
     #  - install/pxe-boot-install.md

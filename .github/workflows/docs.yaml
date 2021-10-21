@@ -13,4 +13,4 @@ jobs:
           python-version: 3.x
       - run: pip install mkdocs-material
       - run: pip install mkdocs-markdownextradata-plugin
-      - run: mkdocs gh-deploy --force
+      - run: mkdocs gh-deploy --force --strict
