@@ -43,16 +43,11 @@ markdown_extensions:
     permalink: true
 
 nav:
-  - index.md
+  - architecture.md
+  - clusters.md
   - installation.md
-    #- Installation:
-    #  - install/iso-install.md
-    #  - install/pxe-boot-install.md
-    #- configuration.md
-    #- Operator:
-    #    - operator/upgrade.md
-    #    - operator/inventory.md
-    #- dashboard.md
-    #- Reference:
-    #  - reference/api.md
-    #- faq.md
+  - upgrade.md
+  - configuration.md
+  - dashboard.md
+  - operator.md
+  - versions.md

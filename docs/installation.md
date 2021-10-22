@@ -26,8 +26,8 @@ Install directives can be set from the kernel command line using a period (.) se
 #cloud-config
 rancheros:
   install:
-    # An http://, https://, or tftp:// URL to load and overlay on top of
-    # this configuration. This configuration can include any install 
+    # An http://, https://, or tftp:// URL to load as the base configuration
+    # for this configuration. This configuration can include any install 
     # directives or OEM configuration. The resulting merged configuration
     # will be read by the installer and all content of the merged config will
     # be stored in /oem/99_custom.yaml in the created image.
@@ -104,24 +104,24 @@ RancherOS requires the following partitions.  These partitions are required by [
 
 ## Folders
 
-| Path              | Read-Only | Ephemeral | Persistence |
-| ------------------|:---------:|:---------:|:-----------:|
-| /                 | x         |           |             |
-| /etc              |           | x         |             |
-| /etc/cni          |           |           | x           |
-| /etc/iscsi        |           |           | x           |
-| /etc/rancher      |           |           | x           |
-| /etc/ssh          |           |           | x           |
-| /etc/systemd      |           |           | x           |
-| /srv              |           | x         |             |
-| /home             |           |           | x           |
-| /opt              |           |           | x           |
-| /root             |           |           | x           |
-| /var              |           | x         |             |
-| /usr/libexec      |           |           | x           |
-| /var/lib/cni      |           |           | x           |
-| /var/lib/kubelet  |           |           | x           |
-| /var/lib/longhorn |           |           | x           |
-| /var/lib/rancher  |           |           | x           |
-| /var/lib/wicked   |           |           | x           |
-| /var/log          |           |           | x           |
+| Path              | Read-Only | Ephemeral | Persistent |
+| ------------------|:---------:|:---------:|:----------:|
+| /                 | x         |           |            |
+| /etc              |           | x         |            |
+| /etc/cni          |           |           | x          |
+| /etc/iscsi        |           |           | x          |
+| /etc/rancher      |           |           | x          |
+| /etc/ssh          |           |           | x          |
+| /etc/systemd      |           |           | x          |
+| /srv              |           | x         |            |
+| /home             |           |           | x          |
+| /opt              |           |           | x          |
+| /root             |           |           | x          |
+| /var              |           | x         |            |
+| /usr/libexec      |           |           | x          |
+| /var/lib/cni      |           |           | x          |
+| /var/lib/kubelet  |           |           | x          |
+| /var/lib/longhorn |           |           | x          |
+| /var/lib/rancher  |           |           | x          |
+| /var/lib/wicked   |           |           | x          |
+| /var/log          |           |           | x          |
