@@ -185,12 +185,12 @@ iso()
 qcow()
 {
     ID=qcow-${RANDOM}
-    if docker run -it --device /dev/kvm busybox /bin/true; then
+    if docker run -i --device /dev/kvm busybox /bin/true; then
         build --target qcow-build --build-arg ACCEL=kvm -t $ID
-        docker run --net=host -it --device /dev/kvm --name $ID $ID
+        docker run --net=host -i --device /dev/kvm --name $ID $ID
     else
         build --target qcow-build --build-arg ACCEL=tcg -t $ID
-        docker run --net=host -it --name $ID $ID
+        docker run --net=host -i --name $ID $ID
     fi || {
         docker rm -fv $ID
         docker rmi $ID
