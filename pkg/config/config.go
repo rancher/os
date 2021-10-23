@@ -15,7 +15,10 @@ type Install struct {
 	NoFormat  bool   `json:"noFormat,omitempty"`
 	Debug     bool   `json:"debug,omitempty"`
 	TTY       string `json:"tty,omitempty"`
-	Password  string `json:"password,omitempy"`
+	ServerURL string `json:"-"`
+	Token     string `json:"-"`
+	Role      string `json:"-"`
+	Password  string `json:"password,omitempty"`
 }
 
 type Config struct {
@@ -24,11 +27,18 @@ type Config struct {
 }
 
 type YipConfig struct {
-	Stages map[string][]Stage `json:"stages,omitempty"`
+	Stages   map[string][]Stage `json:"stages,omitempty"`
+	Rancherd Rancherd           `json:"rancherd,omitempty"`
 }
 
 type Stage struct {
 	Users map[string]User `json:"users,omitempty"`
+}
+
+type Rancherd struct {
+	Server string `json:"server,omitempty"`
+	Role   string `json:"role,omitempty"`
+	Token  string `json:"token,omitempty"`
 }
 
 type User struct {

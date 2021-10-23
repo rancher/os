@@ -54,6 +54,35 @@ func mapToEnv(prefix string, data map[string]interface{}) []string {
 	return result
 }
 
+func readFileFunc(path string) func() (map[string]interface{}, error) {
+	return func() (map[string]interface{}, error) {
+		return readFile(path)
+	}
+}
+
+func readNested(data map[string]interface{}) (map[string]interface{}, error) {
+	var (
+		nestedConfigFiles = convert.ToStringSlice(values.GetValueN(data, "rancheros", "install", "configUrl"))
+		funcs             []reader
+	)
+
+	if len(nestedConfigFiles) == 0 {
+		return data, nil
+	}
+
+	values.RemoveValue(data, "rancheros", "install", "configUrl")
+
+	for _, nestedConfigFile := range nestedConfigFiles {
+		funcs = append(funcs, readFileFunc(nestedConfigFile))
+	}
+
+	funcs = append(funcs, func() (map[string]interface{}, error) {
+		return data, nil
+	})
+
+	return merge(funcs...)
+}
+
 func readFile(path string) (result map[string]interface{}, _ error) {
 	result = map[string]interface{}{}
 	defer func() {
@@ -109,26 +138,17 @@ func merge(readers ...reader) (map[string]interface{}, error) {
 		if err := schema.Mapper.ToInternal(newData); err != nil {
 			return nil, err
 		}
+		newData, err = readNested(newData)
+		if err != nil {
+			return nil, err
+		}
 		d = values.MergeMapsConcatSlice(d, newData)
 	}
 	return d, nil
 }
 
 func readConfigMap(cfg string) (map[string]interface{}, error) {
-	var (
-		err  error
-		data map[string]interface{}
-	)
-	return merge(func() (map[string]interface{}, error) {
-		data, err = merge(readCmdline,
-			func() (map[string]interface{}, error) {
-				return readFile(cfg)
-			},
-		)
-		return data, err
-	}, func() (map[string]interface{}, error) {
-		return readFile(convert.ToString(values.GetValueN(data, "rancheros", "install", "configUrl")))
-	})
+	return merge(readCmdline, readFileFunc(cfg))
 }
 
 func ReadConfig(cfg string) (result Config, err error) {

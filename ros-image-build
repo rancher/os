@@ -124,22 +124,31 @@ RUN cd /iso && \
     luet-makeiso iso.yaml
 
 FROM iso-build AS qcow-build
+ARG ACCEL=tcg
 RUN SUFFIX= && \
     FIRMWARE= && \
     if [ "$(uname -m)" = "aarch64" ]; then SUFFIX=-arm64; FIRMWARE=/usr/share/qemu/qemu-uefi-aarch64.bin; fi && \
-    PACKER_LOG=1 packer build \
+    echo '#!/bin/bash' > /usr/bin/image && \
+    echo 'set -e -x' >> /usr/bin/image && \
+    echo PACKER_LOG=1 packer build \
+    -var "root_password=ros" \
     -var "firmware=${FIRMWARE}" \
     -var "memory=1024" \
     -var "iso=/iso/output.iso" \
-    -var "accelerator=tcg" \
-    -only qemu.cos${SUFFIX} .
-RUN mkdir /output && \
-    mv *.box /output/output.box && \
-    pigz -dc *.tar.gz | tar xvf - && \
-    cat cOS | pigz -c > /output/output.qcow.gz
+    -var "accelerator=${ACCEL}" \
+    -only qemu.cos${SUFFIX} . >> /usr/bin/image && \
+    chmod +x /usr/bin/image
+RUN echo 'mkdir /output &&' >> /usr/bin/image && \
+    echo 'mv *.box /output/output.box' >> /usr/bin/image && \
+    echo 'pigz -dc *.tar.gz | tar xvf -' >> /usr/bin/image && \
+    echo 'cat cOS | pigz -c > /output/output.qcow.gz'>> /usr/bin/image
+CMD ["bash", "-x", "/usr/bin/image"]
+
+FROM qcow-build AS qcow-build2
+RUN bash -x /usr/bin/image
 
 FROM scratch AS qcow
-COPY --from=qcow-build /output/ /
+COPY --from=qcow-build2 /output/ /
 
 FROM scratch AS iso
 COPY --from=iso-build /iso/output.iso /
@@ -153,12 +162,17 @@ ARG NAME=RancherOS-Image-dev
 ARG VERSION=1
 ARG GIT_COMMIT=HEAD
 RUN packer build \
+    -var "root_password=ros" \
     -var "cos_version=${VERSION}" \
     -var "git_sha=${GIT_COMMIT}" \
     -var 'aws_source_ami_filter_owners=["053594193760"]' \
     -var "aws_cos_deploy_args=cos-deploy --no-verify --docker-image ${IMAGE}" \
     -var "name=${NAME}" \
     -only amazon-ebs.cos .
+
+FROM scratch AS default
+COPY --from=iso / /
+COPY --from=qcow / /
 EOF
 }
 
@@ -170,7 +184,22 @@ iso()
 
 qcow()
 {
-    build --target qcow -o build/
+    ID=qcow-${RANDOM}
+    if docker run -it --device /dev/kvm busybox /bin/true; then
+        build --target qcow-build --build-arg ACCEL=kvm -t $ID
+        docker run --net=host -it --device /dev/kvm --name $ID $ID
+    else
+        build --target qcow-build --build-arg ACCEL=tcg -t $ID
+        docker run --net=host -it --name $ID $ID
+    fi || {
+        docker rm -fv $ID
+        docker rmi $ID
+        exit 1
+    }
+    mkdir -p build/
+    docker export $ID | tar xvf - -C build/ output/ --strip-components=1
+    docker rm -fv $ID
+    docker rmi $ID
 }
 
 ami()
@@ -204,6 +233,11 @@ VERSION=${IMAGE##*:}
 NAME=${IMAGE%%:${VERSION}}
 NAME=${NAME//[^a-zA-Z0-9-@.\/_]/-}
 
+if [ "$1" == dockerfile ]; then
+    dockerfile
+    exit 0
+fi
+
 if [ -z "${OUTPUT}" ] || [ -z "${IMAGE}" ] || echo "$@" | grep -q -- -h; then
     usage
     exit 1
@@ -221,10 +255,6 @@ fi
                 ;;
             iso)
                 iso
-                ;;
-            dockerfile)
-                dockerfile
-                exit 0
                 ;;
             *)
                 echo Unknown format $i

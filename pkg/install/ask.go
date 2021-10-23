@@ -26,6 +26,10 @@ func Ask(cfg *config.Config) error {
 		if err := AskPassword(cfg); err != nil {
 			return err
 		}
+
+		if err := AskServerAgent(cfg); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -50,14 +54,67 @@ func AskInstallDevice(cfg *config.Config) error {
 	return nil
 }
 
-func isServer(cfg *config.Config) (bool, bool, error) {
+func AskToken(cfg *config.Config, server bool) error {
+	var (
+		token string
+		err   error
+	)
+
+	if cfg.RancherOS.Install.Token != "" {
+		return nil
+	}
+
+	msg := "Token or cluster secret"
+	if server {
+		msg += " (optional)"
+	}
+	if server {
+		token, err = questions.PromptOptional(msg+": ", "")
+	} else {
+		token, err = questions.Prompt(msg+": ", "")
+	}
+	cfg.RancherOS.Install.Token = token
+
+	return err
+}
+
+func isServer() (bool, bool, error) {
 	opts := []string{"server", "agent", "none"}
-	i, err := questions.PromptFormattedOptions("Run as server or agent?", 0, opts...)
+	i, err := questions.PromptFormattedOptions("Run as server or agent (Choose none if building an image)?", 0, opts...)
 	if err != nil {
 		return false, false, err
 	}
 
 	return i == 0, i == 1, nil
+}
+
+func AskServerAgent(cfg *config.Config) error {
+	if cfg.RancherOS.Install.ServerURL != "" || cfg.RancherOS.Install.Silent {
+		return nil
+	}
+
+	server, agent, err := isServer()
+	if err != nil {
+		return err
+	}
+
+	if !server && !agent {
+		return nil
+	}
+
+	if server {
+		cfg.RancherOS.Install.Role = "server"
+		return AskToken(cfg, true)
+	}
+
+	cfg.RancherOS.Install.Role = "agent"
+	url, err := questions.Prompt("URL of server: ", "")
+	if err != nil {
+		return err
+	}
+	cfg.RancherOS.Install.ServerURL = url
+
+	return AskToken(cfg, false)
 }
 
 func AskPassword(cfg *config.Config) error {

@@ -13,4 +13,4 @@ stages:
       entity: |
         kind: "shadow"
         username: "root"
-        password: "cos"
+        password: "ros"

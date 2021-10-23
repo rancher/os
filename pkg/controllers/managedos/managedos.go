@@ -2,6 +2,7 @@ package managedos
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/rancher/fleet/pkg/apis/fleet.cattle.io/v1alpha1"
 	provv1 "github.com/rancher/os2/pkg/apis/rancheros.cattle.io/v1"
@@ -71,6 +72,10 @@ func (h *handler) OnChange(mos *provv1.ManagedOSImage, status provv1.ManagedOSIm
 		return nil, status, err
 	}
 
+	if mos.Namespace == "fleet-local" && len(mos.Spec.Targets) > 0 {
+		return nil, status, fmt.Errorf("spec.targets should be empty if in the fleet-local namespace")
+	}
+
 	bundle := &v1alpha1.Bundle{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name.SafeConcatName("mos", mos.Name),
@@ -79,10 +84,13 @@ func (h *handler) OnChange(mos *provv1.ManagedOSImage, status provv1.ManagedOSIm
 		Spec: v1alpha1.BundleSpec{
 			Resources:               resources,
 			BundleDeploymentOptions: v1alpha1.BundleDeploymentOptions{},
-			Paused:                  mos.Spec.Paused,
 			RolloutStrategy:         mos.Spec.ClusterRolloutStrategy,
 			Targets:                 mos.Spec.Targets,
 		},
+	}
+
+	if mos.Namespace == "fleet-local" {
+		bundle.Spec.Targets = []v1alpha1.BundleTarget{{ClusterName: "local"}}
 	}
 
 	status, err = h.updateStatus(status, bundle)

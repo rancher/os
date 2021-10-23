@@ -55,7 +55,13 @@ func runInstall(cfg config.Config, output string) error {
 	}
 
 	if cfg.RancherOS.Install.ConfigURL == "" && !cfg.RancherOS.Install.Silent {
-		yip := config.YipConfig{}
+		yip := config.YipConfig{
+			Rancherd: config.Rancherd{
+				Server: cfg.RancherOS.Install.ServerURL,
+				Token:  cfg.RancherOS.Install.Token,
+				Role:   cfg.RancherOS.Install.Role,
+			},
+		}
 		if cfg.RancherOS.Install.Password != "" || len(cfg.SSHAuthorizedKeys) > 0 {
 			yip.Stages = map[string][]config.Stage{
 				"network": {{

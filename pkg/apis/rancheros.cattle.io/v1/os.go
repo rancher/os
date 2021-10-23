@@ -18,7 +18,6 @@ type ManagedOSImage struct {
 }
 
 type ManagedOSImageSpec struct {
-	Paused       bool                  `json:"paused,omitempty"`
 	OSImage      string                `json:"osImage,omitempty"`
 	NodeSelector *metav1.LabelSelector `json:"nodeSelector,omitempty"`
 	Concurrency  *int64                `json:"concurrency,omitempty"`

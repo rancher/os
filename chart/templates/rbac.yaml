@@ -4,6 +4,14 @@ metadata:
   name: rancheros-operator
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - 'secrets'
+  verbs:
+  - 'get'
+  - 'watch'
+  - 'list'
+- apiGroups:
   - rancheros.cattle.io
   resources:
   - '*'
@@ -16,9 +24,18 @@ rules:
   verbs:
   - '*'
 - apiGroups:
+  - provisioning.cattle.io
+  resources:
+  - 'clusters'
+  verbs:
+  - 'get'
+  - 'watch'
+  - 'list'
+- apiGroups:
   - management.cattle.io
   resources:
   - 'settings'
+  - 'clusterregistrationtokens'
   verbs:
   - 'get'
   - 'watch'

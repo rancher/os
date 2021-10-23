@@ -12,8 +12,6 @@ metadata:
   namespace: fleet-local
 spec:
   osImage: "${IMAGE}"
-  clusterTargets:
-  - clusterName: local
 EOF
 }
 

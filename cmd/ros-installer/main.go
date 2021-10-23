@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	output      = flag.Bool("automatic", false, "Check for and run automatic installation")
+	automatic   = flag.Bool("automatic", false, "Check for and run automatic installation")
 	printConfig = flag.Bool("print-config", false, "Print effective configuration and exit")
 	configFile  = flag.String("config-file", "", "Config file to use, local file or http/tftp URL")
 )
@@ -31,7 +31,7 @@ func main() {
 		return
 	}
 
-	if err := install.Run(*output, *configFile); err != nil {
+	if err := install.Run(*automatic, *configFile); err != nil {
 		logrus.Fatal(err)
 	}
 }
