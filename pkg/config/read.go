@@ -66,12 +66,6 @@ func readNested(data map[string]interface{}) (map[string]interface{}, error) {
 		funcs             []reader
 	)
 
-	if len(nestedConfigFiles) == 0 {
-		return data, nil
-	}
-
-	values.RemoveValue(data, "rancheros", "install", "configUrl")
-
 	for _, nestedConfigFile := range nestedConfigFiles {
 		funcs = append(funcs, readFileFunc(nestedConfigFile))
 	}
@@ -123,7 +117,7 @@ func readFile(path string) (result map[string]interface{}, _ error) {
 		return nil, err
 	}
 
-	return data, nil
+	return readNested(data)
 }
 
 type reader func() (map[string]interface{}, error)
@@ -138,17 +132,45 @@ func merge(readers ...reader) (map[string]interface{}, error) {
 		if err := schema.Mapper.ToInternal(newData); err != nil {
 			return nil, err
 		}
-		newData, err = readNested(newData)
-		if err != nil {
-			return nil, err
-		}
 		d = values.MergeMapsConcatSlice(d, newData)
 	}
 	return d, nil
 }
 
 func readConfigMap(cfg string) (map[string]interface{}, error) {
-	return merge(readCmdline, readFileFunc(cfg))
+	data, err := merge(readCmdline, readFileFunc(cfg))
+	if err != nil {
+		return nil, err
+	}
+	if cfg != "" {
+		values.PutValue(data, cfg, "rancheros", "install", "configUrl")
+	}
+	return data, nil
+}
+
+func ToFile(cfg Config, output string) error {
+	data, err := ToBytes(cfg)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(output, data, 0600)
+}
+
+func ToBytes(cfg Config) ([]byte, error) {
+	data, err := merge(readFileFunc(cfg.RancherOS.Install.ConfigURL), func() (map[string]interface{}, error) {
+		return convert.EncodeToMap(cfg)
+	})
+	if err != nil {
+		return nil, err
+	}
+	values.RemoveValue(data, "install")
+	values.RemoveValue(data, "rancheros", "install")
+	bytes, err := yaml.Marshal(data)
+	if err != nil {
+		return nil, err
+	}
+
+	return append([]byte("#cloud-config\n"), bytes...), nil
 }
 
 func ReadConfig(cfg string) (result Config, err error) {
@@ -199,5 +221,5 @@ func readCmdline() (map[string]interface{}, error) {
 		}
 	}
 
-	return data, nil
+	return readNested(data)
 }

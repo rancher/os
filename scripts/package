@@ -53,7 +53,7 @@ set url ${RELEASE_URL}/\${version}
 set kernel rancheros-${PXE_ASSET_VERSION}-kernel
 set initrd rancheros-${PXE_ASSET_VERSION}-initrd
 set rootfs rancheros-${PXE_ASSET_VERSION}.squashfs
-kernel \${url}/\${kernel} initrd=\${initrd} ip=dhcp rd.cos.disable root=live:\${url}/\${rootfs} rancheros.install.automatic=true rancheros.install.config_url=\${config} console=tty1 console=ttyS0 ${cmdline}
+kernel \${url}/\${kernel} initrd=\${initrd} ip=dhcp rd.cos.disable root=live:\${url}/\${rootfs} rancheros.install.automatic=true rancheros.install.config_url=\${config} console=tty1 console=ttyS0 \${cmdline}
 initrd \${url}/\${initrd}
 boot
 EOF

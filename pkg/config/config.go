@@ -9,7 +9,6 @@ type Install struct {
 	ForceEFI  bool   `json:"forceEfi,omitempty"`
 	Device    string `json:"device,omitempty"`
 	ConfigURL string `json:"configUrl,omitempty"`
-	Silent    bool   `json:"silent,omitempty"`
 	ISOURL    string `json:"isoUrl,omitempty"`
 	PowerOff  bool   `json:"powerOff,omitempty"`
 	NoFormat  bool   `json:"noFormat,omitempty"`

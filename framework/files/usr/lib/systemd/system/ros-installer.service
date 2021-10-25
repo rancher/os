@@ -3,7 +3,6 @@ Description=RancherOS Automatic Installation
 Documentation=https://github.com/rancher/os2
 Wants=network-online.target
 After=network-online.target
-Before=getty-pre.target serial-getty@ttyS0.service
 
 [Install]
 WantedBy=multi-user.target

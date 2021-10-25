@@ -27,6 +27,7 @@ if [ "$1" = "pxe" ]; then
     BOOT="-boot cn"
 
     if [ ! -e dev ]; then
+        rm -f dev
         ln -s ../dist/artifacts dev
     fi
 fi

@@ -19,8 +19,6 @@ func Run(automatic bool, configFile string) error {
 
 	if automatic && !cfg.RancherOS.Install.Automatic {
 		return nil
-	} else if automatic {
-		cfg.RancherOS.Install.Silent = true
 	}
 
 	err = Ask(&cfg)
@@ -45,7 +43,7 @@ func runInstall(cfg config.Config, output string) error {
 		return err
 	}
 
-	if !cfg.RancherOS.Install.Silent {
+	if !cfg.RancherOS.Install.Automatic {
 		val, err := questions.PromptBool("\nConfiguration\n"+"-------------\n\n"+
 			string(installBytes)+
 			"\nYour disk will be formatted and installed with the above configuration.\nContinue?", false)
@@ -54,7 +52,7 @@ func runInstall(cfg config.Config, output string) error {
 		}
 	}
 
-	if cfg.RancherOS.Install.ConfigURL == "" && !cfg.RancherOS.Install.Silent {
+	if cfg.RancherOS.Install.ConfigURL == "" && !cfg.RancherOS.Install.Automatic {
 		yip := config.YipConfig{
 			Rancherd: config.Rancherd{
 				Server: cfg.RancherOS.Install.ServerURL,
@@ -86,6 +84,11 @@ func runInstall(cfg config.Config, output string) error {
 		}
 		cfg.RancherOS.Install.ConfigURL = output + ".yip"
 	}
+
+	if err := config.ToFile(cfg, output); err != nil {
+		return err
+	}
+	cfg.RancherOS.Install.ConfigURL = output
 
 	ev, err := config.ToEnv(cfg)
 	if err != nil {

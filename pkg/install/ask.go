@@ -89,7 +89,7 @@ func isServer() (bool, bool, error) {
 }
 
 func AskServerAgent(cfg *config.Config) error {
-	if cfg.RancherOS.Install.ServerURL != "" || cfg.RancherOS.Install.Silent {
+	if cfg.RancherOS.Install.ServerURL != "" || cfg.RancherOS.Install.Automatic {
 		return nil
 	}
 
@@ -118,7 +118,7 @@ func AskServerAgent(cfg *config.Config) error {
 }
 
 func AskPassword(cfg *config.Config) error {
-	if cfg.RancherOS.Install.Silent || cfg.RancherOS.Install.Password != "" {
+	if cfg.RancherOS.Install.Automatic || cfg.RancherOS.Install.Password != "" {
 		return nil
 	}
 
@@ -147,7 +147,7 @@ func AskPassword(cfg *config.Config) error {
 }
 
 func AskGithub(cfg *config.Config) error {
-	if len(cfg.SSHAuthorizedKeys) > 0 || cfg.RancherOS.Install.Password != "" || cfg.RancherOS.Install.Silent {
+	if len(cfg.SSHAuthorizedKeys) > 0 || cfg.RancherOS.Install.Password != "" || cfg.RancherOS.Install.Automatic {
 		return nil
 	}
 
@@ -169,7 +169,7 @@ func AskGithub(cfg *config.Config) error {
 }
 
 func AskConfigURL(cfg *config.Config) error {
-	if cfg.RancherOS.Install.ConfigURL != "" || cfg.RancherOS.Install.Silent {
+	if cfg.RancherOS.Install.ConfigURL != "" || cfg.RancherOS.Install.Automatic {
 		return nil
 	}
 
