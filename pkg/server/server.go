@@ -5,16 +5,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
+	"github.com/pkg/errors"
 	v1 "github.com/rancher/os2/pkg/apis/rancheros.cattle.io/v1"
 	"github.com/rancher/os2/pkg/clients"
 	ranchercontrollers "github.com/rancher/os2/pkg/generated/controllers/management.cattle.io/v3"
 	roscontrollers "github.com/rancher/os2/pkg/generated/controllers/rancheros.cattle.io/v1"
+	"github.com/rancher/os2/pkg/tpm"
 	v3 "github.com/rancher/rancher/pkg/apis/management.cattle.io/v3"
 	corecontrollers "github.com/rancher/wrangler/pkg/generated/controllers/core/v1"
-	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
@@ -24,43 +26,40 @@ var (
 	tokenKey                 = "token"
 	tokenIndex               = "tokenIndex"
 	machineBySecretNameIndex = "machineBySecretNameIndex"
+	registrationTokenIndex   = "registrationTokenIndex"
+	tpmHashIndex             = "tpmHashIndex"
 )
 
+type authenticator interface {
+	Authenticate(resp http.ResponseWriter, req *http.Request, registerNamespace string) (*v1.MachineInventory, bool, io.WriteCloser, error)
+}
+
 type InventoryServer struct {
-	secretCache              corecontrollers.SecretCache
 	settingCache             ranchercontrollers.SettingCache
+	secretCache              corecontrollers.SecretCache
 	machineCache             roscontrollers.MachineInventoryCache
+	machineClient            roscontrollers.MachineInventoryClient
+	machineRegistrationCache roscontrollers.MachineRegistrationCache
 	clusterRegistrationToken ranchercontrollers.ClusterRegistrationTokenCache
+	authenticators           []authenticator
 }
 
 func New(clients *clients.Clients) *InventoryServer {
 	server := &InventoryServer{
+		authenticators: []authenticator{
+			tpm.New(clients),
+			newSharedSecretAuth(clients),
+		},
 		secretCache:              clients.Core.Secret().Cache(),
-		settingCache:             clients.Rancher.Setting().Cache(),
 		machineCache:             clients.OS.MachineInventory().Cache(),
+		machineClient:            clients.OS.MachineInventory(),
+		machineRegistrationCache: clients.OS.MachineRegistration().Cache(),
+		settingCache:             clients.Rancher.Setting().Cache(),
 		clusterRegistrationToken: clients.Rancher.ClusterRegistrationToken().Cache(),
 	}
 
-	server.secretCache.AddIndexer(tokenIndex, func(obj *corev1.Secret) ([]string, error) {
-		if string(obj.Type) != tokenType {
-			return nil, nil
-		}
-		t := obj.Data[tokenKey]
-		if len(t) == 0 {
-			return nil, nil
-		}
-		return []string{base64.StdEncoding.EncodeToString(t)}, nil
-	})
-
-	server.machineCache.AddIndexer(machineBySecretNameIndex, func(obj *v1.MachineInventory) ([]string, error) {
-		if obj.Spec.MachineTokenSecretName == "" {
-			return nil, nil
-		}
-		return []string{obj.Namespace + "/" + obj.Spec.MachineTokenSecretName}, nil
-	})
-
 	server.secretCache.AddIndexer(tokenHash, func(obj *corev1.Secret) ([]string, error) {
-		if string(obj.Type) == tokenType {
+		if string(obj.Type) != tokenType {
 			return nil, nil
 		}
 		if token := obj.Data[tokenKey]; len(token) > 0 {
@@ -70,68 +69,102 @@ func New(clients *clients.Clients) *InventoryServer {
 		return nil, nil
 	})
 
+	server.machineCache.AddIndexer(tokenHash, func(obj *v1.MachineInventory) ([]string, error) {
+		if obj.Spec.TPMHash == "" {
+			return nil, nil
+		}
+		hash := sha256.Sum256([]byte(obj.Spec.TPMHash))
+		return []string{base64.StdEncoding.EncodeToString(hash[:])}, nil
+	})
+
+	server.machineRegistrationCache.AddIndexer(registrationTokenIndex, func(obj *v1.MachineRegistration) ([]string, error) {
+		if obj.Status.RegistrationToken == "" {
+			return nil, nil
+		}
+		return []string{
+			obj.Status.RegistrationToken,
+		}, nil
+	})
+
+	server.machineCache.AddIndexer(tpmHashIndex, func(obj *v1.MachineInventory) ([]string, error) {
+		if obj.Spec.TPMHash == "" {
+			return nil, nil
+		}
+		return []string{obj.Spec.TPMHash}, nil
+	})
+
 	return server
 }
 
 func (i *InventoryServer) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
-	if strings.HasSuffix(req.URL.Path, "/cacerts") {
+	if strings.Contains(req.URL.Path, "/registration/") {
+		i.register(resp, req)
+	} else if strings.HasSuffix(req.URL.Path, "/cacerts") {
 		i.cacerts(resp, req)
 	} else {
-		err := i.handle(resp, req)
-		if err != nil {
-			http.Error(resp, err.Error(), http.StatusInternalServerError)
-		}
+		i.handle(resp, req)
 	}
 }
 
-func (i *InventoryServer) handle(resp http.ResponseWriter, req *http.Request) error {
-	token := strings.TrimPrefix(req.Header.Get("Authorization"), "Bearer ")
-	secrets, err := i.secretCache.GetByIndex(tokenIndex, token)
-	if apierrors.IsNotFound(err) {
-		http.Error(resp, "Token not found", http.StatusNotFound)
-		return nil
-	} else if err != nil {
-		return err
-	} else if len(secrets) > 1 {
-		logrus.Errorf("Multiple machine secrets with the same value [%s/%s, %s/%s, ...]",
-			secrets[0].Namespace, secrets[0].Name, secrets[1].Namespace, secrets[1].Name)
-		http.Error(resp, "Token not found", http.StatusNotFound)
-		return nil
+func (i *InventoryServer) authMachine(resp http.ResponseWriter, req *http.Request, registerNamespace string) (*v1.MachineInventory, io.WriteCloser, error) {
+	for _, auth := range i.authenticators {
+		machine, cont, writer, err := auth.Authenticate(resp, req, registerNamespace)
+		if err != nil {
+			return nil, nil, err
+		}
+		if machine != nil || !cont {
+			return machine, writer, nil
+		}
 	}
+	return nil, nil, nil
+}
 
-	machines, err := i.machineCache.GetByIndex(machineBySecretNameIndex, secrets[0].Namespace+"/"+secrets[0].Name)
-	if len(machines) > 1 {
-		logrus.Errorf("Multiple machine inventories with the token: %v", machines)
+func writeErr(writer io.Writer, resp http.ResponseWriter, err error) {
+	message := "Unauthorized"
+	if err != nil {
+		message = err.Error()
 	}
-	if apierrors.IsNotFound(err) || len(machines) != 1 {
-		http.Error(resp, "Machine not found", http.StatusNotFound)
-		return nil
-	} else if err != nil {
-		return err
+	if writer == nil {
+		http.Error(resp, message, http.StatusUnauthorized)
+	} else {
+		writer.Write([]byte(message))
 	}
+}
 
-	crt, err := i.clusterRegistrationToken.Get(machines[0].Status.ClusterRegistrationTokenNamespace,
-		machines[0].Status.ClusterRegistrationTokenName)
+func (i *InventoryServer) handle(resp http.ResponseWriter, req *http.Request) {
+	machine, writer, err := i.authMachine(resp, req, "")
+	if machine == nil || err != nil {
+		writeErr(writer, resp, err)
+		return
+	}
+	defer writer.Close()
+
+	if machine.Spec.ClusterName == "" {
+		writeErr(writer, resp, errors.New("cluster not assigned"))
+		return
+	}
+	crt, err := i.clusterRegistrationToken.Get(machine.Status.ClusterRegistrationTokenNamespace,
+		machine.Status.ClusterRegistrationTokenName)
 	if apierrors.IsNotFound(err) || crt.Status.Token == "" {
-		http.Error(resp, "Cluster token not found", http.StatusNotFound)
-		return nil
+		writeErr(writer, resp, errors.New("cluster token not assigned"))
 	}
 
-	return writeResponse(resp, machines[0], crt)
+	if err := writeResponse(writer, machine, crt); err != nil {
+		writeErr(writer, resp, err)
+	}
 }
 
 type config struct {
-	Role            string            `json:"role,omitempty"`
-	NodeName        string            `json:"nodeName,omitempty"`
-	Address         string            `json:"address,omitempty"`
-	InternalAddress string            `json:"internalAddress,omitempty"`
-	Taints          []string          `json:"taints,omitempty"`
-	Labels          []string          `json:"labels,omitempty"`
-	ConfigValues    map[string]string `json:"extraConfig,omitempty"`
-	Token           string            `json:"token,omitempty"`
+	Role            string   `json:"role,omitempty"`
+	NodeName        string   `json:"nodeName,omitempty"`
+	Address         string   `json:"address,omitempty"`
+	InternalAddress string   `json:"internalAddress,omitempty"`
+	Taints          []string `json:"taints,omitempty"`
+	Labels          []string `json:"labels,omitempty"`
+	Token           string   `json:"token,omitempty"`
 }
 
-func writeResponse(resp http.ResponseWriter, inventory *v1.MachineInventory, crt *v3.ClusterRegistrationToken) error {
+func writeResponse(writer io.Writer, inventory *v1.MachineInventory, crt *v3.ClusterRegistrationToken) error {
 	config := config{
 		Role:            inventory.Spec.Config.Role,
 		NodeName:        inventory.Spec.Config.NodeName,
@@ -139,7 +172,6 @@ func writeResponse(resp http.ResponseWriter, inventory *v1.MachineInventory, crt
 		InternalAddress: inventory.Spec.Config.InternalAddress,
 		Taints:          nil,
 		Labels:          nil,
-		ConfigValues:    inventory.Spec.Config.ConfigValues,
 		Token:           crt.Status.Token,
 	}
 	for k, v := range inventory.Spec.Config.Labels {
@@ -148,6 +180,5 @@ func writeResponse(resp http.ResponseWriter, inventory *v1.MachineInventory, crt
 	for _, taint := range inventory.Spec.Config.Taints {
 		config.Labels = append(config.Labels, taint.ToString())
 	}
-	resp.Header().Set("Content-Type", "application/json")
-	return json.NewEncoder(resp).Encode(config)
+	return json.NewEncoder(writer).Encode(config)
 }

@@ -43,7 +43,7 @@ func (h *handler) OnMachineInventoryRemove(key string, machine *v1.MachineInvent
 }
 
 func (h *handler) OnMachineInventory(machine *v1.MachineInventory, status v1.MachineInventoryStatus) (v1.MachineInventoryStatus, error) {
-	if machine == nil {
+	if machine == nil || machine.Spec.ClusterName == "" {
 		return status, nil
 	}
 
@@ -56,7 +56,7 @@ func (h *handler) OnMachineInventory(machine *v1.MachineInventory, status v1.Mac
 		return status, fmt.Errorf("waiting for mgmt cluster to be created for prov cluster %s/%s", machine.Namespace, machine.Spec.ClusterName)
 	}
 
-	crtName := name.SafeConcatName(cluster.Status.ClusterName, machine.Name, "-token")
+	crtName := name.SafeConcatName(cluster.Status.ClusterName, machine.Name, "token")
 	_, err = h.clusterRegistrationTokenCache.Get(cluster.Status.ClusterName, crtName)
 	if apierrors.IsNotFound(err) {
 		_, err = h.clusterRegistrationTokenClient.Create(&v3.ClusterRegistrationToken{

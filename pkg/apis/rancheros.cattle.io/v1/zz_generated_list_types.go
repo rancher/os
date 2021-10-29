@@ -43,6 +43,23 @@ func NewMachineInventory(namespace, name string, obj MachineInventory) *MachineI
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+// MachineRegistrationList is a list of MachineRegistration resources
+type MachineRegistrationList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
+
+	Items []MachineRegistration `json:"items"`
+}
+
+func NewMachineRegistration(namespace, name string, obj MachineRegistration) *MachineRegistration {
+	obj.APIVersion, obj.Kind = SchemeGroupVersion.WithKind("MachineRegistration").ToAPIVersionAndKind()
+	obj.Name = name
+	obj.Namespace = namespace
+	return &obj
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // ManagedOSImageList is a list of ManagedOSImage resources
 type ManagedOSImageList struct {
 	metav1.TypeMeta `json:",inline"`

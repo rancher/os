@@ -1,0 +1,3 @@
+#!/bin/bash
+
+helm -n cattle-rancheros-operator-system upgrade --install --create-namespace rancheros-operator ./chart

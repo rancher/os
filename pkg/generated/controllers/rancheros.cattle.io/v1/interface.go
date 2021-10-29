@@ -31,6 +31,7 @@ func init() {
 
 type Interface interface {
 	MachineInventory() MachineInventoryController
+	MachineRegistration() MachineRegistrationController
 	ManagedOSImage() ManagedOSImageController
 }
 
@@ -46,6 +47,9 @@ type version struct {
 
 func (c *version) MachineInventory() MachineInventoryController {
 	return NewMachineInventoryController(schema.GroupVersionKind{Group: "rancheros.cattle.io", Version: "v1", Kind: "MachineInventory"}, "machineinventories", true, c.controllerFactory)
+}
+func (c *version) MachineRegistration() MachineRegistrationController {
+	return NewMachineRegistrationController(schema.GroupVersionKind{Group: "rancheros.cattle.io", Version: "v1", Kind: "MachineRegistration"}, "machineregistrations", true, c.controllerFactory)
 }
 func (c *version) ManagedOSImage() ManagedOSImageController {
 	return NewManagedOSImageController(schema.GroupVersionKind{Group: "rancheros.cattle.io", Version: "v1", Kind: "ManagedOSImage"}, "managedosimages", true, c.controllerFactory)

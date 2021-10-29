@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ "$#" = 0 ]; then
+    exec bash
+fi
+
+if [ -e /dev/tpm0 ]; then
+    mkdir /tmp/emulated_tpm
+    swtpm socket --tpmstate dir=/tmp/emulated_tpm --ctrl type=unixio,path=/tmp/emulated_tpm/swtpm-sock --log level=1 --tpm2 &
+
+    exec "$@" -chardev socket,id=chrtpm,path=/tmp/emulated_tpm/swtpm-sock \
+    -tpmdev emulator,id=tpm0,chardev=chrtpm -device tpm-tis,tpmdev=tpm0
+fi

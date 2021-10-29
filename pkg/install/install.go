@@ -11,14 +11,22 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func Run(automatic bool, configFile string) error {
+func Run(automatic bool, configFile string, powerOff bool, silent bool) error {
 	cfg, err := config.ReadConfig(configFile)
 	if err != nil {
 		return err
 	}
 
+	if powerOff {
+		cfg.RancherOS.Install.PowerOff = true
+	}
+
 	if automatic && !cfg.RancherOS.Install.Automatic {
 		return nil
+	}
+
+	if silent {
+		cfg.RancherOS.Install.Automatic = true
 	}
 
 	err = Ask(&cfg)

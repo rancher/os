@@ -16,7 +16,7 @@ type FuzzyNames struct {
 
 func (f *FuzzyNames) ToInternal(data data.Object) error {
 	for k, v := range data {
-		if newK, ok := f.names[k]; ok && newK != k {
+		if newK, ok := f.names[strings.ToLower(k)]; ok && newK != k {
 			data[newK] = v
 		}
 	}

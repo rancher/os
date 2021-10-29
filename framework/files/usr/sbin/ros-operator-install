@@ -15,6 +15,14 @@ spec:
 EOF
 }
 
+if [ -e /etc/rancher/rke2/rke2.yaml ]; then
+    export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
+elif [ -e /etc/rancher/k3s/k3s.yaml ]; then
+    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+else
+    exit 0
+fi
+
 PULL_POLICY=IfNotPresent
 if [ "$IMAGE_TAG" = dev ]; then
     PULL_POLICY=Always
@@ -28,6 +36,11 @@ helm upgrade \
     --set image.tag=${IMAGE_TAG} \
     --set image.imagePullPolicy=${PULL_POLICY} \
     rancheros-operator /usr/share/rancher/os2/rancheros-operator-chart.tgz
+
+while ! kubectl get crd managedosimages.rancheros.cattle.io; do
+    echo Waiting for RancherOS Operator to be running
+    sleep 15
+done
 
 while ! manifest | kubectl apply -f -; do
     sleep 15

@@ -1,0 +1,6 @@
+#!/bin/bash
+set -x -e
+
+BASE=$(dirname $0)/..
+docker build -t ros-qemu -f ${BASE}/Dockerfile.kvm ${BASE}
+exec docker run -it --rm --net=host -v $(dirname $(pwd)):$(dirname $(pwd)) -w $(pwd) --privileged ros-qemu "$@"

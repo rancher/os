@@ -1,12 +1,7 @@
 if [ -z "$KUBECONFIG" ]; then
-    if [ -e /etc/rancher/rke2 ]; then
-        export KUBECONFIG=/etc/rancher/rke2/rke2.yaml
-    fi
-    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+    export KUBECONFIG="/etc/rancher/k3s/k3s.yaml:/etc/rancher/rke2/rke2.yaml"
 fi
-if [ -d /var/lib/rancher/rke2/bin ]; then
-    export PATH="${PATH}:/var/lib/rancher/rke2/bin"
-fi
+export PATH="${PATH}:/var/lib/rancher/rke2/bin"
 if [ -z "$CONTAINER_RUNTIME_ENDPOINT" ]; then
     export CONTAINER_RUNTIME_ENDPOINT=unix:///var/run/k3s/containerd/containerd.sock
 fi

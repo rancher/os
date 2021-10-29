@@ -38,7 +38,8 @@ if [ "$1" == "" ] && [ ! -e output.iso ]; then
 fi
 
     #-bios /usr/share/qemu/OVMF.fd \
-qemu-system-x86_64 \
+
+../scripts/qemu-wrapper qemu-system-x86_64 \
     $BOOT \
     -enable-kvm \
     -m ${MEMORY:=4096} \

@@ -27,7 +27,7 @@ RUN cd /usr/sbin && \
     rm tmp
 RUN cd /usr/src && \
     git clone https://github.com/rancher-sandbox/cOS-toolkit
-RUN curl -Lo /usr/bin/luet https://github.com/mudler/luet/releases/download/0.18.1/luet-0.18.1-linux-$(go env GOARCH) && \
+RUN curl -Lo /usr/bin/luet https://github.com/mudler/luet/releases/download/0.20.5/luet-0.20.5-linux-$(go env GOARCH) && \
     chmod +x /usr/bin/luet
 RUN mkdir -p /iso/iso-overlay/boot/grub2 /etc/luet
 RUN export SUFFIX; \
@@ -104,7 +104,7 @@ RUN echo -e \
 'fi\n'\
 'menuentry "RancherOS Install" --class os --unrestricted {\n'\
 '    echo Loading kernel...\n'\
-'    $linux ($root)/boot/kernel.xz cdroot root=live:CDLABEL=COS_LIVE rd.live.dir=/ rd.live.squashimg=rootfs.squashfs console=tty1 console=ttyS0 rd.cos.disable\n'\
+'    $linux ($root)/boot/kernel.xz cdroot root=live:CDLABEL=COS_LIVE rd.live.dir=/ rd.live.squashimg=rootfs.squashfs console=tty1 console=ttyS0 rd.cos.disable rancheros.install.automatic=true rancheros.install.config_url=/run/initramfs/live/config\n'\
 '    echo Loading initrd...\n'\
 '    $initrd ($root)/boot/rootfs.xz\n'\
 '}\n'\
@@ -115,7 +115,13 @@ RUN echo -e \
 '        terminal_output console\n'\
 '    }\n'\
 'fi\n' > /iso/iso-overlay/boot/grub2/grub.cfg
+RUN echo -e '#cloud-config\n'\
+'rancheros:\n'\
+'  install:\n'\
+'    automatic: false\n' > /iso/iso-overlay/config
 RUN luet install --no-spinner -y toolchain/luet-makeiso
+ARG CONFIG
+RUN if [ -n "$CONFIG" ]; then echo "$CONFIG" > /iso/iso-overlay/config; fi
 WORKDIR /usr/src/cOS-toolkit/packer
 
 FROM tools AS iso-build
@@ -179,7 +185,10 @@ EOF
 
 iso()
 {
-    build --target iso -o build/
+    if [ -n "$CONFIG" ]; then
+        CONFIG_DATA="$(<$CONFIG)"
+    fi
+    build --target iso -o build/ --build-arg CONFIG="${CONFIG_DATA}"
 }
 
 qcow()
@@ -221,14 +230,16 @@ ami()
 usage()
 {
     echo "Usage:"
-    echo "    $0 IMAGE OUTPUT"
+    echo "    $0 IMAGE OUTPUT [ISO_CLOUD_CONFIG]"
     echo
     echo "    IMAGE: a Docker image"
     echo "    OUTPUT: Comma seperated value of output image formats. Valid: aws,iso,qcow"
+    echo "    ISO_CLOUD_CONFIG: An option file that will be used as the default cloud-init in an ISO"
 }
 
 IMAGE=$1
 OUTPUT=$2
+CONFIG=$3
 VERSION=${IMAGE##*:}
 NAME=${IMAGE%%:${VERSION}}
 NAME=${NAME//[^a-zA-Z0-9-@.\/_]/-}
@@ -258,6 +269,8 @@ fi
                 ;;
             *)
                 echo Unknown format $i
+                echo
+                usage
                 exit 1
         esac
     done

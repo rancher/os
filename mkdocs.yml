@@ -48,6 +48,7 @@ nav:
   - installation.md
   - upgrade.md
   - configuration.md
+  - customizing.md
   - dashboard.md
   - operator.md
   - versions.md

@@ -1,16 +1,22 @@
 package config
 
 import (
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/rancher/os2/pkg/dmidecode"
+	"github.com/rancher/rancherd/pkg/tpm"
 	values "github.com/rancher/wrangler/pkg/data"
 	"github.com/rancher/wrangler/pkg/data/convert"
 	schemas2 "github.com/rancher/wrangler/pkg/schemas"
+	"github.com/sirupsen/logrus"
 	"sigs.k8s.io/yaml"
 )
 
@@ -60,30 +66,33 @@ func readFileFunc(path string) func() (map[string]interface{}, error) {
 	}
 }
 
-func readNested(data map[string]interface{}) (map[string]interface{}, error) {
+func readNested(data map[string]interface{}, overlay bool) (map[string]interface{}, error) {
 	var (
 		nestedConfigFiles = convert.ToStringSlice(values.GetValueN(data, "rancheros", "install", "configUrl"))
 		funcs             []reader
 	)
 
+	if overlay {
+		funcs = append(funcs, func() (map[string]interface{}, error) {
+			return data, nil
+		})
+	}
+
 	for _, nestedConfigFile := range nestedConfigFiles {
 		funcs = append(funcs, readFileFunc(nestedConfigFile))
 	}
 
-	funcs = append(funcs, func() (map[string]interface{}, error) {
-		return data, nil
-	})
+	if !overlay {
+		funcs = append(funcs, func() (map[string]interface{}, error) {
+			return data, nil
+		})
+	}
 
 	return merge(funcs...)
 }
 
 func readFile(path string) (result map[string]interface{}, _ error) {
 	result = map[string]interface{}{}
-	defer func() {
-		if v, ok := result["install"]; ok {
-			values.PutValue(result, v, "rancheros", "install")
-		}
-	}()
 
 	switch {
 	case strings.HasPrefix(path, "http://"):
@@ -117,7 +126,7 @@ func readFile(path string) (result map[string]interface{}, _ error) {
 		return nil, err
 	}
 
-	return readNested(data)
+	return readNested(data, false)
 }
 
 type reader func() (map[string]interface{}, error)
@@ -145,6 +154,20 @@ func readConfigMap(cfg string) (map[string]interface{}, error) {
 	if cfg != "" {
 		values.PutValue(data, cfg, "rancheros", "install", "configUrl")
 	}
+
+	registrationURL := convert.ToString(values.GetValueN(data, "rancheros", "install", "registrationUrl"))
+	registrationCA := convert.ToString(values.GetValueN(data, "rancheros", "install", "registrationCaCert"))
+	if registrationURL != "" {
+		for {
+			newData, err := returnRegistrationData(registrationURL, registrationCA)
+			if err == nil {
+				return newData, nil
+			}
+			logrus.Errorf("failed to read registration URL %s, retrying: %v", registrationURL, err)
+			time.Sleep(15 * time.Second)
+		}
+	}
+
 	return data, nil
 }
 
@@ -157,12 +180,7 @@ func ToFile(cfg Config, output string) error {
 }
 
 func ToBytes(cfg Config) ([]byte, error) {
-	data, err := merge(readFileFunc(cfg.RancherOS.Install.ConfigURL), func() (map[string]interface{}, error) {
-		return convert.EncodeToMap(cfg)
-	})
-	if err != nil {
-		return nil, err
-	}
+	data := values.MergeMaps(nil, cfg.Data)
 	values.RemoveValue(data, "install")
 	values.RemoveValue(data, "rancheros", "install")
 	bytes, err := yaml.Marshal(data)
@@ -179,7 +197,41 @@ func ReadConfig(cfg string) (result Config, err error) {
 		return result, err
 	}
 
-	return result, convert.ToObj(data, &result)
+	if err := convert.ToObj(data, &result); err != nil {
+		return result, err
+	}
+
+	result.Data = data
+	return result, nil
+}
+
+func returnRegistrationData(url, ca string) (map[string]interface{}, error) {
+	smbios, err := getSMBiosHeaders()
+	if err != nil {
+		return nil, err
+	}
+	data, err := tpm.Get([]byte(ca), url, smbios)
+	if err != nil {
+		return nil, err
+	}
+	logrus.Infof("Retrieved config from registrationURL: %s", data)
+	result := map[string]interface{}{}
+	return result, json.Unmarshal(data, &result)
+}
+
+func getSMBiosHeaders() (http.Header, error) {
+	smbios, err := dmidecode.Decode()
+	if err != nil {
+		return nil, err
+	}
+	smbiosData, err := json.Marshal(smbios)
+	if err != nil {
+		return nil, err
+	}
+
+	header := http.Header{}
+	header.Set("X-Cattle-Smbios", base64.StdEncoding.EncodeToString(smbiosData))
+	return header, nil
 }
 
 func readCmdline() (map[string]interface{}, error) {
@@ -221,5 +273,9 @@ func readCmdline() (map[string]interface{}, error) {
 		}
 	}
 
-	return readNested(data)
+	if err := schema.Mapper.ToInternal(data); err != nil {
+		return nil, err
+	}
+
+	return readNested(data, true)
 }

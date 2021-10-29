@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/base64"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -29,8 +30,16 @@ func (i *InventoryServer) cacerts(rw http.ResponseWriter, req *http.Request) {
 
 	if authorization != "" && nonce != "" {
 		crt, err := i.secretCache.GetByIndex(tokenHash, authorization)
-		if err == nil && len(crt) >= 0 {
+		if err == nil && len(crt) > 0 {
 			digest := hmac.New(sha512.New, crt[0].Data[tokenKey])
+			digest.Write([]byte(nonce))
+			digest.Write([]byte{0})
+			digest.Write(bytes)
+			digest.Write([]byte{0})
+			hash := digest.Sum(nil)
+			rw.Header().Set("X-Cattle-Hash", base64.StdEncoding.EncodeToString(hash))
+		} else if machines, err := i.machineCache.GetByIndex(tokenHash, authorization); len(machines) == 1 && err == nil {
+			digest := hmac.New(sha512.New, []byte(machines[0].Spec.TPMHash))
 			digest.Write([]byte(nonce))
 			digest.Write([]byte{0})
 			digest.Write(bytes)
@@ -50,5 +59,22 @@ func (i *InventoryServer) cacert() string {
 	if err != nil {
 		return ""
 	}
+	if setting.Value == "" {
+		setting, err = i.settingCache.Get("internal-cacerts")
+		if err != nil {
+			return ""
+		}
+	}
 	return setting.Value
+}
+
+func (i *InventoryServer) serverURL() (string, error) {
+	setting, err := i.settingCache.Get("server-url")
+	if err != nil {
+		return "", err
+	}
+	if setting.Value == "" {
+		return "", fmt.Errorf("server-url is not set")
+	}
+	return setting.Value, nil
 }

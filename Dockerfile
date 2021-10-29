@@ -1,9 +1,9 @@
 FROM opensuse/leap:15.3 AS build
 RUN zypper ref
 RUN zypper in -y squashfs xorriso go1.16 upx busybox-static curl tar git gzip
-RUN curl -Lo /usr/bin/luet https://github.com/mudler/luet/releases/download/0.18.1/luet-0.18.1-linux-$(go env GOARCH) && \
+RUN curl -Lo /usr/bin/luet https://github.com/mudler/luet/releases/download/0.20.5/luet-0.20.5-linux-$(go env GOARCH) && \
     chmod +x /usr/bin/luet
-RUN curl -Lo /usr/bin/rancherd https://github.com/rancher/rancherd/releases/download/v0.0.1-alpha10/rancherd-$(go env GOARCH) && \
+RUN curl -Lo /usr/bin/rancherd https://github.com/rancher/rancherd/releases/download/v0.0.1-alpha11/rancherd-$(go env GOARCH) && \
     chmod +x /usr/bin/rancherd
 RUN curl -L https://get.helm.sh/helm-v3.7.1-linux-$(go env GOARCH).tar.gz | tar xzf - -C /usr/bin --strip-components=1
 COPY go.mod go.sum /usr/src/
@@ -90,6 +90,7 @@ RUN zypper in -y \
     kernel-firmware-qlogic \
     kernel-firmware-realtek \
     kernel-firmware-usb-network \
+    libtspi1 \
     less \
     lshw \
     lsof \

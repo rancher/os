@@ -28,8 +28,9 @@ import (
 )
 
 var (
-	MachineInventoryResourceName = "machineinventories"
-	ManagedOSImageResourceName   = "managedosimages"
+	MachineInventoryResourceName    = "machineinventories"
+	MachineRegistrationResourceName = "machineregistrations"
+	ManagedOSImageResourceName      = "managedosimages"
 )
 
 // SchemeGroupVersion is group version used to register these objects
@@ -55,6 +56,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&MachineInventory{},
 		&MachineInventoryList{},
+		&MachineRegistration{},
+		&MachineRegistrationList{},
 		&ManagedOSImage{},
 		&ManagedOSImageList{},
 	)

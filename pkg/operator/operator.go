@@ -7,6 +7,7 @@ import (
 	"github.com/rancher/os2/pkg/clients"
 	"github.com/rancher/os2/pkg/controllers/inventory"
 	"github.com/rancher/os2/pkg/controllers/managedos"
+	"github.com/rancher/os2/pkg/controllers/registration"
 	"github.com/rancher/os2/pkg/server"
 	"github.com/rancher/steve/pkg/aggregation"
 	"github.com/rancher/wrangler/pkg/crd"
@@ -39,6 +40,10 @@ func Run(ctx context.Context, namespace string) error {
 			SchemaObject: v1.MachineInventory{},
 			Status:       true,
 		},
+		crd.CRD{
+			SchemaObject: v1.MachineRegistration{},
+			Status:       true,
+		},
 	).BatchWait()
 	if err != nil {
 		logrus.Fatalf("Failed to create CRDs: %v", err)
@@ -46,6 +51,7 @@ func Run(ctx context.Context, namespace string) error {
 
 	managedos.Register(ctx, clients)
 	inventory.Register(ctx, clients)
+	registration.Register(ctx, clients)
 
 	aggregation.Watch(ctx, clients.Core.Secret(), namespace, "rancheros-operator", server.New(clients))
 	return clients.Start(ctx)

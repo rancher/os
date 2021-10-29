@@ -34,8 +34,13 @@ rules:
 - apiGroups:
   - management.cattle.io
   resources:
-  - 'settings'
   - 'clusterregistrationtokens'
+  verbs:
+  - '*'
+- apiGroups:
+  - management.cattle.io
+  resources:
+  - 'settings'
   verbs:
   - 'get'
   - 'watch'
@@ -44,8 +49,6 @@ rules:
   - apiextensions.k8s.io
   resources:
   - customresourcedefinitions
-    #resourceNames:
-    #- managedosimages.rancheros.cattle.io
   verbs:
   - '*'
 - apiGroups:

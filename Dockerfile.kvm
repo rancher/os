@@ -1,0 +1,30 @@
+FROM opensuse/leap:15.3
+RUN zypper ref
+RUN zypper install -y socat net-tools-deprecated libtasn1-devel gnutls-devel libseccomp-devel json-glib-devel system-user-tss git
+RUN zypper install -y autoconf
+RUN zypper install -y automake
+RUN git clone https://github.com/stefanberger/swtpm.git /usr/src/swtpm
+RUN zypper install -y libtool
+RUN zypper install -y gcc
+RUN zypper install -y libopenssl-devel
+RUN git clone https://github.com/stefanberger/libtpms.git /usr/src/libtpms
+RUN zypper install -y gcc-c++
+RUN zypper install -y make
+RUN zypper install -y expect
+RUN zypper install -y sudo
+RUN cd /usr/src/libtpms && \
+    ./autogen.sh --with-openssl --with-tpm2 && \
+    make -j4 && \
+    make install
+RUN cd /usr/src/swtpm && \
+    ./autogen.sh --prefix=/usr --libdir=/usr/lib64 --with-openssl --with-tss-user=root --with-tss-group=tss && \
+    make -j4 && \
+    sudo make -j4 && \
+    sudo make install
+RUN zypper install -y qemu-x86 qemu-arm qemu-tools
+
+COPY scripts/qemu-in-container /usr/bin/
+ENTRYPOINT ["/usr/bin/qemu-in-container"]
+
+RUN chmod +s /usr/lib/qemu-bridge-helper
+RUN echo 'allow all' > /etc/qemu/bridge.conf

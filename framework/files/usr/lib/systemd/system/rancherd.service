@@ -18,5 +18,6 @@ LimitNOFILE=1048576
 LimitNPROC=infinity
 LimitCORE=infinity
 TasksMax=infinity
+StandardOutput=journal+console
 TimeoutStartSec=0
 ExecStart=/usr/bin/rancherd bootstrap
