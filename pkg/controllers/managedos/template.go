@@ -6,13 +6,30 @@ import (
 	osv1 "github.com/rancher/os2/pkg/apis/rancheros.cattle.io/v1"
 	"github.com/rancher/os2/pkg/clients"
 	upgradev1 "github.com/rancher/system-upgrade-controller/pkg/apis/upgrade.cattle.io/v1"
+	"gopkg.in/yaml.v3"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func objects(mos *osv1.ManagedOSImage, prefix string) []runtime.Object {
+func cloudConfig(mos *osv1.ManagedOSImage) ([]byte, error) {
+	if mos.Spec.CloudConfig == nil || len(mos.Spec.CloudConfig.Data) == 0 {
+		return []byte{}, nil
+	}
+	data, err := yaml.Marshal(mos.Spec.CloudConfig.Data)
+	if err != nil {
+		return nil, err
+	}
+	return append([]byte("#cloud-config\n"), data...), nil
+}
+
+func objects(mos *osv1.ManagedOSImage, prefix string) ([]runtime.Object, error) {
+	cloudConfig, err := cloudConfig(mos)
+	if err != nil {
+		return nil, err
+	}
+
 	concurrency := int64(1)
 	if mos.Spec.Concurrency != nil {
 		concurrency = *mos.Spec.Concurrency
@@ -66,6 +83,15 @@ func objects(mos *osv1.ManagedOSImage, prefix string) []runtime.Object {
 				Namespace: clients.SystemNamespace,
 			},
 		},
+		&corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "os-upgrader-data",
+				Namespace: clients.SystemNamespace,
+			},
+			Data: map[string][]byte{
+				"cloud-config": cloudConfig,
+			},
+		},
 		&upgradev1.Plan{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Plan",
@@ -86,6 +112,10 @@ func objects(mos *osv1.ManagedOSImage, prefix string) []runtime.Object {
 				Cordon:             cordon,
 				Drain:              mos.Spec.Drain,
 				Prepare:            mos.Spec.Prepare,
+				Secrets: []upgradev1.SecretSpec{{
+					Name: "os-upgrader-data",
+					Path: "/run/data",
+				}},
 				Upgrade: &upgradev1.ContainerSpec{
 					Image: PrefixPrivateRegistry(image[0], prefix),
 					Command: []string{
@@ -94,7 +124,7 @@ func objects(mos *osv1.ManagedOSImage, prefix string) []runtime.Object {
 				},
 			},
 		},
-	}
+	}, nil
 }
 
 func PrefixPrivateRegistry(image, prefix string) string {

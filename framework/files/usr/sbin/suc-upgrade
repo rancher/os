@@ -2,15 +2,32 @@
 set -x -e
 HOST_DIR="${HOST_DIR:-/host}"
 RELEASE_FILE="${RELEASE_FILE:-/usr/lib/rancheros-release}"
+CONF_FILE="${CONF_FILE:-/run/data/cloud-config}"
+
+function config()
+{
+    if [ ! -e $CONF_FILE ]; then
+        return 0
+    fi
+
+    if [ ! -e ${HOST}/oem/90_operator.yaml ] || ! diff $CONF_FILE ${HOST}/oem/90/operator.yaml >/dev/null; then
+        cp -f $CONF_FILE ${HOST}/oem/90/operator.yaml
+        $REBOOT
+    fi
+}
 
 if [ "$FORCE" != "true" ]; then
     if diff $RELEASE_FILE ${HOST_DIR}${RELEASE_FILE} >/dev/null; then
         echo Update to date with
         cat ${RELEASE_FILE}
+
+        REBOOT="nsenter -i -m -t 1 -- reboot"
+        config
         exit 0
     fi
 fi
 
+config
 mount --rbind $HOST_DIR/dev /dev
 mount --rbind $HOST_DIR/run /run
 bash -x cos-upgrade --directory /

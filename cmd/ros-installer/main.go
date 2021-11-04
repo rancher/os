@@ -21,7 +21,7 @@ var (
 func main() {
 	flag.Parse()
 	if *printConfig {
-		cfg, err := config.ReadConfig(*configFile)
+		cfg, err := config.ReadConfig(*configFile, *automatic)
 		if err != nil {
 			logrus.Fatal(err)
 		}

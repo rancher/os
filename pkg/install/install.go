@@ -12,7 +12,7 @@ import (
 )
 
 func Run(automatic bool, configFile string, powerOff bool, silent bool) error {
-	cfg, err := config.ReadConfig(configFile)
+	cfg, err := config.ReadConfig(configFile, automatic)
 	if err != nil {
 		return err
 	}
@@ -58,6 +58,7 @@ func runInstall(cfg config.Config, output string) error {
 		if err != nil || !val {
 			return err
 		}
+		cfg.Data = nil
 	}
 
 	if cfg.RancherOS.Install.ConfigURL == "" && !cfg.RancherOS.Install.Automatic {
@@ -91,12 +92,12 @@ func runInstall(cfg config.Config, output string) error {
 			return err
 		}
 		cfg.RancherOS.Install.ConfigURL = output + ".yip"
+	} else {
+		if err := config.ToFile(cfg, output); err != nil {
+			return err
+		}
+		cfg.RancherOS.Install.ConfigURL = output
 	}
-
-	if err := config.ToFile(cfg, output); err != nil {
-		return err
-	}
-	cfg.RancherOS.Install.ConfigURL = output
 
 	ev, err := config.ToEnv(cfg)
 	if err != nil {

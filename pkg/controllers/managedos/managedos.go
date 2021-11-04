@@ -67,7 +67,12 @@ func (h *handler) OnChange(mos *provv1.ManagedOSImage, status provv1.ManagedOSIm
 		return nil, status, err
 	}
 
-	resources, err := ToResources(objects(mos, prefix))
+	objs, err := objects(mos, prefix)
+	if err != nil {
+		return nil, status, err
+	}
+
+	resources, err := ToResources(objs)
 	if err != nil {
 		return nil, status, err
 	}

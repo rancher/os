@@ -5,8 +5,17 @@ general:
    debug: false
    spinner_charset: 9
 repositories:
-- name: "cos-toolkit-green"
+- name: "cos-toolkit-green-amd64"
   type: "docker"
   enable: true
+  arch: amd64
+  reference: 20211103130314-repository.yaml
   urls:
   - "quay.io/costoolkit/releases-green"
+- name: "cos-toolkit-green-arm64"
+  type: "docker"
+  enable: true
+  arch: arm64
+  reference: 20211103171213-repository.yaml
+  urls:
+  - "quay.io/costoolkit/releases-green-arm64"

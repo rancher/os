@@ -19,6 +19,7 @@ type ManagedOSImage struct {
 
 type ManagedOSImageSpec struct {
 	OSImage      string                `json:"osImage,omitempty"`
+	CloudConfig  *fleet.GenericMap     `json:"cloudConfig,omitempty"`
 	NodeSelector *metav1.LabelSelector `json:"nodeSelector,omitempty"`
 	Concurrency  *int64                `json:"concurrency,omitempty"`
 

@@ -146,11 +146,24 @@ func merge(readers ...reader) (map[string]interface{}, error) {
 	return d, nil
 }
 
-func readConfigMap(cfg string) (map[string]interface{}, error) {
-	data, err := merge(readCmdline, readFileFunc(cfg))
-	if err != nil {
-		return nil, err
+func readConfigMap(cfg string, includeCmdline bool) (map[string]interface{}, error) {
+	var (
+		data map[string]interface{}
+		err  error
+	)
+
+	if includeCmdline {
+		data, err = merge(readCmdline, readFileFunc(cfg))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		data, err = merge(readFileFunc(cfg))
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	if cfg != "" {
 		values.PutValue(data, cfg, "rancheros", "install", "configUrl")
 	}
@@ -180,7 +193,18 @@ func ToFile(cfg Config, output string) error {
 }
 
 func ToBytes(cfg Config) ([]byte, error) {
-	data := values.MergeMaps(nil, cfg.Data)
+	var (
+		data map[string]interface{}
+		err  error
+	)
+	if len(cfg.Data) > 0 {
+		data = values.MergeMaps(nil, cfg.Data)
+	} else {
+		data, err = convert.EncodeToMap(cfg)
+		if err != nil {
+			return nil, err
+		}
+	}
 	values.RemoveValue(data, "install")
 	values.RemoveValue(data, "rancheros", "install")
 	bytes, err := yaml.Marshal(data)
@@ -191,8 +215,8 @@ func ToBytes(cfg Config) ([]byte, error) {
 	return append([]byte("#cloud-config\n"), bytes...), nil
 }
 
-func ReadConfig(cfg string) (result Config, err error) {
-	data, err := readConfigMap(cfg)
+func ReadConfig(cfg string, includeCmdline bool) (result Config, err error) {
+	data, err := readConfigMap(cfg, includeCmdline)
 	if err != nil {
 		return result, err
 	}
