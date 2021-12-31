@@ -1,4 +1,4 @@
-FROM ubuntu:xenial
+FROM ubuntu:xenial-20210416
 # FROM arm64=arm64v8/ubuntu:xenial
 
 ENV DAPPER_RUN_ARGS --privileged
