@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:xenial-20210416
 # FROM arm64=aarch64/ubuntu:16.04 arm=armhf/ubuntu:16.04
 
 # get the apt-cacher proxy set
