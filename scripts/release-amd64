@@ -14,6 +14,8 @@ if [ "$OS_FIRMWARE" = "false" ]; then
     exit 0
 else
     echo "github-release release --user burmilla --repo os --tag ${VERSION} --pre-release --draft" > dist/publish.sh
+    echo "echo Waiting 30 seconds after release creation to make sure that GitHub is ready for uploads" >> dist/publish.sh
+    echo "sleep 30s" >> dist/publish.sh
 
     echo "github-release upload --user burmilla --repo os --tag ${VERSION} --file ./dist/artifacts/burmillaos.iso --name burmillaos-${VERSION}.iso" >> dist/publish.sh
 
