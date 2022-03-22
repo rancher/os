@@ -39,6 +39,9 @@ require dhcp_server_identifier
 # OR generate Stable Private IPv6 Addresses based from the DUID
 slaac private
 
+# Ignore Docker container interfaces
+denyinterfaces veth*
+
 {{- range $key, $value := .}}
 interface {{$key}}
 static ip_address={{$value.Address}}

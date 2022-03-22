@@ -34,6 +34,7 @@ RUN rm /sbin/poweroff /sbin/reboot /sbin/halt && \
     ln -s /dev/null /etc/udev/rules.d/80-net-name-slot.rules && \
     sed -i s/"partx --update \"\$part\" \"\$dev\""/"partx --update --nr \"\$part\" \"\$dev\""/g /usr/bin/growpart && \
     sed -i -e 's/duid/clientid/g' /etc/dhcpcd.conf && \
+    echo -e '\n# Ignore Docker container interfaces\ndenyinterfaces veth*\n' >> /etc/dhcpcd.conf && \
     rm -f /etc/wpa_supplicant.conf && \
     ln -s /usr/share/dhcpcd/hooks/10-wpa_supplicant /lib/dhcpcd/dhcpcd-hooks/ && \
     rm -f /usr/share/bash-completion/completions/* && \
