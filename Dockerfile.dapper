@@ -81,11 +81,11 @@ ARG OS_CONSOLE=default
 ARG OS_AUTOFORMAT=false
 ARG OS_FIRMWARE=true
 
-ARG OS_BASE_URL_amd64=https://github.com/burmilla/os-base/releases/download/v2020.02.8-1/os-base_amd64.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/burmilla/os-base/releases/download/v2022.02.3-1/os-base_amd64.tar.xz
 ARG OS_BASE_URL_arm64=https://github.com/burmilla/os-base/releases/download/v2020.02.8-1/os-base_arm64.tar.xz
 ARG OS_BASE_URL_mips64el=https://github.com/burmilla/os-base/releases/download/v2020.02.8-1/os-base_mips64el.tar.xz
 
-ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2020.02.8-1/os-initrd-base-amd64.tar.gz
+ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2022.02.3-1/os-initrd-base-amd64.tar.gz
 ARG OS_INITRD_BASE_URL_arm64=https://github.com/burmilla/os-initrd-base/releases/download/v2020.02.8-1/os-initrd-base-arm64.tar.gz
 ARG OS_INITRD_BASE_URL_mips64el=https://github.com/burmilla/os-initrd-base/releases/download/v2020.02.8-1/os-initrd-base-mips64el.tar.gz
 
