@@ -1,4 +1,4 @@
-FROM debian:stable-slim
+FROM debian:bullseye-slim
 
 COPY build/sshd_config.append.tpl /etc/ssh/
 COPY build/lsb-release /etc/
