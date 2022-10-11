@@ -2,7 +2,12 @@ package selinux
 
 // #cgo pkg-config: libselinux libsepol
 // #include <selinux/selinux.h>
+// #include <stdlib.h>
 import "C"
+
+import (
+	"unsafe"
+)
 
 func InitializeSelinux() (int, error) {
 	enforce := C.int(0)
@@ -11,6 +16,12 @@ func InitializeSelinux() (int, error) {
 }
 
 func SetFileContext(path string, context string) (int, error) {
-	ret, err := C.setfilecon(C.CString(path), C.CString(context))
+	cPath := C.CString(path)
+	defer C.free(unsafe.Pointer(cPath))
+
+	cContext := C.CString(context)
+	defer C.free(unsafe.Pointer(cContext))
+
+	ret, err := C.setfilecon(cPath, cContext)
 	return int(ret), err
 }
