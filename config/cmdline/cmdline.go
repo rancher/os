@@ -126,7 +126,7 @@ func UnmarshalOrReturnString(value string) (result interface{}) {
 	return
 }
 
-//splitCmdLine splits on spaces except when a space is within a quoted or bracketed string.
+// splitCmdLine splits on spaces except when a space is within a quoted or bracketed string.
 func splitCmdLine(cmdLine string) []string {
 	lastRune := rune(0)
 	f := func(c rune) bool {

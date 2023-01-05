@@ -32,6 +32,8 @@ ln -s usr/sbin                 ${INITRD_DIR}/sbin
 curl -SL ${!SYSTEM_DOCKER_URL} | tar --strip-components=1 -xzvf - -C ${INITRD_DIR}/usr/bin/
 # we have diabled the user-proxy so we get rid of system-docker-proxy
 rm -f ${INITRD_DIR}/usr/bin/system-docker-proxy
+# reduce size by removing debugging tool system-docker-containerd-ctr
+rm -f ${INITRD_DIR}/usr/bin/system-docker-containerd-ctr
 
 cat <<HERE > ${INITRD_DIR}/usr/share/ros/os-release
 NAME="BurmillaOS"

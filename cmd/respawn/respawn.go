@@ -51,7 +51,7 @@ func Main() {
 }
 
 func setupSigterm() {
-	sigtermChan := make(chan os.Signal)
+	sigtermChan := make(chan os.Signal, 1)
 	signal.Notify(sigtermChan, syscall.SIGTERM)
 	go func() {
 		for range sigtermChan {

@@ -184,7 +184,8 @@ func innerInit(deferedHook bool) {
 // init.Main can't read /proc/cmdline at start.
 // and then fails due to the network not being up
 // TODO: create a "defered SyslogHook that always gets initialised, but if it fails to connect, stores the logs
-//       and retries connecting every time its triggered....
+//
+//	and retries connecting every time its triggered....
 func AddRSyslogHook() {
 	val := cmdline.GetCmdline("netconsole")
 	netconsole := val.(string)

@@ -28,7 +28,7 @@ func TestParseCloudConfig(t *testing.T) {
 	}{
 		{},
 		{
-			config: "	",
+			config:  "	",
 			entries: []Entry{{entryError, "found character that cannot start any token", 1}},
 		},
 		{
