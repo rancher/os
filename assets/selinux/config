@@ -1,2 +1,0 @@
-SELINUX=permissive
-SELINUXTYPE=ros

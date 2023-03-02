@@ -15,7 +15,6 @@ import (
 	"github.com/burmilla/os/pkg/init/one"
 	"github.com/burmilla/os/pkg/log"
 	"github.com/burmilla/os/pkg/netconf"
-	"github.com/burmilla/os/pkg/selinux"
 	"github.com/burmilla/os/pkg/util"
 
 	"github.com/docker/libnetwork/resolvconf"
@@ -38,9 +37,7 @@ var (
 		{"none", "/run", "tmpfs", ""},
 		{"none", "/sys", "sysfs", ""},
 		{"none", "/sys/fs/cgroup", "tmpfs", ""},
-	}
-	optionalMounts = [][]string{
-		{"none", "/sys/fs/selinux", "selinuxfs", "ro"},
+		{"debugfs", "/sys/kernel/debug", "debugfs", ""},
 	}
 )
 
@@ -71,16 +68,6 @@ func createMounts(mounts ...[]string) error {
 	}
 
 	return nil
-}
-
-func createOptionalMounts(mounts ...[]string) {
-	for _, mount := range mounts {
-		log.Debugf("Mounting %s %s %s %s", mount[0], mount[1], mount[2], mount[3])
-		err := util.Mount(mount[0], mount[1], mount[2], mount[3])
-		if err != nil {
-			log.Debugf("Unable to mount %s %s %s %s: %v", mount[0], mount[1], mount[2], mount[3], err)
-		}
-	}
 }
 
 func createDirs(dirs ...string) error {
@@ -448,10 +435,10 @@ func PrepareFs(config *Config) error {
 		return err
 	}
 
-	createOptionalMounts(optionalMounts...)
-
-	if err := mountCgroups(config.CgroupHierarchy); err != nil {
-		return err
+	if util.GetHypervisor() != "wsl2" {
+		if err := mountCgroups(config.CgroupHierarchy); err != nil {
+			return err
+		}
 	}
 
 	if err := createLayout(config); err != nil {
@@ -547,8 +534,6 @@ func createLayout(config *Config) error {
 
 	cleanupFiles(graphDirectory)
 
-	selinux.SetFileContext(graphDirectory, "system_u:object_r:var_lib_t:s0")
-
 	symlinks := [][]string{
 		{"usr/lib", "/lib"},
 		{"usr/sbin", "/sbin"},
@@ -579,10 +564,6 @@ func firstPrepare() error {
 
 	if err := defaultFolders(
 		"/etc/docker",
-		"/etc/selinux",
-		"/etc/selinux/ros",
-		"/etc/selinux/ros/policy",
-		"/etc/selinux/ros/contexts",
 	); err != nil {
 		return err
 	}

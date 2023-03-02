@@ -20,7 +20,6 @@ import (
 	"github.com/burmilla/os/pkg/init/one"
 	"github.com/burmilla/os/pkg/init/prepare"
 	"github.com/burmilla/os/pkg/init/recovery"
-	"github.com/burmilla/os/pkg/init/selinux"
 	"github.com/burmilla/os/pkg/init/sharedroot"
 	"github.com/burmilla/os/pkg/init/switchroot"
 	"github.com/burmilla/os/pkg/log"
@@ -64,7 +63,6 @@ func RunInit() error {
 		{Name: "preparefs2", Func: prepare.FS},
 		{Name: "load modules2", Func: modules.LoadModules},
 		{Name: "set proxy env", Func: env.Proxy},
-		{Name: "init SELinux", Func: selinux.Initialize},
 		{Name: "setupSharedRoot", Func: sharedroot.Setup},
 		{Name: "sysinit", Func: sysinit.RunSysInit},
 	}

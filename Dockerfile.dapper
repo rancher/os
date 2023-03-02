@@ -39,6 +39,7 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
         wget \
         xorriso \
         xz-utils \
+        zstd \
         telnet
 
 ########## Dapper Configuration #####################
@@ -61,9 +62,7 @@ ARG OS_REPO=burmilla
 ARG HOSTNAME_DEFAULT=burmilla
 ARG DISTRIB_ID=BurmillaOS
 
-ARG SELINUX_POLICY_URL=https://github.com/burmilla/refpolicy/releases/download/v0.0.3/policy.29
-
-ARG KERNEL_VERSION=5.10.162-burmilla
+ARG KERNEL_VERSION=5.10.188-burmilla
 ARG KERNEL_URL_amd64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-x86.tar.gz
 ARG KERNEL_URL_arm64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-arm64.tar.gz
 
@@ -79,17 +78,17 @@ ARG OS_CONSOLE=default
 ARG OS_AUTOFORMAT=false
 ARG OS_FIRMWARE=true
 
-ARG OS_BASE_URL_amd64=https://github.com/burmilla/os-base/releases/download/v2022.02.8-2/os-base_amd64.tar.xz
-ARG OS_BASE_URL_arm64=https://github.com/burmilla/os-base/releases/download/v2022.02.8-2/os-base_arm64.tar.xz
+ARG OS_BASE_URL_amd64=https://github.com/burmilla/os-base/releases/download/v2023.05-1/os-base_amd64.tar.xz
+ARG OS_BASE_URL_arm64=https://github.com/burmilla/os-base/releases/download/v2023.05-1/os-base_arm64.tar.xz
 
-ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2022.02.8-2/os-initrd-base-amd64.tar.gz
-ARG OS_INITRD_BASE_URL_arm64=https://github.com/burmilla/os-initrd-base/releases/download/v2022.02.8-2/os-initrd-base-arm64.tar.gz
+ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2023.05-1/os-initrd-base-amd64.tar.gz
+ARG OS_INITRD_BASE_URL_arm64=https://github.com/burmilla/os-initrd-base/releases/download/v2023.05-1/os-initrd-base-arm64.tar.gz
 
-ARG SYSTEM_DOCKER_VERSION=17.06.107
+ARG SYSTEM_DOCKER_VERSION=17.06.108
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
-ARG USER_DOCKER_VERSION=23.0.0rc3
+ARG USER_DOCKER_VERSION=24.0.5
 ARG USER_DOCKER_ENGINE_VERSION=docker-${USER_DOCKER_VERSION}
 
 ARG AZURE_SERVICE=false
@@ -131,7 +130,6 @@ ENV BUILD_DOCKER_URL=BUILD_DOCKER_URL_${ARCH} \
     OS_AUTOFORMAT=${OS_AUTOFORMAT} \
     OS_FIRMWARE=${OS_FIRMWARE} \
     REPO_VERSION=master \
-    SELINUX_POLICY_URL=${SELINUX_POLICY_URL} \
     SYSTEM_DOCKER_URL=SYSTEM_DOCKER_URL_${ARCH} \
     SYSTEM_DOCKER_URL_amd64=${SYSTEM_DOCKER_URL_amd64} \
     SYSTEM_DOCKER_URL_arm64=${SYSTEM_DOCKER_URL_arm64} \
@@ -151,9 +149,6 @@ RUN echo "... Downloading  ${!KERNEL_URL}"; \
     if [ "${!KERNEL_URL}" != "skip" ]; then \
         curl -fL ${!KERNEL_URL} > ${DOWNLOADS}/kernel.tar.gz \
     ;fi
-
-# Download SELinux Policy
-RUN curl -pfL ${SELINUX_POLICY_URL} > ${DOWNLOADS}/$(basename ${SELINUX_POLICY_URL})
 
 # Install Go
 RUN curl -L https://storage.googleapis.com/golang/go${GO_VERSION}.linux-${HOST_ARCH}.tar.gz | tar -xzf - -C /usr/local && \

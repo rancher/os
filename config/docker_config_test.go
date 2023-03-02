@@ -38,13 +38,6 @@ func TestGenerateEngineOptsString(t *testing.T) {
 	})), "--bridge bridge")
 
 	testContains(t, fmt.Sprint(generateEngineOptsSlice(EngineOpts{
-		SelinuxEnabled: &[]bool{true}[0],
-	})), "--selinux-enabled")
-	testContains(t, fmt.Sprint(generateEngineOptsSlice(EngineOpts{
-		SelinuxEnabled: &[]bool{false}[0],
-	})), "--selinux-enabled=false")
-
-	testContains(t, fmt.Sprint(generateEngineOptsSlice(EngineOpts{
 		Host: []string{
 			"unix:///var/run/system-docker.sock",
 			"unix:///var/run/docker.sock",
@@ -59,11 +52,10 @@ func TestGenerateEngineOptsString(t *testing.T) {
 	})), "--log-opt max-size=25m", "--log-opt max-file=2")
 
 	testContains(t, fmt.Sprint(generateEngineOptsSlice(EngineOpts{
-		Bridge:         "bridge",
-		SelinuxEnabled: &[]bool{true}[0],
+		Bridge: "bridge",
 		LogOpts: map[string]string{
 			"max-size": "25m",
 			"max-file": "2",
 		},
-	})), "--bridge bridge", "--selinux-enabled", "--log-opt max-size=25m", "--log-opt max-file=2")
+	})), "--bridge bridge", "--log-opt max-size=25m", "--log-opt max-file=2")
 }

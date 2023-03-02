@@ -8,6 +8,7 @@ RUN apt-get update \
                            sudo less curl ca-certificates psmisc htop kmod iproute2 \
                            net-tools bash-completion wget \
                            nano open-iscsi iputils-ping nvi \
+                           apparmor \
     && update-alternatives --set iptables /usr/sbin/iptables-legacy \
     && update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy \
     && rm -rf /var/lib/apt/lists/* \

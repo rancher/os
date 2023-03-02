@@ -144,5 +144,15 @@ func BlkidType(deviceType string) (deviceNames []string, err error) {
 
 // GetHypervisor tries to detect if we're running in a VM, and returns a string for its type
 func GetHypervisor() string {
-	return cpuid.CPU.HypervisorName
+	hv := cpuid.CPU.HypervisorName
+	if hv == "hyperv" {
+		data, err := os.ReadFile("/proc/sys/kernel/osrelease")
+		if err != nil {
+			return hv
+		}
+		if strings.Contains(string(data), "microsoft-standard-WSL2") {
+			hv = "wsl2"
+		}
+	}
+	return hv
 }

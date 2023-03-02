@@ -1,3 +1,0 @@
-process = "system_u:system_r:svirt_lxc_net_t:s0"
-content = "system_u:object_r:virt_var_lib_t:s0"
-file = "system_u:object_r:svirt_lxc_file_t:s0"

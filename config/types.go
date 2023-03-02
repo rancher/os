@@ -180,7 +180,6 @@ type EngineOpts struct {
 	PidFile          string            `yaml:"pid_file,omitempty" opt:"pidfile"`
 	RegistryMirror   string            `yaml:"registry_mirror,omitempty" opt:"registry-mirror"`
 	Restart          *bool             `yaml:"restart,omitempty" opt:"restart"`
-	SelinuxEnabled   *bool             `yaml:"selinux_enabled,omitempty" opt:"selinux-enabled"`
 	StorageDriver    string            `yaml:"storage_driver,omitempty" opt:"storage-driver"`
 	UserlandProxy    *bool             `yaml:"userland_proxy,omitempty" opt:"userland-proxy"`
 }

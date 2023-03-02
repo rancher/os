@@ -8,12 +8,13 @@ package util
 #include<blkid/blkid.h>
 #include<libmount/libmount.h>
 #include<stdlib.h>
+#cgo pkg-config: libselinux libsepol
+#include <selinux/selinux.h>
 */
 import "C"
-import "unsafe"
-
 import (
 	"errors"
+	"unsafe"
 )
 
 // ResolveDevice this isn't reliable - blkid -L LABEL works more often :(

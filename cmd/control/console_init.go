@@ -277,6 +277,10 @@ sudo ros service up docker-compose
 		log.Error(err)
 	}
 
+	if err := util.RunScript("/etc/init.d/apparmor", "start"); err != nil {
+		log.Error(err)
+	}
+
 	// Enable Bash colors
 	enableBashRC("/root", 0, 0)
 	enableBashRC(rancherHome, 1100, 1100)

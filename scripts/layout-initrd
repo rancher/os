@@ -1,6 +1,7 @@
 #!/bin/bash
 
 function cache_services() {
+    echo "Caching service: $1"
     local SERVICE_YMLFILE=$1
 
     local SERVICE_URL=${OS_SERVICES_REPO}/${REPO_VERSION}
@@ -22,10 +23,11 @@ mkdir -p ${INITRD_DIR}/usr/{etc,lib,bin,share/ros}
 
 ./scripts/template
 
-cp -rf assets/selinux          ${INITRD_DIR}/usr/etc
 cp build/images*.tar           ${INITRD_DIR}/usr/share/ros/
 cp bin/ros                     ${INITRD_DIR}/usr/bin/
 ln -s usr/bin/ros              ${INITRD_DIR}/init
+# cp ${INITRD_DIR}/usr/bin/sh    ${INITRD_DIR}/usr/bin
+ln -s ros                      ${INITRD_DIR}/usr/bin/init
 ln -s bin                      ${INITRD_DIR}/usr/sbin
 ln -s usr/sbin                 ${INITRD_DIR}/sbin
 
@@ -49,44 +51,9 @@ BUILD_ID=
 HERE
 
 # cache os-services yml file
-for file in $(find . -type f -name ".make-*"); do
-    f_file=$(basename ${file})
-    case $f_file in
-        ".make-vmware")
-            cache_services "o/open-vm-tools.yml"
-            ;;
-        ".make-4glte")
-            cache_services "m/modem-manager.yml"
-            ;;
-        ".make-hyperv")
-            cache_services "h/hyperv-vm-tools.yml"
-            ;;
-        ".make-azurebase")
-            cache_services "h/hyperv-vm-tools.yml"
-            cache_services "w/waagent.yml"
-            ;;
-        ".make-proxmoxve")
-            cache_services "q/qemu-guest-agent.yml"
-            ;;
-    esac
-done
-case ${OS_CONSOLE} in
-    "alpine")
-        cache_services "a/alpine.yml"
-        ;;
-    "centos")
-        cache_services "c/centos.yml"
-        ;;
-    "debian")
-        cache_services "d/debian.yml"
-        ;;
-    "fedora")
-        cache_services "f/fedora.yml"
-        ;;
-    "ubuntu")
-        cache_services "u/ubuntu.yml"
-        ;;
-esac
+cache_services "h/hyperv-vm-tools.yml"
+cache_services "o/open-vm-tools.yml"
+cache_services "q/qemu-guest-agent.yml"
 
 pushd ${INITRD_DIR}/usr/etc
 ln -s ../share/ros/os-release .
@@ -96,11 +63,6 @@ popd
 touch ${INITRD_DIR}/usr/bin/docker-containerd
 touch ${INITRD_DIR}/usr/bin/docker-containerd-shim
 touch ${INITRD_DIR}/usr/bin/docker
-
-if [ -e ${DOWNLOADS}/policy.29 ]; then
-    mkdir -p ${INITRD_DIR}/usr/etc/selinux/ros/policy/
-    cp ${DOWNLOADS}/policy.29 ${INITRD_DIR}/usr/etc/selinux/ros/policy/
-fi
 
 # make burmilla/os-initrd image
 cat <<HERE > ${INITRD_DIR}/../Dockerfile.initrd

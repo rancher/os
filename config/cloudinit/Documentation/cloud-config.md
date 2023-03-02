@@ -387,7 +387,6 @@ The following fields are not yet implemented:
 - **inactive**: Deactivate the user upon creation
 - **lock-passwd**: Boolean. Disable password login for user
 - **sudo**: Entry to add to /etc/sudoers for user. By default, no sudo access is authorized.
-- **selinux-user**: Corresponding SELinux user
 - **ssh-import-id**: Import SSH keys by ID from Launchpad.
 
 ```yaml

@@ -136,7 +136,6 @@ func Main() {
 			Action:          userDockerAction,
 		},
 		installCommand,
-		selinuxCommand(),
 	}
 
 	app.Run(os.Args)

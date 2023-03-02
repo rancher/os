@@ -2,11 +2,6 @@ name: release
 
 on:
   workflow_dispatch:
-    inputs:
-      firmware:
-        description: 'Include firmwares'
-        default: 'true'
-        required: true
 
 jobs:
   build:

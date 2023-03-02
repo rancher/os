@@ -140,7 +140,6 @@ var schema = `{
 				"pid_file": {"type": "string"},
 				"registry_mirror": {"type": "string"},
 				"restart": {"type": ["boolean", "null"]},
-				"selinux_enabled": {"type": ["boolean", "null"]},
 				"storage_driver": {"type": "string"},
 				"userland_proxy": {"type": ["boolean", "null"]},
 				"userns_enabled": {"type": ["boolean", "null"]},
