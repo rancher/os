@@ -79,7 +79,7 @@ rancher:
     restart: false
     graph: /var/lib/system-docker
     group: root
-    host: ["unix:///var/run/system-docker.sock"]
+    host: ["unix:///var/run/system-engine.sock"]
     userland_proxy: false
   console: {{.OS_CONSOLE}}
   cloud_init:
@@ -123,7 +123,7 @@ rancher:
       volumes:
       - /usr/bin/ros:/usr/bin/ros:ro
       - /usr/bin/system-docker:/usr/bin/system-docker:ro
-      - /usr/bin/system-docker-runc:/usr/bin/system-docker-runc:ro
+      - /usr/bin/system-engine-rc:/usr/bin/system-engine-rc:ro
     system-volumes:
       image: {{.OS_REPO}}/os-base:{{.VERSION}}{{.SUFFIX}}
       command: echo
@@ -341,7 +341,7 @@ rancher:
       privileged: true
       restart: always
       volumes:
-      - /var/run/system-docker.sock:/var/run/docker.sock
+      - /var/run/system-engine.sock:/var/run/docker.sock
       environment:
         DOCKER_API_VERSION: "1.22"
     udev-cold:
@@ -398,11 +398,11 @@ rancher:
   system_docker:
     exec: true
     storage_driver: overlay2
-    bip: 172.18.42.1/16
+    bridge: none
     restart: false
     graph: /var/lib/system-docker
     group: root
-    host: ["unix:///var/run/system-docker.sock"]
+    host: ["unix:///var/run/system-engine.sock"]
     pid_file: /var/run/system-docker.pid
     exec_root: /var/run/system-docker
     config_file: /etc/docker/system-docker.json

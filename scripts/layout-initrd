@@ -32,10 +32,6 @@ ln -s bin                      ${INITRD_DIR}/usr/sbin
 ln -s usr/sbin                 ${INITRD_DIR}/sbin
 
 curl -SL ${!SYSTEM_DOCKER_URL} | tar --strip-components=1 -xzvf - -C ${INITRD_DIR}/usr/bin/
-# we have diabled the user-proxy so we get rid of system-docker-proxy
-rm -f ${INITRD_DIR}/usr/bin/system-docker-proxy
-# reduce size by removing debugging tool system-docker-containerd-ctr
-rm -f ${INITRD_DIR}/usr/bin/system-docker-containerd-ctr
 
 cat <<HERE > ${INITRD_DIR}/usr/share/ros/os-release
 NAME="BurmillaOS"
@@ -49,11 +45,6 @@ SUPPORT_URL="https://github.com/burmilla/os"
 BUG_REPORT_URL="https://github.com/burmilla/os/issues"
 BUILD_ID=
 HERE
-
-# cache os-services yml file
-cache_services "h/hyperv-vm-tools.yml"
-cache_services "o/open-vm-tools.yml"
-cache_services "q/qemu-guest-agent.yml"
 
 pushd ${INITRD_DIR}/usr/etc
 ln -s ../share/ros/os-release .

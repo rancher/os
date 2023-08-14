@@ -77,7 +77,7 @@ func Recovery(initFailure error) {
 			Restart:       &[]bool{false}[0],
 			Graph:         "/var/lib/recovery-docker",
 			Group:         "root",
-			Host:          []string{"unix:///var/run/system-docker.sock"},
+			Host:          []string{"unix:///var/run/system-engine.sock"},
 			UserlandProxy: &[]bool{false}[0],
 		},
 	}

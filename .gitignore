@@ -22,3 +22,4 @@ __pycache__
 .trash-conf
 /Dockerfile.dapper*
 !/Dockerfile.dapper
+scripts/images/raspberry-pi-hypriot64/Dockerfile.dapper*

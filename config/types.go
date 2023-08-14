@@ -18,14 +18,14 @@ const (
 	StateDir         = "/state"
 	RosBin           = "/usr/bin/ros"
 	SysInitBin       = "/usr/bin/ros-sysinit"
-	SystemDockerHost = "unix:///var/run/system-docker.sock"
+	SystemDockerHost = "unix:///var/run/system-engine.sock"
 	DockerHost       = "unix:///var/run/docker.sock"
 	ImagesPath       = "/usr/share/ros"
 	InitImages       = "images-init.tar"
 	SystemImages     = "images-system.tar"
 	UserImages       = "images-user.tar"
 	Debug            = false
-	SystemDockerBin  = "/usr/bin/system-dockerd"
+	SystemDockerBin  = "/usr/bin/system-engine"
 	DefaultDind      = "burmilla/os-dind:17.12.1"
 
 	DetachLabel        = "io.rancher.os.detach"

@@ -12,11 +12,6 @@ func (d *DockerConfig) FullArgs() []string {
 	args = append(args, generateEngineOptsSlice(d.EngineOpts)...)
 	args = append(args, d.ExtraArgs...)
 
-	// Make sure that OOM killer will kill containers before user docker
-	// https://github.com/burmilla/os/issues/33
-	args = append(args, "--oom-score-adjust")
-	args = append(args, "-250")
-
 	if d.TLS {
 		args = append(args, d.TLSArgs...)
 	}

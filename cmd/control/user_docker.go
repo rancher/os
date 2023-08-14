@@ -186,14 +186,14 @@ func startDocker(cfg *config.CloudConfig) error {
 		return err
 	}
 
-	cmd := []string{"system-docker-runc", "exec", "--", info.ID, "env"}
+	cmd := []string{"system-engine-rc", "exec", "--", info.ID, "env"}
 	log.Info(dockerCfg.AppendEnv())
 	cmd = append(cmd, dockerCfg.AppendEnv()...)
 	cmd = append(cmd, dockerCommand...)
 	cmd = append(cmd, args...)
 	log.Infof("Running %v", cmd)
 
-	return syscall.Exec("/usr/bin/system-docker-runc", cmd, os.Environ())
+	return syscall.Exec("/usr/bin/system-engine-rc", cmd, os.Environ())
 }
 
 func waitForPid(service string, project *project.Project) (int, error) {

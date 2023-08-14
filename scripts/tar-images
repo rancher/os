@@ -19,6 +19,11 @@ for i in ${APPEND_SYSTEM_IMAGES};do
 done
 
 for i in ${IMAGES}; do
+    # Reduce ISO file size by not caching Docker engine
+    if [[ ${i} == "burmilla/os-docker:"* ]]; then
+        continue
+    fi
+
     echo "tar-image: pull($i)"
     if ! docker inspect $i >/dev/null 2>&1; then
         docker pull ${i}

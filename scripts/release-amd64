@@ -3,11 +3,6 @@ set -ex
 
 cd $(dirname $0)/..
 
-# touch .make-azurebase
-touch .make-hyperv
-touch .make-proxmoxve
-touch .make-vmware
-
 source ./scripts/version
 ./scripts/release-build
 
