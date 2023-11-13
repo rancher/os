@@ -407,7 +407,7 @@ func modifySshdConfig(cfg *config.CloudConfig) error {
 }
 
 func setupSSH(cfg *config.CloudConfig) error {
-	for _, keyType := range []string{"rsa", "dsa", "ecdsa", "ed25519"} {
+	for _, keyType := range []string{"rsa", "ed25519"} {
 		outputFile := fmt.Sprintf("/etc/ssh/ssh_host_%s_key", keyType)
 		outputFilePub := fmt.Sprintf("/etc/ssh/ssh_host_%s_key.pub", keyType)
 
