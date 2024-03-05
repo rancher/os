@@ -18,14 +18,14 @@ const (
 	StateDir         = "/state"
 	RosBin           = "/usr/bin/ros"
 	SysInitBin       = "/usr/bin/ros-sysinit"
-	SystemDockerHost = "unix:///var/run/system-engine.sock"
+	SystemDockerHost = "unix:///var/run/system-docker.sock"
 	DockerHost       = "unix:///var/run/docker.sock"
 	ImagesPath       = "/usr/share/ros"
 	InitImages       = "images-init.tar"
 	SystemImages     = "images-system.tar"
 	UserImages       = "images-user.tar"
 	Debug            = false
-	SystemDockerBin  = "/usr/bin/system-engine"
+	SystemDockerBin  = "/usr/bin/system-dockerd"
 	DefaultDind      = "burmilla/os-dind:17.12.1"
 
 	DetachLabel        = "io.rancher.os.detach"
@@ -171,7 +171,7 @@ type EngineOpts struct {
 	Debug            *bool             `yaml:"debug,omitempty" opt:"debug"`
 	ExecRoot         string            `yaml:"exec_root,omitempty" opt:"exec-root"`
 	Group            string            `yaml:"group,omitempty" opt:"group"`
-	Graph            string            `yaml:"graph,omitempty" opt:"graph"`
+	DataRoot         string            `yaml:"data_root,omitempty" opt:"data-root"`
 	Host             []string          `yaml:"host,omitempty" opt:"host"`
 	InsecureRegistry []string          `yaml:"insecure_registry" opt:"insecure-registry"`
 	LiveRestore      *bool             `yaml:"live_restore,omitempty" opt:"live-restore"`

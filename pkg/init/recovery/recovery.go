@@ -75,9 +75,9 @@ func Recovery(initFailure error) {
 			Bridge:        "none",
 			StorageDriver: "overlay2",
 			Restart:       &[]bool{false}[0],
-			Graph:         "/var/lib/recovery-docker",
+			DataRoot:      "/var/lib/recovery-docker",
 			Group:         "root",
-			Host:          []string{"unix:///var/run/system-engine.sock"},
+			Host:          []string{"unix:///var/run/system-docker.sock"},
 			UserlandProxy: &[]bool{false}[0],
 		},
 	}

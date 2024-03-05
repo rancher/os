@@ -26,7 +26,7 @@ Please submit any **BurmillaOS** bugs, issues, and feature requests to [burmilla
 
 ## License
 
-Copyright (c) 2020 Project Burmilla
+Copyright (c) 2020-2024 [BurmillaOS community](https://burmillaos.org)
 
 Copyright (c) 2014-2020 [Rancher Labs, Inc.](http://rancher.com)
 

@@ -96,7 +96,7 @@ func dockerInitAction(c *cli.Context) error {
 		}
 	}
 
-	err = checkZfsBackingFS(cfg.Rancher.Docker.StorageDriver, cfg.Rancher.Docker.Graph)
+	err = checkZfsBackingFS(cfg.Rancher.Docker.StorageDriver, cfg.Rancher.Docker.DataRoot)
 	if err != nil {
 		log.Fatal(err)
 	}

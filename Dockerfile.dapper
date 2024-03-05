@@ -39,7 +39,6 @@ RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01prox
         wget \
         xorriso \
         xz-utils \
-        zstd \
         telnet
 
 ########## Dapper Configuration #####################
@@ -62,7 +61,7 @@ ARG OS_REPO=burmilla
 ARG HOSTNAME_DEFAULT=burmilla
 ARG DISTRIB_ID=BurmillaOS
 
-ARG KERNEL_VERSION=5.10.188-burmilla
+ARG KERNEL_VERSION=5.10.211-burmilla
 ARG KERNEL_URL_amd64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-x86.tar.gz
 ARG KERNEL_URL_arm64=https://github.com/burmilla/os-kernel/releases/download/v${KERNEL_VERSION}/linux-${KERNEL_VERSION}-arm64.tar.gz
 
@@ -81,14 +80,14 @@ ARG OS_FIRMWARE=true
 ARG OS_BASE_URL_amd64=https://github.com/burmilla/os-base/releases/download/v2023.05-1/os-base_amd64.tar.xz
 ARG OS_BASE_URL_arm64=https://github.com/burmilla/os-base/releases/download/v2023.05-1/os-base_arm64.tar.xz
 
-ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2023.05-2/os-initrd-base-amd64.tar.gz
-ARG OS_INITRD_BASE_URL_arm64=https://github.com/burmilla/os-initrd-base/releases/download/v2023.05-2/os-initrd-base-arm64.tar.gz
+ARG OS_INITRD_BASE_URL_amd64=https://github.com/burmilla/os-initrd-base/releases/download/v2023.02.10-1/os-initrd-base-amd64.tar.gz
+ARG OS_INITRD_BASE_URL_arm64=https://github.com/burmilla/os-initrd-base/releases/download/v2023.02.10-1/os-initrd-base-arm64.tar.gz
 
-ARG SYSTEM_DOCKER_VERSION=17.06.109
+ARG SYSTEM_DOCKER_VERSION=17.06.107
 ARG SYSTEM_DOCKER_URL_amd64=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-amd64-${SYSTEM_DOCKER_VERSION}.tgz
 ARG SYSTEM_DOCKER_URL_arm64=https://github.com/burmilla/os-system-docker/releases/download/${SYSTEM_DOCKER_VERSION}/docker-arm64-${SYSTEM_DOCKER_VERSION}.tgz
 
-ARG USER_DOCKER_VERSION=24.0.7
+ARG USER_DOCKER_VERSION=24.0.9
 ARG USER_DOCKER_ENGINE_VERSION=docker-${USER_DOCKER_VERSION}
 
 ARG AZURE_SERVICE=false

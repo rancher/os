@@ -42,20 +42,20 @@ var (
 )
 
 type Config struct {
-	Fork            bool
-	PidOne          bool
-	CommandName     string
-	DNSConfig       netconf.DNSConfig
-	BridgeName      string
-	BridgeAddress   string
-	BridgeMtu       int
-	CgroupHierarchy map[string]string
-	LogFile         string
-	NoLog           bool
-	NoFiles         uint64
-	Environment     []string
-	GraphDirectory  string
-	DaemonConfig    string
+	Fork              bool
+	PidOne            bool
+	CommandName       string
+	DNSConfig         netconf.DNSConfig
+	BridgeName        string
+	BridgeAddress     string
+	BridgeMtu         int
+	CgroupHierarchy   map[string]string
+	LogFile           string
+	NoLog             bool
+	NoFiles           uint64
+	Environment       []string
+	DataRootDirectory string
+	DaemonConfig      string
 }
 
 func createMounts(mounts ...[]string) error {
@@ -400,8 +400,8 @@ func ParseConfig(config *Config, args ...string) []string {
 			if err != nil {
 				config.BridgeMtu = mtu
 			}
-		} else if strings.HasPrefix(arg, "-g") || strings.HasPrefix(arg, "--graph") {
-			config.GraphDirectory = GetValue(i, args)
+		} else if strings.HasPrefix(arg, "--data-root") {
+			config.DataRootDirectory = GetValue(i, args)
 		}
 	}
 
@@ -495,12 +495,12 @@ func createDaemonConfig(config *Config) error {
 	return nil
 }
 
-func cleanupFiles(graphDirectory string) {
+func cleanupFiles(dataRootDirectory string) {
 	zeroFiles := []string{
 		"/etc/docker/key.json",
 		"/etc/docker/daemon.json",
 		"/etc/docker/system-daemon.json",
-		path.Join(graphDirectory, "image/overlay/repositories.json"),
+		path.Join(dataRootDirectory, "image/overlay/repositories.json"),
 	}
 
 	for _, file := range zeroFiles {
@@ -518,13 +518,13 @@ func createLayout(config *Config) error {
 		return err
 	}
 
-	graphDirectory := config.GraphDirectory
+	dataRootDirectory := config.DataRootDirectory
 
-	if config.GraphDirectory == "" {
-		graphDirectory = "/var/lib/docker"
+	if config.DataRootDirectory == "" {
+		dataRootDirectory = "/var/lib/docker"
 	}
 
-	if err := createDirs(graphDirectory); err != nil {
+	if err := createDirs(dataRootDirectory); err != nil {
 		return err
 	}
 
@@ -532,7 +532,7 @@ func createLayout(config *Config) error {
 		return err
 	}
 
-	cleanupFiles(graphDirectory)
+	cleanupFiles(dataRootDirectory)
 
 	symlinks := [][]string{
 		{"usr/lib", "/lib"},

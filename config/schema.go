@@ -132,7 +132,7 @@ var schema = `{
 				"debug": {"type": ["boolean", "null"]},
 				"exec_root": {"type": "string"},
 				"group": {"type": "string"},
-				"graph": {"type": "string"},
+				"data_root": {"type": "string"},
 				"host": {"type": "array"},
 				"live_restore": {"type": ["boolean", "null"]},
 				"log_driver": {"type": "string"},

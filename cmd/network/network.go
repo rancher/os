@@ -63,10 +63,12 @@ func ApplyNetworkConfig(cfg *config.CloudConfig) {
 		cfg.Rancher.Network.DHCPTimeout = cfg.Rancher.Defaults.Network.DHCPTimeout
 	}
 
+	// Always generate dhcpcd.conf to support NTP and hostname configuration coming from DHCP
+	generateDhcpcdFiles(cfg)
+
 	// In order to handle the STATIC mode in Wi-Fi network, we have to update the dhcpcd.conf file.
 	// https://wiki.archlinux.org/index.php/dhcpcd#Static_profile
 	if len(cfg.Rancher.Network.WifiNetworks) > 0 {
-		generateDhcpcdFiles(cfg)
 		generateWpaFiles(cfg)
 	}
 

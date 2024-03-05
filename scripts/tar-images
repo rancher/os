@@ -49,7 +49,10 @@ echo "tar-image: SYSTEM_IMAGES=$SYSTEM_IMAGES"
 echo "tar-image: INIT_IMAGES=$INIT_IMAGES"
 echo "tar-image: USER_IMAGES=$USER_IMAGES"
 
-ARCHIVE_CMD="zstd -19 -c"
+# system-docker can not load images which compressed by xz with a compression level of 9
+# decompression consumes more memory if using level 9
+# the default compression level for xz is 6
+ARCHIVE_CMD="xz -4 -e"
 
 docker save ${INIT_IMAGES} | ${ARCHIVE_CMD} > ${INIT_IMAGES_DST}
 docker save ${SYSTEM_IMAGES} | ${ARCHIVE_CMD} > ${SYSTEM_IMAGES_DST}
