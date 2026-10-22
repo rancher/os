@@ -53,6 +53,11 @@ func consoleSubcommands() []cli.Command {
 			},
 			Action: consoleList,
 		},
+		{
+			Name:        "sshd",
+			Usage:       "disable or enable sshd of the console",
+			Subcommands: sshdSubcommands(),
+		},
 	}
 }
 
