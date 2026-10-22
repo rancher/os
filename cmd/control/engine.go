@@ -131,10 +131,18 @@ func engineSwitch(c *cli.Context) error {
 
 	if newEngine == "latest" {
 		engines := availableEngines(cfg, true)
+		if len(engines) == 0 {
+			log.Fatal("No Docker engines available in the service repositories")
+		}
 		newEngine = engines[len(engines)-1]
 		currentEngine := CurrentEngine()
 		if newEngine == currentEngine {
 			log.Infof("Latest engine %s is already running", newEngine)
+			if cfg.Rancher.Docker.Engine != newEngine {
+				if err := config.Set("rancher.docker.engine", newEngine); err != nil {
+					log.Errorf("Failed to update rancher.docker.engine: %v", err)
+				}
+			}
 			return nil
 		}
 		log.Infof("Switching to engine %s", newEngine)

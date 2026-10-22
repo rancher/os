@@ -84,19 +84,30 @@ func loadConsoleService(cfg *config.CloudConfig, p *project.Project) error {
 
 func loadEngineService(cfg *config.CloudConfig, p *project.Project) error {
 	engine := cfg.Rancher.Docker.Engine
-	if engine == "" || engine == cfg.Rancher.Defaults.Docker.Engine {
+	if engine == "" {
+		engine = cfg.Rancher.Defaults.Docker.Engine
+	}
+	if engine == "" || (engine != "latest" && engine == cfg.Rancher.Defaults.Docker.Engine) {
 		return nil
 	}
 
 	// The configured engine may be missing from the service repository of
 	// this OS version (e.g. an engine selected on an older release). Fall
 	// back to the default engine instead of leaving the system without Docker.
+	// "latest" is not an engine in the repository (there is no os-docker:latest
+	// image), so it always resolves to the latest available engine.
 	engines, err := network.GetEngines(cfg.Rancher.Repositories.ToArray())
 	if err == nil {
 		if fallback, ok := resolveEngine(engine, cfg.Rancher.Defaults.Docker.Engine, engines); !ok {
-			log.Warnf("Docker engine %s is not available in the service repositories, falling back to %s. Use 'ros engine list' and 'ros engine switch' to select an available engine.", engine, fallback)
+			if engine != "latest" {
+				log.Warnf("Docker engine %s is not available in the service repositories, falling back to %s. Use 'ros engine list' and 'ros engine switch' to select an available engine.", engine, fallback)
+			}
 			engine = fallback
 		}
+	}
+	if engine == "latest" {
+		// Engine index could not be read, keep the built-in docker service.
+		return nil
 	}
 
 	return LoadSpecialService(p, cfg, "docker", engine)

@@ -17,6 +17,8 @@ func TestResolveEngine(t *testing.T) {
 		{"missing falls back to latest", "docker-29.6.2", "latest", available, "docker-29.9.2", false},
 		{"missing falls back to listed default", "docker-29.6.2", "docker-25.0.14", available, "docker-25.0.14", false},
 		{"index not readable", "docker-29.6.2", "latest", nil, "docker-29.6.2", true},
+		{"latest resolves to latest available", "latest", "latest", available, "docker-29.9.2", false},
+		{"latest without index", "latest", "latest", nil, "latest", true},
 		{"local file", "/var/lib/rancher/conf/docker.yml", "latest", available, "/var/lib/rancher/conf/docker.yml", true},
 		{"url", "https://example.com/docker.yml", "latest", available, "https://example.com/docker.yml", true},
 	}
