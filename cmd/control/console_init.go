@@ -34,6 +34,14 @@ const (
 	sshdTplFile = "/etc/ssh/sshd_config.tpl"
 )
 
+const (
+	appArmorEnabled  = "/sys/module/apparmor/parameters/enabled"
+	appArmorFs       = "/sys/kernel/security/apparmor"
+	securityFs       = "/sys/kernel/security"
+	appArmorParser   = "/sbin/apparmor_parser"
+	appArmorProfiles = "/etc/apparmor.d"
+)
+
 type symlink struct {
 	oldname, newname string
 }
@@ -277,6 +285,11 @@ $(tput sgr0)
 		log.Error(err)
 	}
 
+	// User Docker waits for console-done and then runs inside this
+	// container's mount namespace, so AppArmor must be ready before that:
+	// dockerd checks AppArmor support only once at startup.
+	startAppArmor()
+
 	if err := ioutil.WriteFile(consoleDone, []byte(CurrentConsole()), 0644); err != nil {
 		log.Error(err)
 	}
@@ -297,10 +310,6 @@ $(tput sgr0)
 	}
 
 	if err := util.RunScript("/etc/rc.local"); err != nil {
-		log.Error(err)
-	}
-
-	if err := util.RunScript("/etc/init.d/apparmor", "start"); err != nil {
 		log.Error(err)
 	}
 
@@ -479,4 +488,39 @@ func istty(name string) bool {
 		return terminal.IsTerminal(int(f.Fd()))
 	}
 	return false
+}
+
+// startAppArmor mounts securityfs and loads the AppArmor profiles shipped in
+// the console. The Debian /etc/init.d/apparmor script can not be used for
+// this: since Debian 13 the console contains systemd (openssh-server depends
+// on it) and the script silently skips everything when systemd-detect-virt
+// reports that it is running inside a container, which is always the case
+// for the console.
+func startAppArmor() {
+	enabled, err := ioutil.ReadFile(appArmorEnabled)
+	if err != nil || !strings.HasPrefix(string(enabled), "Y") {
+		log.Info("AppArmor is not enabled in the kernel, not loading profiles")
+		return
+	}
+
+	if _, err := os.Stat(appArmorFs); os.IsNotExist(err) {
+		if err := syscall.Mount("securityfs", securityFs, "securityfs", 0, ""); err != nil {
+			log.Errorf("Failed to mount securityfs on %s: %v", securityFs, err)
+			return
+		}
+	}
+
+	if _, err := os.Stat(appArmorParser); err != nil {
+		log.Warnf("AppArmor parser %s not found, not loading profiles", appArmorParser)
+		return
+	}
+
+	// same as "/etc/init.d/apparmor reload" does, --replace keeps this
+	// working when the console container is restarted
+	cmd := exec.Command(appArmorParser, "--write-cache", "--replace", "--", appArmorProfiles)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Errorf("At least one AppArmor profile failed to load: %v", err)
+	}
 }
