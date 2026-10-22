@@ -62,7 +62,7 @@ v3.0.0-beta1 shipped kernel 6.12.95, buildroot 2025.02.16, Debian 13 console, Sy
 Known beta1 issues (release discussion #226) and their RC1 fixes:
 
 - **AppArmor not enabled** – the Debian 13 console contains systemd, so Debian's `/etc/init.d/apparmor` exits early inside a container. `console-init` now mounts securityfs and loads `/etc/apparmor.d` itself, before `/run/console-done` so user Docker sees AppArmor. Kernel cmdline already has `apparmor=1 security=apparmor`.
-- **Hyper-V tools crashing** – os-services image built with bookworm glibc but run on bullseye; fixed in os-services (`os-hypervvmtools:6.12.95-burmilla-2`), preload tags updated in `Makefile`. The image tag follows the kernel version, so rebuild it when the kernel is bumped.
+- **Hyper-V tools crashing** – os-services image built with bookworm glibc but run on bullseye; fixed in os-services (`os-hypervvmtools:6.12.114-burmilla-1`, built for kernel 6.12.114), preload tags updated in `Makefile`. The image tag follows the kernel version, so rebuild it when the kernel is bumped.
 - **ZFS service enable fails** – OpenZFS 2.0.1 does not build for 6.12; os-services moved to OpenZFS 2.4.4 on a Debian 13 build image (`os-zfs:v2.4.4-1`).
 - **Docker unavailable after v2 → v3 upgrade** – the selected engine (e.g. docker-29.6.2) was missing from os-services `v3.0.x`. Missing engines were added there, and `pkg/compose/reload.go` now falls back to the default/latest engine when the configured one is not in the index.
 - **multipath-tools** added to the console on user request.

@@ -56,14 +56,14 @@ vmware: .dapper
 hyperv: .dapper
 	mkdir -p dist
 	OS_FIRMWARE="false" \
-	APPEND_SYSTEM_IMAGES="burmilla/os-hypervvmtools:6.12.95-burmilla-2" \
+	APPEND_SYSTEM_IMAGES="burmilla/os-hypervvmtools:6.12.114-burmilla-1" \
 	./.dapper release-hyperv
 
 azurebase: .dapper
 	mkdir -p dist
 	AZURE_SERVICE="true" \
 	OS_FIRMWARE="false" \
-	APPEND_SYSTEM_IMAGES="burmilla/os-hypervvmtools:6.12.95-burmilla-2 burmilla/os-waagent:v2.2.49.2-1" \
+	APPEND_SYSTEM_IMAGES="burmilla/os-hypervvmtools:6.12.114-burmilla-1 burmilla/os-waagent:v2.2.49.2-1" \
 	./.dapper release-azurebase
 
 4glte: .dapper
