@@ -79,7 +79,46 @@ func mountConfigured(display, dev, fsType, target string) error {
 }
 
 func mountState(cfg *config.CloudConfig) error {
-	return mountConfigured("state", cfg.Rancher.State.Dev, cfg.Rancher.State.FsType, config.StateDir)
+	dev := cfg.Rancher.State.Dev
+	fsType := cfg.Rancher.State.FsType
+	if dev == "" {
+		return nil
+	}
+
+	resolved := util.ResolveDevice(dev)
+	if resolved == "" {
+		return fmt.Errorf("Could not resolve device %q", dev)
+	}
+	if fsType == "auto" || fsType == "" {
+		inferred, err := util.GetFsType(resolved)
+		if err != nil {
+			return err
+		}
+		fsType = inferred
+	}
+
+	// Online discard lets thin provisioned and virtual disks (e.g. Hyper-V
+	// VHDX) reclaim space freed in the state partition without a scheduled
+	// fstrim.
+	if options := discardOptions(fsType); options != "" {
+		log.Infof("Mounting state device %s to %s with %s", resolved, config.StateDir, options)
+		err := util.Mount(resolved, config.StateDir, fsType, options)
+		if err == nil {
+			return nil
+		}
+		log.Warnf("Failed to mount state with %s, retrying without: %v", options, err)
+	}
+
+	log.Infof("Mounting state device %s to %s", resolved, config.StateDir)
+	return util.Mount(resolved, config.StateDir, fsType, "")
+}
+
+func discardOptions(fsType string) string {
+	switch fsType {
+	case "ext4", "xfs", "btrfs", "f2fs":
+		return "discard"
+	}
+	return ""
 }
 
 func tryMountState(cfg *config.CloudConfig) error {
