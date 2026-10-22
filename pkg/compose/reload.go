@@ -2,10 +2,13 @@ package compose
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"github.com/burmilla/os/config"
 	"github.com/burmilla/os/pkg/docker"
 	"github.com/burmilla/os/pkg/log"
+	"github.com/burmilla/os/pkg/util"
 	"github.com/burmilla/os/pkg/util/network"
 
 	composeConfig "github.com/burmilla/os/pkg/libcompose/config"
@@ -80,10 +83,44 @@ func loadConsoleService(cfg *config.CloudConfig, p *project.Project) error {
 }
 
 func loadEngineService(cfg *config.CloudConfig, p *project.Project) error {
-	if cfg.Rancher.Docker.Engine == "" || cfg.Rancher.Docker.Engine == cfg.Rancher.Defaults.Docker.Engine {
+	engine := cfg.Rancher.Docker.Engine
+	if engine == "" || engine == cfg.Rancher.Defaults.Docker.Engine {
 		return nil
 	}
-	return LoadSpecialService(p, cfg, "docker", cfg.Rancher.Docker.Engine)
+
+	// The configured engine may be missing from the service repository of
+	// this OS version (e.g. an engine selected on an older release). Fall
+	// back to the default engine instead of leaving the system without Docker.
+	engines, err := network.GetEngines(cfg.Rancher.Repositories.ToArray())
+	if err == nil {
+		if fallback, ok := resolveEngine(engine, cfg.Rancher.Defaults.Docker.Engine, engines); !ok {
+			log.Warnf("Docker engine %s is not available in the service repositories, falling back to %s. Use 'ros engine list' and 'ros engine switch' to select an available engine.", engine, fallback)
+			engine = fallback
+		}
+	}
+
+	return LoadSpecialService(p, cfg, "docker", engine)
+}
+
+// resolveEngine returns engine and true if it can be loaded: it is a local
+// file or URL, it is listed in available, or the engine index could not be
+// read (available is empty). Otherwise it returns the engine to fall back to
+// and false: defaultEngine if it is listed in available, else the latest
+// available engine, as with 'ros engine switch latest'.
+func resolveEngine(engine, defaultEngine string, available []string) (string, bool) {
+	if len(available) == 0 || isLocalOrURL(engine) || util.Contains(available, engine) {
+		return engine, true
+	}
+	if util.Contains(available, defaultEngine) {
+		return defaultEngine, false
+	}
+	sorted := append([]string(nil), available...)
+	sort.Strings(sorted)
+	return sorted[len(sorted)-1], false
+}
+
+func isLocalOrURL(service string) bool {
+	return strings.HasPrefix(service, "/") || strings.HasPrefix(service, "http:/") || strings.HasPrefix(service, "https:/")
 }
 
 func projectReload(p *project.Project, useNetwork *bool, loadConsole bool, environmentLookup *docker.ConfigEnvironment, authLookup *docker.ConfigAuthLookup) func() error {
