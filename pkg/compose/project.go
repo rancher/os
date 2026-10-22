@@ -43,12 +43,6 @@ func CreateService(cfg *config.CloudConfig, name string, serviceConfig *composet
 	return p.CreateService(name)
 }
 
-// CreateServiceV1 creates a single service from a v1 service config (for backward compat).
-func CreateServiceV1(cfg *config.CloudConfig, name string, serviceConfig *composeConfig.ServiceConfigV1) (project.Service, error) {
-	sc := composeConfig.ServiceConfigV1ToServiceConfig(serviceConfig)
-	return CreateService(cfg, name, sc)
-}
-
 // CreateServiceSet creates a project with the given v1 service configs.
 func CreateServiceSet(name string, cfg *config.CloudConfig, configs map[string]*composeConfig.ServiceConfigV1) (*project.Project, error) {
 	p, err := newProject(name, cfg, nil, nil)

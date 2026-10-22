@@ -92,15 +92,7 @@ func loadRawConfigWithError(dirPrefix string, full bool) (map[interface{}]interf
 }
 
 func LoadConfig() *CloudConfig {
-	cfg := LoadConfigWithPrefix("")
-
-	if cfg.Rancher.Debug {
-		log.SetDefaultLevel(log.DebugLevel)
-	} else {
-		log.SetDefaultLevel(log.InfoLevel)
-	}
-
-	return cfg
+	return LoadConfigWithPrefix("")
 }
 
 func LoadConfigWithError() (*CloudConfig, *gojsonschema.Result, error) {
@@ -327,7 +319,7 @@ func WriteToFile(data interface{}, filename string) error {
 		return err
 	}
 
-	return util.WriteFileAtomic(filename, content, 400)
+	return util.WriteFileAtomic(filename, content, 0400)
 }
 
 func readConfigs(bytes []byte, substituteMetadataVars, returnErr bool, files ...string) (map[interface{}]interface{}, error) {

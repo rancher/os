@@ -395,30 +395,6 @@ func TestWriteEnvFileEmptyNoCreate(t *testing.T) {
 	}
 }
 
-func SvenBrokeTestWriteEnvFilePermFailure(t *testing.T) {
-	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
-	if err != nil {
-		t.Fatalf("Unable to create tempdir: %v", err)
-	}
-	defer os.RemoveAll(dir)
-
-	name := "foo.conf"
-	fullPath := path.Join(dir, name)
-	ioutil.WriteFile(fullPath, []byte(base), 0000)
-
-	ef := EnvFile{
-		File: &File{config.File{
-			Path: name,
-		}},
-		Vars: valueUpdate,
-	}
-
-	err = WriteEnvFile(&ef, dir)
-	if !os.IsPermission(err) {
-		t.Fatalf("Not a pemission denied error: %v", err)
-	}
-}
-
 func TestWriteEnvFileNameFailure(t *testing.T) {
 	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
 	if err != nil {

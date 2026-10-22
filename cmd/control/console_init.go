@@ -461,7 +461,7 @@ func setupSSH(cfg *config.CloudConfig) error {
 			continue
 		}
 
-		cmd := exec.Command("bash", "-c", fmt.Sprintf("ssh-keygen -f %s -N '' -t %s", outputFile, keyType))
+		cmd := exec.Command("ssh-keygen", "-f", outputFile, "-N", "", "-t", keyType)
 		if err := cmd.Run(); err != nil {
 			return err
 		}

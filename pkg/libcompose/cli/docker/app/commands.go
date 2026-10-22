@@ -1,11 +1,7 @@
 package app
 
 import (
-	"github.com/burmilla/os/pkg/libcompose/docker"
-	"github.com/burmilla/os/pkg/libcompose/docker/client"
-	"github.com/burmilla/os/pkg/libcompose/project"
 	"github.com/codegangsta/cli"
-	"github.com/sirupsen/logrus"
 )
 
 // DockerClientFlags defines the flags that are specific to the docker client,
@@ -38,23 +34,4 @@ func DockerClientFlags() []cli.Flag {
 			Usage: "Path to docker config dir, default ${HOME}/.docker",
 		},
 	}
-}
-
-// Populate updates the specified docker context based on command line arguments and subcommands.
-func Populate(context *docker.Context, c *cli.Context) {
-	context.ConfigDir = c.String("configdir")
-
-	opts := client.Options{}
-	opts.TLS = c.GlobalBool("tls")
-	opts.TLSVerify = c.GlobalBool("tlsverify")
-	opts.TLSOptions.CAFile = c.GlobalString("tlscacert")
-	opts.TLSOptions.CertFile = c.GlobalString("tlscert")
-	opts.TLSOptions.KeyFile = c.GlobalString("tlskey")
-
-	clientFactory, err := project.NewDefaultClientFactory(opts)
-	if err != nil {
-		logrus.Fatalf("Failed to construct Docker client: %v", err)
-	}
-
-	context.ClientFactory = clientFactory
 }

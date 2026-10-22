@@ -23,15 +23,3 @@ import (
 type Etcd2 struct {
 	config.Etcd2
 }
-
-// Units creates a Unit file drop-in for etcd, using any configured options.
-func (ee Etcd2) Units() []Unit {
-	return []Unit{{config.Unit{
-		Name:    "etcd2.service",
-		Runtime: true,
-		DropIns: []config.UnitDropIn{{
-			Name:    "20-cloudinit.conf",
-			Content: serviceContents(ee.Etcd2),
-		}},
-	}}}
-}

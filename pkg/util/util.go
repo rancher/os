@@ -48,11 +48,15 @@ func Contains(values []string, value string) bool {
 type ReturnsErr func() error
 
 func FileCopy(src, dest string) error {
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
 	data, err := ioutil.ReadFile(src)
 	if err != nil {
 		return err
 	}
-	return WriteFileAtomic(dest, data, 0666)
+	return WriteFileAtomic(dest, data, info.Mode().Perm())
 }
 
 func HTTPDownloadToFile(url, dest string) error {
@@ -65,7 +69,8 @@ func HTTPDownloadToFile(url, dest string) error {
 	if err != nil {
 		return err
 	}
-	return WriteFileAtomic(dest, body, 0666)
+	// only caller downloads a cloud-config, which can hold secrets
+	return WriteFileAtomic(dest, body, 0600)
 }
 
 func WriteFileAtomic(filename string, data []byte, perm os.FileMode) error {
@@ -160,24 +165,6 @@ func SliceCopy(data []interface{}) []interface{} {
 	result := make([]interface{}, len(data), len(data))
 	for k, v := range data {
 		result[k] = Copy(v)
-	}
-	return result
-}
-
-func RemoveString(slice []string, s string) []string {
-	result := []string{}
-	for _, elem := range slice {
-		if elem != s {
-			result = append(result, elem)
-		}
-	}
-	return result
-}
-
-func ToStrings(data []interface{}) []string {
-	result := make([]string, len(data), len(data))
-	for k, v := range data {
-		result[k] = v.(string)
 	}
 	return result
 }
@@ -421,7 +408,7 @@ func GenerateDindEngineScript(name string) error {
 
 	bytes := []byte("/usr/bin/docker -H unix:///var/lib/m-user-docker/" + name + "/docker-" + name + ".sock $@")
 
-	err := ioutil.WriteFile("/usr/bin/docker-"+name, bytes, 755)
+	err := ioutil.WriteFile("/usr/bin/docker-"+name, bytes, 0755)
 	if err != nil {
 		return err
 	}

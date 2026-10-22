@@ -106,14 +106,14 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 
 	if len(scriptBytes) > 0 {
 		log.Infof("Writing to %s", rancherConfig.CloudConfigScriptFile)
-		if err := util.WriteFileAtomic(rancherConfig.CloudConfigScriptFile, scriptBytes, 500); err != nil {
+		if err := util.WriteFileAtomic(rancherConfig.CloudConfigScriptFile, scriptBytes, 0500); err != nil {
 			log.Errorf("Error while writing file %s: %v", rancherConfig.CloudConfigScriptFile, err)
 			return err
 		}
 	}
 
 	if len(cloudConfigBytes) > 0 {
-		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 400); err != nil {
+		if err := util.WriteFileAtomic(rancherConfig.CloudConfigBootFile, cloudConfigBytes, 0400); err != nil {
 			return err
 		}
 		log.Infof("Wrote to %s", rancherConfig.CloudConfigBootFile)
@@ -124,7 +124,7 @@ func saveFiles(cloudConfigBytes, scriptBytes []byte, metadata datasource.Metadat
 		return err
 	}
 
-	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 400); err != nil {
+	if err = util.WriteFileAtomic(rancherConfig.MetaDataFile, metaDataBytes, 0400); err != nil {
 		return err
 	}
 	log.Infof("Wrote to %s", rancherConfig.MetaDataFile)
@@ -284,25 +284,6 @@ func getDatasources(datasources []string) []datasource.Datasource {
 	}
 
 	return dss
-}
-
-func enableDoLinkLocal() {
-	cfg := rancherConfig.LoadConfig()
-	dhcpTimeout := cfg.Rancher.Defaults.Network.DHCPTimeout
-	if cfg.Rancher.Network.DHCPTimeout > 0 {
-		dhcpTimeout = cfg.Rancher.Network.DHCPTimeout
-	}
-	_, err := netconf.ApplyNetworkConfigs(&netconf.NetworkConfig{
-		Interfaces: map[string]netconf.InterfaceConfig{
-			"eth0": {
-				IPV4LL: true,
-			},
-		},
-		DHCPTimeout: dhcpTimeout,
-	}, false, false)
-	if err != nil {
-		log.Errorf("Failed to apply link local on eth0: %v", err)
-	}
 }
 
 // selectDatasource attempts to choose a valid Datasource to use based on its

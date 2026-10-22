@@ -33,19 +33,6 @@ func ProjectStop(p project.APIProject, c *cli.Context) error {
 	return nil
 }
 
-func ProjectDown(p project.APIProject, c *cli.Context) error {
-	options := options.Down{
-		RemoveVolume:  c.Bool("volumes"),
-		RemoveImages:  options.ImageType(c.String("rmi")),
-		RemoveOrphans: c.Bool("remove-orphans"),
-	}
-	err := p.Down(context.Background(), options, c.Args()...)
-	if err != nil {
-		return cli.NewExitError(err.Error(), 1)
-	}
-	return nil
-}
-
 func ProjectBuild(p project.APIProject, c *cli.Context) error {
 	config := options.Build{
 		NoCache:     c.Bool("no-cache"),

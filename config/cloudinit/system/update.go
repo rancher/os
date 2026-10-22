@@ -18,7 +18,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"os"
 	"path"
 	"reflect"
 	"sort"
@@ -39,17 +38,6 @@ const (
 type Update struct {
 	ReadConfig func() (io.Reader, error)
 	config.Update
-}
-
-func DefaultReadConfig() (io.Reader, error) {
-	etcUpdate := path.Join("/etc", "coreos", "update.conf")
-	usrUpdate := path.Join("/usr", "share", "coreos", "update.conf")
-
-	f, err := os.Open(etcUpdate)
-	if os.IsNotExist(err) {
-		f, err = os.Open(usrUpdate)
-	}
-	return f, err
 }
 
 // File generates an `/etc/coreos/update.conf` file (if any update

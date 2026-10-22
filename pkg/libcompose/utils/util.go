@@ -39,21 +39,6 @@ func (i *InParallel) Wait() error {
 	return nil
 }
 
-// ConvertByJSON converts a struct (src) to another one (target) using json marshalling/unmarshalling.
-// If the structure are not compatible, this will throw an error as the unmarshalling will fail.
-func ConvertByJSON(src, target interface{}) error {
-	newBytes, err := json.Marshal(src)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(newBytes, target)
-	if err != nil {
-		logrus.Errorf("Failed to unmarshall: %v\n%s", err, string(newBytes))
-	}
-	return err
-}
-
 // Convert converts a struct (src) to another one (target) using yaml marshalling/unmarshalling.
 // If the structure are not compatible, this will throw an error as the unmarshalling will fail.
 func Convert(src, target interface{}) error {
@@ -89,18 +74,6 @@ func CopyMap(m map[string]string) map[string]string {
 		r[k] = v
 	}
 	return r
-}
-
-// FilterStringSet accepts a string set `s` (in the form of `map[string]bool`) and a filtering function `f`
-// and returns a string set containing only the strings `x` for which `f(x) == true`
-func FilterStringSet(s map[string]bool, f func(x string) bool) map[string]bool {
-	result := map[string]bool{}
-	for k := range s {
-		if f(k) {
-			result[k] = true
-		}
-	}
-	return result
 }
 
 // FilterString returns a json representation of the specified map

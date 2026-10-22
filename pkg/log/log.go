@@ -2,7 +2,6 @@ package log
 
 import (
 	"fmt"
-	"io"
 	"log/syslog"
 	"os"
 	"path/filepath"
@@ -16,7 +15,6 @@ import (
 
 var logFile *os.File
 var userHook *ShowuserlogHook
-var defaultLogLevel logrus.Level
 var debugThisLogger = false
 
 type Fields logrus.Fields
@@ -42,12 +40,6 @@ const (
 	DebugLevel
 )
 
-func SetOutput(out io.Writer) {
-	logrus.SetOutput(out)
-}
-func SetDefaultLevel(level Level) {
-	defaultLogLevel = logrus.Level(level)
-}
 func SetLevel(level Level) {
 	if userHook != nil {
 		userHook.Level = logrus.Level(level)
@@ -75,46 +67,26 @@ func Printf(format string, args ...interface{}) {
 func Warnf(format string, args ...interface{}) {
 	logrus.Warnf(format, args...)
 }
-func Warningf(format string, args ...interface{}) {
-	logrus.Warningf(format, args...)
-}
 func Errorf(format string, args ...interface{}) {
 	logrus.Errorf(format, args...)
 }
 func Fatalf(format string, args ...interface{}) {
 	logrus.Fatalf(format, args...)
 }
-func Panicf(format string, args ...interface{}) {
-	logrus.Panicf(format, args...)
-}
-
 func Debug(args ...interface{}) {
 	logrus.Debug(args...)
 }
 func Info(args ...interface{}) {
 	logrus.Info(args...)
 }
-func Print(args ...interface{}) {
-	logrus.Print(args...)
-}
 func Warn(args ...interface{}) {
 	logrus.Warn(args...)
-}
-func Warning(args ...interface{}) {
-	logrus.Warning(args...)
 }
 func Error(args ...interface{}) {
 	logrus.Error(args...)
 }
 func Fatal(args ...interface{}) {
 	logrus.Fatal(args...)
-}
-func Panic(args ...interface{}) {
-	logrus.Panic(args...)
-}
-
-func WithField(key string, value interface{}) *logrus.Entry {
-	return logrus.WithField(key, value)
 }
 func WithFields(fields Fields) *logrus.Entry {
 	return logrus.WithFields(logrus.Fields(fields))
@@ -143,28 +115,6 @@ func logTheseApps() bool {
 		return false
 	}
 	return true
-}
-
-// InitDeferedLogger stores the log messages until FsReady() is called
-// TODO: actually store them :)
-// TODO: need to work out how to pass entries from a binary run before we switchfs back to init and have it store and write it later
-func InitDeferedLogger() {
-	if logTheseApps() {
-		innerInit(true)
-		//logrus.SetOutput(ioutil.Discard)
-		// write to dmesg until we can write to file. (maybe we can do this if rancher.debug=true?)
-		f, err := os.OpenFile("/dev/kmsg", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0644)
-		if err == nil {
-			logFile = f
-			logrus.SetOutput(logFile)
-		}
-
-		pwd, err := os.Getwd()
-		if err != nil {
-			logrus.Error(err)
-		}
-		logrus.Debugf("START: %v in %s", os.Args, pwd)
-	}
 }
 
 func innerInit(deferedHook bool) {

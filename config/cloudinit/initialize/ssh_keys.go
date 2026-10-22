@@ -16,25 +16,13 @@ package initialize
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/burmilla/os/config/cloudinit/pkg"
-	"github.com/burmilla/os/config/cloudinit/system"
 )
 
 type UserKey struct {
 	ID  int    `json:"id,omitempty"`
 	Key string `json:"key"`
-}
-
-func SSHImportKeysFromURL(systemUser string, url string) error {
-	keys, err := fetchUserKeys(url)
-	if err != nil {
-		return err
-	}
-
-	keyName := fmt.Sprintf("coreos-cloudinit-%s", systemUser)
-	return system.AuthorizeSSHKeys(systemUser, keyName, keys)
 }
 
 func fetchUserKeys(url string) ([]string, error) {

@@ -119,17 +119,6 @@ func (u Ulimit) MarshalYAML() (tag string, value interface{}, err error) {
 	return "", u.ulimitValues, err
 }
 
-// NewUlimit creates a Ulimit based on the specified parts.
-func NewUlimit(name string, soft int64, hard int64) Ulimit {
-	return Ulimit{
-		Name: name,
-		ulimitValues: ulimitValues{
-			Soft: soft,
-			Hard: hard,
-		},
-	}
-}
-
 // Command represents a docker command, can be a string or an array of strings.
 type Command strslice.StrSlice
 
@@ -219,20 +208,6 @@ type MaporColonSlice []string
 // UnmarshalYAML implements the Unmarshaller interface.
 func (s *MaporColonSlice) UnmarshalYAML(tag string, value interface{}) error {
 	parts, err := unmarshalToStringOrSepMapParts(value, ":")
-	if err != nil {
-		return err
-	}
-	*s = parts
-	return nil
-}
-
-// MaporSpaceSlice represents a slice of strings that gets unmarshal from a
-// YAML map into 'key value' string.
-type MaporSpaceSlice []string
-
-// UnmarshalYAML implements the Unmarshaller interface.
-func (s *MaporSpaceSlice) UnmarshalYAML(tag string, value interface{}) error {
-	parts, err := unmarshalToStringOrSepMapParts(value, " ")
 	if err != nil {
 		return err
 	}

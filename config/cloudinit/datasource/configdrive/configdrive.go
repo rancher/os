@@ -147,7 +147,7 @@ func (cd *ConfigDrive) tryReadFile(filename string) ([]byte, error) {
 }
 
 func MountConfigDrive() error {
-	if err := os.MkdirAll(configDevMountPoint, 700); err != nil {
+	if err := os.MkdirAll(configDevMountPoint, 0700); err != nil {
 		return err
 	}
 

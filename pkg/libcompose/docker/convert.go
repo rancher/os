@@ -55,10 +55,6 @@ func ConvertToAPI(s *Service) (*ConfigWrapper, error) {
 	return &result, nil
 }
 
-func isNamedVolume(volume string) bool {
-	return !strings.HasPrefix(volume, ".") && !strings.HasPrefix(volume, "/") && !strings.HasPrefix(volume, "~")
-}
-
 func volumes(c *config.ServiceConfig, ctx project.Context) map[string]struct{} {
 	volumeStrs := config.VolumesToStringSlice(c.Volumes)
 	result := make(map[string]struct{}, len(volumeStrs))

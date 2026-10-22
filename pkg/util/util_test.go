@@ -1,6 +1,8 @@
 package util
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -20,17 +22,6 @@ func TestConvertMergesLeftIntoRight(t *testing.T) {
 	Convert(cc1, &cc0)
 	expected := testCloudConfig{Hostname: "somehost", Key1: "k1value1", Key2: "k2v0"}
 	assert.Equal(expected, cc0)
-}
-
-func NoTestCopyPointer(t *testing.T) {
-	assert := require.New(t)
-	testCCpt := &testCloudConfig{}
-	m0 := map[string]interface{}{"a": testCCpt, "b": testCCpt}
-	m1 := Copy(m0).(map[string]interface{})
-	m1["a"].(*testCloudConfig).Hostname = "somehost"
-	assert.Equal("", m0["a"].(*testCloudConfig).Hostname)
-	assert.Equal("somehost", m1["a"].(*testCloudConfig).Hostname)
-	assert.Equal("", m1["b"].(*testCloudConfig).Hostname)
 }
 
 func TestMapCopy(t *testing.T) {
@@ -172,4 +163,15 @@ func TestParseMountInfoOutsideContainer(t *testing.T) {
 	id, err := parseMountInfo(strings.NewReader(mountInfo))
 	assert.NoError(err)
 	assert.Equal("", id)
+}
+
+func TestFileCopyKeepsMode(t *testing.T) {
+	assert := require.New(t)
+	dir := t.TempDir()
+	src, dest := filepath.Join(dir, "src"), filepath.Join(dir, "dest")
+	assert.NoError(os.WriteFile(src, []byte("x"), 0644))
+	assert.NoError(FileCopy(src, dest))
+	info, err := os.Stat(dest)
+	assert.NoError(err)
+	assert.Equal(os.FileMode(0644), info.Mode().Perm())
 }

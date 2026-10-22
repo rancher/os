@@ -34,7 +34,6 @@ type Project struct {
 	context       *Context
 	clientFactory ClientFactory
 	reload        []string
-	upCount       int
 	listeners     []chan<- events.Event
 	hasListeners  bool
 }

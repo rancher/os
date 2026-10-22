@@ -17,7 +17,6 @@ package initialize
 import (
 	"net"
 	"os"
-	"path"
 	"regexp"
 	"strings"
 
@@ -51,26 +50,6 @@ func NewEnvironment(root, configRoot, workspace, sshKeyName string, metadata dat
 		"$private_ipv6": firstNonNull(metadata.PrivateIPv6, os.Getenv("COREOS_PRIVATE_IPV6")),
 	}
 	return &Environment{root, configRoot, workspace, sshKeyName, substitutions}
-}
-
-func (e *Environment) Workspace() string {
-	return path.Join(e.root, e.workspace)
-}
-
-func (e *Environment) Root() string {
-	return e.root
-}
-
-func (e *Environment) ConfigRoot() string {
-	return e.configRoot
-}
-
-func (e *Environment) SSHKeyName() string {
-	return e.sshKeyName
-}
-
-func (e *Environment) SetSSHKeyName(name string) {
-	e.sshKeyName = name
 }
 
 // Apply goes through the map of substitutions and replaces all instances of
