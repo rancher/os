@@ -3,9 +3,6 @@ name: build-test
 # Builds the OS from any branch without publishing anything and keeps
 # the ISO, kernel, initrd and rootfs as workflow artifacts for boot tests.
 on:
-  push:
-    branches:
-      - claude/project-thread-lganhb
   workflow_dispatch:
     inputs:
       version:
