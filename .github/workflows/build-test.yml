@@ -1,0 +1,57 @@
+name: build-test
+
+# Builds the OS from any branch without publishing anything and keeps
+# the ISO, kernel, initrd and rootfs as workflow artifacts for boot tests.
+on:
+  push:
+    branches:
+      - claude/project-thread-lganhb
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'VERSION to build as (default: short commit id)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: '0'
+
+    - name: Build OS
+      run: |
+        if [ -n "${{ github.event.inputs.version }}" ]; then
+          export VERSION="${{ github.event.inputs.version }}"
+        fi
+        export ARCH=amd64
+        make release
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: burmillaos-${{ github.event.inputs.version || github.sha }}
+        if-no-files-found: error
+        retention-days: 7
+        path: |
+          dist/artifacts/burmillaos.iso
+          dist/artifacts/initrd-*
+          dist/artifacts/vmlinuz-*
+          dist/artifacts/rootfs.tar.gz
+
+    # Workflow artifacts are served from Azure blob storage, which is not
+    # reachable from every network. Keep a copy on a draft release too.
+    - name: Upload to draft release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        TAG=build-test-${GITHUB_SHA::8}
+        cd dist/artifacts
+        gh release create "$TAG" --draft --prerelease --title "build-test $TAG" \
+          --notes "Test build of ${GITHUB_REF_NAME} (${GITHUB_SHA}) by the build-test workflow. Not a release." \
+          burmillaos.iso initrd-* vmlinuz-* rootfs.tar.gz

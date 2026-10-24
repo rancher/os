@@ -49,10 +49,11 @@ echo "tar-image: SYSTEM_IMAGES=$SYSTEM_IMAGES"
 echo "tar-image: INIT_IMAGES=$INIT_IMAGES"
 echo "tar-image: USER_IMAGES=$USER_IMAGES"
 
-# system-docker can not load images which compressed by xz with a compression level of 9
-# decompression consumes more memory if using level 9
-# the default compression level for xz is 6
-ARCHIVE_CMD="xz -4 -e"
+# System Docker 17.06.115 and later only decompress gzip, bzip2 and zstd
+# (xz support was removed with the rest of the unused engine code). zstd -19
+# compresses almost as well as the xz -4 -e used before and decompresses
+# much faster at boot.
+ARCHIVE_CMD="zstd -19 -T0"
 
 docker save ${INIT_IMAGES} | ${ARCHIVE_CMD} > ${INIT_IMAGES_DST}
 docker save ${SYSTEM_IMAGES} | ${ARCHIVE_CMD} > ${SYSTEM_IMAGES_DST}
