@@ -1,15 +1,76 @@
 name: release
 
+# Builds the OS from the selected branch or commit, tags it, pushes the
+# tag and creates a draft release with the build artifacts attached.
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version, e.g. 3.0.0'
+        required: true
+      type:
+        description: 'Release type'
+        type: choice
+        required: true
+        default: beta
+        options:
+          - beta
+          - rc
+          - ga
+      number:
+        description: 'beta/rc number (ignored for ga)'
+        required: false
+        default: '1'
+
+permissions:
+  contents: write
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: '0'
+
+    - name: Resolve the version
+      id: version
+      run: |
+        set -eu
+        VERSION="${{ github.event.inputs.version }}"
+        TYPE="${{ github.event.inputs.type }}"
+        NUMBER="${{ github.event.inputs.number }}"
+        if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "version must look like 3.0.0, got '$VERSION'"
+          exit 1
+        fi
+        case "$TYPE" in
+          ga)
+            TAG="v${VERSION}"
+            ;;
+          beta|rc)
+            if ! [[ "$NUMBER" =~ ^[0-9]+$ ]]; then
+              echo "number must be a positive integer, got '$NUMBER'"
+              exit 1
+            fi
+            TAG="v${VERSION}-${TYPE}${NUMBER}"
+            ;;
+          *)
+            echo "unknown release type '$TYPE'"
+            exit 1
+            ;;
+        esac
+        # A tag may already exist from a run whose publish step failed, but
+        # it must then point at the commit being built.
+        if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+          if [ "$(git rev-parse "${TAG}^{}")" != "$(git rev-parse HEAD)" ]; then
+            echo "tag ${TAG} already exists and points at $(git rev-parse --short "${TAG}^{}"), not at HEAD"
+            exit 1
+          fi
+          echo "tag ${TAG} already points at HEAD"
+        fi
+        echo "Building ${TAG} from $(git rev-parse --short HEAD)"
+        echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
 
     - name: Install github-release
       run: |
@@ -19,13 +80,21 @@ jobs:
 
     - name: Build OS
       run: |
-        export VERSION=$(git describe --exact-match --tags $(git log -n1 --pretty='%h'))
-        if [ -z "$VERSION" ]; then
-          echo "Build is not started from tag. Will exit..."
-          exit 1
-        fi
+        export VERSION="${{ steps.version.outputs.tag }}"
         export ARCH=amd64
         make release
+
+    - name: Tag the release
+      run: |
+        TAG="${{ steps.version.outputs.tag }}"
+        if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+          echo "tag ${TAG} exists already"
+          exit 0
+        fi
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git tag -a "${TAG}" -m "${TAG}"
+        git push origin "refs/tags/${TAG}"
 
     - name: Login to DockerHub
       uses: docker/login-action@v3
