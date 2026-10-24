@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.22
 # TODO: redo as cross platform, and without git etc :)
 
 ARG VERSION
@@ -6,10 +6,10 @@ ARG KERNEL_VERSION
 ENV VERSION=${VERSION}
 ENV KERNEL_VERSION=${KERNEL_VERSION}
 
-# not installed atm udev, kexe-tools
+# not installed atm udev
 # parted: partprobe, e2fsprogs: mkfs.ext4, syslinux: extlinux&syslinux (incl. efi64 for UEFI)
 # e2fsprogs-extra: chattr, dosfstools: mkfs.vfat for the EFI system partition
-RUN apk --no-cache add syslinux parted e2fsprogs e2fsprogs-extra dosfstools util-linux
+RUN apk --no-cache add syslinux parted e2fsprogs e2fsprogs-extra dosfstools util-linux kexec-tools
 
 COPY conf /scripts/
 COPY ./build/ros /bin/
@@ -17,7 +17,6 @@ COPY ./build/ros /bin/
 #OR softlink in the host one - this image should only be used when installing from ISO..
 # (except its useful for testing)
 # && ln -s /host/usr/bin/ros /bin/
-COPY kexec/dist/sbin/kexec /sbin/
 
 RUN ln -s /bootiso/boot/ /dist
 

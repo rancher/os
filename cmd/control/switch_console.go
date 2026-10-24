@@ -7,9 +7,9 @@ import (
 	"github.com/burmilla/os/pkg/compose"
 	"github.com/burmilla/os/pkg/log"
 
+	"context"
 	"github.com/burmilla/os/pkg/libcompose/project/options"
 	"github.com/codegangsta/cli"
-	"golang.org/x/net/context"
 )
 
 func switchConsoleAction(c *cli.Context) error {

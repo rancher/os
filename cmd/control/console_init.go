@@ -20,7 +20,6 @@ import (
 	"github.com/burmilla/os/pkg/util"
 
 	"github.com/codegangsta/cli"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 const (
@@ -149,33 +148,8 @@ func consoleInitFunc() error {
 		}
 	}
 
-	const pollInfo = `#!/bin/sh
-export TERM=xterm-256color
-
-echo "
-
-
-$(tput setaf 3)
-    --------------------------------------------------
-   | Dear Burmilla OS user,                           |
-   | Please, answer to poll in $(tput setaf 4)burmillaos.org/poll$(tput setaf 3)    |
-   | about your main Burmilla OS use case.            |
-   |                                                  |
-   | Thank you advance.                               |
-   |                                                  |
-   | You can disable this message with command:       |
-   | $(tput setaf 5)sudo chmod a-x /etc/update-motd.d/1-burmillaos-1$(tput setaf 3) |
-    --------------------------------------------------
-$(tput sgr0)
-
-
-"
-`
-	if _, err := os.Stat("/etc/update-motd.d/1-burmillaos-1"); os.IsNotExist(err) {
-		if err := ioutil.WriteFile("/etc/update-motd.d/1-burmillaos-1", []byte(pollInfo), 0755); err != nil {
-			log.Error(err)
-		}
-	}
+	// poll notice shown at login until v3.0.0-beta2; remove it from persistent consoles too
+	os.Remove("/etc/update-motd.d/1-burmillaos-1")
 
 	if err := setupSSH(cfg); err != nil {
 		log.Error(err)
@@ -486,7 +460,8 @@ func setupSSH(cfg *config.CloudConfig) error {
 
 func istty(name string) bool {
 	if f, err := os.Open(fmt.Sprintf("/dev/%s", name)); err == nil {
-		return terminal.IsTerminal(int(f.Fd()))
+		fi, err := f.Stat()
+		return err == nil && fi.Mode()&os.ModeCharDevice != 0
 	}
 	return false
 }

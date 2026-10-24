@@ -1,5 +1,5 @@
-FROM ubuntu:bionic
-# FROM arm64=arm64v8/ubuntu:bionic
+FROM ubuntu:24.04
+# FROM arm64=arm64v8/ubuntu:24.04
 
 # get the apt-cacher proxy set
 ARG APTPROXY=
@@ -7,41 +7,32 @@ ARG APT_ARCHIVE_SOURCE="archive.ubuntu.com"
 
 RUN echo "Acquire::http { Proxy \"$APTPROXY\"; };" >> /etc/apt/apt.conf.d/01proxy \
     && cat /etc/apt/apt.conf.d/01proxy \
-    && sed -i "s|archive.ubuntu.com|${APT_ARCHIVE_SOURCE}|" /etc/apt/sources.list \
-    && cat /etc/apt/sources.list \
+    && sed -i "s|archive.ubuntu.com|${APT_ARCHIVE_SOURCE}|" /etc/apt/sources.list.d/ubuntu.sources \
     && apt-get update \
-    && apt-get install -y --no-install-recommends \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
         build-essential \
         ca-certificates \
         cpio \
         curl \
         dosfstools \
-        gccgo \
         genisoimage \
         gettext \
         git \
         grub-common \
         grub-efi-amd64-bin \
         isolinux \
-        less \
         libblkid-dev \
-        libmount-dev \
-        libselinux1-dev \
-        locales \
-        module-init-tools \
+        kmod \
         mtools \
         openssh-client \
-        pkg-config \
-        qemu \
-        qemu-kvm \
-        rsync \
-        sudo \
+        qemu-system-arm \
+        qemu-system-x86 \
+        qemu-utils \
         syslinux-common \
-        vim \
         wget \
         xorriso \
         xz-utils \
-        telnet
+        zstd
 
 ########## Dapper Configuration #####################
 

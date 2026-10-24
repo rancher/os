@@ -3,8 +3,8 @@ package docker
 import (
 	"github.com/burmilla/os/config"
 
+	"context"
 	dockerClient "github.com/docker/engine-api/client"
-	"golang.org/x/net/context"
 )
 
 func NewSystemClient() (dockerClient.APIClient, error) {

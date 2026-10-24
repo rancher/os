@@ -1,7 +1,7 @@
 package docker
 
 import (
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"

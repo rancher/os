@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/burmilla/os/pkg/libcompose/labels"
 	"github.com/docker/engine-api/client"

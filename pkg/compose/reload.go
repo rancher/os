@@ -2,7 +2,6 @@ package compose
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/burmilla/os/config"
@@ -10,6 +9,7 @@ import (
 	"github.com/burmilla/os/pkg/log"
 	"github.com/burmilla/os/pkg/util"
 	"github.com/burmilla/os/pkg/util/network"
+	"github.com/burmilla/os/pkg/util/versions"
 
 	composeConfig "github.com/burmilla/os/pkg/libcompose/config"
 	"github.com/burmilla/os/pkg/libcompose/project"
@@ -126,7 +126,7 @@ func resolveEngine(engine, defaultEngine string, available []string) (string, bo
 		return defaultEngine, false
 	}
 	sorted := append([]string(nil), available...)
-	sort.Strings(sorted)
+	versions.SortEngines(sorted)
 	return sorted[len(sorted)-1], false
 }
 

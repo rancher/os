@@ -9,10 +9,10 @@ import (
 
 	"github.com/burmilla/os/pkg/log"
 
+	"context"
 	"github.com/burmilla/os/pkg/libcompose/project"
 	"github.com/burmilla/os/pkg/libcompose/project/options"
 	"github.com/codegangsta/cli"
-	"golang.org/x/net/context"
 )
 
 func ProjectPs(p project.APIProject, c *cli.Context) error {
@@ -68,6 +68,7 @@ func ProjectUp(p project.APIProject, c *cli.Context) error {
 		},
 	}
 	ctx, cancelFun := context.WithCancel(context.Background())
+	defer cancelFun()
 	err := p.Up(ctx, options, c.Args()...)
 	if err != nil {
 		return cli.NewExitError(err.Error(), 1)

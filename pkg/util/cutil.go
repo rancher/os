@@ -4,12 +4,9 @@
 package util
 
 /*
-#cgo LDFLAGS: -lmount -lblkid -luuid
+#cgo LDFLAGS: -lblkid -luuid
 #include<blkid/blkid.h>
-#include<libmount/libmount.h>
 #include<stdlib.h>
-#cgo pkg-config: libselinux libsepol
-#include <selinux/selinux.h>
 */
 import "C"
 import (
@@ -27,10 +24,11 @@ func ResolveDevice(spec string) string {
 }
 
 func GetFsType(device string) (string, error) {
-	var ambi *C.int
 	cDevice := C.CString(device)
 	defer C.free(unsafe.Pointer(cDevice))
-	cString := C.mnt_get_fstype(cDevice, ambi, nil)
+	cTag := C.CString("TYPE")
+	defer C.free(unsafe.Pointer(cTag))
+	cString := C.blkid_get_tag_value(nil, cTag, cDevice)
 	defer C.free(unsafe.Pointer(cString))
 	if cString != nil {
 		return C.GoString(cString), nil

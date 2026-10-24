@@ -6,7 +6,6 @@ import (
 	"net"
 	"os"
 	"path"
-	"sort"
 	"strconv"
 	"strings"
 
@@ -20,6 +19,7 @@ import (
 	"github.com/burmilla/os/pkg/util/network"
 	"github.com/burmilla/os/pkg/util/versions"
 
+	"context"
 	composeConfig "github.com/burmilla/os/pkg/libcompose/config"
 	"github.com/burmilla/os/pkg/libcompose/project/options"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
@@ -28,7 +28,6 @@ import (
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/filters"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 )
 
 func engineSubcommands() []cli.Command {
@@ -373,7 +372,7 @@ func availableEngines(cfg *config.CloudConfig, update bool) []string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sort.Strings(engines)
+	versions.SortEngines(engines)
 	return engines
 }
 

@@ -4,6 +4,5 @@ set -ex
 cd $(dirname $0)/..
 
 source ./scripts/version
-./scripts/release-build
 
 ./scripts/release-${ARCH}

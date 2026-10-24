@@ -1,7 +1,7 @@
 package project
 
 import (
-	"golang.org/x/net/context"
+	"context"
 )
 
 // Container defines what a libcompose container provides.

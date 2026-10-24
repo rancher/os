@@ -8,10 +8,10 @@ import (
 	"github.com/burmilla/os/pkg/log"
 	"github.com/burmilla/os/pkg/util"
 
+	"context"
 	composeClient "github.com/burmilla/os/pkg/libcompose/docker/client"
 	"github.com/burmilla/os/pkg/libcompose/project"
 	dockerclient "github.com/docker/engine-api/client"
-	"golang.org/x/net/context"
 )
 
 type ClientFactory struct {

@@ -3,8 +3,6 @@ set -e
 
 cd $(dirname $0)/..
 rm -rf build dist bin images/*/build state
-rm -rf ./scripts/images/openstack/dist
-rm -rf ./scripts/images/vmware/dist
 
 docker rmi $(docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "rancher|openstack|kexec|os") || true
 docker rmi $(docker images --filter dangling=true -q) || true

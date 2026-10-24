@@ -16,7 +16,7 @@ import (
 	"github.com/burmilla/os/pkg/log"
 	"github.com/burmilla/os/pkg/util"
 
-	"golang.org/x/net/context"
+	"context"
 )
 
 const (

@@ -16,10 +16,10 @@ import (
 	"github.com/burmilla/os/pkg/log"
 	"github.com/burmilla/os/pkg/util"
 
+	"context"
 	"github.com/docker/engine-api/types"
 	"github.com/docker/engine-api/types/container"
 	"github.com/docker/engine-api/types/filters"
-	"golang.org/x/net/context"
 )
 
 // You can't shutdown the system from a process in console because we want to stop the console container.

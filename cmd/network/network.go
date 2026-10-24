@@ -16,8 +16,8 @@ import (
 	"github.com/burmilla/os/pkg/log"
 	"github.com/burmilla/os/pkg/netconf"
 
+	"context"
 	"github.com/docker/libnetwork/resolvconf"
-	"golang.org/x/net/context"
 )
 
 var funcMap = template.FuncMap{
@@ -118,10 +118,11 @@ func generateDhcpcdFiles(cfg *config.CloudConfig) {
 		}
 	}
 	f, err := os.Create(config.DHCPCDConfigFile)
-	defer f.Close()
 	if err != nil {
 		log.Errorf("Failed to open file: %s err: %v", config.DHCPCDConfigFile, err)
+		return
 	}
+	defer f.Close()
 	templateFiles := []string{config.DHCPCDTemplateFile}
 	templateName := filepath.Base(templateFiles[0])
 	p := template.Must(template.New(templateName).ParseFiles(templateFiles...))
@@ -137,9 +138,11 @@ func generateWpaFiles(cfg *config.CloudConfig) {
 		if v.WifiNetwork != "" {
 			configs := make(map[string]netconf.WifiNetworkConfig)
 			filename := fmt.Sprintf(config.WPAConfigFile, k)
-			f, err := os.Create(filename)
+			// holds the Wi-Fi passphrase
+			f, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 			if err != nil {
 				log.Errorf("Failed to open file: %s err: %v", filename, err)
+				continue
 			}
 			if c, ok := networks[v.WifiNetwork]; ok {
 				configs[v.WifiNetwork] = c

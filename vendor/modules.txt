@@ -16,9 +16,6 @@ github.com/compose-spec/compose-go/dotenv
 github.com/compose-spec/compose-go/template
 github.com/compose-spec/compose-go/types
 github.com/compose-spec/compose-go/utils
-# github.com/coreos/yaml v0.0.0-20141224210557-6b16a5714269
-## explicit
-github.com/coreos/yaml
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
@@ -218,9 +215,6 @@ github.com/xeipuuv/gojsonreference
 # github.com/xeipuuv/gojsonschema v1.2.0 => github.com/xeipuuv/gojsonschema v0.0.0-20170528113821-0c8571ac0ce1
 ## explicit
 github.com/xeipuuv/gojsonschema
-# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-## explicit; go 1.11
-golang.org/x/crypto/ssh/terminal
 # golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 ## explicit; go 1.20
 golang.org/x/exp/constraints

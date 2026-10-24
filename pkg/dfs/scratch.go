@@ -618,12 +618,11 @@ func expand(bin string) string {
 }
 
 func setupBin(config *Config, bin string) error {
-	expanded, err := exec.LookPath(bin)
-	if err == nil {
+	if _, err := exec.LookPath(bin); err == nil {
 		return nil
 	}
 
-	expanded, err = exec.LookPath(bin + distSuffix)
+	expanded, err := exec.LookPath(bin + distSuffix)
 	if err != nil {
 		// Purposely not returning error
 		return nil

@@ -15,14 +15,11 @@
 package initialize
 
 import (
-	"io/ioutil"
 	"net"
 	"os"
-	"path"
 	"testing"
 
 	"github.com/burmilla/os/config/cloudinit/datasource"
-	"github.com/burmilla/os/config/cloudinit/system"
 )
 
 func TestEnvironmentApply(t *testing.T) {
@@ -95,54 +92,10 @@ addr: $private_ipv4
 		},
 	} {
 
-		env := NewEnvironment("./", "./", "./", "", tt.metadata)
+		env := NewEnvironment(tt.metadata)
 		got := env.Apply(tt.input)
 		if got != tt.out {
 			t.Fatalf("Environment incorrectly applied.\ngot:\n%s\nwant:\n%s", got, tt.out)
 		}
-	}
-}
-
-func TestEnvironmentFile(t *testing.T) {
-	metadata := datasource.Metadata{
-		PublicIPv4:  net.ParseIP("1.2.3.4"),
-		PrivateIPv4: net.ParseIP("5.6.7.8"),
-		PublicIPv6:  net.ParseIP("1234::"),
-		PrivateIPv6: net.ParseIP("5678::"),
-	}
-	expect := "COREOS_PRIVATE_IPV4=5.6.7.8\nCOREOS_PRIVATE_IPV6=5678::\nCOREOS_PUBLIC_IPV4=1.2.3.4\nCOREOS_PUBLIC_IPV6=1234::\n"
-
-	dir, err := ioutil.TempDir(os.TempDir(), "coreos-cloudinit-")
-	if err != nil {
-		t.Fatalf("Unable to create tempdir: %v", err)
-	}
-	defer os.RemoveAll(dir)
-
-	env := NewEnvironment("./", "./", "./", "", metadata)
-	ef := env.DefaultEnvironmentFile()
-	err = system.WriteEnvFile(ef, dir)
-	if err != nil {
-		t.Fatalf("WriteEnvFile failed: %v", err)
-	}
-
-	fullPath := path.Join(dir, "etc", "environment")
-	contents, err := ioutil.ReadFile(fullPath)
-	if err != nil {
-		t.Fatalf("Unable to read expected file: %v", err)
-	}
-
-	if string(contents) != expect {
-		t.Fatalf("File has incorrect contents: %q", contents)
-	}
-}
-
-func TestEnvironmentFileNil(t *testing.T) {
-	os.Clearenv()
-	metadata := datasource.Metadata{}
-
-	env := NewEnvironment("./", "./", "./", "", metadata)
-	ef := env.DefaultEnvironmentFile()
-	if ef != nil {
-		t.Fatalf("Environment file not nil: %v", ef)
 	}
 }

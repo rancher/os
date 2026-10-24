@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/net/context"
+	"context"
 
 	"github.com/docker/docker/builder"
 	"github.com/docker/docker/builder/dockerignore"

@@ -1,6 +1,7 @@
 package versions
 
 import (
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -39,4 +40,12 @@ func compare(v1, v2 string) int {
 // LessThan checks if a version is less than another
 func LessThan(v, other string) bool {
 	return compare(v, other) == -1
+}
+
+// SortEngines orders engine names such as docker-29.10.0 by version, so
+// that 29.10 comes after 29.9 (a plain string sort puts it before).
+func SortEngines(engines []string) {
+	sort.Slice(engines, func(i, j int) bool {
+		return LessThan(strings.TrimPrefix(engines[i], "docker-"), strings.TrimPrefix(engines[j], "docker-"))
+	})
 }

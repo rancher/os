@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/burmilla/os/cmd/control/install"
@@ -105,10 +104,6 @@ func installAction(c *cli.Context) error {
 		originalLevel := log.GetLevel()
 		defer log.SetLevel(originalLevel)
 		log.SetLevel(log.DebugLevel)
-	}
-
-	if runtime.GOARCH != "amd64" {
-		log.Fatalf("ros install / upgrade only supported on 'amd64', not '%s'", runtime.GOARCH)
 	}
 
 	if c.Args().Present() {

@@ -17,7 +17,7 @@ if [ ! -f ${ARTIFACTS}/vmlinuz-${KERNEL_VERSION} ]; then
 fi
 
 if [ "$COMPRESS" == "" ]; then
-    COMPRESS="gzip -1"
+    COMPRESS="zstd -1 -T0"
 fi
 
 cd ${INITRD_DIR}

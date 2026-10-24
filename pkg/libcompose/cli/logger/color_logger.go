@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/burmilla/os/pkg/libcompose/logger"
-	"golang.org/x/crypto/ssh/terminal"
 )
 
 // ColorLoggerFactory implements logger.Factory interface using ColorLogger.
@@ -25,7 +24,7 @@ type ColorLogger struct {
 // NewColorLoggerFactory creates a new ColorLoggerFactory.
 func NewColorLoggerFactory() *ColorLoggerFactory {
 	return &ColorLoggerFactory{
-		tty: terminal.IsTerminal(int(os.Stdout.Fd())),
+		tty: isTerminal(os.Stdout),
 	}
 }
 
@@ -73,4 +72,9 @@ func (c *ColorLogger) getLogFmt() (string, string) {
 	name := fmt.Sprintf("%-"+strconv.Itoa(pad)+"s", c.name)
 
 	return logFmt, name
+}
+
+func isTerminal(f *os.File) bool {
+	fi, err := f.Stat()
+	return err == nil && fi.Mode()&os.ModeCharDevice != 0
 }

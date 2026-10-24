@@ -11,6 +11,7 @@ import (
 	"github.com/burmilla/os/pkg/util"
 	"github.com/burmilla/os/pkg/util/network"
 
+	"context"
 	"github.com/burmilla/os/pkg/libcompose/cli/logger"
 	composeConfig "github.com/burmilla/os/pkg/libcompose/config"
 	"github.com/burmilla/os/pkg/libcompose/docker"
@@ -21,7 +22,6 @@ import (
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	composetypes "github.com/compose-spec/compose-go/types"
 	dockerClient "github.com/docker/engine-api/client"
-	"golang.org/x/net/context"
 )
 
 // CreateService creates a single service from a compose-go ServiceConfig.

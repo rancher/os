@@ -16,9 +16,9 @@ import (
 	"github.com/burmilla/os/pkg/docker"
 	"github.com/burmilla/os/pkg/log"
 
+	"context"
 	"github.com/burmilla/os/pkg/libcompose/project/options"
 	"github.com/docker/engine-api/types"
-	"golang.org/x/net/context"
 )
 
 const (

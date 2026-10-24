@@ -20,23 +20,14 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/burmilla/os/config/cloudinit/config"
 	"github.com/burmilla/os/config/cloudinit/datasource"
-	"github.com/burmilla/os/config/cloudinit/system"
 )
 
-const DefaultSSHKeyName = "coreos-cloudinit"
-
 type Environment struct {
-	root          string
-	configRoot    string
-	workspace     string
-	sshKeyName    string
 	substitutions map[string]string
 }
 
-// NewEnvironment TODO(jonboulle): this is getting unwieldy, should be able to simplify the interface somehow
-func NewEnvironment(root, configRoot, workspace, sshKeyName string, metadata datasource.Metadata) *Environment {
+func NewEnvironment(metadata datasource.Metadata) *Environment {
 	firstNonNull := func(ip net.IP, env string) string {
 		if ip == nil {
 			return env
@@ -49,7 +40,7 @@ func NewEnvironment(root, configRoot, workspace, sshKeyName string, metadata dat
 		"$public_ipv6":  firstNonNull(metadata.PublicIPv6, os.Getenv("COREOS_PUBLIC_IPV6")),
 		"$private_ipv6": firstNonNull(metadata.PrivateIPv6, os.Getenv("COREOS_PRIVATE_IPV6")),
 	}
-	return &Environment{root, configRoot, workspace, sshKeyName, substitutions}
+	return &Environment{substitutions}
 }
 
 // Apply goes through the map of substitutions and replaces all instances of
@@ -66,29 +57,4 @@ func (e *Environment) Apply(data string) string {
 		data = regexp.MustCompile(`\\`+matchKey).ReplaceAllString(data, replKey)
 	}
 	return data
-}
-
-func (e *Environment) DefaultEnvironmentFile() *system.EnvFile {
-	ef := system.EnvFile{
-		File: &system.File{File: config.File{
-			Path: "/etc/environment",
-		}},
-		Vars: map[string]string{},
-	}
-	if ip, ok := e.substitutions["$public_ipv4"]; ok && len(ip) > 0 {
-		ef.Vars["COREOS_PUBLIC_IPV4"] = ip
-	}
-	if ip, ok := e.substitutions["$private_ipv4"]; ok && len(ip) > 0 {
-		ef.Vars["COREOS_PRIVATE_IPV4"] = ip
-	}
-	if ip, ok := e.substitutions["$public_ipv6"]; ok && len(ip) > 0 {
-		ef.Vars["COREOS_PUBLIC_IPV6"] = ip
-	}
-	if ip, ok := e.substitutions["$private_ipv6"]; ok && len(ip) > 0 {
-		ef.Vars["COREOS_PRIVATE_IPV6"] = ip
-	}
-	if len(ef.Vars) == 0 {
-		return nil
-	}
-	return &ef
 }

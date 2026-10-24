@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/url"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/burmilla/os/cmd/power"
@@ -16,13 +15,13 @@ import (
 	"github.com/burmilla/os/pkg/util"
 	"github.com/burmilla/os/pkg/util/network"
 
+	"context"
 	"github.com/burmilla/os/pkg/libcompose/project"
 	"github.com/burmilla/os/pkg/libcompose/project/options"
 	yaml "github.com/cloudfoundry-incubator/candiedyaml"
 	"github.com/codegangsta/cli"
 	composetypes "github.com/compose-spec/compose-go/types"
 	dockerClient "github.com/docker/engine-api/client"
-	"golang.org/x/net/context"
 )
 
 type Images struct {
@@ -195,10 +194,6 @@ func getLatestImage() (string, error) {
 }
 
 func osUpgrade(c *cli.Context) error {
-	if runtime.GOARCH != "amd64" {
-		log.Fatalf("ros install / upgrade only supported on 'amd64', not '%s'", runtime.GOARCH)
-	}
-
 	if isExist := checkGlobalCfg(); !isExist {
 		log.Fatalf("ros upgrade cannot be supported")
 	}

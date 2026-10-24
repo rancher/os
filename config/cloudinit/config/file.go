@@ -15,9 +15,9 @@
 package config
 
 type File struct {
-	Encoding           string `yaml:"encoding" valid:"^(base64|b64|gz|gzip|gz\\+base64|gzip\\+base64|gz\\+b64|gzip\\+b64)$"`
+	Encoding           string `yaml:"encoding"`
 	Content            string `yaml:"content"`
 	Owner              string `yaml:"owner"`
 	Path               string `yaml:"path"`
-	RawFilePermissions string `yaml:"permissions" valid:"^0?[0-7]{3,4}$"`
+	RawFilePermissions string `yaml:"permissions"`
 }

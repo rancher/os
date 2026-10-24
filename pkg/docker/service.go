@@ -8,6 +8,7 @@ import (
 	"github.com/burmilla/os/pkg/log"
 	"github.com/burmilla/os/pkg/util/network"
 
+	"context"
 	composeConfig "github.com/burmilla/os/pkg/libcompose/config"
 	"github.com/burmilla/os/pkg/libcompose/docker"
 	"github.com/burmilla/os/pkg/libcompose/project"
@@ -15,7 +16,6 @@ import (
 	"github.com/docker/docker/layer"
 	dockerclient "github.com/docker/engine-api/client"
 	"github.com/docker/engine-api/types"
-	"golang.org/x/net/context"
 )
 
 type Service struct {

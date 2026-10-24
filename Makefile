@@ -1,4 +1,4 @@
-TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|release*|build-moby|run-moby|deps')
+TARGETS := $(shell ls scripts | grep -vE 'clean|run|help|release*|deps')
 
 .dapper:
 	@echo Downloading dapper
@@ -26,12 +26,6 @@ run: build/initrd/.id .dapper
 	./.dapper -m bind build-target
 	./scripts/run
 
-build-moby:
-	./scripts/build-moby
-
-run-moby:
-	./scripts/run-moby
-
 shell-bind: .dapper
 	./.dapper -m bind -s
 
@@ -44,39 +38,31 @@ release-build:
 	mkdir -p dist
 	./.dapper release
 
-rpi64: .dapper
-	./scripts/release-rpi64
-
 vmware: .dapper
 	mkdir -p dist
 	OS_FIRMWARE="false" \
-	APPEND_SYSTEM_IMAGES="burmilla/os-openvmtools:11.2.0-5" \
-	./.dapper release-vmware
+	APPEND_SYSTEM_IMAGES="burmilla/os-openvmtools:12.5-1" \
+	./.dapper release
 
 hyperv: .dapper
 	mkdir -p dist
 	OS_FIRMWARE="false" \
 	APPEND_SYSTEM_IMAGES="burmilla/os-hypervvmtools:6.12.114-burmilla-1" \
-	./.dapper release-hyperv
+	./.dapper release
 
 azurebase: .dapper
 	mkdir -p dist
 	AZURE_SERVICE="true" \
 	OS_FIRMWARE="false" \
 	APPEND_SYSTEM_IMAGES="burmilla/os-hypervvmtools:6.12.114-burmilla-1 burmilla/os-waagent:v2.2.49.2-1" \
-	./.dapper release-azurebase
-
-4glte: .dapper
-	mkdir -p dist
-	APPEND_SYSTEM_IMAGES="burmilla/os-modemmanager:v1.6.4-1" \
-	./.dapper release-4glte
+	./.dapper release
 
 proxmoxve: .dapper
 	mkdir -p dist
 	PROXMOXVE_SERVICE="true" \
 	OS_FIRMWARE="false" \
-	APPEND_SYSTEM_IMAGES="burmilla/os-qemuguestagent:v3.1.0-1" \
-	./.dapper release-proxmoxve
+	APPEND_SYSTEM_IMAGES="burmilla/os-qemuguestagent:v7.2-1" \
+	./.dapper release
 
 help:
 	@./scripts/help

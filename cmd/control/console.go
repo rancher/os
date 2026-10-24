@@ -13,11 +13,11 @@ import (
 	"github.com/burmilla/os/pkg/util"
 	"github.com/burmilla/os/pkg/util/network"
 
+	"context"
 	"github.com/burmilla/os/pkg/libcompose/project/options"
 	"github.com/codegangsta/cli"
 	composetypes "github.com/compose-spec/compose-go/types"
 	"github.com/docker/docker/reference"
-	"golang.org/x/net/context"
 )
 
 func consoleSubcommands() []cli.Command {

@@ -70,6 +70,5 @@ Known beta1 issues (release discussion #226) and their RC1 fixes:
 Open items / caveats:
 
 - arm64 kernel config has AppArmor disabled.
-- `ros engine switch latest` and the engine fallback sort engine names as strings (29.10 < 29.9).
 - Hyper-V VSS and fcopy daemons are built but not started.
 - Fixes above were verified by build/static analysis only; boot-test on real hardware/VMs before the RC.

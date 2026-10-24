@@ -24,3 +24,14 @@ func TestCompareVersion(t *testing.T) {
 	assertVersion(t, "1.1.1", "1.1.2", -1)
 	assertVersion(t, "1.1.2", "1.2", -1)
 }
+
+func TestSortEngines(t *testing.T) {
+	engines := []string{"docker-29.9.2", "docker-29.10.0", "docker-25.0.14", "docker-29.6.1"}
+	SortEngines(engines)
+	want := []string{"docker-25.0.14", "docker-29.6.1", "docker-29.9.2", "docker-29.10.0"}
+	for i := range want {
+		if engines[i] != want[i] {
+			t.Fatalf("SortEngines = %v, want %v", engines, want)
+		}
+	}
+}

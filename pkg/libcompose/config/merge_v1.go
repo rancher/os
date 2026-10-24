@@ -147,7 +147,10 @@ func parseV1(resourceLookup ResourceLookup, environmentLookup EnvironmentLookup,
 			return nil, fmt.Errorf("Failed to find service %s in file %s", service, file)
 		}
 
-		baseService, err = parseV1(resourceLookup, environmentLookup, resolved, baseService, baseRawServices, options)
+		// err is shadowed in this branch, so check it here
+		if baseService, err = parseV1(resourceLookup, environmentLookup, resolved, baseService, baseRawServices, options); err != nil {
+			return nil, err
+		}
 	}
 
 	if err != nil {
